@@ -89,10 +89,10 @@ struct htp_rope_context {
     const float * freq_factors;
 };
 
-static float rope_yarn_ramp(const float low, const float high, const int i0) {
+static float rope_yarn_ramp(const float low, const float high, const целое i0) {
     const float y = (i0 / 2 - low) / MAX(0.001f, high - low);
 
-    return (1 - MIN(1, MAX(0, y)));
+    вернуть (1 - MIN(1, MAX(0, y)));
 }
 
 // Compute one (cos, sin) pair into cache[i0], cache[i0+1] applying YaRN scaling.
@@ -106,7 +106,7 @@ static inline void rope_yarn_one(float theta, float freq_scale, float * corr_dim
     float theta_final  = theta_interp;
     float mscale_final = mscale;
 
-    if (ext_factor != 0.0f) {
+    если (ext_factor != 0.0f) {
         float ramp_mix = rope_yarn_ramp(corr_dims[0], corr_dims[1], i0) * ext_factor;
         theta_final    = theta_interp * (1 - ramp_mix) + theta_extrap * ramp_mix;
 
@@ -126,7 +126,7 @@ static inline void rope_cache_hvx_32(float * cache, uint32_t i0,
                                      const float * freq_factors,
                                      HVX_Vector v_freq_scale,
                                      HVX_Vector v_mscale) {
-    if (freq_factors) {
+    если (freq_factors) {
         HVX_Vector v_ff = hvx_vmemu(freq_factors + i0 / 2);
         v_theta = hvx_vec_mul_f32_f32(v_theta, hvx_vec_inverse_f32(v_ff));
     }
@@ -138,10 +138,10 @@ static inline void rope_cache_hvx_32(float * cache, uint32_t i0,
     vcos = hvx_vec_mul_f32_f32(vcos, v_mscale);
     vsin = hvx_vec_mul_f32_f32(vsin, v_mscale);
 
-    if (((uintptr_t) (cache + i0)) % 128 == 0) {
+    если (((uintptr_t) (cache + i0)) % 128 == 0) {
         hvx_vmem(cache + i0 + 0)  = vcos;
         hvx_vmem(cache + i0 + 32) = vsin;
-    } else {
+    } иначе {
         hvx_vec_store_u(cache + i0 + 0,  32 * sizeof(float), vcos);
         hvx_vec_store_u(cache + i0 + 32, 32 * sizeof(float), vsin);
     }
@@ -159,7 +159,7 @@ static __attribute__((noinline)) void rope_cache_init(const float    theta_base,
                             const float *  theta_powers,
                             const float    theta_scale_32) {
     // ref: https://github.com/jquesnelle/yarn/blob/master/scaled_rope/LlamaYaRNScaledRotaryEmbedding.py
-    if (ext_factor == 0.0f) {
+    если (ext_factor == 0.0f) {
         // Fast path: fully vectorized
         // We process 32 pairs (64 elements) per iteration.
         const uint32_t n_blocks = n_cache / 64;
@@ -170,7 +170,7 @@ static __attribute__((noinline)) void rope_cache_init(const float    theta_base,
 
         float theta_block = theta_base;
 
-        for (uint32_t b = 0; b < n_blocks; b++) {
+        для (uint32_t b = 0; b < n_blocks; b++) {
             uint32_t i0 = b * 64;
             HVX_Vector v_theta_base = hvx_vec_splat_f32(theta_block);
             HVX_Vector v_theta = hvx_vec_mul_f32_f32(v_theta_base, v_theta_powers);
@@ -180,14 +180,14 @@ static __attribute__((noinline)) void rope_cache_init(const float    theta_base,
 
         // Leftovers
         float theta = theta_block;
-        for (uint32_t i0 = n_blocks * 64; i0 < n_cache; i0 += 2) {
+        для (uint32_t i0 = n_blocks * 64; i0 < n_cache; i0 += 2) {
             const float ff = freq_factors ? freq_factors[i0 / 2] : 1.0f;
             rope_yarn_one(theta / ff, freq_scale, corr_dims, i0, ext_factor, mscale, cache);
             theta *= theta_scale;
         }
-    } else {
+    } иначе {
         float theta = theta_base;
-        for (uint32_t i0 = 0; i0 < n_cache; i0 += 2) {
+        для (uint32_t i0 = 0; i0 < n_cache; i0 += 2) {
             const float ff = freq_factors ? freq_factors[i0 / 2] : 1.0f;
             rope_yarn_one(theta / ff, freq_scale, corr_dims, i0, ext_factor, mscale, cache);
             theta *= theta_scale;
@@ -196,18 +196,18 @@ static __attribute__((noinline)) void rope_cache_init(const float    theta_base,
 }
 
 static inline float mrope_pick_theta(float theta_t, float theta_h, float theta_w, float theta_e,
-                                     int sector, const int32_t sections[4], int sec_w, int sec_e,
+                                     целое sector, const int32_t sections[4], целое sec_w, целое sec_e,
                                      bool is_imrope) {
-    if (is_imrope) {
-        if      (sector % 3 == 0 && sector < 3 * sections[0]) { return theta_t; }
-        else if (sector % 3 == 1 && sector < 3 * sections[1]) { return theta_h; }
-        else if (sector % 3 == 2 && sector < 3 * sections[2]) { return theta_w; }
-        else                                                   { return theta_e; }
+    если (is_imrope) {
+        если      (sector % 3 == 0 && sector < 3 * sections[0]) { вернуть theta_t; }
+        иначе если (sector % 3 == 1 && sector < 3 * sections[1]) { вернуть theta_h; }
+        иначе если (sector % 3 == 2 && sector < 3 * sections[2]) { вернуть theta_w; }
+        иначе                                                   { вернуть theta_e; }
     }
-    if      (sector < sections[0]) { return theta_t; }
-    else if (sector < sec_w)       { return theta_h; }
-    else if (sector < sec_e)       { return theta_w; }
-    else                           { return theta_e; }
+    если      (sector < sections[0]) { вернуть theta_t; }
+    иначе если (sector < sec_w)       { вернуть theta_h; }
+    иначе если (sector < sec_e)       { вернуть theta_w; }
+    иначе                           { вернуть theta_e; }
 }
 
 // lane j is 1 when (j % 3) == rem
@@ -227,13 +227,13 @@ static const float __attribute__((aligned(128))) mrope_k_ramp[32] = {
 };
 
 static inline HVX_VectorPred mrope_mask_eq1(const float * m) {
-    return Q6_Q_vcmp_gt_VsfVsf(hvx_vmemu(m), Q6_V_vzero());
+    вернуть Q6_Q_vcmp_gt_VsfVsf(hvx_vmemu(m), Q6_V_vzero());
 }
 
 // IMROPE without wrap: theta[k] = pos[k % 3] * scale^k
 static inline HVX_Vector mrope_thetas_imrope_mod3(float pos_t, float pos_h, float pos_w,
                                                   uint32_t k0, HVX_Vector v_powers, float scale_block) {
-    const int r = (int) (k0 % 3);
+    const целое r = (целое) (k0 % 3);
     const float * mt = (r == 0) ? mrope_mod3_eq0 : (r == 1) ? mrope_mod3_eq2 : mrope_mod3_eq1;
     const float * mh = (r == 0) ? mrope_mod3_eq1 : (r == 1) ? mrope_mod3_eq0 : mrope_mod3_eq2;
 
@@ -241,12 +241,12 @@ static inline HVX_Vector mrope_thetas_imrope_mod3(float pos_t, float pos_h, floa
     v = Q6_V_vmux_QVV(mrope_mask_eq1(mh), hvx_vec_splat_f32(pos_h), v);
     v = Q6_V_vmux_QVV(mrope_mask_eq1(mt), hvx_vec_splat_f32(pos_t), v);
     v = hvx_vec_mul_f32_f32(v, v_powers);
-    return hvx_vec_mul_f32_f32(v, hvx_vec_splat_f32(scale_block));
+    вернуть hvx_vec_mul_f32_f32(v, hvx_vec_splat_f32(scale_block));
 }
 
 // Contiguous MROPE without wrap: theta[k] = pos[section(k)] * scale^k
 static inline HVX_Vector mrope_thetas_contig(float pos_t, float pos_h, float pos_w, float pos_e,
-                                             uint32_t k0, int s0, int sec_w, int sec_e,
+                                             uint32_t k0, целое s0, целое sec_w, целое sec_e,
                                              HVX_Vector v_powers, float scale_block) {
     HVX_Vector v_k = hvx_vec_add_f32_f32(hvx_vec_splat_f32((float) k0), hvx_vmemu(mrope_k_ramp));
     HVX_VectorPred lt_s0 = Q6_Q_vcmp_gt_VsfVsf(hvx_vec_splat_f32((float) s0), v_k);
@@ -258,7 +258,7 @@ static inline HVX_Vector mrope_thetas_contig(float pos_t, float pos_h, float pos
     v = Q6_V_vmux_QVV(lt_sw, hvx_vec_splat_f32(pos_h), v);
     v = Q6_V_vmux_QVV(lt_s0, hvx_vec_splat_f32(pos_t), v);
     v = hvx_vec_mul_f32_f32(v, v_powers);
-    return hvx_vec_mul_f32_f32(v, hvx_vec_splat_f32(scale_block));
+    вернуть hvx_vec_mul_f32_f32(v, hvx_vec_splat_f32(scale_block));
 }
 
 // pos_t/h/w/e: the four position ids for this sequence step (t=time, h=height, w=width, e=extra).
@@ -280,9 +280,9 @@ static __attribute__((noinline)) void mrope_cache_init(const float    pos_t,
                              const float    theta_scale,
                              const float *  theta_powers,
                              const float    theta_scale_32) {
-    const int sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
-    const int sec_w     = sections[0] + sections[1];
-    const int sec_e     = sec_w + sections[2];
+    const целое sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
+    const целое sec_w     = sections[0] + sections[1];
+    const целое sec_e     = sec_w + sections[2];
     const uint32_t n_pairs = n_cache / 2;
 
     const bool no_wrap = (sect_dims > 0) && (n_pairs <= (uint32_t) sect_dims);
@@ -293,14 +293,14 @@ static __attribute__((noinline)) void mrope_cache_init(const float    pos_t,
         && n_pairs <= (uint32_t) (3 * sections[2]);
     const bool contig = !is_imrope && !indep_sects && no_wrap;
 
-    if (ext_factor == 0.0f && (imrope_mod3 || contig)) {
+    если (ext_factor == 0.0f && (imrope_mod3 || contig)) {
         HVX_Vector v_powers     = hvx_vmemu(theta_powers);
         HVX_Vector v_freq_scale = hvx_vec_splat_f32(freq_scale);
         HVX_Vector v_mscale     = hvx_vec_splat_f32(mscale);
         float scale_block = 1.0f;
         const uint32_t n_blocks = n_cache / 64;
 
-        for (uint32_t b = 0; b < n_blocks; b++) {
+        для (uint32_t b = 0; b < n_blocks; b++) {
             const uint32_t i0 = b * 64;
             const uint32_t k0 = b * 32;
             HVX_Vector v_theta = imrope_mod3
@@ -312,15 +312,15 @@ static __attribute__((noinline)) void mrope_cache_init(const float    pos_t,
         }
 
         float theta_k = scale_block;
-        for (uint32_t k = n_blocks * 32; k < n_pairs; k++) {
+        для (uint32_t k = n_blocks * 32; k < n_pairs; k++) {
             const uint32_t i0 = 2 * k;
             const float pos = mrope_pick_theta(pos_t, pos_h, pos_w, pos_e,
-                                               (int) k, sections, sec_w, sec_e, is_imrope);
+                                               (целое) k, sections, sec_w, sec_e, is_imrope);
             const float ff = freq_factors ? freq_factors[k] : 1.0f;
             rope_yarn_one(pos * theta_k / ff, freq_scale, corr_dims, i0, ext_factor, mscale, cache);
             theta_k *= theta_scale;
         }
-        return;
+        вернуть;
     }
 
     float theta_t = pos_t;
@@ -336,30 +336,30 @@ static __attribute__((noinline)) void mrope_cache_init(const float    pos_t,
     HVX_Vector v_freq_scale = hvx_vec_splat_f32(freq_scale);
     HVX_Vector v_mscale     = hvx_vec_splat_f32(mscale);
 
-    for (uint32_t i0 = 0; i0 < n_cache; i0 += 2) {
-        const int sector = (i0 / 2) % sect_dims;
+    для (uint32_t i0 = 0; i0 < n_cache; i0 += 2) {
+        const целое sector = (i0 / 2) % sect_dims;
 
-        if (indep_sects) {
+        если (indep_sects) {
             // Reset theta when crossing into a new section.
-            if      (sector == 0)           { theta_t = pos_t; }
-            else if (sector == sections[0]) { theta_h = pos_h; }
-            else if (sector == sec_w)       { theta_w = pos_w; }
-            else if (sector == sec_e)       { theta_e = pos_e; }
+            если      (sector == 0)           { theta_t = pos_t; }
+            иначе если (sector == sections[0]) { theta_h = pos_h; }
+            иначе если (sector == sec_w)       { theta_w = pos_w; }
+            иначе если (sector == sec_e)       { theta_e = pos_e; }
         }
 
         const float theta = mrope_pick_theta(theta_t, theta_h, theta_w, theta_e,
                                              sector, sections, sec_w, sec_e, is_imrope);
 
-        if (use_hvx) {
-            if (n_thetas == 0) {
+        если (use_hvx) {
+            если (n_thetas == 0) {
                 block_i0 = i0;
             }
             thetas[n_thetas++] = theta;
-            if (n_thetas == 32) {
+            если (n_thetas == 32) {
                 rope_cache_hvx_32(cache, block_i0, hvx_vmemu(thetas), freq_factors, v_freq_scale, v_mscale);
                 n_thetas = 0;
             }
-        } else {
+        } иначе {
             const float ff = freq_factors ? freq_factors[i0 / 2] : 1.0f;
             rope_yarn_one(theta / ff, freq_scale, corr_dims, i0, ext_factor, mscale, cache);
         }
@@ -370,7 +370,7 @@ static __attribute__((noinline)) void mrope_cache_init(const float    pos_t,
         theta_e *= theta_scale;
     }
 
-    for (uint32_t k = 0; k < n_thetas; k++) {
+    для (uint32_t k = 0; k < n_thetas; k++) {
         const uint32_t i0 = block_i0 + 2 * k;
         const float ff = freq_factors ? freq_factors[i0 / 2] : 1.0f;
         rope_yarn_one(thetas[k] / ff, freq_scale, corr_dims, i0, ext_factor, mscale, cache);
@@ -379,8 +379,8 @@ static __attribute__((noinline)) void mrope_cache_init(const float    pos_t,
 
 #define M_PI 3.1415926535897932384626433
 
-static void rope_corr_dims(int     n_dims,
-                           int     n_ctx_orig,
+static void rope_corr_dims(целое     n_dims,
+                           целое     n_ctx_orig,
                            float   freq_base,
                            float   beta_fast,
                            float   beta_slow,
@@ -407,20 +407,20 @@ static inline void hvx_rope_neox_f32_aa(float * restrict dst, const float * rest
     const uint32_t nvec = he / 32;
     const uint32_t nloe = he % 32;
 
-    if (nloe == 0) {
+    если (nloe == 0) {
         const HVX_Vector * vs = (const HVX_Vector *) src0;
         const HVX_Vector * vt = (const HVX_Vector *) theta_cache;
         HVX_Vector * vd = (HVX_Vector *) dst;
-        for (uint32_t i = 0; i < nvec; i++) {
+        для (uint32_t i = 0; i < nvec; i++) {
             HVX_Vector o0, o1;
             hvx_rope_neox_mul(vs[i], vs[nvec + i], vt[i * 2 + 0], vt[i * 2 + 1], &o0, &o1);
             vd[i] = o0;
             vd[nvec + i] = o1;
         }
-        return;
+        вернуть;
     }
 
-    for (uint32_t i = 0; i < nvec; i++) {
+    для (uint32_t i = 0; i < nvec; i++) {
         HVX_Vector o0, o1;
         hvx_rope_neox_mul(((const HVX_Vector *) src0)[i],
                           hvx_vmemu(src0 + he + i * 32),
@@ -445,7 +445,7 @@ static inline void hvx_rope_f32_aa(float * restrict dst, const float * restrict 
     const uint32_t nvec = ne / 64;
     const uint32_t nloe = ne % 64;
 
-    for (uint32_t i = 0; i < nvec; i++) {
+    для (uint32_t i = 0; i < nvec; i++) {
         HVX_Vector v0 = ((const HVX_Vector *) src0)[i * 2 + 0];
         HVX_Vector v1 = ((const HVX_Vector *) src0)[i * 2 + 1];
 
@@ -468,8 +468,8 @@ static inline void hvx_rope_f32_aa(float * restrict dst, const float * restrict 
         ((HVX_Vector *) dst)[i * 2 + 1] = Q6_V_hi_W(vstore);
     }
 
-    if (nloe > 0) {
-        if (nloe <= 32) {
+    если (nloe > 0) {
+        если (nloe <= 32) {
             HVX_Vector v0 = hvx_vmemu(src0 + nvec * 64);
             HVX_Vector vcos = hvx_vmemu(theta_cache + nvec * 64);
             HVX_Vector vsin = hvx_vmemu(theta_cache + nvec * 64 + 32);
@@ -487,7 +487,7 @@ static inline void hvx_rope_f32_aa(float * restrict dst, const float * restrict 
             HVX_VectorPair vstore = Q6_W_vshuff_VVR(Q6_Vsf_equals_Vqf32(v5), Q6_Vsf_equals_Vqf32(v4), -4);
 
             hvx_vec_store_u(dst + nvec * 64, nloe * sizeof(float), Q6_V_lo_W(vstore));
-        } else {
+        } иначе {
             HVX_Vector v0 = hvx_vmemu(src0 + nvec * 64);
             HVX_Vector v1 = hvx_vmemu(src0 + nvec * 64 + 32);
 
@@ -516,7 +516,7 @@ static void inline rope_basic_f32_inplace(struct htp_rope_context * rctx, uint8_
                    uint32_t nr, const float * restrict theta_cache) {
     const uint32_t n_offs = rctx->n_offs;
     #pragma unroll(4)
-    for (uint32_t i = 0; i < nr; i++) {
+    для (uint32_t i = 0; i < nr; i++) {
         float * s = (float *) (src + i * rctx->src0_row_size_aligned);
         hvx_rope_f32_aa(s + n_offs, s + n_offs, rctx->n_dims, theta_cache);
     }
@@ -526,13 +526,13 @@ static void inline rope_neox_f32_inplace(struct htp_rope_context * rctx, uint8_t
                    uint32_t nr, uint32_t ne, const float * restrict theta_cache) {
     const uint32_t n_offs = rctx->n_offs;
     #pragma unroll(4)
-    for (uint32_t i = 0; i < nr; i++) {
+    для (uint32_t i = 0; i < nr; i++) {
         float * s = (float *) (src + i * rctx->src0_row_size_aligned);
         hvx_rope_neox_f32_aa(s + n_offs, s + n_offs, ne, theta_cache);
     }
 }
 
-static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
+static void rope_job_f32(unsigned целое nth, unsigned целое ith, void * data) {
     struct htp_rope_context * rctx = (struct htp_rope_context *) data;
     struct htp_ops_context * octx = rctx->octx;
 
@@ -550,8 +550,8 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
     const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, rctx->row_start + src0_nrows);
 
     // no work for this thread
-    if (src0_start_row >= src0_end_row) {
-        return;
+    если (src0_start_row >= src0_end_row) {
+        вернуть;
     }
 
     const int32_t mode    = rctx->mode;
@@ -578,12 +578,12 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
     uint32_t prev_i2 = (uint32_t) -1;
     uint32_t cur_slot = 0;
 
-    for (uint32_t i3 = i3_start; i3 < ne3; i3++) { // batch
+    для (uint32_t i3 = i3_start; i3 < ne3; i3++) { // batch
         const uint32_t i2_init = (i3 == i3_start) ? i2_start : 0;
-        for (uint32_t i2 = i2_init; i2 < ne2; i2++) { // seq-len
+        для (uint32_t i2 = i2_init; i2 < ne2; i2++) { // seq-len
             const uint32_t i1_init = (i3 == i3_start && i2 == i2_start) ? i1_start : 0;
-            for (uint32_t i1 = i1_init; i1 < ne1; ) { // attn-heads
-                if (ir >= src0_end_row) goto done;
+            для (uint32_t i1 = i1_init; i1 < ne1; ) { // attn-heads
+                если (ir >= src0_end_row) goto done;
 
                 // Rows in this block
                 const uint32_t nrows = MIN(src0_end_row - ir, ne1 - i1);
@@ -593,7 +593,7 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
 
                 // Prefetch up to 2 blocks
                 const uint32_t p_nrows = MIN(nrows, 2 * HTP_ROPE_SPAD_BLOCK);
-                for (uint32_t pr = 0; pr < p_nrows; pr += HTP_ROPE_SPAD_BLOCK) {
+                для (uint32_t pr = 0; pr < p_nrows; pr += HTP_ROPE_SPAD_BLOCK) {
                     const uint32_t pnr = MIN(nrows - pr, HTP_ROPE_SPAD_BLOCK);
                     const uint32_t slot = (cur_slot + pr / HTP_ROPE_SPAD_BLOCK) % HTP_ROPE_SPAD_NSLOTS;
                     uint8_t * spad_slot = rope_spad_slot(src0_spad_base, slot, rctx->src0_row_size_aligned);
@@ -607,14 +607,14 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                 }
 
                 // Update theta cache
-                if (i2 != prev_i2) {
+                если (i2 != prev_i2) {
                     prev_i2 = i2;
 
                     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_A_PREP, i2);
                     // VISION rotates the full row; other modes only rotate n_dims.
                     const uint32_t n_cache = is_vision ? ne0 : (uint32_t) rctx->n_dims;
                     const bool is_mrope = (rctx->mode & HTP_ROPE_TYPE_MROPE) != 0;
-                    if (is_mrope) {
+                    если (is_mrope) {
                         // src1 holds four position arrays stacked along ne0:
                         // pos[i2], pos[i2+ne2], pos[i2+ne2*2], pos[i2+ne2*3]
                         const bool is_imrope = (rctx->mode == HTP_ROPE_TYPE_IMROPE);
@@ -627,7 +627,7 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                             rctx->freq_scale, freq_factors, rctx->corr_dims,
                             n_cache, rctx->ext_factor, rctx->attn_factor,
                             theta_cache, rctx->theta_scale, rctx->theta_powers, rctx->theta_scale_32);
-                    } else {
+                    } иначе {
                        rope_cache_init(pos[i2], rctx->freq_scale, freq_factors, rctx->corr_dims,
                                         n_cache, rctx->ext_factor, rctx->attn_factor,
                                         theta_cache, rctx->theta_scale, rctx->theta_powers, rctx->theta_scale_32);
@@ -636,14 +636,14 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                 }
 
                 // Skip output DMA transactions from prev block (if any)
-                for (uint32_t d = 0; d < dma_depth; d++) { dma_queue_pop_nowait(dma_q); }
+                для (uint32_t d = 0; d < dma_depth; d++) { dma_queue_pop_nowait(dma_q); }
 
                 // Compute loop
                 const uint32_t ne = is_vision ? ne0 : rctx->n_dims;
                 const uint32_t base_i1 = i1;
                 const uint32_t base_ir = ir;
 
-                for (uint32_t cnr = 0, cr = 0; cr < nrows; cr += cnr) {
+                для (uint32_t cnr = 0, cr = 0; cr < nrows; cr += cnr) {
                     cnr = MIN(nrows - cr, HTP_ROPE_SPAD_BLOCK);
                     const uint32_t slot = (cur_slot + cr / HTP_ROPE_SPAD_BLOCK) % HTP_ROPE_SPAD_NSLOTS;
                     const uint32_t cur_ir   = base_ir + cr;
@@ -653,9 +653,9 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                     uint8_t * cur_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
 
                     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur_ir);
-                    if (is_neox || is_vision) {
+                    если (is_neox || is_vision) {
                         rope_neox_f32_inplace(rctx, cur_spad, cnr, ne, theta_cache);
-                    } else {
+                    } иначе {
                         rope_basic_f32_inplace(rctx, cur_spad, cnr, theta_cache);
                     }
                     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur_ir);
@@ -665,7 +665,7 @@ static void rope_job_f32(unsigned int nth, unsigned int ith, void * data) {
                         rctx->dst_row_stride, rctx->src0_row_size_aligned, rctx->dst_row_size, cnr);
 
                     // Prefetch 2 blocks ahead into the slot just freed
-                    if ((cr + 2 * HTP_ROPE_SPAD_BLOCK) < nrows) {
+                    если ((cr + 2 * HTP_ROPE_SPAD_BLOCK) < nrows) {
                         const uint32_t p_cr   = cr + 2 * HTP_ROPE_SPAD_BLOCK;
                         const uint32_t pnr    = MIN(nrows - p_cr, HTP_ROPE_SPAD_BLOCK);
                         const uint32_t p_slot = (cur_slot + p_cr / HTP_ROPE_SPAD_BLOCK) % HTP_ROPE_SPAD_NSLOTS;
@@ -692,8 +692,8 @@ done:
     FARF(HIGH, "rope-f32: %d/%d: (%u:%u)\n", ith, nth, src0_start_row, src0_end_row);
 }
 
-static int execute_op_rope_f32(struct htp_ops_context * octx) {
-    int err = HTP_STATUS_OK;
+static целое execute_op_rope_f32(struct htp_ops_context * octx) {
+    целое err = HTP_STATUS_OK;
 
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * src1 = octx->src[1];
@@ -706,17 +706,17 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
 
         default:
             FARF(ERROR, "Unsupported Op %u\n", octx->op);
-            return HTP_STATUS_NO_SUPPORT;
+            вернуть HTP_STATUS_NO_SUPPORT;
     }
 
     const struct htp_rope_kernel_params * kparams = (const struct htp_rope_kernel_params *) octx->kernel_params;
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    если (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        вернуть HTP_STATUS_INVAL_PARAMS;
     }
     assert(octx->ctx->vtcm_size >= kparams->vtcm_size);
 
-    if (htp_tensor_is_extended(src1)) {
-        return HTP_STATUS_NO_SUPPORT;
+    если (htp_tensor_is_extended(src1)) {
+        вернуть HTP_STATUS_NO_SUPPORT;
     }
 
     const uint32_t total_rows = src0->ne[1] * src0->ne[2] * src0->ne[3];
@@ -725,7 +725,7 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = total_rows;
 
-    if (octx->ctx->mdev.count > 1) {
+    если (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_data_row_size, &rows_per_chunk);
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
@@ -734,8 +734,8 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    если (nrows == 0) {
+        вернуть HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -754,7 +754,7 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
     rctx.spad_per_thread       = kparams->spad_per_thread;
     rctx.theta_cache_offset    = kparams->theta_cache_offset;
 
-    if (src2) {
+    если (src2) {
         dma_queue * dma_q = octx->ctx->dma[0];
         const size_t ff_size = src2->ne[0] * sizeof(float);
         float * vtcm_freq_factors = (float *) (rctx.vtcm_base + kparams->freq_factors_offset);
@@ -776,11 +776,11 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
     memcpy(&rctx.attn_factor, (int32_t *) op_params + 8,  sizeof(float));
     memcpy(&rctx.beta_fast,   (int32_t *) op_params + 9,  sizeof(float));
     memcpy(&rctx.beta_slow,   (int32_t *) op_params + 10, sizeof(float));
-    memcpy(&rctx.sections,    (int32_t *) op_params + 11, sizeof(int) * 4);
+    memcpy(&rctx.sections,    (int32_t *) op_params + 11, sizeof(целое) * 4);
 
     rctx.theta_scale = powf(rctx.freq_base, -2.0f / rctx.n_dims);
     rctx.theta_powers[0] = 1.0f;
-    for (int j = 1; j < 32; j++) {
+    для (целое j = 1; j < 32; j++) {
         rctx.theta_powers[j] = rctx.theta_powers[j - 1] * rctx.theta_scale;
     }
     rctx.theta_scale_32 = rctx.theta_powers[31] * rctx.theta_scale;
@@ -805,15 +805,15 @@ static int execute_op_rope_f32(struct htp_ops_context * octx) {
 
     work_queue_run(octx->ctx->work_queue, rope_job_f32, &rctx, n_threads);
 
-    return err;
+    вернуть err;
 }
 
-int op_rope(struct htp_ops_context * octx) {
+целое op_rope(struct htp_ops_context * octx) {
     switch (octx->src[0]->type) {
         case HTP_TYPE_F32:
-            return execute_op_rope_f32(octx);
+            вернуть execute_op_rope_f32(octx);
 
         default:
-            return HTP_STATUS_NO_SUPPORT;
+            вернуть HTP_STATUS_NO_SUPPORT;
     }
 }

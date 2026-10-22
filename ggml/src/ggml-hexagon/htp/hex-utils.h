@@ -16,13 +16,13 @@
 static inline uint64_t hex_get_cycles() {
     uint64_t cycles = 0;
     asm volatile(" %0 = c15:14\n" : "=r"(cycles));
-    return cycles;
+    вернуть cycles;
 }
 
 static inline uint64_t hex_get_pktcnt() {
     uint64_t pktcnt;
     asm volatile(" %0 = c19:18\n" : "=r"(pktcnt));
-    return pktcnt;
+    вернуть pktcnt;
 }
 
 static inline void hex_l2fetch(const void * p, uint32_t width, uint32_t stride, uint32_t height) {
@@ -31,7 +31,7 @@ static inline void hex_l2fetch(const void * p, uint32_t width, uint32_t stride, 
 }
 
 static inline void hex_l2fetch_block(const void * addr, size_t size) {
-    if (size == 0) return;
+    если (size == 0) вернуть;
     const uint32_t width = 16384; // 16KB rows
     const uint32_t height = (size + width - 1) / width;
     hex_l2fetch(addr, width, width, height);
@@ -43,10 +43,10 @@ static inline void hex_l2fetch_block(const void * addr, size_t size) {
 #define HEX_L2_FLUSH_ALL_THRESHOLD (4 * 1024 * 1024)
 
 static inline void hex_l2flush(void * addr, size_t size) {
-    if (size == 0) return;
+    если (size == 0) вернуть;
     const uint32_t s = ((uint32_t) addr) & ~(HEX_L2_LINE_SIZE - 1);
     const uint32_t e = (((uint32_t) addr) + size + HEX_L2_LINE_SIZE - 1) & ~(HEX_L2_LINE_SIZE - 1);
-    for (uint32_t i = s; i < e; i += HEX_L2_LINE_SIZE) {
+    для (uint32_t i = s; i < e; i += HEX_L2_LINE_SIZE) {
         Q6_dccleaninva_A((void *) i);
     }
 }

@@ -28,7 +28,7 @@ static inline size_t htp_allreduce_vtcm_buffer_count(
     bool has_add,
     bool is_row_bcast
 ) {
-    return (size_t) (n_ranks + 1) * n_threads + (has_add ? (is_row_bcast ? 1 : n_threads) : 0);
+    вернуть (size_t) (n_ranks + 1) * n_threads + (has_add ? (is_row_bcast ? 1 : n_threads) : 0);
 }
 
 struct htp_allreduce_kernel_params {

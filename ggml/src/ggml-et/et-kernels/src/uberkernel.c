@@ -39,51 +39,51 @@ struct ggml_et_ssm_scan_params;
 struct ggml_et_sum_rows_params;
 struct ggml_et_tri_params;
 
-extern int el_map_f32_entry(struct ggml_et_binary_params *, void *);
-extern int glu_f32_entry(struct ggml_et_glu_params *, void *);
-extern int unary_f32_entry(struct ggml_et_unary_params *, void *);
-extern int rope_f32_entry(struct ggml_et_rope_params *, void *);
-extern int rms_norm_f32_entry(struct ggml_et_rms_norm_params *, void *);
-extern int rms_norm_mul_f32_entry(struct ggml_et_rms_norm_mul_params *, void *);
-extern int softmax_f32_entry(struct ggml_et_softmax_params *, void *);
-extern int set_rows_f32_entry(struct ggml_et_set_rows_params *, void *);
-extern int get_rows_f32_entry(struct ggml_et_get_rows_params *, void *);
-extern int cont_f32_entry(struct ggml_et_cont_params *, void *);
-extern int cont_f16_entry(struct ggml_et_cont_params *, void *);
-extern int cpy_f32_f16_entry(struct ggml_et_cont_params *, void *);
-extern int concat_f32_entry(struct ggml_et_concat_params *, void *);
-extern int cumsum_f32_entry(struct ggml_et_cumsum_params *, void *);
-extern int diag_f32_entry(struct ggml_et_diag_params *, void *);
-extern int fill_f32_entry(struct ggml_et_fill_params *, void *);
-extern int flash_attn_ext_f32_entry(struct ggml_et_flash_attn_ext_params *, void *);
-extern int flash_attn_ext_f16_me_entry(struct ggml_et_flash_attn_ext_params *, void *);
-extern int gated_delta_net_f32_entry(struct ggml_et_gated_delta_net_params *, void *);
-extern int group_norm_f32_entry(struct ggml_et_group_norm_params *, void *);
-extern int im2col_entry(struct ggml_et_im2col_params *, void *);
-extern int l2_norm_f32_entry(struct ggml_et_l2_norm_params *, void *);
-extern int mul_mat_id_f32_entry(struct ggml_et_mul_mat_id_params *, void *);
-extern int norm_f32_entry(struct ggml_et_norm_params *, void *);
-extern int pad_f32_entry(struct ggml_et_pad_params *, void *);
-extern int repeat_f32_entry(struct ggml_et_repeat_params *, void *);
-extern int rwkv_wkv6_f32_entry(struct ggml_et_rwkv_wkv6_params *, void *);
-extern int rwkv_wkv7_f32_entry(struct ggml_et_rwkv_wkv7_params *, void *);
-extern int scale_f32_entry(struct ggml_et_scale_params *, void *);
-extern int set_f32_entry(struct ggml_et_set_params *, void *);
-extern int solve_tri_f32_entry(struct ggml_et_solve_tri_params *, void *);
-extern int sqr_f32_entry(struct ggml_et_sqr_params *, void *);
-extern int ssm_conv_f32_entry(struct ggml_et_ssm_conv_params *, void *);
-extern int ssm_scan_f32_entry(struct ggml_et_ssm_scan_params *, void *);
-extern int sum_rows_f32_entry(struct ggml_et_sum_rows_params *, void *);
-extern int tri_f32_entry(struct ggml_et_tri_params *, void *);
-extern int mul_mat_f16_entry(struct ggml_et_binary_params *, void *);
-extern int mul_mat_f16_matrix_engine_entry(struct ggml_et_binary_params *, void *);
-extern int mul_mat_f32_entry(struct ggml_et_binary_params *, void *);
-extern int mul_mat_f32_matrix_engine_entry(struct ggml_et_binary_params *, void *);
-extern int mul_mat_Q8_0_entry(struct ggml_et_mm_q8_params *, void *);
-extern int mul_mat_Q4_0_entry(struct ggml_et_binary_params *, void *);
+extern целое el_map_f32_entry(struct ggml_et_binary_params *, void *);
+extern целое glu_f32_entry(struct ggml_et_glu_params *, void *);
+extern целое unary_f32_entry(struct ggml_et_unary_params *, void *);
+extern целое rope_f32_entry(struct ggml_et_rope_params *, void *);
+extern целое rms_norm_f32_entry(struct ggml_et_rms_norm_params *, void *);
+extern целое rms_norm_mul_f32_entry(struct ggml_et_rms_norm_mul_params *, void *);
+extern целое softmax_f32_entry(struct ggml_et_softmax_params *, void *);
+extern целое set_rows_f32_entry(struct ggml_et_set_rows_params *, void *);
+extern целое get_rows_f32_entry(struct ggml_et_get_rows_params *, void *);
+extern целое cont_f32_entry(struct ggml_et_cont_params *, void *);
+extern целое cont_f16_entry(struct ggml_et_cont_params *, void *);
+extern целое cpy_f32_f16_entry(struct ggml_et_cont_params *, void *);
+extern целое concat_f32_entry(struct ggml_et_concat_params *, void *);
+extern целое cumsum_f32_entry(struct ggml_et_cumsum_params *, void *);
+extern целое diag_f32_entry(struct ggml_et_diag_params *, void *);
+extern целое fill_f32_entry(struct ggml_et_fill_params *, void *);
+extern целое flash_attn_ext_f32_entry(struct ggml_et_flash_attn_ext_params *, void *);
+extern целое flash_attn_ext_f16_me_entry(struct ggml_et_flash_attn_ext_params *, void *);
+extern целое gated_delta_net_f32_entry(struct ggml_et_gated_delta_net_params *, void *);
+extern целое group_norm_f32_entry(struct ggml_et_group_norm_params *, void *);
+extern целое im2col_entry(struct ggml_et_im2col_params *, void *);
+extern целое l2_norm_f32_entry(struct ggml_et_l2_norm_params *, void *);
+extern целое mul_mat_id_f32_entry(struct ggml_et_mul_mat_id_params *, void *);
+extern целое norm_f32_entry(struct ggml_et_norm_params *, void *);
+extern целое pad_f32_entry(struct ggml_et_pad_params *, void *);
+extern целое repeat_f32_entry(struct ggml_et_repeat_params *, void *);
+extern целое rwkv_wkv6_f32_entry(struct ggml_et_rwkv_wkv6_params *, void *);
+extern целое rwkv_wkv7_f32_entry(struct ggml_et_rwkv_wkv7_params *, void *);
+extern целое scale_f32_entry(struct ggml_et_scale_params *, void *);
+extern целое set_f32_entry(struct ggml_et_set_params *, void *);
+extern целое solve_tri_f32_entry(struct ggml_et_solve_tri_params *, void *);
+extern целое sqr_f32_entry(struct ggml_et_sqr_params *, void *);
+extern целое ssm_conv_f32_entry(struct ggml_et_ssm_conv_params *, void *);
+extern целое ssm_scan_f32_entry(struct ggml_et_ssm_scan_params *, void *);
+extern целое sum_rows_f32_entry(struct ggml_et_sum_rows_params *, void *);
+extern целое tri_f32_entry(struct ggml_et_tri_params *, void *);
+extern целое mul_mat_f16_entry(struct ggml_et_binary_params *, void *);
+extern целое mul_mat_f16_matrix_engine_entry(struct ggml_et_binary_params *, void *);
+extern целое mul_mat_f32_entry(struct ggml_et_binary_params *, void *);
+extern целое mul_mat_f32_matrix_engine_entry(struct ggml_et_binary_params *, void *);
+extern целое mul_mat_Q8_0_entry(struct ggml_et_mm_q8_params *, void *);
+extern целое mul_mat_Q4_0_entry(struct ggml_et_binary_params *, void *);
 
 static inline size_t tensor_bytes(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+    вернуть (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
 struct uber_glu_params {
@@ -199,20 +199,20 @@ struct uber_gated_delta_net_params {
 };
 
 static void copy_f32_to_f16_row(uint16_t * dst, const float * src, int64_t num_elements) {
-    for (int64_t i = 0; i < num_elements; i++) {
+    для (int64_t i = 0; i < num_elements; i++) {
         dst[i] = fp32_to_fp16(src[i]);
     }
 }
 
 static void copy_f32_row(float * dst, const float * src, int64_t num_elements) {
-    for (int64_t i = 0; i < num_elements; i++) {
+    для (int64_t i = 0; i < num_elements; i++) {
         dst[i] = src[i];
     }
 }
 
 static void evict_region_past_l2_local(const void * addr, size_t bytes) {
-    if (!addr || bytes == 0) {
-        return;
+    если (!addr || bytes == 0) {
+        вернуть;
     }
 
     const uint64_t CL     = 64;
@@ -222,25 +222,25 @@ static void evict_region_past_l2_local(const void * addr, size_t bytes) {
     cache_ops_priv_evict_sw(0, /*to_L2*/ 3, 0, 0, CL);
 }
 
-int entry_point(struct ggml_et_uberkernel_params * params, void * env) {
+целое entry_point(struct ggml_et_uberkernel_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || !params) {
-        return -1;
+    если (!kernel_env || !params) {
+        вернуть -1;
     }
 
     struct ggml_et_uberkernel_inst * insts       = (struct ggml_et_uberkernel_inst *) (uintptr_t) params->insts;
     uint8_t *                        params_blob = (uint8_t *) (uintptr_t) params->params_blob;
 
-    if (!insts || !params_blob || params->inst_stride < sizeof(struct ggml_et_uberkernel_inst)) {
-        return -1;
+    если (!insts || !params_blob || params->inst_stride < sizeof(struct ggml_et_uberkernel_inst)) {
+        вернуть -1;
     }
 
-    for (uint32_t i = 0; i < params->num_insts; ++i) {
+    для (uint32_t i = 0; i < params->num_insts; ++i) {
         struct ggml_et_uberkernel_inst * inst =
             (struct ggml_et_uberkernel_inst *) ((uint8_t *) insts + (i * params->inst_stride));
         void * inst_params = params_blob + inst->params_offset;
-        int    rc          = -1;
+        целое    rc          = -1;
 
         et_barrier_global(32ULL);
 
@@ -485,13 +485,13 @@ int entry_point(struct ggml_et_uberkernel_params * params, void * env) {
                 }
 
             default:
-                return -1;
+                вернуть -1;
         }
 
-        if (rc != 0) {
-            return rc;
+        если (rc != 0) {
+            вернуть rc;
         }
     }
 
-    return 0;
+    вернуть 0;
 }

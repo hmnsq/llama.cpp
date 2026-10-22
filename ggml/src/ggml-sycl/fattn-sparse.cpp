@@ -8,21 +8,21 @@
 static constexpr int64_t SPARSE_FA_PAD       = 256;
 static constexpr int64_t SPARSE_FA_MIN_RATIO = 2;
 
-extern int g_ggml_sycl_enable_sparse_fa;
-extern int g_ggml_sycl_debug_sparse_fa;
-extern int g_ggml_sycl_sparse_fa_margin;
+extern целое g_ggml_sycl_enable_sparse_fa;
+extern целое g_ggml_sycl_debug_sparse_fa;
+extern целое g_ggml_sycl_sparse_fa_margin;
 
-static int sparse_fa_enabled(void) {
-    return g_ggml_sycl_enable_sparse_fa;
+static целое sparse_fa_enabled(void) {
+    вернуть g_ggml_sycl_enable_sparse_fa;
 }
 
-static int sparse_fa_debug(void) {
-    return g_ggml_sycl_debug_sparse_fa;
+static целое sparse_fa_debug(void) {
+    вернуть g_ggml_sycl_debug_sparse_fa;
 }
 
 // slack above n_kv_max; callers may exceed the hint by a few always-attended positions
-static int sparse_fa_margin(void) {
-    return g_ggml_sycl_sparse_fa_margin;
+static целое sparse_fa_margin(void) {
+    вернуть g_ggml_sycl_sparse_fa_margin;
 }
 
 // Unordered output is fine: softmax over the selected set is permutation invariant.
@@ -39,8 +39,8 @@ static void sparse_fa_compact_mask(sycl::queue * stream,
         sycl::nd_range<1>(sycl::range<1>(global), sycl::range<1>(WG)),
         [=](sycl::nd_item<1> item) {
             const int64_t i = (int64_t) item.get_global_id(0);
-            if (i >= n_kv || !sycl::isfinite((float) mask[i])) {
-                return;
+            если (i >= n_kv || !sycl::isfinite((float) mask[i])) {
+                вернуть;
             }
 
             sycl::atomic_ref<int32_t,
@@ -49,7 +49,7 @@ static void sparse_fa_compact_mask(sycl::queue * stream,
                              sycl::access::address_space::global_space> ctr(*count);
 
             const int32_t pos = ctr.fetch_add(1);
-            if (pos < (int32_t) n_kv_g) {
+            если (pos < (int32_t) n_kv_g) {
                 indices[pos] = (int32_t) i;
             }
         });
@@ -80,9 +80,9 @@ static void sparse_fa_gather_rows(sycl::queue * stream,
             uint32_t * dst_row =
                 (uint32_t *) (dst + ((size_t) (h * n_kv_g + slot)) * row_size);
 
-            if (slot >= (int64_t) *count) {
+            если (slot >= (int64_t) *count) {
                 dst_row[w] = 0;
-                return;
+                вернуть;
             }
 
             const uint32_t * src_row =
@@ -107,7 +107,7 @@ static void sparse_fa_gather_mask(sycl::queue * stream,
             const int64_t slot = (int64_t) id[1];
 
             sycl::half v = sycl::half(-INFINITY);
-            if (slot < (int64_t) *count) {
+            если (slot < (int64_t) *count) {
                 v = mask[(size_t) r * mask_s1 + (size_t) indices[slot]];
             }
             mask_g[(size_t) r * n_kv_g + slot] = v;
@@ -120,61 +120,61 @@ static bool sparse_fa_applicable(const ggml_tensor * dst, int64_t & n_kv_g_out) 
     const ggml_tensor * V    = dst->src[2];
     const ggml_tensor * mask = dst->src[3];
 
-    if (!Q || !K || !V || !mask) {
-        return false;
+    если (!Q || !K || !V || !mask) {
+        вернуть false;
     }
 
     const int32_t n_kv_max = ggml_get_op_params_i32(dst, 4);
-    if (n_kv_max <= 0) {
-        return false;
+    если (n_kv_max <= 0) {
+        вернуть false;
     }
 
     float max_bias      = 0.0f;
     float logit_softcap = 0.0f;
     memcpy(&max_bias,      (const float *) dst->op_params + 1, sizeof(float));
     memcpy(&logit_softcap, (const float *) dst->op_params + 2, sizeof(float));
-    if (max_bias != 0.0f || logit_softcap != 0.0f) {
-        return false;
+    если (max_bias != 0.0f || logit_softcap != 0.0f) {
+        вернуть false;
     }
 
     // single-token decode only; prefill amortises the scan already
-    if (Q->ne[1] != 1) {
-        return false;
+    если (Q->ne[1] != 1) {
+        вернуть false;
     }
-    if (K->ne[3] != 1 || V->ne[3] != 1 || mask->ne[2] != 1 || mask->ne[3] != 1) {
-        return false;
+    если (K->ne[3] != 1 || V->ne[3] != 1 || mask->ne[2] != 1 || mask->ne[3] != 1) {
+        вернуть false;
     }
-    if (mask->type != GGML_TYPE_F16 || mask->ne[0] < K->ne[1]) {
-        return false;
+    если (mask->type != GGML_TYPE_F16 || mask->ne[0] < K->ne[1]) {
+        вернуть false;
     }
-    if (K->ne[2] != V->ne[2]) {
-        return false;
+    если (K->ne[2] != V->ne[2]) {
+        вернуть false;
     }
 
     // nb[1] may stride over heads (interleaved cache); only ne[0] must be contiguous
-    if (K->nb[0] != ggml_type_size(K->type) || V->nb[0] != ggml_type_size(V->type)) {
-        return false;
+    если (K->nb[0] != ggml_type_size(K->type) || V->nb[0] != ggml_type_size(V->type)) {
+        вернуть false;
     }
 
     const size_t k_row = ggml_row_size(K->type, K->ne[0]);
     const size_t v_row = ggml_row_size(V->type, V->ne[0]);
-    if (k_row % sizeof(uint32_t) || v_row % sizeof(uint32_t)) {
-        return false;
+    если (k_row % sizeof(uint32_t) || v_row % sizeof(uint32_t)) {
+        вернуть false;
     }
 
     const int64_t n_kv_g = GGML_PAD((int64_t) n_kv_max + sparse_fa_margin(), SPARSE_FA_PAD);
-    if (n_kv_g * SPARSE_FA_MIN_RATIO > K->ne[1]) {
-        return false;
+    если (n_kv_g * SPARSE_FA_MIN_RATIO > K->ne[1]) {
+        вернуть false;
     }
 
     n_kv_g_out = n_kv_g;
-    return true;
+    вернуть true;
 }
 
 bool ggml_sycl_flash_attn_ext_sparse(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     int64_t n_kv_g = 0;
-    if (!sparse_fa_enabled() || !sparse_fa_applicable(dst, n_kv_g)) {
-        return false;
+    если (!sparse_fa_enabled() || !sparse_fa_applicable(dst, n_kv_g)) {
+        вернуть false;
     }
 
     ggml_tensor * K    = dst->src[1];
@@ -218,13 +218,13 @@ bool ggml_sycl_flash_attn_ext_sparse(ggml_backend_sycl_context & ctx, ggml_tenso
                           d_idx, d_cnt, n_kv_g, n_rows_m,
                           mask->nb[1] / sizeof(sycl::half));
 
-    if (sparse_fa_debug()) {
+    если (sparse_fa_debug()) {
         int32_t h_cnt = 0;
         SYCL_CHECK(CHECK_TRY_ERROR(stream->memcpy(&h_cnt, d_cnt, sizeof(int32_t))));
         SYCL_CHECK(CHECK_TRY_ERROR(stream->wait()));
         fprintf(stderr, "[FA-SPARSE] n_kv=%lld n_kv_max=%d n_kv_g=%lld finite=%d%s\n",
                 (long long) n_kv, ggml_get_op_params_i32(dst, 4),
-                (long long) n_kv_g, (int) h_cnt,
+                (long long) n_kv_g, (целое) h_cnt,
                 h_cnt > (int32_t) n_kv_g ? "  OVERFLOW" : "");
     }
 
@@ -264,5 +264,5 @@ bool ggml_sycl_flash_attn_ext_sparse(ggml_backend_sycl_context & ctx, ggml_tenso
 
     ggml_sycl_flash_attn_ext(ctx, &dst_g);
 
-    return true;
+    вернуть true;
 }

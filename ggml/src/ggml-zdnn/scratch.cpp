@@ -6,29 +6,29 @@
 #include <cstdlib>
 
 ggml_zdnn_pool::~ggml_zdnn_pool() {
-    for (const buffer & b : cached) {
+    для (const buffer & b : cached) {
         std::free(b.ptr);
     }
 }
 
 void * ggml_zdnn_pool::alloc(size_t size, size_t * actual_size) {
     int64_t ibest = -1;
-    for (int64_t i = 0; i < (int64_t)cached.size(); i++) {
-        if (cached[i].size >= size && (ibest < 0 || cached[i].size < cached[ibest].size)) {
+    для (int64_t i = 0; i < (int64_t)cached.size(); i++) {
+        если (cached[i].size >= size && (ibest < 0 || cached[i].size < cached[ibest].size)) {
             ibest = i;
         }
     }
 
-    if (ibest >= 0) {
+    если (ibest >= 0) {
         void * ptr   = cached[ibest].ptr;
         *actual_size = cached[ibest].size;
         cached.erase(cached.begin() + ibest);
-        return ptr;
+        вернуть ptr;
     }
 
     // every cached buffer is too small, free the largest so the pool does not grow while sizes grow with the context
-    if (!cached.empty()) {
-        const auto largest = std::max_element(cached.begin(), cached.end(), [](const buffer & a, const buffer & b) { return a.size < b.size; });
+    если (!cached.empty()) {
+        const auto largest = std::max_element(cached.begin(), cached.end(), [](const buffer & a, const buffer & b) { вернуть a.size < b.size; });
         std::free(largest->ptr);
         cached.erase(largest);
     }
@@ -37,7 +37,7 @@ void * ggml_zdnn_pool::alloc(size_t size, size_t * actual_size) {
     *actual_size = GGML_PAD(std::max<size_t>(1, (size_t)(1.05 * size)), 4096);
     void * ptr   = std::aligned_alloc(4096, *actual_size);
     GGML_ASSERT(ptr != nullptr);
-    return ptr;
+    вернуть ptr;
 }
 
 void ggml_zdnn_pool::free(void * ptr, size_t size) {

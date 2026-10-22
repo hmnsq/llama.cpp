@@ -46,22 +46,22 @@ enum ApirForwardReturnCode {
 __attribute__((unused)) static inline const char * apir_command_name(ApirCommandType type) {
     switch (type) {
         case APIR_COMMAND_TYPE_HANDSHAKE:
-            return "HandShake";
+            вернуть "HandShake";
         case APIR_COMMAND_TYPE_LOADLIBRARY:
-            return "LoadLibrary";
+            вернуть "LoadLibrary";
         case APIR_COMMAND_TYPE_FORWARD:
-            return "Forward";
+            вернуть "Forward";
         default:
-            return "unknown";
+            вернуть "unknown";
     }
 }
 
 __attribute__((unused)) static const char * apir_load_library_error(ApirLoadLibraryReturnCode code) {
 #define APIR_LOAD_LIBRARY_ERROR(code_name) \
     do {                                   \
-        if (code == code_name)             \
-            return #code_name;             \
-    } while (0)
+        если (code == code_name)             \
+            вернуть #code_name;             \
+    } пока (0)
 
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_SUCCESS);
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR);
@@ -71,7 +71,7 @@ __attribute__((unused)) static const char * apir_load_library_error(ApirLoadLibr
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_SYMBOL_MISSING);
     APIR_LOAD_LIBRARY_ERROR(APIR_LOAD_LIBRARY_INIT_BASE_INDEX);
 
-    return "Unknown APIR_COMMAND_TYPE_LoadLibrary error";
+    вернуть "Unknown APIR_COMMAND_TYPE_LoadLibrary error";
 
 #undef APIR_LOAD_LIBRARY_ERROR
 }
@@ -79,9 +79,9 @@ __attribute__((unused)) static const char * apir_load_library_error(ApirLoadLibr
 __attribute__((unused)) static const char * apir_forward_error(ApirForwardReturnCode code) {
 #define APIR_FORWARD_ERROR(code_name) \
     do {                              \
-        if (code == code_name)        \
-            return #code_name;        \
-    } while (0)
+        если (code == code_name)        \
+            вернуть #code_name;        \
+    } пока (0)
 
     APIR_FORWARD_ERROR(APIR_FORWARD_SUCCESS);
     APIR_FORWARD_ERROR(APIR_FORWARD_NO_DISPATCH_FCT);
@@ -89,7 +89,7 @@ __attribute__((unused)) static const char * apir_forward_error(ApirForwardReturn
     APIR_FORWARD_ERROR(APIR_FORWARD_FAILED_TO_SYNC_STREAMS);
     APIR_FORWARD_ERROR(APIR_FORWARD_BASE_INDEX);
 
-    return "Unknown APIR_COMMAND_TYPE_FORWARD error";
+    вернуть "Unknown APIR_COMMAND_TYPE_FORWARD error";
 
 #undef APIR_FORWARD_ERROR
 }

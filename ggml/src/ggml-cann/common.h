@@ -56,7 +56,7 @@
  * @param line The line number at which the error occurred.
  * @param msg The error message.
  */
-[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int line, const char * msg);
+[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, целое line, const char * msg);
 
 /**
  * @brief Checks the result of a CANN function call and invokes the error
@@ -67,11 +67,11 @@
  */
 #define ACL_CHECK_GEN(stmt, success, error_fn)                                \
     do {                                                                      \
-        int err_code = (stmt);                                                \
-        if (err_code != (success)) {                                          \
+        целое err_code = (stmt);                                                \
+        если (err_code != (success)) {                                          \
             ggml_cann_error(#stmt, __func__, __FILE__, __LINE__, error_fn()); \
         }                                                                     \
-    } while (0);
+    } пока (0);
 
 #define ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, aclGetRecentErrMsg)
 
@@ -88,7 +88,7 @@ struct ggml_cann_device_info {
      * @brief Information about a single CANN device.
      */
     struct cann_device_info {
-        int    cc;              /**< Compute capability.                   */
+        целое    cc;              /**< Compute capability.                   */
         size_t smpb;            /**< Maximum shared memory per block.      */
         bool   vmm;             /**< Virtual memory support.               */
         size_t vmm_granularity; /**< Granularity of virtual memory.        */
@@ -104,7 +104,7 @@ void    ggml_cann_set_device(int32_t device);
 
 std::optional<std::string> get_env_as_lowercase(const std::string & name);
 bool                       parse_bool(const std::string & value);
-int                        parse_integer(const std::string & value);
+целое                        parse_integer(const std::string & value);
 
 /**
  * @brief Abstract base class for memory pools used by CANN.
@@ -166,7 +166,7 @@ struct ggml_cann_pool_alloc {
      * @brief Destructor that frees the allocated memory block.
      */
     ~ggml_cann_pool_alloc() {
-        if (ptr != nullptr) {
+        если (ptr != nullptr) {
             pool->free(ptr, actual_size);
         }
     }
@@ -180,7 +180,7 @@ struct ggml_cann_pool_alloc {
         GGML_ASSERT(pool != nullptr);
         GGML_ASSERT(ptr == nullptr);
         ptr = pool->alloc(size, &this->actual_size);
-        return ptr;
+        вернуть ptr;
     }
 
     /**
@@ -191,14 +191,14 @@ struct ggml_cann_pool_alloc {
      */
     void * alloc(ggml_cann_pool & pool, size_t size) {
         this->pool = &pool;
-        return alloc(size);
+        вернуть alloc(size);
     }
 
     /**
      * @brief Gets the pointer to the allocated memory block.
      * @return Pointer to the allocated memory block.
      */
-    void * get() { return ptr; }
+    void * get() { вернуть ptr; }
 
     // Deleted copy constructor
     ggml_cann_pool_alloc(const ggml_cann_pool_alloc &) = delete;
@@ -241,59 +241,59 @@ struct ggml_graph_node_properties {
      * @return true if all fields match (excluding GGML_OP_VIEW); false otherwise.
      */
     bool has_matching_properties(ggml_tensor * node) {
-        if (node->data != this->node_address && node->op != GGML_OP_VIEW) {
-            return false;
+        если (node->data != this->node_address && node->op != GGML_OP_VIEW) {
+            вернуть false;
         }
 
-        if (node->op != this->node_op) {
-            return false;
+        если (node->op != this->node_op) {
+            вернуть false;
         }
 
-        if (node->type != this->node_type) {
-            return false;
+        если (node->type != this->node_type) {
+            вернуть false;
         }
 
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
-            if (node->ne[i] != this->ne[i]) {
-                return false;
+        для (целое i = 0; i < GGML_MAX_DIMS; i++) {
+            если (node->ne[i] != this->ne[i]) {
+                вернуть false;
             }
-            if (node->nb[i] != this->nb[i]) {
-                return false;
+            если (node->nb[i] != this->nb[i]) {
+                вернуть false;
             }
         }
 
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            if (node->src[i]) {
-                if (node->src[i]->data != this->src_address[i] && node->op != GGML_OP_VIEW) {
-                    return false;
+        для (целое i = 0; i < GGML_MAX_SRC; i++) {
+            если (node->src[i]) {
+                если (node->src[i]->data != this->src_address[i] && node->op != GGML_OP_VIEW) {
+                    вернуть false;
                 }
 
-                if (node->src[i]->type != this->src_type[i]) {
-                    return false;
+                если (node->src[i]->type != this->src_type[i]) {
+                    вернуть false;
                 }
 
-                for (int d = 0; d < GGML_MAX_DIMS; d++) {
-                    if (node->src[i]->ne[d] != this->src_ne[i][d]) {
-                        return false;
+                для (целое d = 0; d < GGML_MAX_DIMS; d++) {
+                    если (node->src[i]->ne[d] != this->src_ne[i][d]) {
+                        вернуть false;
                     }
-                    if (node->src[i]->nb[d] != this->src_nb[i][d]) {
-                        return false;
+                    если (node->src[i]->nb[d] != this->src_nb[i][d]) {
+                        вернуть false;
                     }
                 }
-            } else {
-                if (this->src_address[i] != nullptr) {
-                    return false;
+            } иначе {
+                если (this->src_address[i] != nullptr) {
+                    вернуть false;
                 }
             }
         }
 
-        return memcmp(this->op_params, node->op_params, GGML_MAX_OP_PARAMS) == 0;
+        вернуть memcmp(this->op_params, node->op_params, GGML_MAX_OP_PARAMS) == 0;
     }
 };
 
 struct ggml_cann_graph {
     ~ggml_cann_graph() {
-        if (graph != nullptr) {
+        если (graph != nullptr) {
             ACL_CHECK(aclmdlRIDestroy(graph));
         }
     }
@@ -323,7 +323,7 @@ struct ggml_cann_graph {
         ggml_cann_graph * new_graph = new ggml_cann_graph();
         new_graph->ggml_graph_properties.resize(cgraph->n_nodes);
 
-        for (int node_idx = 0; node_idx < cgraph->n_nodes; ++node_idx) {
+        для (целое node_idx = 0; node_idx < cgraph->n_nodes; ++node_idx) {
             ggml_tensor * node = cgraph->nodes[node_idx];
             auto &        prop = new_graph->ggml_graph_properties[node_idx];
 
@@ -334,13 +334,13 @@ struct ggml_cann_graph {
             std::copy_n(node->ne, GGML_MAX_DIMS, prop.ne);
             std::copy_n(node->nb, GGML_MAX_DIMS, prop.nb);
 
-            for (int src = 0; src < GGML_MAX_SRC; ++src) {
-                if (node->src[src]) {
+            для (целое src = 0; src < GGML_MAX_SRC; ++src) {
+                если (node->src[src]) {
                     prop.src_address[src] = node->src[src]->data;
                     prop.src_type[src]    = node->src[src]->type;
                     std::copy_n(node->src[src]->ne, GGML_MAX_DIMS, prop.src_ne[src]);
                     std::copy_n(node->src[src]->nb, GGML_MAX_DIMS, prop.src_nb[src]);
-                } else {
+                } иначе {
                     prop.src_address[src] = nullptr;
                     prop.src_type[src]    = GGML_TYPE_COUNT;
                     std::fill_n(prop.src_ne[src], GGML_MAX_DIMS, 0);
@@ -351,7 +351,7 @@ struct ggml_cann_graph {
             memcpy(prop.op_params, node->op_params, GGML_MAX_OP_PARAMS);
         }
 
-        return new_graph;
+        вернуть new_graph;
     }
 
     /**
@@ -365,17 +365,17 @@ struct ggml_cann_graph {
      * @return true if this CANN graph matches the ggml graph; false otherwise.
      */
     bool matches_cgraph(ggml_cgraph * cgraph) {
-        if (this->ggml_graph_properties.size() != static_cast<size_t>(cgraph->n_nodes)) {
-            return false;
+        если (this->ggml_graph_properties.size() != static_cast<size_t>(cgraph->n_nodes)) {
+            вернуть false;
         }
 
-        for (int i = 0; i < cgraph->n_nodes; ++i) {
-            if (!this->ggml_graph_properties[i].has_matching_properties(cgraph->nodes[i])) {
-                return false;
+        для (целое i = 0; i < cgraph->n_nodes; ++i) {
+            если (!this->ggml_graph_properties[i].has_matching_properties(cgraph->nodes[i])) {
+                вернуть false;
             }
         }
 
-        return true;
+        вернуть true;
     }
 };
 
@@ -400,7 +400,7 @@ struct ggml_cann_graph_lru_cache {
      *        Ownership is transferred to the cache (cache will delete it).
      */
     void push(ggml_cann_graph * new_node) {
-        if (cache_list.size() >= capacity) {
+        если (cache_list.size() >= capacity) {
             ggml_cann_graph * old = cache_list.back();
             cache_list.pop_back();
             delete old;  // free the old graph
@@ -412,7 +412,7 @@ struct ggml_cann_graph_lru_cache {
      * @brief Clear all graphs from the cache (also frees memory).
      */
     void clear() {
-        for (auto ptr : cache_list) {
+        для (auto ptr : cache_list) {
             delete ptr;
         }
         cache_list.clear();
@@ -435,39 +435,39 @@ struct ggml_cann_graph_lru_cache {
      * @return true if found; false otherwise.
      */
     bool find_and_move_to_front(ggml_cgraph * cgraph) {
-        for (auto & graph_ptr : this->cache_list) {
-            if (graph_ptr->matches_cgraph(cgraph)) {
+        для (auto & graph_ptr : this->cache_list) {
+            если (graph_ptr->matches_cgraph(cgraph)) {
                 cache_list.remove(graph_ptr);
                 cache_list.push_front(graph_ptr);
-                return true;
+                вернуть true;
             }
         }
-        return false;
+        вернуть false;
     }
 };
 #endif  // USE_ACL_GRAPH
 
 struct ggml_cann_rope_cache {
     ~ggml_cann_rope_cache() {
-        if (theta_scale_cache) {
+        если (theta_scale_cache) {
             ACL_CHECK(aclrtFree(theta_scale_cache));
         }
-        if (sin_cache) {
+        если (sin_cache) {
             ACL_CHECK(aclrtFree(sin_cache));
         }
-        if (cos_cache) {
+        если (cos_cache) {
             ACL_CHECK(aclrtFree(cos_cache));
         }
-        if (position_select_index) {
+        если (position_select_index) {
             ACL_CHECK(aclrtFree(position_select_index));
         }
-        if (theta_scale_exp_host) {
+        если (theta_scale_exp_host) {
             free(theta_scale_exp_host);
         }
-        if (position_select_index_host) {
+        если (position_select_index_host) {
             free(position_select_index_host);
         }
-        if (yarn_ramp_cache) {
+        если (yarn_ramp_cache) {
             ACL_CHECK(aclrtFree(yarn_ramp_cache));
         }
     }
@@ -482,8 +482,8 @@ struct ggml_cann_rope_cache {
                bool    indep_sects,
                bool    mrope_used,
                bool    is_imrope,
-               int     sections[4]) {
-        return this->theta_scale_length == theta_scale_length && this->position_length == position_length &&
+               целое     sections[4]) {
+        вернуть this->theta_scale_length == theta_scale_length && this->position_length == position_length &&
                this->ext_factor == ext_factor && this->theta_scale == theta_scale && this->freq_scale == freq_scale &&
                this->attn_factor == attn_factor && this->is_neox == is_neox && this->indep_sects == indep_sects &&
                this->mrope_used == mrope_used && this->is_imrope == is_imrope && this->sections[0] == sections[0] &&
@@ -500,7 +500,7 @@ struct ggml_cann_rope_cache {
              bool    indep_sects,
              bool    mrope_used,
              bool    is_imrope,
-             int     sections[4]) {
+             целое     sections[4]) {
         this->theta_scale_length = theta_scale_length;
         this->position_length    = position_length;
         this->ext_factor         = ext_factor;
@@ -520,7 +520,7 @@ struct ggml_cann_rope_cache {
     // memory cache, prepare before inferencing.
     void *  theta_scale_cache          = nullptr;
     float * theta_scale_exp_host       = nullptr;
-    int *   position_select_index_host = nullptr;
+    целое *   position_select_index_host = nullptr;
     void *  position_select_index      = nullptr;
     void *  yarn_ramp_cache            = nullptr;
     // sin/cos cache, used only to accelerate first layer on each device
@@ -537,13 +537,13 @@ struct ggml_cann_rope_cache {
     bool    is_neox                    = false;
     bool    indep_sects                = false;
     bool    mrope_used                 = false;
-    int     sections[4]                = { 0, 0, 0, 0 };
+    целое     sections[4]                = { 0, 0, 0, 0 };
     bool    is_imrope                  = false;
 };
 
 struct ggml_cann_tensor_cache {
     ~ggml_cann_tensor_cache() {
-        if (cache != nullptr) {
+        если (cache != nullptr) {
             ACL_CHECK(aclrtFree(cache));
         }
     }
@@ -578,7 +578,7 @@ struct ggml_backend_cann_context {
      * @brief Constructor for initializing the context with a given device.
      * @param device Device ID.
      */
-    explicit ggml_backend_cann_context(int device) : device(device), name("CANN" + std::to_string(device)) {
+    explicit ggml_backend_cann_context(целое device) : device(device), name("CANN" + std::to_string(device)) {
         ggml_cann_set_device(device);
         description = aclrtGetSocName();
 
@@ -594,11 +594,11 @@ struct ggml_backend_cann_context {
      */
     ~ggml_backend_cann_context() {
         ggml_cann_set_device(device);
-        if (copy_event != nullptr) {
+        если (copy_event != nullptr) {
             ACL_CHECK(aclrtDestroyEvent(copy_event));
         }
-        for (int i = 0; i < GGML_CANN_MAX_STREAMS; ++i) {
-            if (streams[i] != nullptr) {
+        для (целое i = 0; i < GGML_CANN_MAX_STREAMS; ++i) {
+            если (streams[i] != nullptr) {
                 ACL_CHECK(aclrtDestroyStream(streams[i]));
             }
         }
@@ -609,22 +609,22 @@ struct ggml_backend_cann_context {
      * @param stream Index of the stream.
      * @return The stream corresponding to the given index.
      */
-    aclrtStream stream(int stream) {
-        if (streams[stream] == nullptr) {
+    aclrtStream stream(целое stream) {
+        если (streams[stream] == nullptr) {
             // If the device is not set here, destroying the stream later may cause a mismatch
             // between the thread contexts where the stream was created and destroyed.
             // However, I printed the device_id, thread_id, and stream, and they are all consistent.
             ACL_CHECK(aclrtSetDevice(device));
             ACL_CHECK(aclrtCreateStream(&streams[stream]));
         }
-        return streams[stream];
+        вернуть streams[stream];
     }
 
     /**
      * @brief Get or create the default stream (index 0).
      * @return The default stream.
      */
-    aclrtStream stream() { return stream(0); }
+    aclrtStream stream() { вернуть stream(0); }
 
     // TODO: each stream should have a memory pool.
     std::unique_ptr<ggml_cann_pool> mem_pool; /**< Memory pool for the device. */
@@ -634,17 +634,17 @@ struct ggml_backend_cann_context {
      * @param device Device ID.
      * @return A unique pointer to the new memory pool.
      */
-    static std::unique_ptr<ggml_cann_pool> new_pool_for_device(int device);
+    static std::unique_ptr<ggml_cann_pool> new_pool_for_device(целое device);
 
     /**
      * @brief Get or create the memory pool for the context.
      * @return Reference to the memory pool.
      */
     ggml_cann_pool & pool() {
-        if (mem_pool == nullptr) {
+        если (mem_pool == nullptr) {
             mem_pool = new_pool_for_device(device);
         }
-        return *mem_pool;
+        вернуть *mem_pool;
     }
 };
 

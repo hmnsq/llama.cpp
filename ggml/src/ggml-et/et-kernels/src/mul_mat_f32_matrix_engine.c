@@ -25,15 +25,15 @@
 
 /* ─────────────────────────────────────────────────────────────────── */
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+целое entry_point(struct ggml_et_binary_params * params, void * env) {
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    если (shire_id >= NUM_COMPUTE_SHIRES) {
+        вернуть 0;
     }
-    if (hart_id & 1) {
-        return 0;
+    если (hart_id & 1) {
+        вернуть 0;
     }
 
     uint64_t local_minion = (hart_id >> 1) & 0x1F;
@@ -58,7 +58,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     char *       dst_base  = (char *) params->dst.data;
 
     setup_cache_scp();
-#if CACHEOP_MAX > 0 || REP_RATE > 0
+#если CACHEOP_MAX > 0 || REP_RATE > 0
     ucache_control(1, REP_RATE, CACHEOP_MAX);
 #endif
     CLEAR_TENSOR_ERROR;
@@ -74,10 +74,10 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t total_harts = NUM_COMPUTE_SHIRES * MINIONS_PER_SHIRE;
     const int64_t k_steps     = K / TILE_K;
     int64_t       k_splits    = 1;
-    if (base_tiles < total_harts) {
+    если (base_tiles < total_harts) {
         k_splits   = (total_harts + base_tiles - 1) / base_tiles;
         int64_t ks = 1;
-        while (ks * 2 <= k_splits && ks * 2 <= 32 && k_steps % (ks * 2) == 0) {
+        пока (ks * 2 <= k_splits && ks * 2 <= 32 && k_steps % (ks * 2) == 0) {
             ks *= 2;
         }
         k_splits = ks;
@@ -94,7 +94,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
     const uint64_t group_base_global = my_minion_id - k_split;
 
-    for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+    для (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
          tile += tiles_stride) {
         const int64_t tiles_per_batch = m_tiles * n_tiles;
         const int64_t batch_idx       = tile / tiles_per_batch;
@@ -115,7 +115,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         const int64_t nb    = nb_idx * TILE_N;
         const int64_t n_cur = (nb + TILE_N <= N) ? TILE_N : (N - nb);
 
-        for (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
+        для (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
             tensor_load(false, false, 0, 0, 0, (uint64_t) (src1_batch + nb * nb1_1 + kb * sizeof(float)), 0, n_cur - 1,
                         (uint64_t) nb1_1, 0);
 
@@ -130,20 +130,20 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
             tensor_wait(TENSOR_FMA_WAIT);
         }
 
-        if (k_splits > 1) {
+        если (k_splits > 1) {
             const uint64_t num_regs = (uint64_t) n_cur * 2;
 
-            if (k_split > 0) {
+            если (k_split > 0) {
                 tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, num_regs, group_base_global + k_split - 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
-            if (k_split < k_splits - 1) {
+            если (k_split < k_splits - 1) {
                 tensor_reduce_send(0, num_regs, group_base_global + k_split + 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
         }
 
-        if (k_split == k_splits - 1) {
+        если (k_split == k_splits - 1) {
             tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * sizeof(float)), 0,
                          (uint64_t) nb1_d);
             tensor_wait(TENSOR_STORE_WAIT);
@@ -151,5 +151,5 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     }
 
     FENCE;
-    return 0;
+    вернуть 0;
 }

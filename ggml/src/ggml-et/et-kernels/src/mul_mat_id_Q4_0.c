@@ -19,16 +19,16 @@
 
 #include <stdint.h>
 
-int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
+целое entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
-    if (!kernel_env || !params) {
-        return -1;
+    если (!kernel_env || !params) {
+        вернуть -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
-    if (thread_id < 0) {
-        return 0;
+    целое thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    целое num_threads = get_num_threads(kernel_env->shire_mask);
+    если (thread_id < 0) {
+        вернуть 0;
     }
 
     struct ggml_tensor * src0 = &params->src0;
@@ -36,17 +36,17 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     struct ggml_tensor * src2 = &params->src2;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_Q4_0 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32 ||
+    если (src0->type != GGML_TYPE_Q4_0 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_I32 ||
         dst->type != GGML_TYPE_F32) {
-        return -1;
+        вернуть -1;
     }
 
     const void *    src0_data = src0->data;
     const float *   src1_data = (const float *) src1->data;
     const int32_t * src2_data = (const int32_t *) src2->data;
     float *         dst_data  = (float *) dst->data;
-    if (!src0_data || !src1_data || !src2_data || !dst_data) {
-        return -1;
+    если (!src0_data || !src1_data || !src2_data || !dst_data) {
+        вернуть -1;
     }
 
     const int64_t K             = src0->ne[0];
@@ -56,8 +56,8 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     const int64_t batch         = src2->ne[1];
     const int64_t ne11          = src1->ne[1];
 
-    if (K % QK4_0 != 0) {
-        return -1;
+    если (K % QK4_0 != 0) {
+        вернуть -1;
     }
 
     const size_t nb01 = src0->nb[1];  // Q4_0 row stride
@@ -70,27 +70,27 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     const size_t nbd1 = dst->nb[1];
     const size_t nbd2 = dst->nb[2];
 
-    if (src0->nb[0] != sizeof(block_q4_0) || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(int32_t) ||
+    если (src0->nb[0] != sizeof(block_q4_0) || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(int32_t) ||
         nbd0 != sizeof(float)) {
-        return -1;
+        вернуть -1;
     }
 
     const int64_t K_blocks = K / QK4_0;
-    const int     use_x2   = ((nb01 & 31) == 0);
+    const целое     use_x2   = ((nb01 & 31) == 0);
 
     const uint64_t total_outputs = (uint64_t) M * (uint64_t) n_expert_used * (uint64_t) batch;
-    if (total_outputs == 0) {
-        return 0;
+    если (total_outputs == 0) {
+        вернуть 0;
     }
 
     // Even partition: hart h owns outputs [h*chunk, (h+1)*chunk).
     const uint64_t chunk    = (total_outputs + (uint64_t) num_threads - 1) / (uint64_t) num_threads;
     const uint64_t my_start = (uint64_t) thread_id * chunk;
-    if (my_start >= total_outputs) {
-        return 0;
+    если (my_start >= total_outputs) {
+        вернуть 0;
     }
     uint64_t my_end = my_start + chunk;
-    if (my_end > total_outputs) {
+    если (my_end > total_outputs) {
         my_end = total_outputs;
     }
 
@@ -101,7 +101,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     const uint64_t per_batch = (uint64_t) M * (uint64_t) n_expert_used;
 
     uint64_t idx = my_start;
-    while (idx < my_end) {
+    пока (idx < my_end) {
         // Decode (m, slot, batch) from the m-major linear index.
         const int64_t  batch_idx = (int64_t) (idx / per_batch);
         const uint64_t rem       = idx - (uint64_t) batch_idx * per_batch;
@@ -120,10 +120,10 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
 
         char * dst_slot = (char *) dst_data + slot_idx * (int64_t) nbd1 + batch_idx * (int64_t) nbd2;
 
-        if (expert_id < 0 || expert_id >= n_expert) {
+        если (expert_id < 0 || expert_id >= n_expert) {
             // Invalid expert id — zero out this run's outputs.
             int64_t m = m0;
-            for (int64_t i = 0; i < run_len; i++, m++) {
+            для (int64_t i = 0; i < run_len; i++, m++) {
                 atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), 0.0f);
             }
             idx += (uint64_t) run_len;
@@ -139,8 +139,8 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
         int64_t left = run_len;
 
         // Paired-row dots: halves B bandwidth for runs >= 2.
-        if (use_x2) {
-            while (left >= 2) {
+        если (use_x2) {
+            пока (left >= 2) {
                 const block_q4_0 * row0 = (const block_q4_0 *) (expert_base + m * (int64_t) nb01);
                 const block_q4_0 * row1 = (const block_q4_0 *) (expert_base + (m + 1) * (int64_t) nb01);
                 float              s0, s1;
@@ -153,7 +153,7 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
         }
 
         // Tail / non-aligned fallback: single-row dots.
-        while (left > 0) {
+        пока (left > 0) {
             const block_q4_0 * row = (const block_q4_0 *) (expert_base + m * (int64_t) nb01);
             float              s   = q4_dot_compute(row, b_col_base, K_blocks);
             atomic_store_f32((volatile float *) (dst_slot + m * (int64_t) nbd0), s);
@@ -165,5 +165,5 @@ int entry_point(struct ggml_et_mul_mat_id_params * params, void * env) {
     }
 
     q4_dot_end(&q4_state);
-    return 0;
+    вернуть 0;
 }

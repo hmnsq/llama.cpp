@@ -1,6 +1,6 @@
 #include "ggml-backend-impl.h"
 
-#if defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
+#если defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -14,94 +14,94 @@
 
 // ref: https://cdrdv2-public.intel.com/782156/325383-sdm-vol-2abcd.pdf
 struct cpuid_x86 {
-    bool SSE3(void) { return f_1_ecx[0]; }
-    bool PCLMULQDQ(void) { return f_1_ecx[1]; }
-    bool MONITOR(void) { return f_1_ecx[3]; }
-    bool SSSE3(void) { return f_1_ecx[9]; }
-    bool FMA(void) { return f_1_ecx[12]; }
-    bool CMPXCHG16B(void) { return f_1_ecx[13]; }
-    bool SSE41(void) { return f_1_ecx[19]; }
-    bool SSE42(void) { return f_1_ecx[20]; }
-    bool MOVBE(void) { return f_1_ecx[22]; }
-    bool POPCNT(void) { return f_1_ecx[23]; }
-    bool AES(void) { return f_1_ecx[25]; }
-    bool XSAVE(void) { return f_1_ecx[26]; }
-    bool OSXSAVE(void) { return f_1_ecx[27]; }
-    bool AVX(void) { return f_1_ecx[28]; }
-    bool F16C(void) { return f_1_ecx[29]; }
-    bool RDRAND(void) { return f_1_ecx[30]; }
+    bool SSE3(void) { вернуть f_1_ecx[0]; }
+    bool PCLMULQDQ(void) { вернуть f_1_ecx[1]; }
+    bool MONITOR(void) { вернуть f_1_ecx[3]; }
+    bool SSSE3(void) { вернуть f_1_ecx[9]; }
+    bool FMA(void) { вернуть f_1_ecx[12]; }
+    bool CMPXCHG16B(void) { вернуть f_1_ecx[13]; }
+    bool SSE41(void) { вернуть f_1_ecx[19]; }
+    bool SSE42(void) { вернуть f_1_ecx[20]; }
+    bool MOVBE(void) { вернуть f_1_ecx[22]; }
+    bool POPCNT(void) { вернуть f_1_ecx[23]; }
+    bool AES(void) { вернуть f_1_ecx[25]; }
+    bool XSAVE(void) { вернуть f_1_ecx[26]; }
+    bool OSXSAVE(void) { вернуть f_1_ecx[27]; }
+    bool AVX(void) { вернуть f_1_ecx[28]; }
+    bool F16C(void) { вернуть f_1_ecx[29]; }
+    bool RDRAND(void) { вернуть f_1_ecx[30]; }
 
-    bool MSR(void) { return f_1_edx[5]; }
-    bool CX8(void) { return f_1_edx[8]; }
-    bool SEP(void) { return f_1_edx[11]; }
-    bool CMOV(void) { return f_1_edx[15]; }
-    bool CLFSH(void) { return f_1_edx[19]; }
-    bool MMX(void) { return f_1_edx[23]; }
-    bool FXSR(void) { return f_1_edx[24]; }
-    bool SSE(void) { return f_1_edx[25]; }
-    bool SSE2(void) { return f_1_edx[26]; }
+    bool MSR(void) { вернуть f_1_edx[5]; }
+    bool CX8(void) { вернуть f_1_edx[8]; }
+    bool SEP(void) { вернуть f_1_edx[11]; }
+    bool CMOV(void) { вернуть f_1_edx[15]; }
+    bool CLFSH(void) { вернуть f_1_edx[19]; }
+    bool MMX(void) { вернуть f_1_edx[23]; }
+    bool FXSR(void) { вернуть f_1_edx[24]; }
+    bool SSE(void) { вернуть f_1_edx[25]; }
+    bool SSE2(void) { вернуть f_1_edx[26]; }
 
-    bool FSGSBASE(void) { return f_7_ebx[0]; }
-    bool BMI1(void) { return f_7_ebx[3]; }
-    bool HLE(void) { return is_intel && f_7_ebx[4]; }
-    bool AVX2(void) { return f_7_ebx[5]; }
-    bool BMI2(void) { return f_7_ebx[8]; }
-    bool ERMS(void) { return f_7_ebx[9]; }
-    bool INVPCID(void) { return f_7_ebx[10]; }
-    bool RTM(void) { return is_intel && f_7_ebx[11]; }
-    bool AVX512F(void) { return f_7_ebx[16]; }
-    bool AVX512DQ(void) { return f_7_ebx[17]; }
-    bool RDSEED(void) { return f_7_ebx[18]; }
-    bool ADX(void) { return f_7_ebx[19]; }
-    bool AVX512PF(void) { return f_7_ebx[26]; }
-    bool AVX512ER(void) { return f_7_ebx[27]; }
-    bool AVX512CD(void) { return f_7_ebx[28]; }
-    bool AVX512BW(void) { return f_7_ebx[30]; }
-    bool AVX512VL(void) { return f_7_ebx[31]; }
+    bool FSGSBASE(void) { вернуть f_7_ebx[0]; }
+    bool BMI1(void) { вернуть f_7_ebx[3]; }
+    bool HLE(void) { вернуть is_intel && f_7_ebx[4]; }
+    bool AVX2(void) { вернуть f_7_ebx[5]; }
+    bool BMI2(void) { вернуть f_7_ebx[8]; }
+    bool ERMS(void) { вернуть f_7_ebx[9]; }
+    bool INVPCID(void) { вернуть f_7_ebx[10]; }
+    bool RTM(void) { вернуть is_intel && f_7_ebx[11]; }
+    bool AVX512F(void) { вернуть f_7_ebx[16]; }
+    bool AVX512DQ(void) { вернуть f_7_ebx[17]; }
+    bool RDSEED(void) { вернуть f_7_ebx[18]; }
+    bool ADX(void) { вернуть f_7_ebx[19]; }
+    bool AVX512PF(void) { вернуть f_7_ebx[26]; }
+    bool AVX512ER(void) { вернуть f_7_ebx[27]; }
+    bool AVX512CD(void) { вернуть f_7_ebx[28]; }
+    bool AVX512BW(void) { вернуть f_7_ebx[30]; }
+    bool AVX512VL(void) { вернуть f_7_ebx[31]; }
 
-    bool SHA(void) { return f_7_ebx[29]; }
+    bool SHA(void) { вернуть f_7_ebx[29]; }
 
-    bool PREFETCHWT1(void) { return f_7_ecx[0]; }
+    bool PREFETCHWT1(void) { вернуть f_7_ecx[0]; }
 
-    bool LAHF(void) { return f_81_ecx[0]; }
-    bool LZCNT(void) { return is_intel && f_81_ecx[5]; }
-    bool ABM(void) { return is_amd && f_81_ecx[5]; }
-    bool SSE4a(void) { return is_amd && f_81_ecx[6]; }
-    bool XOP(void) { return is_amd && f_81_ecx[11]; }
-    bool TBM(void) { return is_amd && f_81_ecx[21]; }
+    bool LAHF(void) { вернуть f_81_ecx[0]; }
+    bool LZCNT(void) { вернуть is_intel && f_81_ecx[5]; }
+    bool ABM(void) { вернуть is_amd && f_81_ecx[5]; }
+    bool SSE4a(void) { вернуть is_amd && f_81_ecx[6]; }
+    bool XOP(void) { вернуть is_amd && f_81_ecx[11]; }
+    bool TBM(void) { вернуть is_amd && f_81_ecx[21]; }
 
-    bool SYSCALL(void) { return is_intel && f_81_edx[11]; }
-    bool MMXEXT(void) { return is_amd && f_81_edx[22]; }
-    bool RDTSCP(void) { return is_intel && f_81_edx[27]; }
-    bool _3DNOWEXT(void) { return is_amd && f_81_edx[30]; }
-    bool _3DNOW(void) { return is_amd && f_81_edx[31]; }
+    bool SYSCALL(void) { вернуть is_intel && f_81_edx[11]; }
+    bool MMXEXT(void) { вернуть is_amd && f_81_edx[22]; }
+    bool RDTSCP(void) { вернуть is_intel && f_81_edx[27]; }
+    bool _3DNOWEXT(void) { вернуть is_amd && f_81_edx[30]; }
+    bool _3DNOW(void) { вернуть is_amd && f_81_edx[31]; }
 
-    bool AVX512_VBMI(void) { return f_7_ecx[1]; }
-    bool AVX512_VNNI(void) { return f_7_ecx[11]; }
-    bool AVX512_FP16(void) { return f_7_edx[23]; }
-    bool AVX512_BF16(void) { return f_7_1_eax[5]; }
-    bool AVX_VNNI(void) { return f_7_1_eax[4]; }
+    bool AVX512_VBMI(void) { вернуть f_7_ecx[1]; }
+    bool AVX512_VNNI(void) { вернуть f_7_ecx[11]; }
+    bool AVX512_FP16(void) { вернуть f_7_edx[23]; }
+    bool AVX512_BF16(void) { вернуть f_7_1_eax[5]; }
+    bool AVX_VNNI(void) { вернуть f_7_1_eax[4]; }
 
-    bool AMX_TILE(void) { return f_7_edx[24]; }
-    bool AMX_INT8(void) { return f_7_edx[25]; }
-    bool AMX_FP16(void) { return f_7_1_eax[21]; }
-    bool AMX_BF16(void) { return f_7_edx[22]; }
+    bool AMX_TILE(void) { вернуть f_7_edx[24]; }
+    bool AMX_INT8(void) { вернуть f_7_edx[25]; }
+    bool AMX_FP16(void) { вернуть f_7_1_eax[21]; }
+    bool AMX_BF16(void) { вернуть f_7_edx[22]; }
 
 #ifdef _MSC_VER
-    static void cpuid(int cpu_info[4], int eax) {
+    static void cpuid(целое cpu_info[4], целое eax) {
         __cpuid(cpu_info, eax);
     }
-    static void cpuidex(int cpu_info[4], int eax, int ecx) {
+    static void cpuidex(целое cpu_info[4], целое eax, целое ecx) {
         __cpuidex(cpu_info, eax, ecx);
     }
-#else
-    static void cpuid(int cpu_info[4], int eax) {
+#иначе
+    static void cpuid(целое cpu_info[4], целое eax) {
         __asm__ __volatile__(
             "cpuid"
             : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
             : "a"(eax), "c"(0));
     }
-    static void cpuidex(int cpu_info[4], int eax, int ecx) {
+    static void cpuidex(целое cpu_info[4], целое eax, целое ecx) {
         __asm__ __volatile__(
             "cpuid"
             : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
@@ -110,39 +110,39 @@ struct cpuid_x86 {
 #endif
 
     cpuid_x86() {
-        std::array<int, 4> cpui;
-        std::vector<std::array<int, 4>> data;
+        std::array<целое, 4> cpui;
+        std::vector<std::array<целое, 4>> data;
 
         // calling __cpuid with 0x0 as the function_id argument
         // gets the number of the highest valid function ID.
         cpuid(cpui.data(), 0);
-        int n_ids = cpui[0];
+        целое n_ids = cpui[0];
 
-        for (int i = 0; i <= n_ids; ++i) {
+        для (целое i = 0; i <= n_ids; ++i) {
             cpuidex(cpui.data(), i, 0);
             data.push_back(cpui);
         }
 
         // capture vendor string
         char vendor[0x20] = {};
-        *reinterpret_cast<int *>(vendor)     = data[0][1];
-        *reinterpret_cast<int *>(vendor + 4) = data[0][3];
-        *reinterpret_cast<int *>(vendor + 8) = data[0][2];
+        *reinterpret_cast<целое *>(vendor)     = data[0][1];
+        *reinterpret_cast<целое *>(vendor + 4) = data[0][3];
+        *reinterpret_cast<целое *>(vendor + 8) = data[0][2];
         this->vendor = vendor;
-        if (this->vendor == "GenuineIntel") {
+        если (this->vendor == "GenuineIntel") {
             is_intel = true;
-        } else if (this->vendor == "AuthenticAMD") {
+        } иначе если (this->vendor == "AuthenticAMD") {
             is_amd = true;
         }
 
         // load bitset with flags for function 0x00000001
-        if (n_ids >= 1) {
+        если (n_ids >= 1) {
             f_1_ecx = data[1][2];
             f_1_edx = data[1][3];
         }
 
         // load bitset with flags for function 0x00000007
-        if (n_ids >= 7) {
+        если (n_ids >= 7) {
             f_7_ebx = data[7][1];
             f_7_ecx = data[7][2];
             f_7_edx = data[7][3];
@@ -153,23 +153,23 @@ struct cpuid_x86 {
         // calling __cpuid with 0x80000000 as the function_id argument
         // gets the number of the highest valid extended ID.
         cpuid(cpui.data(), 0x80000000);
-        unsigned int n_ex_ids = cpui[0];
+        unsigned целое n_ex_ids = cpui[0];
 
-        std::vector<std::array<int, 4>> ext_data;
-        for (unsigned int i = 0x80000000; i <= n_ex_ids; ++i) {
+        std::vector<std::array<целое, 4>> ext_data;
+        для (unsigned целое i = 0x80000000; i <= n_ex_ids; ++i) {
             cpuidex(cpui.data(), i, 0);
             ext_data.push_back(cpui);
         }
 
         // load bitset with flags for function 0x80000001
-        if (n_ex_ids >= 0x80000001) {
+        если (n_ex_ids >= 0x80000001) {
             f_81_ecx = ext_data[1][2];
             f_81_edx = ext_data[1][3];
         }
 
         // interpret CPU brand string if reported
         char brand[0x40] = {};
-        if (n_ex_ids >= 0x80000004) {
+        если (n_ex_ids >= 0x80000004) {
             std::memcpy(brand, ext_data[2].data(), sizeof(cpui));
             std::memcpy(brand + 16, ext_data[3].data(), sizeof(cpui));
             std::memcpy(brand + 32, ext_data[4].data(), sizeof(cpui));
@@ -191,7 +191,7 @@ struct cpuid_x86 {
     std::bitset<32> f_81_edx;
 };
 
-#if 0
+#если 0
 void test_x86_is() {
     cpuid_x86 is;
     printf("CPU Vendor: %s\n", is.vendor.c_str());
@@ -260,66 +260,66 @@ void test_x86_is() {
 }
 #endif
 
-static int ggml_backend_cpu_x86_score() {
+static целое ggml_backend_cpu_x86_score() {
     // FIXME: this does not check for OS support
 
-    int score = 1;
+    целое score = 1;
     cpuid_x86 is;
 
 #ifdef GGML_FMA
-    if (!is.FMA()) { return 0; }
+    если (!is.FMA()) { вернуть 0; }
     score += 1;
 #endif
 #ifdef GGML_F16C
-    if (!is.F16C()) { return 0; }
+    если (!is.F16C()) { вернуть 0; }
     score += 1<<1;
 #endif
 #ifdef GGML_SSE42
-    if (!is.SSE42()) { return 0; }
+    если (!is.SSE42()) { вернуть 0; }
     score += 1<<2;
 #endif
 #ifdef GGML_BMI2
-    if (!is.BMI2()) { return 0; }
+    если (!is.BMI2()) { вернуть 0; }
     score += 1<<3;
 #endif
 #ifdef GGML_AVX
-    if (!is.AVX()) { return 0; }
+    если (!is.AVX()) { вернуть 0; }
     score += 1<<4;
 #endif
 #ifdef GGML_AVX2
-    if (!is.AVX2()) { return 0; }
+    если (!is.AVX2()) { вернуть 0; }
     score += 1<<5;
 #endif
 #ifdef GGML_AVX_VNNI
-    if (!is.AVX_VNNI()) { return 0; }
+    если (!is.AVX_VNNI()) { вернуть 0; }
     score += 1<<6;
 #endif
 #ifdef GGML_AVX512
-    if (!is.AVX512F()) { return 0; }
-    if (!is.AVX512CD()) { return 0; }
-    if (!is.AVX512VL()) { return 0; }
-    if (!is.AVX512DQ()) { return 0; }
-    if (!is.AVX512BW()) { return 0; }
+    если (!is.AVX512F()) { вернуть 0; }
+    если (!is.AVX512CD()) { вернуть 0; }
+    если (!is.AVX512VL()) { вернуть 0; }
+    если (!is.AVX512DQ()) { вернуть 0; }
+    если (!is.AVX512BW()) { вернуть 0; }
     score += 1<<7;
 #endif
 #ifdef GGML_AVX512_VBMI
-    if (!is.AVX512_VBMI()) { return 0; }
+    если (!is.AVX512_VBMI()) { вернуть 0; }
     score += 1<<8;
 #endif
 #ifdef GGML_AVX512_BF16
-    if (!is.AVX512_BF16()) { return 0; }
+    если (!is.AVX512_BF16()) { вернуть 0; }
     score += 1<<9;
 #endif
 #ifdef GGML_AVX512_VNNI
-    if (!is.AVX512_VNNI()) { return 0; }
+    если (!is.AVX512_VNNI()) { вернуть 0; }
     score += 1<<10;
 #endif
 #ifdef GGML_AMX_INT8
-    if (!is.AMX_INT8()) { return 0; }
+    если (!is.AMX_INT8()) { вернуть 0; }
     score += 1<<11;
 #endif
 
-    return score;
+    вернуть score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_x86_score)

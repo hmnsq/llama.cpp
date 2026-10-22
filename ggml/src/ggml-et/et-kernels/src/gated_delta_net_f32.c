@@ -49,25 +49,25 @@ static inline float hsum_f10(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    вернуть result;
 }
 
-int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
+целое entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    если (!kernel_env) {
+        вернуть -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    целое thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    целое num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    если (thread_id < 0) {
+        вернуть 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    если (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        вернуть -1;
     }
 
     const struct ggml_tensor * q_tsr     = &params->q;
@@ -98,16 +98,16 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
     const int32_t K        = params->K;
     const float   scale    = params->scale;
 
-    if (!q || !k || !v || !g || !beta || !state_in || !dst_data) {
-        return -1;
+    если (!q || !k || !v || !g || !beta || !state_in || !dst_data) {
+        вернуть -1;
     }
 
     // Preserve the original contract for every tensor except q, k, and v, which may be
     // row-contiguous with strided higher dimensions.
-    if (q_tsr->nb[0] != sizeof(float) || k_tsr->nb[0] != sizeof(float) || v_tsr->nb[0] != sizeof(float) ||
+    если (q_tsr->nb[0] != sizeof(float) || k_tsr->nb[0] != sizeof(float) || v_tsr->nb[0] != sizeof(float) ||
         g_tsr->nb[0] != sizeof(float) || beta_tsr->nb[0] != sizeof(float) || state_tsr->nb[0] != sizeof(float) ||
         dst_tsr->nb[0] != sizeof(float)) {
-        return -1;
+        вернуть -1;
     }
 
     const int32_t attn_elems     = S_v * H * n_tokens * n_seqs;
@@ -158,7 +158,7 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
     const int32_t n_j_blocks = (S_v + J_BLK - 1) / J_BLK;
     const int32_t total_work = n_j_blocks * H * n_seqs;
 
-    for (int32_t ir = thread_id; ir < total_work; ir += num_threads) {
+    для (int32_t ir = thread_id; ir < total_work; ir += num_threads) {
         const int32_t jb   = ir % n_j_blocks;
         const int32_t head = (ir / n_j_blocks) % H;
         const int32_t seq  = ir / (n_j_blocks * H);
@@ -187,7 +187,7 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
 
         const float zero = 0.0f;
 
-        for (int32_t t = 0; t < n_tokens; t++) {
+        для (int32_t t = 0; t < n_tokens; t++) {
             const float * q_t      = (const float *) ((const char *) q + seq_q * q_nb3 + t * q_nb2 + h_q * q_nb1);
             const float * k_t      = (const float *) ((const char *) k + seq_k * k_nb3 + t * k_nb2 + h_k * k_nb1);
             const float * v_t      = (const float *) ((const char *) v + seq * v_nb3 + t * v_nb2 + head * v_nb1);
@@ -198,11 +198,11 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
             // otherwise. Decay is fused into per-j pass A/B below, not
             // applied to state in a separate pre-pass.
             float decay = 0.0f;  // only used when !kda
-            if (kda) {
+            если (kda) {
                 const float log2e = 1.4426950408889634f;
                 __asm__ volatile("mov.m.x m0, x0, 255\n" :::);
                 __asm__ volatile("fbc.ps f20, %[l2e]\n" : : [l2e] "m"(log2e) : "f20");
-                for (int32_t i = 0; i < S_v; i += 8) {
+                для (int32_t i = 0; i < S_v; i += 8) {
                     __asm__ volatile(
                         "flw.ps f10, %[g_vec]\n"
                         "fmul.ps f10, f10, f20, rne\n"
@@ -213,18 +213,18 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                         : "f10");
                 }
                 __asm__ volatile("mova.m.x %[ms]\n" : : [ms] "r"(default_mask));
-            } else {
+            } иначе {
                 decay = et_expf(g_t[0]);
             }
 
-            for (int32_t j = j_start; j < j_end; j++) {
+            для (int32_t j = j_start; j < j_end; j++) {
                 const float * src_row = src_state + j * S_v;
                 float *       dst_row = s_out + j * S_v;
 
                 __asm__ volatile("mov.m.x m0, x0, 255\n" :::);
-                if (kda) {
+                если (kda) {
                     __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
-                    for (int32_t i = 0; i < S_v; i += 8) {
+                    для (int32_t i = 0; i < S_v; i += 8) {
                         __asm__ volatile(
                             "flw.ps f11, %[s_vec]\n"
                             "flw.ps f12, %[g_vec]\n"
@@ -237,14 +237,14 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                               [k_vec] "m"(*(const float (*)[8]) & k_t[i])
                             : "f10", "f11", "f12", "f13");
                     }
-                } else {
+                } иначе {
                     __asm__ volatile(
                         "fbc.ps f10, %[z]\n"
                         "fbc.ps f22, %[d]\n"
                         :
                         : [z] "m"(zero), [d] "m"(decay)
                         : "f10", "f22");
-                    for (int32_t i = 0; i < S_v; i += 8) {
+                    для (int32_t i = 0; i < S_v; i += 8) {
                         __asm__ volatile(
                             "flw.ps f11, %[s_vec]\n"
                             "flw.ps f13, %[k_vec]\n"
@@ -264,14 +264,14 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
 
                 // -------- Pass B: decay + outer product + attn --------
                 __asm__ volatile("mov.m.x m0, x0, 255\n" :::);
-                if (kda) {
+                если (kda) {
                     __asm__ volatile(
                         "fbc.ps f10, %[z]\n"
                         "fbc.ps f21, %[dj]\n"
                         :
                         : [z] "m"(zero), [dj] "m"(delta_j)
                         : "f10", "f21");
-                    for (int32_t i = 0; i < S_v; i += 8) {
+                    для (int32_t i = 0; i < S_v; i += 8) {
                         __asm__ volatile(
                             "flw.ps f11, %[s_vec]\n"
                             "flw.ps f12, %[g_vec]\n"
@@ -287,7 +287,7 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                               [k_vec] "m"(*(const float (*)[8]) & k_t[i]), [q_vec] "m"(*(const float (*)[8]) & q_t[i])
                             : "f10", "f11", "f12", "f13", "f14");
                     }
-                } else {
+                } иначе {
                     __asm__ volatile(
                         "fbc.ps f10, %[z]\n"
                         "fbc.ps f21, %[dj]\n"
@@ -295,7 +295,7 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                         :
                         : [z] "m"(zero), [dj] "m"(delta_j), [d] "m"(decay)
                         : "f10", "f21", "f22");
-                    for (int32_t i = 0; i < S_v; i += 8) {
+                    для (int32_t i = 0; i < S_v; i += 8) {
                         __asm__ volatile(
                             "flw.ps f11, %[s_vec]\n"
                             "flw.ps f13, %[k_vec]\n"
@@ -321,14 +321,14 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
             // Copies state to target snapshot slots [1, K-1] in reverse chronological order.
             // target_slot == 0 is the live buffer itself => no copy.
             // target_slot >= K (when n_tokens > K) => older slots are discarded.
-            if (K > 1) {
+            если (K > 1) {
                 const int32_t target_slot = (n_tokens - 1) - t;
-                if (target_slot > 0 && target_slot < K) {
+                если (target_slot > 0 && target_slot < K) {
                     float * snap = state_out_base + target_slot * state_plane_floats + head_state_off;
-                    for (int32_t j = j_start; j < j_end; j++) {
+                    для (int32_t j = j_start; j < j_end; j++) {
                         const float * src = s_out + j * S_v;
                         float *       dst = snap + j * S_v;
-                        for (int32_t i = 0; i < S_v; i++) {
+                        для (int32_t i = 0; i < S_v; i++) {
                             dst[i] = src[i];
                         }
                     }
@@ -342,5 +342,5 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
         }
     }
 
-    return 0;
+    вернуть 0;
 }

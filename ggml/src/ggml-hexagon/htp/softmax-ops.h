@@ -50,9 +50,9 @@ struct htp_softmax_kernel_params {
     struct fastdiv_values div_ne13;
 };
 
-#if defined(__cplusplus)
+#если defined(__cplusplus)
 static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
-#else
+#иначе
 _Static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
 #endif
 

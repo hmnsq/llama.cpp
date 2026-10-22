@@ -26,12 +26,12 @@
 typedef uintptr_t apir_buffer_type_host_handle_t;
 typedef uintptr_t apir_buffer_host_handle_t;
 
-static const char * apir_backend_initialize_error(int code) {
+static const char * apir_backend_initialize_error(целое code) {
 #define APIR_BACKEND_INITIALIZE_ERROR(code_name) \
     do {                                         \
-        if (code == code_name)                   \
-            return #code_name;                   \
-    } while (0)
+        если (code == code_name)                   \
+            вернуть #code_name;                   \
+    } пока (0)
 
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_SUCCESS);
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_CANNOT_OPEN_BACKEND_LIBRARY);
@@ -44,7 +44,7 @@ static const char * apir_backend_initialize_error(int code) {
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_NO_DEVICE);
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED);
 
-    return "Unknown APIR_BACKEND_INITIALIZE error:/";
+    вернуть "Unknown APIR_BACKEND_INITIALIZE error:/";
 
 #undef APIR_BACKEND_INITIALIZE_ERROR
 }

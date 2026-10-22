@@ -16,7 +16,7 @@
 
 static inline void hmx_lock(hmx_queue_t q)
 {
-    if (!q->hmx_locked) {
+    если (!q->hmx_locked) {
         HAP_compute_res_hmx_lock(q->hap_rctx);
         q->hmx_locked = true;
     }
@@ -24,18 +24,18 @@ static inline void hmx_lock(hmx_queue_t q)
 
 static inline void hmx_unlock(hmx_queue_t q)
 {
-    if (q->hmx_locked) {
+    если (q->hmx_locked) {
         HAP_compute_res_hmx_unlock(q->hap_rctx);
         q->hmx_locked = false;
     }
 }
 
 static inline void hmx_queue_process(hmx_queue_t q, bool* killed) {
-    unsigned int ir = atomic_load(&q->idx_read);
+    unsigned целое ir = atomic_load(&q->idx_read);
 
-    while (ir != atomic_load(&q->idx_write)) {
+    пока (ir != atomic_load(&q->idx_write)) {
         struct hmx_queue_desc *d = &q->desc[ir];
-        if (!d->done) {
+        если (!d->done) {
             FARF(HIGH, "hmx-queue-process: ir %u func %p data %p", ir, d->func, d->data);
 
             uintptr_t sig = (uintptr_t) d->func;
@@ -67,16 +67,16 @@ static void hmx_queue_thread(void * arg) {
 
     bool killed = false;
 
-    unsigned int poll_cnt  = HMX_QUEUE_POLL_COUNT;
-    unsigned int prev_seqn = 0;
-    while (!killed) {
-        unsigned int seqn = atomic_load(&q->seqn);
-        if (seqn == prev_seqn) {
+    unsigned целое poll_cnt  = HMX_QUEUE_POLL_COUNT;
+    unsigned целое prev_seqn = 0;
+    пока (!killed) {
+        unsigned целое seqn = atomic_load(&q->seqn);
+        если (seqn == prev_seqn) {
             // drop HVX context while spinning
-            if (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
+            если (poll_cnt > 1 && poll_cnt == HMX_QUEUE_POLL_COUNT) {
                 qurt_hvx_unlock();
             }
-            if (--poll_cnt) { hex_pause(); continue; }
+            если (--poll_cnt) { hex_pause(); continue; }
             FARF(HIGH, "hmx-queue-thread: sleeping");
             qurt_futex_wait(&q->seqn, prev_seqn);
             poll_cnt = HMX_QUEUE_POLL_COUNT;
@@ -98,11 +98,11 @@ size_t hmx_queue_sizeof(size_t capacity, uint32_t stack_size) {
     size_t size_q = hex_align_up(sizeof(struct hmx_queue_s), HEX_L2_LINE_SIZE);
     size_t size_desc = hex_align_up(capacity * sizeof(struct hmx_queue_desc), HEX_L2_LINE_SIZE);
     size_t size_stack = stack_size;
-    return size_q + size_desc + size_stack;
+    вернуть size_q + size_desc + size_stack;
 }
 
 size_t hmx_queue_alignof(void) {
-    return HEX_L2_LINE_SIZE;
+    вернуть HEX_L2_LINE_SIZE;
 }
 
 hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace) {
@@ -129,11 +129,11 @@ hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uin
     q->trace = trace;
 
     // Match caller thread priority (same pattern as worker-pool.c).
-    int prio = qurt_thread_get_priority(qurt_thread_get_id());
-    if (prio < 1) {
+    целое prio = qurt_thread_get_priority(qurt_thread_get_id());
+    если (prio < 1) {
         prio = 1;
     }
-    if (prio > QURT_LOWEST_PRIO) {
+    если (prio > QURT_LOWEST_PRIO) {
         prio = QURT_LOWEST_PRIO;
     }
 
@@ -144,20 +144,20 @@ hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uin
     qurt_thread_attr_set_priority(&attr, prio);
     qurt_thread_attr_set_name(&attr, "hmx-queue");
 
-    int err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
-    if (err) {
+    целое err = qurt_thread_create(&q->thread, &attr, hmx_queue_thread, q);
+    если (err) {
         FARF(ERROR, "hmx-worker: thread create failed (%d)", err);
-        return NULL;
+        вернуть NULL;
     }
 
     FARF(HIGH, "hmx-queue: capacity %u\n", capacity);
 
-    return q;
+    вернуть q;
 }
 
 void hmx_queue_free(hmx_queue_t q) {
-    if (!q) {
-        return;
+    если (!q) {
+        вернуть;
     }
 
     // Tell the worker to exit.
@@ -165,6 +165,6 @@ void hmx_queue_free(hmx_queue_t q) {
     hmx_queue_signal(q, HMX_QUEUE_KILL);
     hmx_queue_flush(q);
 
-    int status;
+    целое status;
     qurt_thread_join(q->thread, &status);
 }

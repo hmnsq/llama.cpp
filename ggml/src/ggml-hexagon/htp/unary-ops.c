@@ -106,7 +106,7 @@ static inline size_t unary_row_offset(uint32_t ir,
     const uint32_t ir_div_ne1 = fastdiv(ir, div_ne1);
     const uint32_t i2 = fastmodulo(ir_div_ne1, ne2, div_ne2);
     const uint32_t i3 = fastdiv(ir, div_ne12);
-    return i1 * nb1 + i2 * nb2 + i3 * nb3;
+    вернуть i1 * nb1 + i2 * nb2 + i3 * nb3;
 }
 
 // Safe DMA block size from row `ir`: clamp to the tighter dim-1 slice
@@ -120,12 +120,12 @@ static inline uint32_t unary_block_size(uint32_t ir,
                                         const struct fastdiv_values * div_ne1) {
     uint32_t limit = MIN(block, end_row - ir);
 
-    if (!src_contig || !dst_contig) {
+    если (!src_contig || !dst_contig) {
         const uint32_t slice_end = (fastdiv(ir, div_ne1) + 1) * ne1;
         limit = MIN(limit, slice_end - ir);
     }
 
-    return limit;
+    вернуть limit;
 }
 
 #define htp_unary_preamble            \
@@ -165,7 +165,7 @@ static void scale_f32(const void * restrict src,
     memcpy(&scale, &op_params[0], sizeof(float));
     memcpy(&bias,  &op_params[1], sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -183,7 +183,7 @@ static void clamp_f32(const void * restrict src,
     memcpy(&min, &op_params[0], sizeof(float));
     memcpy(&max, &op_params[1], sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -199,7 +199,7 @@ static void leaky_relu_f32(const void * restrict src,
     float negative_slope = 0.f;
     memcpy(&negative_slope, &op_params[0], sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -215,7 +215,7 @@ static void rms_norm_f32(const void * restrict src,
     float epsilon = 0.f;
     memcpy(&epsilon, op_params, sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -232,7 +232,7 @@ static void rms_norm_mul_f32(const void * restrict src,
     float epsilon = 0.f;
     memcpy(&epsilon, op_params, sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         const uint8_t * restrict w_local   = (const uint8_t *)weight + (uctx->broadcast_weight ? 0 : ir * uctx->src1_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
@@ -249,7 +249,7 @@ static void norm_f32(const void * restrict src,
     float epsilon = 0.f;
     memcpy(&epsilon, op_params, sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -263,7 +263,7 @@ static void sqr_f32(const void * restrict src,
                     const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -277,7 +277,7 @@ static void sqrt_f32(const void * restrict src,
                      const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -295,7 +295,7 @@ static void scale_f16(const void * restrict src,
     memcpy(&scale, &op_params[0], sizeof(float));
     memcpy(&bias,  &op_params[1], sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -313,7 +313,7 @@ static void clamp_f16(const void * restrict src,
     memcpy(&min, &op_params[0], sizeof(float));
     memcpy(&max, &op_params[1], sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -329,7 +329,7 @@ static void rms_norm_f16(const void * restrict src,
     float epsilon = 0.f;
     memcpy(&epsilon, op_params, sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -345,7 +345,7 @@ static void norm_f16(const void * restrict src,
     float epsilon = 0.f;
     memcpy(&epsilon, op_params, sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -359,7 +359,7 @@ static void sqr_f16(const void * restrict src,
                     const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -373,7 +373,7 @@ static void sqrt_f16(const void * restrict src,
                      const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -387,7 +387,7 @@ static void abs_f16(const void * restrict src,
                     const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -401,7 +401,7 @@ static void log_f16(const void * restrict src,
                     const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -415,7 +415,7 @@ static void step_f16(const void * restrict src,
                      const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -431,7 +431,7 @@ static void l2_norm_f16(const void * restrict src,
     float epsilon = 0.f;
     memcpy(&epsilon, op_params, sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_f = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_f       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -445,7 +445,7 @@ static void neg_f32(const void * restrict src,
                     const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -459,7 +459,7 @@ static void exp_f32(const void * restrict src,
                     const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -473,7 +473,7 @@ static void sigmoid_f32(const void * restrict src,
                         const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -488,7 +488,7 @@ static void silu_f32(const void * restrict src,
                      const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -508,7 +508,7 @@ static __attribute__((noinline)) HVX_Vector hvx_vec_gelu_f32(HVX_Vector x) {
     inner = hvx_vec_mul_f32_f32(inner, x);
     inner = hvx_vec_mul_f32_f32(inner, hvx_vec_splat_f32(0.7978845608028654f));
 
-    return hvx_vec_mul_f32_f32(hvx_vec_mul_f32_f32(half, x),
+    вернуть hvx_vec_mul_f32_f32(hvx_vec_mul_f32_f32(half, x),
                                hvx_vec_add_f32_f32(one, hvx_vec_tanh_f32(inner)));
 }
 
@@ -524,10 +524,10 @@ static inline void hvx_gelu_f32_aa(uint8_t * restrict dst, const uint8_t * restr
 
     uint32_t i = 0;
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    для (; i < nvec; i++) {
         vdst[i] = hvx_vec_gelu_f32(vsrc[i]);
     }
-    if (nloe) {
+    если (nloe) {
         hvx_vec_store_a(&vdst[i], nloe * sizeof(float), hvx_vec_gelu_f32(vsrc[i]));
     }
 }
@@ -540,7 +540,7 @@ static __attribute__((noinline)) HVX_Vector hvx_vec_gelu_quick_f32(HVX_Vector x)
     const HVX_Vector scaled  = hvx_vec_mul_f32_f32(x, hvx_vec_splat_f32(1.702f));
     const HVX_Vector sigmoid = hvx_vec_fast_sigmoid_f32_guard(scaled, one, max_exp, min_exp);
 
-    return hvx_vec_mul_f32_f32(x, sigmoid);
+    вернуть hvx_vec_mul_f32_f32(x, sigmoid);
 }
 
 static inline void hvx_gelu_quick_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
@@ -555,10 +555,10 @@ static inline void hvx_gelu_quick_f32_aa(uint8_t * restrict dst, const uint8_t *
 
     uint32_t i = 0;
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    для (; i < nvec; i++) {
         vdst[i] = hvx_vec_gelu_quick_f32(vsrc[i]);
     }
-    if (nloe) {
+    если (nloe) {
         hvx_vec_store_a(&vdst[i], nloe * sizeof(float), hvx_vec_gelu_quick_f32(vsrc[i]));
     }
 }
@@ -569,7 +569,7 @@ static void gelu_f32(const void * restrict src,
                      const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -583,7 +583,7 @@ static void gelu_quick_f32(const void * restrict src,
                            const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -597,7 +597,7 @@ static void gelu_erf_f32(const void * restrict src,
                          const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *) src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *) dst + (ir * dst_row_size_aligned);
 
@@ -618,7 +618,7 @@ static void tri_f32(const void * restrict src,
 
     const uint32_t ne01 = uctx->octx->src[0]->ne[1];
 
-    for (uint32_t b = 0; b < num_rows; b++) {
+    для (uint32_t b = 0; b < num_rows; b++) {
         const uint32_t abs_row = ir + b;
         const uint32_t i01     = abs_row % ne01;
 
@@ -626,7 +626,7 @@ static void tri_f32(const void * restrict src,
         HVX_Vector * restrict v_dst       = (HVX_Vector *) ((uint8_t *) dst + b * dst_row_size_aligned);
 
         uint32_t boundary;
-        int      keep_left;
+        целое      keep_left;
         switch (ttype) {
             case 0: boundary = i01;     keep_left = 0; break;  // keep col >= row
             case 1: boundary = i01 + 1; keep_left = 0; break;  // keep col > row
@@ -634,27 +634,27 @@ static void tri_f32(const void * restrict src,
             case 3: boundary = i01;     keep_left = 1; break;  // keep col < row
             default: boundary = 0; keep_left = 0; break;
         }
-        if (boundary > ne0) boundary = ne0;
+        если (boundary > ne0) boundary = ne0;
 
         // Full HVX vectors - each starts at a 128-byte aligned offset
-        for (uint32_t i = 0; i < nvec; i++) {
+        для (uint32_t i = 0; i < nvec; i++) {
             const uint32_t vec_start = i * VLEN_FP32;
             const uint32_t vec_end   = vec_start + VLEN_FP32;
-            if (keep_left) {
-                if (vec_end <= boundary) {
+            если (keep_left) {
+                если (vec_end <= boundary) {
                     v_dst[i] = v_src[i];
-                } else if (vec_start >= boundary) {
+                } иначе если (vec_start >= boundary) {
                     v_dst[i] = zero;
-                } else {
+                } иначе {
                     HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - vec_start) * sizeof(float));
                     v_dst[i]            = Q6_V_vmux_QVV(mask, v_src[i], zero);
                 }
-            } else {
-                if (vec_end <= boundary) {
+            } иначе {
+                если (vec_end <= boundary) {
                     v_dst[i] = zero;
-                } else if (vec_start >= boundary) {
+                } иначе если (vec_start >= boundary) {
                     v_dst[i] = v_src[i];
-                } else {
+                } иначе {
                     HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - vec_start) * sizeof(float));
                     v_dst[i]            = Q6_V_vmux_QVV(mask, zero, v_src[i]);
                 }
@@ -662,25 +662,25 @@ static void tri_f32(const void * restrict src,
         }
 
         // Tail elements (row_elems not a multiple of VLEN_FP32)
-        if (nloe > 0) {
+        если (nloe > 0) {
             const uint32_t abs_start = nvec * VLEN_FP32;
             const uint32_t abs_end   = abs_start + nloe;
             HVX_Vector     tail_val;
-            if (keep_left) {
-                if (abs_end <= boundary) {
+            если (keep_left) {
+                если (abs_end <= boundary) {
                     tail_val = v_src[nvec];
-                } else if (abs_start >= boundary) {
+                } иначе если (abs_start >= boundary) {
                     tail_val = zero;
-                } else {
+                } иначе {
                     HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
                     tail_val            = Q6_V_vmux_QVV(mask, v_src[nvec], zero);
                 }
-            } else {
-                if (abs_end <= boundary) {
+            } иначе {
+                если (abs_end <= boundary) {
                     tail_val = zero;
-                } else if (abs_start >= boundary) {
+                } иначе если (abs_start >= boundary) {
                     tail_val = v_src[nvec];
-                } else {
+                } иначе {
                     HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
                     tail_val            = Q6_V_vmux_QVV(mask, zero, v_src[nvec]);
                 }
@@ -703,7 +703,7 @@ static inline void hvx_softplus_f32_aa(uint8_t * restrict dst, const uint8_t * r
     const uint32_t nloe = n % VLEN_FP32;
 
     #pragma unroll(4)
-    for (uint32_t i = 0; i < nvec; i++) {
+    для (uint32_t i = 0; i < nvec; i++) {
         HVX_Vector x              = v_src[i];
         HVX_VectorPred pred_gt20  = Q6_Q_vcmp_gt_VsfVsf(x, twenty);
         HVX_Vector expx           = hvx_vec_exp_f32(x);
@@ -711,7 +711,7 @@ static inline void hvx_softplus_f32_aa(uint8_t * restrict dst, const uint8_t * r
         v_dst[i]                  = Q6_V_vmux_QVV(pred_gt20, x, logv);
     }
 
-    if (nloe > 0) {
+    если (nloe > 0) {
         HVX_Vector x             = v_src[nvec];
         HVX_VectorPred pred_gt20 = Q6_Q_vcmp_gt_VsfVsf(x, twenty);
         HVX_Vector expx          = hvx_vec_exp_f32(x);
@@ -727,7 +727,7 @@ static void softplus_f32(const void * restrict src,
                          const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -743,7 +743,7 @@ static void l2_norm_f32(const void * restrict src,
     float epsilon = 0.f;
     memcpy(&epsilon, op_params, sizeof(float));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_f = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_f       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -755,7 +755,7 @@ static inline HVX_VectorPair hvx_fwht_stage_pair(HVX_Vector v0, HVX_Vector v1, i
     HVX_VectorPair p = Q6_W_vshuff_VVR(v1, v0, b);
     HVX_Vector s = Q6_Vqf32_vadd_Vqf32Vqf32(Q6_V_lo_W(p), Q6_V_hi_W(p));
     HVX_Vector d = Q6_Vqf32_vsub_Vqf32Vqf32(Q6_V_lo_W(p), Q6_V_hi_W(p));
-    return Q6_W_vshuff_VVR(d, s, b);
+    вернуть Q6_W_vshuff_VVR(d, s, b);
 }
 
 static inline HVX_VectorPair hvx_fwht32_pair(HVX_Vector v0_sf, HVX_Vector v1_sf, HVX_Vector v_scale) {
@@ -767,7 +767,7 @@ static inline HVX_VectorPair hvx_fwht32_pair(HVX_Vector v0_sf, HVX_Vector v1_sf,
     p = hvx_fwht_stage_pair(Q6_V_lo_W(p), Q6_V_hi_W(p), 16);
     p = hvx_fwht_stage_pair(Q6_V_lo_W(p), Q6_V_hi_W(p), 32);
     p = hvx_fwht_stage_pair(Q6_V_lo_W(p), Q6_V_hi_W(p), 64);
-    return p;
+    вернуть p;
 }
 
 static inline void hvx_fwht_store32(HVX_Vector * restrict v_dst, HVX_VectorPair p) {
@@ -783,10 +783,10 @@ static inline void hvx_fwht_store64(HVX_Vector * restrict v_dst, HVX_VectorPair 
 
 static inline void hvx_fwht_tail_f32(HVX_Vector * restrict v_dst, uint32_t nvec) {
     uint32_t len_vec = 2;
-    for (; len_vec * 2 < nvec; len_vec <<= 2) {
+    для (; len_vec * 2 < nvec; len_vec <<= 2) {
         const uint32_t step = len_vec * 4;
-        for (uint32_t i = 0; i < nvec; i += step) {
-            for (uint32_t j = 0; j < len_vec; j++) {
+        для (uint32_t i = 0; i < nvec; i += step) {
+            для (uint32_t j = 0; j < len_vec; j++) {
                 HVX_Vector a0 = v_dst[i + j];
                 HVX_Vector a1 = v_dst[i + j + len_vec];
                 HVX_Vector a2 = v_dst[i + j + 2 * len_vec];
@@ -805,9 +805,9 @@ static inline void hvx_fwht_tail_f32(HVX_Vector * restrict v_dst, uint32_t nvec)
         }
     }
 
-    if (len_vec < nvec) {
-        for (uint32_t i = 0; i < nvec; i += 2 * len_vec) {
-            for (uint32_t j = 0; j < len_vec; j++) {
+    если (len_vec < nvec) {
+        для (uint32_t i = 0; i < nvec; i += 2 * len_vec) {
+            для (uint32_t j = 0; j < len_vec; j++) {
                 HVX_Vector u = v_dst[i + j];
                 HVX_Vector v = v_dst[i + len_vec + j];
                 v_dst[i + j]           = hvx_vec_add_f32_f32(u, v);
@@ -822,13 +822,13 @@ static inline void hvx_fwht_row_f32(const uint8_t * restrict src, uint8_t * rest
     HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
     const uint32_t nvec               = n / VLEN_FP32;
 
-    if (nvec == 1) {
+    если (nvec == 1) {
         HVX_VectorPair p = hvx_fwht32_pair(v_src[0], v_src[0], v_scale);
         hvx_fwht_store32(v_dst, p);
-        return;
+        вернуть;
     }
 
-    for (uint32_t i = 0; i < nvec; i += 2) {
+    для (uint32_t i = 0; i < nvec; i += 2) {
         HVX_VectorPair p = hvx_fwht32_pair(v_src[i], v_src[i + 1], v_scale);
         hvx_fwht_store64(&v_dst[i], p);
     }
@@ -841,15 +841,15 @@ static inline void hvx_fwht_row_f16(const uint8_t * restrict src, uint8_t * rest
     HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
     const uint32_t nvec               = n / VLEN_FP32;
 
-    if (nvec == 1) {
+    если (nvec == 1) {
         HVX_Vector v0 = Q6_V_lo_W(hvx_vec_f16_to_f32(v_src[0]));
         HVX_VectorPair p = hvx_fwht32_pair(v0, v0, v_scale);
         hvx_fwht_store32(v_dst, p);
-        return;
+        вернуть;
     }
 
     const uint32_t nvec_f16 = n / VLEN_FP16;
-    for (uint32_t i = 0; i < nvec_f16; i++) {
+    для (uint32_t i = 0; i < nvec_f16; i++) {
         HVX_VectorPair f32p = hvx_vec_f16_to_f32(v_src[i]);
         HVX_VectorPair p    = hvx_fwht32_pair(Q6_V_lo_W(f32p), Q6_V_hi_W(f32p), v_scale);
         hvx_fwht_store64(&v_dst[2 * i], p);
@@ -865,7 +865,7 @@ static void hadamard_f32(const void * restrict src,
     htp_unary_op_preamble;
     const HVX_Vector v_scale = hvx_vec_splat_f32(1.0f / sqrtf((float) ne0));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_row = (const uint8_t *) src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_row       = (uint8_t *) dst + (ir * dst_row_size_aligned);
 
@@ -880,7 +880,7 @@ static void hadamard_f16(const void * restrict src,
     htp_unary_op_preamble;
     const HVX_Vector v_scale = hvx_vec_splat_f32(1.0f / sqrtf((float) ne0));
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_row = (const uint8_t *) src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_row       = (uint8_t *) dst + (ir * dst_row_size_aligned);
 
@@ -894,7 +894,7 @@ static void tanh_f32(const void * restrict src,
                      const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -908,7 +908,7 @@ static void abs_f32(const void * restrict src,
                     const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -922,7 +922,7 @@ static void relu_f32(const void * restrict src,
                      const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -936,7 +936,7 @@ static void step_f32(const void * restrict src,
                      const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -950,7 +950,7 @@ static void log_f32(const void * restrict src,
                     const struct htp_unary_context * uctx) {
     htp_unary_op_preamble;
 
-    for (uint32_t ir = 0; ir < num_rows; ir++) {
+    для (uint32_t ir = 0; ir < num_rows; ir++) {
         const uint8_t * restrict src_local = (const uint8_t *)src + (ir * src0_row_size_aligned);
         uint8_t * restrict dst_local       = (uint8_t *)dst + (ir * dst_row_size_aligned);
 
@@ -1065,7 +1065,7 @@ static void tri_apply_tile_f32(const void * restrict src, void * restrict dst,
     const HVX_Vector zero = hvx_vec_splat_f32(0.0f);
 
     uint32_t boundary;
-    int      keep_left;
+    целое      keep_left;
     switch (ttype) {
         case 0: boundary = i01;     keep_left = 0; break;
         case 1: boundary = i01 + 1; keep_left = 0; break;
@@ -1073,54 +1073,54 @@ static void tri_apply_tile_f32(const void * restrict src, void * restrict dst,
         case 3: boundary = i01;     keep_left = 1; break;
         default: boundary = 0; keep_left = 0; break;
     }
-    if (boundary > ne0) boundary = ne0;
+    если (boundary > ne0) boundary = ne0;
 
     const uint32_t nvec = tile_elems / VLEN_FP32;
     const uint32_t nloe = tile_elems % VLEN_FP32;
 
-    for (uint32_t i = 0; i < nvec; i++) {
+    для (uint32_t i = 0; i < nvec; i++) {
         const uint32_t abs_start = col_start + i * VLEN_FP32;
         const uint32_t abs_end   = abs_start + VLEN_FP32;
-        if (keep_left) {
-            if (abs_end <= boundary) {
+        если (keep_left) {
+            если (abs_end <= boundary) {
                 v_dst[i] = v_src[i];
-            } else if (abs_start >= boundary) {
+            } иначе если (abs_start >= boundary) {
                 v_dst[i] = zero;
-            } else {
+            } иначе {
                 HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
                 v_dst[i]            = Q6_V_vmux_QVV(mask, v_src[i], zero);
             }
-        } else {
-            if (abs_end <= boundary) {
+        } иначе {
+            если (abs_end <= boundary) {
                 v_dst[i] = zero;
-            } else if (abs_start >= boundary) {
+            } иначе если (abs_start >= boundary) {
                 v_dst[i] = v_src[i];
-            } else {
+            } иначе {
                 HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
                 v_dst[i]            = Q6_V_vmux_QVV(mask, zero, v_src[i]);
             }
         }
     }
 
-    if (nloe > 0) {
+    если (nloe > 0) {
         const uint32_t abs_start = col_start + nvec * VLEN_FP32;
         const uint32_t abs_end   = abs_start + nloe;
         HVX_Vector     tail_val;
-        if (keep_left) {
-            if (abs_end <= boundary) {
+        если (keep_left) {
+            если (abs_end <= boundary) {
                 tail_val = v_src[nvec];
-            } else if (abs_start >= boundary) {
+            } иначе если (abs_start >= boundary) {
                 tail_val = zero;
-            } else {
+            } иначе {
                 HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
                 tail_val            = Q6_V_vmux_QVV(mask, v_src[nvec], zero);
             }
-        } else {
-            if (abs_end <= boundary) {
+        } иначе {
+            если (abs_end <= boundary) {
                 tail_val = zero;
-            } else if (abs_start >= boundary) {
+            } иначе если (abs_start >= boundary) {
                 tail_val = v_src[nvec];
-            } else {
+            } иначе {
                 HVX_VectorPred mask = Q6_Q_vsetq_R((boundary - abs_start) * sizeof(float));
                 tail_val            = Q6_V_vmux_QVV(mask, zero, v_src[nvec]);
             }
@@ -1130,7 +1130,7 @@ static void tri_apply_tile_f32(const void * restrict src, void * restrict dst,
 }
 
 // 1. Standard row-block unary task (F32 and F16).
-static void unary_thread_row_block(unsigned int nth, unsigned int ith, void * data) {
+static void unary_thread_row_block(unsigned целое nth, unsigned целое ith, void * data) {
     (void) nth;
     const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
     struct htp_ops_context * octx = uctx->octx;
@@ -1150,8 +1150,8 @@ static void unary_thread_row_block(unsigned int nth, unsigned int ith, void * da
     const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
     const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    если (src0_start_row >= src0_end_row) {
+        вернуть;
     }
 
     const dma_addr_t data_src = uctx->data_src0;
@@ -1175,15 +1175,15 @@ static void unary_thread_row_block(unsigned int nth, unsigned int ith, void * da
     const uint32_t src0_max_block = src0_contig ? uctx->block : MIN((uint32_t)uctx->block, ne01);
     const uint32_t dst_max_block  = dst_contig  ? uctx->block : MIN((uint32_t)uctx->block, ne1);
     const uint32_t BLOCK = MIN(src0_max_block, dst_max_block);
-    if (BLOCK == 0) {
+    если (BLOCK == 0) {
         FARF(ERROR, "unary-row-block : current VTCM reservation %zu is too small, needed at least %zu\n",
              uctx->vtcm_src0_size_per_thread, src0_row_size_aligned);
-        return;
+        вернуть;
     }
 
     dma_queue * dma_q = octx->ctx->dma[ith];
 
-    for (uint32_t ir = src0_start_row, vtcm_idx = 0; ir < src0_end_row && vtcm_idx < 2; vtcm_idx++) {
+    для (uint32_t ir = src0_start_row, vtcm_idx = 0; ir < src0_end_row && vtcm_idx < 2; vtcm_idx++) {
         const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, src0_contig, dst_contig,
                                                      ne01, div_ne01);
 
@@ -1202,7 +1202,7 @@ static void unary_thread_row_block(unsigned int nth, unsigned int ith, void * da
 
     unary_compute_fn_t compute = (unary_compute_fn_t) uctx->compute;
 
-    for (uint32_t ir = src0_start_row; ir < src0_end_row; ) {
+    для (uint32_t ir = src0_start_row; ir < src0_end_row; ) {
         const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, src0_contig, dst_contig,
                                                      ne01, div_ne01);
 
@@ -1220,11 +1220,11 @@ static void unary_thread_row_block(unsigned int nth, unsigned int ith, void * da
             nb1, dst_row_size_aligned, dst_data_row_size, block_size);
 
         const uint32_t next_ir = ir + block_size;
-        if (next_ir < src0_end_row) {
+        если (next_ir < src0_end_row) {
             const uint32_t next_block_size = unary_block_size(next_ir, src0_end_row, BLOCK, src0_contig,
                                                               dst_contig, ne01, div_ne01);
             const uint32_t pref_ir = next_ir + next_block_size;
-            if (pref_ir < src0_end_row) {
+            если (pref_ir < src0_end_row) {
                 const uint32_t pref_block_size = unary_block_size(pref_ir, src0_end_row, BLOCK, src0_contig,
                                                                   dst_contig, ne01, div_ne01);
                 const size_t src0_pref_off = src0_contig ? (pref_ir * nb01) :
@@ -1241,7 +1241,7 @@ static void unary_thread_row_block(unsigned int nth, unsigned int ith, void * da
 }
 
 // 2. RMS_NORM_MUL row-block task with weight buffer.
-static void unary_thread_rms_norm_mul_f32(unsigned int nth, unsigned int ith, void * data) {
+static void unary_thread_rms_norm_mul_f32(unsigned целое nth, unsigned целое ith, void * data) {
     (void) nth;
     const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
     struct htp_ops_context * octx = uctx->octx;
@@ -1261,8 +1261,8 @@ static void unary_thread_rms_norm_mul_f32(unsigned int nth, unsigned int ith, vo
     const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
     const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    если (src0_start_row >= src0_end_row) {
+        вернуть;
     }
 
     const dma_addr_t data_src  = uctx->data_src0;
@@ -1302,21 +1302,21 @@ static void unary_thread_rms_norm_mul_f32(unsigned int nth, unsigned int ith, vo
     const uint32_t src0_max_block = block_src0_contig ? uctx->block : MIN((uint32_t)uctx->block, ne01);
     const uint32_t dst_max_block  = block_dst_contig  ? uctx->block : MIN((uint32_t)uctx->block, ne1);
     const uint32_t BLOCK = MIN(src0_max_block, dst_max_block);
-    if (BLOCK == 0) {
+    если (BLOCK == 0) {
         FARF(ERROR, "unary-rms-norm-mul : current VTCM reservation %zu is too small, needed at least %zu\n",
              uctx->vtcm_src0_size_per_thread, src0_row_size_aligned);
-        return;
+        вернуть;
     }
 
     dma_queue * dma_q = octx->ctx->dma[ith];
 
-    if (uctx->broadcast_weight) {
+    если (uctx->broadcast_weight) {
         dma_queue_push(dma_q, dma_make_data(src1_vtcm_data, data_src1),
                        uctx->src1_row_size_aligned, 0, uctx->src1_data_row_size, 1);
         dma_queue_flush(dma_q);
     }
 
-    for (uint32_t ir = src0_start_row, vtcm_idx = 0; ir < src0_end_row && vtcm_idx < 2; vtcm_idx++) {
+    для (uint32_t ir = src0_start_row, vtcm_idx = 0; ir < src0_end_row && vtcm_idx < 2; vtcm_idx++) {
         const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, block_src0_contig, block_dst_contig,
                                                      ne01, div_ne01);
 
@@ -1330,7 +1330,7 @@ static void unary_thread_rms_norm_mul_f32(unsigned int nth, unsigned int ith, vo
             dma_make_data(src0_vtcm_data + (vtcm_idx * src0_vtcm_half_size), data_src + src0_off),
             src0_row_size_aligned, nb01, src0_data_row_size, block_size);
 
-        if (!uctx->broadcast_weight) {
+        если (!uctx->broadcast_weight) {
             const size_t src1_off = src1_contig ? (ir * nb11) :
                 unary_row_offset(ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb11_bc, nb12_bc, nb13_bc);
             dma_queue_push(dma_q,
@@ -1343,14 +1343,14 @@ static void unary_thread_rms_norm_mul_f32(unsigned int nth, unsigned int ith, vo
 
     unary_rms_norm_mul_compute_fn_t compute = (unary_rms_norm_mul_compute_fn_t) uctx->compute;
 
-    for (uint32_t ir = src0_start_row; ir < src0_end_row; ) {
+    для (uint32_t ir = src0_start_row; ir < src0_end_row; ) {
         const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, block_src0_contig, block_dst_contig,
                                                      ne01, div_ne01);
 
         void * dst_vtcm  = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
         void * src0_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
         void * src1_vtcm = NULL;
-        if (!uctx->broadcast_weight) {
+        если (!uctx->broadcast_weight) {
             src1_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
         }
 
@@ -1366,11 +1366,11 @@ static void unary_thread_rms_norm_mul_f32(unsigned int nth, unsigned int ith, vo
             nb1, dst_row_size_aligned, dst_data_row_size, block_size);
 
         const uint32_t next_ir = ir + block_size;
-        if (next_ir < src0_end_row) {
+        если (next_ir < src0_end_row) {
             const uint32_t next_block_size = unary_block_size(next_ir, src0_end_row, BLOCK, block_src0_contig,
                                                               block_dst_contig, ne01, div_ne01);
             const uint32_t pref_ir = next_ir + next_block_size;
-            if (pref_ir < src0_end_row) {
+            если (pref_ir < src0_end_row) {
                 const uint32_t pref_block_size = unary_block_size(pref_ir, src0_end_row, BLOCK, block_src0_contig,
                                                                   block_dst_contig, ne01, div_ne01);
                 const size_t src0_pref_off = src0_contig ? (pref_ir * nb01) :
@@ -1379,7 +1379,7 @@ static void unary_thread_rms_norm_mul_f32(unsigned int nth, unsigned int ith, vo
                     dma_make_data(src0_vtcm, data_src + src0_pref_off),
                     src0_row_size_aligned, nb01, src0_data_row_size, pref_block_size);
 
-                if (!uctx->broadcast_weight) {
+                если (!uctx->broadcast_weight) {
                     const size_t src1_pref_off = src1_contig ? (pref_ir * nb11) :
                         unary_row_offset(pref_ir, ne01, ne02, div_ne01, div_ne02, div_ne012, nb11_bc, nb12_bc,
                                           nb13_bc);
@@ -1396,7 +1396,7 @@ static void unary_thread_rms_norm_mul_f32(unsigned int nth, unsigned int ith, vo
 }
 
 // 3. TRI row-block task with row index ir.
-static void unary_thread_tri_f32(unsigned int nth, unsigned int ith, void * data) {
+static void unary_thread_tri_f32(unsigned целое nth, unsigned целое ith, void * data) {
     (void) nth;
     const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
     struct htp_ops_context * octx = uctx->octx;
@@ -1416,8 +1416,8 @@ static void unary_thread_tri_f32(unsigned int nth, unsigned int ith, void * data
     const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
     const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    если (src0_start_row >= src0_end_row) {
+        вернуть;
     }
 
     const dma_addr_t data_src = uctx->data_src0;
@@ -1441,15 +1441,15 @@ static void unary_thread_tri_f32(unsigned int nth, unsigned int ith, void * data
     const uint32_t src0_max_block = src0_contig ? uctx->block : MIN((uint32_t)uctx->block, ne01);
     const uint32_t dst_max_block  = dst_contig  ? uctx->block : MIN((uint32_t)uctx->block, ne1);
     const uint32_t BLOCK = MIN(src0_max_block, dst_max_block);
-    if (BLOCK == 0) {
+    если (BLOCK == 0) {
         FARF(ERROR, "unary-tri : current VTCM reservation %zu is too small, needed at least %zu\n",
              uctx->vtcm_src0_size_per_thread, src0_row_size_aligned);
-        return;
+        вернуть;
     }
 
     dma_queue * dma_q = octx->ctx->dma[ith];
 
-    for (uint32_t ir = src0_start_row, vtcm_idx = 0; ir < src0_end_row && vtcm_idx < 2; vtcm_idx++) {
+    для (uint32_t ir = src0_start_row, vtcm_idx = 0; ir < src0_end_row && vtcm_idx < 2; vtcm_idx++) {
         const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, src0_contig, dst_contig,
                                                      ne01, div_ne01);
 
@@ -1468,7 +1468,7 @@ static void unary_thread_tri_f32(unsigned int nth, unsigned int ith, void * data
 
     unary_tri_compute_fn_t compute = (unary_tri_compute_fn_t) uctx->compute;
 
-    for (uint32_t ir = src0_start_row; ir < src0_end_row; ) {
+    для (uint32_t ir = src0_start_row; ir < src0_end_row; ) {
         const uint32_t block_size = unary_block_size(ir, src0_end_row, BLOCK, src0_contig, dst_contig,
                                                      ne01, div_ne01);
 
@@ -1486,11 +1486,11 @@ static void unary_thread_tri_f32(unsigned int nth, unsigned int ith, void * data
             nb1, dst_row_size_aligned, dst_data_row_size, block_size);
 
         const uint32_t next_ir = ir + block_size;
-        if (next_ir < src0_end_row) {
+        если (next_ir < src0_end_row) {
             const uint32_t next_block_size = unary_block_size(next_ir, src0_end_row, BLOCK, src0_contig,
                                                               dst_contig, ne01, div_ne01);
             const uint32_t pref_ir = next_ir + next_block_size;
-            if (pref_ir < src0_end_row) {
+            если (pref_ir < src0_end_row) {
                 const uint32_t pref_block_size = unary_block_size(pref_ir, src0_end_row, BLOCK, src0_contig,
                                                                   dst_contig, ne01, div_ne01);
                 const size_t src0_pref_off = src0_contig ? (pref_ir * nb01) :
@@ -1507,7 +1507,7 @@ static void unary_thread_tri_f32(unsigned int nth, unsigned int ith, void * data
 }
 
 // 4. Pointwise tiled unary task.
-static void unary_thread_tiled(unsigned int nth, unsigned int ith, void * data) {
+static void unary_thread_tiled(unsigned целое nth, unsigned целое ith, void * data) {
     (void) nth;
     const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
     struct htp_ops_context * octx = uctx->octx;
@@ -1524,8 +1524,8 @@ static void unary_thread_tiled(unsigned int nth, unsigned int ith, void * data) 
     const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
     const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    если (src0_start_row >= src0_end_row) {
+        вернуть;
     }
 
     const dma_addr_t data_src = uctx->data_src0;
@@ -1553,7 +1553,7 @@ static void unary_thread_tiled(unsigned int nth, unsigned int ith, void * data) 
 
     const uint32_t total_tiles = (src0_end_row - src0_start_row) * tiles_per_row;
 
-    for (uint32_t t = 0, vtcm_idx = 0; t < total_tiles && vtcm_idx < 2; t++, vtcm_idx++) {
+    для (uint32_t t = 0, vtcm_idx = 0; t < total_tiles && vtcm_idx < 2; t++, vtcm_idx++) {
         const uint32_t row  = src0_start_row + t / tiles_per_row;
         const uint32_t col  = (t % tiles_per_row) * col_tile;
         const uint32_t tw   = MIN(col_tile, ne0 - col);
@@ -1576,7 +1576,7 @@ static void unary_thread_tiled(unsigned int nth, unsigned int ith, void * data) 
     uint32_t pcol = fastmodulo(2, tiles_per_row, div_tpr) * col_tile;
     uint32_t ptile_in_row = fastmodulo(2, tiles_per_row, div_tpr);
 
-    for (uint32_t t = 0; t < total_tiles; t++) {
+    для (uint32_t t = 0; t < total_tiles; t++) {
         void * dst_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
         void * src_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
 
@@ -1593,7 +1593,7 @@ static void unary_thread_tiled(unsigned int nth, unsigned int ith, void * data) 
         dma_queue_push(dma_q, dma_make_data(data_dst + doff, dst_vtcm), tb, tb, tb, 1);
 
         const uint32_t pt = t + 2;
-        if (pt < total_tiles) {
+        если (pt < total_tiles) {
             const uint32_t ptw  = MIN(col_tile, ne0 - pcol);
             const size_t   ptb  = (size_t) ptw * sizeof(float);
             const size_t   psoff = (src0_contig ? (prow * nb01) :
@@ -1605,7 +1605,7 @@ static void unary_thread_tiled(unsigned int nth, unsigned int ith, void * data) 
 
         tile_in_row++;
         col += col_tile;
-        if (tile_in_row == tiles_per_row) {
+        если (tile_in_row == tiles_per_row) {
             tile_in_row = 0;
             col = 0;
             row++;
@@ -1613,7 +1613,7 @@ static void unary_thread_tiled(unsigned int nth, unsigned int ith, void * data) 
 
         ptile_in_row++;
         pcol += col_tile;
-        if (ptile_in_row == tiles_per_row) {
+        если (ptile_in_row == tiles_per_row) {
             ptile_in_row = 0;
             pcol = 0;
             prow++;
@@ -1624,7 +1624,7 @@ static void unary_thread_tiled(unsigned int nth, unsigned int ith, void * data) 
 }
 
 // 5. TRI tiled task.
-static void unary_thread_tiled_tri_f32(unsigned int nth, unsigned int ith, void * data) {
+static void unary_thread_tiled_tri_f32(unsigned целое nth, unsigned целое ith, void * data) {
     (void) nth;
     const struct htp_unary_context * uctx = (const struct htp_unary_context *) data;
     struct htp_ops_context * octx = uctx->octx;
@@ -1642,8 +1642,8 @@ static void unary_thread_tiled_tri_f32(unsigned int nth, unsigned int ith, void 
     const uint32_t src0_start_row = uctx->row_start + src0_nrows_per_thread * ith;
     const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, uctx->row_start + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    если (src0_start_row >= src0_end_row) {
+        вернуть;
     }
 
     const dma_addr_t data_src = uctx->data_src0;
@@ -1672,7 +1672,7 @@ static void unary_thread_tiled_tri_f32(unsigned int nth, unsigned int ith, void 
 
     const uint32_t total_tiles = (src0_end_row - src0_start_row) * tiles_per_row;
 
-    for (uint32_t t = 0, vtcm_idx = 0; t < total_tiles && vtcm_idx < 2; t++, vtcm_idx++) {
+    для (uint32_t t = 0, vtcm_idx = 0; t < total_tiles && vtcm_idx < 2; t++, vtcm_idx++) {
         const uint32_t row  = src0_start_row + t / tiles_per_row;
         const uint32_t col  = (t % tiles_per_row) * col_tile;
         const uint32_t tw   = MIN(col_tile, ne0 - col);
@@ -1696,7 +1696,7 @@ static void unary_thread_tiled_tri_f32(unsigned int nth, unsigned int ith, void 
     uint32_t pcol = fastmodulo(2, tiles_per_row, div_tpr) * col_tile;
     uint32_t ptile_in_row = fastmodulo(2, tiles_per_row, div_tpr);
 
-    for (uint32_t t = 0; t < total_tiles; t++) {
+    для (uint32_t t = 0; t < total_tiles; t++) {
         void * dst_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
         void * src_vtcm = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
 
@@ -1713,7 +1713,7 @@ static void unary_thread_tiled_tri_f32(unsigned int nth, unsigned int ith, void 
         dma_queue_push(dma_q, dma_make_data(data_dst + doff, dst_vtcm), tb, tb, tb, 1);
 
         const uint32_t pt = t + 2;
-        if (pt < total_tiles) {
+        если (pt < total_tiles) {
             const uint32_t ptw  = MIN(col_tile, ne0 - pcol);
             const size_t   ptb  = (size_t) ptw * sizeof(float);
             const size_t   psoff = (src0_contig ? (prow * nb01) :
@@ -1725,19 +1725,19 @@ static void unary_thread_tiled_tri_f32(unsigned int nth, unsigned int ith, void 
 
         tile_in_row++;
         col += col_tile;
-        if (tile_in_row == tiles_per_row) {
+        если (tile_in_row == tiles_per_row) {
             tile_in_row = 0;
             col = 0;
             row++;
             i01++;
-            if (i01 == ne01) {
+            если (i01 == ne01) {
                 i01 = 0;
             }
         }
 
         ptile_in_row++;
         pcol += col_tile;
-        if (ptile_in_row == tiles_per_row) {
+        если (ptile_in_row == tiles_per_row) {
             ptile_in_row = 0;
             pcol = 0;
             prow++;
@@ -1747,8 +1747,8 @@ static void unary_thread_tiled_tri_f32(unsigned int nth, unsigned int ith, void 
     dma_queue_flush(dma_q);
 }
 
-static int execute_op_unary(struct htp_ops_context * octx) {
-    int err = HTP_STATUS_OK;
+static целое execute_op_unary(struct htp_ops_context * octx) {
+    целое err = HTP_STATUS_OK;
 
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst  = octx->dst;
@@ -1784,12 +1784,12 @@ static int execute_op_unary(struct htp_ops_context * octx) {
         case HTP_OP_HADAMARD:        op_type = is_f16 ? "hadamard-f16" : "hadamard-f32";     break;
         default:
             FARF(ERROR, "Unsupported unary Op %u\n", octx->op);
-            return HTP_STATUS_NO_SUPPORT;
+            вернуть HTP_STATUS_NO_SUPPORT;
     }
 
     // F16 only has row-block kernels for this subset of ops (see the dispatch switch
     // below) - reject everything else up front, before touching kparams/VTCM.
-    if (is_f16) {
+    если (is_f16) {
         switch (octx->op) {
             case HTP_OP_NORM:
             case HTP_OP_RMS_NORM:
@@ -1805,14 +1805,14 @@ static int execute_op_unary(struct htp_ops_context * octx) {
                 break;
             default:
                 FARF(ERROR, "unary-%s: not supported for F16\n", op_type);
-                return HTP_STATUS_NO_SUPPORT;
+                вернуть HTP_STATUS_NO_SUPPORT;
         }
     }
 
     const struct htp_unary_kernel_params * kparams = (const struct htp_unary_kernel_params *) octx->kernel_params;
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    если (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        вернуть HTP_STATUS_INVAL_PARAMS;
     }
 
     const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
@@ -1824,7 +1824,7 @@ static int execute_op_unary(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    если (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, (uint32_t) dst_elem_size, (uint32_t) dst_data_row_size, &rows_per_chunk);
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
@@ -1832,8 +1832,8 @@ static int execute_op_unary(struct htp_ops_context * octx) {
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    если (nrows == 0) {
+        вернуть HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -1852,14 +1852,14 @@ static int execute_op_unary(struct htp_ops_context * octx) {
 
     // RMS_NORM_MUL fusion is F32-only (its weight tensor is always F32; see
     // try_fuse_node()'s type guard), so this never triggers when is_f16 is true.
-    if (octx->op == HTP_OP_RMS_NORM_MUL) {
+    если (octx->op == HTP_OP_RMS_NORM_MUL) {
         src1 = octx->src[1];
         src1_data_row_size = src1->ne[0] * sizeof(float);
     }
 
-    if (octx->ctx->vtcm_size < (size_t)kparams->vtcm_size) {
+    если (octx->ctx->vtcm_size < (size_t)kparams->vtcm_size) {
         FARF(ERROR, "unary-%s : current VTCM reservation %zu is too small, needed %zu\n", op_type, octx->ctx->vtcm_size, (size_t)kparams->vtcm_size);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        вернуть HTP_STATUS_VTCM_TOO_SMALL;
     }
 
     octx->src0_spad.src = NULL;
@@ -1913,7 +1913,7 @@ static int execute_op_unary(struct htp_ops_context * octx) {
     worker_callback_t task_func = NULL;
     void * compute_func = NULL;
 
-    if (col_tile) {
+    если (col_tile) {
         task_func = unary_thread_tiled;
         switch (octx->op) {
             case HTP_OP_SCALE:           compute_func = (void *) tile_scale_f32;          break;
@@ -1940,7 +1940,7 @@ static int execute_op_unary(struct htp_ops_context * octx) {
                 break;
             default:                     break;
         }
-    } else if (is_f16) {
+    } иначе если (is_f16) {
         task_func = unary_thread_row_block;
         switch (octx->op) {
             case HTP_OP_NORM:            compute_func = (void *) norm_f16;                break;
@@ -1956,7 +1956,7 @@ static int execute_op_unary(struct htp_ops_context * octx) {
             case HTP_OP_HADAMARD:        compute_func = (void *) hadamard_f16;            break;
             default:                     break;
         }
-    } else {
+    } иначе {
         task_func = unary_thread_row_block;
         switch (octx->op) {
             case HTP_OP_NORM:            compute_func = (void *) norm_f32;                break;
@@ -1993,24 +1993,24 @@ static int execute_op_unary(struct htp_ops_context * octx) {
         }
     }
 
-    if (!task_func || !compute_func) {
+    если (!task_func || !compute_func) {
         FARF(ERROR, "execute_op_unary: task function is NULL for op %d\n", octx->op);
-        return HTP_STATUS_NO_SUPPORT;
+        вернуть HTP_STATUS_NO_SUPPORT;
     }
 
     uctx.compute = compute_func;
     work_queue_run(octx->ctx->work_queue, task_func, &uctx, n_threads);
 
-    return err;
+    вернуть err;
 }
 
-int op_unary(struct htp_ops_context * octx) {
+целое op_unary(struct htp_ops_context * octx) {
     switch (octx->src[0]->type) {
         case HTP_TYPE_F32:
         case HTP_TYPE_F16:
-            return execute_op_unary(octx);
+            вернуть execute_op_unary(octx);
 
         default:
-            return HTP_STATUS_NO_SUPPORT;
+            вернуть HTP_STATUS_NO_SUPPORT;
     }
 }

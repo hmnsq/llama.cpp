@@ -4,17 +4,17 @@
 
 #include <vulkan/vulkan_core.h>
 
-#if defined(GGML_VULKAN_RUN_TESTS) || defined(GGML_VULKAN_CHECK_RESULTS)
+#если defined(GGML_VULKAN_RUN_TESTS) || defined(GGML_VULKAN_CHECK_RESULTS)
 #include <chrono>
 #include "ggml-cpu.h"
 #endif
 
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 
-#if VK_HEADER_VERSION >= 301
+#если VK_HEADER_VERSION >= 301
 namespace vk::detail { class DispatchLoaderDynamic; }
 using vk::detail::DispatchLoaderDynamic;
-#else
+#иначе
 namespace vk { class DispatchLoaderDynamic; }
 using vk::DispatchLoaderDynamic;
 #endif
@@ -36,13 +36,13 @@ typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
 } VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV;
 #endif
 
-#if __has_include(<spirv/unified1/spirv.hpp>)
+#если __has_include(<spirv/unified1/spirv.hpp>)
 #    include <spirv/unified1/spirv.hpp>
 #elif __has_include(<spirv-headers/spirv.hpp>)
 #    include <spirv-headers/spirv.hpp>
 #elif __has_include(<spirv.hpp>)
 #    include <spirv.hpp>
-#else
+#иначе
      // Fallback to let the compiler throw a standard "file not found" error
 #    include <spirv/unified1/spirv.hpp>
 #endif
@@ -68,25 +68,25 @@ typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
 #include <condition_variable>
 #include <thread>
 
-#if defined(_MSC_VER)
+#если defined(_MSC_VER)
 # define NOMINMAX 1
 # include <windows.h>
 # define YIELD() YieldProcessor()
 #elif defined(__clang__) || defined(__GNUC__)
-# if defined(__x86_64__) ||defined(__i386__)
+# если defined(__x86_64__) ||defined(__i386__)
 #  include <immintrin.h>
 #  define YIELD() _mm_pause()
 # elif defined(__arm__) || defined(__aarch64__)
-#  if defined(__clang__)
+#  если defined(__clang__)
 #   include <arm_acle.h>
 #   define YIELD() __yield()
-#  else
+#  иначе
 #   define YIELD() asm volatile("yield")
 #  endif
 # endif
 #endif
 
-#if !defined(YIELD)
+#если !defined(YIELD)
 #define YIELD()
 #endif
 
@@ -94,7 +94,7 @@ typedef struct VkPhysicalDeviceCooperativeMatrixDecodeVectorFeaturesNV {
 #include "ggml-backend-impl.h"
 #include "ggml-vulkan-shaders.hpp"
 
-#if !defined(VK_KHR_shader_bfloat16)
+#если !defined(VK_KHR_shader_bfloat16)
 
 #define VK_KHR_shader_bfloat16 1
 #define VK_KHR_SHADER_BFLOAT16_SPEC_VERSION                          1
@@ -111,7 +111,7 @@ typedef struct VkPhysicalDeviceShaderBfloat16FeaturesKHR {
 } VkPhysicalDeviceShaderBfloat16FeaturesKHR;
 #endif
 
-#if !defined(VK_VALVE_shader_mixed_float_dot_product)
+#если !defined(VK_VALVE_shader_mixed_float_dot_product)
 #define VK_VALVE_shader_mixed_float_dot_product 1
 #define VK_VALVE_SHADER_MIXED_FLOAT_DOT_PRODUCT_SPEC_VERSION 1
 #define VK_VALVE_SHADER_MIXED_FLOAT_DOT_PRODUCT_EXTENSION_NAME "VK_VALVE_shader_mixed_float_dot_product"
@@ -126,7 +126,7 @@ typedef struct VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE {
 } VkPhysicalDeviceShaderMixedFloatDotProductFeaturesVALVE;
 #endif
 
-#if !defined(VK_EXT_shader_ocp_microscaling_types)
+#если !defined(VK_EXT_shader_ocp_microscaling_types)
 #define VK_EXT_shader_ocp_microscaling_types 1
 #define VK_EXT_SHADER_OCP_MICROSCALING_TYPES_SPEC_VERSION 1
 #define VK_EXT_SHADER_OCP_MICROSCALING_TYPES_EXTENSION_NAME "VK_EXT_shader_ocp_microscaling_types"
@@ -141,7 +141,7 @@ typedef struct VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT {
 } VkPhysicalDeviceShaderOCPMicroscalingTypesFeaturesEXT;
 #endif
 
-#if !defined(VK_EXT_shader_float8)
+#если !defined(VK_EXT_shader_float8)
 #define VK_EXT_shader_float8 1
 #define VK_EXT_SHADER_FLOAT8_SPEC_VERSION 1
 #define VK_EXT_SHADER_FLOAT8_EXTENSION_NAME "VK_EXT_shader_float8"
@@ -168,7 +168,7 @@ typedef struct VkPhysicalDeviceInternallySynchronizedQueuesFeaturesKHR {
     void* pNext;
     VkBool32           internallySynchronizedQueues;
 } VkPhysicalDeviceInternallySynchronizedQueuesFeaturesKHR;
-#else
+#иначе
 static constexpr vk::DeviceQueueCreateFlagBits eInternallySynchronizedKHR = vk::DeviceQueueCreateFlagBits::eInternallySynchronizedKHR;
 #endif
 
@@ -176,7 +176,7 @@ static constexpr vk::DeviceQueueCreateFlagBits eInternallySynchronizedKHR = vk::
 
 #define CEIL_DIV(M, N) (((M) / (N)) + (((M) % (N)) != 0))
 
-static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
+static bool is_pow2(uint32_t x) { вернуть x > 1 && (x & (x-1)) == 0; }
 
 #define VK_VENDOR_ID_AMD 0x1002
 
@@ -203,17 +203,17 @@ static bool is_pow2(uint32_t x) { return x > 1 && (x & (x-1)) == 0; }
                 #err, __FILE__, __LINE__);                          \
             throw;                                                  \
         }                                                           \
-        if (err_ != vk::Result::eSuccess) {                         \
+        если (err_ != vk::Result::eSuccess) {                         \
             GGML_LOG_ERROR("ggml_vulkan: %s error %s at %s:%d\n",   \
                 #err, to_string(err_).c_str(), __FILE__, __LINE__); \
             throw vk::SystemError(vk::make_error_code(err_),        \
                 "ggml_vulkan: " msg);                               \
         }                                                           \
-    } while (0)
+    } пока (0)
 
 #ifdef GGML_VULKAN_DEBUG
 #define VK_LOG_DEBUG(msg) std::cerr << msg << std::endl
-#else
+#иначе
 #define VK_LOG_DEBUG(msg) ((void) 0)
 #endif // GGML_VULKAN_DEBUG
 
@@ -244,7 +244,7 @@ struct vk_pipeline_struct {
     // number of registers used, extracted from pipeline executable properties
     uint32_t register_count {};
 
-#if defined(VK_EXT_shader_64bit_indexing)
+#если defined(VK_EXT_shader_64bit_indexing)
     bool is_64b_indexing {};
 #endif
     // linked list of pipelines for multiple compilation variants.
@@ -261,7 +261,7 @@ struct vk_matmul_pipeline_key {
     bool f16acc;
 
     bool operator<(const vk_matmul_pipeline_key & o) const {
-        return std::tie(type_a, type_b, mul_mat_id, f16acc)
+        вернуть std::tie(type_a, type_b, mul_mat_id, f16acc)
              < std::tie(o.type_a, o.type_b, o.mul_mat_id, o.f16acc);
     }
 };
@@ -319,8 +319,8 @@ struct vk_command_pool {
     vk_queue *q;
 
     size_t buffers_in_use() const {
-        return std::count_if(cmd_buffers.begin(), cmd_buffers.end(),
-            [](const auto& cb) { return cb.in_use; });
+        вернуть std::count_if(cmd_buffers.begin(), cmd_buffers.end(),
+            [](const auto& cb) { вернуть cb.in_use; });
     }
 };
 
@@ -426,7 +426,7 @@ struct vk_fa_pipeline_state {
     ggml_type v_type;
 
     bool operator<(const vk_fa_pipeline_state &b) const {
-        return std::tie(HSK, HSV, Br, Bc, D_split, row_split, shmem_staging, path, workgroup_size, subgroup_size, aligned, f32acc, flags, limit_occupancy_shmem, k_type, v_type) <
+        вернуть std::tie(HSK, HSV, Br, Bc, D_split, row_split, shmem_staging, path, workgroup_size, subgroup_size, aligned, f32acc, flags, limit_occupancy_shmem, k_type, v_type) <
                std::tie(b.HSK, b.HSV, b.Br, b.Bc, b.D_split, b.row_split, b.shmem_staging, b.path, b.workgroup_size, b.subgroup_size, b.aligned, b.f32acc, b.flags, b.limit_occupancy_shmem, b.k_type, b.v_type);
     }
 };
@@ -440,7 +440,7 @@ struct vk_conv2d_pipeline_state {
     uint32_t aligned;
 
     bool operator<(const vk_conv2d_pipeline_state &b) const {
-        return std::tie(s0, s1, p0, p1, d0, d1, KW, KH, aligned) <
+        вернуть std::tie(s0, s1, p0, p1, d0, d1, KW, KH, aligned) <
                std::tie(b.s0, b.s1, b.p0, b.p1, b.d0, b.d1, b.KW, b.KH, b.aligned);
     }
 };
@@ -454,7 +454,7 @@ struct vk_conv3d_pipeline_state {
     uint32_t aligned;
 
     bool operator<(const vk_conv3d_pipeline_state &b) const {
-        return std::tie(s0, s1, s2, p0, p1, p2, d0, d1, d2, KW, KH, KD, aligned) <
+        вернуть std::tie(s0, s1, s2, p0, p1, p2, d0, d1, d2, KW, KH, KD, aligned) <
                std::tie(b.s0, b.s1, b.s2, b.p0, b.p1, b.p2, b.d0, b.d1, b.d2, b.KW, b.KH, b.KD, b.aligned);
     }
 };
@@ -466,7 +466,7 @@ struct vk_solve_tri_pipeline_state {
     uint32_t N, K;
 
     bool operator<(const vk_solve_tri_pipeline_state &b) const {
-        return std::tie(N, K) <
+        вернуть std::tie(N, K) <
                std::tie(b.N, b.K);
     }
 };
@@ -517,7 +517,7 @@ static constexpr std::initializer_list<ggml_op> topk_qsa_pattern { GGML_OP_GET_R
                                                                    GGML_OP_RESHAPE,  GGML_OP_ADD,
                                                                    GGML_OP_TOP_K };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_qsa_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> topk_qsa_edges {
     { 1, 0, 0 }, // permute->src[0] == get_rows
     { 2, 0, 1 }, // cont->src[0]    == permute
     { 4, 0, 3 }, // reshape->src[0] == cpy (mask cast)
@@ -539,13 +539,13 @@ static constexpr std::initializer_list<ggml_op> rope_view_set_rows_pattern { GGM
 // scale_out*sigmoid(scale_in*x) as the hc_post weights (qwen4exp hc_combine)
 static constexpr std::initializer_list<ggml_op> hc_post_gate_pattern { GGML_OP_SCALE, GGML_OP_UNARY, GGML_OP_SCALE, GGML_OP_DSV4_HC_POST };
 
-static constexpr std::initializer_list<std::array<int, 3>> hc_post_gate_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> hc_post_gate_edges {
     { 1, 0, 0 }, // sigmoid->src[0] == scale
     { 2, 0, 1 }, // scale->src[0]   == sigmoid
     { 3, 2, 2 }, // hc_post->src[2] == scale (post)
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softmax_norm_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> topk_moe_early_softmax_norm_edges {
     { 1, 0, 0 }, // reshape->src[0]  == softmax
     { 2, 0, 0 }, // argsort->src[0]  == softmax
     { 3, 0, 2 }, // view->src[0]     == argsort
@@ -559,7 +559,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softma
     { 9, 0, 8 }, // reshape->src[0]  == div
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sigmoid_norm_bias_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> topk_moe_sigmoid_norm_bias_edges {
     { 1, 0, 0 }, // reshape->src[0]  == sigmoid
     { 2, 0, 0 }, // add->src[0]      == sigmoid
     { 3, 0, 2 }, // argsort->src[0]  == add
@@ -574,7 +574,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sigmoid_norm
     {10, 0, 9 }, // reshape->src[0]  == div
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sqrt_softplus_norm_bias_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> topk_moe_sqrt_softplus_norm_bias_edges {
     { 1, 0, 0 }, // sqrt->src[0]     == softplus
     { 2, 0, 1 }, // reshape->src[0]  == sqrt
     { 3, 0, 1 }, // add->src[0]      == sqrt
@@ -590,7 +590,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_sqrt_softplu
     {11, 0,10 }, // reshape->src[0]  == div
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softmax_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> topk_moe_early_softmax_edges {
     { 1, 0, 0 }, // reshape->src[0]  == softmax
     { 2, 0, 0 }, // argsort->src[0]  == softmax
     { 3, 0, 2 }, // view->src[0]     == argsort
@@ -598,7 +598,7 @@ static constexpr std::initializer_list<std::array<int, 3>> topk_moe_early_softma
     { 4, 1, 3 }, // get_rows->src[1] == view
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> topk_moe_late_softmax_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> topk_moe_late_softmax_edges {
     { 1, 0, 0 }, // view->src[0]     == argsort
     { 2, 1, 1 }, // get_rows->src[1] == view
     { 3, 0, 2 }, // reshape->src[0]  == get_rows
@@ -625,19 +625,19 @@ enum rms_norm_mode {
     RMS_NORM_COUNT,
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> rope_view_set_rows_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> rope_view_set_rows_edges {
     { 1, 0, 0 }, // view->src[0]     == rope
     { 2, 0, 1 }, // set_rows->src[0] == view
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> rms_norm_mul_rope_view_set_rows_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> rms_norm_mul_rope_view_set_rows_edges {
     { 1, 0, 0 }, // mul->src[0]      == rms
     { 2, 0, 1 }, // rope->src[0]     == mul
     { 3, 0, 2 }, // view->src[0]     == rope
     { 4, 0, 3 }, // set_rows->src[0] == view
 };
 
-static constexpr std::initializer_list<std::array<int, 3>> rms_norm_view_set_rows_edges {
+static constexpr std::initializer_list<std::array<целое, 3>> rms_norm_view_set_rows_edges {
     { 1, 0, 0 }, // view->src[0]     == rms_norm
     { 2, 0, 1 }, // set_rows->src[0] == view
 };
@@ -758,8 +758,8 @@ struct vk_device_struct {
     bool serialize_submissions {};
 
     const ggml_cgraph * diag_cgraph {};
-    int diag_prev_start = -1;
-    int diag_prev_end = -1;
+    целое diag_prev_start = -1;
+    целое diag_prev_end = -1;
 
     size_t idx;
 
@@ -1043,8 +1043,8 @@ struct vk_buffer_struct {
     vk_device device;
 
     ~vk_buffer_struct() {
-        if (size == 0) {
-            return;
+        если (size == 0) {
+            вернуть;
         }
         VK_LOG_DEBUG("~vk_buffer_struct(" << buffer << ", " << size << ")");
 
@@ -1061,7 +1061,7 @@ struct vk_subbuffer {
     uint64_t size;
 
     operator vk::DescriptorBufferInfo() const {
-        return { buffer->buffer, offset, size };
+        вернуть { buffer->buffer, offset, size };
     }
 };
 
@@ -1117,7 +1117,7 @@ struct vk_context_struct {
     vk_submission * s;
     std::vector<vk_sequence> seqs;
 
-    int exit_tensor_idx;
+    целое exit_tensor_idx;
 
     std::vector<vk_staging_memcpy> in_memcpys;
     std::vector<vk_staging_memcpy> out_memcpys;
@@ -1139,7 +1139,7 @@ struct ggml_vk_garbage_collector {
     std::vector<vk_context> contexts;
 };
 
-#define VK_LOG_MEMORY(msg) if (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << msg << std::endl; }
+#define VK_LOG_MEMORY(msg) если (vk_memory_logger_enabled) { std::cerr << "ggml_vulkan memory: " << msg << std::endl; }
 
 static std::string format_size(size_t size) {
     const size_t kib = 1024;
@@ -1149,17 +1149,17 @@ static std::string format_size(size_t size) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(2);
 
-    if (size >= gib) {
+    если (size >= gib) {
         oss << static_cast<double>(size) / gib << " GiB";
-    } else if (size >= mib) {
+    } иначе если (size >= mib) {
         oss << static_cast<double>(size) / mib << " MiB";
-    } else if (size >= kib) {
+    } иначе если (size >= kib) {
         oss << static_cast<double>(size) / kib << " KiB";
-    } else {
+    } иначе {
         oss << size << " B";
     }
 
-    return oss.str();
+    вернуть oss.str();
 }
 
 class vk_memory_logger {
@@ -1188,7 +1188,7 @@ class vk_perf_logger {
     void log_timing(const ggml_tensor * node, const char *fusion_name, uint64_t time) {
         uint64_t n_flops;
         std::string name = get_node_fusion_name(node, fusion_name, &n_flops);
-        if (n_flops) {
+        если (n_flops) {
             flops[name].push_back(n_flops);
         }
         timings[name].push_back(time);
@@ -1197,16 +1197,16 @@ class vk_perf_logger {
     void log_timing(const std::vector<ggml_tensor *> &nodes, const std::vector<const char *> &names, uint64_t time) {
         uint64_t total_flops = 0;
         std::string name;
-        for (size_t n = 0; n < nodes.size(); ++n) {
+        для (size_t n = 0; n < nodes.size(); ++n) {
             uint64_t n_flops = 0;
             name += get_node_fusion_name(nodes[n], names[n], &n_flops);
             total_flops += n_flops;
 
-            if (n != nodes.size() - 1) {
+            если (n != nodes.size() - 1) {
                 name += ", ";
             }
         }
-        if (total_flops) {
+        если (total_flops) {
             flops[name].push_back(total_flops);
         }
         timings[name].push_back(time);
@@ -1272,11 +1272,11 @@ struct ggml_backend_vk_context {
 
     // number of additional consecutive nodes that are being fused with the
     // node currently being processed
-    int num_additional_fused_ops {};
+    целое num_additional_fused_ops {};
     // Bitmask of which fused ops need to write an intermediate value to memory.
     // Bit 'i' means nodes[start_of_fusion + i] writes to memory.
     // If there's no fusion, bit 0 is still set.
-    int fused_ops_write_mask {};
+    целое fused_ops_write_mask {};
     topk_moe_mode fused_topk_moe_mode {};
     bool fused_topk_moe_scale {};
     // QSA indexer gather+add+top_k fused into one radix-select
@@ -1288,9 +1288,9 @@ struct ggml_backend_vk_context {
     std::unique_ptr<vk_perf_logger> perf_logger;
     vk::QueryPool query_pool;
     std::vector<const char *> query_fusion_names;
-    std::vector<int> query_fusion_node_count;
+    std::vector<целое> query_fusion_node_count;
     std::vector<ggml_tensor *> query_nodes;
-    std::vector<int> query_node_idx;
+    std::vector<целое> query_node_idx;
     int32_t num_queries {};
     int32_t query_idx {};
 };
@@ -1410,7 +1410,7 @@ struct ggml_vk_debug_label {
 
     // one region per graph node
     // fused nodes are joined with '+', e.g. "RMS_NORM+MUL+ROPE Qcur-19"
-    ggml_vk_debug_label(vk_context & ctx, const ggml_cgraph * cgraph, int node_idx, int n_fused);
+    ggml_vk_debug_label(vk_context & ctx, const ggml_cgraph * cgraph, целое node_idx, целое n_fused);
 
 
     // one region per graph evaluation, opened on the queue instead of a command buffer
@@ -1443,5 +1443,5 @@ struct ggml_backend_vk_device_context {
     std::string description;
     bool is_integrated_gpu;
     std::string pci_bus_id;
-    int op_offload_min_batch_size;
+    целое op_offload_min_batch_size;
 };

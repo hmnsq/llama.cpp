@@ -24,7 +24,7 @@ OutputVector translate_clamp(const NodeContext & context) {
     std::memcpy(&max, reinterpret_cast<const float *>(op_params) + 1, sizeof(float));
 
     auto res = std::make_shared<ov::op::v0::Clamp>(input, min, max);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    вернуть rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

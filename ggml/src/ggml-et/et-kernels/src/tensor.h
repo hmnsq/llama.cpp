@@ -5,12 +5,12 @@
 extern "C" {
 #endif
 
-#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#если defined(__cplusplus) && (__cplusplus >= 201103L)
 #    include <cinttypes>
-#    if (__cplusplus < 202002L)
+#    если (__cplusplus < 202002L)
 #        include <cstdbool>
 #    endif
-#else
+#иначе
 #    include <inttypes.h>
 #    include <stdbool.h>
 #endif
@@ -535,7 +535,7 @@ inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t val
         : [csr_enc] "r"(csr_enc), [value] "r"(value)
         : "f0");
 
-    return out;
+    вернуть out;
 }
 
 /*! \fn inline float tensor_reduce_float(float freg, uint64_t operation, uint64_t num_reg, uint64_t partnerID, uint64_t action) {
@@ -568,7 +568,7 @@ inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
         : [csr_enc] "r"(csr_enc), [freg] "f"(freg)
         : "f0");
 
-    return out;
+    вернуть out;
 }
 
 //#define tensor_reduce_float1(fval, operation, partnerID, action) do {
@@ -859,7 +859,7 @@ inline unsigned long __attribute__((always_inline)) get_tensor_error() {
 
     __asm__ __volatile__("csrr %0, 0x808" : "=r"(error));
 
-    return error;
+    вернуть error;
 }
 
 /*! \fn inline uint64_t get_tensor_mask()
@@ -872,23 +872,23 @@ inline uint64_t __attribute__((always_inline)) get_tensor_mask() {
 
     __asm__ __volatile__("csrr %0, 0x805" : "=r"(val));
 
-    return val;
+    вернуть val;
 }
 
 #define mask_set(msk, val)                                          \
     do {                                                            \
         __asm__ volatile("mov.m.x m" #msk ", zero, %0" ::"n"(val)); \
-    } while (0)
+    } пока (0)
 
 #define flw_ps(fd, ptr)                                       \
     do {                                                      \
         __asm__ volatile("flw.ps f" #fd ", (%0)" ::"r"(ptr)); \
-    } while (0)
+    } пока (0)
 
 #define fsw_ps(fd, ptr)                                                  \
     do {                                                                 \
         __asm__ volatile("fsw.ps f" #fd ", (%0)" ::"r"(ptr) : "memory"); \
-    } while (0)
+    } пока (0)
 
 #ifdef __cplusplus
 }

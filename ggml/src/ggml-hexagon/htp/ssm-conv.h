@@ -24,9 +24,9 @@ struct htp_ssm_conv_kernel_params {
     uint32_t vtcm_size;
 };
 
-#if defined(__cplusplus)
+#если defined(__cplusplus)
 static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
-#else
+#иначе
 _Static_assert(sizeof(struct htp_ssm_conv_kernel_params) <= 128, "htp_ssm_conv_kernel_params is too large for kernel_params blob");
 #endif
 

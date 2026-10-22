@@ -83,7 +83,7 @@ typedef void (*softmax_compute_fn_t)(
 
 static void hvx_fast_softmax_prep_f16(const uint8_t * restrict src,
                                       uint8_t * restrict dst,
-                                      const int num_elems,
+                                      const целое num_elems,
                                       float     scale,
                                       const uint8_t * restrict mask,
                                       float slope) {
@@ -94,11 +94,11 @@ static void hvx_fast_softmax_prep_f16(const uint8_t * restrict src,
     HVX_Vector scale_vec = hvx_vec_splat_f32(scale);
     HVX_Vector slope_vec = hvx_vec_splat_f32(slope);
 
-    const int nvec_64 = num_elems / VLEN_FP16;
-    const int nloe_64 = num_elems % VLEN_FP16;
+    const целое nvec_64 = num_elems / VLEN_FP16;
+    const целое nloe_64 = num_elems % VLEN_FP16;
 
     #pragma unroll(2)
-    for (int i = 0; i < nvec_64; i++) {
+    для (целое i = 0; i < nvec_64; i++) {
         HVX_VectorPair p = hvx_vec_f16_to_f32(v_mask[i]);
         HVX_Vector m0 = Q6_V_lo_W(p);
         HVX_Vector m1 = Q6_V_hi_W(p);
@@ -113,16 +113,16 @@ static void hvx_fast_softmax_prep_f16(const uint8_t * restrict src,
         v_dst[2 * i + 1] = Q6_Vsf_equals_Vqf32(v1);
     }
 
-    if (nloe_64 > 0) {
+    если (nloe_64 > 0) {
         HVX_VectorPair p = hvx_vec_f16_to_f32(v_mask[nvec_64]);
         HVX_Vector m0 = Q6_V_lo_W(p);
 
         HVX_Vector s0 = v_src[2 * nvec_64];
         HVX_Vector v0 = Q6_Vqf32_vadd_Vqf32Vqf32(Q6_Vqf32_vmpy_VsfVsf(s0, scale_vec), Q6_Vqf32_vmpy_VsfVsf(m0, slope_vec));
 
-        if (nloe_64 <= VLEN_FP32) {
+        если (nloe_64 <= VLEN_FP32) {
             hvx_vec_store_a(&v_dst[2 * nvec_64], nloe_64 * sizeof(float), Q6_Vsf_equals_Vqf32(v0));
-        } else {
+        } иначе {
             v_dst[2 * nvec_64] = Q6_Vsf_equals_Vqf32(v0);
 
             HVX_Vector m1 = Q6_V_hi_W(p);
@@ -136,7 +136,7 @@ static void hvx_fast_softmax_prep_f16(const uint8_t * restrict src,
 
 static void hvx_fast_softmax_prep_f32(const uint8_t * restrict src,
                                       uint8_t * restrict dst,
-                                      const int num_elems,
+                                      const целое num_elems,
                                       float     scale,
                                       const uint8_t * restrict mask,
                                       float slope) {
@@ -147,11 +147,11 @@ static void hvx_fast_softmax_prep_f32(const uint8_t * restrict src,
     HVX_Vector scale_vec = hvx_vec_splat_f32(scale);
     HVX_Vector slope_vec = hvx_vec_splat_f32(slope);
 
-    const int nvec = num_elems / VLEN_FP32;
-    const int nloe = num_elems % VLEN_FP32;
+    const целое nvec = num_elems / VLEN_FP32;
+    const целое nloe = num_elems % VLEN_FP32;
 
     #pragma unroll(4)
-    for (int i = 0; i < nvec; i++) {
+    для (целое i = 0; i < nvec; i++) {
         HVX_Vector v1 = v_src[i];
         HVX_Vector v3 = v_mask[i];
 
@@ -162,7 +162,7 @@ static void hvx_fast_softmax_prep_f32(const uint8_t * restrict src,
         v_dst[i] = Q6_Vsf_equals_Vqf32(v5);
     }
 
-    if (nloe > 0) {
+    если (nloe > 0) {
         HVX_Vector v1 = v_src[nvec];
         HVX_Vector v3 = v_mask[nvec];
 
@@ -174,22 +174,22 @@ static void hvx_fast_softmax_prep_f32(const uint8_t * restrict src,
     }
 }
 
-static void hvx_fast_softmax_f32(const uint8_t * restrict src, uint8_t * restrict dst, const int num_elems) {
+static void hvx_fast_softmax_f32(const uint8_t * restrict src, uint8_t * restrict dst, const целое num_elems) {
     const HVX_Vector * restrict v_src = (const HVX_Vector *) src;
     HVX_Vector * restrict v_dst       = (HVX_Vector *) dst;
 
-    const int nvec = num_elems / VLEN_FP32;
-    const int nloe = num_elems % VLEN_FP32;
+    const целое nvec = num_elems / VLEN_FP32;
+    const целое nloe = num_elems % VLEN_FP32;
 
     HVX_Vector max_vec = hvx_vec_splat_f32(((const float *) src)[0]);
 
     #pragma unroll(2)
-    for (int i = 0; i < nvec; i++) {
+    для (целое i = 0; i < nvec; i++) {
         HVX_Vector v1 = v_src[i];
         max_vec       = Q6_Vsf_vmax_VsfVsf(max_vec, v1);
     }
 
-    if (nloe > 0) {
+    если (nloe > 0) {
         HVX_VectorPred q_mask = Q6_Q_vsetq_R(nloe * sizeof(float));
         HVX_Vector neg_inf    = hvx_vec_splat_f32(-INFINITY);
         HVX_Vector v_tail     = Q6_V_vmux_QVV(q_mask, v_src[nvec], neg_inf);
@@ -201,7 +201,7 @@ static void hvx_fast_softmax_f32(const uint8_t * restrict src, uint8_t * restric
     HVX_Vector sum_vec = Q6_V_vsplat_R(0x00000000);
 
     #pragma unroll(2)
-    for (int i = 0; i < nvec; i++) {
+    для (целое i = 0; i < nvec; i++) {
         HVX_Vector v1 = v_src[i];
         HVX_Vector v2 = Q6_Vqf32_vsub_VsfVsf(v1, max_vec);
 
@@ -212,7 +212,7 @@ static void hvx_fast_softmax_f32(const uint8_t * restrict src, uint8_t * restric
         v_dst[i] = v3;
     }
 
-    if (nloe > 0) {
+    если (nloe > 0) {
         HVX_VectorPred q_mask = Q6_Q_vsetq_R(nloe * sizeof(float));
         HVX_Vector v1     = v_src[nvec];
         HVX_Vector v2     = Q6_Vqf32_vsub_VsfVsf(v1, max_vec);
@@ -230,13 +230,13 @@ static void hvx_fast_softmax_f32(const uint8_t * restrict src, uint8_t * restric
     HVX_Vector     scale_vec = Q6_V_vmux_QVV(pos_sum, v4, hvx_vec_splat_f32(1.0f));
 
     #pragma unroll(2)
-    for (int i = 0; i < nvec; i++) {
+    для (целое i = 0; i < nvec; i++) {
         HVX_Vector v1 = v_dst[i];
         HVX_Vector v2 = Q6_Vqf32_vmpy_VsfVsf(v1, scale_vec);
         v_dst[i]      = Q6_Vsf_equals_Vqf32(v2);
     }
 
-    if (nloe > 0) {
+    если (nloe > 0) {
         HVX_Vector v1 = v_dst[nvec];
         HVX_Vector v2 = Q6_Vqf32_vmpy_VsfVsf(v1, scale_vec);
         hvx_vec_store_a(&v_dst[nvec], nloe * sizeof(float), Q6_Vsf_equals_Vqf32(v2));
@@ -287,7 +287,7 @@ static const softmax_compute_fn_t softmax_kernels[HTP_SOFTMAX_KERNEL_COUNT] = {
     [HTP_SOFTMAX_KERNEL_MASK_F16] = compute_fast_softmax_f32_mask_f16,
 };
 
-static void softmax_thread_dma(unsigned int nth, unsigned int ith, void * data) {
+static void softmax_thread_dma(unsigned целое nth, unsigned целое ith, void * data) {
     (void) nth;
     const struct htp_softmax_context * smctx = (const struct htp_softmax_context *) data;
     struct htp_ops_context * octx = smctx->octx;
@@ -301,8 +301,8 @@ static void softmax_thread_dma(unsigned int nth, unsigned int ith, void * data) 
     const uint32_t src0_start_row = smctx->row_start + src0_nrows_per_thread * ith;
     const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, smctx->row_start + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    если (src0_start_row >= src0_end_row) {
+        вернуть;
     }
 
     const dma_addr_t data_src0 = smctx->data_src0;
@@ -319,7 +319,7 @@ static void softmax_thread_dma(unsigned int nth, unsigned int ith, void * data) 
 
     dma_queue * dma_q = octx->ctx->dma[ith];
 
-    for (uint32_t r = src0_start_row, idx = 0; r < src0_end_row && idx < 2; r++, idx++) {
+    для (uint32_t r = src0_start_row, idx = 0; r < src0_end_row && idx < 2; r++, idx++) {
         dma_addr_t cur_dst  = data_dst  + r * dst_row_size;
         dma_addr_t cur_src0 = data_src0 + r * src0_row_size;
         void * d_spad = dst_vtcm_base  + idx * dst_vtcm_half;
@@ -334,7 +334,7 @@ static void softmax_thread_dma(unsigned int nth, unsigned int ith, void * data) 
     softmax_compute_fn_t compute = (softmax_compute_fn_t) smctx->compute;
     const uint32_t ne00 = src0->ne[0];
 
-    for (uint32_t r = src0_start_row; r < src0_end_row; ++r) {
+    для (uint32_t r = src0_start_row; r < src0_end_row; ++r) {
         void * d_spad = (void *) dma_queue_pop(dma_q).src;
         void * s_spad = (void *) dma_queue_pop(dma_q).dst;
 
@@ -347,7 +347,7 @@ static void softmax_thread_dma(unsigned int nth, unsigned int ith, void * data) 
                        dst_row_size, smctx->dst_row_size_aligned, dst_row_size, 1);
 
         const uint32_t next_r = r + 2;
-        if (next_r < src0_end_row) {
+        если (next_r < src0_end_row) {
             dma_addr_t next_src0 = data_src0 + next_r * src0_row_size;
             dma_queue_push(dma_q, dma_make_data(s_spad, next_src0),
                            smctx->src0_row_size_aligned, src0_row_size, src0_row_size, 1);
@@ -357,7 +357,7 @@ static void softmax_thread_dma(unsigned int nth, unsigned int ith, void * data) 
     dma_queue_flush(dma_q);
 }
 
-static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * data) {
+static void softmax_thread_mask_dma(unsigned целое nth, unsigned целое ith, void * data) {
     (void) nth;
     const struct htp_softmax_context * smctx = (const struct htp_softmax_context *) data;
     struct htp_ops_context * octx = smctx->octx;
@@ -372,8 +372,8 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
     const uint32_t src0_start_row = smctx->row_start + src0_nrows_per_thread * ith;
     const uint32_t src0_end_row   = MIN(src0_start_row + src0_nrows_per_thread, smctx->row_start + src0_nrows);
 
-    if (src0_start_row >= src0_end_row) {
-        return;
+    если (src0_start_row >= src0_end_row) {
+        вернуть;
     }
 
     const dma_addr_t data_src0 = smctx->data_src0;
@@ -410,7 +410,7 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
 
     dma_queue * dma_q = octx->ctx->dma[ith];
 
-    for (uint32_t r = src0_start_row, idx = 0; r < src0_end_row && idx < 2; r++, idx++) {
+    для (uint32_t r = src0_start_row, idx = 0; r < src0_end_row && idx < 2; r++, idx++) {
         dma_addr_t cur_dst  = data_dst  + r * dst_row_size;
         dma_addr_t cur_src0 = data_src0 + r * src0_row_size;
 
@@ -439,15 +439,15 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
     uint32_t prev_i2 = (uint32_t)-1;
     float slope = 1.0f;
 
-    for (uint32_t r = src0_start_row; r < src0_end_row; ++r) {
+    для (uint32_t r = src0_start_row; r < src0_end_row; ++r) {
         void * d_spad = (void *) (uintptr_t) dma_queue_pop(dma_q).src;
         void * s_spad = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
         void * m_spad = (void *) (uintptr_t) dma_queue_pop(dma_q).dst;
 
-        if (has_bias) {
+        если (has_bias) {
             uint32_t r_div_ne01 = fastdiv(r, div_ne01);
             uint32_t i2 = fastmodulo(r_div_ne01, ne02, div_ne02);
-            if (i2 != prev_i2) {
+            если (i2 != prev_i2) {
                 slope = smctx->slopes[i2];
                 prev_i2 = i2;
             }
@@ -462,7 +462,7 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
                        dst_row_size, smctx->dst_row_size_aligned, dst_row_size, 1);
 
         const uint32_t next_r = r + 2;
-        if (next_r < src0_end_row) {
+        если (next_r < src0_end_row) {
             dma_addr_t next_src0 = data_src0 + next_r * src0_row_size;
 
             uint32_t ni1 = fastmodulo(next_r, ne01, div_ne01);
@@ -483,7 +483,7 @@ static void softmax_thread_mask_dma(unsigned int nth, unsigned int ith, void * d
     dma_queue_flush(dma_q);
 }
 
-static int execute_op_softmax_f32(struct htp_ops_context * octx) {
+static целое execute_op_softmax_f32(struct htp_ops_context * octx) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst  = octx->dst;
 
@@ -492,18 +492,18 @@ static int execute_op_softmax_f32(struct htp_ops_context * octx) {
     const struct htp_softmax_kernel_params * kparams =
         (const struct htp_softmax_kernel_params *) octx->kernel_params;
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    если (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        вернуть HTP_STATUS_INVAL_PARAMS;
     }
 
-    if (kparams->kernel_id >= HTP_SOFTMAX_KERNEL_COUNT) {
-        return HTP_STATUS_INVAL_PARAMS;
+    если (kparams->kernel_id >= HTP_SOFTMAX_KERNEL_COUNT) {
+        вернуть HTP_STATUS_INVAL_PARAMS;
     }
 
-    if (octx->ctx->vtcm_size < (size_t) kparams->vtcm_size) {
+    если (octx->ctx->vtcm_size < (size_t) kparams->vtcm_size) {
         FARF(ERROR, "%s : current VTCM reservation %zu is too small, needed %u\n",
              op_type, octx->ctx->vtcm_size, kparams->vtcm_size);
-        return HTP_STATUS_VTCM_TOO_SMALL;
+        вернуть HTP_STATUS_VTCM_TOO_SMALL;
     }
 
     const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
@@ -513,20 +513,20 @@ static int execute_op_softmax_f32(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    если (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, (uint32_t) elem_size, (uint32_t) dst_row_size, &rows_per_chunk);
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             src0_nrows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
-        if (nrows < octx->n_threads) {
+        если (nrows < octx->n_threads) {
             htp_ops_context_set_n_threads(octx, nrows ? nrows : 1);
         }
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    если (nrows == 0) {
+        вернуть HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -581,11 +581,11 @@ static int execute_op_softmax_f32(struct htp_ops_context * octx) {
         .nrows                 = nrows,
     };
 
-    if (kparams->max_bias > 0.0f && kparams->use_src1) {
-        if (kparams->n_head > 512) {
-            return HTP_STATUS_INVAL_PARAMS;
+    если (kparams->max_bias > 0.0f && kparams->use_src1) {
+        если (kparams->n_head > 512) {
+            вернуть HTP_STATUS_INVAL_PARAMS;
         }
-        for (uint32_t h = 0; h < kparams->n_head; h += 32) {
+        для (uint32_t h = 0; h < kparams->n_head; h += 32) {
             HVX_Vector v_slopes = hvx_alibi_slopes(h, 1, kparams->n_head_log2, kparams->m0, kparams->m1);
             hvx_vmem(&smctx.slopes[h]) = v_slopes;
         }
@@ -594,11 +594,11 @@ static int execute_op_softmax_f32(struct htp_ops_context * octx) {
     work_queue_func_t task_func = kparams->use_src1 ? softmax_thread_mask_dma : softmax_thread_dma;
     work_queue_run(octx->ctx->work_queue, task_func, &smctx, n_threads);
 
-    return HTP_STATUS_OK;
+    вернуть HTP_STATUS_OK;
 }
 
-int op_softmax(struct htp_ops_context * octx) {
-    int err = HTP_STATUS_OK;
+целое op_softmax(struct htp_ops_context * octx) {
+    целое err = HTP_STATUS_OK;
 
     switch (octx->src[0]->type) {
         case HTP_TYPE_F32:
@@ -610,5 +610,5 @@ int op_softmax(struct htp_ops_context * octx) {
             break;
     }
 
-    return err;
+    вернуть err;
 }

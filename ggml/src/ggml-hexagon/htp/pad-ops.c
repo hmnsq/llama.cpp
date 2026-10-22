@@ -20,7 +20,7 @@
 
 /* Circular wrap: maps any integer x into [0, n) */
 static inline uint32_t wrap_around(int32_t x, uint32_t n) {
-    return (uint32_t)(((x % (int32_t)n) + (int32_t)n) % (int32_t)n);
+    вернуть (uint32_t)(((x % (int32_t)n) + (int32_t)n) % (int32_t)n);
 }
 
 /* Decompose a flat dst row index into (i1, i2, i3) */
@@ -32,11 +32,11 @@ static inline void pad_decompose_row(uint32_t ir, uint32_t ne1, uint32_t ne2,
 }
 
 /* Return non-zero if row (i1,i2,i3) falls in the non-padded interior */
-static inline int pad_is_interior(uint32_t i1, uint32_t i2, uint32_t i3,
+static inline целое pad_is_interior(uint32_t i1, uint32_t i2, uint32_t i3,
                                    int32_t lp1, int32_t rp1, uint32_t ne1,
                                    int32_t lp2, int32_t rp2, uint32_t ne2,
                                    int32_t lp3, int32_t rp3, uint32_t ne3) {
-    return ((int32_t)i1 >= lp1 && (int32_t)i1 < (int32_t)ne1 - rp1) &&
+    вернуть ((int32_t)i1 >= lp1 && (int32_t)i1 < (int32_t)ne1 - rp1) &&
            ((int32_t)i2 >= lp2 && (int32_t)i2 < (int32_t)ne2 - rp2) &&
            ((int32_t)i3 >= lp3 && (int32_t)i3 < (int32_t)ne3 - rp3);
 }
@@ -45,7 +45,7 @@ static inline int pad_is_interior(uint32_t i1, uint32_t i2, uint32_t i3,
 static inline const uint8_t * pad_src_row_ptr(const struct htp_tensor * src,
                                                uint32_t i1, uint32_t i2, uint32_t i3,
                                                int32_t lp1, int32_t lp2, int32_t lp3) {
-    return (const uint8_t *) src->data
+    вернуть (const uint8_t *) src->data
         + (i1 - (uint32_t)lp1) * src->nb[1]
         + (i2 - (uint32_t)lp2) * src->nb[2]
         + (i3 - (uint32_t)lp3) * src->nb[3];
@@ -54,7 +54,7 @@ static inline const uint8_t * pad_src_row_ptr(const struct htp_tensor * src,
 static inline dma_addr_t pad_src_row_data(const struct htp_tensor * src,
                                           uint32_t i1, uint32_t i2, uint32_t i3,
                                           int32_t lp1, int32_t lp2, int32_t lp3) {
-    return src->data
+    вернуть src->data
         + (i1 - (uint32_t)lp1) * src->nb[1]
         + (i2 - (uint32_t)lp2) * src->nb[2]
         + (i3 - (uint32_t)lp3) * src->nb[3];
@@ -64,7 +64,7 @@ static inline dma_addr_t pad_src_row_data(const struct htp_tensor * src,
 static inline const uint8_t * pad_circ_src_row_ptr(const struct htp_tensor * src,
                                                     uint32_t i1, uint32_t i2, uint32_t i3,
                                                     int32_t lp1, int32_t lp2, int32_t lp3) {
-    return (const uint8_t *) src->data
+    вернуть (const uint8_t *) src->data
         + wrap_around((int32_t)i1 - lp1, src->ne[1]) * src->nb[1]
         + wrap_around((int32_t)i2 - lp2, src->ne[2]) * src->nb[2]
         + wrap_around((int32_t)i3 - lp3, src->ne[3]) * src->nb[3];
@@ -73,7 +73,7 @@ static inline const uint8_t * pad_circ_src_row_ptr(const struct htp_tensor * src
 static inline dma_addr_t pad_circ_src_row_data(const struct htp_tensor * src,
                                                uint32_t i1, uint32_t i2, uint32_t i3,
                                                int32_t lp1, int32_t lp2, int32_t lp3) {
-    return src->data
+    вернуть src->data
         + wrap_around((int32_t)i1 - lp1, src->ne[1]) * src->nb[1]
         + wrap_around((int32_t)i2 - lp2, src->ne[2]) * src->nb[2]
         + wrap_around((int32_t)i3 - lp3, src->ne[3]) * src->nb[3];
@@ -142,7 +142,7 @@ struct htp_pad_context {
 // HVX vectorized PAD kernel
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx(unsigned int nth, unsigned int ith, void * data) {
+static void pad_job_per_thread_hvx(unsigned целое nth, unsigned целое ith, void * data) {
     const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
     struct htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
@@ -150,38 +150,38 @@ static void pad_job_per_thread_hvx(unsigned int nth, unsigned int ith, void * da
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
 
-    for (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
+    для (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
         uint32_t i1, i2, i3;
         pad_decompose_row(dst_row, ne1, ne2, &i1, &i2, &i3);
 
         uint8_t * dst_ptr = (uint8_t *) dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
-        const int interior = pad_is_interior(i1, i2, i3,
+        const целое interior = pad_is_interior(i1, i2, i3,
                                              lp1, rp1, ne1,
                                              lp2, rp2, ne2,
                                              lp3, rp3, ne3);
 
-        if (!interior) {
+        если (!interior) {
             hvx_splat_f32_u(dst_ptr, 0.0f, ne0);
-        } else {
+        } иначе {
             const uint8_t * src_ptr = pad_src_row_ptr(src, i1, i2, i3, lp1, lp2, lp3);
 
-            if (lp0 > 0) {
+            если (lp0 > 0) {
                 hvx_splat_f32_u(dst_ptr, 0.0f, (uint32_t)lp0);
             }
 
             uint8_t * dst_row_start = dst_ptr + (size_t)lp0 * type_size;
-            if (nb00 == type_size) {
+            если (nb00 == type_size) {
                 hvx_copy_f32_uu(dst_row_start, src_ptr, ne00);
-            } else {
-                for (uint32_t i = 0; i < ne00; i++) {
+            } иначе {
+                для (uint32_t i = 0; i < ne00; i++) {
                     memcpy(dst_row_start + i * type_size,
                            src_ptr + (size_t)i * nb00,
                            type_size);
                 }
             }
 
-            if (rp0 > 0) {
+            если (rp0 > 0) {
                 hvx_splat_f32_u(dst_ptr + ((size_t)lp0 + ne00) * type_size, 0.0f, (uint32_t)rp0);
             }
         }
@@ -200,7 +200,7 @@ static void pad_job_per_thread_hvx(unsigned int nth, unsigned int ith, void * da
 // HVX + DMA PAD kernel - aligned, double-buffered
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void * data) {
+static void pad_job_per_thread_hvx_dma(unsigned целое nth, unsigned целое ith, void * data) {
     const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
     struct htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
@@ -210,7 +210,7 @@ static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void 
     // Priming phase: push 2 pairs of (dummy_dst_DMA, src_DMA) to seed the
     // double-buffer pipeline before the main loop begins.
     // -----------------------------------------------------------------------
-    for (uint32_t ir = row_start, spad_idx = 0; ir < row_end && spad_idx < 2; ir++, spad_idx++) {
+    для (uint32_t ir = row_start, spad_idx = 0; ir < row_end && spad_idx < 2; ir++, spad_idx++) {
         uint8_t * src_spad_cur = src_spad_base + spad_idx * src_row_size_aligned;
         uint8_t * dst_spad_cur = dst_spad_base + spad_idx * dst_row_size_aligned;
 
@@ -220,7 +220,7 @@ static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void 
 
         uint32_t i1, i2, i3;
         pad_decompose_row(ir, ne1, ne2, &i1, &i2, &i3);
-        const int interior = pad_is_interior(i1, i2, i3,
+        const целое interior = pad_is_interior(i1, i2, i3,
                                              lp1, rp1, ne1,
                                              lp2, rp2, ne2,
                                              lp3, rp3, ne3);
@@ -241,7 +241,7 @@ static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void 
     // -----------------------------------------------------------------------
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = row_start; ir < row_end; ir++) {
+    для (uint32_t ir = row_start; ir < row_end; ir++) {
         uint8_t * dst_spad_cur = (uint8_t *) dma_queue_pop(dma_q).src;
         uint8_t * src_spad_cur = (uint8_t *) dma_queue_pop(dma_q).dst;
 
@@ -250,22 +250,22 @@ static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void 
 
         const dma_addr_t dst_data = dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
-        const int interior = pad_is_interior(i1, i2, i3,
+        const целое interior = pad_is_interior(i1, i2, i3,
                                              lp1, rp1, ne1,
                                              lp2, rp2, ne2,
                                              lp3, rp3, ne3);
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        if (!interior) {
+        если (!interior) {
             hvx_splat_f32_a(dst_spad_cur, 0.0f, ne0);
-        } else {
+        } иначе {
             hvx_splat_f32_a(dst_spad_cur, 0.0f, ne0);
 
             uint8_t * dst_interior = dst_spad_cur + (size_t)lp0 * type_size;
 
-            if ((uintptr_t)dst_interior % VLEN == 0) {
+            если ((uintptr_t)dst_interior % VLEN == 0) {
                 hvx_copy_f32_aa(dst_interior, src_spad_cur, ne00);
-            } else {
+            } иначе {
                 hvx_copy_f32_ua(dst_interior, src_spad_cur, ne00);
             }
         }
@@ -276,10 +276,10 @@ static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void 
             dst_row_size, dst_row_size_aligned, dst_row_size, 1);
 
         const uint32_t next_row = ir + 2;
-        if (next_row < row_end) {
+        если (next_row < row_end) {
             uint32_t ni1, ni2, ni3;
             pad_decompose_row(next_row, ne1, ne2, &ni1, &ni2, &ni3);
-            const int next_interior = pad_is_interior(ni1, ni2, ni3,
+            const целое next_interior = pad_is_interior(ni1, ni2, ni3,
                                                       lp1, rp1, ne1,
                                                       lp2, rp2, ne2,
                                                       lp3, rp3, ne3);
@@ -305,7 +305,7 @@ static void pad_job_per_thread_hvx_dma(unsigned int nth, unsigned int ith, void 
 // HVX circular PAD kernel
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx_circular(unsigned int nth, unsigned int ith, void * data) {
+static void pad_job_per_thread_hvx_circular(unsigned целое nth, unsigned целое ith, void * data) {
     const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
     struct htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
@@ -313,48 +313,48 @@ static void pad_job_per_thread_hvx_circular(unsigned int nth, unsigned int ith, 
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
 
-    for (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
+    для (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
         uint32_t i1, i2, i3;
         pad_decompose_row(dst_row, ne1, ne2, &i1, &i2, &i3);
 
         uint8_t       * dst_ptr = (uint8_t *) dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
         const uint8_t * src_row = pad_circ_src_row_ptr(src, i1, i2, i3, lp1, lp2, lp3);
 
-        if (nb00 == type_size) {
+        если (nb00 == type_size) {
 
-            if (lp0 > 0) {
-                if ((uint32_t)lp0 < 32) {
+            если (lp0 > 0) {
+                если ((uint32_t)lp0 < 32) {
                     memcpy(dst_ptr,
                            src_row + (size_t)(ne00 - (uint32_t)lp0) * type_size,
                            (size_t)lp0 * type_size);
-                } else {
+                } иначе {
                     hvx_copy_f32_uu(dst_ptr,
                                     src_row + (size_t)(ne00 - (uint32_t)lp0) * type_size,
                                     (uint32_t)lp0);
                 }
             }
             hvx_copy_f32_uu(dst_ptr + (size_t)lp0 * type_size, src_row, ne00);
-            if (rp0 > 0) {
-                if ((uint32_t)rp0 < 32) {
+            если (rp0 > 0) {
+                если ((uint32_t)rp0 < 32) {
                     memcpy(dst_ptr + ((size_t)lp0 + ne00) * type_size,
                            src_row,
                            (size_t)rp0 * type_size);
-                } else {
+                } иначе {
                     hvx_copy_f32_uu(dst_ptr + ((size_t)lp0 + ne00) * type_size,
                                     src_row,
                                     (uint32_t)rp0);
                 }
             }
-        } else {
-            for (uint32_t i = 0; i < (uint32_t)lp0; i++) {
+        } иначе {
+            для (uint32_t i = 0; i < (uint32_t)lp0; i++) {
                 *(float *)(dst_ptr + i * type_size) =
                     *(const float *)(src_row + (size_t)(ne00 - (uint32_t)lp0 + i) * nb00);
             }
-            for (uint32_t i = 0; i < ne00; i++) {
+            для (uint32_t i = 0; i < ne00; i++) {
                 *(float *)(dst_ptr + ((size_t)lp0 + i) * type_size) =
                     *(const float *)(src_row + (size_t)i * nb00);
             }
-            for (uint32_t i = 0; i < (uint32_t)rp0; i++) {
+            для (uint32_t i = 0; i < (uint32_t)rp0; i++) {
                 *(float *)(dst_ptr + ((size_t)lp0 + ne00 + i) * type_size) =
                     *(const float *)(src_row + (size_t)i * nb00);
             }
@@ -374,7 +374,7 @@ static void pad_job_per_thread_hvx_circular(unsigned int nth, unsigned int ith, 
 // HVX + DMA circular PAD kernel - aligned, double-buffered
 // ---------------------------------------------------------------------------
 
-static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int ith, void * data) {
+static void pad_job_per_thread_hvx_circular_dma(unsigned целое nth, unsigned целое ith, void * data) {
     const struct htp_pad_context * pctx = (const struct htp_pad_context *) data;
     struct htp_ops_context * octx = pctx->octx;
     htp_pad_preamble;
@@ -384,7 +384,7 @@ static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int i
     // Priming phase: push 2 pairs of (dummy_dst_DMA, src_DMA) to seed the
     // double-buffer pipeline.  Every row is a real src DMA (no null DMAs).
     // -----------------------------------------------------------------------
-    for (uint32_t ir = row_start, spad_idx = 0; ir < row_end && spad_idx < 2; ir++, spad_idx++) {
+    для (uint32_t ir = row_start, spad_idx = 0; ir < row_end && spad_idx < 2; ir++, spad_idx++) {
         uint8_t * src_spad_cur = src_spad_base + spad_idx * src_row_size_aligned;
         uint8_t * dst_spad_cur = dst_spad_base + spad_idx * dst_row_size_aligned;
 
@@ -406,7 +406,7 @@ static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int i
     // -----------------------------------------------------------------------
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = row_start; ir < row_end; ir++) {
+    для (uint32_t ir = row_start; ir < row_end; ir++) {
         uint8_t * dst_spad_cur = (uint8_t *) dma_queue_pop(dma_q).src;
         uint8_t * src_spad_cur = (uint8_t *) dma_queue_pop(dma_q).dst;
 
@@ -415,33 +415,33 @@ static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int i
         const dma_addr_t dst_data = dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        if (lp0 > 0) {
+        если (lp0 > 0) {
             uint8_t * dst_left       = dst_spad_cur;
             const uint8_t * src_left = src_spad_cur + (size_t)(ne00 - (uint32_t)lp0) * type_size;
-            if ((uint32_t)lp0 < 32) {
+            если ((uint32_t)lp0 < 32) {
                 memcpy(dst_left, src_left, (size_t)lp0 * type_size);
-            } else {
+            } иначе {
                 hvx_copy_f32_uu(dst_left, src_left, (uint32_t)lp0);
             }
         }
 
         {
             uint8_t * dst_mid = dst_spad_cur + (size_t)lp0 * type_size;
-            if ((uintptr_t)dst_mid % VLEN == 0) {
+            если ((uintptr_t)dst_mid % VLEN == 0) {
                 hvx_copy_f32_aa(dst_mid, src_spad_cur, ne00);
-            } else {
+            } иначе {
                 hvx_copy_f32_ua(dst_mid, src_spad_cur, ne00);
             }
         }
 
-        if (rp0 > 0) {
+        если (rp0 > 0) {
             uint8_t * dst_right = dst_spad_cur + ((size_t)lp0 + ne00) * type_size;
-            if ((uint32_t)rp0 < 32) {
+            если ((uint32_t)rp0 < 32) {
                 memcpy(dst_right, src_spad_cur, (size_t)rp0 * type_size);
-            } else {
-                if ((uintptr_t)dst_right % VLEN == 0) {
+            } иначе {
+                если ((uintptr_t)dst_right % VLEN == 0) {
                     hvx_copy_f32_aa(dst_right, src_spad_cur, (uint32_t)rp0);
-                } else {
+                } иначе {
                     hvx_copy_f32_ua(dst_right, src_spad_cur, (uint32_t)rp0);
                 }
             }
@@ -453,7 +453,7 @@ static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int i
             dst_row_size, dst_row_size_aligned, dst_row_size, 1);
 
         const uint32_t next_row = ir + 2;
-        if (next_row < row_end) {
+        если (next_row < row_end) {
             uint32_t nri1, nri2, nri3;
             pad_decompose_row(next_row, ne1, ne2, &nri1, &nri2, &nri3);
             const dma_addr_t next_src_data = pad_circ_src_row_data(src, nri1, nri2, nri3, lp1, lp2, lp3);
@@ -472,7 +472,7 @@ static void pad_job_per_thread_hvx_circular_dma(unsigned int nth, unsigned int i
          row_start, row_end);
 }
 
-int op_pad(struct htp_ops_context * octx) {
+целое op_pad(struct htp_ops_context * octx) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst  = octx->dst;
 
@@ -482,7 +482,7 @@ int op_pad(struct htp_ops_context * octx) {
         case HTP_TYPE_F32: type_size = 4; break;
         default:
             FARF(ERROR, "pad-hvx: unsupported type %u\n", src0->type);
-            return HTP_STATUS_NO_SUPPORT;
+            вернуть HTP_STATUS_NO_SUPPORT;
     }
 
     const int32_t lp0 = octx->op_params[0];
@@ -504,7 +504,7 @@ int op_pad(struct htp_ops_context * octx) {
     uint32_t row_start = 0;
     uint32_t nrows     = total_dst_rows;
 
-    if (octx->ctx->mdev.count > 1) {
+    если (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, type_size, (uint32_t) dst_row_size, &rows_per_chunk);
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_dst_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
@@ -512,8 +512,8 @@ int op_pad(struct htp_ops_context * octx) {
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    если (nrows == 0) {
+        вернуть HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -525,14 +525,14 @@ int op_pad(struct htp_ops_context * octx) {
     // Total VTCM needed: 2 buffers (ping+pong) for src and dst, per thread
     const size_t vtcm_needed = (size_t)n_threads * 2 * (src_row_size_aligned + dst_row_size_aligned);
 
-    const int use_dma = (src0->nb[0] == (uint32_t)type_size) && (ne00 >= 512) &&
+    const целое use_dma = (src0->nb[0] == (uint32_t)type_size) && (ne00 >= 512) &&
                         (octx->ctx->vtcm_size >= vtcm_needed);
 
-    if (!use_dma && (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst))) {
-        return HTP_STATUS_NO_SUPPORT;
+    если (!use_dma && (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst))) {
+        вернуть HTP_STATUS_NO_SUPPORT;
     }
 
-    if (use_dma) {
+    если (use_dma) {
         octx->src0_spad.size_per_thread = 2 * src_row_size_aligned;
         octx->dst_spad.size_per_thread  = 2 * dst_row_size_aligned;
         octx->src0_spad.size = n_threads * octx->src0_spad.size_per_thread;
@@ -566,10 +566,10 @@ int op_pad(struct htp_ops_context * octx) {
          dst->ne[0],  dst->ne[1],  dst->ne[2],  dst->ne[3],
          lp0, rp0, lp1, rp1, lp2, rp2, lp3, rp3);
 
-    if      (circular && use_dma) { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_circular_dma, &pctx, n_threads); }
-    else if (circular)            { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_circular,     &pctx, n_threads); }
-    else if (use_dma)             { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_dma,          &pctx, n_threads); }
-    else                          { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx,              &pctx, n_threads); }
+    если      (circular && use_dma) { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_circular_dma, &pctx, n_threads); }
+    иначе если (circular)            { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_circular,     &pctx, n_threads); }
+    иначе если (use_dma)             { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx_dma,          &pctx, n_threads); }
+    иначе                          { work_queue_run(octx->ctx->work_queue, pad_job_per_thread_hvx,              &pctx, n_threads); }
 
-    return HTP_STATUS_OK;
+    вернуть HTP_STATUS_OK;
 }

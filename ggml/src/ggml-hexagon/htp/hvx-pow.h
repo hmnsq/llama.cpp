@@ -20,7 +20,7 @@ static inline HVX_Vector hvx_vec_pow_const_base_f32(float base, HVX_Vector expon
     const HVX_Vector max_exp = hvx_vec_splat_f32(kMaxExp);
     const HVX_Vector inf     = hvx_vec_splat_f32(kInf);
 
-    return hvx_vec_exp_f32_guard(x, max_exp, inf);
+    вернуть hvx_vec_exp_f32_guard(x, max_exp, inf);
 }
 
 // Approximates base^exponent element-wise for float vectors.
@@ -36,7 +36,7 @@ static inline HVX_Vector hvx_vec_pow_f32(HVX_Vector base, HVX_Vector exponent) {
     const HVX_Vector max_exp = hvx_vec_splat_f32(kMaxExp);
     const HVX_Vector inf     = hvx_vec_splat_f32(kInf);
 
-    return hvx_vec_exp_f32_guard(x, max_exp, inf);
+    вернуть hvx_vec_exp_f32_guard(x, max_exp, inf);
 }
 
 #endif /* HVX_POW_H */

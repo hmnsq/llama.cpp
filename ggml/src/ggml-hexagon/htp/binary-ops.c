@@ -90,15 +90,15 @@ static inline uint32_t calc_block_size(struct htp_binary_context * bctx, uint32_
     uint32_t rows_left = end_row - ir;
     uint32_t block_limit = rows_left;
 
-    if (bctx->split_at_ne01) {
+    если (bctx->split_at_ne01) {
         block_limit = MIN(block_limit, ne01 - i01);
     }
-    if (bctx->split_at_ne02) {
+    если (bctx->split_at_ne02) {
          uint32_t rows_in_plane = (ne02 * ne01) - rem;
          block_limit = MIN(block_limit, rows_in_plane);
     }
 
-    return MIN(bctx->block_max, block_limit);
+    вернуть MIN(bctx->block_max, block_limit);
 }
 
 // Out-of-line compute micro-kernels
@@ -114,12 +114,12 @@ static void compute_scalar_##NAME(                              \
     uint32_t cur_i11, uint32_t ne11, uint32_t n_rows,           \
     size_t dst_stride, size_t src0_stride, uint32_t ne00) {     \
     const TYPE * table = (const TYPE *) s1_table;               \
-    for (uint32_t r = 0; r < n_rows; r++) {                     \
+    для (uint32_t r = 0; r < n_rows; r++) {                     \
         uint8_t * r_dst = dst + r * dst_stride;                 \
         const uint8_t * r_src0 = src0 + r * src0_stride;        \
         TYPE val = table[cur_i11];                              \
         HVX_STMT;                                               \
-        if (ne11 > 1 && ++cur_i11 == ne11) {                    \
+        если (ne11 > 1 && ++cur_i11 == ne11) {                    \
             cur_i11 = 0;                                        \
         }                                                       \
     }                                                           \
@@ -142,7 +142,7 @@ typedef void (*compute_same_shape_t)(
 static void compute_same_shape_##NAME(                                                           \
     uint8_t * dst, const uint8_t * src0, const uint8_t * src1,                                   \
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, size_t src1_stride, uint32_t ne00) { \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                      \
+    для (uint32_t r = 0; r < n_rows; r++) {                                                      \
         HVX_FN(dst + r * dst_stride, src0 + r * src0_stride, src1 + r * src1_stride, ne00);      \
     }                                                                                            \
 }
@@ -164,7 +164,7 @@ typedef void (*compute_row_bcast_t)(
 static void compute_row_bcast_##NAME(                                                        \
     uint8_t * dst, const uint8_t * src0, const uint8_t * src1,                               \
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00) {                 \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                  \
+    для (uint32_t r = 0; r < n_rows; r++) {                                                  \
         HVX_FN(dst + r * dst_stride, src0 + r * src0_stride, src1, ne00);                    \
     }                                                                                        \
 }
@@ -188,7 +188,7 @@ static void compute_complex_##NAME(                                             
     uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,                         \
     uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,  \
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00) {                 \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                  \
+    для (uint32_t r = 0; r < n_rows; r++) {                                                  \
         uint32_t i11 = fastmodulo(i01 + r, ne11, div11);                                     \
         const uint8_t * r_src1 = src1_plane + i11 * src1_stride;                             \
         HVX_FN(dst + r * dst_stride, src0 + r * src0_stride, r_src1, ne00);                  \
@@ -214,12 +214,12 @@ static void compute_repeat_##NAME(                                              
     uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,                         \
     uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,  \
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00, uint32_t ne10) {  \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                  \
+    для (uint32_t r = 0; r < n_rows; r++) {                                                  \
         uint32_t i11 = fastmodulo(i01 + r, ne11, div11);                                     \
         const uint8_t * r_src1_row = src1_plane + i11 * src1_stride;                         \
         uint8_t * r_dst = dst + r * dst_stride;                                              \
         const uint8_t * r_src0 = src0 + r * src0_stride;                                     \
-        for (uint32_t c = 0; c < ne00; c += ne10) {                                          \
+        для (uint32_t c = 0; c < ne00; c += ne10) {                                          \
             uint32_t len = MIN(ne10, ne00 - c);                                              \
             HVX_FN(r_dst + c * sizeof(TYPE), r_src0 + c * sizeof(TYPE), r_src1_row, len);    \
         }                                                                                    \
@@ -244,10 +244,10 @@ static void compute_add_id_f32(
     uint8_t * dst, const uint8_t * src0, const uint8_t * src1_data, const int32_t * src2_ids,
     uint32_t i01, uint32_t i02, uint32_t ne01, uint32_t src1_stride,
     uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00) {
-    for (uint32_t r = 0; r < n_rows; r++) {
+    для (uint32_t r = 0; r < n_rows; r++) {
         uint32_t r_i01 = i01 + r;
         const int32_t idx = src2_ids[i02 * ne01 + r_i01];
-        if (idx < 0) {
+        если (idx < 0) {
             memcpy(dst + r * dst_stride, src0 + r * src0_stride, ne00 * sizeof(float));
             continue;
         }
@@ -259,7 +259,7 @@ static void compute_add_id_f32(
 }
 
 // 1. Scalar src1 in VTCM via DMA (ne10 == 1)
-static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data) {
+static void binary_thread_scalar(unsigned целое nth, unsigned целое ith, void * data) {
     struct htp_binary_context * bctx = (struct htp_binary_context *) data;
     struct htp_ops_context * octx = bctx->octx;
     htp_binary_preamble;
@@ -271,7 +271,7 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
     const uint32_t row_size_bytes = bctx->row_size_bytes;
     const uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
     const uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    если (start_row >= end_row) вернуть;
 
     FARF(HIGH, "binary-scalar: %d/%d (%u:%u) row-size %u (%u)",
          ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
@@ -285,9 +285,9 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    целое spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    для (целое k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03, i02, i01, rem;
         i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -311,7 +311,7 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_scalar_t compute = (compute_scalar_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    для (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
 
         uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
@@ -338,7 +338,7 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
         dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes,
                                                                 current_block_size);
 
-        if (ir_prefetch < end_row) {
+        если (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -357,7 +357,7 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
 }
 
 // 2. Vector Same Shape (ne1x == ne0x) or Simple Broadcast
-static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, void * data) {
+static void binary_thread_vector_same_shape(unsigned целое nth, unsigned целое ith, void * data) {
     struct htp_binary_context * bctx = (struct htp_binary_context *) data;
     struct htp_ops_context * octx = bctx->octx;
     htp_binary_preamble;
@@ -365,7 +365,7 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
     const uint32_t row_size_bytes = bctx->row_size_bytes;
     const uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
     const uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    если (start_row >= end_row) вернуть;
 
     FARF(HIGH, "binary-same-shape: %d/%d (%u:%u) row-size %u (%u)",
          ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
@@ -381,9 +381,9 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    целое spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    для (целое k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03, i02, i01, rem;
         i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -413,7 +413,7 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_same_shape_t compute = (compute_same_shape_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    для (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
         uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
         uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
@@ -432,7 +432,7 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
         dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        если (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -459,7 +459,7 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
 }
 
 // 3. Row Broadcast (ne11 == 1, ne12 == 1, single row src1)
-static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int ith, void * data) {
+static void binary_thread_vector_row_broadcast(unsigned целое nth, unsigned целое ith, void * data) {
     struct htp_binary_context * bctx = (struct htp_binary_context *) data;
     struct htp_ops_context * octx = bctx->octx;
     htp_binary_preamble;
@@ -467,7 +467,7 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
     const uint32_t row_size_bytes = bctx->row_size_bytes;
     const uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
     const uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    если (start_row >= end_row) вернуть;
 
     FARF(HIGH, "binary-row-bcast: %d/%d (%u:%u) row-size %u (%u)",
          ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
@@ -481,11 +481,11 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    целое spad_idx = 0;
 
     void * s1_ptr = VTCM_LAYOUT_PTR(void, bctx->vtcm_base, layout->off_src1);
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    для (целое k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
@@ -507,7 +507,7 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_row_bcast_t compute = (compute_row_bcast_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    для (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
         uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
         uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
@@ -524,7 +524,7 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
         dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        если (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -542,7 +542,7 @@ static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int it
 }
 
 // 4. Vector Complex (ne10 == ne00, complex broadcast)
-static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, void * data) {
+static void binary_thread_vector_complex(unsigned целое nth, unsigned целое ith, void * data) {
     struct htp_binary_context * bctx = (struct htp_binary_context *) data;
     struct htp_ops_context * octx = bctx->octx;
     htp_binary_preamble;
@@ -550,7 +550,7 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
     const uint32_t row_size_bytes = bctx->row_size_bytes;
     const uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
     const uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    если (start_row >= end_row) вернуть;
 
     FARF(HIGH, "binary-complex: %d/%d (%u:%u) row-size %u (%u)",
          ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
@@ -569,9 +569,9 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    целое spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    для (целое k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
@@ -593,7 +593,7 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_complex_t compute = (compute_complex_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    для (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
         uint8_t * d_spad = (uint8_t *) dma_queue_pop(dma_q).src;
         uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
@@ -615,7 +615,7 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
         dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        если (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -633,7 +633,7 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
 }
 
 // 5. Element Repeat (ne10 != ne00)
-static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, void * data) {
+static void binary_thread_element_repeat(unsigned целое nth, unsigned целое ith, void * data) {
     struct htp_binary_context * bctx = (struct htp_binary_context *) data;
     struct htp_ops_context * octx = bctx->octx;
     htp_binary_preamble;
@@ -641,7 +641,7 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
     const uint32_t row_size_bytes = bctx->row_size_bytes;
     const uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
     const uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    если (start_row >= end_row) вернуть;
 
     const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
     uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
@@ -660,9 +660,9 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    целое spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    для (целое k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
@@ -684,7 +684,7 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_repeat_t compute = (compute_repeat_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    для (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
         uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
         uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
@@ -706,7 +706,7 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
         dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        если (ir_prefetch < end_row) {
             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -724,7 +724,7 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
 }
 
 // 6. ADD_ID (src1 gathered via src2 indices)
-static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * data) {
+static void binary_thread_add_id_f32(unsigned целое nth, unsigned целое ith, void * data) {
     struct htp_binary_context * bctx = (struct htp_binary_context *) data;
     struct htp_ops_context * octx = bctx->octx;
 
@@ -749,7 +749,7 @@ static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * 
     const uint32_t row_size_bytes = bctx->row_size_bytes;
     const uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
     const uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    если (start_row >= end_row) вернуть;
 
     const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
     uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
@@ -761,9 +761,9 @@ static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * 
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    целое spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
+    для (целое k = 0; k < 2 && ir_prefetch < end_row; k++) {
         uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
@@ -784,7 +784,7 @@ static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * 
 
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
+    для (uint32_t ir = start_row; ir < end_row; ) {
         uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
         uint8_t * d_spad = (uint8_t *) dma_queue_pop(dma_q).src;
         uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
@@ -804,7 +804,7 @@ static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * 
         dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
         dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
 
-        if (ir_prefetch < end_row) {
+        если (ir_prefetch < end_row) {
              uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
              uint32_t p03, p02, p01, prem;
              p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
@@ -867,7 +867,7 @@ struct binary_chunked_context {
     compute_binary_scalar_chunked_f16_t compute_scalar_f16;
 };
 
-static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * data) {
+static void binary_thread_chunked(unsigned целое nth, unsigned целое ith, void * data) {
     (void) nth;
     struct binary_chunked_context * ctx = (struct binary_chunked_context *) data;
     struct htp_ops_context * octx = ctx->octx;
@@ -877,8 +877,8 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
 
     const uint32_t start_chunk = ctx->chunks_per_thread * ith;
     const uint32_t end_chunk   = MIN(start_chunk + ctx->chunks_per_thread, ctx->total_chunks);
-    if (start_chunk >= end_chunk) {
-        return;
+    если (start_chunk >= end_chunk) {
+        вернуть;
     }
 
     const uint32_t src0_type   = src0->type;
@@ -896,9 +896,9 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
 
     dma_queue * dma_q = octx->ctx->dma[ith];
     uint32_t prefetch_chunk = start_chunk;
-    int spad_idx = 0;
+    целое spad_idx = 0;
 
-    for (int k = 0; k < 2 && prefetch_chunk < end_chunk; k++) {
+    для (целое k = 0; k < 2 && prefetch_chunk < end_chunk; k++) {
         const uint32_t c_start   = ctx->elem_start + prefetch_chunk * chunk_size;
         const uint32_t c_end     = MIN(c_start + chunk_size, ctx->elem_start + ctx->nelem);
         const uint32_t cur_elems = c_end - c_start;
@@ -912,7 +912,7 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
 
         dma_queue_push(dma_q, dma_make_data(d_curr, d_spad), chunk_bytes, chunk_bytes, cur_bytes, 0);
         dma_queue_push(dma_q, dma_make_data(s0_spad, s0_curr), chunk_bytes, chunk_bytes, cur_bytes, 1);
-        if (!ctx->is_scalar) {
+        если (!ctx->is_scalar) {
             dma_addr_t s1_curr = src1->data + (size_t) c_start * elem_size;
             uint8_t * s1_spad = src1_spad_base + spad_idx * chunk_bytes;
             dma_queue_push(dma_q, dma_make_data(s1_spad, s1_curr), chunk_bytes, chunk_bytes, cur_bytes, 1);
@@ -924,7 +924,7 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
 
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t c = start_chunk; c < end_chunk; c++) {
+    для (uint32_t c = start_chunk; c < end_chunk; c++) {
         const uint32_t c_start   = ctx->elem_start + c * chunk_size;
         const uint32_t c_end     = MIN(c_start + chunk_size, ctx->elem_start + ctx->nelem);
         const uint32_t cur_elems = c_end - c_start;
@@ -935,13 +935,13 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
         uint8_t * s1_spad = ctx->is_scalar ? NULL : (uint8_t *) dma_queue_pop(dma_q).dst;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) c);
-        if (ctx->is_scalar) {
-            if (src0_type == HTP_TYPE_F32) {
+        если (ctx->is_scalar) {
+            если (src0_type == HTP_TYPE_F32) {
                 ctx->compute_scalar_f32(d_spad, s0_spad, ctx->scalar_f32, cur_elems);
-            } else {
+            } иначе {
                 ctx->compute_scalar_f16(d_spad, s0_spad, ctx->scalar_f16, cur_elems);
             }
-        } else {
+        } иначе {
             ctx->compute(d_spad, s0_spad, s1_spad, cur_elems);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) c);
@@ -949,7 +949,7 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
         dma_addr_t dst_curr = dst->data + (size_t) c_start * elem_size;
         dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), chunk_bytes, chunk_bytes, cur_bytes, 1);
 
-        if (prefetch_chunk < end_chunk) {
+        если (prefetch_chunk < end_chunk) {
             const uint32_t pc_start  = ctx->elem_start + prefetch_chunk * chunk_size;
             const uint32_t pc_end    = MIN(pc_start + chunk_size, ctx->elem_start + ctx->nelem);
             const uint32_t p_elems   = pc_end - pc_start;
@@ -957,7 +957,7 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
 
             dma_addr_t s0_next = src0->data + (size_t) pc_start * elem_size;
             dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), chunk_bytes, chunk_bytes, p_bytes, 1);
-            if (!ctx->is_scalar) {
+            если (!ctx->is_scalar) {
                 dma_addr_t s1_next = src1->data + (size_t) pc_start * elem_size;
                 dma_queue_push(dma_q, dma_make_data(s1_spad, s1_next), chunk_bytes, chunk_bytes, p_bytes, 1);
             }
@@ -969,7 +969,7 @@ static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * dat
     dma_queue_flush(dma_q);
 }
 
-static int execute_op_binary(struct htp_ops_context * octx) {
+static целое execute_op_binary(struct htp_ops_context * octx) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * src1 = octx->src[1];
     const struct htp_tensor * dst  = octx->dst;
@@ -984,15 +984,15 @@ static int execute_op_binary(struct htp_ops_context * octx) {
     const size_t src1_row_size = src1->ne[0] * elem_size;
     const size_t dst_row_size  = dst->ne[0]  * elem_size;
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
+    если (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
         const bool is_scalar = kparams->is_scalar || (src1->ne[0] == 1 && src1->ne[1] == 1 && src1->ne[2] == 1 && src1->ne[3] == 1);
 
         compute_binary_chunked_t compute = NULL;
         compute_binary_scalar_chunked_f32_t compute_scalar_f32 = NULL;
         compute_binary_scalar_chunked_f16_t compute_scalar_f16 = NULL;
 
-        if (is_scalar) {
-            if (src0_type == HTP_TYPE_F32) {
+        если (is_scalar) {
+            если (src0_type == HTP_TYPE_F32) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_scalar_f32 = hvx_add_scalar_f32; break;
                     case HTP_OP_SUB: compute_scalar_f32 = hvx_sub_scalar_f32; break;
@@ -1000,7 +1000,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
                     case HTP_OP_DIV: compute_scalar_f32 = hvx_div_scalar_f32; break;
                     default: break;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
+            } иначе если (src0_type == HTP_TYPE_F16) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_scalar_f16 = hvx_add_scalar_f16; break;
                     case HTP_OP_SUB: compute_scalar_f16 = hvx_sub_scalar_f16; break;
@@ -1009,11 +1009,11 @@ static int execute_op_binary(struct htp_ops_context * octx) {
                     default: break;
                 }
             }
-            if (!compute_scalar_f32 && !compute_scalar_f16) {
-                return HTP_STATUS_NO_SUPPORT;
+            если (!compute_scalar_f32 && !compute_scalar_f16) {
+                вернуть HTP_STATUS_NO_SUPPORT;
             }
-        } else {
-            if (src0_type == HTP_TYPE_F32) {
+        } иначе {
+            если (src0_type == HTP_TYPE_F32) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute = hvx_add_f32; break;
                     case HTP_OP_SUB: compute = hvx_sub_f32; break;
@@ -1021,7 +1021,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
                     case HTP_OP_DIV: compute = hvx_div_f32; break;
                     default: break;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
+            } иначе если (src0_type == HTP_TYPE_F16) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute = hvx_add_f16; break;
                     case HTP_OP_SUB: compute = hvx_sub_f16; break;
@@ -1030,21 +1030,21 @@ static int execute_op_binary(struct htp_ops_context * octx) {
                     default: break;
                 }
             }
-            if (!compute) {
-                return HTP_STATUS_NO_SUPPORT;
+            если (!compute) {
+                вернуть HTP_STATUS_NO_SUPPORT;
             }
         }
 
         const uint32_t total_elems = (uint32_t) (src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3]);
-        if (total_elems == 0) {
-            return HTP_STATUS_OK;
+        если (total_elems == 0) {
+            вернуть HTP_STATUS_OK;
         }
 
         uint32_t elem_start = 0;
         uint32_t nelem      = total_elems;
         const uint32_t elems_per_line = (src0_type == HTP_TYPE_F32) ? 32 : 64;
 
-        if (octx->ctx->mdev.count > 1) {
+        если (octx->ctx->mdev.count > 1) {
             const bool can_split = htp_tensor_mdev_data_aligned(dst) &&
                                    htp_tensor_mdev_data_aligned(src0) &&
                                    (is_scalar || htp_tensor_mdev_data_aligned(src1)) &&
@@ -1058,18 +1058,18 @@ static int execute_op_binary(struct htp_ops_context * octx) {
             nelem      = range.count;
         }
 
-        if (nelem == 0) {
-            return HTP_STATUS_OK;
+        если (nelem == 0) {
+            вернуть HTP_STATUS_OK;
         }
 
-        if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-            return HTP_STATUS_INVAL_PARAMS;
+        если (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+            вернуть HTP_STATUS_INVAL_PARAMS;
         }
 
         struct htp_binary_vtcm_layout vtcm_layout;
         htp_binary_vtcm_layout_build(&vtcm_layout, kparams, octx->ctx->vtcm_size);
-        if (vtcm_layout.total_bytes == 0 || vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
-            return HTP_STATUS_VTCM_TOO_SMALL;
+        если (vtcm_layout.total_bytes == 0 || vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
+            вернуть HTP_STATUS_VTCM_TOO_SMALL;
         }
 
         const uint32_t chunk_size = kparams->chunk_size > 0 ? kparams->chunk_size : (32768 / elem_size);
@@ -1079,15 +1079,15 @@ static int execute_op_binary(struct htp_ops_context * octx) {
 
         float scalar_f32 = 0.0f;
         _Float16 scalar_f16 = 0;
-        if (is_scalar) {
+        если (is_scalar) {
             uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, octx->ctx->vtcm_base, vtcm_layout.off_src1);
             dma_queue * dma_q = octx->ctx->dma[0];
             dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data), 128, 0, elem_size, 1);
             dma_queue_pop(dma_q);
 
-            if (src0_type == HTP_TYPE_F32) {
+            если (src0_type == HTP_TYPE_F32) {
                 scalar_f32 = ((const float *) vtcm_src1)[0];
-            } else {
+            } иначе {
                 scalar_f16 = ((const _Float16 *) vtcm_src1)[0];
             }
         }
@@ -1110,13 +1110,13 @@ static int execute_op_binary(struct htp_ops_context * octx) {
         };
 
         work_queue_run(octx->ctx->work_queue, binary_thread_chunked, &cctx, n_threads);
-        return HTP_STATUS_OK;
+        вернуть HTP_STATUS_OK;
     }
 
     uint32_t row_start = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
+    если (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
         htp_tensor_mdev_rows_per_chunk(dst, (uint32_t) elem_size, (uint32_t) dst_row_size, &rows_per_chunk);
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk,
@@ -1125,12 +1125,12 @@ static int execute_op_binary(struct htp_ops_context * octx) {
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    если (nrows == 0) {
+        вернуть HTP_STATUS_OK;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    если (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        вернуть HTP_STATUS_INVAL_PARAMS;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -1142,37 +1142,37 @@ static int execute_op_binary(struct htp_ops_context * octx) {
     bctx.vtcm_base = (uint8_t *) octx->ctx->vtcm_base;
     htp_binary_vtcm_layout_build(&bctx.vtcm_layout, kparams, octx->ctx->vtcm_size);
 
-    if (bctx.vtcm_layout.rows_per_buffer == 0 || bctx.vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    если (bctx.vtcm_layout.rows_per_buffer == 0 || bctx.vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
+        вернуть HTP_STATUS_VTCM_TOO_SMALL;
     }
 
     dma_queue * dma_q = octx->ctx->dma[0];
     uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, bctx.vtcm_base, bctx.vtcm_layout.off_src1);
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_ROW_BCAST) {
+    если (kparams->kernel_type == HTP_BINARY_KERNEL_ROW_BCAST) {
         dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data), bctx.vtcm_layout.src1_size, 0, src1->ne[0] * elem_size, 1);
-    } else if (kparams->kernel_type == HTP_BINARY_KERNEL_SCALAR ||
+    } иначе если (kparams->kernel_type == HTP_BINARY_KERNEL_SCALAR ||
                kparams->kernel_type == HTP_BINARY_KERNEL_REPEAT ||
                kparams->kernel_type == HTP_BINARY_KERNEL_COMPLEX) {
-        if (!kparams->src1_strided) {
+        если (!kparams->src1_strided) {
             const size_t src1_bytes = (size_t) src1->ne[0] * src1->ne[1] * src1->ne[2] * src1->ne[3] * elem_size;
             dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data), bctx.vtcm_layout.src1_size, 0, src1_bytes, 1);
-        } else {
+        } иначе {
             const uint32_t ne11 = src1->ne[1];
             const uint32_t ne12 = src1->ne[2];
             const uint32_t ne13 = src1->ne[3];
             const size_t row_bytes = src1->ne[0] * elem_size;
-            for (uint32_t i13 = 0; i13 < ne13; i13++) {
-                for (uint32_t i12 = 0; i12 < ne12; i12++) {
+            для (uint32_t i13 = 0; i13 < ne13; i13++) {
+                для (uint32_t i12 = 0; i12 < ne12; i12++) {
                     dma_addr_t src_addr = src1->data + i13 * src1->nb[3] + i12 * src1->nb[2];
                     uint8_t * dst_ptr = vtcm_src1 + (i13 * ne12 * ne11 + i12 * ne11) * row_bytes;
-                    while (!dma_queue_push(dma_q, dma_make_data(dst_ptr, src_addr),
+                    пока (!dma_queue_push(dma_q, dma_make_data(dst_ptr, src_addr),
                                            row_bytes, src1->nb[1], row_bytes, ne11)) {
                         dma_queue_pop(dma_q);
                     }
                 }
             }
         }
-    } else if (kparams->kernel_type == HTP_BINARY_KERNEL_ADD_ID) {
+    } иначе если (kparams->kernel_type == HTP_BINARY_KERNEL_ADD_ID) {
         const struct htp_tensor * src2 = octx->src[2];
         uint8_t * vtcm_src2 = VTCM_LAYOUT_PTR(uint8_t, bctx.vtcm_base, bctx.vtcm_layout.off_src2);
         dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data),
@@ -1211,7 +1211,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
     switch (kparams->kernel_type) {
         case HTP_BINARY_KERNEL_SAME_SHAPE:
             worker_func = binary_thread_vector_same_shape;
-            if (src0_type == HTP_TYPE_F32) {
+            если (src0_type == HTP_TYPE_F32) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_same_shape_add_f32; break;
                     case HTP_OP_SUB: compute_func = compute_same_shape_sub_f32; break;
@@ -1219,7 +1219,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
                     case HTP_OP_DIV: compute_func = compute_same_shape_div_f32; break;
                     default: break;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
+            } иначе если (src0_type == HTP_TYPE_F16) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_same_shape_add_f16; break;
                     case HTP_OP_SUB: compute_func = compute_same_shape_sub_f16; break;
@@ -1231,7 +1231,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
             break;
         case HTP_BINARY_KERNEL_ROW_BCAST:
             worker_func = binary_thread_vector_row_broadcast;
-            if (src0_type == HTP_TYPE_F32) {
+            если (src0_type == HTP_TYPE_F32) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_row_bcast_add_f32; break;
                     case HTP_OP_SUB: compute_func = compute_row_bcast_sub_f32; break;
@@ -1239,7 +1239,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
                     case HTP_OP_DIV: compute_func = compute_row_bcast_div_f32; break;
                     default: break;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
+            } иначе если (src0_type == HTP_TYPE_F16) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_row_bcast_add_f16; break;
                     case HTP_OP_SUB: compute_func = compute_row_bcast_sub_f16; break;
@@ -1251,7 +1251,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
             break;
         case HTP_BINARY_KERNEL_SCALAR:
             worker_func = binary_thread_scalar;
-            if (src0_type == HTP_TYPE_F32) {
+            если (src0_type == HTP_TYPE_F32) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_scalar_add_f32; break;
                     case HTP_OP_SUB: compute_func = compute_scalar_sub_f32; break;
@@ -1259,7 +1259,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
                     case HTP_OP_DIV: compute_func = compute_scalar_div_f32; break;
                     default: break;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
+            } иначе если (src0_type == HTP_TYPE_F16) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_scalar_add_f16; break;
                     case HTP_OP_SUB: compute_func = compute_scalar_sub_f16; break;
@@ -1271,7 +1271,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
             break;
         case HTP_BINARY_KERNEL_COMPLEX:
             worker_func = binary_thread_vector_complex;
-            if (src0_type == HTP_TYPE_F32) {
+            если (src0_type == HTP_TYPE_F32) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_complex_add_f32; break;
                     case HTP_OP_SUB: compute_func = compute_complex_sub_f32; break;
@@ -1279,7 +1279,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
                     case HTP_OP_DIV: compute_func = compute_complex_div_f32; break;
                     default: break;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
+            } иначе если (src0_type == HTP_TYPE_F16) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_complex_add_f16; break;
                     case HTP_OP_SUB: compute_func = compute_complex_sub_f16; break;
@@ -1291,7 +1291,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
             break;
         case HTP_BINARY_KERNEL_REPEAT:
             worker_func = binary_thread_element_repeat;
-            if (src0_type == HTP_TYPE_F32) {
+            если (src0_type == HTP_TYPE_F32) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_repeat_add_f32; break;
                     case HTP_OP_SUB: compute_func = compute_repeat_sub_f32; break;
@@ -1299,7 +1299,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
                     case HTP_OP_DIV: compute_func = compute_repeat_div_f32; break;
                     default: break;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
+            } иначе если (src0_type == HTP_TYPE_F16) {
                 switch (octx->op) {
                     case HTP_OP_ADD: compute_func = compute_repeat_add_f16; break;
                     case HTP_OP_SUB: compute_func = compute_repeat_sub_f16; break;
@@ -1310,7 +1310,7 @@ static int execute_op_binary(struct htp_ops_context * octx) {
             }
             break;
         case HTP_BINARY_KERNEL_ADD_ID:
-            if (octx->op == HTP_OP_ADD_ID && src0_type == HTP_TYPE_F32) {
+            если (octx->op == HTP_OP_ADD_ID && src0_type == HTP_TYPE_F32) {
                 worker_func = binary_thread_add_id_f32;
                 compute_func = (void *) compute_add_id_f32;
             }
@@ -1318,13 +1318,13 @@ static int execute_op_binary(struct htp_ops_context * octx) {
         default: break;
     }
 
-    if (!worker_func || !compute_func) {
-        return HTP_STATUS_NO_SUPPORT;
+    если (!worker_func || !compute_func) {
+        вернуть HTP_STATUS_NO_SUPPORT;
     }
 
     bctx.compute = compute_func;
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_ROW_BCAST ||
+    если (kparams->kernel_type == HTP_BINARY_KERNEL_ROW_BCAST ||
         kparams->kernel_type == HTP_BINARY_KERNEL_SCALAR ||
         kparams->kernel_type == HTP_BINARY_KERNEL_REPEAT ||
         kparams->kernel_type == HTP_BINARY_KERNEL_COMPLEX ||
@@ -1334,14 +1334,14 @@ static int execute_op_binary(struct htp_ops_context * octx) {
 
     work_queue_run(octx->ctx->work_queue, worker_func, &bctx, n_threads);
 
-    return HTP_STATUS_OK;
+    вернуть HTP_STATUS_OK;
 }
 
-int op_binary(struct htp_ops_context * octx) {
+целое op_binary(struct htp_ops_context * octx) {
     const uint32_t src0_type = octx->src[0]->type;
-    if ((src0_type == HTP_TYPE_F32) || (src0_type == HTP_TYPE_F16)) {
-        return execute_op_binary(octx);
+    если ((src0_type == HTP_TYPE_F32) || (src0_type == HTP_TYPE_F16)) {
+        вернуть execute_op_binary(octx);
     }
 
-    return HTP_STATUS_NO_SUPPORT;
+    вернуть HTP_STATUS_NO_SUPPORT;
 }

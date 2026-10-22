@@ -18,7 +18,7 @@ using namespace metal;
 
 #define PAD2(x, n) (((x) + (n) - 1) & ~((n) - 1))
 
-#define FOR_UNROLL(x) _Pragma("clang loop unroll(full)") for (x)
+#define FOR_UNROLL(x) _Pragma("clang loop unroll(full)") для (x)
 
 #define N_SIMDWIDTH 32 // assuming SIMD group size is 32
 
@@ -28,11 +28,11 @@ using namespace metal;
 //   .../usr/bin/metal -dM -E -c                             ggml/src/ggml-metal/kernels/<src>.metal
 //   .../usr/bin/metal -dM -E -c -target air64-apple-ios14.0 ggml/src/ggml-metal/kernels/<src>.metal
 //
-#if __METAL_VERSION__ < 310 && defined(GGML_METAL_HAS_BF16)
+#если __METAL_VERSION__ < 310 && defined(GGML_METAL_HAS_BF16)
 #undef GGML_METAL_HAS_BF16
 #endif
 
-#if defined(GGML_METAL_HAS_BF16)
+#если defined(GGML_METAL_HAS_BF16)
 typedef matrix<bfloat, 4, 4> bfloat4x4;
 typedef matrix<bfloat, 2, 4> bfloat2x4;
 #endif
@@ -45,39 +45,39 @@ constexpr constant static float kvalues_mxfp4_f[16] = {
     0, .5f, 1.f, 1.5f, 2.f, 3.f, 4.f, 6.f, -0, -.5f, -1.f, -1.5f, -2.f, -3.f, -4.f, -6.f
 };
 
-static inline int best_index_int8(int n, constant float * val, float x) {
-    if (x <= val[0]) return 0;
-    if (x >= val[n-1]) return n-1;
-    int ml = 0, mu = n-1;
-    while (mu-ml > 1) {
-        int mav = (ml+mu)/2;
-        if (x < val[mav]) mu = mav; else ml = mav;
+static inline целое best_index_int8(целое n, constant float * val, float x) {
+    если (x <= val[0]) вернуть 0;
+    если (x >= val[n-1]) вернуть n-1;
+    целое ml = 0, mu = n-1;
+    пока (mu-ml > 1) {
+        целое mav = (ml+mu)/2;
+        если (x < val[mav]) mu = mav; иначе ml = mav;
     }
-    return x - val[mu-1] < val[mu] - x ? mu-1 : mu;
+    вернуть x - val[mu-1] < val[mu] - x ? mu-1 : mu;
 }
 
 static inline float e8m0_to_fp32(uint8_t x) {
     uint32_t bits;
 
-    if (x == 0) {
+    если (x == 0) {
         bits = 0x00400000;
-    } else {
+    } иначе {
         bits = (uint32_t) x << 23;
     }
 
-    return as_type<float>(bits);
+    вернуть as_type<float>(bits);
 }
 
 static inline float dot(float x, float y) {
-    return x*y;
+    вернуть x*y;
 }
 
 static inline float sum(float x) {
-    return x;
+    вернуть x;
 }
 
 static inline float sum(float4 x) {
-    return x[0] + x[1] + x[2] + x[3];
+    вернуть x[0] + x[1] + x[2] + x[3];
 }
 
 enum ggml_sort_order {
@@ -105,13 +105,13 @@ inline T erf_approx(T x) {
     x = fabs(x);
     T t = 1.0f / (1.0f + p_erf * x);
     T y = 1.0f - (((((a5_erf * t + a4_erf) * t) + a3_erf) * t + a2_erf) * t + a1_erf) * t * exp(-x * x);
-    return sign_x * y;
+    вернуть sign_x * y;
 }
 
 template<typename T> T elu_approx(T x);
 
 template<> inline float elu_approx<float>(float x) {
-    return (x > 0.f) ? x : (exp(x) - 1);
+    вернуть (x > 0.f) ? x : (exp(x) - 1);
 }
 
 template<> inline float4 elu_approx<float4>(float4 x) {
@@ -122,5 +122,5 @@ template<> inline float4 elu_approx<float4>(float4 x) {
     res[2] = (x[2] > 0.0f) ? x[2] : (exp(x[2]) - 1.0f);
     res[3] = (x[3] > 0.0f) ? x[3] : (exp(x[3]) - 1.0f);
 
-    return res;
+    вернуть res;
 }

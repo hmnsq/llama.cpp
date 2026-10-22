@@ -33,10 +33,10 @@ struct htp_concat_context {
 static inline dma_addr_t concat_plane_addr(const struct htp_tensor * t, uint32_t p, const struct fastdiv_values * div_ne2, uint32_t ne2) {
     const uint32_t i3 = fastdiv(p, div_ne2);
     const uint32_t i2 = p - i3 * ne2;
-    return t->data + i2 * t->nb[2] + i3 * t->nb[3];
+    вернуть t->data + i2 * t->nb[2] + i3 * t->nb[3];
 }
 
-static void concat_2d_f32_transposed(unsigned int nth, unsigned int ith, void * data) {
+static void concat_2d_f32_transposed(unsigned целое nth, unsigned целое ith, void * data) {
     struct htp_concat_context * cctx = (struct htp_concat_context *) data;
     struct htp_ops_context * octx = cctx->octx;
 
@@ -50,7 +50,7 @@ static void concat_2d_f32_transposed(unsigned int nth, unsigned int ith, void * 
     const uint32_t row_end = cctx->row_start + cctx->nrows;
     const uint32_t start_i = cctx->row_start + ith * cctx->nrows_per_thread;
     const uint32_t end_i   = (start_i + cctx->nrows_per_thread < row_end) ? (start_i + cctx->nrows_per_thread) : row_end;
-    if (start_i >= end_i) return;
+    если (start_i >= end_i) вернуть;
 
     dma_queue * dma_q = octx->ctx->dma[ith];
 
@@ -83,11 +83,11 @@ static void concat_2d_f32_transposed(unsigned int nth, unsigned int ith, void * 
 
     dma_queue_pop(dma_q); // src1
 
-    while (p < cctx->nplanes) {
+    пока (p < cctx->nplanes) {
         const uint32_t current_block_i = MIN(end_i - i, block_i);
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) i);
-        for (uint32_t j = 0; j < src1_ne0; j += 32) {
+        для (uint32_t j = 0; j < src1_ne0; j += 32) {
             const uint8_t * src_ptr = spad1_base + j * spad1_stride;
             uint8_t * dst_ptr = spad0_base + src0_row_padded + j * sizeof(float);
             hvx_transpose_32x32_w_gather(dst_ptr, spad0_row_bytes, src_ptr, spad1_stride, offsets, current_block_i, MIN(src1_ne0 - j, 32));
@@ -97,7 +97,7 @@ static void concat_2d_f32_transposed(unsigned int nth, unsigned int ith, void * 
 
         uint32_t np = p;
         uint32_t ni = i + block_i;
-        if (ni >= end_i) {
+        если (ni >= end_i) {
             ni = start_i;
             np++;
         }
@@ -105,7 +105,7 @@ static void concat_2d_f32_transposed(unsigned int nth, unsigned int ith, void * 
         const uint32_t next_block_i = MIN(end_i - ni, block_i);
 
         // spad1 is free after the gather sync, prefetch next src1 ahead of the dst write
-        if (has_next) {
+        если (has_next) {
             const dma_addr_t nsrc1_addr = concat_plane_addr(src1, np, div_ne2, ne2) + ni * src1->nb[1];
             dma_queue_push(dma_q, dma_make_data(spad1_base, nsrc1_addr), spad1_stride, src1->nb[0], next_block_i * sizeof(float), src1_ne0);
         }
@@ -115,13 +115,13 @@ static void concat_2d_f32_transposed(unsigned int nth, unsigned int ith, void * 
         const dma_addr_t dst_addr = concat_plane_addr(dst, p, div_ne2, ne2) + i * dst->nb[1];
         dma_queue_push(dma_q, dma_make_data(dst_addr, spad0_base + src0_pre), dst->nb[1], spad0_row_bytes, (src0_ne0 + src1_ne0) * sizeof(float), current_block_i);
 
-        if (has_next) {
+        если (has_next) {
             dma_queue_pop(dma_q); // next src1
         }
         dma_queue_pop(dma_q); // dst
 
         // spad0 is free after the dst write
-        if (has_next) {
+        если (has_next) {
             const dma_addr_t nsrc0_addr = concat_plane_addr(src0, np, div_ne2, ne2) + ni * src0->nb[1];
             dma_queue_push(dma_q, dma_make_data(spad0_base + src0_pre, nsrc0_addr), spad0_row_bytes, src0->nb[1], src0_row_bytes, next_block_i);
         }
@@ -132,7 +132,7 @@ static void concat_2d_f32_transposed(unsigned int nth, unsigned int ith, void * 
     dma_queue_flush(dma_q);
 }
 
-static void concat_2d_f16_transposed(unsigned int nth, unsigned int ith, void * data) {
+static void concat_2d_f16_transposed(unsigned целое nth, unsigned целое ith, void * data) {
     struct htp_concat_context * cctx = (struct htp_concat_context *) data;
     struct htp_ops_context * octx = cctx->octx;
 
@@ -146,7 +146,7 @@ static void concat_2d_f16_transposed(unsigned int nth, unsigned int ith, void * 
     const uint32_t row_end = cctx->row_start + cctx->nrows;
     const uint32_t start_i = cctx->row_start + ith * cctx->nrows_per_thread;
     const uint32_t end_i   = (start_i + cctx->nrows_per_thread < row_end) ? (start_i + cctx->nrows_per_thread) : row_end;
-    if (start_i >= end_i) return;
+    если (start_i >= end_i) вернуть;
 
     dma_queue * dma_q = octx->ctx->dma[ith];
 
@@ -179,11 +179,11 @@ static void concat_2d_f16_transposed(unsigned int nth, unsigned int ith, void * 
 
     dma_queue_pop(dma_q); // src1
 
-    while (p < cctx->nplanes) {
+    пока (p < cctx->nplanes) {
         const uint32_t current_block_i = MIN(end_i - i, block_i);
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) i);
-        for (uint32_t j = 0; j < src1_ne0; j += 64) {
+        для (uint32_t j = 0; j < src1_ne0; j += 64) {
             const uint8_t * src_ptr = spad1_base + j * spad1_stride;
             uint8_t * dst_ptr = spad0_base + src0_row_padded + j * sizeof(__fp16);
             hvx_transpose_64x64_h_gather(dst_ptr, spad0_row_bytes, src_ptr, spad1_stride, offsets, current_block_i, MIN(src1_ne0 - j, 64));
@@ -193,7 +193,7 @@ static void concat_2d_f16_transposed(unsigned int nth, unsigned int ith, void * 
 
         uint32_t np = p;
         uint32_t ni = i + block_i;
-        if (ni >= end_i) {
+        если (ni >= end_i) {
             ni = start_i;
             np++;
         }
@@ -201,7 +201,7 @@ static void concat_2d_f16_transposed(unsigned int nth, unsigned int ith, void * 
         const uint32_t next_block_i = MIN(end_i - ni, block_i);
 
         // spad1 is free after the gather sync, prefetch next src1 ahead of the dst write
-        if (has_next) {
+        если (has_next) {
             const dma_addr_t nsrc1_addr = concat_plane_addr(src1, np, div_ne2, ne2) + ni * src1->nb[1];
             dma_queue_push(dma_q, dma_make_data(spad1_base, nsrc1_addr), spad1_stride, src1->nb[0], next_block_i * sizeof(__fp16), src1_ne0);
         }
@@ -211,13 +211,13 @@ static void concat_2d_f16_transposed(unsigned int nth, unsigned int ith, void * 
         const dma_addr_t dst_addr = concat_plane_addr(dst, p, div_ne2, ne2) + i * dst->nb[1];
         dma_queue_push(dma_q, dma_make_data(dst_addr, spad0_base + src0_pre), dst->nb[1], spad0_row_bytes, (src0_ne0 + src1_ne0) * sizeof(__fp16), current_block_i);
 
-        if (has_next) {
+        если (has_next) {
             dma_queue_pop(dma_q); // next src1
         }
         dma_queue_pop(dma_q); // dst
 
         // spad0 is free after the dst write
-        if (has_next) {
+        если (has_next) {
             const dma_addr_t nsrc0_addr = concat_plane_addr(src0, np, div_ne2, ne2) + ni * src0->nb[1];
             dma_queue_push(dma_q, dma_make_data(spad0_base + src0_pre, nsrc0_addr), spad0_row_bytes, src0->nb[1], src0_row_bytes, next_block_i);
         }
@@ -228,14 +228,14 @@ static void concat_2d_f16_transposed(unsigned int nth, unsigned int ith, void * 
     dma_queue_flush(dma_q);
 }
 
-static int concat_regular(struct htp_ops_context * octx, int dim, uint32_t type_size) {
+static целое concat_regular(struct htp_ops_context * octx, целое dim, uint32_t type_size) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * src1 = octx->src[1];
     const struct htp_tensor * dst  = octx->dst;
 
     struct htp_tensor view0 = *dst;
     struct htp_tensor view1 = *dst;
-    for (int d = 0; d < HTP_OP_MAX_DIMS; d++) {
+    для (целое d = 0; d < HTP_OP_MAX_DIMS; d++) {
         view0.ne[d] = src0->ne[d];
         view1.ne[d] = src1->ne[d];
     }
@@ -247,7 +247,7 @@ static int concat_regular(struct htp_ops_context * octx, int dim, uint32_t type_
     uint32_t rstart0 = 0, nrows0 = total_rows_0;
     uint32_t rstart1 = 0, nrows1 = total_rows_1;
 
-    if (octx->ctx->mdev.count > 1) {
+    если (octx->ctx->mdev.count > 1) {
         const struct htp_tensor_mdev_range range0 = htp_tensor_mdev_partition(
             total_rows_0, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         rstart0 = range0.start;
@@ -265,12 +265,12 @@ static int concat_regular(struct htp_ops_context * octx, int dim, uint32_t type_
     dma_cpy_sametype_sameshape_range(q, &view1, src1, type_size, rstart1, nrows1);
     dma_queue_flush(q);
 
-    return HTP_STATUS_OK;
+    вернуть HTP_STATUS_OK;
 }
 
-static int concat_transposed(struct htp_ops_context * octx, const struct htp_concat_kernel_params * kparams, uint32_t type_size) {
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+static целое concat_transposed(struct htp_ops_context * octx, const struct htp_concat_kernel_params * kparams, uint32_t type_size) {
+    если (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        вернуть HTP_STATUS_INVAL_PARAMS;
     }
 
     const struct htp_tensor * dst = octx->dst;
@@ -278,18 +278,18 @@ static int concat_transposed(struct htp_ops_context * octx, const struct htp_con
     const uint32_t total_rows = dst->ne[1];
     uint32_t row_start = 0;
     uint32_t nrows     = total_rows;
-    if (octx->ctx->mdev.count > 1) {
+    если (octx->ctx->mdev.count > 1) {
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_rows, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
     }
 
-    if (nrows == 0 || dst->ne[2] == 0 || dst->ne[3] == 0) {
-        return HTP_STATUS_OK;
+    если (nrows == 0 || dst->ne[2] == 0 || dst->ne[3] == 0) {
+        вернуть HTP_STATUS_OK;
     }
 
-    if (kparams->vtcm_size > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    если (kparams->vtcm_size > octx->ctx->vtcm_size) {
+        вернуть HTP_STATUS_VTCM_TOO_SMALL;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -314,16 +314,16 @@ static int concat_transposed(struct htp_ops_context * octx, const struct htp_con
 
     work_queue_func_t worker_func = (type_size == 4) ? concat_2d_f32_transposed : concat_2d_f16_transposed;
     work_queue_run(octx->ctx->work_queue, worker_func, &cctx, n_threads);
-    return HTP_STATUS_OK;
+    вернуть HTP_STATUS_OK;
 }
 
-int op_concat(struct htp_ops_context * octx) {
+целое op_concat(struct htp_ops_context * octx) {
     const struct htp_concat_kernel_params * kparams = (const struct htp_concat_kernel_params *) octx->kernel_params;
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * src1 = octx->src[1];
     const struct htp_tensor * dst  = octx->dst;
 
-    int status = HTP_STATUS_OK;
+    целое status = HTP_STATUS_OK;
     const uint32_t type_size = (dst->type == HTP_TYPE_F32 || dst->type == HTP_TYPE_I32) ? 4 : 2;
 
     switch (kparams->kernel_type) {
@@ -346,5 +346,5 @@ int op_concat(struct htp_ops_context * octx) {
 
     htp_ops_context_set_status(octx, status);
 
-    return octx->status;
+    вернуть octx->status;
 }

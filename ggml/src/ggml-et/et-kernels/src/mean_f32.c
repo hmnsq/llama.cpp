@@ -29,8 +29,8 @@ struct ggml_et_mean_params {
 // path only when `base + i_lo` is 32B-aligned; the tail (and the whole slice
 // when misaligned) is summed with scalar fadd.s.
 static inline float partial_sum_slice(const float * base, int32_t i_lo, int32_t i_hi) {
-    if (i_lo >= i_hi) {
-        return 0.0f;
+    если (i_lo >= i_hi) {
+        вернуть 0.0f;
     }
 
     const float * p   = base + i_lo;
@@ -38,11 +38,11 @@ static inline float partial_sum_slice(const float * base, int32_t i_lo, int32_t 
     float         acc = 0.0f;
     int32_t       i   = 0;
 
-    if (n >= 8 && (((uintptr_t) p) & 31) == 0) {
+    если (n >= 8 && (((uintptr_t) p) & 31) == 0) {
         float zero = 0.0f;
         __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-        for (; i + 8 <= n; i += 8) {
+        для (; i + 8 <= n; i += 8) {
             __asm__ volatile(
                 "flw.ps  f11, %[x]\n"
                 "fadd.ps f10, f10, f11\n"
@@ -64,42 +64,42 @@ static inline float partial_sum_slice(const float * base, int32_t i_lo, int32_t 
         acc = vec_sum;
     }
 
-    for (; i < n; i++) {
+    для (; i < n; i++) {
         acc += p[i];
     }
-    return acc;
+    вернуть acc;
 }
 
-int entry_point(struct ggml_et_mean_params * params, void * env) {
+целое entry_point(struct ggml_et_mean_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    если (!kernel_env) {
+        вернуть -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    целое thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    целое num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    если (thread_id < 0) {
+        вернуть 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    если (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        вернуть -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    если (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        вернуть -1;
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    если (!src0_data || !dst_data) {
+        вернуть -1;
     }
 
     const int64_t ne00 = src0->ne[0];
@@ -115,17 +115,17 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
     const size_t nb2 = dst->nb[2];
     const size_t nb3 = dst->nb[3];
 
-    if (ne00 <= 0) {
-        return 0;
+    если (ne00 <= 0) {
+        вернуть 0;
     }
 
     const int32_t total_rows    = (int32_t) (ne01 * ne02 * ne03);
-    const int     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
+    const целое     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
     const float   inv_ne00      = et_fdiv(1.0f, (float) (int32_t) ne00);
 
     // Row-parallel: each thread owns whole rows.
-    if (total_rows >= shire_threads) {
-        for (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
+    если (total_rows >= shire_threads) {
+        для (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
             const int64_t i03 = ir / (ne02 * ne01);
             const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
             const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
@@ -137,17 +137,17 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
             atomic_store_f32(dst_ptr, row_sum * inv_ne00);
         }
         // Shire co-work
-    } else {
-        int shire_tid       = thread_id % shire_threads;
-        int threads_per_row = shire_threads / total_rows;
-        int my_row          = shire_tid / threads_per_row;
-        int local_tid       = shire_tid % threads_per_row;
-        int group_base      = my_row * threads_per_row;
+    } иначе {
+        целое shire_tid       = thread_id % shire_threads;
+        целое threads_per_row = shire_threads / total_rows;
+        целое my_row          = shire_tid / threads_per_row;
+        целое local_tid       = shire_tid % threads_per_row;
+        целое group_base      = my_row * threads_per_row;
 
-        if (my_row >= total_rows) {
+        если (my_row >= total_rows) {
             FENCE;
             et_barrier(ET_BARRIER_SHIRE);
-            return 0;
+            вернуть 0;
         }
 
         int64_t i1 = my_row % ne01;
@@ -162,21 +162,21 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
         // matters for the vector path inside partial_sum_slice).
         int32_t chunk = ((int32_t) ne00 + threads_per_row - 1) / threads_per_row;
         chunk         = (chunk + 7) & ~7;
-        if (chunk < 8) {
+        если (chunk < 8) {
             chunk = 8;
         }
 
         int32_t my_start = local_tid * chunk;
         int32_t my_end   = my_start + chunk;
-        if (my_end > (int32_t) ne00) {
+        если (my_end > (int32_t) ne00) {
             my_end = (int32_t) ne00;
         }
-        if (my_start > (int32_t) ne00) {
+        если (my_start > (int32_t) ne00) {
             my_start = my_end = (int32_t) ne00;
         }
 
-        int workers = ((int32_t) ne00 + chunk - 1) / chunk;
-        if (workers > threads_per_row) {
+        целое workers = ((int32_t) ne00 + chunk - 1) / chunk;
+        если (workers > threads_per_row) {
             workers = threads_per_row;
         }
 
@@ -197,16 +197,16 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
 
         et_barrier(ET_BARRIER_SHIRE);
 
-        if (local_tid == 0) {
+        если (local_tid == 0) {
             // Reader-side evictions for every contributing peer slot.
-            for (int t = 0; t < workers; t++) {
+            для (целое t = 0; t < workers; t++) {
                 volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
                 evict_to_l2((const void *) slot, 1, 64);
             }
             WAIT_CACHEOPS;
 
             float total_sum = 0.0f;
-            for (int t = 0; t < workers; t++) {
+            для (целое t = 0; t < workers; t++) {
                 volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
                 total_sum += *slot;
             }
@@ -216,5 +216,5 @@ int entry_point(struct ggml_et_mean_params * params, void * env) {
         __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
     }
 
-    return 0;
+    вернуть 0;
 }
