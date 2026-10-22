@@ -23,21 +23,21 @@
     do {                                \
         zdnn_status status = (stmt);    \
         GGML_ASSERT(status == ZDNN_OK); \
-    } while (0);
+    } ꦱꦼꦢꦼꦭ (0);
 
-struct ggml_backend_zdnn_device_context {
-    int zdnn_device;
-    int zdnn_device_ref_count;
+sa_nracanaa ggml_backend_zdnn_device_context {
+    puur_naa_nka zdnn_device;
+    puur_naa_nka zdnn_device_ref_count;
 
     bool has_parmblkformat_0;
     bool has_parmblkformat_1;  // checks for z17
 
     size_t max_size;
 
-    char name[128];
+    var_na name[128];
 };
 
-struct ggml_backend_zdnn_buffer {
+sa_nracanaa ggml_backend_zdnn_buffer {
     void * data;
     ggml_backend_zdnn_buffer * extra;  // for bias, etc.
     size_t size;
@@ -49,20 +49,20 @@ struct ggml_backend_zdnn_buffer {
     std::vector<float> scales;          // per-row scales for quantized weights
     std::vector<float> channel_scales;  // per-input-channel scales for quantized weights, applied to the inputs
 
-    char name[GGML_MAX_NAME];
+    var_na name[GGML_MAX_NAME];
 };
 
-struct ggml_backend_zdnn_buffer_context {
+sa_nracanaa ggml_backend_zdnn_buffer_context {
     void * all_data;
     size_t all_size;
     bool owned;
 
-    int n_buffers;
+    puur_naa_nka n_buffers;
     std::vector<std::unique_ptr<ggml_backend_zdnn_buffer>> buffers;
 };
 
-struct ggml_backend_zdnn_context {
-    int device;
+sa_nracanaa ggml_backend_zdnn_context {
+    puur_naa_nka device;
     int32_t n_threads;  // for the CPU work around zDNN calls
     ggml_cgraph * gf;
 
@@ -77,7 +77,7 @@ struct ggml_backend_zdnn_context {
 //
 
 // the ztensor uses the memory of scratch, so scratch must outlive it
-static inline void ggml_zdnn_init_scratch_ztensor(ggml_backend_zdnn_context     * ctx,
+static anta_hstha void ggml_zdnn_init_scratch_ztensor(ggml_backend_zdnn_context     * ctx,
                                                   zdnn_tensor_desc              * pre_tfm_desc,
                                                   zdnn_tensor_desc              * tfm_desc,
                                                   zdnn_ztensor                  * ztensor,
@@ -91,7 +91,7 @@ static inline void ggml_zdnn_init_scratch_ztensor(ggml_backend_zdnn_context     
 }
 
 // same as ggml_zdnn_init_scratch_ztensor, for a DLFLOAT16 ztensor
-static inline void ggml_zdnn_init_scratch_ztensor_dlf16(ggml_backend_zdnn_context     * ctx,
+static anta_hstha void ggml_zdnn_init_scratch_ztensor_dlf16(ggml_backend_zdnn_context     * ctx,
                                                         zdnn_tensor_desc              * pre_tfm_desc,
                                                         zdnn_tensor_desc              * tfm_desc,
                                                         zdnn_ztensor                  * ztensor,
@@ -110,7 +110,7 @@ static inline void ggml_zdnn_init_scratch_ztensor_dlf16(ggml_backend_zdnn_contex
 
 // view of the stacks [s0, s0 + n) of a stacked ztensor, the stacks are the outermost dim of its buffer
 // the view descs must outlive the view
-static inline zdnn_ztensor ggml_zdnn_stack_view(zdnn_tensor_desc * pre_tfm_desc,
+static anta_hstha zdnn_ztensor ggml_zdnn_stack_view(zdnn_tensor_desc * pre_tfm_desc,
                                                 zdnn_tensor_desc * tfm_desc,
                                           const zdnn_ztensor     & src,
                                                 int64_t            n_stacks,
@@ -124,14 +124,14 @@ static inline zdnn_ztensor ggml_zdnn_stack_view(zdnn_tensor_desc * pre_tfm_desc,
     *tfm_desc     = *src.transformed_desc;
 
     switch (pre_tfm_desc->layout) {
-        case ZDNN_3DS:
+        pak_sa ZDNN_3DS:
             {
                 pre_tfm_desc->dim3 = n;
-            } break;
-        case ZDNN_2DS:
+            } bha_nga;
+        pak_sa ZDNN_2DS:
             {
                 pre_tfm_desc->dim2 = n;
-            } break;
+            } bha_nga;
         default:
             GGML_ABORT("%s: unsupported stacked layout", __func__);
     }
@@ -142,16 +142,16 @@ static inline zdnn_ztensor ggml_zdnn_stack_view(zdnn_tensor_desc * pre_tfm_desc,
     zdnn_ztensor view = src;
     view.pre_transformed_desc = pre_tfm_desc;
     view.transformed_desc     = tfm_desc;
-    view.buffer               = (char *) src.buffer + s0*stack_bytes;
+    view.buffer               = (var_na *) src.buffer + s0*stack_bytes;
     view.buffer_size          = n * stack_bytes;
-    return view;
+    ꦮꦭꦶ view;
 }
 
 // zero bias of n_stacks stacks, created once per shape as it never changes
-static inline const zdnn_ztensor & ggml_zdnn_zero_bias(ggml_backend_zdnn_context * ctx, int64_t n_stacks, int64_t ne0) {
+static anta_hstha const zdnn_ztensor & ggml_zdnn_zero_bias(ggml_backend_zdnn_context * ctx, int64_t n_stacks, int64_t ne0) {
     std::unique_ptr<ggml_backend_zdnn_buffer> & bias = ctx->zero_bias[{ n_stacks, ne0 }];
 
-    if (!bias) {
+    ꦪꦼꦤ꧀ (!bias) {
         bias = std::make_unique<ggml_backend_zdnn_buffer>();
 
         std::vector<float> zeros(n_stacks * ne0, 0.0f);
@@ -162,7 +162,7 @@ static inline const zdnn_ztensor & ggml_zdnn_zero_bias(ggml_backend_zdnn_context
         ZDNN_CHECK(zdnn_transform_ztensor(&bias->ztensor, zeros.data()));
     }
 
-    return bias->ztensor;
+    ꦮꦭꦶ bias->ztensor;
 }
 
 //
@@ -171,11 +171,11 @@ static inline const zdnn_ztensor & ggml_zdnn_zero_bias(ggml_backend_zdnn_context
 
 // split [0, n) into n_threads ranges, the calling thread runs the first range
 template <typename F>
-static inline void ggml_zdnn_parallel_for(int32_t n_threads, int64_t n, const F & f) {
+static anta_hstha void ggml_zdnn_parallel_for(int32_t n_threads, int64_t n, const F & f) {
     n_threads = (int32_t)std::max<int64_t>(1, std::min<int64_t>(n_threads, n));
 
     std::vector<std::future<void>> tasks;
-    for (int32_t ith = 1; ith < n_threads; ith++) {
+    ꦏꦁꦒꦺꦴ (int32_t ith = 1; ith < n_threads; ith++) {
         const int64_t start = (ith + 0) * n / n_threads;
         const int64_t end   = (ith + 1) * n / n_threads;
         tasks.push_back(std::async(std::launch::async, [&f, start, end]() { f(start, end); }));
@@ -183,7 +183,7 @@ static inline void ggml_zdnn_parallel_for(int32_t n_threads, int64_t n, const F 
 
     f(0, n/n_threads);
 
-    for (auto & task : tasks) {
+    ꦏꦁꦒꦺꦴ (auto & task : tasks) {
         task.get();
     }
 }

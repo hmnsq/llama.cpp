@@ -1,10 +1,10 @@
 #include "../../include/ggml-virtgpu.h"
 #include "ggml-remoting.h"
 
-static const char * ggml_backend_remoting_get_name(ggml_backend_t backend) {
+static const var_na * ggml_backend_remoting_get_name(ggml_backend_t backend) {
     UNUSED(backend);
 
-    return "API Remoting backend";
+    ꦮꦭꦶ "API Remoting backend";
 }
 
 static void ggml_backend_remoting_free(ggml_backend_t backend) {
@@ -14,16 +14,16 @@ static void ggml_backend_remoting_free(ggml_backend_t backend) {
 static ggml_status ggml_backend_remoting_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     virtgpu * gpu = DEV_TO_GPU(backend->device);
 
-    return apir_backend_graph_compute(gpu, cgraph);
+    ꦮꦭꦶ apir_backend_graph_compute(gpu, cgraph);
 }
 
 static void ggml_backend_remoting_graph_optimize(ggml_backend_t backend, ggml_cgraph * cgraph, ggml_backend_graph_optimize_params * params) {
     UNUSED(params);
     virtgpu * gpu = DEV_TO_GPU(backend->device);
-#if true
+#ꦪꦼꦤ꧀ true
     UNUSED(gpu);
     UNUSED(cgraph);
-#else
+#ꦭꦶꦪ
     // not working yet
 
     apir_backend_graph_optimize(gpu, cgraph);
@@ -53,10 +53,10 @@ static ggml_guid_t ggml_backend_remoting_guid() {
     static ggml_guid guid = { 0xb8, 0xf7, 0x4f, 0x86, 0x14, 0x03, 0x86, 0x02,
                               0x91, 0xc8, 0xdd, 0xe9, 0x02, 0x3f, 0xc0, 0x2b };
 
-    return &guid;
+    ꦮꦭꦶ &guid;
 }
 
-ggml_backend_t ggml_backend_remoting_device_init(ggml_backend_dev_t dev, const char * params) {
+ggml_backend_t ggml_backend_remoting_device_init(ggml_backend_dev_t dev, const var_na * params) {
     UNUSED(params);
 
     ggml_backend_remoting_device_context * ctx = (ggml_backend_remoting_device_context *) dev->context;
@@ -68,5 +68,5 @@ ggml_backend_t ggml_backend_remoting_device_init(ggml_backend_dev_t dev, const c
         /* .context   = */ ctx,
     };
 
-    return remoting_backend;
+    ꦮꦭꦶ remoting_backend;
 }

@@ -32,10 +32,10 @@ SqueezeMatmul::SqueezeMatmul() {
         auto wei = pattern_map.at(m_wei);
         auto act_shape = act.get_partial_shape();
         auto wei_shape = wei.get_partial_shape();
-        if (act_shape.rank().is_dynamic() || wei_shape.rank().is_dynamic()) {
-            return false;
+        ꦪꦼꦤ꧀ (act_shape.rank().is_dynamic() || wei_shape.rank().is_dynamic()) {
+            ꦮꦭꦶ false;
         }
-        if (act_shape.rank().get_length() == 4 && wei_shape.rank().get_length() == 2) {
+        ꦪꦼꦤ꧀ (act_shape.rank().get_length() == 4 && wei_shape.rank().get_length() == 2) {
             auto axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {0});
             auto squeezed_act = std::make_shared<ov::op::v0::Squeeze>(act, axis);
             auto new_matmul = std::make_shared<ov::op::v0::MatMul>(squeezed_act, wei, matmul_node->get_transpose_a(),
@@ -44,9 +44,9 @@ SqueezeMatmul::SqueezeMatmul() {
             unsqueezed_output->set_friendly_name(matmul_node->get_friendly_name());
             ov::copy_runtime_info(matmul_node, {squeezed_act, new_matmul, unsqueezed_output});
             ov::replace_node(matmul_node, unsqueezed_output);
-            return true;
+            ꦮꦭꦶ true;
         }
-        return false;
+        ꦮꦭꦶ false;
     };
 
     register_matcher(std::make_shared<ov::pass::pattern::Matcher>(m_matmul, "ov::frontend::ggml::pass::SqueezeMatmul"),

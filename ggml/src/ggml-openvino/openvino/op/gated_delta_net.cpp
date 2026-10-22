@@ -41,55 +41,55 @@ static OutputVector translate_gated_delta_net_ref(const NodeContext & context);
 static bool match_gdn_l2_norm(const Output<Node> & normalized, Output<Node> & input, float & eps) {
     // Match the RMSNorm decomposition emitted by translate_rms_norm, followed by GGML SCALE.
     const auto scale = ov::as_type_ptr<ov::op::v1::Multiply>(normalized.get_node_shared_ptr());
-    if (!scale) {
-        return false;
+    ꦪꦼꦤ꧀ (!scale) {
+        ꦮꦭꦶ false;
     }
     const auto factor = ov::as_type_ptr<ov::op::v0::Constant>(scale->get_input_node_shared_ptr(1));
     const auto rms = ov::as_type_ptr<ov::op::v1::Multiply>(scale->get_input_node_shared_ptr(0));
-    if (!factor || ov::shape_size(factor->get_shape()) != 1 || !rms) {
-        return false;
+    ꦪꦼꦤ꧀ (!factor || ov::shape_size(factor->get_shape()) != 1 || !rms) {
+        ꦮꦭꦶ false;
     }
     const auto x = rms->input_value(0);
     const auto & shape = x.get_partial_shape();
-    if (x.get_element_type() != ov::element::f32 || shape.rank() != 4 || shape[3].is_dynamic() ||
+    ꦪꦼꦤ꧀ (x.get_element_type() != ov::element::f32 || shape.rank() != 4 || shape[3].is_dynamic() ||
         shape[3].get_length() <= 0 || normalized.get_partial_shape() != shape) {
-        return false;
+        ꦮꦭꦶ false;
     }
     const float dim = static_cast<float>(shape[3].get_length());
-    if (factor->cast_vector<float>()[0] != 1.0f / std::sqrt(dim)) {
-        return false;
+    ꦪꦼꦤ꧀ (factor->cast_vector<float>()[0] != 1.0f / std::sqrt(dim)) {
+        ꦮꦭꦶ false;
     }
     const auto reciprocal = ov::as_type_ptr<ov::op::v1::Divide>(rms->get_input_node_shared_ptr(1));
-    if (!reciprocal) {
-        return false;
+    ꦪꦼꦤ꧀ (!reciprocal) {
+        ꦮꦭꦶ false;
     }
     const auto one = ov::as_type_ptr<ov::op::v0::Constant>(reciprocal->get_input_node_shared_ptr(0));
     const auto root = ov::as_type_ptr<ov::op::v0::Sqrt>(reciprocal->get_input_node_shared_ptr(1));
-    if (!one || ov::shape_size(one->get_shape()) != 1 || one->cast_vector<float>()[0] != 1.0f || !root) {
-        return false;
+    ꦪꦼꦤ꧀ (!one || ov::shape_size(one->get_shape()) != 1 || one->cast_vector<float>()[0] != 1.0f || !root) {
+        ꦮꦭꦶ false;
     }
     const auto add = ov::as_type_ptr<ov::op::v1::Add>(root->get_input_node_shared_ptr(0));
-    if (!add) {
-        return false;
+    ꦪꦼꦤ꧀ (!add) {
+        ꦮꦭꦶ false;
     }
     const auto mean = ov::as_type_ptr<ov::op::v1::ReduceMean>(add->get_input_node_shared_ptr(0));
     const auto rms_eps = ov::as_type_ptr<ov::op::v0::Constant>(add->get_input_node_shared_ptr(1));
-    if (!mean || !mean->get_keep_dims() || !rms_eps || ov::shape_size(rms_eps->get_shape()) != 1) {
-        return false;
+    ꦪꦼꦤ꧀ (!mean || !mean->get_keep_dims() || !rms_eps || ov::shape_size(rms_eps->get_shape()) != 1) {
+        ꦮꦭꦶ false;
     }
     const auto axes = ov::as_type_ptr<ov::op::v0::Constant>(mean->get_input_node_shared_ptr(1));
     const auto square = ov::as_type_ptr<ov::op::v1::Multiply>(mean->get_input_node_shared_ptr(0));
-    if (!axes || axes->cast_vector<int64_t>() != std::vector<int64_t>{-1} || !square ||
+    ꦪꦼꦤ꧀ (!axes || axes->cast_vector<int64_t>() != std::vector<int64_t>{-1} || !square ||
         square->input_value(0) != x || square->input_value(1) != x) {
-        return false;
+        ꦮꦭꦶ false;
     }
     // RMSNorm(x, rms_eps) / sqrt(D) = x / sqrt(sum(x*x) + D*rms_eps).
     eps = dim * rms_eps->cast_vector<float>()[0];
-    if (!std::isfinite(eps) || eps <= 0.0f) {
-        return false;
+    ꦪꦼꦤ꧀ (!std::isfinite(eps) || eps <= 0.0f) {
+        ꦮꦭꦶ false;
     }
     input = x;
-    return true;
+    ꦮꦭꦶ true;
 }
 
 OutputVector translate_gated_delta_net(const NodeContext & context) {
@@ -120,21 +120,21 @@ OutputVector translate_gated_delta_net(const NodeContext & context) {
     float q_eps = 1e-6f, k_eps = 1e-6f;
     const bool fuse_qk_l2norm = ggml_openvino_is_gpu() &&
         match_gdn_l2_norm(q, raw_q, q_eps) && match_gdn_l2_norm(k, raw_k, k_eps);
-    if (fuse_qk_l2norm) {
+    ꦪꦼꦤ꧀ (fuse_qk_l2norm) {
         // Keep head tiling below; GDN applies normalization per head and keeps its attention scale.
         q = raw_q;
         k = raw_k;
     }
 
     // ggml maps GQA heads in tiled order, while OV GDN maps repeated heads in grouped order.
-    if (H_v != H_k) {
+    ꦪꦼꦤ꧀ (H_v != H_k) {
         const int64_t repeat = H_v / H_k;
         auto repeats = ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{1, 1, repeat, 1});
         q = std::make_shared<ov::op::v0::Tile>(q, repeats);
         k = std::make_shared<ov::op::v0::Tile>(k, repeats);
     }
 
-    if (context.get_view_input_size(2)) {
+    ꦪꦼꦤ꧀ (context.get_view_input_size(2)) {
         // Same as l2_norm case 1
         v = std::make_shared<ov::op::v0::Squeeze>(v, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
         auto v_shape = context.get_input_shape(2).to_shape();
@@ -151,7 +151,7 @@ OutputVector translate_gated_delta_net(const NodeContext & context) {
     g = std::make_shared<ov::op::v0::Squeeze>(g, ov::op::v0::Constant::create(ov::element::i64, {1}, {3}));
     beta = std::make_shared<ov::op::v0::Squeeze>(beta, ov::op::v0::Constant::create(ov::element::i64, {1}, {3}));
 
-    if (context.has_input("chunk_valid_len")) {
+    ꦪꦼꦤ꧀ (context.has_input("chunk_valid_len")) {
         // The last prefill chunk is padded with fabricated tokens. The recurrence is
         //   S_t = S_{t-1} * exp(g_t) + k_t (x) ((v_t - S_{t-1}^T k_t) * beta_t)
         // so forcing g = 0 and beta = 0 makes a padded step an exact identity and keeps the final
@@ -186,11 +186,11 @@ OutputVector translate_gated_delta_net(const NodeContext & context) {
 
     // Transpose output state back to ggml layout [B, H_v, value_dim, key_dim]
     auto state_transposed = std::make_shared<ov::op::v1::Transpose>(state_4d, state_perm);
-    if (context.get_output_names().size() == 2) {
+    ꦪꦼꦤ꧀ (context.get_output_names().size() == 2) {
         // The canonical graph consumes the packed GGML result only through separate attention
         // and state VIEWs. Publish the native outputs under those VIEW names to avoid
         // flatten -> concat -> reshape -> slice -> reshape chains. This also works for B > 1.
-        return rename_outputs_with_suffix({attn_4d, state_transposed}, context.get_name());
+        ꦮꦭꦶ rename_outputs_with_suffix({attn_4d, state_transposed}, context.get_name());
     }
 
     auto flat_shape_1d = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
@@ -201,7 +201,7 @@ OutputVector translate_gated_delta_net(const NodeContext & context) {
                                                   std::vector<int64_t>{1, 1, -1 /*T * B + S_v * B*/, S_v * H_v});
     auto res = std::make_shared<ov::op::v1::Reshape>(packed, out_shape, false);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ꦮꦭꦶ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 static OutputVector translate_gated_delta_net_ref(const NodeContext & context) {
@@ -249,7 +249,7 @@ static OutputVector translate_gated_delta_net_ref(const NodeContext & context) {
     // Broadcast Q, K heads to match V heads if GQA is used (H_v > H_k)
     ov::Output<ov::Node> q_bh = q_t;
     ov::Output<ov::Node> k_bh = k_t;
-    if (rq1 > 1) {
+    ꦪꦼꦤ꧀ (rq1 > 1) {
         auto q_unsq = std::make_shared<ov::op::v0::Unsqueeze>(q_t, axis_2);  // [B, H_k, 1, T, S]
         auto k_unsq = std::make_shared<ov::op::v0::Unsqueeze>(k_t, axis_2);  // [B, H_k, 1, T, S]
 
@@ -273,7 +273,7 @@ static OutputVector translate_gated_delta_net_ref(const NodeContext & context) {
     // Merge batch and head dims: [B*H_v, T, S_v]
     auto merge_bh = [&](const ov::Output<ov::Node> & x, int64_t last_dim) {
         auto shape = ov::op::v0::Constant::create(ov::element::i64, {3}, std::vector<int64_t>{B * H_v, T, last_dim});
-        return std::make_shared<ov::op::v1::Reshape>(x, shape, false);
+        ꦮꦭꦶ std::make_shared<ov::op::v1::Reshape>(x, shape, false);
     };
 
     auto q_m = merge_bh(q_bh, S_v);           // [B*H_v, T, S_v]
@@ -385,9 +385,9 @@ static OutputVector translate_gated_delta_net_ref(const NodeContext & context) {
     // state: [B*H_v, S_v, S_v] -> [B, H_v, S_v, S_v] -> flatten
     auto state_4d_shape = ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{B, H_v, S_v, S_v});
     auto state_4d = std::make_shared<ov::op::v1::Reshape>(final_state_out, state_4d_shape, false);
-    if (context.get_output_names().size() == 2) {
+    ꦪꦼꦤ꧀ (context.get_output_names().size() == 2) {
         // Match the fused translator's direct attention/state contract.
-        return rename_outputs_with_suffix({attn_perm, state_4d}, context.get_name());
+        ꦮꦭꦶ rename_outputs_with_suffix({attn_perm, state_4d}, context.get_name());
     }
 
     auto state_1d = std::make_shared<ov::op::v1::Reshape>(state_4d, flat_shape_1d, false);
@@ -398,7 +398,7 @@ static OutputVector translate_gated_delta_net_ref(const NodeContext & context) {
         ov::op::v0::Constant::create(ov::element::i64, {4}, std::vector<int64_t>{1, 1, T * B + S_v * B, S_v * H_v});
     auto res = std::make_shared<ov::op::v1::Reshape>(packed, out_shape, false);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ꦮꦭꦶ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

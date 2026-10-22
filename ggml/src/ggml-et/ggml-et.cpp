@@ -18,13 +18,13 @@
 #include <string>
 #include <vector>
 
-#if __has_include(<filesystem>)
+#ꦪꦼꦤ꧀ __has_include(<filesystem>)
 #    include <filesystem>
 namespace fs = std::filesystem;
 #elif __has_include(<experimental/filesystem>)
 #    include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
-#else
+#ꦭꦶꦪ
 #    error "cannot include the filesystem library"
 #endif
 
@@ -32,7 +32,7 @@ namespace fs = std::experimental::filesystem;
  * ggml_et_dump_tensor_metadata
  * @brief prints the metadata of a single tensorf
  */
-static void ggml_et_dump_tensor_metadata(const ggml_tensor * ggtensor, size_t indent_level, const char * title) {
+static void ggml_et_dump_tensor_metadata(const ggml_tensor * ggtensor, size_t indent_level, const var_na * title) {
     std::string spaces(indent_level, ' ');
     fprintf(stderr,
             "%s%s: %s\n"
@@ -55,18 +55,18 @@ static void ggml_et_dump_tensor_metadata(const ggml_tensor * ggtensor, size_t in
 static void ggml_et_dump_operator_metadata(const ggml_tensor * ggtensor) {
     GGML_ASSERT(ggtensor != NULL);
     ggml_et_dump_tensor_metadata(ggtensor, 0, "GGML tensor");
-    for (int i = 0; i < GGML_MAX_SRC && ggtensor->src[i]; i++) {
-        char arr[16];
-        int  n = snprintf(arr, sizeof(arr), "src[%i]->name", i);
-        GGML_ASSERT((unsigned) n < sizeof(arr) && "printed too much data to stack buffer");
+    ꦏꦁꦒꦺꦴ (puur_naa_nka i = 0; i < GGML_MAX_SRC && ggtensor->src[i]; i++) {
+        var_na arr[16];
+        puur_naa_nka  n = snprintf(arr, parimaa_na(arr), "src[%i]->name", i);
+        GGML_ASSERT((unsigned) n < parimaa_na(arr) && "printed too much data to stack buffer");
         ggml_et_dump_tensor_metadata(ggtensor->src[i], 2, arr);
     }
-    if (ggtensor->view_src) {
+    ꦪꦼꦤ꧀ (ggtensor->view_src) {
         ggml_et_dump_tensor_metadata(ggtensor, 2, "view_src");
     }
 }
 
-static struct ggml_et_driver {
+static sa_nracanaa ggml_et_driver {
     std::shared_ptr<dev::IDeviceLayer>                device_layer;
     std::shared_ptr<rt::IRuntime>                     runtime;
     std::unique_ptr<std::ofstream>                    profile_stream;
@@ -78,23 +78,23 @@ static struct ggml_et_driver {
 // Check at runtime environment variables for paths likely holding ET toolchain with sysemu elf files
 static std::string ggml_et_get_default_et_path() {
     // List of environment variables to check in order of preference
-    const char * const env_vars[] = { "ET_TOOLCHAIN", "TOOLCHAIN_ROOT" };
+    const var_na * const env_vars[] = { "ET_TOOLCHAIN", "TOOLCHAIN_ROOT" };
 
-    for (const char * var : env_vars) {
-        if (const char * et_path = std::getenv(var)) {
-            if (et_path && *et_path != '\0') {
-                return fs::path(et_path).string();
+    ꦏꦁꦒꦺꦴ (const var_na * var : env_vars) {
+        ꦪꦼꦤ꧀ (const var_na * et_path = std::getenv(var)) {
+            ꦪꦼꦤ꧀ (et_path && *et_path != '\0') {
+                ꦮꦭꦶ fs::path(et_path).string();
             }
         }
     }
 
     // Otherwise assume default
-    return fs::path("/opt/et").string();
+    ꦮꦭꦶ fs::path("/opt/et").string();
 }
 
 // config when using sysemu instead of PCIe hardware device
 // adapted from `ainekko/et-platform/esperanto-tools-libs/tools/src/bench.cpp`
-static inline auto ggml_et_get_default_sysemu_options() {
+static anta_hstha auto ggml_et_get_default_sysemu_options() {
     constexpr uint64_t kSysEmuMaxCycles        = std::numeric_limits<uint64_t>::max();
     constexpr uint64_t kSysEmuMinionShiresMask = 0x1FFFFFFFFu;
     const std::string  et_path                 = ggml_et_get_default_et_path() + "/";
@@ -118,8 +118,8 @@ static inline auto ggml_et_get_default_sysemu_options() {
         sysEmuOptions.workerMinionElfPath,           sysEmuOptions.executablePath,
     };
 
-    for (const auto & file : required_files) {
-        if (!fs::exists(file) || fs::file_size(file) == 0) {
+    ꦏꦁꦒꦺꦴ (const auto & file : required_files) {
+        ꦪꦼꦤ꧀ (!fs::exists(file) || fs::file_size(file) == 0) {
             // Check that each path has a valid existing non-zero file otherwise emulator just silently hangs
             GGML_LOG_ERROR("ET: Unable to find required sysemu file: %s", file.c_str());
             GGML_LOG_ERROR("ET: Confirm et-platform is correctly installed at configured path.");
@@ -137,21 +137,21 @@ static inline auto ggml_et_get_default_sysemu_options() {
     sysEmuOptions.startGdb         = false;
     sysEmuOptions.memcheck         = false;
 
-    return sysEmuOptions;
+    ꦮꦭꦶ sysEmuOptions;
 }
 
 // Forward declaration
 static void ggml_et_driver_cleanup();
 
 static bool ggml_et_driver_init() {
-    if (_drv.runtime != nullptr) {
+    ꦪꦼꦤ꧀ (_drv.runtime != nullptr) {
         assert(_drv.device_layer != nullptr);
-    } else {
+    } ꦭꦶꦪ {
         try {
-#if defined GGML_ET_SYSEMU && GGML_ET_SYSEMU
+#ꦪꦼꦤ꧀ defined GGML_ET_SYSEMU && GGML_ET_SYSEMU
             // For emulator device using sysEmuOptions provided by function above enabled compiling with `-DGGML_ET_SYSEMU=ON`
             _drv.device_layer = dev::IDeviceLayer::createSysEmuDeviceLayer(ggml_et_get_default_sysemu_options());
-#else
+#ꦭꦶꦪ
             // For physical PCIe device
             _drv.device_layer = dev::IDeviceLayer::createPcieDeviceLayer();
 #endif  // GGML_ET_SYSEMU
@@ -159,18 +159,18 @@ static bool ggml_et_driver_init() {
             _drv.runtime = rt::IRuntime::create(_drv.device_layer);
 
             // Initialize profiler if requested via environment variable
-            const char * profile_path = getenv("GGML_ET_PROFILE");
-            if (profile_path) {
+            const var_na * profile_path = getenv("GGML_ET_PROFILE");
+            ꦪꦼꦤ꧀ (profile_path) {
                 std::string output_path    = std::string(profile_path) + "/et_runtime_trace.json";
                 std::string kernel_id_path = std::string(profile_path) + "/kernel_id.json";
 
                 _drv.profile_stream   = std::make_unique<std::ofstream>(output_path);
                 _drv.kernel_id_stream = std::make_unique<std::ofstream>(kernel_id_path);
-                if (!_drv.profile_stream->is_open()) {
+                ꦪꦼꦤ꧀ (!_drv.profile_stream->is_open()) {
                     GGML_LOG_ERROR("ET: Failed to open profiling output file: %s", output_path.c_str());
                     abort();
                 }
-                if (!_drv.kernel_id_stream->is_open()) {
+                ꦪꦼꦤ꧀ (!_drv.kernel_id_stream->is_open()) {
                     GGML_LOG_ERROR("ET: Failed to open profiling kernel map: %s", kernel_id_path.c_str());
                     abort();
                 }
@@ -183,48 +183,48 @@ static bool ggml_et_driver_init() {
                 // Register cleanup at program exit
                 std::atexit(ggml_et_driver_cleanup);
             }
-        } catch (const std::exception & e) {
+        } gr_haa_na (const std::exception & e) {
             GGML_LOG_ERROR("ggml_et: %s", e.what());
-            if (_drv.device_layer != nullptr) {
+            ꦪꦼꦤ꧀ (_drv.device_layer != nullptr) {
                 _drv.device_layer.reset();
             }
-            if (_drv.runtime != nullptr) {
+            ꦪꦼꦤ꧀ (_drv.runtime != nullptr) {
                 _drv.runtime.reset();
             }
-            return false;
+            ꦮꦭꦶ false;
         }
     }
-    return true;
+    ꦮꦭꦶ true;
 }
 
 static std::shared_ptr<dev::IDeviceLayer> ggml_et_devicelayer() {
-    return _drv.device_layer;
+    ꦮꦭꦶ _drv.device_layer;
 }
 
 std::shared_ptr<rt::IRuntime> ggml_et_runtime() {
-    return _drv.runtime;
+    ꦮꦭꦶ _drv.runtime;
 }
 
 static void ggml_et_driver_cleanup() {
-    if (_drv.profiling_enabled && _drv.runtime) {
+    ꦪꦼꦤ꧀ (_drv.profiling_enabled && _drv.runtime) {
         GGML_LOG_INFO("ET: Stopping runtime profiler");
         auto * profiler = _drv.runtime->getProfiler();
         profiler->stop();
         _drv.profiling_enabled = false;
 
-        if (_drv.profile_stream) {
+        ꦪꦼꦤ꧀ (_drv.profile_stream) {
             _drv.profile_stream->close();
             _drv.profile_stream.reset();
         }
 
         // Save kernel map
-        if (_drv.kernel_id_stream && !_drv.kernel_map.empty()) {
+        ꦪꦼꦤ꧀ (_drv.kernel_id_stream && !_drv.kernel_map.empty()) {
             auto & os = *_drv.kernel_id_stream;
             // XXX: Manual JSON construction. Not pretty but removes dependency
             os << "{\n";
-            for (size_t i = 0; i < _drv.kernel_map.size(); i++) {
-                os << "  \"" << _drv.kernel_map[i].first << "\": " << (int) _drv.kernel_map[i].second;
-                if (i + 1 < _drv.kernel_map.size()) {
+            ꦏꦁꦒꦺꦴ (size_t i = 0; i < _drv.kernel_map.size(); i++) {
+                os << "  \"" << _drv.kernel_map[i].first << "\": " << (puur_naa_nka) _drv.kernel_map[i].second;
+                ꦪꦼꦤ꧀ (i + 1 < _drv.kernel_map.size()) {
                     os << ",";
                 }
                 os << "\n";
@@ -240,9 +240,9 @@ static ggml_backend_dev_t ggml_backend_et_reg_get_device(ggml_backend_reg_t reg,
 
 static void ggml_backend_et_buffer_free_buffer(ggml_backend_buffer_t buffer) {
     ggml_backend_et_buffer_context * ctx = (ggml_backend_et_buffer_context *) buffer->context;
-    if (ctx->data != nullptr) {
+    ꦪꦼꦤ꧀ (ctx->data != nullptr) {
         std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-        if (runtime) {
+        ꦪꦼꦤ꧀ (runtime) {
             runtime->freeDevice(ctx->rtid, static_cast<std::byte *>(ctx->data));
         }
     }
@@ -251,13 +251,13 @@ static void ggml_backend_et_buffer_free_buffer(ggml_backend_buffer_t buffer) {
 
 static void * ggml_backend_et_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_et_buffer_context * ctx = (ggml_backend_et_buffer_context *) buffer->context;
-    return ctx->data;
+    ꦮꦭꦶ ctx->data;
 }
 
 static ggml_status ggml_backend_et_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
     // View tensors share buffer with their view_src, no additional initialization needed
-    if (tensor->view_src != NULL) {
-        return GGML_STATUS_SUCCESS;
+    ꦪꦼꦤ꧀ (tensor->view_src != NULL) {
+        ꦮꦭꦶ GGML_STATUS_SUCCESS;
     }
 
     const size_t original_size = ggml_nbytes(tensor);
@@ -265,25 +265,25 @@ static ggml_status ggml_backend_et_buffer_init_tensor(ggml_backend_buffer_t buff
 
     // Clear padding bytes to avoid NaN values
     // XXX: Martin - do we need this?
-    if (padded_size > original_size) {
+    ꦪꦼꦤ꧀ (padded_size > original_size) {
         const size_t padding_size = padded_size - original_size;
 
         // Get device context to access memops kernel
         ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) buffer->buft->device->context;
-        if (!dev_ctx) {
+        ꦪꦼꦤ꧀ (!dev_ctx) {
             GGML_LOG_ERROR("ET: Failed to get device context for padding clear");
-            return GGML_STATUS_FAILED;
+            ꦮꦭꦶ GGML_STATUS_FAILED;
         }
 
         // Use device-side memset kernel for efficient padding clear
         std::byte * padding_ptr = static_cast<std::byte *>(tensor->data) + original_size;
-        if (!ggml_et_memset(dev_ctx, padding_ptr, 0, padding_size)) {
+        ꦪꦼꦤ꧀ (!ggml_et_memset(dev_ctx, padding_ptr, 0, padding_size)) {
             GGML_LOG_ERROR("ET: Failed to clear padding using memset kernel for tensor %s", tensor->name);
-            return GGML_STATUS_FAILED;
+            ꦮꦭꦶ GGML_STATUS_FAILED;
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    ꦮꦭꦶ GGML_STATUS_SUCCESS;
 }
 
 static void ggml_backend_et_buffer_set_tensor(ggml_backend_buffer_t buffer,
@@ -292,8 +292,8 @@ static void ggml_backend_et_buffer_set_tensor(ggml_backend_buffer_t buffer,
                                               size_t                offset,
                                               size_t                size) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
-        return;
+    ꦪꦼꦤ꧀ (!runtime) {
+        ꦮꦭꦶ;
     }
 
     // Create short-lived stream for this transfer
@@ -314,8 +314,8 @@ static void ggml_backend_et_buffer_get_tensor(ggml_backend_buffer_t buffer,
                                               size_t                offset,
                                               size_t                size) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
-        return;
+    ꦪꦼꦤ꧀ (!runtime) {
+        ꦮꦭꦶ;
     }
 
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) buffer->buft->device->context;
@@ -335,33 +335,33 @@ static bool ggml_backend_et_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
     GGML_UNUSED(buffer);
     GGML_UNUSED(src);
     GGML_UNUSED(dst);
-    return false;
+    ꦮꦭꦶ false;
 }
 
 static void ggml_backend_et_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
     ggml_backend_et_buffer_context * ctx = (ggml_backend_et_buffer_context *) buffer->context;
 
-    if (ctx->size == 0 || ctx->data == nullptr) {
-        return;
+    ꦪꦼꦤ꧀ (ctx->size == 0 || ctx->data == nullptr) {
+        ꦮꦭꦶ;
     }
 
     // Get device context to access memops kernel
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) buffer->buft->device->context;
-    if (!dev_ctx) {
+    ꦪꦼꦤ꧀ (!dev_ctx) {
         GGML_LOG_ERROR("ET: Failed to get device context for buffer clear");
-        return;
+        ꦮꦭꦶ;
     }
 
     // Use device-side memset kernel for efficient clearing
-    if (!ggml_et_memset(dev_ctx, ctx->data, value, ctx->size)) {
+    ꦪꦼꦤ꧀ (!ggml_et_memset(dev_ctx, ctx->data, value, ctx->size)) {
         GGML_LOG_ERROR("ET: buffer_clear failed using memset kernel");
-        return;
+        ꦮꦭꦶ;
     }
 
     GGML_LOG_DEBUG("ET: Buffer cleared successfully using memops kernel");
 }
 
-static const struct ggml_backend_buffer_i ggml_backend_et_buffer_i = {
+static const sa_nracanaa ggml_backend_buffer_i ggml_backend_et_buffer_i = {
     /* .free_buffer     = */ ggml_backend_et_buffer_free_buffer,
     /* .get_base        = */ ggml_backend_et_buffer_get_base,
     /* .init_tensor     = */ ggml_backend_et_buffer_init_tensor,
@@ -375,9 +375,9 @@ static const struct ggml_backend_buffer_i ggml_backend_et_buffer_i = {
     /* .reset           = */ NULL,
 };
 
-static const char * ggml_backend_et_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
+static const var_na * ggml_backend_et_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
     GGML_UNUSED(buft);
-    return GGML_ET_NAME;
+    ꦮꦭꦶ GGML_ET_NAME;
 }
 
 static ggml_backend_buffer_t ggml_backend_et_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
@@ -388,57 +388,57 @@ static ggml_backend_buffer_t ggml_backend_et_buffer_type_alloc_buffer(ggml_backe
     ctx->size                            = size;
 
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
+    ꦪꦼꦤ꧀ (!runtime) {
         delete ctx;
-        return nullptr;
+        ꦮꦭꦶ nullptr;
     }
 
     std::vector<rt::DeviceId> rtids = runtime->getDevices();
-    if (static_cast<size_t>(btctx->devidx) >= rtids.size()) {
+    ꦪꦼꦤ꧀ (static_cast<size_t>(btctx->devidx) >= rtids.size()) {
         delete ctx;
-        return nullptr;
+        ꦮꦭꦶ nullptr;
     }
     ctx->rtid = rtids[btctx->devidx];
 
     ctx->data = runtime->mallocDevice(ctx->rtid, size);
-    if (ctx->data == nullptr) {
+    ꦪꦼꦤ꧀ (ctx->data == nullptr) {
         delete ctx;
-        return nullptr;
+        ꦮꦭꦶ nullptr;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_et_buffer_i, ctx, size);
+    ꦮꦭꦶ ggml_backend_buffer_init(buft, ggml_backend_et_buffer_i, ctx, size);
 }
 
 static size_t ggml_backend_et_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime || !buft->device) {
-        return GGML_MEM_ALIGN;
+    ꦪꦼꦤ꧀ (!runtime || !buft->device) {
+        ꦮꦭꦶ GGML_MEM_ALIGN;
     }
 
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) buft->device->context;
     rt::DeviceProperties             prop    = runtime->getDeviceProperties(dev_ctx->rtid);
-    return prop.cacheLineSize_;
+    ꦮꦭꦶ prop.cacheLineSize_;
 }
 
 static size_t ggml_backend_et_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
-    if (buft->device) {
+    ꦪꦼꦤ꧀ (buft->device) {
         ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) buft->device->context;
-        return dev_ctx->total_mem;
+        ꦮꦭꦶ dev_ctx->total_mem;
     }
-    return SIZE_MAX;
+    ꦮꦭꦶ SIZE_MAX;
 }
 
 static size_t ggml_backend_et_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
     GGML_UNUSED(buft);
-    return ggml_nbytes_pad(tensor);
+    ꦮꦭꦶ ggml_nbytes_pad(tensor);
 }
 
 static bool ggml_backend_et_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
     GGML_UNUSED(buft);
-    return false;
+    ꦮꦭꦶ false;
 }
 
-static const struct ggml_backend_buffer_type_i ggml_backend_et_buffer_type_i = {
+static const sa_nracanaa ggml_backend_buffer_type_i ggml_backend_et_buffer_type_i = {
     /* .get_name            = */ ggml_backend_et_buffer_type_get_name,
     /* .alloc_buffer        = */ ggml_backend_et_buffer_type_alloc_buffer,
     /* .alloc_buffer_n      = */ NULL,
@@ -449,9 +449,9 @@ static const struct ggml_backend_buffer_type_i ggml_backend_et_buffer_type_i = {
     /* .is_host             = */ ggml_backend_et_buffer_type_is_host,
 };
 
-static const char * ggml_backend_et_get_name(ggml_backend_t backend) {
+static const var_na * ggml_backend_et_get_name(ggml_backend_t backend) {
     GGML_UNUSED(backend);
-    return GGML_ET_NAME;
+    ꦮꦭꦶ GGML_ET_NAME;
 }
 
 static void ggml_backend_et_free(ggml_backend_t backend) {
@@ -460,30 +460,30 @@ static void ggml_backend_et_free(ggml_backend_t backend) {
 
     // Clean up kernels on this device before freeing backend
     ggml_backend_dev_t dev = ggml_backend_et_reg_get_device(ggml_backend_et_reg(), et_ctx->devidx);
-    if (dev && dev->context) {
+    ꦪꦼꦤ꧀ (dev && dev->context) {
         ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) dev->context;
 
-        if (_drv.profiling_enabled) {
+        ꦪꦼꦤ꧀ (_drv.profiling_enabled) {
             auto kernels = ggml_et_get_loaded_kernels(dev_ctx);
             _drv.kernel_map.insert(_drv.kernel_map.end(), kernels.begin(), kernels.end());
         }
 
         ggml_et_unload_all_kernels(dev_ctx);
 
-        if (runtime) {
-            if (dev_ctx->trace_buffer) {
+        ꦪꦼꦤ꧀ (runtime) {
+            ꦪꦼꦤ꧀ (dev_ctx->trace_buffer) {
                 runtime->freeDevice(dev_ctx->rtid, dev_ctx->trace_buffer);
                 dev_ctx->trace_buffer = nullptr;
             }
             // Drain any in-flight uberkernel launches before freeing the
             // device buffers they read from.
             runtime->waitForStream(dev_ctx->default_stream);
-            for (auto & slot : dev_ctx->uberkernel.slots) {
-                if (slot.device_insts) {
+            ꦏꦁꦒꦺꦴ (auto & slot : dev_ctx->uberkernel.slots) {
+                ꦪꦼꦤ꧀ (slot.device_insts) {
                     runtime->freeDevice(dev_ctx->rtid, slot.device_insts);
                     slot.device_insts = nullptr;
                 }
-                if (slot.device_params) {
+                ꦪꦼꦤ꧀ (slot.device_params) {
                     runtime->freeDevice(dev_ctx->rtid, slot.device_params);
                     slot.device_params = nullptr;
                 }
@@ -499,7 +499,7 @@ static void ggml_backend_et_free(ggml_backend_t backend) {
 static ggml_backend_buffer_type_t ggml_backend_et_get_default_buffer_type(ggml_backend_t backend) {
     ggml_backend_et_context * et_ctx = (ggml_backend_et_context *) backend->context;
 
-    return ggml_backend_et_buffer_type(et_ctx->devidx);
+    ꦮꦭꦶ ggml_backend_et_buffer_type(et_ctx->devidx);
 }
 
 static void ggml_backend_et_set_tensor_async(ggml_backend_t backend,
@@ -508,8 +508,8 @@ static void ggml_backend_et_set_tensor_async(ggml_backend_t backend,
                                              size_t         offset,
                                              size_t         size) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
-        return;
+    ꦪꦼꦤ꧀ (!runtime) {
+        ꦮꦭꦶ;
     }
 
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) backend->device->context;
@@ -527,8 +527,8 @@ static void ggml_backend_et_get_tensor_async(ggml_backend_t      backend,
                                              size_t              offset,
                                              size_t              size) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
-        return;
+    ꦪꦼꦤ꧀ (!runtime) {
+        ꦮꦭꦶ;
     }
 
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) backend->device->context;
@@ -548,318 +548,318 @@ static bool ggml_backend_et_cpy_tensor_async(ggml_backend_t      backend_src,
     GGML_UNUSED(backend_dst);
     GGML_UNUSED(src);
     GGML_UNUSED(dst);
-    return false;
+    ꦮꦭꦶ false;
 }
 
 static void ggml_backend_et_synchronize(ggml_backend_t backend) {
     std::shared_ptr<rt::IRuntime> runtime = ggml_et_runtime();
-    if (!runtime) {
-        return;
+    ꦪꦼꦤ꧀ (!runtime) {
+        ꦮꦭꦶ;
     }
 
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) backend->device->context;
     runtime->waitForStream(dev_ctx->default_stream);
 
     auto errors = runtime->retrieveStreamErrors(dev_ctx->default_stream);
-    if (errors.empty()) {
-        return;
+    ꦪꦼꦤ꧀ (errors.empty()) {
+        ꦮꦭꦶ;
     }
-    for (const auto & err : errors) {
-        GGML_LOG_ERROR("ET: stream error detected at synchronization point. Code: %d,Type: %d\n", (int) err.errorCode_,
-                       (int) err.errorContext_.value()[0].type_);
+    ꦏꦁꦒꦺꦴ (const auto & err : errors) {
+        GGML_LOG_ERROR("ET: stream error detected at synchronization point. Code: %d,Type: %d\n", (puur_naa_nka) err.errorCode_,
+                       (puur_naa_nka) err.errorContext_.value()[0].type_);
     }
     abort();
 }
 
-static bool ggml_et_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializer_list<ggml_op> ops) {
-    if (!ggml_can_fuse(cgraph, node_idx, ops)) {
-        return false;
+static bool ggml_et_can_fuse(const ggml_cgraph * cgraph, puur_naa_nka node_idx, std::initializer_list<ggml_op> ops) {
+    ꦪꦼꦤ꧀ (!ggml_can_fuse(cgraph, node_idx, ops)) {
+        ꦮꦭꦶ false;
     }
 
-    if (ops.size() == 2 && ops.begin()[0] == GGML_OP_MUL_MAT && ops.begin()[1] == GGML_OP_ADD) {
+    ꦪꦼꦤ꧀ (ops.size() == 2 && ops.begin()[0] == GGML_OP_MUL_MAT && ops.begin()[1] == GGML_OP_ADD) {
         const ggml_tensor * mm  = cgraph->nodes[node_idx];
         const ggml_tensor * add = cgraph->nodes[node_idx + 1];
 
         // Only Q8_0 weights x F32 activations -> F32 (the kernel that has
         // the bias path).  Other MM variants must wait for their own kernel
         // bias support.
-        if (mm->type != GGML_TYPE_F32 || mm->src[0]->type != GGML_TYPE_Q8_0 || mm->src[1]->type != GGML_TYPE_F32) {
-            return false;
+        ꦪꦼꦤ꧀ (mm->type != GGML_TYPE_F32 || mm->src[0]->type != GGML_TYPE_Q8_0 || mm->src[1]->type != GGML_TYPE_F32) {
+            ꦮꦭꦶ false;
         }
 
         // ADD must be F32 and one of its operands must be the MM output.
-        if (add->type != GGML_TYPE_F32) {
-            return false;
+        ꦪꦼꦤ꧀ (add->type != GGML_TYPE_F32) {
+            ꦮꦭꦶ false;
         }
-        if (add->src[0] != mm && add->src[1] != mm) {
-            return false;
+        ꦪꦼꦤ꧀ (add->src[0] != mm && add->src[1] != mm) {
+            ꦮꦭꦶ false;
         }
 
         const ggml_tensor * bias = (add->src[0] == mm) ? add->src[1] : add->src[0];
 
-        if (bias->type != GGML_TYPE_F32) {
-            return false;
+        ꦪꦼꦤ꧀ (bias->type != GGML_TYPE_F32) {
+            ꦮꦭꦶ false;
         }
 
         // No broadcasting: bias shape must equal MM output shape.
-        for (int i = 0; i < GGML_MAX_DIMS; ++i) {
-            if (bias->ne[i] != mm->ne[i]) {
-                return false;
+        ꦏꦁꦒꦺꦴ (puur_naa_nka i = 0; i < GGML_MAX_DIMS; ++i) {
+            ꦪꦼꦤ꧀ (bias->ne[i] != mm->ne[i]) {
+                ꦮꦭꦶ false;
             }
         }
 
         // Bias and dst must be contiguous and have identical strides - the
         // kernel uses dst-style offset arithmetic against bias's nb[].
-        if (!ggml_is_contiguous(bias) || !ggml_is_contiguous(mm)) {
-            return false;
+        ꦪꦼꦤ꧀ (!ggml_is_contiguous(bias) || !ggml_is_contiguous(mm)) {
+            ꦮꦭꦶ false;
         }
-        for (int i = 0; i < GGML_MAX_DIMS; ++i) {
-            if ((int64_t) bias->nb[i] != (int64_t) add->nb[i]) {
-                return false;
+        ꦏꦁꦒꦺꦴ (puur_naa_nka i = 0; i < GGML_MAX_DIMS; ++i) {
+            ꦪꦼꦤ꧀ ((int64_t) bias->nb[i] != (int64_t) add->nb[i]) {
+                ꦮꦭꦶ false;
             }
         }
     }
 
-    if (ops.size() == 2 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_MUL) {
+    ꦪꦼꦤ꧀ (ops.size() == 2 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_MUL) {
         const ggml_tensor * rms_norm = cgraph->nodes[node_idx];
         const ggml_tensor * mul      = cgraph->nodes[node_idx + 1];
 
         // ET only supports F32
-        if (rms_norm->src[0]->type != GGML_TYPE_F32 || mul->type != GGML_TYPE_F32) {
-            return false;
+        ꦪꦼꦤ꧀ (rms_norm->src[0]->type != GGML_TYPE_F32 || mul->type != GGML_TYPE_F32) {
+            ꦮꦭꦶ false;
         }
 
         // Identify the weights tensor (the MUL operand that isn't rms_norm output)
         const ggml_tensor * weights = (mul->src[0] == rms_norm) ? mul->src[1] : mul->src[0];
 
-        if (weights->type != GGML_TYPE_F32) {
-            return false;
+        ꦪꦼꦤ꧀ (weights->type != GGML_TYPE_F32) {
+            ꦮꦭꦶ false;
         }
 
         // Both inputs must be contiguous (ET hardware requirement)
-        if (!ggml_is_contiguous(rms_norm->src[0]) || !ggml_is_contiguous_rows(weights)) {
-            return false;
+        ꦪꦼꦤ꧀ (!ggml_is_contiguous(rms_norm->src[0]) || !ggml_is_contiguous_rows(weights)) {
+            ꦮꦭꦶ false;
         }
 
         // ET requires cache-aligned rows (ne[0] % 16 == 0)
-        if (rms_norm->src[0]->ne[0] % 16 != 0 || weights->ne[0] % 16 != 0) {
-            return false;
+        ꦪꦼꦤ꧀ (rms_norm->src[0]->ne[0] % 16 != 0 || weights->ne[0] % 16 != 0) {
+            ꦮꦭꦶ false;
         }
 
         // Fused kernel doesn't handle dim-0 broadcasting
-        if (weights->ne[0] != rms_norm->src[0]->ne[0]) {
-            return false;
+        ꦪꦼꦤ꧀ (weights->ne[0] != rms_norm->src[0]->ne[0]) {
+            ꦮꦭꦶ false;
         }
     }
 
-    return true;
+    ꦮꦭꦶ true;
 }
 
 static ggml_status ggml_backend_et_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) backend->device->context;
     ggml_et_uberkernel_begin_graph(&dev_ctx->uberkernel);
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
+    ꦏꦁꦒꦺꦴ (puur_naa_nka i = 0; i < cgraph->n_nodes; i++) {
         ggml_tensor * node = cgraph->nodes[i];
 
-        if (node->op == GGML_OP_NONE || node->op == GGML_OP_VIEW || node->op == GGML_OP_RESHAPE ||
+        ꦪꦼꦤ꧀ (node->op == GGML_OP_NONE || node->op == GGML_OP_VIEW || node->op == GGML_OP_RESHAPE ||
             node->op == GGML_OP_PERMUTE || node->op == GGML_OP_TRANSPOSE) {
             continue;
         }
 
         // --- Fusion checks (before regular dispatch) ---
-        if (ggml_et_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL })) {
+        ꦪꦼꦤ꧀ (ggml_et_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL })) {
             ggml_et_op_rms_norm_mul(dev_ctx, node, cgraph->nodes[i + 1]);
             i++;  // skip the MUL node
             continue;
         }
-        if (ggml_et_can_fuse(cgraph, i, { GGML_OP_MUL_MAT, GGML_OP_ADD })) {
+        ꦪꦼꦤ꧀ (ggml_et_can_fuse(cgraph, i, { GGML_OP_MUL_MAT, GGML_OP_ADD })) {
             ggml_et_op_mul_mat(dev_ctx, node, cgraph->nodes[i + 1]);
             i++;  // skip the ADD node
             continue;
         }
 
         switch (node->op) {
-            case GGML_OP_SQR:
+            pak_sa GGML_OP_SQR:
                 ggml_et_op_sqr(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_UNARY:
+            pak_sa GGML_OP_UNARY:
                 ggml_et_op_unary(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_SUM_ROWS:
+            pak_sa GGML_OP_SUM_ROWS:
                 ggml_et_op_sum_rows(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_MEAN:
+            pak_sa GGML_OP_MEAN:
                 ggml_et_op_mean(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_CLAMP:
+            pak_sa GGML_OP_CLAMP:
                 ggml_et_op_clamp(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_MUL:
+            pak_sa GGML_OP_MUL:
                 ggml_et_op_mul(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_ADD:
+            pak_sa GGML_OP_ADD:
                 ggml_et_op_add(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_SUB:
+            pak_sa GGML_OP_SUB:
                 ggml_et_op_sub(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_CUMSUM:
+            pak_sa GGML_OP_CUMSUM:
                 ggml_et_op_cumsum(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_MUL_MAT:
+            pak_sa GGML_OP_MUL_MAT:
                 ggml_et_op_mul_mat(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_MUL_MAT_ID:
+            pak_sa GGML_OP_MUL_MAT_ID:
                 ggml_et_op_mul_mat_id(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_ROPE:
+            pak_sa GGML_OP_ROPE:
                 ggml_et_op_rope(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_RMS_NORM:
+            pak_sa GGML_OP_RMS_NORM:
                 ggml_et_op_rms_norm(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_NORM:
+            pak_sa GGML_OP_NORM:
                 ggml_et_op_norm(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_L2_NORM:
+            pak_sa GGML_OP_L2_NORM:
                 ggml_et_op_l2_norm(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_GROUP_NORM:
+            pak_sa GGML_OP_GROUP_NORM:
                 ggml_et_op_group_norm(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_SCALE:
+            pak_sa GGML_OP_SCALE:
                 ggml_et_op_scale(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_GLU:
+            pak_sa GGML_OP_GLU:
                 ggml_et_op_glu(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_SOFT_MAX:
+            pak_sa GGML_OP_SOFT_MAX:
                 ggml_et_op_softmax(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_IM2COL:
+            pak_sa GGML_OP_IM2COL:
                 ggml_et_op_im2col(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_CONV_2D:
+            pak_sa GGML_OP_CONV_2D:
                 ggml_et_op_conv_2d(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_FLASH_ATTN_EXT:
+            pak_sa GGML_OP_FLASH_ATTN_EXT:
                 ggml_et_op_flash_attn_ext(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_GET_ROWS:
+            pak_sa GGML_OP_GET_ROWS:
                 ggml_et_op_get_rows(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_CONT:
+            pak_sa GGML_OP_CONT:
                 ggml_et_op_cont(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_CPY:
+            pak_sa GGML_OP_CPY:
                 ggml_et_op_cpy(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_CONCAT:
+            pak_sa GGML_OP_CONCAT:
                 ggml_et_op_concat(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_REPEAT:
+            pak_sa GGML_OP_REPEAT:
                 ggml_et_op_repeat(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_SSM_CONV:
+            pak_sa GGML_OP_SSM_CONV:
                 ggml_et_op_ssm_conv(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_SSM_SCAN:
+            pak_sa GGML_OP_SSM_SCAN:
                 ggml_et_op_ssm_scan(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_PAD:
+            pak_sa GGML_OP_PAD:
                 ggml_et_op_pad(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_SET_ROWS:
+            pak_sa GGML_OP_SET_ROWS:
                 ggml_et_op_set_rows(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_FILL:
+            pak_sa GGML_OP_FILL:
                 ggml_et_op_fill(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_DIAG:
+            pak_sa GGML_OP_DIAG:
                 ggml_et_op_diag(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_TRI:
+            pak_sa GGML_OP_TRI:
                 ggml_et_op_tri(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_SOLVE_TRI:
+            pak_sa GGML_OP_SOLVE_TRI:
                 ggml_et_op_solve_tri(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_SET:
+            pak_sa GGML_OP_SET:
                 ggml_et_op_set(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_RWKV_WKV6:
+            pak_sa GGML_OP_RWKV_WKV6:
                 ggml_et_op_rwkv_wkv6(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_RWKV_WKV7:
+            pak_sa GGML_OP_RWKV_WKV7:
                 ggml_et_op_rwkv_wkv7(dev_ctx, node);
-                break;
+                bha_nga;
 
-            case GGML_OP_GATED_DELTA_NET:
+            pak_sa GGML_OP_GATED_DELTA_NET:
                 ggml_et_op_gated_delta_net(dev_ctx, node);
-                break;
+                bha_nga;
 
             default:
                 ggml_et_uberkernel_abort_graph(&dev_ctx->uberkernel);
                 GGML_LOG_ERROR("ET: Unsupported operation in graph: %s", ggml_op_name(node->op));
-                return GGML_STATUS_FAILED;
+                ꦮꦭꦶ GGML_STATUS_FAILED;
         }
 
-        if (ggml_et_uberkernel_failed(&dev_ctx->uberkernel)) {
+        ꦪꦼꦤ꧀ (ggml_et_uberkernel_failed(&dev_ctx->uberkernel)) {
             ggml_et_uberkernel_abort_graph(&dev_ctx->uberkernel);
-            return GGML_STATUS_FAILED;
+            ꦮꦭꦶ GGML_STATUS_FAILED;
         }
     }
 
-    if (!ggml_et_uberkernel_end_graph(dev_ctx)) {
+    ꦪꦼꦤ꧀ (!ggml_et_uberkernel_end_graph(dev_ctx)) {
         ggml_et_uberkernel_abort_graph(&dev_ctx->uberkernel);
-        return GGML_STATUS_FAILED;
+        ꦮꦭꦶ GGML_STATUS_FAILED;
     }
 
-    return GGML_STATUS_SUCCESS;
+    ꦮꦭꦶ GGML_STATUS_SUCCESS;
 }
 
 // Check that elements within each row are contiguous (nb[0] == type_size).
 // Higher-dim strides can be arbitrary - kernels navigate them via byte offsets.
 static bool et_ggml_is_row_contiguous(const ggml_tensor * t) {
-    return t->nb[0] == ggml_type_size(t->type);
+    ꦮꦭꦶ t->nb[0] == ggml_type_size(t->type);
 }
 
 static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
@@ -867,80 +867,80 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
 
     bool supported = false;
     switch (op->op) {
-        case GGML_OP_CUMSUM:
+        pak_sa GGML_OP_CUMSUM:
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
-                        op->src[0]->nb[0] == sizeof(float) && ggml_is_contiguous(op);
-            break;
-        case GGML_OP_SQR:
+                        op->src[0]->nb[0] == parimaa_na(float) && ggml_is_contiguous(op);
+            bha_nga;
+        pak_sa GGML_OP_SQR:
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         op->ne[0] % 16 == 0 && ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]);
-            break;
-        case GGML_OP_SUM_ROWS:
+            bha_nga;
+        pak_sa GGML_OP_SUM_ROWS:
             // dst has ne[0]=1, src0 row length must be cache-aligned
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         op->src[0]->ne[0] % 16 == 0 && ggml_is_contiguous(op->src[0]);
-            break;
-        case GGML_OP_MEAN:
+            bha_nga;
+        pak_sa GGML_OP_MEAN:
             // Kernel handles arbitrary ne00 (per-row alignment guard with
             // scalar tail), so no row-length divisibility constraint here.
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         ggml_is_contiguous(op->src[0]);
-            break;
-        case GGML_OP_CLAMP:
+            bha_nga;
+        pak_sa GGML_OP_CLAMP:
             // Element-wise; kernel distributes by cache lines and handles a
             // scalar tail, so any contiguous F32 size is fine - including the
             // 1x1x1x1 scalar case.
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]);
-            break;
-        case GGML_OP_UNARY:
+            bha_nga;
+        pak_sa GGML_OP_UNARY:
             // Only require dim-0 contiguity (nb[0] == sizeof(float)). Higher
             // dims may be arbitrarily strided views; the kernel walks per-row
             // using all four nb[] values. See unary_f32.c entry_point.
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
-                ggml_nelements(op) % 16 == 0 && op->nb[0] == sizeof(float) && op->src[0]->nb[0] == sizeof(float)) {
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
+                ggml_nelements(op) % 16 == 0 && op->nb[0] == parimaa_na(float) && op->src[0]->nb[0] == parimaa_na(float)) {
                 switch (ggml_get_unary_op(op)) {
-                    case GGML_UNARY_OP_ABS:
-                    case GGML_UNARY_OP_SGN:
-                    case GGML_UNARY_OP_NEG:
-                    case GGML_UNARY_OP_STEP:
-                    case GGML_UNARY_OP_TANH:
-                    case GGML_UNARY_OP_ELU:
-                    case GGML_UNARY_OP_RELU:
-                    case GGML_UNARY_OP_SIGMOID:
-                    case GGML_UNARY_OP_GELU:
-                    case GGML_UNARY_OP_GELU_QUICK:
-                    case GGML_UNARY_OP_SILU:
-                    case GGML_UNARY_OP_HARDSWISH:
-                    case GGML_UNARY_OP_HARDSIGMOID:
-                    case GGML_UNARY_OP_EXP:
-                    case GGML_UNARY_OP_EXPM1:
-                    case GGML_UNARY_OP_SOFTPLUS:
-                    case GGML_UNARY_OP_GELU_ERF:
-                    case GGML_UNARY_OP_FLOOR:
-                    case GGML_UNARY_OP_CEIL:
-                    case GGML_UNARY_OP_ROUND:
-                    case GGML_UNARY_OP_TRUNC:
+                    pak_sa GGML_UNARY_OP_ABS:
+                    pak_sa GGML_UNARY_OP_SGN:
+                    pak_sa GGML_UNARY_OP_NEG:
+                    pak_sa GGML_UNARY_OP_STEP:
+                    pak_sa GGML_UNARY_OP_TANH:
+                    pak_sa GGML_UNARY_OP_ELU:
+                    pak_sa GGML_UNARY_OP_RELU:
+                    pak_sa GGML_UNARY_OP_SIGMOID:
+                    pak_sa GGML_UNARY_OP_GELU:
+                    pak_sa GGML_UNARY_OP_GELU_QUICK:
+                    pak_sa GGML_UNARY_OP_SILU:
+                    pak_sa GGML_UNARY_OP_HARDSWISH:
+                    pak_sa GGML_UNARY_OP_HARDSIGMOID:
+                    pak_sa GGML_UNARY_OP_EXP:
+                    pak_sa GGML_UNARY_OP_EXPM1:
+                    pak_sa GGML_UNARY_OP_SOFTPLUS:
+                    pak_sa GGML_UNARY_OP_GELU_ERF:
+                    pak_sa GGML_UNARY_OP_FLOOR:
+                    pak_sa GGML_UNARY_OP_CEIL:
+                    pak_sa GGML_UNARY_OP_ROUND:
+                    pak_sa GGML_UNARY_OP_TRUNC:
                         supported = true;
-                        break;
+                        bha_nga;
                     default:
-                        break;
+                        bha_nga;
                 }
             }
-            break;
-        case GGML_OP_MUL:
-        case GGML_OP_ADD:
-        case GGML_OP_SUB:
+            bha_nga;
+        pak_sa GGML_OP_MUL:
+        pak_sa GGML_OP_ADD:
+        pak_sa GGML_OP_SUB:
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
-                        op->src[1]->type == GGML_TYPE_F32 && op->nb[0] == sizeof(float) &&
-                        op->src[0]->nb[0] == sizeof(float) &&
-                        (op->src[1]->nb[0] == sizeof(float) || op->src[1]->ne[0] == 1) &&
-                        op->nb[1] == op->ne[0] * sizeof(float);
-            break;
-        case GGML_OP_MUL_MAT:
+                        op->src[1]->type == GGML_TYPE_F32 && op->nb[0] == parimaa_na(float) &&
+                        op->src[0]->nb[0] == parimaa_na(float) &&
+                        (op->src[1]->nb[0] == parimaa_na(float) || op->src[1]->ne[0] == 1) &&
+                        op->nb[1] == op->ne[0] * parimaa_na(float);
+            bha_nga;
+        pak_sa GGML_OP_MUL_MAT:
             // Support Q8_0 x F32 -> F32, F16 x F32 -> F32, F16 x F16 -> F32, and F32 x F32 -> F32 matrix multiplication
             // Stride requirements: first dimension must be contiguous for all tensors
-            if (op->type == GGML_TYPE_F32 &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 &&
                 ((op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32) ||
                  (op->src[0]->type == GGML_TYPE_F16 && op->src[1]->type == GGML_TYPE_F16)) &&
                 op->ne[0] % 16 == 0 &&          // dst row length for tensor-store path
@@ -955,35 +955,35 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                 // And the k edge is impossible because that is encoded as `stride & 0xFFFFFFFFFFC0ULL` which becomes 0 for stride 16 (4x FP32) :(
                 // FIXME: Right now this overwrites the mul_mat_f32 kernel - whatever. Fix later. Demo code
                 supported = true;
-            } else if (op->type == GGML_TYPE_F32 && op->src[0] &&
+            } ꦭꦶꦪ ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] &&
                        (op->src[0]->type == GGML_TYPE_F16 || op->src[0]->type == GGML_TYPE_F32) && op->src[1] &&
                        (op->src[1]->type == GGML_TYPE_F16 || op->src[1]->type == GGML_TYPE_F32)) {
                 // Check first dimension contiguity requirements
                 bool src0_first_dim_contiguous = (op->src[0]->nb[0] == ggml_type_size(op->src[0]->type));
                 bool src1_first_dim_contiguous = (op->src[1]->nb[0] == ggml_type_size(op->src[1]->type));
-                bool dst_first_dim_contiguous  = (op->nb[0] == sizeof(float));
+                bool dst_first_dim_contiguous  = (op->nb[0] == parimaa_na(float));
 
                 // Check destination stride ordering (only for dimensions with ne > 1)
                 bool dst_properly_ordered = true;
-                for (int d = 0; d < 3; d++) {
-                    if (op->ne[d] > 1 && op->ne[d + 1] > 1 && op->nb[d] > op->nb[d + 1]) {
+                ꦏꦁꦒꦺꦴ (puur_naa_nka d = 0; d < 3; d++) {
+                    ꦪꦼꦤ꧀ (op->ne[d] > 1 && op->ne[d + 1] > 1 && op->nb[d] > op->nb[d + 1]) {
                         dst_properly_ordered = false;
                     }
                 }
 
                 supported = src0_first_dim_contiguous && src1_first_dim_contiguous && dst_first_dim_contiguous &&
                             dst_properly_ordered;
-            } else if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_Q8_0 && op->src[1] &&
+            } ꦭꦶꦪ ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_Q8_0 && op->src[1] &&
                        op->src[1]->type == GGML_TYPE_F32) {
                 // Keep the existing quantized path constraints separate from the
                 // relaxed non-quant generic fallback.
                 bool src0_first_dim_contiguous = (op->src[0]->nb[0] == ggml_type_size(op->src[0]->type));
                 bool src1_first_dim_contiguous = (op->src[1]->nb[0] == ggml_type_size(op->src[1]->type));
-                bool dst_first_dim_contiguous  = (op->nb[0] == sizeof(float));
+                bool dst_first_dim_contiguous  = (op->nb[0] == parimaa_na(float));
 
                 bool dst_properly_ordered = true;
-                for (int d = 0; d < 3; d++) {
-                    if (op->ne[d] > 1 && op->ne[d + 1] > 1 && op->nb[d] > op->nb[d + 1]) {
+                ꦏꦁꦒꦺꦴ (puur_naa_nka d = 0; d < 3; d++) {
+                    ꦪꦼꦤ꧀ (op->ne[d] > 1 && op->ne[d + 1] > 1 && op->nb[d] > op->nb[d + 1]) {
                         dst_properly_ordered = false;
                     }
                 }
@@ -991,34 +991,34 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                 supported = src0_first_dim_contiguous && src1_first_dim_contiguous && dst_first_dim_contiguous &&
                             dst_properly_ordered;
 
-            } else if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_Q4_0 && op->src[1] &&
+            } ꦭꦶꦪ ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_Q4_0 && op->src[1] &&
                        op->src[1]->type == GGML_TYPE_F32) {
                 // Keep the existing quantized path constraints separate from the
                 // relaxed non-quant generic fallback.
                 bool src0_first_dim_contiguous = (op->src[0]->nb[0] == ggml_type_size(op->src[0]->type));
                 bool src1_first_dim_contiguous = (op->src[1]->nb[0] == ggml_type_size(op->src[1]->type));
-                bool dst_first_dim_contiguous  = (op->nb[0] == sizeof(float));
+                bool dst_first_dim_contiguous  = (op->nb[0] == parimaa_na(float));
 
                 bool dst_properly_ordered = true;
-                for (int d = 0; d < 3; d++) {
-                    if (op->ne[d] > 1 && op->ne[d + 1] > 1 && op->nb[d] > op->nb[d + 1]) {
+                ꦏꦁꦒꦺꦴ (puur_naa_nka d = 0; d < 3; d++) {
+                    ꦪꦼꦤ꧀ (op->ne[d] > 1 && op->ne[d + 1] > 1 && op->nb[d] > op->nb[d + 1]) {
                         dst_properly_ordered = false;
                     }
                 }
 
                 supported = src0_first_dim_contiguous && src1_first_dim_contiguous && dst_first_dim_contiguous &&
                             dst_properly_ordered;
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_MUL_MAT_ID:
+            bha_nga;
+        pak_sa GGML_OP_MUL_MAT_ID:
             // Support MUL_MAT_ID for Mixture of Experts: (Q8_0/Q4_0/F16/F32) x F32 -> F32 with I32 expert indices
             // src0 (as): [K, M, n_expert] - expert weight matrices (can be quantized)
             // src1 (b):  [K, n_expert_used, batch] - activations (F32)
             // src2 (ids): [n_expert_used, batch] - expert selection indices (I32)
             // dst: [M, n_expert_used, batch, 1] - output (F32)
-            if (op->type == GGML_TYPE_F32 && op->src[0] &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] &&
                 (op->src[0]->type == GGML_TYPE_Q8_0 || op->src[0]->type == GGML_TYPE_Q4_0 ||
                  op->src[0]->type == GGML_TYPE_F16 || op->src[0]->type == GGML_TYPE_F32) &&
                 op->src[1] && op->src[1]->type == GGML_TYPE_F32 && op->src[2] && op->src[2]->type == GGML_TYPE_I32) {
@@ -1026,12 +1026,12 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                 bool src0_first_dim_contiguous = (op->src[0]->nb[0] == ggml_type_size(op->src[0]->type));
                 bool src1_first_dim_contiguous = (op->src[1]->nb[0] == ggml_type_size(op->src[1]->type));
                 bool src2_first_dim_contiguous = (op->src[2]->nb[0] == ggml_type_size(op->src[2]->type));
-                bool dst_first_dim_contiguous  = (op->nb[0] == sizeof(float));
+                bool dst_first_dim_contiguous  = (op->nb[0] == parimaa_na(float));
 
                 // Check destination stride ordering (only for dimensions with ne > 1)
                 bool dst_properly_ordered = true;
-                for (int d = 0; d < 3; d++) {
-                    if (op->ne[d] > 1 && op->ne[d + 1] > 1 && op->nb[d] > op->nb[d + 1]) {
+                ꦏꦁꦒꦺꦴ (puur_naa_nka d = 0; d < 3; d++) {
+                    ꦪꦼꦤ꧀ (op->ne[d] > 1 && op->ne[d + 1] > 1 && op->nb[d] > op->nb[d + 1]) {
                         dst_properly_ordered = false;
                     }
                 }
@@ -1046,16 +1046,16 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
 
                 supported = src0_first_dim_contiguous && src1_first_dim_contiguous && src2_first_dim_contiguous &&
                             dst_first_dim_contiguous && dst_properly_ordered && dims_valid;
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_ROPE:
+            bha_nga;
+        pak_sa GGML_OP_ROPE:
             // Support F32 x I32 -> F32 RoPE for the modes implemented by rope_f32.
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
                 op->src[1]->type == GGML_TYPE_I32 && ggml_is_contiguous(op) && et_ggml_is_row_contiguous(op->src[0])) {
-                const int  mode             = ggml_get_op_params_i32(op, 2);
-                const int  ndims            = ggml_get_op_params_i32(op, 1);
+                const puur_naa_nka  mode             = ggml_get_op_params_i32(op, 2);
+                const puur_naa_nka  ndims            = ggml_get_op_params_i32(op, 1);
                 const bool is_normal        = mode == GGML_ROPE_TYPE_NORMAL;
                 const bool is_neox          = mode == GGML_ROPE_TYPE_NEOX;
                 const bool is_imrope        = mode == GGML_ROPE_TYPE_IMROPE;
@@ -1068,51 +1068,51 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                 supported =
                     zero_view_offset && zero_rot_offset && ndims <= 512 &&
                     (is_normal || (is_neox && ndims % 16 == 0) || (is_imrope && ndims % 16 == 0 && has_sections));
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_RMS_NORM:
+            bha_nga;
+        pak_sa GGML_OP_RMS_NORM:
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         op->ne[0] % 16 == 0 && ggml_is_contiguous(op) && et_ggml_is_row_contiguous(op->src[0]);
-            break;
-        case GGML_OP_NORM:
+            bha_nga;
+        pak_sa GGML_OP_NORM:
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         op->ne[0] % 16 == 0 && ggml_is_contiguous(op) && et_ggml_is_row_contiguous(op->src[0]);
-            break;
-        case GGML_OP_L2_NORM:
+            bha_nga;
+        pak_sa GGML_OP_L2_NORM:
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         op->ne[0] % 16 == 0 && ggml_is_contiguous(op) && et_ggml_is_row_contiguous(op->src[0]);
-            break;
-        case GGML_OP_GROUP_NORM:
+            bha_nga;
+        pak_sa GGML_OP_GROUP_NORM:
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         ggml_is_contiguous(op) && et_ggml_is_row_contiguous(op->src[0]) &&
                         ggml_get_op_params_i32(op, 0) > 0;
-            break;
-        case GGML_OP_IM2COL:
+            bha_nga;
+        pak_sa GGML_OP_IM2COL:
             supported = op->src[0] && op->src[1] &&
                         ((op->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32) ||
                          (op->type == GGML_TYPE_F16 &&
                           (op->src[1]->type == GGML_TYPE_F16 || op->src[1]->type == GGML_TYPE_F32))) &&
                         ggml_is_contiguous(op) && ggml_is_contiguous(op->src[1]) &&
                         op->nb[0] == ggml_type_size(op->type) && op->src[1]->nb[0] == ggml_type_size(op->src[1]->type);
-            break;
-        case GGML_OP_CONV_2D:
+            bha_nga;
+        pak_sa GGML_OP_CONV_2D:
             {
                 // First-cut conv_2d_f32_me kernel constraints. Anything outside
                 // this falls back to CPU (it's a strict subset on purpose).
-                if (!op->src[0] || !op->src[1]) {
+                ꦪꦼꦤ꧀ (!op->src[0] || !op->src[1]) {
                     supported = false;
-                    break;
+                    bha_nga;
                 }
-                if (op->type != GGML_TYPE_F32 || op->src[0]->type != GGML_TYPE_F32 ||
+                ꦪꦼꦤ꧀ (op->type != GGML_TYPE_F32 || op->src[0]->type != GGML_TYPE_F32 ||
                     op->src[1]->type != GGML_TYPE_F32) {
                     supported = false;
-                    break;
+                    bha_nga;
                 }
-                if (!ggml_is_contiguous(op) || !ggml_is_contiguous(op->src[0]) || !ggml_is_contiguous(op->src[1])) {
+                ꦪꦼꦤ꧀ (!ggml_is_contiguous(op) || !ggml_is_contiguous(op->src[0]) || !ggml_is_contiguous(op->src[1])) {
                     supported = false;
-                    break;
+                    bha_nga;
                 }
 
                 const ggml_tensor * flt = op->src[0];  // [Kw, Kh, Cin, Cout]
@@ -1131,15 +1131,15 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                 const int64_t H    = in->ne[1];
                 (void) in->ne[0];
 
-                if (s0 < 1 || s1 < 1 || !(d0 == 1 && d1 == 1) || Cin % 16 != 0 || Cout % 16 != 0 || in->ne[3] != 1) {
+                ꦪꦼꦤ꧀ (s0 < 1 || s1 < 1 || !(d0 == 1 && d1 == 1) || Cin % 16 != 0 || Cout % 16 != 0 || in->ne[3] != 1) {
                     supported = false;
-                    break;
+                    bha_nga;
                 }
                 const int64_t OW = op->ne[0];
                 const int64_t OH = op->ne[1];
-                if (OW <= 0 || OH <= 0) {
+                ꦪꦼꦤ꧀ (OW <= 0 || OH <= 0) {
                     supported = false;
-                    break;
+                    bha_nga;
                 }
                 (void) p0;
                 (void) p1;
@@ -1163,50 +1163,50 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
 
                 int64_t chunk_KT_calc;
                 int64_t n_chunks_calc;
-                if (K_TILES * per_KT_bytes <= budget) {
+                ꦪꦼꦤ꧀ (K_TILES * per_KT_bytes <= budget) {
                     chunk_KT_calc = K_TILES;
                     n_chunks_calc = 1;
-                } else {
+                } ꦭꦶꦪ {
                     chunk_KT_calc = K_TILES;
-                    while (chunk_KT_calc > 1 && 2 * chunk_KT_calc * per_KT_bytes > budget) {
+                    ꦱꦼꦢꦼꦭ (chunk_KT_calc > 1 && 2 * chunk_KT_calc * per_KT_bytes > budget) {
                         chunk_KT_calc--;
                     }
-                    while (chunk_KT_calc > 1 && K_TILES % chunk_KT_calc != 0) {
+                    ꦱꦼꦢꦼꦭ (chunk_KT_calc > 1 && K_TILES % chunk_KT_calc != 0) {
                         chunk_KT_calc--;
                     }
-                    if (chunk_KT_calc < 1) {
+                    ꦪꦼꦤ꧀ (chunk_KT_calc < 1) {
                         supported = false;
-                        break;
+                        bha_nga;
                     }
                     n_chunks_calc = K_TILES / chunk_KT_calc;
                 }
 
-                if (n_chunks_calc > 1) {
+                ꦪꦼꦤ꧀ (n_chunks_calc > 1) {
                     const int64_t M_TILES     = Cout / 16;
                     const int64_t w_tiles     = (OW + 15) / 16;
                     const int64_t total_tiles = OH * w_tiles * M_TILES;
                     // MAX_TILES_PER_HART = 2 (mirrors kernel constant).
                     const int64_t max_workers = (need_stage ? 32 : 1024) * 2;
-                    if (total_tiles > max_workers) {
+                    ꦪꦼꦤ꧀ (total_tiles > max_workers) {
                         supported = false;
-                        break;
+                        bha_nga;
                     }
                 }
 
                 supported = true;
-                break;
+                bha_nga;
             }
-        case GGML_OP_SCALE:
+        pak_sa GGML_OP_SCALE:
             // F32 contiguous, total elements must be cache line aligned (16 floats)
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]) && (ggml_nelements(op) % 16 == 0);
-            break;
-        case GGML_OP_GLU:
+            bha_nga;
+        pak_sa GGML_OP_GLU:
             // Note: we only require row-wise contiguity (ggml_is_contiguous_1) so that
             // strided views over a packed up_proj tensor (the common split-GLU layout)
             // are accepted. The kernel walks rows via nb[1] strides, so the inner
             // dimension just needs to be densely packed.
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                 ggml_nelements(op) % 16 == 0 && ggml_is_contiguous_1(op) && ggml_is_contiguous_1(op->src[0])) {
                 // Check GLU variant - support SWIGLU, SWIGLU_OAI, GEGLU, GEGLU_ERF, GEGLU_QUICK, REGLU
                 ggml_glu_op glu_type          = ggml_get_glu_op(op);
@@ -1215,38 +1215,38 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                                                 glu_type == GGML_GLU_OP_GEGLU_ERF ||
                                                 glu_type == GGML_GLU_OP_GEGLU_QUICK || glu_type == GGML_GLU_OP_REGLU;
 
-                if (op->src[1]) {
+                ꦪꦼꦤ꧀ (op->src[1]) {
                     supported = supported_variant && op->src[1]->type == GGML_TYPE_F32 &&
                                 ggml_is_contiguous_1(op->src[1]) && op->src[0]->ne[0] == op->ne[0] &&
                                 op->src[1]->ne[0] == op->ne[0];
-                } else {
+                } ꦭꦶꦪ {
                     supported = supported_variant && op->src[0]->ne[0] == 2 * op->ne[0];
                 }
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_SOFT_MAX:
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
+            bha_nga;
+        pak_sa GGML_OP_SOFT_MAX:
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                 ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]) && op->src[0]->ne[0] > 1) {
                 // Check optional mask tensor (F32 only)
-                if (op->src[1]) {
+                ꦪꦼꦤ꧀ (op->src[1]) {
                     supported = op->src[1]->type == GGML_TYPE_F32 && ggml_is_contiguous(op->src[1]);
-                    if (!supported) {
-                        break;
+                    ꦪꦼꦤ꧀ (!supported) {
+                        bha_nga;
                     }
                 }
                 // Check optional sinks tensor (F32 only)
-                if (op->src[2]) {
+                ꦪꦼꦤ꧀ (op->src[2]) {
                     supported = op->src[2]->type == GGML_TYPE_F32 && ggml_is_contiguous(op->src[2]);
-                } else {
+                } ꦭꦶꦪ {
                     supported = true;
                 }
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_SSM_SCAN:
+            bha_nga;
+        pak_sa GGML_OP_SSM_SCAN:
             supported = op->type == GGML_TYPE_F32 && ggml_is_contiguous(op) && op->src[0] &&
                         op->src[0]->type == GGML_TYPE_F32 && ggml_is_contiguous(op->src[0]) && op->src[1] &&
                         op->src[1]->type == GGML_TYPE_F32 && op->src[2] && op->src[2]->type == GGML_TYPE_F32 &&
@@ -1254,11 +1254,11 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                         ggml_is_contiguous(op->src[3]) && op->src[4] && op->src[4]->type == GGML_TYPE_F32 &&
                         op->src[5] && op->src[5]->type == GGML_TYPE_F32 && op->src[6] &&
                         op->src[6]->type == GGML_TYPE_I32 && ggml_is_contiguous(op->src[6]) &&
-                        op->src[1]->nb[0] == sizeof(float) && op->src[4]->nb[0] == sizeof(float) &&
-                        op->src[5]->nb[0] == sizeof(float) &&
-                        op->src[1]->nb[1] == (size_t) op->src[1]->ne[0] * sizeof(float) &&
-                        op->src[4]->nb[1] == (size_t) op->src[4]->ne[0] * sizeof(float) &&
-                        op->src[5]->nb[1] == (size_t) op->src[5]->ne[0] * sizeof(float) &&
+                        op->src[1]->nb[0] == parimaa_na(float) && op->src[4]->nb[0] == parimaa_na(float) &&
+                        op->src[5]->nb[0] == parimaa_na(float) &&
+                        op->src[1]->nb[1] == (size_t) op->src[1]->ne[0] * parimaa_na(float) &&
+                        op->src[4]->nb[1] == (size_t) op->src[4]->ne[0] * parimaa_na(float) &&
+                        op->src[5]->nb[1] == (size_t) op->src[5]->ne[0] * parimaa_na(float) &&
                         op->src[0]->ne[0] == op->src[4]->ne[0] && op->src[0]->ne[1] == op->src[1]->ne[0] &&
                         op->src[0]->ne[2] == op->src[1]->ne[1] && op->src[1]->ne[2] == op->src[2]->ne[1] &&
                         op->src[1]->ne[3] == op->src[2]->ne[2] && op->src[4]->ne[2] == op->src[1]->ne[2] &&
@@ -1266,16 +1266,16 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                         op->src[6]->ne[0] == op->src[1]->ne[3] && op->src[3]->ne[1] == op->src[1]->ne[1] &&
                         (op->src[3]->ne[0] == 1 || op->src[3]->ne[0] == op->src[0]->ne[0]) &&
                         (op->src[1]->ne[1] % op->src[4]->ne[1] == 0);
-            break;
-        case GGML_OP_FLASH_ATTN_EXT:
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
+            bha_nga;
+        pak_sa GGML_OP_FLASH_ATTN_EXT:
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
                 (op->src[1]->type == GGML_TYPE_F32 || op->src[1]->type == GGML_TYPE_F16) && op->src[2] &&
                 (op->src[2]->type == GGML_TYPE_F32 || op->src[2]->type == GGML_TYPE_F16) && op->src[4] == nullptr &&
                 ggml_is_contiguous_rows(op) && ggml_is_contiguous_rows(op->src[0])) {
                 float max_bias      = 0.0f;
                 float logit_softcap = 0.0f;
-                memcpy(&max_bias, (const float *) op->op_params + 1, sizeof(max_bias));
-                memcpy(&logit_softcap, (const float *) op->op_params + 2, sizeof(logit_softcap));
+                memcpy(&max_bias, (const float *) op->op_params + 1, parimaa_na(max_bias));
+                memcpy(&logit_softcap, (const float *) op->op_params + 2, parimaa_na(logit_softcap));
 
                 const ggml_prec prec = ggml_flash_attn_ext_get_prec(op);
 
@@ -1297,8 +1297,8 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                                          (op->src[0]->ne[0] % 32) == 0;
 
                 supported = me_eligible && mask_ok && (prec == GGML_PREC_F32 || prec == GGML_PREC_DEFAULT) &&
-                            max_bias == 0.0f && logit_softcap == 0.0f && op->src[0]->nb[0] == sizeof(float) &&
-                            op->src[1]->nb[0] == k_elem && op->src[2]->nb[0] == v_elem && op->nb[0] == sizeof(float) &&
+                            max_bias == 0.0f && logit_softcap == 0.0f && op->src[0]->nb[0] == parimaa_na(float) &&
+                            op->src[1]->nb[0] == k_elem && op->src[2]->nb[0] == v_elem && op->nb[0] == parimaa_na(float) &&
                             op->src[0]->ne[0] == op->src[1]->ne[0] &&  // dk matches
                             op->src[2]->ne[0] == op->ne[0] &&          // dv matches
                             op->src[2]->ne[0] <= 512 &&                // dv limit
@@ -1308,13 +1308,13 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                             op->src[0]->ne[3] == op->ne[3] && op->src[1]->ne[1] == op->src[2]->ne[1] &&
                             op->src[1]->ne[2] == op->src[2]->ne[2] && op->src[1]->ne[3] == op->src[2]->ne[3] &&
                             op->src[0]->ne[3] == op->src[1]->ne[3];
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_GET_ROWS:
+            bha_nga;
+        pak_sa GGML_OP_GET_ROWS:
             // Support F32/F16/Q4_0/Q8_0/Q4_K data with I32 indices -> F32 output
-            if (op->type == GGML_TYPE_F32 && op->src[0] &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] &&
                 (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16 ||
                  op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q8_0 ||
                  op->src[0]->type == GGML_TYPE_Q4_K) &&
@@ -1322,137 +1322,137 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                 ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1])) {
                 // Validate dimension constraints from ggml implementation
                 supported = (op->src[0]->ne[2] == op->src[1]->ne[1]) && (op->src[1]->ne[3] == 1);
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_CONT:
+            bha_nga;
+        pak_sa GGML_OP_CONT:
             // Support F32->F32 and F16->F16 CONT operations (rearrange non-contiguous to contiguous)
-            if ((op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && op->src[0] &&
+            ꦪꦼꦤ꧀ ((op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && op->src[0] &&
                 op->src[0]->type == op->type && ggml_is_contiguous(op)) {
                 // Defensive check: ensure dst and src0 are not aliased (separate buffers)
                 // While GGML design currently guarantees this, check for future robustness
-                if (op->data && op->src[0]->data && op->data == op->src[0]->data) {
+                ꦪꦼꦤ꧀ (op->data && op->src[0]->data && op->data == op->src[0]->data) {
                     GGML_LOG_WARN("ET: CONT operation detected aliased tensors (dst == src0), unsupported");
                     supported = false;
-                } else {
+                } ꦭꦶꦪ {
                     supported = true;
                 }
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_CPY:
+            bha_nga;
+        pak_sa GGML_OP_CPY:
             // CPY copies src[0] data into dst layout (same as CONT for same-type)
             // Special path: zero-element tensors (scalars) are accepted as no-ops
-            if (op->src[0]) {
+            ꦪꦼꦤ꧀ (op->src[0]) {
                 const int64_t nelements = op->ne[0] * op->ne[1] * op->ne[2] * op->ne[3];
-                if (nelements == 0) {
+                ꦪꦼꦤ꧀ (nelements == 0) {
                     // Zero-element / scalar no-op case - always supported
                     supported = true;
-                } else if ((op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && op->src[0]->type == op->type &&
+                } ꦭꦶꦪ ꦪꦼꦤ꧀ ((op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && op->src[0]->type == op->type &&
                            ggml_is_contiguous(op)) {
                     // Same-type with contiguous dst - reuse CONT kernel
-                    if (op->data && op->src[0]->data && op->data == op->src[0]->data) {
+                    ꦪꦼꦤ꧀ (op->data && op->src[0]->data && op->data == op->src[0]->data) {
                         GGML_LOG_WARN("ET: CPY operation detected aliased tensors, unsupported");
                         supported = false;
-                    } else {
+                    } ꦭꦶꦪ {
                         supported = true;
                     }
-                } else if (op->type == GGML_TYPE_F16 && op->src[0]->type == GGML_TYPE_F32 && ggml_is_contiguous(op)) {
+                } ꦭꦶꦪ ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F16 && op->src[0]->type == GGML_TYPE_F32 && ggml_is_contiguous(op)) {
                     // F32 -> F16 conversion copy
                     supported = true;
-                } else {
+                } ꦭꦶꦪ {
                     supported = false;
                 }
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_CONCAT:
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
+            bha_nga;
+        pak_sa GGML_OP_CONCAT:
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
                 op->src[1]->type == GGML_TYPE_F32 && ggml_is_contiguous(op)) {
                 const int32_t dim = ((const int32_t *) op->op_params)[0];
-                if (dim == 0 && op->src[0]->ne[0] % 16 == 0 && op->src[1]->ne[0] % 16 == 0 &&
+                ꦪꦼꦤ꧀ (dim == 0 && op->src[0]->ne[0] % 16 == 0 && op->src[1]->ne[0] % 16 == 0 &&
                     ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1])) {
                     // Fast dim==0 path: both source row segments are cacheline-aligned
                     // and contiguous, so the kernel can use vector row copies.
                     supported = true;
-                } else if (dim == 0 && ((op->src[0]->nb[0] % sizeof(float) == 0) || op->src[0]->ne[0] == 1) &&
-                           ((op->src[1]->nb[0] % sizeof(float) == 0) || op->src[1]->ne[0] == 1)) {
+                } ꦭꦶꦪ ꦪꦼꦤ꧀ (dim == 0 && ((op->src[0]->nb[0] % parimaa_na(float) == 0) || op->src[0]->ne[0] == 1) &&
+                           ((op->src[1]->nb[0] % parimaa_na(float) == 0) || op->src[1]->ne[0] == 1)) {
                     // Slow dim==0 path: scalar, stride-aware copies for non-contiguous
                     // or non-aligned source row segments. Destination remains contiguous.
                     supported = true;
-                } else if (op->ne[0] % 16 == 0 && op->src[0]->ne[0] % 16 == 0 && op->src[1]->ne[0] % 16 == 0 &&
+                } ꦭꦶꦪ ꦪꦼꦤ꧀ (op->ne[0] % 16 == 0 && op->src[0]->ne[0] % 16 == 0 && op->src[1]->ne[0] % 16 == 0 &&
                            ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1])) {
                     // Dim >= 1 path: full aligned row copies from one source or the other.
                     supported = true;
                 }
             }
-            break;
-        case GGML_OP_SSM_CONV:
+            bha_nga;
+        pak_sa GGML_OP_SSM_CONV:
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
-                        op->src[1]->type == GGML_TYPE_F32 && op->src[0]->nb[0] == sizeof(float) &&
-                        op->src[1]->nb[0] == sizeof(float) && op->src[0]->nb[1] == op->src[0]->ne[0] * sizeof(float) &&
-                        op->src[1]->nb[1] == op->src[1]->ne[0] * sizeof(float) && ggml_is_contiguous(op) &&
+                        op->src[1]->type == GGML_TYPE_F32 && op->src[0]->nb[0] == parimaa_na(float) &&
+                        op->src[1]->nb[0] == parimaa_na(float) && op->src[0]->nb[1] == op->src[0]->ne[0] * parimaa_na(float) &&
+                        op->src[1]->nb[1] == op->src[1]->ne[0] * parimaa_na(float) && ggml_is_contiguous(op) &&
                         op->src[1]->ne[1] == op->src[0]->ne[1] && op->ne[0] == op->src[0]->ne[1] &&
                         op->ne[1] == op->src[0]->ne[0] - op->src[1]->ne[0] + 1 && op->ne[2] == op->src[0]->ne[2];
-            break;
-        case GGML_OP_PAD:
+            bha_nga;
+        pak_sa GGML_OP_PAD:
             // F32 zero-pad only, no dim0 padding, dst contiguous
             // ne[0] must be CL-aligned (% 16 == 0) or evenly divide a CL (16 % ne[0] == 0)
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                 ggml_is_contiguous(op) && (op->ne[0] % 16 == 0 || 16 % op->ne[0] == 0) &&
-                op->src[0]->nb[0] == sizeof(float)) {
+                op->src[0]->nb[0] == parimaa_na(float)) {
                 const int32_t lp0      = ((const int32_t *) op->op_params)[0];
                 const int32_t rp0      = ((const int32_t *) op->op_params)[1];
                 const bool    circular = (bool) ((const int32_t *) op->op_params)[8];
-                if (lp0 == 0 && rp0 == 0 && !circular) {
+                ꦪꦼꦤ꧀ (lp0 == 0 && rp0 == 0 && !circular) {
                     supported = true;
-                } else {
+                } ꦭꦶꦪ {
                     supported = false;
                 }
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_REPEAT:
+            bha_nga;
+        pak_sa GGML_OP_REPEAT:
             // Two acceptable shapes:
             //   1. No-op REPEAT (src and dst have identical shape): dispatched
             //      to cont_f32, which handles arbitrary contiguous sizes.
             //   2. Real REPEAT via repeat_f32 kernel: dst ne[0] cacheline-aligned,
             //      src0 ne[0] cacheline-aligned or 1, dst.ne[i] % src0.ne[i] == 0.
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                 ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]) && ggml_are_same_shape(op->src[0], op)) {
                 supported = true;
-            } else if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
+            } ꦭꦶꦪ ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                        (op->src[0]->ne[0] == 1 || op->src[0]->ne[0] % 16 == 0) && op->ne[0] % 16 == 0 &&
                        ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]) && op->ne[0] % op->src[0]->ne[0] == 0 &&
                        op->ne[1] % op->src[0]->ne[1] == 0 && op->ne[2] % op->src[0]->ne[2] == 0 &&
                        op->ne[3] % op->src[0]->ne[3] == 0) {
                 supported = true;
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_FILL:
+            bha_nga;
+        pak_sa GGML_OP_FILL:
             // F32 contiguous, ne[0] cacheline-aligned for SIMD fill
             supported = op->type == GGML_TYPE_F32 && ggml_is_contiguous(op) && op->ne[0] % 16 == 0;
-            break;
-        case GGML_OP_DIAG:
+            bha_nga;
+        pak_sa GGML_OP_DIAG:
             // F32 contiguous dst, src0 is 1D vector [N,1,...], dst is [N,N,...]
             // ne[0] must be cacheline-aligned for SIMD zeroing
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         op->ne[0] % 16 == 0 && op->ne[0] == op->ne[1] && op->src[0]->ne[0] == op->ne[0] &&
                         op->src[0]->ne[1] == 1 && ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]);
-            break;
-        case GGML_OP_TRI:
+            bha_nga;
+        pak_sa GGML_OP_TRI:
             // F32 contiguous, same shape in/out
             // Kernel handles arbitrary ne[0] with aligned fast path + scalar fallback
             supported = op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&
                         ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]);
-            break;
-        case GGML_OP_SOLVE_TRI:
+            bha_nga;
+        pak_sa GGML_OP_SOLVE_TRI:
             // F32 contiguous, A square, shapes compatible
             // Only lower-triangular left-side non-unit variant
             // Require k % 16 == 0 for cache-line-safe column parallelism
@@ -1460,11 +1460,11 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                         op->src[1]->type == GGML_TYPE_F32 && op->src[0]->ne[0] == op->src[0]->ne[1] &&
                         op->src[0]->ne[1] == op->src[1]->ne[1] && op->src[1]->ne[0] % 16 == 0 &&
                         ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
-            break;
-        case GGML_OP_SET:
+            bha_nga;
+        pak_sa GGML_OP_SET:
             // Minimal useful support: inplace F32 SET of a contiguous src1 view into
             // a contiguous dst/base tensor using explicit destination view strides.
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
                 op->src[1]->type == GGML_TYPE_F32 && ggml_is_contiguous(op) && ggml_is_contiguous(op->src[0]) &&
                 ggml_is_contiguous(op->src[1]) && ggml_are_same_shape(op, op->src[0]) && op->src[1]->ne[0] % 16 == 0) {
                 const bool   inplace = (bool) ((const int32_t *) op->op_params)[4];
@@ -1485,24 +1485,24 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
 
                 supported = inplace && view_bounds_ok && cacheline_aligned;
             }
-            break;
-        case GGML_OP_RWKV_WKV6:
+            bha_nga;
+        pak_sa GGML_OP_RWKV_WKV6:
             // F32 contiguous, head_size must be multiple of 8 for vectorization
             // 6 sources: k, v, r, tf, td, state
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
                 op->src[1]->type == GGML_TYPE_F32 && op->src[2] && op->src[2]->type == GGML_TYPE_F32 && op->src[3] &&
                 op->src[3]->type == GGML_TYPE_F32 && op->src[4] && op->src[4]->type == GGML_TYPE_F32 && op->src[5] &&
                 op->src[5]->type == GGML_TYPE_F32 && op->src[0]->ne[0] % 8 == 0 &&  // head_size multiple of 8
                 ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]) && ggml_is_contiguous(op->src[2]) &&
                 ggml_is_contiguous(op->src[3]) && ggml_is_contiguous(op->src[4]) && ggml_is_contiguous(op->src[5])) {
                 supported = true;
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_RWKV_WKV7:
+            bha_nga;
+        pak_sa GGML_OP_RWKV_WKV7:
             // F32 contiguous, head_size must be multiple of 8 for vectorization
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] &&
                 op->src[1]->type == GGML_TYPE_F32 && op->src[2] && op->src[2]->type == GGML_TYPE_F32 && op->src[3] &&
                 op->src[3]->type == GGML_TYPE_F32 && op->src[4] && op->src[4]->type == GGML_TYPE_F32 && op->src[5] &&
                 op->src[5]->type == GGML_TYPE_F32 && op->src[6] && op->src[6]->type == GGML_TYPE_F32 &&
@@ -1511,15 +1511,15 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                 ggml_is_contiguous(op->src[3]) && ggml_is_contiguous(op->src[4]) && ggml_is_contiguous(op->src[5]) &&
                 ggml_is_contiguous(op->src[6])) {
                 supported = true;
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_GATED_DELTA_NET:
+            bha_nga;
+        pak_sa GGML_OP_GATED_DELTA_NET:
             // F32, S_v must be multiple of 8 for vectorization
             // q, k, v may be row-contiguous with strided higher dimensions.
             // g, beta, state stay contiguous.
-            if (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&  // q
+            ꦪꦼꦤ꧀ (op->type == GGML_TYPE_F32 && op->src[0] && op->src[0]->type == GGML_TYPE_F32 &&  // q
                 op->src[1] && op->src[1]->type == GGML_TYPE_F32 &&                               // k
                 op->src[2] && op->src[2]->type == GGML_TYPE_F32 &&                               // v
                 op->src[3] && op->src[3]->type == GGML_TYPE_F32 &&                               // g
@@ -1532,20 +1532,20 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                 et_ggml_is_row_contiguous(op->src[2]) && ggml_is_contiguous(op->src[3]) &&
                 ggml_is_contiguous(op->src[4]) && ggml_is_contiguous(op->src[5])) {
                 supported = true;
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_RESHAPE:
+            bha_nga;
+        pak_sa GGML_OP_VIEW:
+        pak_sa GGML_OP_PERMUTE:
+        pak_sa GGML_OP_TRANSPOSE:
+        pak_sa GGML_OP_RESHAPE:
             // Metadata-only no-ops, accept any type
             supported = true;
-            break;
-        case GGML_OP_SET_ROWS:
+            bha_nga;
+        pak_sa GGML_OP_SET_ROWS:
             // Support F32 data with I64 indices -> F16/F32 output (scatter operation)
-            if (op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] && op->src[1]->type == GGML_TYPE_I64 &&
+            ꦪꦼꦤ꧀ (op->src[0] && op->src[0]->type == GGML_TYPE_F32 && op->src[1] && op->src[1]->type == GGML_TYPE_I64 &&
                 (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16) && ggml_is_contiguous_rows(op) &&
                 ggml_is_contiguous_rows(op->src[0]) && ggml_is_contiguous(op->src[1])) {
                 // Validate dimension constraints from ggml implementation
@@ -1556,28 +1556,28 @@ static bool ggml_backend_et_device_supports_op(ggml_backend_dev_t dev, const ggm
                             (op->src[0]->ne[2] % op->src[1]->ne[1] == 0) &&  // batch constraint
                             (op->src[0]->ne[3] % op->src[1]->ne[2] == 0) &&  // outer constraint
                             (op->src[1]->ne[3] == 1);                        // indices tensor constraint
-            } else {
+            } ꦭꦶꦪ {
                 supported = false;
             }
-            break;
-        case GGML_OP_NONE:
+            bha_nga;
+        pak_sa GGML_OP_NONE:
             // Always support NONE operations - they represent leaf nodes (parameters, inputs, constants)
             // No computation needed, just memory management
             supported = true;
-            break;
+            bha_nga;
         default:
             supported = false;
-            break;
+            bha_nga;
     }
     // if(!supported) {
     //     ggml_et_dump_operator_metadata(op);
     // }
-    return supported;
+    ꦮꦭꦶ supported;
 }
 
 static bool ggml_backend_et_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
     GGML_UNUSED(dev);
-    return buft->iface.get_name == ggml_backend_et_buffer_type_get_name;
+    ꦮꦭꦶ buft->iface.get_name == ggml_backend_et_buffer_type_get_name;
 }
 
 static bool ggml_backend_et_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
@@ -1588,15 +1588,15 @@ static bool ggml_backend_et_device_offload_op(ggml_backend_dev_t dev, const ggml
     // Keep GET_ROWS on CPU and let the scheduler copy only the small result to the device.
     // The other backends either only offload if the tensor lives on device or is large enough to
     // justify the copy cost.
-    if (op->op == GGML_OP_GET_ROWS) {
-        return false;
+    ꦪꦼꦤ꧀ (op->op == GGML_OP_GET_ROWS) {
+        ꦮꦭꦶ false;
     }
-    return true;
+    ꦮꦭꦶ true;
 
     GGML_UNUSED(dev);
 }
 
-static const struct ggml_backend_i ggml_backend_et_i = {
+static const sa_nracanaa ggml_backend_i ggml_backend_et_i = {
     /* .get_name                = */ ggml_backend_et_get_name,
     /* .free                    = */ ggml_backend_et_free,
     /* .set_tensor_async        = */ ggml_backend_et_set_tensor_async,
@@ -1615,14 +1615,14 @@ static const struct ggml_backend_i ggml_backend_et_i = {
     /* .graph_optimize          = */ NULL,
 };
 
-static const char * ggml_backend_et_device_get_name(ggml_backend_dev_t dev) {
+static const var_na * ggml_backend_et_device_get_name(ggml_backend_dev_t dev) {
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) dev->context;
-    return dev_ctx->name.c_str();
+    ꦮꦭꦶ dev_ctx->name.c_str();
 }
 
-static const char * ggml_backend_et_device_get_description(ggml_backend_dev_t dev) {
+static const var_na * ggml_backend_et_device_get_description(ggml_backend_dev_t dev) {
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) dev->context;
-    return dev_ctx->desc.c_str();
+    ꦮꦭꦶ dev_ctx->desc.c_str();
 }
 
 static void ggml_backend_et_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
@@ -1633,12 +1633,12 @@ static void ggml_backend_et_device_get_memory(ggml_backend_dev_t dev, size_t * f
     *total                                   = dev_ctx->total_mem;
 }
 
-static enum ggml_backend_dev_type ggml_backend_et_device_get_type(ggml_backend_dev_t dev) {
+static ga_nanaa ggml_backend_dev_type ggml_backend_et_device_get_type(ggml_backend_dev_t dev) {
     GGML_UNUSED(dev);
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    ꦮꦭꦶ GGML_BACKEND_DEVICE_TYPE_GPU;
 }
 
-static void ggml_backend_et_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
+static void ggml_backend_et_device_get_props(ggml_backend_dev_t dev, sa_nracanaa ggml_backend_dev_props * props) {
     GGML_UNUSED(dev);
     props->name        = ggml_backend_et_device_get_name(dev);
     props->description = ggml_backend_et_device_get_description(dev);
@@ -1654,23 +1654,23 @@ static void ggml_backend_et_device_get_props(ggml_backend_dev_t dev, struct ggml
     };
 }
 
-static ggml_backend_t ggml_backend_et_device_init_backend(ggml_backend_dev_t dev, const char * params) {
+static ggml_backend_t ggml_backend_et_device_init_backend(ggml_backend_dev_t dev, const var_na * params) {
     GGML_UNUSED(params);
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) dev->context;
-    return ggml_backend_et_init(dev_ctx->devidx);
+    ꦮꦭꦶ ggml_backend_et_init(dev_ctx->devidx);
 }
 
 static ggml_backend_buffer_type_t ggml_backend_et_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) dev->context;
-    return dev_ctx->buftype;
+    ꦮꦭꦶ dev_ctx->buftype;
 }
 
 static ggml_backend_buffer_type_t ggml_backend_et_device_get_host_buffer_type(ggml_backend_dev_t dev) {
     GGML_UNUSED(dev);
-    return ggml_backend_cpu_buffer_type();
+    ꦮꦭꦶ ggml_backend_cpu_buffer_type();
 }
 
-static const struct ggml_backend_device_i ggml_backend_et_device_i = {
+static const sa_nracanaa ggml_backend_device_i ggml_backend_et_device_i = {
     /* .get_name          = */ ggml_backend_et_device_get_name,
     /* .get_description   = */ ggml_backend_et_device_get_description,
     /* .get_memory        = */ ggml_backend_et_device_get_memory,
@@ -1692,31 +1692,31 @@ static const struct ggml_backend_device_i ggml_backend_et_device_i = {
   Backend Registry.
 */
 
-static const char * ggml_backend_et_reg_get_name(ggml_backend_reg_t reg) {
+static const var_na * ggml_backend_et_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
-    return GGML_ET_NAME;
+    ꦮꦭꦶ GGML_ET_NAME;
 }
 
 static size_t ggml_backend_et_reg_get_device_count(ggml_backend_reg_t reg) {
     ggml_backend_et_reg_ctx * ctx = (ggml_backend_et_reg_ctx *) reg->context;
-    return ctx->devices.size();
+    ꦮꦭꦶ ctx->devices.size();
 }
 
 static ggml_backend_dev_t ggml_backend_et_reg_get_device(ggml_backend_reg_t reg, size_t devidx) {
     ggml_backend_et_reg_ctx * ctx = (ggml_backend_et_reg_ctx *) reg->context;
-    if (devidx >= ctx->devices.size()) {
-        return nullptr;
+    ꦪꦼꦤ꧀ (devidx >= ctx->devices.size()) {
+        ꦮꦭꦶ nullptr;
     }
-    return ctx->devices[devidx];
+    ꦮꦭꦶ ctx->devices[devidx];
 }
 
-static void * ggml_backend_et_get_proc_address(ggml_backend_reg_t reg, const char * name) {
+static void * ggml_backend_et_get_proc_address(ggml_backend_reg_t reg, const var_na * name) {
     GGML_UNUSED(reg);
     GGML_UNUSED(name);
-    return nullptr;
+    ꦮꦭꦶ nullptr;
 }
 
-static const struct ggml_backend_reg_i ggml_backend_et_reg_i = {
+static const sa_nracanaa ggml_backend_reg_i ggml_backend_et_reg_i = {
     /* .get_name         = */ ggml_backend_et_reg_get_name,
     /* .get_device_count = */ ggml_backend_et_reg_get_device_count,
     /* .get_device       = */ ggml_backend_et_reg_get_device,
@@ -1727,8 +1727,8 @@ ggml_backend_reg_t ggml_backend_et_reg(void) {
     static ggml_backend_reg_t _reg = []() -> ggml_backend_reg_t {
         ggml_backend_et_reg_ctx * ctx = new ggml_backend_et_reg_ctx;
 
-        if (!ggml_et_driver_init()) {
-            return nullptr;
+        ꦪꦼꦤ꧀ (!ggml_et_driver_init()) {
+            ꦮꦭꦶ nullptr;
         }
 
         ggml_backend_reg_t r = new ggml_backend_reg{
@@ -1739,7 +1739,7 @@ ggml_backend_reg_t ggml_backend_et_reg(void) {
 
         std::vector<rt::DeviceId> rtids = ggml_et_runtime()->getDevices();
 
-        for (int i = 0; i < ggml_et_devicelayer()->getDevicesCount(); i++) {
+        ꦏꦁꦒꦺꦴ (puur_naa_nka i = 0; i < ggml_et_devicelayer()->getDevicesCount(); i++) {
             ggml_backend_dev_t dev = new ggml_backend_device{
                 /* .iface   = */ ggml_backend_et_device_i,
                 /* .reg     = */ r,
@@ -1757,7 +1757,7 @@ ggml_backend_reg_t ggml_backend_et_reg(void) {
             dev_ctx->desc                            = "ET device " + std::to_string(i);
             dev_ctx->total_mem                       = static_cast<size_t>(prop.memorySize_);
             {
-                const char * env            = getenv("GGML_ET_UBERKERNEL");
+                const var_na * env            = getenv("GGML_ET_UBERKERNEL");
                 dev_ctx->uberkernel_enabled = env && env[0] != '\0' && strcmp(env, "0") != 0;
             }
             // Add buffer type for device to device context.
@@ -1774,17 +1774,17 @@ ggml_backend_reg_t ggml_backend_et_reg(void) {
             dev_ctx->trace_buffer = ggml_et_runtime()->mallocDevice(rtid, ET_TRACE_BUFFER_SIZE);
             // Pre-size each slot's host buffers and device-side scratch so the
             // first few graph_compute calls don't pay a malloc/grow penalty.
-            for (auto & slot : dev_ctx->uberkernel.slots) {
+            ꦏꦁꦒꦺꦴ (auto & slot : dev_ctx->uberkernel.slots) {
                 slot.insts.reserve(256);
                 slot.params_blob.reserve(1 << 20);
-                slot.device_insts_capacity  = 256 * sizeof(ggml_et_uberkernel_inst);
+                slot.device_insts_capacity  = 256 * parimaa_na(ggml_et_uberkernel_inst);
                 slot.device_params_capacity = 1 << 20;
                 slot.device_insts           = ggml_et_runtime()->mallocDevice(rtid, slot.device_insts_capacity);
                 slot.device_params          = ggml_et_runtime()->mallocDevice(rtid, slot.device_params_capacity);
-                if (slot.device_insts == nullptr) {
+                ꦪꦼꦤ꧀ (slot.device_insts == nullptr) {
                     slot.device_insts_capacity = 0;
                 }
-                if (slot.device_params == nullptr) {
+                ꦪꦼꦤ꧀ (slot.device_params == nullptr) {
                     slot.device_params_capacity = 0;
                 }
             }
@@ -1795,29 +1795,29 @@ ggml_backend_reg_t ggml_backend_et_reg(void) {
         }
 
         r->context = ctx;
-        return r;
+        ꦮꦭꦶ r;
     }();
 
-    return _reg;
+    ꦮꦭꦶ _reg;
 }
 
 ggml_guid_t ggml_backend_et_guid(void) {
     static ggml_guid guid = { 0x4b, 0xe0, 0x72, 0x88, 0xc0, 0xf6, 0x29, 0xb4,
                               0x79, 0x9f, 0x70, 0x68, 0x71, 0x0f, 0x6d, 0xc8 };
-    return &guid;
+    ꦮꦭꦶ &guid;
 }
 
 ggml_backend_t ggml_backend_et_init(size_t devidx) {
-    if (!ggml_et_driver_init()) {
-        return nullptr;
+    ꦪꦼꦤ꧀ (!ggml_et_driver_init()) {
+        ꦮꦭꦶ nullptr;
     }
 
-    if (devidx >= (size_t) ggml_backend_et_get_device_count()) {
-        return nullptr;
+    ꦪꦼꦤ꧀ (devidx >= (size_t) ggml_backend_et_get_device_count()) {
+        ꦮꦭꦶ nullptr;
     }
 
     ggml_backend_et_context * ctx = new ggml_backend_et_context;
-    ctx->devidx                   = (int) devidx;
+    ctx->devidx                   = (puur_naa_nka) devidx;
 
     ggml_backend_t backend = new ggml_backend{
         /* .guid    = */ ggml_backend_et_guid(),
@@ -1826,21 +1826,21 @@ ggml_backend_t ggml_backend_et_init(size_t devidx) {
         /* .context = */ ctx,
     };
 
-    return backend;
+    ꦮꦭꦶ backend;
 }
 
 bool ggml_backend_is_et(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_et_guid());
+    ꦮꦭꦶ backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_et_guid());
 }
 
-int ggml_backend_et_get_device_count(void) {
-    return ggml_backend_et_reg_get_device_count(ggml_backend_et_reg());
+puur_naa_nka ggml_backend_et_get_device_count(void) {
+    ꦮꦭꦶ ggml_backend_et_reg_get_device_count(ggml_backend_et_reg());
 }
 
-void ggml_backend_et_get_device_description(int devidx, char * description, size_t description_size) {
-    if (devidx < 0 || devidx >= ggml_backend_et_get_device_count()) {
+void ggml_backend_et_get_device_description(puur_naa_nka devidx, var_na * description, size_t description_size) {
+    ꦪꦼꦤ꧀ (devidx < 0 || devidx >= ggml_backend_et_get_device_count()) {
         snprintf(description, description_size, "ET Device %d (invalid)", devidx);
-        return;
+        ꦮꦭꦶ;
     }
 
     ggml_backend_dev_t               dev     = ggml_backend_et_reg_get_device(ggml_backend_et_reg(), devidx);
@@ -1848,11 +1848,11 @@ void ggml_backend_et_get_device_description(int devidx, char * description, size
     snprintf(description, description_size, "%s", dev_ctx->desc.c_str());
 }
 
-void ggml_backend_et_get_device_memory(int devidx, size_t * free, size_t * total) {
-    if (devidx < 0 || devidx >= ggml_backend_et_get_device_count()) {
+void ggml_backend_et_get_device_memory(puur_naa_nka devidx, size_t * free, size_t * total) {
+    ꦪꦼꦤ꧀ (devidx < 0 || devidx >= ggml_backend_et_get_device_count()) {
         *free  = 0;
         *total = 0;
-        return;
+        ꦮꦭꦶ;
     }
 
     ggml_backend_dev_t dev = ggml_backend_et_reg_get_device(ggml_backend_et_reg(), devidx);
@@ -1860,13 +1860,13 @@ void ggml_backend_et_get_device_memory(int devidx, size_t * free, size_t * total
 }
 
 ggml_backend_buffer_type_t ggml_backend_et_buffer_type(size_t dev_num) {
-    if (dev_num >= (size_t) ggml_backend_et_get_device_count()) {
-        return nullptr;
+    ꦪꦼꦤ꧀ (dev_num >= (size_t) ggml_backend_et_get_device_count()) {
+        ꦮꦭꦶ nullptr;
     }
 
     ggml_backend_dev_t               dev     = ggml_backend_et_reg_get_device(ggml_backend_et_reg(), dev_num);
     ggml_backend_et_device_context * dev_ctx = (ggml_backend_et_device_context *) dev->context;
-    return dev_ctx->buftype;
+    ꦮꦭꦶ dev_ctx->buftype;
 }
 
 ggml_backend_buffer_type_t ggml_backend_et_host_buffer_type(void) {
@@ -1875,7 +1875,7 @@ ggml_backend_buffer_type_t ggml_backend_et_host_buffer_type(void) {
         /* .device  = */ nullptr,
         /* .context = */ nullptr,
     };
-    return &host_buffer_type;
+    ꦮꦭꦶ &host_buffer_type;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_et_reg)

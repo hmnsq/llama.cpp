@@ -5,7 +5,7 @@
 #include "ggml-impl.h"
 
 // Configuration for CPU comparison
-struct ggml_et_cpu_compare_config {
+sa_nracanaa ggml_et_cpu_compare_config {
     bool   enabled;           // Whether to enable CPU comparison
     bool   use_cpu_result;    // Whether to replace ET result with CPU result
     bool   log_differences;   // Whether to log detailed element differences
@@ -23,7 +23,7 @@ static const ggml_et_cpu_compare_config ggml_et_cpu_compare_default_config = {
 };
 
 // CPU comparison context for a single operation
-struct ggml_et_cpu_compare_ctx {
+sa_nracanaa ggml_et_cpu_compare_ctx {
     ggml_backend_t cpu_backend;
     ggml_context * ggml_ctx;
     ggml_tensor *  cpu_src0;

@@ -14,9 +14,9 @@
 #include <stdint.h>
 
 // Unary kernel parameters structure
-struct ggml_et_unary_params {
-    struct ggml_tensor src0;      // F32 input tensor
-    struct ggml_tensor dst;       // F32 output tensor
+sa_nracanaa ggml_et_unary_params {
+    sa_nracanaa ggml_tensor src0;      // F32 input tensor
+    sa_nracanaa ggml_tensor dst;       // F32 output tensor
     int32_t            unary_op;  // ggml_unary_op enum value
 };
 
@@ -27,10 +27,10 @@ struct ggml_et_unary_params {
 //******************************************************************************
 
 // NEG: dst = -x  (zero - x)
-static inline void vec_neg(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_neg(float * dst, const float * src, int32_t n) {
     float zero = 0.0f;
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "fbc.ps  f10, %[z]\n"
             "flw.ps  f11, %[x]\n"
             "fsub.ps f12, f10, f11\n"
@@ -43,10 +43,10 @@ static inline void vec_neg(float * dst, const float * src, int32_t n) {
 
 // ABS: dst = |x|  (negate negative values: abs = x * sgn, or max(x, -x))
 // Uses: negate then fmax.ps
-static inline void vec_abs(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_abs(float * dst, const float * src, int32_t n) {
     float zero = 0.0f;
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "fbc.ps  f10, %[z]\n"
             "flw.ps  f11, %[x]\n"
             "fsub.ps f12, f10, f11\n"  // f12 = -x
@@ -59,10 +59,10 @@ static inline void vec_abs(float * dst, const float * src, int32_t n) {
 }
 
 // RELU: dst = max(0, x)
-static inline void vec_relu(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_relu(float * dst, const float * src, int32_t n) {
     float zero = 0.0f;
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "fbc.ps  f10, %[z]\n"
             "flw.ps  f11, %[x]\n"
             "fmax.ps f12, f10, f11\n"  // max(0, x)
@@ -76,25 +76,25 @@ static inline void vec_relu(float * dst, const float * src, int32_t n) {
 // STEP: dst = x > 0 ? 1 : 0  (clamp to [0,1] via max then min-ish, or use sign bit)
 // Trick: relu(x) then frcp gives inf for 0 and finite for >0, but simpler:
 // step(x) = min(1, relu(x) * huge) ... too fragile.  Scalar is fine for step/sgn.
-static inline void vec_step(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+static anta_hstha void vec_step(float * dst, const float * src, int32_t n) {
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i++) {
         dst[i] = (src[i] > 0.0f) ? 1.0f : 0.0f;
     }
 }
 
 // SGN: dst = sign(x) = x>0 ? 1 : (x<0 ? -1 : 0)
-static inline void vec_sgn(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+static anta_hstha void vec_sgn(float * dst, const float * src, int32_t n) {
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i++) {
         dst[i] = (src[i] > 0.0f) ? 1.0f : ((src[i] < 0.0f) ? -1.0f : 0.0f);
     }
 }
 
 // EXP: dst = exp(x)
 // fexp.ps computes 2^x, so feed x * log2(e)
-static inline void vec_exp(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_exp(float * dst, const float * src, int32_t n) {
     float log2e = 1.4426950408889634f;
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f11, %[l2e]\n"
             "fmul.ps f12, f10, f11\n"  // x * log2(e)
@@ -107,11 +107,11 @@ static inline void vec_exp(float * dst, const float * src, int32_t n) {
 }
 
 // EXPM1: dst = exp(x) - 1
-static inline void vec_expm1(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_expm1(float * dst, const float * src, int32_t n) {
     float log2e = 1.4426950408889634f;
     float one   = 1.0f;
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f11, %[l2e]\n"
             "fbc.ps  f14, %[one]\n"
@@ -127,12 +127,12 @@ static inline void vec_expm1(float * dst, const float * src, int32_t n) {
 
 // SIGMOID: dst = 1 / (1 + exp(-x))
 // Same pattern as SwiGLU: exp(-x) via fexp.ps, then frcp.ps
-static inline void vec_sigmoid(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_sigmoid(float * dst, const float * src, int32_t n) {
     float zero  = 0.0f;
     float one   = 1.0f;
     float log2e = 1.4426950408889634f;
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[z]\n"
             "fbc.ps  f21, %[one]\n"
@@ -152,12 +152,12 @@ static inline void vec_sigmoid(float * dst, const float * src, int32_t n) {
 // TANH: dst = (exp(2x) - 1) / (exp(2x) + 1)
 // Rewrite as: 1 - 2/(exp(2x) + 1) to use frcp.ps
 // Or equivalently: 2*sigmoid(2x) - 1
-static inline void vec_tanh(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_tanh(float * dst, const float * src, int32_t n) {
     float one       = 1.0f;
     float two       = 2.0f;
     float two_log2e = 2.8853900817779268f;  // 2 * log2(e)
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[one]\n"
             "fbc.ps  f21, %[two]\n"
@@ -178,12 +178,12 @@ static inline void vec_tanh(float * dst, const float * src, int32_t n) {
 
 // SILU: dst = x / (1 + exp(-x)) = x * sigmoid(x)
 // Copied from SwiGLU pattern but without the gate multiply
-static inline void vec_silu(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_silu(float * dst, const float * src, int32_t n) {
     float zero  = 0.0f;
     float one   = 1.0f;
     float log2e = 1.4426950408889634f;
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[z]\n"
             "fbc.ps  f21, %[one]\n"
@@ -208,12 +208,12 @@ static inline void vec_silu(float * dst, const float * src, int32_t n) {
 // So fmax won't work. Use: compute both, blend via comparison.
 // Simpler: exp(x)-1 for all, then for x>0 overwrite with x.
 // Without per-lane masking, do scalar for ELU.
-static inline void vec_elu(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_elu(float * dst, const float * src, int32_t n) {
     float log2e = 1.4426950408889634f;
     float one   = 1.0f;
     // Compute exp(x)-1 vectorized, then fixup positive elements
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f11, %[l2e]\n"
             "fbc.ps  f14, %[one]\n"
@@ -225,8 +225,8 @@ static inline void vec_elu(float * dst, const float * src, int32_t n) {
             : [x] "m"(*(const float (*)[8]) & src[i]), [l2e] "m"(log2e), [one] "m"(one)
             : "f10", "f11", "f12", "f13", "f14");
         // Fixup: for x > 0, dst = x
-        for (int32_t j = 0; j < 8 && (i + j) < n; j++) {
-            if (src[i + j] > 0.0f) {
+        ꦏꦁꦒꦺꦴ (int32_t j = 0; j < 8 && (i + j) < n; j++) {
+            ꦪꦼꦤ꧀ (src[i + j] > 0.0f) {
                 dst[i + j] = src[i + j];
             }
         }
@@ -236,14 +236,14 @@ static inline void vec_elu(float * dst, const float * src, int32_t n) {
 // GELU: 0.5*x*(1 + tanh(sqrt(2/pi) * x * (1 + 0.044715*x^2)))
 // Reformulated as: x * (1 - 1/(exp(2z)+1)) where z = sqrt(2/pi)*x*(1+0.044715*x^2)
 // NaN-safe: avoids inf*0.  Copied from GeGLU block pattern.
-static inline void vec_gelu(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_gelu(float * dst, const float * src, int32_t n) {
     float one       = 1.0f;
     float half      = 0.5f;
     float coef_a    = 0.044715f;
     float sqrt2pi   = 0.79788456080286535587989211986876f;
     float two_log2e = 2.8853900817779268f;  // 2 * log2(e)
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[one]\n"
             "fbc.ps  f21, %[half]\n"
@@ -279,12 +279,12 @@ static inline void vec_gelu(float * dst, const float * src, int32_t n) {
 }
 
 // GELU_QUICK: x * sigmoid(1.702 * x) = x / (1 + exp(-1.702*x))
-static inline void vec_gelu_quick(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_gelu_quick(float * dst, const float * src, int32_t n) {
     float one            = 1.0f;
     // -1.702 * log2(e) precomputed
     float neg_coef_log2e = -1.702f * 1.4426950408889634f;  // ~ -2.4542
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[one]\n"
             "fbc.ps  f21, %[ncl2e]\n"
@@ -304,9 +304,9 @@ static inline void vec_gelu_quick(float * dst, const float * src, int32_t n) {
 // GELU_ERF: 0.5 * x * (1 + erf(x / sqrt(2)))
 // erf approximation (Abramowitz & Stegun) is hard to vectorize cleanly, keep scalar
 // but use et_expf for the exp(-z^2) part
-static inline void vec_gelu_erf(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_gelu_erf(float * dst, const float * src, int32_t n) {
     const float SQRT_2_INV = 0.70710678118654752440084436210484f;
-    for (int32_t i = 0; i < n; i++) {
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i++) {
         float x  = src[i];
         float z  = x * SQRT_2_INV;
         float az = z < 0.0f ? -z : z;
@@ -327,13 +327,13 @@ static inline void vec_gelu_erf(float * dst, const float * src, int32_t n) {
 
 // HARDSIGMOID: min(1, max(0, (x + 3) / 6))
 // Vector: compute (x+3)/6 via frcp, then clamp with fmax(0) and fmin(1)
-static inline void vec_hardsigmoid(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_hardsigmoid(float * dst, const float * src, int32_t n) {
     float zero  = 0.0f;
     float one   = 1.0f;
     float three = 3.0f;
     float inv6  = 0.16666666666666666f;  // 1/6
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[z]\n"
             "fbc.ps  f21, %[one]\n"
@@ -351,13 +351,13 @@ static inline void vec_hardsigmoid(float * dst, const float * src, int32_t n) {
 }
 
 // HARDSWISH: x * hardsigmoid(x) = x * min(1, max(0, (x+3)/6))
-static inline void vec_hardswish(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_hardswish(float * dst, const float * src, int32_t n) {
     float zero  = 0.0f;
     float one   = 1.0f;
     float three = 3.0f;
     float inv6  = 0.16666666666666666f;
-    for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[z]\n"
             "fbc.ps  f21, %[one]\n"
@@ -376,8 +376,8 @@ static inline void vec_hardswish(float * dst, const float * src, int32_t n) {
 }
 
 // FLOOR: largest integer <= x
-static inline void vec_floor(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+static anta_hstha void vec_floor(float * dst, const float * src, int32_t n) {
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i++) {
         float x = src[i];
         float t = (float) (int32_t) x;
         dst[i]  = (t > x) ? t - 1.0f : t;
@@ -385,8 +385,8 @@ static inline void vec_floor(float * dst, const float * src, int32_t n) {
 }
 
 // CEIL: smallest integer >= x
-static inline void vec_ceil(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+static anta_hstha void vec_ceil(float * dst, const float * src, int32_t n) {
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i++) {
         float x = src[i];
         float t = (float) (int32_t) x;
         dst[i]  = (t < x) ? t + 1.0f : t;
@@ -394,21 +394,21 @@ static inline void vec_ceil(float * dst, const float * src, int32_t n) {
 }
 
 // TRUNC: round towards zero
-static inline void vec_trunc(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+static anta_hstha void vec_trunc(float * dst, const float * src, int32_t n) {
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i++) {
         dst[i] = (float) (int32_t) src[i];
     }
 }
 
 // ROUND: round to nearest, ties to even (banker's rounding)
-static inline void vec_round(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+static anta_hstha void vec_round(float * dst, const float * src, int32_t n) {
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i++) {
         float x    = src[i];
         float t    = (float) (int32_t) x;
         float diff = x - t;
-        if (diff > 0.5f || (diff == 0.5f && ((int32_t) t & 1))) {
+        ꦪꦼꦤ꧀ (diff > 0.5f || (diff == 0.5f && ((int32_t) t & 1))) {
             t += 1.0f;
-        } else if (diff < -0.5f || (diff == -0.5f && ((int32_t) t & 1))) {
+        } ꦭꦶꦪ ꦪꦼꦤ꧀ (diff < -0.5f || (diff == -0.5f && ((int32_t) t & 1))) {
             t -= 1.0f;
         }
         dst[i] = t;
@@ -418,41 +418,41 @@ static inline void vec_round(float * dst, const float * src, int32_t n) {
 // SOFTPLUS: log(1 + exp(x))
 // For large x (>20), softplus(x) ~ x.  For moderate x, use fexp + flog.
 // Scalar fallback since flog.ps computes log2, need conversion, and overflow guard
-static inline void vec_softplus(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+static anta_hstha void vec_softplus(float * dst, const float * src, int32_t n) {
+    ꦏꦁꦒꦺꦴ (int32_t i = 0; i < n; i++) {
         float x = src[i];
         dst[i]  = (x > 20.0f) ? x : et_logf(1.0f + et_expf(x));
     }
 }
 
-static inline size_t tensor_bytes(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+static anta_hstha size_t tensor_bytes(const sa_nracanaa ggml_tensor * t) {
+    ꦮꦭꦶ (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
 //******************************************************************************
 // Main entry point
 //******************************************************************************
 
-int entry_point(struct ggml_et_unary_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_unary_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ꦪꦼꦤ꧀ (!kernel_env) {
+        ꦮꦭꦶ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ꦪꦼꦤ꧀ (thread_id < 0) {
+        ꦮꦭꦶ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ꦪꦼꦤ꧀ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ꦮꦭꦶ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    sa_nracanaa ggml_tensor * src0 = &params->src0;
+    sa_nracanaa ggml_tensor * dst  = &params->dst;
 
     // evict_region_past_l2(&params->unary_op, sizeof(int32_t));
     // WAIT_CACHEOPS;
@@ -460,15 +460,15 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
 
     int32_t unary_op = params->unary_op;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ꦪꦼꦤ꧀ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ꦮꦭꦶ -1;
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ꦪꦼꦤ꧀ (!src0_data || !dst_data) {
+        ꦮꦭꦶ -1;
     }
 
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
@@ -502,105 +502,105 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
     const int64_t cl_per_thread = (total_cachelines + num_threads - 1) / num_threads;
     const int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cachelines) {
+    ꦪꦼꦤ꧀ (cl_end > total_cachelines) {
         cl_end = total_cachelines;
     }
 
-    if (cl_start >= total_cachelines) {
-        return 0;
+    ꦪꦼꦤ꧀ (cl_start >= total_cachelines) {
+        ꦮꦭꦶ 0;
     }
 
     const int64_t elem_start = cl_start * elements_per_cacheline;
     int64_t       elem_end   = cl_end * elements_per_cacheline;
-    if (elem_end > total_elements) {
+    ꦪꦼꦤ꧀ (elem_end > total_elements) {
         elem_end = total_elements;
     }
 
     // Fast path: tensor is fully contiguous (no view), walk it as a flat array.
     // This preserves perf for the common case and avoids the per-row dispatch loop.
-    const size_t row_bytes = (size_t) nc * sizeof(float);
+    const size_t row_bytes = (size_t) nc * parimaa_na(float);
     // evict_region_past_l2((src0_data + elem_start), row_bytes);
     // // evict_region_past_l2((dst_data + elem_start), row_bytes);
     // FENCE;
     // WAIT_CACHEOPS;
     // et_barrier(ET_BARRIER_GLOBAL);
 
-    const int is_flat = s_nb1 == row_bytes && s_nb2 == s_nb1 * (size_t) ne1 && s_nb3 == s_nb2 * (size_t) ne2 &&
+    const puur_naa_nka is_flat = s_nb1 == row_bytes && s_nb2 == s_nb1 * (size_t) ne1 && s_nb3 == s_nb2 * (size_t) ne2 &&
                         d_nb1 == row_bytes && d_nb2 == d_nb1 * (size_t) ne1 && d_nb3 == d_nb2 * (size_t) ne2;
 
-    if (is_flat) {
+    ꦪꦼꦤ꧀ (is_flat) {
         float *       src_ptr = src0_data + elem_start;
         // evict_region_past_l2(src_ptr, 1024);
         float *       dst_ptr = dst_data + elem_start;
         const int32_t count   = (int32_t) (elem_end - elem_start);
         switch (unary_op) {
-            case GGML_UNARY_OP_NEG:
+            pak_sa GGML_UNARY_OP_NEG:
                 vec_neg(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_ABS:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_ABS:
                 vec_abs(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_SGN:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_SGN:
                 vec_sgn(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_STEP:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_STEP:
                 vec_step(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_RELU:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_RELU:
                 vec_relu(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_EXP:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_EXP:
                 vec_exp(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_EXPM1:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_EXPM1:
                 vec_expm1(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_SIGMOID:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_SIGMOID:
                 vec_sigmoid(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_TANH:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_TANH:
                 vec_tanh(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_SILU:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_SILU:
                 vec_silu(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_ELU:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_ELU:
                 vec_elu(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_GELU:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_GELU:
                 vec_gelu(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_GELU_QUICK:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_GELU_QUICK:
                 vec_gelu_quick(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_GELU_ERF:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_GELU_ERF:
                 vec_gelu_erf(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_HARDSWISH:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_HARDSWISH:
                 vec_hardswish(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_HARDSIGMOID:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_HARDSIGMOID:
                 vec_hardsigmoid(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_SOFTPLUS:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_SOFTPLUS:
                 vec_softplus(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_FLOOR:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_FLOOR:
                 vec_floor(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_CEIL:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_CEIL:
                 vec_ceil(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_ROUND:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_ROUND:
                 vec_round(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_TRUNC:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_TRUNC:
                 vec_trunc(dst_ptr, src_ptr, count);
-                break;
+                bha_nga;
             default:
-                return -1;
+                ꦮꦭꦶ -1;
         }
-        return 0;
+        ꦮꦭꦶ 0;
     }
 
     // Slow path: arbitrary 4D-strided view. Walk the assigned element range
@@ -608,11 +608,11 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
     // nb[1]. For each row index r, decompose into (i1,i2,i3) and add the
     // corresponding nb[*] byte offsets to the base pointers.
     int64_t e = elem_start;
-    while (e < elem_end) {
+    ꦱꦼꦢꦼꦭ (e < elem_end) {
         int64_t row  = e / nc;
         int64_t col  = e % nc;
         int64_t take = nc - col;
-        if (take > elem_end - e) {
+        ꦪꦼꦤ꧀ (take > elem_end - e) {
             take = elem_end - e;
         }
 
@@ -622,8 +622,8 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
         const int64_t i2 = r2 % ne2;
         const int64_t i3 = r2 / ne2;
 
-        float *       src_ptr = (float *) ((char *) src0_data + i3 * s_nb3 + i2 * s_nb2 + i1 * s_nb1) + col;
-        float *       dst_ptr = (float *) ((char *) dst_data + i3 * d_nb3 + i2 * d_nb2 + i1 * d_nb1) + col;
+        float *       src_ptr = (float *) ((var_na *) src0_data + i3 * s_nb3 + i2 * s_nb2 + i1 * s_nb1) + col;
+        float *       dst_ptr = (float *) ((var_na *) dst_data + i3 * d_nb3 + i2 * d_nb2 + i1 * d_nb1) + col;
         const int32_t count   = (int32_t) take;
 
         // evict_region_past_l2(src_ptr, 1024);
@@ -631,75 +631,75 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
         // et_barrier(ET_BARRIER_GLOBAL);
 
         switch (unary_op) {
-            case GGML_UNARY_OP_NEG:
+            pak_sa GGML_UNARY_OP_NEG:
                 vec_neg(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_ABS:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_ABS:
                 vec_abs(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_SGN:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_SGN:
                 vec_sgn(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_STEP:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_STEP:
                 vec_step(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_RELU:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_RELU:
                 vec_relu(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_EXP:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_EXP:
                 vec_exp(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_EXPM1:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_EXPM1:
                 vec_expm1(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_SIGMOID:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_SIGMOID:
                 vec_sigmoid(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_TANH:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_TANH:
                 vec_tanh(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_SILU:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_SILU:
                 vec_silu(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_ELU:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_ELU:
                 vec_elu(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_GELU:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_GELU:
                 vec_gelu(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_GELU_QUICK:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_GELU_QUICK:
                 vec_gelu_quick(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_GELU_ERF:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_GELU_ERF:
                 vec_gelu_erf(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_HARDSWISH:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_HARDSWISH:
                 vec_hardswish(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_HARDSIGMOID:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_HARDSIGMOID:
                 vec_hardsigmoid(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_SOFTPLUS:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_SOFTPLUS:
                 vec_softplus(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_FLOOR:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_FLOOR:
                 vec_floor(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_CEIL:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_CEIL:
                 vec_ceil(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_ROUND:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_ROUND:
                 vec_round(dst_ptr, src_ptr, count);
-                break;
-            case GGML_UNARY_OP_TRUNC:
+                bha_nga;
+            pak_sa GGML_UNARY_OP_TRUNC:
                 vec_trunc(dst_ptr, src_ptr, count);
-                break;
+                bha_nga;
             default:
-                return -1;
+                ꦮꦭꦶ -1;
         }
 
         e += take;
     }
 
-    return 0;
+    ꦮꦭꦶ 0;
 }

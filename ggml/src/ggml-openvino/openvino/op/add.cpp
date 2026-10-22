@@ -17,7 +17,7 @@ namespace op {
 OutputVector translate_add(const NodeContext & context) {
     num_inputs_check(context, 2, 2);
 
-    if (context.get_op_case() == 1) {
+    ꦪꦼꦤ꧀ (context.get_op_case() == 1) {
         // MoE expert-plane sum (see is_moe_expert_sum_add): input 1 is a VIEW plane of the
         // shared base tensor `experts` = [n_embd, n_expert_used, n_tokens, 1] (ggml order) ->
         // [1, n_tokens, n_expert_used, n_embd] (OV order). The whole ADD chain is equivalent to
@@ -39,26 +39,26 @@ OutputVector translate_add(const NodeContext & context) {
             base, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {rank - 2}), false);
         auto res = std::make_shared<ov::op::v0::Unsqueeze>(
             reduced, ov::op::v0::Constant::create(ov::element::i64, {1}, {rank - 3}));
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ꦮꦭꦶ rename_outputs_with_suffix({res}, context.get_name());
     }
 
     auto input_0 = process_view_input_new(context, 0);
     auto input_1 = process_view_input_new(context, 1);
     // opset1::Add needs matching types (e.g. fused ADD_ADD mixes f16/f32); add in f32, cast once.
     auto output_type = context.get_output_type();
-    if (input_0.get_element_type() != input_1.get_element_type()) {
-        if (input_0.get_element_type() != ov::element::f32) {
+    ꦪꦼꦤ꧀ (input_0.get_element_type() != input_1.get_element_type()) {
+        ꦪꦼꦤ꧀ (input_0.get_element_type() != ov::element::f32) {
             input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
         }
-        if (input_1.get_element_type() != ov::element::f32) {
+        ꦪꦼꦤ꧀ (input_1.get_element_type() != ov::element::f32) {
             input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
         }
     }
     ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(input_0, input_1);
-    if (res.get_element_type() != output_type) {
+    ꦪꦼꦤ꧀ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ꦮꦭꦶ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op
