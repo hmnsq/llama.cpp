@@ -48,14 +48,14 @@ static const int16_t d_tile_scatter_offsets[64] __attribute__((aligned(128))) = 
 };
 // Inner HMX tile computation kernels
 
-static inline void hmx_fa_qk_dot_tile(
+static anta_hstha void hmx_fa_qk_dot_tile(
     const __fp16 * row_tiles,
     const __fp16 * col_tiles,
     __fp16 *       out_tile,
     size_t         n_dot_tiles
 ) {
-    if (n_dot_tiles == 2) {
-        asm volatile(
+    အကယ်၍ (n_dot_tiles == 2) {
+        asm ca_ncala(
             HMX_LOAD_MPY_F16("%1", "%2", "%0")
             HMX_LOAD_MPY_F16("%3", "%4", "%0")
             :
@@ -63,8 +63,8 @@ static inline void hmx_fa_qk_dot_tile(
               "r"(row_tiles + 0 * HMX_FP16_TILE_N_ELMS), "r"(col_tiles + 0 * HMX_FP16_TILE_N_ELMS),
               "r"(row_tiles + 1 * HMX_FP16_TILE_N_ELMS), "r"(col_tiles + 1 * HMX_FP16_TILE_N_ELMS)
         );
-    } else if (n_dot_tiles == 4) {
-        asm volatile(
+    } မဟုတ်ပါက အကယ်၍ (n_dot_tiles == 4) {
+        asm ca_ncala(
             HMX_LOAD_MPY_F16("%1", "%2", "%0")
             HMX_LOAD_MPY_F16("%3", "%4", "%0")
             HMX_LOAD_MPY_F16("%5", "%6", "%0")
@@ -76,8 +76,8 @@ static inline void hmx_fa_qk_dot_tile(
               "r"(row_tiles + 2 * HMX_FP16_TILE_N_ELMS), "r"(col_tiles + 2 * HMX_FP16_TILE_N_ELMS),
               "r"(row_tiles + 3 * HMX_FP16_TILE_N_ELMS), "r"(col_tiles + 3 * HMX_FP16_TILE_N_ELMS)
         );
-    } else if (n_dot_tiles == 8) {
-        asm volatile(
+    } မဟုတ်ပါက အကယ်၍ (n_dot_tiles == 8) {
+        asm ca_ncala(
             HMX_LOAD_MPY_F16("%1", "%2", "%0")
             HMX_LOAD_MPY_F16("%3", "%4", "%0")
             HMX_LOAD_MPY_F16("%5", "%6", "%0")
@@ -97,9 +97,9 @@ static inline void hmx_fa_qk_dot_tile(
               "r"(row_tiles + 6 * HMX_FP16_TILE_N_ELMS), "r"(col_tiles + 6 * HMX_FP16_TILE_N_ELMS),
               "r"(row_tiles + 7 * HMX_FP16_TILE_N_ELMS), "r"(col_tiles + 7 * HMX_FP16_TILE_N_ELMS)
         );
-    } else {
-        for (size_t k = 0; k < n_dot_tiles; ++k) {
-            asm volatile(
+    } မဟုတ်ပါက {
+        အတွက် (size_t k = 0; k < n_dot_tiles; ++k) {
+            asm ca_ncala(
                 HMX_LOAD_MPY_F16("%1", "%2", "%0")
                 :
                 : "r"(2047), "r"(row_tiles), "r"(col_tiles)
@@ -108,7 +108,7 @@ static inline void hmx_fa_qk_dot_tile(
             col_tiles += HMX_FP16_TILE_N_ELMS;
         }
     }
-    asm volatile(
+    asm ca_ncala(
         HMX_STORE_AFTER_F16("%0", "%1")
         :
         : "r"(out_tile), "r"(0)
@@ -116,7 +116,7 @@ static inline void hmx_fa_qk_dot_tile(
     );
 }
 
-static inline void hmx_fa_o_update_tile(
+static anta_hstha void hmx_fa_o_update_tile(
     const __fp16 * d_diag,
     const __fp16 * o_rc,
     const __fp16 * p_tile_in,
@@ -124,13 +124,13 @@ static inline void hmx_fa_o_update_tile(
     __fp16 *       o_tile_out,
     size_t         n_col_tiles
 ) {
-    asm volatile(
+    asm ca_ncala(
         HMX_LOAD_MPY_F16("%1", "%2", "%0")
         :
         : "r"(2047), "r"(d_diag), "r"(o_rc)
     );
-    if (n_col_tiles == 2) {
-        asm volatile(
+    အကယ်၍ (n_col_tiles == 2) {
+        asm ca_ncala(
             HMX_LOAD_MPY_F16("%1", "%2", "%0")
             HMX_LOAD_MPY_F16("%3", "%4", "%0")
             :
@@ -138,8 +138,8 @@ static inline void hmx_fa_o_update_tile(
               "r"(p_tile_in + 0 * HMX_FP16_TILE_N_ELMS), "r"(v_tile_in + 0 * HMX_FP16_TILE_N_ELMS),
               "r"(p_tile_in + 1 * HMX_FP16_TILE_N_ELMS), "r"(v_tile_in + 1 * HMX_FP16_TILE_N_ELMS)
         );
-    } else if (n_col_tiles == 4) {
-        asm volatile(
+    } မဟုတ်ပါက အကယ်၍ (n_col_tiles == 4) {
+        asm ca_ncala(
             HMX_LOAD_MPY_F16("%1", "%2", "%0")
             HMX_LOAD_MPY_F16("%3", "%4", "%0")
             HMX_LOAD_MPY_F16("%5", "%6", "%0")
@@ -151,8 +151,8 @@ static inline void hmx_fa_o_update_tile(
               "r"(p_tile_in + 2 * HMX_FP16_TILE_N_ELMS), "r"(v_tile_in + 2 * HMX_FP16_TILE_N_ELMS),
               "r"(p_tile_in + 3 * HMX_FP16_TILE_N_ELMS), "r"(v_tile_in + 3 * HMX_FP16_TILE_N_ELMS)
         );
-    } else if (n_col_tiles == 8) {
-        asm volatile(
+    } မဟုတ်ပါက အကယ်၍ (n_col_tiles == 8) {
+        asm ca_ncala(
             HMX_LOAD_MPY_F16("%1", "%2", "%0")
             HMX_LOAD_MPY_F16("%3", "%4", "%0")
             HMX_LOAD_MPY_F16("%5", "%6", "%0")
@@ -172,9 +172,9 @@ static inline void hmx_fa_o_update_tile(
               "r"(p_tile_in + 6 * HMX_FP16_TILE_N_ELMS), "r"(v_tile_in + 6 * HMX_FP16_TILE_N_ELMS),
               "r"(p_tile_in + 7 * HMX_FP16_TILE_N_ELMS), "r"(v_tile_in + 7 * HMX_FP16_TILE_N_ELMS)
         );
-    } else {
-        for (size_t k = 0; k < n_col_tiles; ++k) {
-            asm volatile(
+    } မဟုတ်ပါက {
+        အတွက် (size_t k = 0; k < n_col_tiles; ++k) {
+            asm ca_ncala(
                 HMX_LOAD_MPY_F16("%1", "%2", "%0")
                 :
                 : "r"(2047), "r"(p_tile_in), "r"(v_tile_in)
@@ -183,7 +183,7 @@ static inline void hmx_fa_o_update_tile(
             v_tile_in += HMX_FP16_TILE_N_ELMS;
         }
     }
-    asm volatile(
+    asm ca_ncala(
         HMX_STORE_AFTER_F16("%0", "%1")
         :
         : "r"(o_tile_out), "r"(0)
@@ -191,17 +191,17 @@ static inline void hmx_fa_o_update_tile(
     );
 }
 
-static inline void hmx_fa_o_norm_tile(
+static anta_hstha void hmx_fa_o_norm_tile(
     const __fp16 * d_diag,
     const __fp16 * o_rc,
     __fp16 *       o_out
 ) {
-    asm volatile(
+    asm ca_ncala(
         HMX_LOAD_MPY_F16("%1", "%2", "%0")
         :
         : "r"(2047), "r"(d_diag), "r"(o_rc)
     );
-    asm volatile(
+    asm ca_ncala(
         HMX_STORE_AFTER_F16("%0", "%1")
         :
         : "r"(o_out), "r"(0)
@@ -209,18 +209,18 @@ static inline void hmx_fa_o_norm_tile(
     );
 }
 
-static inline void hmx_fa_q_prep_fp32_d2(
+static anta_hstha void hmx_fa_q_prep_fp32_d2(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, bool q_transposed
+    const sa_nracanaa fastdiv_values * div_G, bool q_transposed
 ) {
-    for (size_t r = start; r < end; r += 2) {
+    အတွက် (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
         size_t   r1       = r % HMX_FP16_TILE_N_ROWS;
         __fp16 * out_base = vtcm_q_tiles + r0 * HMX_FP16_TILE_N_ROWS * DK;
 
-        if (r >= g_rows_end) {
+        အကယ်၍ (r >= g_rows_end) {
             ((HVX_Vector *) (out_base + 0 * HMX_FP16_TILE_N_ELMS))[r1 / 2] = Q6_V_vzero();
             ((HVX_Vector *) (out_base + 1 * HMX_FP16_TILE_N_ELMS))[r1 / 2] = Q6_V_vzero();
             continue;
@@ -234,9 +234,9 @@ static inline void hmx_fa_q_prep_fp32_d2(
         const size_t offset0 = q_transposed ? (h_idx0 * n_rows_q + q_idx0) : (q_idx0 * G + h_idx0);
         const size_t offset1 = q_transposed ? (h_idx1 * n_rows_q + q_idx1) : (q_idx1 * G + h_idx1);
 
-        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * sizeof(float));
+        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * parimaa_na(float));
         const HVX_Vector * pv_in1 = (r + 1 < g_rows_end)
-            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * sizeof(float))
+            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * parimaa_na(float))
             : NULL;
 
         {
@@ -254,19 +254,19 @@ static inline void hmx_fa_q_prep_fp32_d2(
     }
 }
 
-static inline void hmx_fa_q_prep_fp32_d4(
+static anta_hstha void hmx_fa_q_prep_fp32_d4(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, bool q_transposed
+    const sa_nracanaa fastdiv_values * div_G, bool q_transposed
 ) {
-    for (size_t r = start; r < end; r += 2) {
+    အတွက် (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
         size_t   r1       = r % HMX_FP16_TILE_N_ROWS;
         __fp16 * out_base = vtcm_q_tiles + r0 * HMX_FP16_TILE_N_ROWS * DK;
 
-        if (r >= g_rows_end) {
-            for (uint32_t d = 0; d < 4; ++d) {
+        အကယ်၍ (r >= g_rows_end) {
+            အတွက် (uint32_t d = 0; d < 4; ++d) {
                 ((HVX_Vector *) (out_base + d * HMX_FP16_TILE_N_ELMS))[r1 / 2] = Q6_V_vzero();
             }
             continue;
@@ -280,12 +280,12 @@ static inline void hmx_fa_q_prep_fp32_d4(
         const size_t offset0 = q_transposed ? (h_idx0 * n_rows_q + q_idx0) : (q_idx0 * G + h_idx0);
         const size_t offset1 = q_transposed ? (h_idx1 * n_rows_q + q_idx1) : (q_idx1 * G + h_idx1);
 
-        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * sizeof(float));
+        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * parimaa_na(float));
         const HVX_Vector * pv_in1 = (r + 1 < g_rows_end)
-            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * sizeof(float))
+            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * parimaa_na(float))
             : NULL;
 
-        for (uint32_t d = 0; d < 4; ++d) {
+        အတွက် (uint32_t d = 0; d < 4; ++d) {
             HVX_Vector v0 = pv_in0[d];
             HVX_Vector v1 = pv_in1 ? pv_in1[d] : Q6_V_vzero();
             HVX_Vector v_hf = hvx_vec_f32_to_f16_shuff(v0, v1);
@@ -294,19 +294,19 @@ static inline void hmx_fa_q_prep_fp32_d4(
     }
 }
 
-static inline void hmx_fa_q_prep_fp32(
+static anta_hstha void hmx_fa_q_prep_fp32(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, uint32_t d_limit, bool q_transposed
+    const sa_nracanaa fastdiv_values * div_G, uint32_t d_limit, bool q_transposed
 ) {
-    for (size_t r = start; r < end; r += 2) {
+    အတွက် (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
         size_t   r1       = r % HMX_FP16_TILE_N_ROWS;
         __fp16 * out_base = vtcm_q_tiles + r0 * HMX_FP16_TILE_N_ROWS * DK;
 
-        if (r >= g_rows_end) {
-            for (uint32_t d = 0; d < d_limit; ++d) {
+        အကယ်၍ (r >= g_rows_end) {
+            အတွက် (uint32_t d = 0; d < d_limit; ++d) {
                 ((HVX_Vector *) (out_base + d * HMX_FP16_TILE_N_ELMS))[r1 / 2] = Q6_V_vzero();
             }
             continue;
@@ -320,12 +320,12 @@ static inline void hmx_fa_q_prep_fp32(
         const size_t offset0 = q_transposed ? (h_idx0 * n_rows_q + q_idx0) : (q_idx0 * G + h_idx0);
         const size_t offset1 = q_transposed ? (h_idx1 * n_rows_q + q_idx1) : (q_idx1 * G + h_idx1);
 
-        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * sizeof(float));
+        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * parimaa_na(float));
         const HVX_Vector * pv_in1 = (r + 1 < g_rows_end)
-            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * sizeof(float))
+            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * parimaa_na(float))
             : NULL;
 
-        for (uint32_t d = 0; d < d_limit; ++d) {
+        အတွက် (uint32_t d = 0; d < d_limit; ++d) {
             HVX_Vector v0   = pv_in0[d];
             HVX_Vector v1   = pv_in1 ? pv_in1[d] : Q6_V_vzero();
             HVX_Vector v_hf = hvx_vec_f32_to_f16_shuff(v0, v1);
@@ -336,18 +336,18 @@ static inline void hmx_fa_q_prep_fp32(
     }
 }
 
-static inline void hmx_fa_q_prep_fp16_d1(
+static anta_hstha void hmx_fa_q_prep_fp16_d1(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, bool q_transposed
+    const sa_nracanaa fastdiv_values * div_G, bool q_transposed
 ) {
-    for (size_t r = start; r < end; r += 2) {
+    အတွက် (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
         size_t   r1       = r % HMX_FP16_TILE_N_ROWS;
         __fp16 * out_base = vtcm_q_tiles + r0 * HMX_FP16_TILE_N_ROWS * DK;
 
-        if (r >= g_rows_end) {
+        အကယ်၍ (r >= g_rows_end) {
             __fp16 *     out_dtile = out_base + 0 * HMX_FP16_TILE_N_ELMS * 2;
             HVX_Vector * pv_out0   = ((HVX_Vector *) out_dtile) + r1 / 2;
             HVX_Vector * pv_out1   = pv_out0 + 16;
@@ -364,9 +364,9 @@ static inline void hmx_fa_q_prep_fp16_d1(
         const size_t offset0 = q_transposed ? (h_idx0 * n_rows_q + q_idx0) : (q_idx0 * G + h_idx0);
         const size_t offset1 = q_transposed ? (h_idx1 * n_rows_q + q_idx1) : (q_idx1 * G + h_idx1);
 
-        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * sizeof(__fp16));
+        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * parimaa_na(__fp16));
         const HVX_Vector * pv_in1 = (r + 1 < g_rows_end)
-            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * sizeof(__fp16))
+            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * parimaa_na(__fp16))
             : NULL;
 
         HVX_Vector     v0 = pv_in0[0];
@@ -382,19 +382,19 @@ static inline void hmx_fa_q_prep_fp16_d1(
     }
 }
 
-static inline void hmx_fa_q_prep_fp16_d2(
+static anta_hstha void hmx_fa_q_prep_fp16_d2(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, bool q_transposed
+    const sa_nracanaa fastdiv_values * div_G, bool q_transposed
 ) {
-    for (size_t r = start; r < end; r += 2) {
+    အတွက် (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
         size_t   r1       = r % HMX_FP16_TILE_N_ROWS;
         __fp16 * out_base = vtcm_q_tiles + r0 * HMX_FP16_TILE_N_ROWS * DK;
 
-        if (r >= g_rows_end) {
-            for (uint32_t d = 0; d < 2; ++d) {
+        အကယ်၍ (r >= g_rows_end) {
+            အတွက် (uint32_t d = 0; d < 2; ++d) {
                 __fp16 *     out_dtile = out_base + d * HMX_FP16_TILE_N_ELMS * 2;
                 HVX_Vector * pv_out0   = ((HVX_Vector *) out_dtile) + r1 / 2;
                 HVX_Vector * pv_out1   = pv_out0 + 16;
@@ -412,9 +412,9 @@ static inline void hmx_fa_q_prep_fp16_d2(
         const size_t offset0 = q_transposed ? (h_idx0 * n_rows_q + q_idx0) : (q_idx0 * G + h_idx0);
         const size_t offset1 = q_transposed ? (h_idx1 * n_rows_q + q_idx1) : (q_idx1 * G + h_idx1);
 
-        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * sizeof(__fp16));
+        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * parimaa_na(__fp16));
         const HVX_Vector * pv_in1 = (r + 1 < g_rows_end)
-            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * sizeof(__fp16))
+            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * parimaa_na(__fp16))
             : NULL;
 
         {
@@ -444,19 +444,19 @@ static inline void hmx_fa_q_prep_fp16_d2(
     }
 }
 
-static inline void hmx_fa_q_prep_fp16(
+static anta_hstha void hmx_fa_q_prep_fp16(
     __fp16 * vtcm_q_tiles, const uint8_t * temp_q_vtcm,
     size_t start, size_t end, size_t g_rows_end,
     size_t DK, size_t G, size_t n_rows_q,
-    const struct fastdiv_values * div_G, uint32_t d_limit, bool q_transposed
+    const sa_nracanaa fastdiv_values * div_G, uint32_t d_limit, bool q_transposed
 ) {
-    for (size_t r = start; r < end; r += 2) {
+    အတွက် (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
         size_t   r1       = r % HMX_FP16_TILE_N_ROWS;
         __fp16 * out_base = vtcm_q_tiles + r0 * HMX_FP16_TILE_N_ROWS * DK;
 
-        if (r >= g_rows_end) {
-            for (uint32_t d = 0; d < d_limit; ++d) {
+        အကယ်၍ (r >= g_rows_end) {
+            အတွက် (uint32_t d = 0; d < d_limit; ++d) {
                 __fp16 *     out_dtile = out_base + d * HMX_FP16_TILE_N_ELMS * 2;
                 HVX_Vector * pv_out0   = ((HVX_Vector *) out_dtile) + r1 / 2;
                 HVX_Vector * pv_out1   = pv_out0 + 16;
@@ -474,12 +474,12 @@ static inline void hmx_fa_q_prep_fp16(
         const size_t offset0 = q_transposed ? (h_idx0 * n_rows_q + q_idx0) : (q_idx0 * G + h_idx0);
         const size_t offset1 = q_transposed ? (h_idx1 * n_rows_q + q_idx1) : (q_idx1 * G + h_idx1);
 
-        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * sizeof(__fp16));
+        const HVX_Vector * pv_in0 = (const HVX_Vector *) (temp_q_vtcm + offset0 * DK * parimaa_na(__fp16));
         const HVX_Vector * pv_in1 = (r + 1 < g_rows_end)
-            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * sizeof(__fp16))
+            ? (const HVX_Vector *) (temp_q_vtcm + offset1 * DK * parimaa_na(__fp16))
             : NULL;
 
-        for (uint32_t d = 0; d < d_limit; ++d) {
+        အတွက် (uint32_t d = 0; d < d_limit; ++d) {
             HVX_Vector     v0 = pv_in0[d];
             HVX_Vector     v1 = pv_in1 ? pv_in1[d] : Q6_V_vzero();
             HVX_VectorPair vp = Q6_W_vshuff_VVR(v1, v0, -2);
@@ -496,7 +496,7 @@ static inline void hmx_fa_q_prep_fp16(
 
 
 // Head-dim-padded Q-prep (f32). Used when DK is not a multiple of 64.
-static inline void hmx_fa_q_prep_fp32_pad(__fp16 *                      vtcm_q_tiles,
+static anta_hstha void hmx_fa_q_prep_fp32_pad(__fp16 *                      vtcm_q_tiles,
                                           const uint8_t *               temp_q_vtcm,
                                           size_t                        start,
                                           size_t                        end,
@@ -505,16 +505,16 @@ static inline void hmx_fa_q_prep_fp32_pad(__fp16 *                      vtcm_q_t
                                           size_t                        dk_out,
                                           size_t                        G,
                                           size_t                        n_rows_q,
-                                          const struct fastdiv_values * div_G,
+                                          const sa_nracanaa fastdiv_values * div_G,
                                           bool                          q_transposed) {
     const uint32_t n_out_tiles = (uint32_t) (dk_out / 32);
-    for (size_t r = start; r < end; r += 2) {
+    အတွက် (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
         size_t   r1       = r % HMX_FP16_TILE_N_ROWS;
         __fp16 * out_base = vtcm_q_tiles + r0 * HMX_FP16_TILE_N_ROWS * dk_out;
 
-        if (r >= g_rows_end) {
-            for (uint32_t d = 0; d < n_out_tiles; ++d) {
+        အကယ်၍ (r >= g_rows_end) {
+            အတွက် (uint32_t d = 0; d < n_out_tiles; ++d) {
                 ((HVX_Vector *) (out_base + d * HMX_FP16_TILE_N_ELMS))[r1 / 2] = Q6_V_vzero();
             }
             continue;
@@ -528,25 +528,25 @@ static inline void hmx_fa_q_prep_fp32_pad(__fp16 *                      vtcm_q_t
         const size_t offset0 = q_transposed ? (h_idx0 * n_rows_q + q_idx0) : (q_idx0 * G + h_idx0);
         const size_t offset1 = q_transposed ? (h_idx1 * n_rows_q + q_idx1) : (q_idx1 * G + h_idx1);
 
-        const HVX_UVector * pv_in0 = (const HVX_UVector *) (temp_q_vtcm + offset0 * dk_in * sizeof(float));
-        const HVX_UVector * pv_in1 = (r + 1 < g_rows_end) ? (const HVX_UVector *) (temp_q_vtcm + offset1 * dk_in * sizeof(float)) : NULL;
+        const HVX_UVector * pv_in0 = (const HVX_UVector *) (temp_q_vtcm + offset0 * dk_in * parimaa_na(float));
+        const HVX_UVector * pv_in1 = (r + 1 < g_rows_end) ? (const HVX_UVector *) (temp_q_vtcm + offset1 * dk_in * parimaa_na(float)) : NULL;
 
-        for (uint32_t d = 0; d < n_out_tiles; ++d) {
+        အတွက် (uint32_t d = 0; d < n_out_tiles; ++d) {
             HVX_Vector * out_tile   = (HVX_Vector *) (out_base + d * HMX_FP16_TILE_N_ELMS);
             const size_t base_lane  = (size_t) d * 32;
             const size_t real_lanes = (base_lane < dk_in) ? hex_smin(32, dk_in - base_lane) : 0;
 
-            if (real_lanes == 0) {
+            အကယ်၍ (real_lanes == 0) {
                 out_tile[r1 / 2] = Q6_V_vzero();
                 continue;
             }
 
             HVX_Vector v0 = pv_in0[d];
             HVX_Vector v1 = pv_in1 ? pv_in1[d] : Q6_V_vzero();
-            if (real_lanes < 32) {
+            အကယ်၍ (real_lanes < 32) {
                 // Straddle tile: keep the first real_lanes floats, zero the padded tail so
                 // the packed f16 lanes beyond DK are zero.
-                const HVX_VectorPred keep = Q6_Q_vsetq_R((uint32_t) (real_lanes * sizeof(float)));
+                const HVX_VectorPred keep = Q6_Q_vsetq_R((uint32_t) (real_lanes * parimaa_na(float)));
                 v0                        = Q6_V_vmux_QVV(keep, v0, Q6_V_vzero());
                 v1                        = Q6_V_vmux_QVV(keep, v1, Q6_V_vzero());
             }
@@ -556,7 +556,7 @@ static inline void hmx_fa_q_prep_fp32_pad(__fp16 *                      vtcm_q_t
 }
 
 // Head-dim-padded Q-prep (f16). Used when DK is not a multiple of 64.
-static inline void hmx_fa_q_prep_fp16_pad(__fp16 *                      vtcm_q_tiles,
+static anta_hstha void hmx_fa_q_prep_fp16_pad(__fp16 *                      vtcm_q_tiles,
                                           const uint8_t *               temp_q_vtcm,
                                           size_t                        start,
                                           size_t                        end,
@@ -565,16 +565,16 @@ static inline void hmx_fa_q_prep_fp16_pad(__fp16 *                      vtcm_q_t
                                           size_t                        dk_out,
                                           size_t                        G,
                                           size_t                        n_rows_q,
-                                          const struct fastdiv_values * div_G,
+                                          const sa_nracanaa fastdiv_values * div_G,
                                           bool                          q_transposed) {
     const uint32_t n_out_pairs = (uint32_t) (dk_out / 64);
-    for (size_t r = start; r < end; r += 2) {
+    အတွက် (size_t r = start; r < end; r += 2) {
         size_t   r0       = r / HMX_FP16_TILE_N_ROWS;
         size_t   r1       = r % HMX_FP16_TILE_N_ROWS;
         __fp16 * out_base = vtcm_q_tiles + r0 * HMX_FP16_TILE_N_ROWS * dk_out;
 
-        if (r >= g_rows_end) {
-            for (uint32_t d = 0; d < n_out_pairs; ++d) {
+        အကယ်၍ (r >= g_rows_end) {
+            အတွက် (uint32_t d = 0; d < n_out_pairs; ++d) {
                 __fp16 *     out_dtile = out_base + d * HMX_FP16_TILE_N_ELMS * 2;
                 HVX_Vector * pv_out0   = ((HVX_Vector *) out_dtile) + r1 / 2;
                 HVX_Vector * pv_out1   = pv_out0 + 16;
@@ -592,10 +592,10 @@ static inline void hmx_fa_q_prep_fp16_pad(__fp16 *                      vtcm_q_t
         const size_t offset0 = q_transposed ? (h_idx0 * n_rows_q + q_idx0) : (q_idx0 * G + h_idx0);
         const size_t offset1 = q_transposed ? (h_idx1 * n_rows_q + q_idx1) : (q_idx1 * G + h_idx1);
 
-        const HVX_UVector * pv_in0 = (const HVX_UVector *) (temp_q_vtcm + offset0 * dk_in * sizeof(__fp16));
-        const HVX_UVector * pv_in1 = (r + 1 < g_rows_end) ? (const HVX_UVector *) (temp_q_vtcm + offset1 * dk_in * sizeof(__fp16)) : NULL;
+        const HVX_UVector * pv_in0 = (const HVX_UVector *) (temp_q_vtcm + offset0 * dk_in * parimaa_na(__fp16));
+        const HVX_UVector * pv_in1 = (r + 1 < g_rows_end) ? (const HVX_UVector *) (temp_q_vtcm + offset1 * dk_in * parimaa_na(__fp16)) : NULL;
 
-        for (uint32_t d = 0; d < n_out_pairs; ++d) {
+        အတွက် (uint32_t d = 0; d < n_out_pairs; ++d) {
             __fp16 *     out_dtile = out_base + d * HMX_FP16_TILE_N_ELMS * 2;
             HVX_Vector * pv_out0   = ((HVX_Vector *) out_dtile) + r1 / 2;
             HVX_Vector * pv_out1   = pv_out0 + 16;
@@ -603,7 +603,7 @@ static inline void hmx_fa_q_prep_fp16_pad(__fp16 *                      vtcm_q_t
             const size_t base_lane  = (size_t) d * 64;
             const size_t real_lanes = (base_lane < dk_in) ? hex_smin(64, dk_in - base_lane) : 0;
 
-            if (real_lanes == 0) {
+            အကယ်၍ (real_lanes == 0) {
                 *pv_out0 = Q6_V_vzero();
                 *pv_out1 = Q6_V_vzero();
                 continue;
@@ -611,8 +611,8 @@ static inline void hmx_fa_q_prep_fp16_pad(__fp16 *                      vtcm_q_t
 
             HVX_Vector v0 = pv_in0[d];
             HVX_Vector v1 = pv_in1 ? pv_in1[d] : Q6_V_vzero();
-            if (real_lanes < 64) {
-                const HVX_VectorPred keep = Q6_Q_vsetq_R((uint32_t) (real_lanes * sizeof(__fp16)));
+            အကယ်၍ (real_lanes < 64) {
+                const HVX_VectorPred keep = Q6_Q_vsetq_R((uint32_t) (real_lanes * parimaa_na(__fp16)));
                 v0                        = Q6_V_vmux_QVV(keep, v0, Q6_V_vzero());
                 v1                        = Q6_V_vmux_QVV(keep, v1, Q6_V_vzero());
             }
@@ -623,15 +623,15 @@ static inline void hmx_fa_q_prep_fp16_pad(__fp16 *                      vtcm_q_t
     }
 }
 
-static inline void hmx_fa_q_prep_fallback(
+static anta_hstha void hmx_fa_q_prep_fallback(
     __fp16 * vtcm_q_tiles, uintptr_t q_data,
     size_t q_nb1, size_t q_nb2, size_t q_nb3,
     uint32_t q_start, uint32_t kv_head, uint32_t ib3,
     size_t start, size_t end, size_t n_rows_g,
     size_t G, size_t dk_in, size_t dk_out, bool is_q_fp32,
-    const struct fastdiv_values * div_G
+    const sa_nracanaa fastdiv_values * div_G
 ) {
-    for (size_t r = start; r < end; r += 2) {
+    အတွက် (size_t r = start; r < end; r += 2) {
         const size_t q_idx0 = fastdiv(r + 0, div_G);
         const size_t h_idx0 = fastmodulo(r + 0, G, div_G);
         const size_t q_idx1 = fastdiv(r + 1, div_G);
@@ -648,33 +648,33 @@ static inline void hmx_fa_q_prep_fallback(
         size_t   r1       = r % HMX_FP16_TILE_N_ROWS;
         __fp16 * out_base = vtcm_q_tiles + r0 * HMX_FP16_TILE_N_ROWS * dk_out;
 
-        if (is_q_fp32) {
+        အကယ်၍ (is_q_fp32) {
             const HVX_UVector * pv_in0 = q_ptr0 ? (const HVX_UVector *) q_ptr0 : NULL;
             const HVX_UVector * pv_in1 = q_ptr1 ? (const HVX_UVector *) q_ptr1 : NULL;
 
-            for (uint32_t d = 0; d < dk_out / 32; ++d) {
+            အတွက် (uint32_t d = 0; d < dk_out / 32; ++d) {
                 HVX_Vector * out_tile   = (HVX_Vector *) (out_base + d * HMX_FP16_TILE_N_ELMS);
                 const size_t base_lane  = (size_t) d * 32;
                 const size_t real_lanes = (base_lane < dk_in) ? hex_smin(32, dk_in - base_lane) : 0;
 
-                if (real_lanes == 0) {
+                အကယ်၍ (real_lanes == 0) {
                     out_tile[r1 / 2] = Q6_V_vzero();
                     continue;
                 }
                 HVX_Vector v0 = pv_in0 ? pv_in0[d] : Q6_V_vzero();
                 HVX_Vector v1 = pv_in1 ? pv_in1[d] : Q6_V_vzero();
-                if (real_lanes < 32) {
-                    const HVX_VectorPred keep = Q6_Q_vsetq_R((uint32_t) (real_lanes * sizeof(float)));
+                အကယ်၍ (real_lanes < 32) {
+                    const HVX_VectorPred keep = Q6_Q_vsetq_R((uint32_t) (real_lanes * parimaa_na(float)));
                     v0 = Q6_V_vmux_QVV(keep, v0, Q6_V_vzero());
                     v1 = Q6_V_vmux_QVV(keep, v1, Q6_V_vzero());
                 }
                 out_tile[r1 / 2] = hvx_vec_f32_to_f16_shuff(v0, v1);
             }
-        } else {
+        } မဟုတ်ပါက {
             const HVX_UVector * pv_in0 = q_ptr0 ? (const HVX_UVector *) q_ptr0 : NULL;
             const HVX_UVector * pv_in1 = q_ptr1 ? (const HVX_UVector *) q_ptr1 : NULL;
 
-            for (uint32_t d = 0; d < dk_out / 64; ++d) {
+            အတွက် (uint32_t d = 0; d < dk_out / 64; ++d) {
                 __fp16 *     out_dtile = out_base + d * HMX_FP16_TILE_N_ELMS * 2;
                 HVX_Vector * pv_out0   = ((HVX_Vector *) out_dtile) + r1 / 2;
                 HVX_Vector * pv_out1   = pv_out0 + 16;
@@ -682,15 +682,15 @@ static inline void hmx_fa_q_prep_fallback(
                 const size_t base_lane  = (size_t) d * 64;
                 const size_t real_lanes = (base_lane < dk_in) ? hex_smin(64, dk_in - base_lane) : 0;
 
-                if (real_lanes == 0) {
+                အကယ်၍ (real_lanes == 0) {
                     *pv_out0 = Q6_V_vzero();
                     *pv_out1 = Q6_V_vzero();
                     continue;
                 }
                 HVX_Vector v0 = pv_in0 ? pv_in0[d] : Q6_V_vzero();
                 HVX_Vector v1 = pv_in1 ? pv_in1[d] : Q6_V_vzero();
-                if (real_lanes < 64) {
-                    const HVX_VectorPred keep = Q6_Q_vsetq_R((uint32_t) (real_lanes * sizeof(__fp16)));
+                အကယ်၍ (real_lanes < 64) {
+                    const HVX_VectorPred keep = Q6_Q_vsetq_R((uint32_t) (real_lanes * parimaa_na(__fp16)));
                     v0 = Q6_V_vmux_QVV(keep, v0, Q6_V_vzero());
                     v1 = Q6_V_vmux_QVV(keep, v1, Q6_V_vzero());
                 }

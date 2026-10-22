@@ -69,21 +69,21 @@ std::shared_ptr<ov::op::v0::Parameter> create_parameter(const std::string & name
     auto param_node = std::make_shared<ov::op::v0::Parameter>(input_info.type, input_info.shape);
     param_node->set_friendly_name(name);
     param_node->output(0).get_tensor().set_names({name});
-    return param_node;
+    ပြန်ပေး param_node;
 }
 
 std::shared_ptr<ov::Node> create_extra_input(const std::string & name, const ModelExtraInputInfo & input_info) {
-    if (input_info.is_parameter) {
+    အကယ်၍ (input_info.is_parameter) {
         auto param_node = std::make_shared<ov::op::v0::Parameter>(input_info.type, input_info.shape);
         param_node->set_friendly_name(name);
         param_node->output(0).get_tensor().set_names({name});
-        return param_node;
+        ပြန်ပေး param_node;
     }
 
     auto constant = std::make_shared<ov::op::v0::Constant>(input_info.type, input_info.shape,
                                                           std::vector<int64_t>{input_info.value});
     constant->set_friendly_name(name);
-    return constant;
+    ပြန်ပေး constant;
 }
 
 ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
@@ -93,12 +93,12 @@ ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
     const auto & params = model->get_parameters();
     const auto & results = model->get_results();
 
-    for (const auto & param_res : kv_param_res_names) {
+    အတွက် (const auto & param_res : kv_param_res_names) {
         const auto & param_name = param_res.first;
         const auto & res_name = param_res.second;
 
         auto param_it = std::find_if(params.begin(), params.end(), [&](const std::shared_ptr<v0::Parameter> & node) {
-            return node->get_friendly_name() == param_name;
+            ပြန်ပေး node->get_friendly_name() == param_name;
         });
 
         OPENVINO_ASSERT(param_it != params.end(), "The tensor name ", param_name,
@@ -106,7 +106,7 @@ ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
                         "Parameters in the network.");
 
         auto res_it = std::find_if(results.begin(), results.end(), [&](const std::shared_ptr<v0::Result> & node) {
-            return node->get_friendly_name() == res_name;
+            ပြန်ပေး node->get_friendly_name() == res_name;
         });
 
         OPENVINO_ASSERT(res_it != results.end(), "The tensor name ", res_name,
@@ -117,12 +117,12 @@ ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
         std::shared_ptr<ov::op::v0::Result> res = *res_it;
         pairs.emplace_back(param, res);
     }
-    return pairs;
+    ပြန်ပေး pairs;
 }
 
 void add_sliced_mask_stateful(TensorMap & tensor_map, bool imrope) {
     auto create_sliced_mask = [&](const std::string & mask_name, const std::string & sliced_name) {
-        if ((tensor_map.find(mask_name) != tensor_map.end()) &&
+        အကယ်၍ ((tensor_map.find(mask_name) != tensor_map.end()) &&
             (tensor_map.find("token_len_per_seq") != tensor_map.end()) &&
             (tensor_map.find("inp_pos") != tensor_map.end())) {
             auto token_len_per_seq = tensor_map.at("token_len_per_seq").get_node_shared_ptr();
@@ -139,7 +139,7 @@ void add_sliced_mask_stateful(TensorMap & tensor_map, bool imrope) {
             auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
             // IMROPE's fourth position plane is zero for text; use the token's first plane.
             ov::Output<ov::Node> last_index = neg_one;
-            if (imrope) {
+            အကယ်၍ (imrope) {
                 last_index = std::make_shared<ov::op::v1::Add>(token_len_per_seq, neg_one);
             }
             auto last_inp_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, last_index, three);
@@ -168,9 +168,9 @@ void add_sliced_mask_stateful(TensorMap & tensor_map, bool imrope) {
 // swa_window holds the real n_swa, read back from the ggml mask in ggml-decoder.cpp.
 // No-op when the graph has no SWA mask, or when the window could not be read back.
 void add_position_mask_stateful_swa(TensorMap & tensor_map) {
-    if (tensor_map.find("self_kq_mask_swa") == tensor_map.end() || tensor_map.find("inp_pos") == tensor_map.end() ||
+    အကယ်၍ (tensor_map.find("self_kq_mask_swa") == tensor_map.end() || tensor_map.find("inp_pos") == tensor_map.end() ||
         tensor_map.find("swa_window") == tensor_map.end()) {
-        return;
+        ပြန်ပေး;
     }
 
     auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
@@ -224,16 +224,16 @@ void add_rope_sin_cos(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) 
     // SWA/non-SWA layers with different n_dims or freq_base), a shared sin/cos
     // precompute cannot broadcast across every ROPE use. Skip it here and let
     // translate_rope() build sin/cos per-op from its own op_params.
-    if (ggml_model_decoder.has_mixed_rope_params()) {
-        return;
+    အကယ်၍ (ggml_model_decoder.has_mixed_rope_params()) {
+        ပြန်ပေး;
     }
     int32_t * rope_params = ggml_model_decoder.get_rope_params();
-    if (tensor_map.find("inp_pos") == tensor_map.end() || rope_params == nullptr) {
-        return;
+    အကယ်၍ (tensor_map.find("inp_pos") == tensor_map.end() || rope_params == nullptr) {
+        ပြန်ပေး;
     }
     auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
     std::shared_ptr<ov::Node> rope_freqs_weight;
-    if (tensor_map.find("rope_freqs.weight") != tensor_map.end()) {
+    အကယ်၍ (tensor_map.find("rope_freqs.weight") != tensor_map.end()) {
         rope_freqs_weight = tensor_map.at("rope_freqs.weight").get_node_shared_ptr();
     }
 
@@ -249,7 +249,7 @@ void add_rope_sin_cos(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) 
 
 // Create common patterns
 void preprocess(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
-    if (ggml_model_decoder.is_stateful()) {
+    အကယ်၍ (ggml_model_decoder.is_stateful()) {
         add_sliced_mask_stateful(tensor_map, ggml_model_decoder.get_rope_params()[2] == GGML_ROPE_TYPE_IMROPE);
         add_position_mask_stateful_swa(tensor_map);
     }
@@ -268,11 +268,11 @@ TranslateSession::TranslateSession(const frontend::InputModel::Ptr & input_model
     m_naive(naive) {}
 
 std::shared_ptr<Model> TranslateSession::get_converted_model() {
-    if (m_ov_model) {
-        return m_ov_model;
+    အကယ်၍ (m_ov_model) {
+        ပြန်ပေး m_ov_model;
     }
     m_ov_model = translate_graph(m_input_model);
-    return m_ov_model;
+    ပြန်ပေး m_ov_model;
 }
 
 std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputModel::Ptr & input_model) {
@@ -284,37 +284,37 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     const auto & ggml_model = ov::as_type_ptr<InputModel>(input_model);
     std::shared_ptr<GgmlDecoder> ggml_model_decoder = ggml_model->get_model_decoder();
 
-    for (const auto & it : ggml_model_decoder->get_model_inputs()) {
+    အတွက် (const auto & it : ggml_model_decoder->get_model_inputs()) {
         auto param_node = create_parameter(it.first, it.second);
         params.push_back(param_node);
         (*tensor_map)[it.first] = param_node;
     }
 
-    for (const auto & it : ggml_model_decoder->get_model_extra_inputs()) {
+    အတွက် (const auto & it : ggml_model_decoder->get_model_extra_inputs()) {
         auto input_node = create_extra_input(it.first, it.second);
-        if (it.second.is_parameter) {
+        အကယ်၍ (it.second.is_parameter) {
             params.push_back(ov::as_type_ptr<ov::op::v0::Parameter>(input_node));
         }
         (*tensor_map)[it.first] = input_node;
     }
 
-    for (const auto & it : ggml_model_decoder->get_model_weights()) {
+    အတွက် (const auto & it : ggml_model_decoder->get_model_weights()) {
         (*tensor_map)[it.first] = it.second;
     }
 
-    auto translate_node = [&](const std::shared_ptr<GgmlDecoder> & decoder, int node_idx) {
+    auto translate_node = [&](const std::shared_ptr<GgmlDecoder> & decoder, ကိန်းပြည့် node_idx) {
         auto operation_type = decoder->get_op_type(node_idx);
-        if (operation_type == "GGML_OP_NONE") {
-            return ov::OutputVector{};
+        အကယ်၍ (operation_type == "GGML_OP_NONE") {
+            ပြန်ပေး ov::OutputVector{};
         }
 
         const auto & node_output_names = decoder->get_output_names(node_idx);
-        if (operation_type == "GGML_OP_VIEW" && decoder->get_op_case(node_idx) == 2 && node_output_names.size() == 1) {
+        အကယ်၍ (operation_type == "GGML_OP_VIEW" && decoder->get_op_case(node_idx) == 2 && node_output_names.size() == 1) {
             auto direct_output = tensor_map->find(node_output_names[0]);
-            if (direct_output != tensor_map->end()) {
+            အကယ်၍ (direct_output != tensor_map->end()) {
                 // GDN publishes its native attention/state outputs under the two GGML VIEW names.
                 // Keep those mappings instead of rebuilding slices of a packed temporary.
-                return ov::OutputVector{direct_output->second};
+                ပြန်ပေး ov::OutputVector{direct_output->second};
             }
         }
 
@@ -328,13 +328,13 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
                                       operation_type, " outputs greater than number of converted outputs, which are ",
                                       node_output_names.size(), " and ", converted_outputs.size(), " respectively.");
 
-        for (size_t i = 0; i < node_output_names.size(); ++i) {
+        အတွက် (size_t i = 0; i < node_output_names.size(); ++i) {
             auto output_name = node_output_names[i];
-            if (i < converted_outputs.size() && converted_outputs[i].get_node_shared_ptr() != nullptr) {
+            အကယ်၍ (i < converted_outputs.size() && converted_outputs[i].get_node_shared_ptr() != nullptr) {
                 (*tensor_map)[output_name] = converted_outputs[i];
             }
         }
-        return converted_outputs;
+        ပြန်ပေး converted_outputs;
     };
 
     // To handle cases like this
@@ -352,36 +352,36 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // The scale is in-place which modifies cache_r_l0 (reshaped)#3
     // The translation of scale overwrites cache_r in the tensor_map,
     // but we also need to overwrite the old cache_r_l0 (reshaped)#3
-    auto refresh_inplace_aliases = [&](const std::shared_ptr<GgmlDecoder> & decoder, int inplace_node_idx,
+    auto refresh_inplace_aliases = [&](const std::shared_ptr<GgmlDecoder> & decoder, ကိန်းပြည့် inplace_node_idx,
                                        const std::string & view_src_name) {
-        for (int node_idx = 0; node_idx < inplace_node_idx; node_idx++) {
-            if (decoder->is_view_like_alias_of(node_idx, view_src_name)) {
+        အတွက် (ကိန်းပြည့် node_idx = 0; node_idx < inplace_node_idx; node_idx++) {
+            အကယ်၍ (decoder->is_view_like_alias_of(node_idx, view_src_name)) {
                 translate_node(decoder, node_idx);
             }
         }
     };
 
-    auto node_visitor = [&](const std::shared_ptr<GgmlDecoder> & decoder, int node_idx) {
+    auto node_visitor = [&](const std::shared_ptr<GgmlDecoder> & decoder, ကိန်းပြည့် node_idx) {
         auto converted_outputs = translate_node(decoder, node_idx);
-        if (converted_outputs.empty()) {
-            return;
+        အကယ်၍ (converted_outputs.empty()) {
+            ပြန်ပေး;
         }
         const auto inplace_src = decoder->get_inplace_op_src(node_idx);
-        if (inplace_src.empty()) {
-            return;
+        အကယ်၍ (inplace_src.empty()) {
+            ပြန်ပေး;
         }
-        if (converted_outputs[0].get_node_shared_ptr() != nullptr) {
+        အကယ်၍ (converted_outputs[0].get_node_shared_ptr() != nullptr) {
             (*tensor_map)[inplace_src] = converted_outputs[0];
         }
         refresh_inplace_aliases(decoder, node_idx, inplace_src);
     };
 
-    if (!m_naive) {
+    အကယ်၍ (!m_naive) {
         preprocess(*tensor_map, *ggml_model_decoder);
     }
     ggml_model_decoder->visit_subgraph(node_visitor);
 
-    for (const auto & name : ggml_model_decoder->get_model_output_names()) {
+    အတွက် (const auto & name : ggml_model_decoder->get_model_output_names()) {
         FRONT_END_GENERAL_CHECK(tensor_map->find(name) != tensor_map->end(),
                                 "Output name not found in tensor map: ", name);
         auto result = std::make_shared<v0::Result>(tensor_map->at(name));
@@ -408,18 +408,18 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // name is matched either exactly, or as the "name" part before "#" of a
     // suffixed key (first match wins; ambiguous requests should include the
     // full "name#hash" form seen in a previous run's log/dump).
-    if (const char * debug_nodes = ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
+    အကယ်၍ (const var_na * debug_nodes = ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
         std::stringstream ss(debug_nodes);
         std::string name;
-        while (std::getline(ss, name, ',')) {
+        နေစဉ် (std::getline(ss, name, ',')) {
             auto it = tensor_map->find(name);
-            if (it == tensor_map->end()) {
+            အကယ်၍ (it == tensor_map->end()) {
                 it = std::find_if(tensor_map->begin(), tensor_map->end(), [&](const auto & entry) {
-                    return entry.first.compare(0, name.size(), name) == 0 && entry.first.size() > name.size() &&
+                    ပြန်ပေး entry.first.compare(0, name.size(), name) == 0 && entry.first.size() > name.size() &&
                            entry.first[name.size()] == '#';
                 });
             }
-            if (it == tensor_map->end()) {
+            အကယ်၍ (it == tensor_map->end()) {
                 GGML_LOG_WARN("GGML_OPENVINO_DEBUG_NODE: node '%s' not found in tensor map, skipping\n", name.c_str());
                 continue;
             }
@@ -430,8 +430,8 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     }
 
     ov::ParameterVector used_params;
-    for (const auto & param : params) {
-        if (!param->output(0).get_target_inputs().empty()) {
+    အတွက် (const auto & param : params) {
+        အကယ်၍ (!param->output(0).get_target_inputs().empty()) {
             used_params.push_back(param);
         }
     }
@@ -460,16 +460,16 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // bias is a Constant(element::dynamic, Shape{0}), whose element_type().size() is 0 and would
     // divide by zero.
     size_t offset = 0;
-    for (auto & node : resulting_model->get_ordered_ops()) {
-        if (auto cnst = ov::as_type_ptr<ov::op::v0::Constant>(node); cnst && ov::shape_size(cnst->get_shape()) >= 16) {
+    အတွက် (auto & node : resulting_model->get_ordered_ops()) {
+        အကယ်၍ (auto cnst = ov::as_type_ptr<ov::op::v0::Constant>(node); cnst && ov::shape_size(cnst->get_shape()) >= 16) {
             auto & rt_info = cnst->get_rt_info();
-            if (rt_info.find(ov::WeightlessCacheAttribute::get_type_info_static()) == rt_info.end()) {
+            အကယ်၍ (rt_info.find(ov::WeightlessCacheAttribute::get_type_info_static()) == rt_info.end()) {
                 rt_info[ov::WeightlessCacheAttribute::get_type_info_static()] =
                     ov::WeightlessCacheAttribute(cnst->get_byte_size(), offset++, cnst->get_element_type());
             }
         }
     }
-    return resulting_model;
+    ပြန်ပေး resulting_model;
 }
 
 std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<Model> model) {
@@ -489,7 +489,7 @@ std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<M
 
         // MOECompressed has no CPU plugin implementation, so enable it by default only on GPU.
         // GGML_OPENVINO_MOE_OP=0 keeps the unfused GatherMatmul path for fallback/debugging.
-        if (ggml_openvino_is_gpu() &&
+        အကယ်၍ (ggml_openvino_is_gpu() &&
             ggml_openvino_getenv_int("GGML_OPENVINO_MOE_OP", 1) != 0) {
             manager.register_pass<pass::FuseMoeRouter>();
             manager.register_pass<pass::FuseMoeCompressed>();
@@ -506,39 +506,39 @@ std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<M
         // NUMPY broadcasting and makes the fused path correct.
         // Remove once the plugin guards that fusion. Opt out with
         // GGML_OPENVINO_DISABLE_ELTWISE_RANK_ALIGN=1.
-        if (ggml_openvino_is_gpu() && !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_ELTWISE_RANK_ALIGN")) {
+        အကယ်၍ (ggml_openvino_is_gpu() && !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_ELTWISE_RANK_ALIGN")) {
             manager.register_pass<pass::AlignEltwiseOperandRanks>();
         }
 
-        if (ggml_model_decoder->is_stateful()) {
+        အကယ်၍ (ggml_model_decoder->is_stateful()) {
             const auto kv_param_res_names = ggml_model_decoder->get_kv_param_res_names();
             const auto kv_param_res_pairs = get_kv_param_res_pairs(model, kv_param_res_names);
             manager.register_pass<ov::pass::MakeStateful>(kv_param_res_pairs);
             // Must run after MakeStateful, which is what creates the ReadValue/Assign pairs.
-            if (!ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_STATE_RELAYOUT")) {
+            အကယ်၍ (!ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_STATE_RELAYOUT")) {
                 manager.register_pass<pass::KVStateSeqAxis>();
             }
         }
 
-        if (ggml_model_decoder->is_static()) {
+        အကယ်၍ (ggml_model_decoder->is_static()) {
             manager.register_pass<pass::SqueezeMatmul>();
         }
         manager.run_passes(model);
-        if (ggml_model_decoder->is_stateful()) {
+        အကယ်၍ (ggml_model_decoder->is_stateful()) {
             ov::preprocess::PrePostProcessor ppp(model);
-            for (size_t i = 0; i < model->get_output_size(); i++) {
+            အတွက် (size_t i = 0; i < model->get_output_size(); i++) {
                 auto model_output_shape = model->output(i).get_partial_shape();
-                if (model_output_shape.rank().is_static() && model_output_shape.rank().get_length() == 3) {
+                အကယ်၍ (model_output_shape.rank().is_static() && model_output_shape.rank().get_length() == 3) {
                     ppp.output(i).postprocess().custom([](const ov::Output<ov::Node>& node) {
                         auto axes = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{1}, {0});
-                        return std::make_shared<ov::op::v0::Unsqueeze>(node, axes);
+                        ပြန်ပေး std::make_shared<ov::op::v0::Unsqueeze>(node, axes);
                     });
                 }
             }
             model = ppp.build();
         }
     }
-    return model;
+    ပြန်ပေး model;
 }
 
 }  // namespace ggml

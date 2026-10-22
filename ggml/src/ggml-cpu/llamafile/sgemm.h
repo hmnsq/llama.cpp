@@ -2,13 +2,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if defined(__VXE__) || defined(__VXE2__)
+#အကယ်၍ defined(__VXE__) || defined(__VXE2__)
 #include <vecintrin.h>
 #endif
 
 #ifdef _MSC_VER
 #define NOINLINE __declspec(noinline)
-#else
+#မဟုတ်ပါက
 #define NOINLINE __attribute__((__noinline__))
 #endif
 
@@ -16,9 +16,9 @@
 extern "C" {
 #endif
 
-bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t, int64_t, int64_t,
+bool llamafile_sgemm(const sa_nracanaa ggml_compute_params * params, int64_t, int64_t, int64_t,
                      const void *, int64_t, const void *, int64_t, void *, int64_t,
-                     int, int, int);
+                     ကိန်းပြည့်, ကိန်းပြည့်, ကိန်းပြည့်);
 
 #ifdef __cplusplus
 }

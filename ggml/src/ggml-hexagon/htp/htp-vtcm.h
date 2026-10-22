@@ -4,14 +4,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
-static inline uint8_t *vtcm_seq_alloc(uint8_t **vtcm_ptr, size_t size) {
+static anta_hstha uint8_t *vtcm_seq_alloc(uint8_t **vtcm_ptr, size_t size) {
     uint8_t *p = *vtcm_ptr;
     *vtcm_ptr += size;
-    return p;
+    ပြန်ပေး p;
 }
 
-#define VTCM_LAYOUT_ALLOC(off, field, sz) do { (L)->field = (off); (off) += (sz); } while (0)
-#define VTCM_LAYOUT_ALLOC_OPTIONAL(off, field, sz, cond) do { if (cond) { VTCM_LAYOUT_ALLOC(off, field, sz); } else { (L)->field = 0; } } while (0)
+#define VTCM_LAYOUT_ALLOC(off, field, sz) do { (L)->field = (off); (off) += (sz); } နေစဉ် (0)
+#define VTCM_LAYOUT_ALLOC_OPTIONAL(off, field, sz, cond) do { အကယ်၍ (cond) { VTCM_LAYOUT_ALLOC(off, field, sz); } မဟုတ်ပါက { (L)->field = 0; } } နေစဉ် (0)
 
 #define VTCM_LAYOUT_PTR(type, base, offset) ((type *)((uint8_t *)(base) + (offset)))
 #define VTCM_LAYOUT_PTR_OPTIONAL(type, base, offset, cond) ((cond) ? VTCM_LAYOUT_PTR(type, base, offset) : NULL)

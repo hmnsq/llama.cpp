@@ -21,7 +21,7 @@ OutputVector translate_sum(const NodeContext & context) {
     auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{4}, {0, 1, 2, 3});
     auto res = std::make_shared<ov::op::v1::ReduceSum>(input, axes, true);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ပြန်ပေး rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

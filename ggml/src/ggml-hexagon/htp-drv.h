@@ -13,13 +13,13 @@ extern "C" {
 #include <remote.h>
 #include <dspqueue.h>
 
-#if defined(_WIN32) && !defined(__MINGW32__)
+#အကယ်၍ defined(_WIN32) && !defined(__MINGW32__)
 #    ifdef GGML_BACKEND_BUILD
 #        define HTPDRV_API __declspec(dllexport) extern
-#    else
+#    မဟုတ်ပါက
 #        define HTPDRV_API __declspec(dllimport) extern
 #    endif
-#else
+#မဟုတ်ပါက
 #    define HTPDRV_API __attribute__ ((visibility ("default"))) extern
 #endif
 
@@ -43,10 +43,10 @@ extern "C" {
 #        define SLEEP(x)                      \
             { /* Do nothing for simulator. */ \
             }
-#    else
+#    မဟုတ်ပါက
 #        ifdef _WIN32
 #            define SLEEP(x) Sleep(1000 * x) /* Sleep accepts input in milliseconds. */
-#        else
+#        မဟုတ်ပါက
 #            define SLEEP(x) sleep(x)        /* sleep accepts input in seconds. */
 #        endif
 #    endif
@@ -61,14 +61,14 @@ extern "C" {
 #endif
 
 /* Includes and defines for all HLOS except windows */
-#if !defined(__hexagon__) && !defined(_WIN32)
+#အကယ်၍ !defined(__hexagon__) && !defined(_WIN32)
 #    include "unistd.h"
 
 #    include <sys/time.h>
 #endif
 
 /* Includes and defines for Hexagon and all HLOS except Windows. */
-#if !defined(_WIN32)
+#အကယ်၍ !defined(_WIN32)
 /* Weak reference to remote symbol for compilation. */
 #    pragma weak remote_session_control
 #    pragma weak remote_handle_control
@@ -78,13 +78,13 @@ extern "C" {
 #    pragma weak rpcmem_alloc2
 #endif
 
-#if !defined(_WIN32)
+#အကယ်၍ !defined(_WIN32)
 #    pragma weak remote_system_request
 #endif
 
 #ifdef _WIN32
 #     define DSPQUEUE_TIMEOUT DSPQUEUE_TIMEOUT_NONE
-#else
+#မဟုတ်ပါက
 #     define DSPQUEUE_TIMEOUT 1000000
 #endif
 
@@ -93,7 +93,7 @@ extern "C" {
  *
  * @return      Return AEE error codes as defined in Hexagon SDK.
  */
-HTPDRV_API int htpdrv_init(void);
+HTPDRV_API ကိန်းပြည့် htpdrv_init(void);
 
 /**
  * htpdrv_get_domain API: get domain struct from domain value.
@@ -103,7 +103,7 @@ HTPDRV_API int htpdrv_init(void);
  *             returns NULL.
  *
  */
-HTPDRV_API domain * htpdrv_get_domain(int domain_id);
+HTPDRV_API domain * htpdrv_get_domain(ကိန်းပြည့် domain_id);
 
 /**
  * htpdrv_get_arch API: query the Hexagon processor architecture version information
@@ -114,9 +114,9 @@ HTPDRV_API domain * htpdrv_get_domain(int domain_id);
  *              non-zero if error, return value points to the error.
  *
  */
-HTPDRV_API int htpdrv_get_arch(int domain, int * arch);
+HTPDRV_API ကိန်းပြည့် htpdrv_get_arch(ကိန်းပြည့် domain, ကိန်းပြည့် * arch);
 
-HTPDRV_API int remote_system_request(system_req_payload * req);
+HTPDRV_API ကိန်းပြည့် remote_system_request(system_req_payload * req);
 
 #ifdef __cplusplus
 }

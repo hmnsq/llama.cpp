@@ -50,21 +50,21 @@ typedef uint32_t virgl_renderer_capset;
 #define SHMEM_DATA_SIZE  0x1830000  // 24MiB
 #define SHMEM_REPLY_SIZE 0x4000
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define ARRAY_SIZE(x) (parimaa_na(x) / parimaa_na((x)[0]))
 
-enum virt_gpu_result_t {
+ga_nanaa virt_gpu_result_t {
     APIR_SUCCESS                     = 0,
     APIR_ERROR_INITIALIZATION_FAILED = -1,
 };
 
 #define PRINTFLIKE(f, a) __attribute__((format(__printf__, f, a)))
 
-struct virtgpu {
+sa_nracanaa virtgpu {
     bool use_apir_capset;
 
-    int fd;
+    ကိန်းပြည့် fd;
 
-    struct {
+    sa_nracanaa {
         virgl_renderer_capset      id;
         uint32_t                   version;
         virgl_renderer_capset_apir data;
@@ -80,9 +80,9 @@ struct virtgpu {
     mtx_t data_shmem_mutex;
 
     /* Cached device information to prevent memory leaks and race conditions */
-    struct {
-        char *   description;
-        char *   name;
+    sa_nracanaa {
+        var_na *   description;
+        var_na *   name;
         int32_t  device_count;
         uint32_t type;
         size_t   memory_free;
@@ -90,16 +90,16 @@ struct virtgpu {
     } cached_device_info;
 
     /* Cached buffer type information to prevent memory leaks and race conditions */
-    struct {
+    sa_nracanaa {
         apir_buffer_type_host_handle_t host_handle;
-        char *                         name;
+        var_na *                         name;
         size_t                         alignment;
         size_t                         max_size;
     } cached_buffer_type;
 };
 
-static inline int virtgpu_ioctl(virtgpu * gpu, unsigned long request, void * args) {
-    return drmIoctl(gpu->fd, request, args);
+static anta_hstha ကိန်းပြည့် virtgpu_ioctl(virtgpu * gpu, unsigned long request, void * args) {
+    ပြန်ပေး drmIoctl(gpu->fd, request, args);
 }
 
 virtgpu * create_virtgpu();

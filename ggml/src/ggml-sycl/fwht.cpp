@@ -46,36 +46,36 @@ static constexpr float H20[20][20] = {
 #undef P
 #undef N
 
-template <int N, typename T>
+template <ကိန်းပြည့် N, typename T>
 static void fwht_kernel(const T * __restrict__ src, float * __restrict__ dst, const int64_t n_rows,
                         const float scale, const sycl::nd_item<2> & item) {
     const sycl::sub_group sg = item.get_sub_group();
 
     const int64_t r = item.get_global_id(0);
-    if (r >= n_rows) {
-        return;
+    အကယ်၍ (r >= n_rows) {
+        ပြန်ပေး;
     }
 
     src += r * N;
     dst += r * N;
 
-    constexpr int el_w = N / WARP_SIZE;
+    constexpr ကိန်းပြည့် el_w = N / WARP_SIZE;
     static_assert(el_w >= 1 && N % WARP_SIZE == 0, "row must be a whole number of sub-group widths");
 
     float     reg[el_w];
-    const int lane = sg.get_local_linear_id();
+    const ကိန်းပြည့် lane = sg.get_local_linear_id();
 
 #pragma unroll
-    for (int i = 0; i < el_w; ++i) {
+    အတွက် (ကိန်းပြည့် i = 0; i < el_w; ++i) {
         reg[i] = static_cast<float>(src[i * WARP_SIZE + lane]) * scale;
     }
 
     // Butterflies inside the sub-group. The partner of a lane with bit h clear is the
     // lower index of the pair, so it takes the sum and the upper takes lower - upper.
 #pragma unroll
-    for (int h = 1; h < WARP_SIZE; h *= 2) {
+    အတွက် (ကိန်းပြည့် h = 1; h < WARP_SIZE; h *= 2) {
 #pragma unroll
-        for (int j = 0; j < el_w; ++j) {
+        အတွက် (ကိန်းပြည့် j = 0; j < el_w; ++j) {
             const float val  = reg[j];
             const float val2 = dpct::permute_sub_group_by_xor(sg, val, h, WARP_SIZE);
 
@@ -86,12 +86,12 @@ static void fwht_kernel(const T * __restrict__ src, float * __restrict__ dst, co
     // Butterflies across registers: h is a multiple of WARP_SIZE, so the partner of
     // element i*WARP_SIZE + lane lives in reg[i + h/WARP_SIZE] on the same lane.
 #pragma unroll
-    for (int h = WARP_SIZE; h < N; h *= 2) {
-        const int step = h / WARP_SIZE;
+    အတွက် (ကိန်းပြည့် h = WARP_SIZE; h < N; h *= 2) {
+        const ကိန်းပြည့် step = h / WARP_SIZE;
 #pragma unroll
-        for (int j = 0; j < el_w; j += 2 * step) {
+        အတွက် (ကိန်းပြည့် j = 0; j < el_w; j += 2 * step) {
 #pragma unroll
-            for (int k = 0; k < step; ++k) {
+            အတွက် (ကိန်းပြည့် k = 0; k < step; ++k) {
                 const float x = reg[j + k];
                 const float y = reg[j + k + step];
 
@@ -102,15 +102,15 @@ static void fwht_kernel(const T * __restrict__ src, float * __restrict__ dst, co
     }
 
 #pragma unroll
-    for (int i = 0; i < el_w; ++i) {
+    အတွက် (ကိန်းပြည့် i = 0; i < el_w; ++i) {
         dst[i * WARP_SIZE + lane] = reg[i];
     }
 }
 
-template <int N, typename T>
+template <ကိန်းပြည့် N, typename T>
 static void launch_fwht(const T * src, float * dst, const int64_t n_rows, const float scale,
                         dpct::queue_ptr stream) {
-    constexpr int rows_per_block = 4;
+    constexpr ကိန်းပြည့် rows_per_block = 4;
 
     const int64_t num_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
 
@@ -128,7 +128,7 @@ static void launch_fwht(const T * src, float * dst, const int64_t n_rows, const 
 // keeps N/NT values rather than N/WARP_SIZE. Butterflies below the sub-group width
 // still shuffle; those up to NT go through work-group local memory; the rest stay
 // in registers.
-template <int N, int NT, typename T>
+template <ကိန်းပြည့် N, ကိန်းပြည့် NT, typename T>
 static void fwht_kernel_wide(const T * __restrict__ src,
                              float * __restrict__ dst,
                              const int64_t            n_rows,
@@ -136,32 +136,32 @@ static void fwht_kernel_wide(const T * __restrict__ src,
                              const sycl::nd_item<2> & item,
                              float *                  smem) {
     const int64_t r = item.get_global_id(0);
-    if (r >= n_rows) {
-        return;
+    အကယ်၍ (r >= n_rows) {
+        ပြန်ပေး;
     }
 
     src += r * N;
     dst += r * N;
 
-    constexpr int el_w = N / NT;
+    constexpr ကိန်းပြည့် el_w = N / NT;
     static_assert(el_w >= 1 && N % NT == 0, "row must be a whole number of work-group widths");
 
-    const int tid = item.get_local_id(1);
+    const ကိန်းပြည့် tid = item.get_local_id(1);
 
     float reg[el_w];
 #pragma unroll
-    for (int i = 0; i < el_w; ++i) {
+    အတွက် (ကိန်းပြည့် i = 0; i < el_w; ++i) {
         reg[i] = static_cast<float>(src[i * NT + tid]) * scale;
     }
 
     const sycl::sub_group sg   = item.get_sub_group();
-    const int             lane = sg.get_local_linear_id();
+    const ကိန်းပြည့်             lane = sg.get_local_linear_id();
 
     // Butterflies inside the sub-group, same pattern as the narrow kernel.
 #pragma unroll
-    for (int h = 1; h < WARP_SIZE; h *= 2) {
+    အတွက် (ကိန်းပြည့် h = 1; h < WARP_SIZE; h *= 2) {
 #pragma unroll
-        for (int j = 0; j < el_w; ++j) {
+        အတွက် (ကိန်းပြည့် j = 0; j < el_w; ++j) {
             const float val  = reg[j];
             const float val2 = dpct::permute_sub_group_by_xor(sg, val, h, WARP_SIZE);
 
@@ -171,14 +171,14 @@ static void fwht_kernel_wide(const T * __restrict__ src,
 
     // Butterflies from the sub-group width up to NT: the partner lane is outside
     // this sub-group, so it goes through work-group local memory instead of a shuffle.
-    for (int h = WARP_SIZE; h < NT; h *= 2) {
+    အတွက် (ကိန်းပြည့် h = WARP_SIZE; h < NT; h *= 2) {
 #pragma unroll
-        for (int j = 0; j < el_w; ++j) {
+        အတွက် (ကိန်းပြည့် j = 0; j < el_w; ++j) {
             smem[j * NT + tid] = reg[j];
         }
         item.barrier(sycl::access::fence_space::local_space);
 #pragma unroll
-        for (int j = 0; j < el_w; ++j) {
+        အတွက် (ကိန်းပြည့် j = 0; j < el_w; ++j) {
             const float val  = reg[j];
             const float val2 = smem[j * NT + (tid ^ h)];
             reg[j]           = (tid & h) == 0 ? val + val2 : val2 - val;
@@ -188,10 +188,10 @@ static void fwht_kernel_wide(const T * __restrict__ src,
 
     // Butterflies across registers: h is a multiple of NT, so the partner of element
     // i*NT + tid lives in reg[i + h/NT] on the same work-item.
-    for (int h = NT; h < N; h *= 2) {
-        const int step = h / NT;
-        for (int j = 0; j < el_w; j += 2 * step) {
-            for (int k = 0; k < step; ++k) {
+    အတွက် (ကိန်းပြည့် h = NT; h < N; h *= 2) {
+        const ကိန်းပြည့် step = h / NT;
+        အတွက် (ကိန်းပြည့် j = 0; j < el_w; j += 2 * step) {
+            အတွက် (ကိန်းပြည့် k = 0; k < step; ++k) {
                 const float x = reg[j + k];
                 const float y = reg[j + k + step];
 
@@ -202,12 +202,12 @@ static void fwht_kernel_wide(const T * __restrict__ src,
     }
 
 #pragma unroll
-    for (int i = 0; i < el_w; ++i) {
+    အတွက် (ကိန်းပြည့် i = 0; i < el_w; ++i) {
         dst[i * NT + tid] = reg[i];
     }
 }
 
-template <int N, int NT, typename T>
+template <ကိန်းပြည့် N, ကိန်းပြည့် NT, typename T>
 static void launch_fwht_wide(const T *       src,
                              float *         dst,
                              const int64_t   n_rows,
@@ -225,7 +225,7 @@ static void launch_fwht_wide(const T *       src,
     });
 }
 
-template <int N, int m, typename T>
+template <ကိန်းပြည့် N, ကိန်းပြည့် m, typename T>
 static void kronecker_kernel(const T * __restrict__ src,
                              float * __restrict__ dst,
                              const int64_t            n_rows,
@@ -236,54 +236,54 @@ static void kronecker_kernel(const T * __restrict__ src,
     const sycl::sub_group sg = item.get_sub_group();
 
     const int64_t r = item.get_global_id(0);
-    if (r >= n_rows) {
-        return;
+    အကယ်၍ (r >= n_rows) {
+        ပြန်ပေး;
     }
 
     src += r * N;
     dst += r * N;
 
-    constexpr int blocks_per_group = N / m;
-    constexpr int el_w             = blocks_per_group / WARP_SIZE;
+    constexpr ကိန်းပြည့် blocks_per_group = N / m;
+    constexpr ကိန်းပြည့် el_w             = blocks_per_group / WARP_SIZE;
     static_assert(el_w >= 1 && blocks_per_group % WARP_SIZE == 0, "blocks_per_group must be a multiple of WARP_SIZE");
     float     reg[el_w * m];
-    const int lane = sg.get_local_linear_id();
+    const ကိန်းပြည့် lane = sg.get_local_linear_id();
 
 #pragma unroll
-    for (int i = 0; i < el_w; ++i) {
-        const int b_idx = i * WARP_SIZE + lane;
+    အတွက် (ကိန်းပြည့် i = 0; i < el_w; ++i) {
+        const ကိန်းပြည့် b_idx = i * WARP_SIZE + lane;
 
 #pragma unroll
-        for (int j = 0; j < m; ++j) {
+        အတွက် (ကိန်းပြည့် j = 0; j < m; ++j) {
             reg[i * m + j] = static_cast<float>(src[b_idx * m + j]) * scale;
         }
     }
 
 #pragma unroll
-    for (int b = 0; b < el_w; ++b) {
+    အတွက် (ကိန်းပြည့် b = 0; b < el_w; ++b) {
         float z[m] = { 0.0f };
 
 #pragma unroll
-        for (int i = 0; i < m; ++i) {
+        အတွက် (ကိန်းပြည့် i = 0; i < m; ++i) {
 #pragma unroll
-            for (int j = 0; j < m; ++j) {
+            အတွက် (ကိန်းပြည့် j = 0; j < m; ++j) {
                 const float h = (m == 12 ? H12[j][i] : H20[j][i]);
                 z[i] += reg[b * m + j] * h;
             }
         }
 
 #pragma unroll
-        for (int i = 0; i < m; ++i) {
+        အတွက် (ကိန်းပြည့် i = 0; i < m; ++i) {
             reg[b * m + i] = z[i];
         }
     }
 
 #pragma unroll
-    for (int h = 1; h < WARP_SIZE; h *= 2) {
+    အတွက် (ကိန်းပြည့် h = 1; h < WARP_SIZE; h *= 2) {
 #pragma unroll
-        for (int j = 0; j < el_w; ++j) {
+        အတွက် (ကိန်းပြည့် j = 0; j < el_w; ++j) {
 #pragma unroll
-            for (int k = 0; k < m; ++k) {
+            အတွက် (ကိန်းပြည့် k = 0; k < m; ++k) {
                 const float val  = reg[j * m + k];
                 const float val2 = dpct::permute_sub_group_by_xor(sg, val, h, WARP_SIZE);
 
@@ -293,14 +293,14 @@ static void kronecker_kernel(const T * __restrict__ src,
     }
 
 #pragma unroll
-    for (int h = WARP_SIZE; h < blocks_per_group; h *= 2) {
-        const int step = h / WARP_SIZE;
+    အတွက် (ကိန်းပြည့် h = WARP_SIZE; h < blocks_per_group; h *= 2) {
+        const ကိန်းပြည့် step = h / WARP_SIZE;
 #pragma unroll
-        for (int j = 0; j < el_w; j += 2 * step) {
+        အတွက် (ကိန်းပြည့် j = 0; j < el_w; j += 2 * step) {
 #pragma unroll
-            for (int s = 0; s < step; ++s) {
+            အတွက် (ကိန်းပြည့် s = 0; s < step; ++s) {
 #pragma unroll
-                for (int k = 0; k < m; ++k) {
+                အတွက် (ကိန်းပြည့် k = 0; k < m; ++k) {
                     const float x = reg[(j + s) * m + k];
                     const float y = reg[(j + s + step) * m + k];
 
@@ -312,22 +312,22 @@ static void kronecker_kernel(const T * __restrict__ src,
     }
 
 #pragma unroll
-    for (int i = 0; i < el_w; ++i) {
-        const int b_idx = i * WARP_SIZE + lane;
+    အတွက် (ကိန်းပြည့် i = 0; i < el_w; ++i) {
+        const ကိန်းပြည့် b_idx = i * WARP_SIZE + lane;
 #pragma unroll
-        for (int k = 0; k < m; ++k) {
+        အတွက် (ကိန်းပြည့် k = 0; k < m; ++k) {
             dst[b_idx * m + k] = reg[i * m + k];
         }
     }
 }
 
-template <int N, int m, typename T>
+template <ကိန်းပြည့် N, ကိန်းပြည့် m, typename T>
 static void launch_kronecker(const T *       src,
                              float *         dst,
                              const int64_t   n_rows,
                              const float     scale,
                              dpct::queue_ptr stream) {
-    constexpr int rows_per_block = 4;
+    constexpr ကိန်းပြည့် rows_per_block = 4;
 
     const int64_t num_blocks = (n_rows + rows_per_block - 1) / rows_per_block;
 
@@ -343,7 +343,7 @@ static void launch_kronecker(const T *       src,
 
 template <typename T>
 static bool ggml_sycl_op_fwht_impl(ggml_backend_sycl_context & ctx, const ggml_tensor * src, ggml_tensor * dst) {
-    const int     n    = (int) src->ne[0];
+    const ကိန်းပြည့်     n    = (ကိန်းပြည့်) src->ne[0];
     const int64_t rows = ggml_nrows(src);
 
     const T *       src_d  = (const T *) src->data;
@@ -353,64 +353,64 @@ static bool ggml_sycl_op_fwht_impl(ggml_backend_sycl_context & ctx, const ggml_t
     const float scale = 1.0f / std::sqrt((float) n);
 
     switch (n) {
-        case 64:
+        pak_sa 64:
             launch_fwht<64>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 128:
+            ပြန်ပေး true;
+        pak_sa 128:
             launch_fwht<128>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 256:
+            ပြန်ပေး true;
+        pak_sa 256:
             launch_fwht<256>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 512:
+            ပြန်ပေး true;
+        pak_sa 512:
             launch_fwht<512>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 384:
+            ပြန်ပေး true;
+        pak_sa 384:
             launch_kronecker<384, 12>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 768:
+            ပြန်ပေး true;
+        pak_sa 768:
             launch_kronecker<768, 12>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 640:
+            ပြန်ပေး true;
+        pak_sa 640:
             launch_kronecker<640, 20>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 1280:
+            ပြန်ပေး true;
+        pak_sa 1280:
             launch_kronecker<1280, 20>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 1024:
+            ပြန်ပေး true;
+        pak_sa 1024:
             launch_fwht_wide<1024, 256>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 2048:
+            ပြန်ပေး true;
+        pak_sa 2048:
             launch_fwht_wide<2048, 256>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 4096:
+            ပြန်ပေး true;
+        pak_sa 4096:
             launch_fwht_wide<4096, 256>(src_d, dst_d, rows, scale, stream);
-            return true;
-        case 8192:
+            ပြန်ပေး true;
+        pak_sa 8192:
             launch_fwht_wide<8192, 256>(src_d, dst_d, rows, scale, stream);
-            return true;
+            ပြန်ပေး true;
         default:
-            return false;
+            ပြန်ပေး false;
     }
 }
 
 bool ggml_sycl_op_fwht(ggml_backend_sycl_context & ctx, const ggml_tensor * src, ggml_tensor * dst) {
-    if (dst->type != GGML_TYPE_F32) {
-        return false;
+    အကယ်၍ (dst->type != GGML_TYPE_F32) {
+        ပြန်ပေး false;
     }
-    if (!ggml_are_same_shape(src, dst)) {
-        return false;
+    အကယ်၍ (!ggml_are_same_shape(src, dst)) {
+        ပြန်ပေး false;
     }
-    if (!ggml_is_contiguous(src) || !ggml_is_contiguous(dst)) {
-        return false;
+    အကယ်၍ (!ggml_is_contiguous(src) || !ggml_is_contiguous(dst)) {
+        ပြန်ပေး false;
     }
 
     switch (src->type) {
-        case GGML_TYPE_F32:
-            return ggml_sycl_op_fwht_impl<float>(ctx, src, dst);
-        case GGML_TYPE_F16:
-            return ggml_sycl_op_fwht_impl<sycl::half>(ctx, src, dst);
+        pak_sa GGML_TYPE_F32:
+            ပြန်ပေး ggml_sycl_op_fwht_impl<float>(ctx, src, dst);
+        pak_sa GGML_TYPE_F16:
+            ပြန်ပေး ggml_sycl_op_fwht_impl<sycl::half>(ctx, src, dst);
         default:
-            return false;
+            ပြန်ပေး false;
     }
 }

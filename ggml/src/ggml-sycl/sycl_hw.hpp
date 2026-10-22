@@ -13,7 +13,7 @@ using gpu_arch = sycl::ext::oneapi::experimental::architecture;
 
 // It's used to mark the GPU computing capacity
 // The value must flow the order of performance.
-enum sycl_intel_gpu_family {
+ga_nanaa sycl_intel_gpu_family {
   GPU_FAMILY_UKNOWN = -1,
   // iGPU without Xe core, before Meteor Lake iGPU(Xe)
   GPU_FAMILY_IGPU_NON_XE = 0,
@@ -25,9 +25,9 @@ enum sycl_intel_gpu_family {
   GPU_FAMILY_DGPU_CLOUD = 3
 };
 
-struct sycl_hw_info {
+sa_nracanaa sycl_hw_info {
   syclex::architecture arch;
-  const char* arch_name;
+  const var_na* arch_name;
   int32_t device_id;
   std::string name;
   sycl_intel_gpu_family gpu_family;

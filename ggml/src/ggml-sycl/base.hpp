@@ -16,28 +16,28 @@
 
 #include <cstdio>
 
-extern int g_ggml_sycl_debug;
-extern int g_ggml_sycl_dev_debug;
+extern ကိန်းပြည့် g_ggml_sycl_debug;
+extern ကိန်းပြည့် g_ggml_sycl_dev_debug;
 
-#if defined(__clang__) && __has_builtin(__builtin_expect)
+#အကယ်၍ defined(__clang__) && __has_builtin(__builtin_expect)
 // Hint the optimizer to pipeline the more likely following instruction in branches
 #    define LIKELY(expr)   __builtin_expect(expr, true)
 #    define UNLIKELY(expr) __builtin_expect(expr, false)
-#else
+#မဟုတ်ပါက
 #    define LIKELY(expr)   (expr)
 #    define UNLIKELY(expr) (expr)
 #endif
 
 #define GGML_SYCL_DEBUG(...)              \
     do {                                  \
-        if (UNLIKELY(g_ggml_sycl_debug))  \
+        အကယ်၍ (UNLIKELY(g_ggml_sycl_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } နေစဉ် (0)
 
 #define GGML_SYCL_DEV_DEBUG(...)          \
     do {                                  \
-        if (UNLIKELY(g_ggml_sycl_dev_debug))  \
+        အကယ်၍ (UNLIKELY(g_ggml_sycl_dev_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } နေစဉ် (0)
 
 #endif  // GGML_SYCL_BASE_HPP

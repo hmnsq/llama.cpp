@@ -19,18 +19,18 @@ namespace op {
 
 static ov::Output<ov::Node> reshape_add_id_input_to_2d(const ov::Output<ov::Node> & input,
                                                        const ov::PartialShape & input_shape,
-                                                       const std::vector<int> & dims) {
+                                                       const std::vector<ကိန်းပြည့်> & dims) {
     const auto & actual_shape = input.get_partial_shape();
-    if (actual_shape.rank().is_static() && actual_shape.rank().get_length() == 2) {
-        return input;
+    အကယ်၍ (actual_shape.rank().is_static() && actual_shape.rank().get_length() == 2) {
+        ပြန်ပေး input;
     }
 
-    if (input_shape.rank().is_static() && input_shape.rank().get_length() == 2) {
-        return input;
+    အကယ်၍ (input_shape.rank().is_static() && input_shape.rank().get_length() == 2) {
+        ပြန်ပေး input;
     }
 
     auto shape = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    return std::make_shared<ov::op::v1::Reshape>(input, get_dimensions(shape, dims), false);
+    ပြန်ပေး std::make_shared<ov::op::v1::Reshape>(input, get_dimensions(shape, dims), false);
 }
 
 OutputVector translate_add_id(const NodeContext & context) {
@@ -48,7 +48,7 @@ OutputVector translate_add_id(const NodeContext & context) {
     bias = reshape_add_id_input_to_2d(bias, context.get_input_shape(1), {2, 3});
     ids = reshape_add_id_input_to_2d(ids, context.get_input_shape(2), {2, 3});
 
-    if (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
+    အကယ်၍ (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
         ids = std::make_shared<ov::op::v0::Convert>(ids, ov::element::i32);
     }
 
@@ -57,17 +57,17 @@ OutputVector translate_add_id(const NodeContext & context) {
     selected_bias = std::make_shared<ov::op::v1::Reshape>(
         selected_bias, std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64), false);
 
-    if (selected_bias.get_element_type() != input.get_element_type()) {
+    အကယ်၍ (selected_bias.get_element_type() != input.get_element_type()) {
         selected_bias = std::make_shared<ov::op::v0::Convert>(selected_bias, input.get_element_type());
     }
 
     ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(input, selected_bias);
     const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    အကယ်၍ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ပြန်ပေး rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

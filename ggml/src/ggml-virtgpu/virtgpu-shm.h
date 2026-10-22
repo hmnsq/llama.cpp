@@ -9,9 +9,9 @@
 #include <cstddef>
 #include <cstdint>
 
-struct virtgpu;
+sa_nracanaa virtgpu;
 
-struct virtgpu_shmem {
+sa_nracanaa virtgpu_shmem {
     uint32_t res_id;
     size_t   mmap_size;
     void *   mmap_ptr;
@@ -19,5 +19,5 @@ struct virtgpu_shmem {
     uint32_t gem_handle;
 };
 
-int  virtgpu_shmem_create(virtgpu * gpu, size_t size, virtgpu_shmem * shmem);
+ကိန်းပြည့်  virtgpu_shmem_create(virtgpu * gpu, size_t size, virtgpu_shmem * shmem);
 void virtgpu_shmem_destroy(virtgpu * gpu, virtgpu_shmem * shmem);

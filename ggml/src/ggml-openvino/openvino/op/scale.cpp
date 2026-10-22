@@ -32,16 +32,16 @@ OutputVector translate_scale(const NodeContext & context) {
 
     float scale;
     float bias;
-    memcpy(&scale, (float *) context.get_output_op_params() + 0, sizeof(float));
-    memcpy(&bias, (float *) context.get_output_op_params() + 1, sizeof(float));
+    memcpy(&scale, (float *) context.get_output_op_params() + 0, parimaa_na(float));
+    memcpy(&bias, (float *) context.get_output_op_params() + 1, parimaa_na(float));
 
     auto scale_node = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{scale});
 
-    if (context.get_op_case() == 2) {
-        return {context.get_input(0)};
+    အကယ်၍ (context.get_op_case() == 2) {
+        ပြန်ပေး {context.get_input(0)};
     }
 
-    if (context.get_op_case() == 1 && context.has_input("cache_rs_reset_len")) {
+    အကယ်၍ (context.get_op_case() == 1 && context.has_input("cache_rs_reset_len")) {
         auto cache_rs_reset_idx = context.get_input("cache_rs_reset_idx");
         auto cache_rs_reset_len = context.get_input("cache_rs_reset_len");
 
@@ -67,21 +67,21 @@ OutputVector translate_scale(const NodeContext & context) {
             keep_mask_f32, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {1}));
 
         auto cleared_cache_rs = std::make_shared<ov::op::v1::Multiply>(cache_rs, keep_mask_reshape);
-        return rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
+        ပြန်ပေး rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
     }
 
     auto scaled = std::make_shared<ov::op::v1::Multiply>(context.get_input(0), scale_node);
 
     std::shared_ptr<ov::Node> res;
-    if (bias != 0.0f) {
+    အကယ်၍ (bias != 0.0f) {
         auto bias_node =
             std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{bias});
         res = std::make_shared<ov::op::v1::Add>(scaled, bias_node);
-    } else {
+    } မဟုတ်ပါက {
         res = scaled;
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ပြန်ပေး rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

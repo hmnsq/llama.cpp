@@ -15,7 +15,7 @@
 
 #define GGML_VIRTGPU_BCK "ggml-virtgpu-backend: "
 
-struct virgl_apir_context {
+sa_nracanaa virgl_apir_context {
     uint32_t               ctx_id;
     virgl_apir_callbacks * iface;
 };

@@ -18,60 +18,60 @@
 
 #include <stdint.h>
 
-struct ggml_et_pad_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+sa_nracanaa ggml_et_pad_params {
+    sa_nracanaa ggml_tensor src0;
+    sa_nracanaa ggml_tensor dst;
     int32_t            lp[4];
     int32_t            rp[4];
 };
 
 // Vectorized copy with scalar tail
-static inline void vec_copy_f32(float * dst, const float * src, int32_t n) {
+static anta_hstha void vec_copy_f32(float * dst, const float * src, int32_t n) {
     int32_t       i       = 0;
     const int32_t vec_end = (n / 8) * 8;
-    for (; i < vec_end; i += 8) {
-        __asm__ volatile(
+    အတွက် (; i < vec_end; i += 8) {
+        __asm__ ca_ncala(
             "flw.ps f10, %[s]\n"
             "fsw.ps f10, %[d]\n"
             : [d] "=m"(*(float (*)[8]) & dst[i])
             : [s] "m"(*(const float (*)[8]) & src[i])
             : "f10");
     }
-    for (; i < n; i++) {
+    အတွက် (; i < n; i++) {
         dst[i] = src[i];
     }
 }
 
-int entry_point(struct ggml_et_pad_params * params, void * env) {
+ကိန်းပြည့် entry_point(sa_nracanaa ggml_et_pad_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    အကယ်၍ (!kernel_env) {
+        ပြန်ပေး -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ကိန်းပြည့် thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    ကိန်းပြည့် num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    အကယ်၍ (thread_id < 0) {
+        ပြန်ပေး 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    အကယ်၍ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ပြန်ပေး -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    sa_nracanaa ggml_tensor * src0 = &params->src0;
+    sa_nracanaa ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    အကယ်၍ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ပြန်ပေး -1;
     }
 
     const float * src0_data = (const float *) src0->data;
     float *       dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    အကယ်၍ (!src0_data || !dst_data) {
+        ပြန်ပေး -1;
     }
 
     // Dst dimensions
@@ -96,36 +96,36 @@ int entry_point(struct ggml_et_pad_params * params, void * env) {
     const int64_t total_rows     = ne1 * ne2 * ne3;
     const int64_t total_elements = ne0 * total_rows;
 
-    if (total_elements == 0) {
-        return 0;
+    အကယ်၍ (total_elements == 0) {
+        ပြန်ပေး 0;
     }
 
     // Broadcast 0.0f to SIMD register for vectorized zero-fill
     float zero = 0.0f;
-    __asm__ volatile("fbc.ps f12, %[v]\n" : : [v] "m"(zero) : "f12");
+    __asm__ ca_ncala("fbc.ps f12, %[v]\n" : : [v] "m"(zero) : "f12");
 
     // Aligned: ne0 % 16 == 0 -> row-based distribution, vectorized
-    if (ne0 % 16 == 0) {
-        for (int64_t row = thread_id; row < total_rows; row += num_threads) {
+    အကယ်၍ (ne0 % 16 == 0) {
+        အတွက် (int64_t row = thread_id; row < total_rows; row += num_threads) {
             const int64_t i3 = row / (ne1 * ne2);
             const int64_t i2 = (row / ne1) % ne2;
             const int64_t i1 = row % ne1;
 
             float * dst_row = dst_data + row * ne0;
 
-            if (i1 >= lp1 && i1 < ne1 - rp1 && i2 >= lp2 && i2 < ne2 - rp2 && i3 >= lp3 && i3 < ne3 - rp3) {
-                const float * src_row = (const float *) ((const char *) src0_data + (i1 - lp1) * nb1_src +
+            အကယ်၍ (i1 >= lp1 && i1 < ne1 - rp1 && i2 >= lp2 && i2 < ne2 - rp2 && i3 >= lp3 && i3 < ne3 - rp3) {
+                const float * src_row = (const float *) ((const var_na *) src0_data + (i1 - lp1) * nb1_src +
                                                          (i2 - lp2) * nb2_src + (i3 - lp3) * nb3_src);
                 vec_copy_f32(dst_row, src_row, (int32_t) ne0);
-            } else {
+            } မဟုတ်ပါက {
                 int64_t       i       = 0;
                 const int64_t vec_end = (ne0 / 8) * 8;
-                for (; i < vec_end; i += 8) {
-                    __asm__ volatile("fsw.ps f12, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i])::"f12");
+                အတွက် (; i < vec_end; i += 8) {
+                    __asm__ ca_ncala("fsw.ps f12, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_row[i])::"f12");
                 }
             }
         }
-        return 0;
+        ပြန်ပေး 0;
     }
 
     // Small-ne0 path: 16 % ne0 == 0 -> cache-line distributed, scalar
@@ -136,14 +136,14 @@ int entry_point(struct ggml_et_pad_params * params, void * env) {
     const int64_t ne2_data_end = ne2 - rp2;
     const int64_t ne3_data_end = ne3 - rp3;
 
-    for (int64_t cl = thread_id; cl < total_cl; cl += num_threads) {
+    အတွက် (int64_t cl = thread_id; cl < total_cl; cl += num_threads) {
         const int64_t elem_start = cl * elems_per_cl;
         int64_t       elem_end   = elem_start + elems_per_cl;
-        if (elem_end > total_elements) {
+        အကယ်၍ (elem_end > total_elements) {
             elem_end = total_elements;
         }
 
-        for (int64_t idx = elem_start; idx < elem_end; idx++) {
+        အတွက် (int64_t idx = elem_start; idx < elem_end; idx++) {
             const int64_t i0   = idx % ne0;
             const int64_t rem  = idx / ne0;
             const int64_t i1   = rem % ne1;
@@ -151,15 +151,15 @@ int entry_point(struct ggml_et_pad_params * params, void * env) {
             const int64_t i2   = rem2 % ne2;
             const int64_t i3   = rem2 / ne2;
 
-            if (i1 >= lp1 && i1 < ne1_data_end && i2 >= lp2 && i2 < ne2_data_end && i3 >= lp3 && i3 < ne3_data_end) {
-                const float * sp = (const float *) ((const char *) src0_data + i0 * 4 + (i1 - lp1) * nb1_src +
+            အကယ်၍ (i1 >= lp1 && i1 < ne1_data_end && i2 >= lp2 && i2 < ne2_data_end && i3 >= lp3 && i3 < ne3_data_end) {
+                const float * sp = (const float *) ((const var_na *) src0_data + i0 * 4 + (i1 - lp1) * nb1_src +
                                                     (i2 - lp2) * nb2_src + (i3 - lp3) * nb3_src);
                 dst_data[idx]    = *sp;
-            } else {
+            } မဟုတ်ပါက {
                 dst_data[idx] = 0.0f;
             }
         }
     }
 
-    return 0;
+    ပြန်ပေး 0;
 }

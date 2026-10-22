@@ -14,68 +14,68 @@
 #define os_free_aligned(_ptr)            free(_ptr)
 #define p_atomic_cmpxchg(v, old, _new)   __sync_val_compare_and_swap((v), (old), (_new))
 
-static inline uint64_t util_logbase2_64(uint64_t n) {
-#if defined(HAVE___BUILTIN_CLZLL)
-    return ((sizeof(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
-#else
+static anta_hstha uint64_t util_logbase2_64(uint64_t n) {
+#အကယ်၍ defined(HAVE___BUILTIN_CLZLL)
+    ပြန်ပေး ((parimaa_na(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
+#မဟုတ်ပါက
     uint64_t pos = 0ull;
-    if (n >= 1ull << 32) {
+    အကယ်၍ (n >= 1ull << 32) {
         n >>= 32;
         pos += 32;
     }
-    if (n >= 1ull << 16) {
+    အကယ်၍ (n >= 1ull << 16) {
         n >>= 16;
         pos += 16;
     }
-    if (n >= 1ull << 8) {
+    အကယ်၍ (n >= 1ull << 8) {
         n >>= 8;
         pos += 8;
     }
-    if (n >= 1ull << 4) {
+    အကယ်၍ (n >= 1ull << 4) {
         n >>= 4;
         pos += 4;
     }
-    if (n >= 1ull << 2) {
+    အကယ်၍ (n >= 1ull << 2) {
         n >>= 2;
         pos += 2;
     }
-    if (n >= 1ull << 1) {
+    အကယ်၍ (n >= 1ull << 1) {
         pos += 1;
     }
-    return pos;
+    ပြန်ပေး pos;
 #endif
 }
 
 void util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size) {
-    memset(arr, 0, sizeof(*arr));
+    memset(arr, 0, parimaa_na(*arr));
     arr->elem_size      = elem_size;
     arr->node_size_log2 = util_logbase2_64(node_size);
     assert(node_size >= 2 && node_size == (1ull << arr->node_size_log2));
 }
 
-static inline void * os_malloc_aligned(size_t size, size_t alignment) {
+static anta_hstha void * os_malloc_aligned(size_t size, size_t alignment) {
     void * ptr;
-    alignment = (alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
-    if (posix_memalign(&ptr, alignment, size) != 0) {
-        return NULL;
+    alignment = (alignment + parimaa_na(void *) - 1) & ~(parimaa_na(void *) - 1);
+    အကယ်၍ (posix_memalign(&ptr, alignment, size) != 0) {
+        ပြန်ပေး NULL;
     }
-    return ptr;
+    ပြန်ပေး ptr;
 }
 
-static inline void * _util_sparse_array_node_data(uintptr_t handle) {
-    return (void *) (handle & NODE_PTR_MASK);
+static anta_hstha void * _util_sparse_array_node_data(uintptr_t handle) {
+    ပြန်ပေး (void *) (handle & NODE_PTR_MASK);
 }
 
-static inline unsigned _util_sparse_array_node_level(uintptr_t handle) {
-    return handle & NODE_LEVEL_MASK;
+static anta_hstha unsigned _util_sparse_array_node_level(uintptr_t handle) {
+    ပြန်ပေး handle & NODE_LEVEL_MASK;
 }
 
-static inline void _util_sparse_array_node_finish(util_sparse_array * arr, uintptr_t node) {
-    if (_util_sparse_array_node_level(node) > 0) {
+static anta_hstha void _util_sparse_array_node_finish(util_sparse_array * arr, uintptr_t node) {
+    အကယ်၍ (_util_sparse_array_node_level(node) > 0) {
         uintptr_t * children  = (uintptr_t *) _util_sparse_array_node_data(node);
         size_t      node_size = 1ull << arr->node_size_log2;
-        for (size_t i = 0; i < node_size; i++) {
-            if (children[i]) {
+        အတွက် (size_t i = 0; i < node_size; i++) {
+            အကယ်၍ (children[i]) {
                 _util_sparse_array_node_finish(arr, children[i]);
             }
         }
@@ -84,48 +84,48 @@ static inline void _util_sparse_array_node_finish(util_sparse_array * arr, uintp
     os_free_aligned(_util_sparse_array_node_data(node));
 }
 
-static inline uintptr_t _util_sparse_array_node(void * data, unsigned level) {
+static anta_hstha uintptr_t _util_sparse_array_node(void * data, unsigned level) {
     assert(data != NULL);
     assert(((uintptr_t) data & NODE_LEVEL_MASK) == 0);
     assert((level & NODE_PTR_MASK) == 0);
-    return (uintptr_t) data | level;
+    ပြန်ပေး (uintptr_t) data | level;
 }
 
-inline uintptr_t _util_sparse_array_node_alloc(util_sparse_array * arr, unsigned level) {
+anta_hstha uintptr_t _util_sparse_array_node_alloc(util_sparse_array * arr, unsigned level) {
     size_t size;
-    if (level == 0) {
+    အကယ်၍ (level == 0) {
         size = arr->elem_size << arr->node_size_log2;
-    } else {
-        size = sizeof(uintptr_t) << arr->node_size_log2;
+    } မဟုတ်ပါက {
+        size = parimaa_na(uintptr_t) << arr->node_size_log2;
     }
 
     void * data = os_malloc_aligned(size, NODE_ALLOC_ALIGN);
     memset(data, 0, size);
 
-    return _util_sparse_array_node(data, level);
+    ပြန်ပေး _util_sparse_array_node(data, level);
 }
 
-static inline uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr, uintptr_t cmp_node, uintptr_t node) {
+static anta_hstha uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr, uintptr_t cmp_node, uintptr_t node) {
     uintptr_t prev_node = p_atomic_cmpxchg(node_ptr, cmp_node, node);
 
-    if (prev_node != cmp_node) {
+    အကယ်၍ (prev_node != cmp_node) {
         /* We lost the race.  Free this one and return the one that was already
        * allocated.
        */
         os_free_aligned(_util_sparse_array_node_data(node));
-        return prev_node;
-    } else {
-        return node;
+        ပြန်ပေး prev_node;
+    } မဟုတ်ပါက {
+        ပြန်ပေး node;
     }
 }
 
 void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
     const unsigned node_size_log2 = arr->node_size_log2;
     uintptr_t      root           = p_atomic_read(&arr->root);
-    if (unlikely(!root)) {
+    အကယ်၍ (unlikely(!root)) {
         unsigned root_level = 0;
         uint64_t idx_iter   = idx >> node_size_log2;
-        while (idx_iter) {
+        နေစဉ် (idx_iter) {
             idx_iter >>= node_size_log2;
             root_level++;
         }
@@ -133,11 +133,11 @@ void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
         root               = _util_sparse_array_set_or_free_node(&arr->root, NULL_NODE, new_root);
     }
 
-    while (1) {
+    နေစဉ် (1) {
         unsigned root_level = _util_sparse_array_node_level(root);
         uint64_t root_idx   = idx >> (root_level * node_size_log2);
-        if (likely(root_idx < (1ull << node_size_log2))) {
-            break;
+        အကယ်၍ (likely(root_idx < (1ull << node_size_log2))) {
+            bha_nga;
         }
 
         /* In this case, we have a root but its level is low enough that the
@@ -159,13 +159,13 @@ void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
 
     void *   node_data  = _util_sparse_array_node_data(root);
     unsigned node_level = _util_sparse_array_node_level(root);
-    while (node_level > 0) {
+    နေစဉ် (node_level > 0) {
         uint64_t child_idx = (idx >> (node_level * node_size_log2)) & ((1ull << node_size_log2) - 1);
 
         uintptr_t * children = (uintptr_t *) node_data;
         uintptr_t   child    = p_atomic_read(&children[child_idx]);
 
-        if (unlikely(!child)) {
+        အကယ်၍ (unlikely(!child)) {
             child = _util_sparse_array_node_alloc(arr, node_level - 1);
             child = _util_sparse_array_set_or_free_node(&children[child_idx], NULL_NODE, child);
         }
@@ -175,5 +175,5 @@ void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
     }
 
     uint64_t elem_idx = idx & ((1ull << node_size_log2) - 1);
-    return (void *) ((char *) node_data + (elem_idx * arr->elem_size));
+    ပြန်ပေး (void *) ((var_na *) node_data + (elem_idx * arr->elem_size));
 }

@@ -11,22 +11,22 @@
 // clang-format on
 
 // ggml_tensor is serialized into apir_rpc_tensor
-struct apir_rpc_tensor {
+sa_nracanaa apir_rpc_tensor {
     uint64_t id;
     uint32_t type;
     uint64_t buffer;
     uint32_t ne[GGML_MAX_DIMS];
     uint32_t nb[GGML_MAX_DIMS];
     uint32_t op;
-    int32_t  op_params[GGML_MAX_OP_PARAMS / sizeof(int32_t)];
+    int32_t  op_params[GGML_MAX_OP_PARAMS / parimaa_na(int32_t)];
     int32_t  flags;
     uint64_t src[GGML_MAX_SRC];
     uint64_t view_src;
     uint64_t view_offs;
     uint64_t data;
-    char     name[GGML_MAX_NAME];
+    var_na     name[GGML_MAX_NAME];
 
-    char padding[4];
+    var_na padding[4];
 };
 
 /* frontend */
