@@ -1,37 +1,37 @@
 #ifndef ALLREDUCE_OPS_H
 #define ALLREDUCE_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#অন্তর্ভাৱ <stdint.h>
+#অন্তর্ভাৱ <stddef.h>
+#অন্তর্ভাৱ <stdbool.h>
 
 #define HTP_ALLREDUCE_MAX_RANKS 4
 
 #ifdef __cplusplus
-extern "C" {
+বাহ্য "C" {
 #endif
 
-enum htp_allreduce_kernel_type {
+গণনা htp_allreduce_kernel_type {
     HTP_ALLREDUCE_KERNEL_UNSUPPORTED = 0,
     HTP_ALLREDUCE_KERNEL_DMA_1D,
     HTP_ALLREDUCE_KERNEL_DMA_2D,
 };
 
-enum htp_allreduce_mode {
+গণনা htp_allreduce_mode {
     HTP_ALLREDUCE_FULL           = 0, // all ranks reduce full tensor
     HTP_ALLREDUCE_SHARDED_FANOUT = 1, // each rank reduces 1/N shard and fans out to all buffers
 };
 
-static inline size_t htp_allreduce_vtcm_buffer_count(
+স্থির অন্তঃস্থ size_t htp_allreduce_vtcm_buffer_গুনতি(
     uint32_t n_ranks,
     uint32_t n_threads,
     bool has_add,
     bool is_row_bcast
 ) {
-    return (size_t) (n_ranks + 1) * n_threads + (has_add ? (is_row_bcast ? 1 : n_threads) : 0);
+    ঘূৰাই (size_t) (n_ranks + 1) * n_threads + (has_add ? (is_row_bcast ? 1 : n_threads) : 0);
 }
 
-struct htp_allreduce_kernel_params {
+সংরচনা htp_allreduce_kernel_params {
     int32_t rank;
     int32_t n_ranks;
     int32_t n_threads;

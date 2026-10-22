@@ -1,34 +1,34 @@
 #pragma once
 
-#include <atomic>
-#include <cstdint>
+#অন্তর্ভাৱ <atomic>
+#অন্তর্ভাৱ <cstdint>
 
-#define SPINE_CACHE_LINE  64
-#define SPINE_CACHE_ALIGN __attribute__((aligned(SPINE_CACHE_LINE)))
+#define SPINE_CACHE_সাৰি  64
+#define SPINE_CACHE_ALIGN __attribute__((aligned(SPINE_CACHE_সাৰি)))
 
-struct spine_barrier_t {
+সংরচনা spine_barrier_t {
     SPINE_CACHE_ALIGN std::atomic<int64_t> pending_;
     SPINE_CACHE_ALIGN std::atomic<int64_t> rounds_;
     SPINE_CACHE_ALIGN int64_t              total_;
 };
 
-inline void spine_barrier_wait(spine_barrier_t * b) {
+অন্তঃস্থ শূন্য spine_barrier_wait(spine_barrier_t * b) {
     auto cur_round = b->rounds_.load(std::memory_order_acquire);
     auto cnt       = --b->pending_;
-    if (cnt == 0) {
+    যদি (cnt == 0) {
         b->pending_.store(b->total_);
         b->rounds_.store(cur_round + 1);
-    } else {
-        while (cur_round == b->rounds_.load(std::memory_order_relaxed)) {
-            __asm__ volatile("pause " ::: "memory");
+    } অন্যথা {
+        যেতিয়ালৈ (cur_round == b->rounds_.load(std::memory_order_relaxed)) {
+            __asm__ চঞ্চল("pause " ::: "memory");
         }
     }
 }
 
-inline void spine_barrier_init(spine_barrier_t * b, int num_barriers, uint64_t thread_count) {
-    for (int i = 0; i < num_barriers; i++) {
-        b[i].total_ = thread_count;
-        b[i].pending_.store(thread_count);
+অন্তঃস্থ শূন্য spine_barrier_init(spine_barrier_t * b, পূর্ণাঙ্ক অঙ্ক_barriers, uint64_t thread_গুনতি) {
+    বাবে (পূর্ণাঙ্ক i = 0; i < অঙ্ক_barriers; i++) {
+        b[i].total_ = thread_গুনতি;
+        b[i].pending_.store(thread_গুনতি);
         b[i].rounds_.store(0);
     }
 }

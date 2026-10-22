@@ -1,25 +1,25 @@
-#include "kv_state_seq_axis.h"
+#অন্তর্ভাৱ "kv_state_seq_axis.h"
 
-#include <memory>
-#include <openvino/core/graph_util.hpp>
-#include <openvino/op/assign.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/read_value.hpp>
-#include <openvino/op/transpose.hpp>
-#include <vector>
+#অন্তর্ভাৱ <memory>
+#অন্তর্ভাৱ <openvino/core/graph_util.hpp>
+#অন্তর্ভাৱ <openvino/op/assign.hpp>
+#অন্তর্ভাৱ <openvino/op/concat.hpp>
+#অন্তর্ভাৱ <openvino/op/constant.hpp>
+#অন্তর্ভাৱ <openvino/op/read_value.hpp>
+#অন্তর্ভাৱ <openvino/op/transpose.hpp>
+#অন্তর্ভাৱ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+নামাকাশ ov {
+নামাকাশ frontend {
+নামাকাশ ggml {
+নামাকাশ pass {
 
-namespace {
+নামাকাশ {
 
-const std::vector<int64_t> & seq_axis_perm() {
+ধ্রুৱ std::vector<int64_t> & seq_axis_perm() {
     // [1, seq, n_heads_kv, head_size] <-> [1, n_heads_kv, seq, head_size]
-    static const std::vector<int64_t> perm{0, 2, 1, 3};
-    return perm;
+    স্থির ধ্রুৱ std::vector<int64_t> perm{0, 2, 1, 3};
+    ঘূৰাই perm;
 }
 
 // True when the state still has the frontend's stateful KV layout, so the sequence axis
@@ -28,54 +28,54 @@ const std::vector<int64_t> & seq_axis_perm() {
 // ([1, seq, 1, head] and [1, 1, seq, head] are the same memory); with several heads it
 // also drops the reader-side transpose of the whole accumulated state, which is where
 // most of the gain comes from at depth.
-bool can_move_seq_axis(const ov::PartialShape & shape) {
-    return shape.rank().is_static() && shape.rank().get_length() == 4 && shape[0].is_static() &&
+তার্কিক can_move_seq_axis(ধ্রুৱ ov::PartialShape & shape) {
+    ঘূৰাই shape.rank().is_static() && shape.rank().get_length() == 4 && shape[0].is_static() &&
            shape[1].is_dynamic() && shape[2].is_static() && shape[3].is_static();
 }
 
-std::shared_ptr<ov::op::v0::Concat> match_kv_append(const std::shared_ptr<ov::op::v6::Assign> & assign) {
-    auto concat = ov::as_type_ptr<ov::op::v0::Concat>(assign->get_input_node_shared_ptr(0));
-    if (!concat || concat->get_input_size() != 2 || concat->get_axis() != 1) {
-        return nullptr;
+std::shared_ptr<ov::op::v0::Concat> match_kv_append(ধ্রুৱ std::shared_ptr<ov::op::v6::Assign> & assign) {
+    auto concat = ov::as_type_ptr<ov::op::v0::Concat>(assign->get_প্ৰবেশ_গ্ৰন্থি_shared_ptr(0));
+    যদি (!concat || concat->get_প্ৰবেশ_size() != 2 || concat->get_axis() != 1) {
+        ঘূৰাই nullptr;
     }
-    auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
-    if (!read_value || read_value->get_variable() != assign->get_variable()) {
-        return nullptr;
+    auto read_মান = ov::as_type_ptr<ov::op::v6::Read_মান>(concat->get_প্ৰবেশ_গ্ৰন্থি_shared_ptr(0));
+    যদি (!read_মান || read_মান->get_variable() != assign->get_variable()) {
+        ঘূৰাই nullptr;
     }
-    if (!can_move_seq_axis(read_value->get_output_partial_shape(0))) {
-        return nullptr;
+    যদি (!can_move_seq_axis(read_মান->get_output_partial_shape(0))) {
+        ঘূৰাই nullptr;
     }
-    return concat;
+    ঘূৰাই concat;
 }
 
 }  // namespace
 
-bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
+তার্কিক KVStateSeqAxis::run_on_model(ধ্রুৱ std::shared_ptr<ov::Model> & model) {
     std::vector<std::shared_ptr<ov::op::v6::Assign>> assigns;
-    for (const auto & op : model->get_ops()) {
-        if (auto assign = ov::as_type_ptr<ov::op::v6::Assign>(op)) {
+    বাবে (ধ্রুৱ auto & op : model->get_ops()) {
+        যদি (auto assign = ov::as_type_ptr<ov::op::v6::Assign>(op)) {
             assigns.push_back(assign);
         }
     }
 
-    bool changed = false;
-    for (const auto & assign : assigns) {
+    তার্কিক changed = মিছা;
+    বাবে (ধ্রুৱ auto & assign : assigns) {
         auto concat = match_kv_append(assign);
-        if (!concat) {
-            continue;
+        যদি (!concat) {
+            অনুৱর্ত;
         }
-        auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
+        auto read_মান = ov::as_type_ptr<ov::op::v6::Read_মান>(concat->get_প্ৰবেশ_গ্ৰন্থি_shared_ptr(0));
 
-        auto variable = read_value->get_variable();
+        auto variable = read_মান->get_variable();
         auto info = variable->get_info();
-        const auto & shape = info.data_shape;
+        ধ্রুৱ auto & shape = info.data_shape;
         info.data_shape = ov::PartialShape{shape[0], shape[2], shape[1], shape[3]};
         variable->update(info);
-        read_value->validate_and_infer_types();
+        read_মান->validate_and_infer_types();
 
         auto readers = concat->output(0).get_target_inputs();
 
-        auto new_rows = concat->input_value(1);
+        auto new_rows = concat->প্ৰবেশ_মান(1);
         auto perm_in = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
         concat->set_argument(1, std::make_shared<ov::op::v1::Transpose>(new_rows, perm_in));
         concat->set_axis(2);
@@ -84,28 +84,28 @@ bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
         // Readers still expect seq at dim 1. A reader that is itself the inverse
         // Transpose wanted seq at dim 2 all along, so drop it; give anything else the
         // inverse Transpose so its input is unchanged.
-        for (const auto & reader : readers) {
-            auto * node = reader.get_node();
-            if (ov::is_type<ov::op::v6::Assign>(node)) {
-                continue;
+        বাবে (ধ্রুৱ auto & reader : readers) {
+            auto * গ্ৰন্থি = reader.get_গ্ৰন্থি();
+            যদি (ov::is_type<ov::op::v6::Assign>(গ্ৰন্থি)) {
+                অনুৱর্ত;
             }
-            bool dropped = false;
-            if (auto * transpose = ov::as_type<ov::op::v1::Transpose>(node)) {
-                auto order = ov::as_type_ptr<ov::op::v0::Constant>(transpose->get_input_node_shared_ptr(1));
-                if (order && order->cast_vector<int64_t>() == seq_axis_perm()) {
+            তার্কিক dropped = মিছা;
+            যদি (auto * transpose = ov::as_type<ov::op::v1::Transpose>(গ্ৰন্থি)) {
+                auto order = ov::as_type_ptr<ov::op::v0::Constant>(transpose->get_প্ৰবেশ_গ্ৰন্থি_shared_ptr(1));
+                যদি (order && order->cast_vector<int64_t>() == seq_axis_perm()) {
                     ov::replace_output_update_name(transpose->output(0), concat->output(0));
-                    dropped = true;
+                    dropped = সঁচা;
                 }
             }
-            if (!dropped) {
+            যদি (!dropped) {
                 auto perm_out = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
                 reader.replace_source_output(std::make_shared<ov::op::v1::Transpose>(concat->output(0), perm_out));
             }
         }
-        changed = true;
+        changed = সঁচা;
     }
 
-    return changed;
+    ঘূৰাই changed;
 }
 
 }  // namespace pass

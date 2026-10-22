@@ -1,5 +1,5 @@
 #pragma once
 
-#include "common.hpp"
+#অন্তর্ভাৱ "common.hpp"
 
-void ggml_sycl_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+শূন্য ggml_sycl_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst);

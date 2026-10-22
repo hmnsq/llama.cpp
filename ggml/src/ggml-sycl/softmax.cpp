@@ -1,19 +1,19 @@
-#include "softmax.hpp"
-#include <cstdint>
-#include <utility>
-#include <cmath>
+#অন্তর্ভাৱ "softmax.hpp"
+#অন্তর্ভাৱ <cstdint>
+#অন্তর্ভাৱ <utility>
+#অন্তর্ভাৱ <cmath>
 
 
-template <typename T> static __dpct_inline__ float t2f32(T val) {
-    return (float) val;
+template <typename T> স্থির __dpct_inline__ ভিন্ন t2f32(T val) {
+    ঘূৰাই (ভিন্ন) val;
 }
 
-template <> float __dpct_inline__ t2f32<sycl::half>(sycl::half val) {
-  return sycl::vec<sycl::half, 1>(val)
-      .convert<float, sycl::rounding_mode::automatic>()[0];
+template <> ভিন্ন __dpct_inline__ t2f32<sycl::half>(sycl::half val) {
+  ঘূৰাই sycl::vec<sycl::half, 1>(val)
+      .convert<ভিন্ন, sycl::rounding_mode::automatic>()[0];
 }
 
-struct soft_max_params {
+সংরচনা soft_max_params {
 
     int64_t nheads;
     uint32_t n_head_log2;
@@ -30,73 +30,73 @@ struct soft_max_params {
 
     int64_t ne12;
     int64_t ne13;
-    float scale;
-    float max_bias;
-    float m0;
-    float m1;
+    ভিন্ন scale;
+    ভিন্ন max_bias;
+    ভিন্ন m0;
+    ভিন্ন m1;
 };
 
 // When ncols_template == 0 the bounds for the loops in this function are not known and can't be unrolled.
 // As we want to keep pragma unroll for all other cases we suppress the clang transformation warning here.
 #ifdef __clang__
-#pragma clang diagnostic push
+#pragma clang diagnostic ঠেলো
 #pragma clang diagnostic ignored "-Wpass-failed"
 #endif // __clang__
-template <bool use_shared, int ncols_template, int block_size_template, typename T>
-static void soft_max_f32(const float *         x,
-                         const T *             mask,
-                         const float *         sinks,
-                         float *               dst,
-                         const soft_max_params p,
+template <তার্কিক use_shared, পূর্ণাঙ্ক ncols_template, পূর্ণাঙ্ক block_size_template, typename T>
+স্থির শূন্য soft_max_f32(ধ্রুৱ ভিন্ন *         x,
+                         ধ্রুৱ T *             mask,
+                         ধ্রুৱ ভিন্ন *         sinks,
+                         ভিন্ন *               dst,
+                         ধ্রুৱ soft_max_params p,
                          uint8_t *             dpct_local) {
     auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int ncols    = ncols_template == 0 ? p.ncols : ncols_template;
-    const int block_size = block_size_template == 0
+    ধ্রুৱ পূর্ণাঙ্ক ncols    = ncols_template == 0 ? p.ncols : ncols_template;
+    ধ্রুৱ পূর্ণাঙ্ক block_size = block_size_template == 0
                                ? item_ct1.get_local_range(2)
                                : block_size_template;
-    const int nthreads = block_size;
-    const int nwarps = nthreads / WARP_SIZE;
-    const size_t nreduce = nwarps / WARP_SIZE;
+    ধ্রুৱ পূর্ণাঙ্ক nthreads = block_size;
+    ধ্রুৱ পূর্ণাঙ্ক nwarps = nthreads / WARP_SIZE;
+    ধ্রুৱ size_t nreduce = nwarps / WARP_SIZE;
 
-    const int tid = item_ct1.get_local_id(2);
+    ধ্রুৱ পূর্ণাঙ্ক tid = item_ct1.get_local_id(2);
 
-    const int64_t i03 = item_ct1.get_group(0);
-    const int64_t i02 = item_ct1.get_group(1);
-    const int64_t i01 = item_ct1.get_group(2);
+    ধ্রুৱ int64_t i03 = item_ct1.get_group(0);
+    ধ্রুৱ int64_t i02 = item_ct1.get_group(1);
+    ধ্রুৱ int64_t i01 = item_ct1.get_group(2);
 
     //TODO: noncontigous inputs/outputs
-    const int rowx = item_ct1.get_group(2) +
+    ধ্রুৱ পূর্ণাঙ্ক rowx = item_ct1.get_group(2) +
                      item_ct1.get_group(1) * item_ct1.get_group_range(2) +
                      item_ct1.get_group(0) * item_ct1.get_group_range(2) *
                          item_ct1.get_group_range(1);
 
-    const int64_t i11 = i01;
-    const int64_t i12 = i02 % p.ne12;
-    const int64_t i13 = i03 % p.ne13;
+    ধ্রুৱ int64_t i11 = i01;
+    ধ্রুৱ int64_t i12 = i02 % p.ne12;
+    ধ্রুৱ int64_t i13 = i03 % p.ne13;
 
     x    += int64_t(rowx)*ncols;
-    mask += (i11*p.nb11 + i12*p.nb12 + i13*p.nb13) / sizeof(T) * (mask != nullptr);
+    mask += (i11*p.nb11 + i12*p.nb12 + i13*p.nb13) / পরিমাণ(T) * (mask != nullptr);
     dst  += int64_t(rowx)*ncols;
 
-    const int warp_id = item_ct1.get_local_id(2) / WARP_SIZE;
-    const int lane_id = item_ct1.get_local_id(2) % WARP_SIZE;
+    ধ্রুৱ পূর্ণাঙ্ক warp_id = item_ct1.get_local_id(2) / WARP_SIZE;
+    ধ্রুৱ পূর্ণাঙ্ক lane_id = item_ct1.get_local_id(2) % WARP_SIZE;
 
-    const float slope = get_alibi_slope(p.max_bias, i02, p.n_head_log2, p.m0, p.m1);
+    ধ্রুৱ ভিন্ন slope = get_alibi_slope(p.max_bias, i02, p.n_head_log2, p.m0, p.m1);
 
-    float * buf_iw = (float *) dpct_local;
+    ভিন্ন * buf_iw = (ভিন্ন *) dpct_local;
 
     // shared memory buffer to cache values between iterations:
-    float *vals = use_shared ? buf_iw + sycl::max(nwarps, WARP_SIZE) : dst;
-    float max_val = sinks ? sinks[i02] : -INFINITY;
+    ভিন্ন *vals = use_shared ? buf_iw + sycl::max(nwarps, WARP_SIZE) : dst;
+    ভিন্ন max_val = sinks ? sinks[i02] : -INFINITY;
 #pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+    বাবে (পূর্ণাঙ্ক col0 = 0; col0 < ncols; col0 += block_size) {
+        ধ্রুৱ পূর্ণাঙ্ক col = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            break;
+        যদি (ncols_template == 0 && col >= ncols) {
+            ভঙ্গ;
         }
 
-        const float val = x[col]*p.scale + (mask ? slope*t2f32(mask[col]) : 0.0f);
+        ধ্রুৱ ভিন্ন val = x[col]*p.scale + (mask ? slope*t2f32(mask[col]) : 0.0f);
 
         vals[col] = val;
         max_val   = sycl::max(max_val, val);
@@ -104,113 +104,113 @@ static void soft_max_f32(const float *         x,
     // find the max value in the block
     max_val = warp_reduce_max<WARP_SIZE>(max_val);
 
-    if (block_size > WARP_SIZE) {
-        if (lane_id == 0) {
+    যদি (block_size > WARP_SIZE) {
+        যদি (lane_id == 0) {
             buf_iw[warp_id] = max_val;
         }
         item_ct1.barrier();
 
         max_val = -INFINITY;
-        for (int i = lane_id; i < nwarps; i += WARP_SIZE) {
+        বাবে (পূর্ণাঙ্ক i = lane_id; i < nwarps; i += WARP_SIZE) {
             max_val = sycl::max(max_val, buf_iw[i]);
         }
         max_val = warp_reduce_max<WARP_SIZE>(max_val);
     }
-    float tmp = 0.0f; // partial sum
+    ভিন্ন tmp = 0.0f; // partial sum
 
 #pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+    বাবে (পূর্ণাঙ্ক col0 = 0; col0 < ncols; col0 += block_size) {
+        ধ্রুৱ পূর্ণাঙ্ক col = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            break;
+        যদি (ncols_template == 0 && col >= ncols) {
+            ভঙ্গ;
         }
 
-        const float val = sycl::native::exp(sycl::max(vals[col] - max_val, -80.0f));
+        ধ্রুৱ ভিন্ন val = sycl::native::exp(sycl::max(vals[col] - max_val, -80.0f));
         tmp += val;
         vals[col] = val;
     }
     // find the sum of exps in the block
     tmp = warp_reduce_sum<WARP_SIZE>(tmp);
-    if (block_size > WARP_SIZE) {
+    যদি (block_size > WARP_SIZE) {
         item_ct1.barrier();
-        if (warp_id == 0) {
+        যদি (warp_id == 0) {
             buf_iw[lane_id] = 0.0f;
-            for (size_t i = 1; i < nreduce; i += 1) {
+            বাবে (size_t i = 1; i < nreduce; i += 1) {
                 buf_iw[lane_id + i * WARP_SIZE] = 0.f;
             }
         }
         item_ct1.barrier();
 
-        if (lane_id == 0) {
+        যদি (lane_id == 0) {
             buf_iw[warp_id] = tmp;
         }
         item_ct1.barrier();
 
         tmp = buf_iw[lane_id];
-        for (size_t i = 1; i < nreduce; i += 1) {
+        বাবে (size_t i = 1; i < nreduce; i += 1) {
             tmp += buf_iw[lane_id + i * WARP_SIZE];
         }
         tmp = warp_reduce_sum<WARP_SIZE>(tmp);
     }
-    if (sinks) {
+    যদি (sinks) {
         tmp += sycl::native::exp(sycl::max(sinks[i02] - max_val, -80.0f));
     }
-    const float inv_sum = 1.0f / tmp;
+    ধ্রুৱ ভিন্ন inv_sum = 1.0f / tmp;
 
 #pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+    বাবে (পূর্ণাঙ্ক col0 = 0; col0 < ncols; col0 += block_size) {
+        ধ্রুৱ পূর্ণাঙ্ক col = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            return;
+        যদি (ncols_template == 0 && col >= ncols) {
+            ঘূৰাই;
         }
 
         dst[col] = vals[col] * inv_sum;
     }
 }
 #ifdef __clang__
-#pragma clang diagnostic pop
+#pragma clang diagnostic বেৰ_কৰো
 #endif // __clang__
 
-static void soft_max_back_f32(const float *grad, const float *dstf, float *dst,
-                              const int ncols, const float scale) {
+স্থির শূন্য soft_max_back_f32(ধ্রুৱ ভিন্ন *grad, ধ্রুৱ ভিন্ন *dstf, ভিন্ন *dst,
+                              ধ্রুৱ পূর্ণাঙ্ক ncols, ধ্রুৱ ভিন্ন scale) {
     auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int tid      = item_ct1.get_local_id(2);
-    const int rowx     = item_ct1.get_group(2);
+    ধ্রুৱ পূর্ণাঙ্ক tid      = item_ct1.get_local_id(2);
+    ধ্রুৱ পূর্ণাঙ্ক rowx     = item_ct1.get_group(2);
 
     grad += int64_t(rowx)*ncols;
     dstf += int64_t(rowx)*ncols;
     dst  += int64_t(rowx)*ncols;
 
-    float dgf_dot = 0.0f; // dot product of dst from forward pass and gradients
+    ভিন্ন dgf_dot = 0.0f; // dot product of dst from forward pass and gradients
 
-    for (int col = tid; col < ncols; col += WARP_SIZE) {
+    বাবে (পূর্ণাঙ্ক col = tid; col < ncols; col += WARP_SIZE) {
         dgf_dot += dstf[col]*grad[col];
     }
 
     dgf_dot = warp_reduce_sum<WARP_SIZE>(dgf_dot);
 
-    for (int col = tid; col < ncols; col += WARP_SIZE) {
+    বাবে (পূর্ণাঙ্ক col = tid; col < ncols; col += WARP_SIZE) {
         dst[col] = scale * (grad[col] - dgf_dot) * dstf[col];
     }
 }
 
-template <int... Ns, typename T>
-static void launch_soft_max_kernels(const float *           x,
-                                    const T *               mask,
-                                    const float *           sinks,
-                                    float *                 dst,
-                                    const soft_max_params & p,
+template <পূর্ণাঙ্ক... Ns, typename T>
+স্থির শূন্য launch_soft_max_kernels(ধ্রুৱ ভিন্ন *           x,
+                                    ধ্রুৱ T *               mask,
+                                    ধ্রুৱ ভিন্ন *           sinks,
+                                    ভিন্ন *                 dst,
+                                    ধ্রুৱ soft_max_params & p,
                                     dpct::queue_ptr         stream,
                                     dpct::dim3              block_dims,
                                     dpct::dim3              block_nums,
                                     size_t                  nbytes_shared)
 {
-    auto launch_kernel = [=](auto I) -> bool {
-        constexpr int ncols = decltype(I)::value;
-        constexpr int block = (ncols > 1024 ? 1024 : ncols);
-        if (p.ncols == ncols) {
+    auto launch_kernel = [=](auto I) -> তার্কিক {
+        constexpr পূর্ণাঙ্ক ncols = decltype(I)::value;
+        constexpr পূর্ণাঙ্ক block = (ncols > 1024 ? 1024 : ncols);
+        যদি (p.ncols == ncols) {
             stream->submit([&](sycl::handler &cgh) {
                 sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
                     sycl::range<1>(nbytes_shared), cgh);
@@ -219,7 +219,7 @@ static void launch_soft_max_kernels(const float *           x,
                     sycl::nd_range<3>(block_nums * block_dims, block_dims),
                     [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(
                         WARP_SIZE)]] {
-                        soft_max_f32<true, ncols, block>(
+                        soft_max_f32<সঁচা, ncols, block>(
                             x, mask, sinks, dst, p,
                             dpct_local_acc_ct1
                                 .get_multi_ptr<sycl::access::decorated::no>()
@@ -227,14 +227,14 @@ static void launch_soft_max_kernels(const float *           x,
                         GGML_UNUSED(item_ct1);
                     });
             });
-            return true;
+            ঘূৰাই সঁচা;
         }
-        return false;
+        ঘূৰাই মিছা;
     };
 
     // unary fold over launch_kernel
-    if ((launch_kernel(std::integral_constant<int, Ns>{}) || ...)) {
-        return;
+    যদি ((launch_kernel(std::integral_constant<পূর্ণাঙ্ক, Ns>{}) || ...)) {
+        ঘূৰাই;
     }
 
     stream->submit([&](sycl::handler &cgh) {
@@ -245,7 +245,7 @@ static void launch_soft_max_kernels(const float *           x,
             sycl::nd_range<3>(block_nums * block_dims, block_dims),
             [=](sycl::nd_item<3> item_ct1)
                 [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    soft_max_f32<true, 0, 0>(
+                    soft_max_f32<সঁচা, 0, 0>(
                         x, mask, sinks, dst, p,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
@@ -256,41 +256,41 @@ static void launch_soft_max_kernels(const float *           x,
 }
 
 template <typename T>
-static void soft_max_f32_sycl(const float *x, const T *mask,
-                              const float *sinks, float *dst,
-                              const soft_max_params &params,
-                              dpct::queue_ptr stream, int device) {
-    int nth = WARP_SIZE;
-    int max_block_size = ggml_sycl_info().max_work_group_sizes[device];
-    const int64_t ncols_x = params.ncols;
+স্থির শূন্য soft_max_f32_sycl(ধ্রুৱ ভিন্ন *x, ধ্রুৱ T *mask,
+                              ধ্রুৱ ভিন্ন *sinks, ভিন্ন *dst,
+                              ধ্রুৱ soft_max_params &params,
+                              dpct::queue_ptr stream, পূর্ণাঙ্ক device) {
+    পূর্ণাঙ্ক nth = WARP_SIZE;
+    পূর্ণাঙ্ক max_block_size = ggml_sycl_info().max_work_group_sizes[device];
+    ধ্রুৱ int64_t ncols_x = params.ncols;
 
-    while (nth < ncols_x && nth < max_block_size) nth *= 2;
-    if (nth>max_block_size) nth = max_block_size;
+    যেতিয়ালৈ (nth < ncols_x && nth < max_block_size) nth *= 2;
+    যদি (nth>max_block_size) nth = max_block_size;
 
-    const dpct::dim3 block_dims(nth, 1, 1);
-    const dpct::dim3 block_nums(params.ne01, params.ne02, params.ne03);
-    const size_t nbytes_shared =
-        (GGML_PAD(ncols_x, WARP_SIZE) + WARP_SIZE) * sizeof(float);
+    ধ্রুৱ dpct::dim3 block_dims(nth, 1, 1);
+    ধ্রুৱ dpct::dim3 block_nums(params.ne01, params.ne02, params.ne03);
+    ধ্রুৱ size_t nbytes_shared =
+        (GGML_PAD(ncols_x, WARP_SIZE) + WARP_SIZE) * পরিমাণ(ভিন্ন);
 
-    const int id       = get_current_device_id();
-    const size_t smpbo = ggml_sycl_info().devices[id].smpbo;
+    ধ্রুৱ পূর্ণাঙ্ক id       = get_current_device_id();
+    ধ্রুৱ size_t smpbo = ggml_sycl_info().devices[id].smpbo;
 
-    if (nbytes_shared <= smpbo && ncols_x <= max_block_size) {
+    যদি (nbytes_shared <= smpbo && ncols_x <= max_block_size) {
         launch_soft_max_kernels<32, 64, 128, 256, 512, 1024, 2048, 4096>(
             x, mask, sinks, dst, params, stream, block_dims, block_nums,
             nbytes_shared);
-    } else {
-        const size_t nbytes_shared_low = WARP_SIZE * sizeof(float);
+    } অন্যথা {
+        ধ্রুৱ size_t nbytes_shared_নিচেৰ = WARP_SIZE * পরিমাণ(ভিন্ন);
 
         stream->submit([&](sycl::handler &cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
-                sycl::range<1>(nbytes_shared_low), cgh);
+                sycl::range<1>(nbytes_shared_নিচেৰ), cgh);
 
             cgh.parallel_for(
                 sycl::nd_range<3>(block_nums * block_dims, block_dims),
                 [=](sycl::nd_item<3> item_ct1)
                     [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    soft_max_f32<false, 0, 0>(
+                    soft_max_f32<মিছা, 0, 0>(
                         x, mask, sinks, dst, params,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
@@ -301,15 +301,15 @@ static void soft_max_f32_sycl(const float *x, const T *mask,
     }
 }
 
-static void soft_max_back_f32_sycl(const float *   grad,
-                                   const float *   dstf,
-                                   float *         dst,
-                                   const int       ncols,
-                                   const int       nrows,
-                                   const float     scale,
+স্থির শূন্য soft_max_back_f32_sycl(ধ্রুৱ ভিন্ন *   grad,
+                                   ধ্রুৱ ভিন্ন *   dstf,
+                                   ভিন্ন *         dst,
+                                   ধ্রুৱ পূর্ণাঙ্ক       ncols,
+                                   ধ্রুৱ পূর্ণাঙ্ক       nrows,
+                                   ধ্রুৱ ভিন্ন     scale,
                                    dpct::queue_ptr stream) {
-    const dpct::dim3 block_dims(WARP_SIZE, 1, 1);
-    const dpct::dim3 block_nums(nrows, 1, 1);
+    ধ্রুৱ dpct::dim3 block_dims(WARP_SIZE, 1, 1);
+    ধ্রুৱ dpct::dim3 block_nums(nrows, 1, 1);
 
     stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                          [=](sycl::nd_item<3> item_ct1) {
@@ -318,17 +318,17 @@ static void soft_max_back_f32_sycl(const float *   grad,
                          });
 }
 
-void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const ggml_tensor * src2 = dst->src[2];
+    ধ্রুৱ ggml_tensor * src0 = dst->src[0];
+    ধ্রুৱ ggml_tensor * src1 = dst->src[1];
+    ধ্রুৱ ggml_tensor * src2 = dst->src[2];
 
-    const float * src0_d = (const float *) src0->data;
-    const void  * src1_d = src1 ? (const void *) src1->data : nullptr;
-    const void  * src2_d = src2 ? (const void *) src2->data : nullptr;
-    float       *  dst_d = (float *) dst->data;
+    ধ্রুৱ ভিন্ন * src0_d = (ধ্রুৱ ভিন্ন *) src0->data;
+    ধ্রুৱ শূন্য  * src1_d = src1 ? (ধ্রুৱ শূন্য *) src1->data : nullptr;
+    ধ্রুৱ শূন্য  * src2_d = src2 ? (ধ্রুৱ শূন্য *) src2->data : nullptr;
+    ভিন্ন       *  dst_d = (ভিন্ন *) dst->data;
 
     dpct::queue_ptr stream = ctx.stream();
 
@@ -338,31 +338,31 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     // src1 contains mask and it is optional
     GGML_ASSERT(!src1 || src1->type == GGML_TYPE_F16 || src1->type == GGML_TYPE_F32);
 
-    const int64_t nrows_x = ggml_nrows(src0);
-    const int64_t nrows_y = src0->ne[1];
+    ধ্রুৱ int64_t nrows_x = ggml_nrows(src0);
+    ধ্রুৱ int64_t nrows_y = src0->ne[1];
 
-    const int64_t ne00 = src0->ne[0];
+    ধ্রুৱ int64_t ne00 = src0->ne[0];
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    ভিন্ন scale    = 1.0f;
+    ভিন্ন max_bias = 0.0f;
 
-    memcpy(&scale,    (const float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (const float *) dst->op_params + 1, sizeof(float));
+    memcpy(&scale,    (ধ্রুৱ ভিন্ন *) dst->op_params + 0, পরিমাণ(ভিন্ন));
+    memcpy(&max_bias, (ধ্রুৱ ভিন্ন *) dst->op_params + 1, পরিমাণ(ভিন্ন));
 
-    const bool use_f16 = (src1 && src1->type == GGML_TYPE_F16);
+    ধ্রুৱ তার্কিক use_f16 = (src1 && src1->type == GGML_TYPE_F16);
 
-    const int64_t nb11 = src1 ? src1->nb[1] : 1;
-    const int64_t nb12 = src1 ? src1->nb[2] : 1;
-    const int64_t nb13 = src1 ? src1->nb[3] : 1;
+    ধ্রুৱ int64_t nb11 = src1 ? src1->nb[1] : 1;
+    ধ্রুৱ int64_t nb12 = src1 ? src1->nb[2] : 1;
+    ধ্রুৱ int64_t nb13 = src1 ? src1->nb[3] : 1;
 
-    const int64_t ne12 = src1 ? src1->ne[2] : 1;
-    const int64_t ne13 = src1 ? src1->ne[3] : 1;
+    ধ্রুৱ int64_t ne12 = src1 ? src1->ne[2] : 1;
+    ধ্রুৱ int64_t ne13 = src1 ? src1->ne[3] : 1;
 
-    const uint32_t n_head      = src0->ne[2];
-    const uint32_t n_head_log2 = 1u << (uint32_t) floorf(log2f((float) n_head));
+    ধ্রুৱ uint32_t n_head      = src0->ne[2];
+    ধ্রুৱ uint32_t n_head_log2 = 1u << (uint32_t) floorf(log2f((ভিন্ন) n_head));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    ধ্রুৱ ভিন্ন m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
+    ধ্রুৱ ভিন্ন m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
 
 
     soft_max_params params = {};
@@ -385,24 +385,24 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     params.m0 = m0;
     params.m1 = m1;
 
-    if (use_f16) {
-        soft_max_f32_sycl(src0_d, (const sycl::half *)src1_d,
-                          (const float *)src2_d, dst_d, params, stream,
+    যদি (use_f16) {
+        soft_max_f32_sycl(src0_d, (ধ্রুৱ sycl::half *)src1_d,
+                          (ধ্রুৱ ভিন্ন *)src2_d, dst_d, params, stream,
                           ctx.device);
-    } else {
-        soft_max_f32_sycl(src0_d, (const float *)src1_d, (const float *)src2_d,
+    } অন্যথা {
+        soft_max_f32_sycl(src0_d, (ধ্রুৱ ভিন্ন *)src1_d, (ধ্রুৱ ভিন্ন *)src2_d,
                           dst_d, params, stream, ctx.device);
     }
 }
 
-void ggml_sycl_op_soft_max_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_op_soft_max_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    const ggml_tensor * src0 = dst->src[0]; // grad
-    const ggml_tensor * src1 = dst->src[1]; // forward pass output
+    ধ্রুৱ ggml_tensor * src0 = dst->src[0]; // grad
+    ধ্রুৱ ggml_tensor * src1 = dst->src[1]; // forward pass output
 
-    const float * src0_d = (const float *) src0->data;
-    const float * src1_d = (const float *) src1->data;
-    float       * dst_d  = (float       *) dst->data;
+    ধ্রুৱ ভিন্ন * src0_d = (ধ্রুৱ ভিন্ন *) src0->data;
+    ধ্রুৱ ভিন্ন * src1_d = (ধ্রুৱ ভিন্ন *) src1->data;
+    ভিন্ন       * dst_d  = (ভিন্ন       *) dst->data;
 
     dpct::queue_ptr stream = ctx.stream();
 
@@ -410,14 +410,14 @@ void ggml_sycl_op_soft_max_back(ggml_backend_sycl_context & ctx, ggml_tensor * d
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    const int64_t ncols = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    ধ্রুৱ int64_t ncols = src0->ne[0];
+    ধ্রুৱ int64_t nrows = ggml_nrows(src0);
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    ভিন্ন scale    = 1.0f;
+    ভিন্ন max_bias = 0.0f;
 
-    memcpy(&scale,    (const float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (const float *) dst->op_params + 1, sizeof(float));
+    memcpy(&scale,    (ধ্রুৱ ভিন্ন *) dst->op_params + 0, পরিমাণ(ভিন্ন));
+    memcpy(&max_bias, (ধ্রুৱ ভিন্ন *) dst->op_params + 1, পরিমাণ(ভিন্ন));
 
     GGML_ASSERT(max_bias == 0.0f);
 

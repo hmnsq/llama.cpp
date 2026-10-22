@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from glob import glob
-import os
+তঃ glob আনযন glob
+আনযন os
 
 HEAD_SIZES_KQ = [40, 64, 72, 80, 96, 112, 128, 192, 256, 320, 512, 576]
 
@@ -65,55 +65,55 @@ DECL_MMF_CASE({type});
 
 
 def get_short_name(long_quant_name):
-    return long_quant_name.replace("GGML_TYPE_", "").lower()
+    ঘূৰাই long_quant_name.replace("GGML_TYPE_", "").lower()
 
 
-for filename in glob("*.cu"):
+বাবে filename অন্তঃ glob("*.cu"):
     os.remove(filename)
 
-for head_size_kq in HEAD_SIZES_KQ:
+বাবে head_size_kq অন্তঃ HEAD_SIZES_KQ:
     head_size_v = HEAD_SIZES_V_OVERRIDE.get(head_size_kq, head_size_kq)
-    with open(f"fattn-tile-instance-dkq{head_size_kq}-dv{head_size_v}.cu", "w") as f:
-        f.write(SOURCE_FATTN_TILE.format(head_size_kq=head_size_kq, head_size_v=head_size_v))
+    with open(f"fattn-tile-instance-dkq{head_size_kq}-dv{head_size_v}.cu", "w") ইৱ f:
+        f.লিখ(SOURCE_FATTN_TILE.format(head_size_kq=head_size_kq, head_size_v=head_size_v))
 
-for type_k in TYPES_KV:
-    for type_v in TYPES_KV:
-        with open(f"fattn-vec-instance-{get_short_name(type_k)}-{get_short_name(type_v)}.cu", "w") as f:
-            f.write(SOURCE_FATTN_VEC.format(type_k=type_k, type_v=type_v))
+বাবে type_k অন্তঃ TYPES_KV:
+    বাবে type_v অন্তঃ TYPES_KV:
+        with open(f"fattn-vec-instance-{get_short_name(type_k)}-{get_short_name(type_v)}.cu", "w") ইৱ f:
+            f.লিখ(SOURCE_FATTN_VEC.format(type_k=type_k, type_v=type_v))
 
-for ncols in [8, 16, 32, 64]:
-    for ncols2 in [1, 2, 4, 8, 16, 32]:
-        if ncols2 > ncols:
-            continue
+বাবে ncols অন্তঃ [8, 16, 32, 64]:
+    বাবে ncols2 অন্তঃ [1, 2, 4, 8, 16, 32]:
+        যদি ncols2 > ncols:
+            অনুৱর্ত
         ncols1 = ncols // ncols2
-        with open(f"fattn-mma-f16-instance-ncols1_{ncols1}-ncols2_{ncols2}.cu", "w") as f:
-            f.write(SOURCE_FATTN_MMA_START)
+        with open(f"fattn-mma-f16-instance-ncols1_{ncols1}-ncols2_{ncols2}.cu", "w") ইৱ f:
+            f.লিখ(SOURCE_FATTN_MMA_START)
 
-            for head_size_kq in HEAD_SIZES_KQ:
-                if head_size_kq == 40:
-                    continue
-                if head_size_kq == 72:
-                    continue
+            বাবে head_size_kq অন্তঃ HEAD_SIZES_KQ:
+                যদি head_size_kq == 40:
+                    অনুৱর্ত
+                যদি head_size_kq == 72:
+                    অনুৱর্ত
                 # Skip compilation of unused ncols2 values for niche head sizes:
-                if head_size_kq == 192 and ncols2 not in (8, 16): # MiMo-V2.5
-                    continue
-                if head_size_kq == 320 and ncols2 != 32: # Mistral Small 4
-                    continue
-                if head_size_kq == 512 and ncols2 not in (2, 4, 8): # Gemma 4 (+ MTP)
-                    continue
-                if head_size_kq == 576 and ncols2 not in (4, 16, 32): # Deepseek, GLM 4.7 Flash
-                    continue
-                if head_size_kq not in (192, 320, 576) and ncols2 in (16, 32):
-                    continue
+                যদি head_size_kq == 192 আৰু ncols2 নহয় অন্তঃ (8, 16): # MiMo-V2.5
+                    অনুৱর্ত
+                যদি head_size_kq == 320 আৰু ncols2 != 32: # Mistral Small 4
+                    অনুৱর্ত
+                যদি head_size_kq == 512 আৰু ncols2 নহয় অন্তঃ (2, 4, 8): # Gemma 4 (+ MTP)
+                    অনুৱর্ত
+                যদি head_size_kq == 576 আৰু ncols2 নহয় অন্তঃ (4, 16, 32): # Deepseek, GLM 4.7 Flash
+                    অনুৱর্ত
+                যদি head_size_kq নহয় অন্তঃ (192, 320, 576) আৰু ncols2 অন্তঃ (16, 32):
+                    অনুৱর্ত
                 head_size_v = HEAD_SIZES_V_OVERRIDE.get(head_size_kq, head_size_kq)
-                f.write(SOURCE_FATTN_MMA_CASE.format(ncols1=ncols1, ncols2=ncols2, head_size_kq=head_size_kq, head_size_v=head_size_v))
+                f.লিখ(SOURCE_FATTN_MMA_CASE.format(ncols1=ncols1, ncols2=ncols2, head_size_kq=head_size_kq, head_size_v=head_size_v))
 
-for type in TYPES_MMQ:
-    with open(f"mmq-instance-{get_short_name(type)}.cu", "w") as f:
-        f.write(SOURCE_MMQ.format(type=type))
-        if type in TYPES_MMQ_W4A4:
-            f.write(SOURCE_MMQ_W4A4.format(type=type))
+বাবে type অন্তঃ TYPES_MMQ:
+    with open(f"mmq-instance-{get_short_name(type)}.cu", "w") ইৱ f:
+        f.লিখ(SOURCE_MMQ.format(type=type))
+        যদি type অন্তঃ TYPES_MMQ_W4A4:
+            f.লিখ(SOURCE_MMQ_W4A4.format(type=type))
 
-for type in range(1, 17):
-    with open(f"mmf-instance-ncols_{type}.cu", "w") as f:
-        f.write(SOURCE_MMF.format(type=type))
+বাবে type অন্তঃ range(1, 17):
+    with open(f"mmf-instance-ncols_{type}.cu", "w") ইৱ f:
+        f.লিখ(SOURCE_MMF.format(type=type))

@@ -1,9 +1,9 @@
-#include "virtgpu-forward-impl.h"
+#অন্তর্ভাৱ "virtgpu-forward-impl.h"
 
-static long long current_time_ms() {
+স্থির long long current_time_ms() {
     timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);  // Use CLOCK_MONOTONIC for elapsed time
-    return (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    ঘূৰাই (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
 ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
@@ -18,16 +18,16 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
 
     virtgpu_shmem   temp_shmem;  // Local storage for large buffers
     virtgpu_shmem * shmem              = &temp_shmem;
-    bool            using_shared_shmem = false;
+    তার্কিক            using_shared_shmem = মিছা;
 
-    if (cgraph_size <= gpu->data_shmem.mmap_size) {
+    যদি (cgraph_size <= gpu->data_shmem.mmap_size) {
         // Lock mutex before using shared data_shmem buffer
-        if (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
+        যদি (mtx_lock(&gpu->data_shmem_mutex) != thrd_success) {
             GGML_ABORT(GGML_VIRTGPU "%s: Failed to lock data_shmem mutex", __func__);
         }
-        using_shared_shmem = true;
+        using_shared_shmem = সঁচা;
         shmem              = &gpu->data_shmem;
-    } else if (virtgpu_shmem_create(gpu, cgraph_size, shmem)) {
+    } অন্যথা যদি (virtgpu_shmem_create(gpu, cgraph_size, shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the guest-host shared buffer", __func__);
     }
 
@@ -35,7 +35,7 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
 
     apir_encode_size_t(encoder, &cgraph_size);
 
-    char *       shmem_data    = (char *) shmem->mmap_ptr;
+    ৱর্ণ *       shmem_data    = (ৱর্ণ *) shmem->mmap_ptr;
     apir_encoder secondary_enc = apir_new_encoder(shmem_data, cgraph_size);
 
     apir_encode_cgraph_data(&secondary_enc, cgraph_data);
@@ -48,11 +48,11 @@ ggml_status apir_backend_graph_compute(virtgpu * gpu, ggml_cgraph * cgraph) {
     remote_call_finish(gpu, encoder, decoder);
 
     // Unlock mutex before cleanup
-    if (using_shared_shmem) {
+    যদি (using_shared_shmem) {
         mtx_unlock(&gpu->data_shmem_mutex);
-    } else {
+    } অন্যথা {
         virtgpu_shmem_destroy(gpu, shmem);
     }
 
-    return status;
+    ঘূৰাই status;
 }

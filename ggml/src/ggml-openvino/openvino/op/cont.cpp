@@ -1,34 +1,34 @@
 
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#অন্তর্ভাৱ "../node_context.h"
+#অন্তর্ভাৱ "../op_table.h"
+#অন্তর্ভাৱ "../utils.h"
 
-#include <memory>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
+#অন্তর্ভাৱ <memory>
+#অন্তর্ভাৱ <openvino/op/reshape.hpp>
+#অন্তর্ভাৱ <openvino/op/slice.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+নামাকাশ ov {
+নামাকাশ frontend {
+নামাকাশ ggml {
+নামাকাশ op {
 
-OutputVector translate_cont(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_cont(ধ্রুৱ গ্ৰন্থি_Context & context) {
+    অঙ্ক_inputs_check(context, 1, 1);
 
-    auto src_shape = context.get_input_shape(0).to_shape();
+    auto src_shape = context.get_প্ৰবেশ_shape(0).to_shape();
     auto dst_shape = context.get_output_shape().to_shape();
 
-    if (context.get_op_dynamic_dim() != -1) {
+    যদি (context.get_op_dynamic_dim() != -1) {
         dst_shape[3 - context.get_op_dynamic_dim()] = -1;
     }
 
-    auto input = process_view_input_new(context, 0);
+    auto প্ৰবেশ = process_view_প্ৰবেশ_new(context, 0);
 
     ov::Output<Node> res;
     res = std::make_shared<ov::op::v1::Reshape>(
-        input, ov::op::v0::Constant::create(ov::element::i64, {dst_shape.size()}, dst_shape), false);
+        প্ৰবেশ, ov::op::v0::Constant::create(ov::element::i64, {dst_shape.size()}, dst_shape), মিছা);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ঘূৰাই rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

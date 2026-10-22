@@ -7,11 +7,11 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#অন্যথা
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
-#include <filesystem>
+#অন্তর্ভাৱ <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -19,13 +19,13 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+সংরচনা dl_handle_deleter {
+    শূন্য operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+স্থির অন্তঃস্থ dl_handle * dl_load_library(ধ্রুৱ fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -34,46 +34,46 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    ঘূৰাই handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
+স্থির অন্তঃস্থ শূন্য * dl_get_sym(dl_handle * handle, ধ্রুৱ ৱর্ণ * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    শূন্য * p = (শূন্য *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    ঘূৰাই p;
 }
 
-static inline const char * dl_error() {
-    return "";
+স্থির অন্তঃস্থ ধ্রুৱ ৱর্ণ * dl_error() {
+    ঘূৰাই "";
 }
 
-#else
+#অন্যথা
 
-using dl_handle = void;
+using dl_handle = শূন্য;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+সংরচনা dl_handle_deleter {
+    শূন্য operator()(শূন্য * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+স্থির অন্তঃস্থ dl_handle * dl_load_library(ধ্রুৱ fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    ঘূৰাই handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+স্থির অন্তঃস্থ শূন্য * dl_get_sym(dl_handle * handle, ধ্রুৱ ৱর্ণ * name) {
+    ঘূৰাই dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+স্থির অন্তঃস্থ ধ্রুৱ ৱর্ণ * dl_error() {
+    ধ্রুৱ ৱর্ণ *rslt = dlerror();
+    ঘূৰাই rslt != nullptr ? rslt : "";
 }
 
 #endif

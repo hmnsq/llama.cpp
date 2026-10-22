@@ -1,50 +1,50 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#অন্তর্ভাৱ "../node_context.h"
+#অন্তর্ভাৱ "../op_table.h"
+#অন্তর্ভাৱ "../utils.h"
 
-#include <openvino/op/avg_pool.hpp>
-#include <openvino/op/max_pool.hpp>
-#include <openvino/op/convert.hpp>
+#অন্তর্ভাৱ <openvino/op/avg_pool.hpp>
+#অন্তর্ভাৱ <openvino/op/max_pool.hpp>
+#অন্তর্ভাৱ <openvino/op/convert.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+নামাকাশ ov {
+নামাকাশ frontend {
+নামাকাশ ggml {
+নামাকাশ op {
 
-OutputVector translate_pool_2d(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
-    const int32_t * params = context.get_output_op_params();
+OutputVector translate_pool_2d(ধ্রুৱ গ্ৰন্থি_Context & context) {
+    অঙ্ক_inputs_check(context, 1, 1);
+    ধ্রুৱ int32_t * params = context.get_output_op_params();
 
-    const int k0 = params[1];
-    const int k1 = params[2];
-    const int s0 = params[3];
-    const int s1 = params[4];
-    const int p0 = params[5];
-    const int p1 = params[6];
+    ধ্রুৱ পূর্ণাঙ্ক k0 = params[1];
+    ধ্রুৱ পূর্ণাঙ্ক k1 = params[2];
+    ধ্রুৱ পূর্ণাঙ্ক s0 = params[3];
+    ধ্রুৱ পূর্ণাঙ্ক s1 = params[4];
+    ধ্রুৱ পূর্ণাঙ্ক p0 = params[5];
+    ধ্রুৱ পূর্ণাঙ্ক p1 = params[6];
 
-    const int op_case = context.get_op_case();
-    ov::Output<Node> input = context.get_input(0);
+    ধ্রুৱ পূর্ণাঙ্ক op_case = context.get_op_case();
+    ov::Output<Node> প্ৰবেশ = context.get_প্ৰবেশ(0);
     ov::Strides strides{static_cast<size_t>(s1), static_cast<size_t>(s0)};
     ov::Shape pads_begin{static_cast<size_t>(p1), static_cast<size_t>(p0)};
     ov::Shape pads_end{static_cast<size_t>(p1), static_cast<size_t>(p0)};
     ov::Shape kernel{static_cast<size_t>(k1), static_cast<size_t>(k0)};
     ov::Output<Node> res;
 
-    switch (op_case) {
-    case 1:  // GGML_OP_POOL_MAX
+    ৱিকল্প (op_case) {
+    পক্ষ 1:  // GGML_OP_POOL_MAX
     {
-        res = std::make_shared<ov::op::v1::MaxPool>(input, strides, pads_begin, pads_end, kernel);
-        break;
+        res = std::make_shared<ov::op::v1::MaxPool>(প্ৰবেশ, strides, pads_begin, pads_end, kernel);
+        ভঙ্গ;
     }
-    case 2:  // GGML_OP_POOL_AVG
+    পক্ষ 2:  // GGML_OP_POOL_AVG
     {
-        res = std::make_shared<ov::op::v1::AvgPool>(input, strides, pads_begin, pads_end, kernel, false);
-        break;
+        res = std::make_shared<ov::op::v1::AvgPool>(প্ৰবেশ, strides, pads_begin, pads_end, kernel, মিছা);
+        ভঙ্গ;
     }
-    default:
-        break;
+    স্ৱভাৱ:
+        ভঙ্গ;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ঘূৰাই rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

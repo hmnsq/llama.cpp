@@ -1,42 +1,42 @@
 #ifndef HVX_POW_H
 #define HVX_POW_H
 
-#include <math.h>
-#include "hvx-base.h"
-#include "hvx-exp.h"
-#include "hvx-log.h"
+#অন্তর্ভাৱ <math.h>
+#অন্তর্ভাৱ "hvx-base.h"
+#অন্তর্ভাৱ "hvx-exp.h"
+#অন্তর্ভাৱ "hvx-log.h"
 
 // Approximates base^exponent element-wise for float vectors.
 // base must be a positive constant. exponent is an HVX f32 vector.
 // Uses base^x = exp(x * ln(base)).
-static inline HVX_Vector hvx_vec_pow_const_base_f32(float base, HVX_Vector exponent) {
-    float ln_base = logf(base);
+স্থির অন্তঃস্থ HVX_Vector hvx_vec_pow_const_base_f32(ভিন্ন base, HVX_Vector exponent) {
+    ভিন্ন ln_base = logf(base);
     HVX_Vector ln_base_v = hvx_vec_splat_f32(ln_base);
     HVX_Vector x = hvx_vec_mul_f32_f32(exponent, ln_base_v);
 
-    static const float kInf    = INFINITY;
-    static const float kMaxExp = 88.7228f;
+    স্থির ধ্রুৱ ভিন্ন kInf    = INFINITY;
+    স্থির ধ্রুৱ ভিন্ন kMaxExp = 88.7228f;
 
-    const HVX_Vector max_exp = hvx_vec_splat_f32(kMaxExp);
-    const HVX_Vector inf     = hvx_vec_splat_f32(kInf);
+    ধ্রুৱ HVX_Vector max_exp = hvx_vec_splat_f32(kMaxExp);
+    ধ্রুৱ HVX_Vector inf     = hvx_vec_splat_f32(kInf);
 
-    return hvx_vec_exp_f32_guard(x, max_exp, inf);
+    ঘূৰাই hvx_vec_exp_f32_guard(x, max_exp, inf);
 }
 
 // Approximates base^exponent element-wise for float vectors.
 // base and exponent are HVX f32 vectors. base elements must be positive.
 // Uses base^exponent = exp(exponent * ln(base)).
-static inline HVX_Vector hvx_vec_pow_f32(HVX_Vector base, HVX_Vector exponent) {
+স্থির অন্তঃস্থ HVX_Vector hvx_vec_pow_f32(HVX_Vector base, HVX_Vector exponent) {
     HVX_Vector ln_base = hvx_vec_log_f32(base);
     HVX_Vector x = hvx_vec_mul_f32_f32(exponent, ln_base);
 
-    static const float kInf    = INFINITY;
-    static const float kMaxExp = 88.7228f;
+    স্থির ধ্রুৱ ভিন্ন kInf    = INFINITY;
+    স্থির ধ্রুৱ ভিন্ন kMaxExp = 88.7228f;
 
-    const HVX_Vector max_exp = hvx_vec_splat_f32(kMaxExp);
-    const HVX_Vector inf     = hvx_vec_splat_f32(kInf);
+    ধ্রুৱ HVX_Vector max_exp = hvx_vec_splat_f32(kMaxExp);
+    ধ্রুৱ HVX_Vector inf     = hvx_vec_splat_f32(kInf);
 
-    return hvx_vec_exp_f32_guard(x, max_exp, inf);
+    ঘূৰাই hvx_vec_exp_f32_guard(x, max_exp, inf);
 }
 
 #endif /* HVX_POW_H */

@@ -1,76 +1,76 @@
-#include "amx.h"
-#include "common.h"
-#include "mmq.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "traits.h"
+#অন্তর্ভাৱ "amx.h"
+#অন্তর্ভাৱ "common.h"
+#অন্তর্ভাৱ "mmq.h"
+#অন্তর্ভাৱ "ggml-backend-impl.h"
+#অন্তর্ভাৱ "ggml-backend.h"
+#অন্তর্ভাৱ "ggml-impl.h"
+#অন্তর্ভাৱ "ggml-cpu.h"
+#অন্তর্ভাৱ "traits.h"
 
-#if defined(__linux__)
-#include <sys/syscall.h>
-#include <unistd.h>
+#যদি defined(__linux__)
+#অন্তর্ভাৱ <sys/syscall.h>
+#অন্তর্ভাৱ <unistd.h>
 #endif
 
-#include <cstdlib>
-#include <cstring>
-#include <memory>
+#অন্তর্ভাৱ <cstdlib>
+#অন্তর্ভাৱ <cstring>
+#অন্তর্ভাৱ <memory>
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#যদি defined(__AMX_INT8__) && defined(__AVX512VNNI__)
 
 // AMX type_trais
-namespace ggml::cpu::amx {
-class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
+নামাকাশ ggml::cpu::amx {
+শ্ৰেণী tensor_traits : সার্ৱজনিক ggml::cpu::tensor_traits {
+    তার্কিক work_size(পূর্ণাঙ্ক /* n_threads */, ধ্রুৱ সংরচনা ggml_tensor * op, size_t & size) override {
         size = ggml_backend_amx_desired_wsize(op);
-        return true;
+        ঘূৰাই সঁচা;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
+    তার্কিক compute_forward(সংরচনা ggml_compute_params * params, সংরচনা ggml_tensor * op) override {
+        যদি (op->op == GGML_OP_MUL_MAT) {
             ggml_backend_amx_mul_mat(params, op);
-            return true;
+            ঘূৰাই সঁচা;
         }
-        return false;
+        ঘূৰাই মিছা;
     }
 };
 
-static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
-    static tensor_traits traits;
-    return &traits;
+স্থির ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, সংরচনা ggml_tensor *) {
+    স্থির tensor_traits traits;
+    ঘূৰাই &traits;
 }
 }  // namespace ggml::cpu::amx
 
 // AMX buffer interface
-static void ggml_backend_amx_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    free(buffer->context);
+স্থির শূন্য ggml_backend_amx_buffer_free_buffer(ggml_backend_buffer_t buffer) {
+    মুক্ত(buffer->context);
 }
 
-static void * ggml_backend_amx_buffer_get_base(ggml_backend_buffer_t buffer) {
-    return (void *) (buffer->context);
+স্থির শূন্য * ggml_backend_amx_buffer_get_base(ggml_backend_buffer_t buffer) {
+    ঘূৰাই (শূন্য *) (buffer->context);
 }
 
-static enum ggml_status ggml_backend_amx_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    tensor->extra = (void *) ggml::cpu::amx::get_tensor_traits(buffer, tensor);
+স্থির গণনা ggml_status ggml_backend_amx_buffer_init_tensor(ggml_backend_buffer_t buffer, সংরচনা ggml_tensor * tensor) {
+    tensor->extra = (শূন্য *) ggml::cpu::amx::get_tensor_traits(buffer, tensor);
 
     GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    ঘূৰাই GGML_STATUS_SUCCESS;
 }
 
-static void ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
+স্থির শূন্য ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, সংরচনা ggml_tensor * tensor,
                                                   uint8_t value, size_t offset, size_t size) {
-    memset((char *) tensor->data + offset, value, size);
+    memset((ৱর্ণ *) tensor->data + offset, value, size);
 
     GGML_UNUSED(buffer);
 }
 
-static void ggml_backend_amx_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                               const void * data, size_t offset, size_t size) {
-    if (qtype_has_amx_kernels(tensor->type)) {
+স্থির শূন্য ggml_backend_amx_buffer_set_tensor(ggml_backend_buffer_t buffer, সংরচনা ggml_tensor * tensor,
+                                               ধ্রুৱ শূন্য * data, size_t offset, size_t size) {
+    যদি (qtype_has_amx_kernels(tensor->type)) {
         GGML_LOG_DEBUG("%s: amx repack tensor %s of type %s\n", __func__, tensor->name, ggml_type_name(tensor->type));
         ggml_backend_amx_convert_weight(tensor, data, offset, size);
-    } else {
-        memcpy((char *) tensor->data + offset, data, size);
+    } অন্যথা {
+        memcpy((ৱর্ণ *) tensor->data + offset, data, size);
     }
 
     GGML_UNUSED(buffer);
@@ -100,11 +100,11 @@ static bool ggml_backend_amx_buffer_cpy_tensor(ggml_backend_buffer_t buffer, con
 }
 */
 
-static void ggml_backend_amx_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
+স্থির শূন্য ggml_backend_amx_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
     memset(buffer->context, value, buffer->size);
 }
 
-static ggml_backend_buffer_i ggml_backend_amx_buffer_interface = {
+স্থির ggml_backend_buffer_i ggml_backend_amx_buffer_interface = {
     /* .free_buffer     = */ ggml_backend_amx_buffer_free_buffer,
     /* .get_base        = */ ggml_backend_amx_buffer_get_base,
     /* .init_tensor     = */ ggml_backend_amx_buffer_init_tensor,
@@ -118,90 +118,90 @@ static ggml_backend_buffer_i ggml_backend_amx_buffer_interface = {
     /* .reset           = */ nullptr,
 };
 
-static const char * ggml_backend_amx_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "AMX";
+স্থির ধ্রুৱ ৱর্ণ * ggml_backend_amx_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
+    ঘূৰাই "AMX";
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_t ggml_backend_amx_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    void * data = ggml_aligned_malloc(size);
-    if (data == NULL) {
+স্থির ggml_backend_buffer_t ggml_backend_amx_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
+    শূন্য * data = ggml_aligned_malloc(size);
+    যদি (data == রিক্ত) {
         fprintf(stderr, "%s: failed to allocate buffer of size %zu\n", __func__, size);
-        return NULL;
+        ঘূৰাই রিক্ত;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
+    ঘূৰাই ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
 }
 
-static size_t ggml_backend_amx_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+স্থির size_t ggml_backend_amx_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
+    ঘূৰাই TENSOR_ALIGNMENT;
 
     GGML_UNUSED(buft);
 }
 
-namespace ggml::cpu::amx {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+নামাকাশ ggml::cpu::amx {
+শ্ৰেণী extra_buffer_type : ggml::cpu::extra_buffer_type {
+    তার্কিক supports_op(ggml_backend_dev_t, ধ্রুৱ সংরচনা ggml_tensor * op) override {
+        যদি (op->op != GGML_OP_MUL_MAT) {
+            ঘূৰাই মিছা;
         }
         auto * src0 = op->src[0];
         auto * src1 = op->src[1];
 
-        if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
-            return false;
+        যদি (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
+            ঘূৰাই মিছা;
         }
-        if (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
-            return false;
+        যদি (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
+            ঘূৰাই মিছা;
         }
-        if (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
-            return false;
+        যদি (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
+            ঘূৰাই মিছা;
         }
-        if (op->ne[0] % (TILE_N * 2)) {
-            return false;
+        যদি (op->ne[0] % (TILE_N * 2)) {
+            ঘূৰাই মিছা;
         }
-        int alignment;
-        switch (src0->type) {
-            case GGML_TYPE_Q4_0:
-            case GGML_TYPE_Q4_1:
-            case GGML_TYPE_Q8_0:
+        পূর্ণাঙ্ক alignment;
+        ৱিকল্প (src0->type) {
+            পক্ষ GGML_TYPE_Q4_0:
+            পক্ষ GGML_TYPE_Q4_1:
+            পক্ষ GGML_TYPE_Q8_0:
                 alignment = TILE_K;
-                break;
-            case GGML_TYPE_Q4_K:
-            case GGML_TYPE_Q5_K:
-            case GGML_TYPE_Q6_K:
-            case GGML_TYPE_IQ4_XS:
+                ভঙ্গ;
+            পক্ষ GGML_TYPE_Q4_K:
+            পক্ষ GGML_TYPE_Q5_K:
+            পক্ষ GGML_TYPE_Q6_K:
+            পক্ষ GGML_TYPE_IQ4_XS:
                 alignment = 256; // QK_K
-                break;
-            case GGML_TYPE_F16:
+                ভঙ্গ;
+            পক্ষ GGML_TYPE_F16:
                 alignment = 16;
-                break;
-            default:
-                return false;
+                ভঙ্গ;
+            স্ৱভাৱ:
+                ঘূৰাই মিছা;
         }
-        if (src0->ne[0] % alignment) {
-            return false;
+        যদি (src0->ne[0] % alignment) {
+            ঘূৰাই মিছা;
         }
-        if (src1->type != GGML_TYPE_F32) {
-            return false;
+        যদি (src1->type != GGML_TYPE_F32) {
+            ঘূৰাই মিছা;
         }
-        return true;
+        ঘূৰাই সঁচা;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
+    ggml::cpu::tensor_traits * get_tensor_traits(ধ্রুৱ সংরচনা ggml_tensor * op) override {
+        যদি (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
             op->src[0]->buffer->buft == ggml_backend_amx_buffer_type()) {
-            return (ggml::cpu::tensor_traits *) op->src[0]->extra;
+            ঘূৰাই (ggml::cpu::tensor_traits *) op->src[0]->extra;
         }
 
-        return nullptr;
+        ঘূৰাই nullptr;
     }
 };
 }  // namespace ggml::cpu::amx
 
-static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_amx_get_alloc_size(tensor);
+স্থির size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, ধ্রুৱ ggml_tensor * tensor) {
+    ঘূৰাই ggml_backend_amx_get_alloc_size(tensor);
 
     GGML_UNUSED(buft);
 }
@@ -211,22 +211,22 @@ static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_ty
 #define XFEATURE_XTILECFG       17
 #define XFEATURE_XTILEDATA      18
 
-static bool ggml_amx_init() {
-#if defined(__linux__)
-    if (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
+স্থির তার্কিক ggml_amx_init() {
+#যদি defined(__linux__)
+    যদি (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
         fprintf(stderr, "AMX is not ready to be used!\n");
-        return false;
+        ঘূৰাই মিছা;
     }
-    return true;
-#elif defined(_WIN32)
-    return true;
-#else
-    return false;
+    ঘূৰাই সঁচা;
+#নোচেদ্যদি defined(_WIN32)
+    ঘূৰাই সঁচা;
+#অন্যথা
+    ঘূৰাই মিছা;
 #endif
 }
 
 ggml_backend_buffer_type_t ggml_backend_amx_buffer_type() {
-    static struct ggml_backend_buffer_type ggml_backend_buffer_type_amx = {
+    স্থির সংরচনা ggml_backend_buffer_type ggml_backend_buffer_type_amx = {
         /* .iface = */ {
                         /* .get_name            = */ ggml_backend_amx_buffer_type_get_name,
                         /* .alloc_buffer        = */ ggml_backend_amx_buffer_type_alloc_buffer,
@@ -234,18 +234,18 @@ ggml_backend_buffer_type_t ggml_backend_amx_buffer_type() {
                         /* .get_alignment       = */ ggml_backend_amx_buffer_type_get_alignment,
                         /* .get_max_size        = */ nullptr,  // defaults to SIZE_MAX
                         /* .get_alloc_size      = */ ggml_backend_amx_buffer_type_get_alloc_size,
-                        /* .get_alloc_size_n    = */ NULL,
+                        /* .get_alloc_size_n    = */ রিক্ত,
                         /* .is_host             = */ nullptr,
                         },
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
-        /* .context = */ new ggml::cpu::amx::extra_buffer_type(),
+        /* .context = */ নূতন ggml::cpu::amx::extra_buffer_type(),
     };
 
-    if (!ggml_amx_init()) {
-        return nullptr;
+    যদি (!ggml_amx_init()) {
+        ঘূৰাই nullptr;
     }
 
-    return &ggml_backend_buffer_type_amx;
+    ঘূৰাই &ggml_backend_buffer_type_amx;
 }
 
 #endif  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)

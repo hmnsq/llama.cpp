@@ -1,10 +1,10 @@
 #pragma once
 
-#include <musa_runtime.h>
-#include <musa.h>
-#include <mublas.h>
-#include <musa_bf16.h>
-#include <musa_fp16.h>
+#অন্তর্ভাৱ <musa_runtime.h>
+#অন্তর্ভাৱ <musa.h>
+#অন্তর্ভাৱ <mublas.h>
+#অন্তর্ভাৱ <musa_bf16.h>
+#অন্তর্ভাৱ <musa_fp16.h>
 
 #ifdef __MUSA_ARCH__
 #define __CUDA_ARCH__ 1300 // GGML_CUDA_CC_RUBIN
@@ -18,7 +18,7 @@
 #define CUBLAS_OP_N MUBLAS_OP_N
 #define CUBLAS_OP_T MUBLAS_OP_T
 #define CUBLAS_DEFAULT_MATH MUBLAS_DEFAULT_MATH
-#define CUBLAS_SIDE_RIGHT MUBLAS_SIDE_RIGHT
+#define CUBLAS_SIDE_ডান MUBLAS_SIDE_ডান
 #define CUBLAS_FILL_MODE_UPPER MUBLAS_FILL_MODE_UPPER
 #define CUBLAS_DIAG_NON_UNIT MUBLAS_DIAG_NON_UNIT
 #define CUBLAS_STATUS_SUCCESS MUBLAS_STATUS_SUCCESS
@@ -63,7 +63,7 @@
 #define cudaFree musaFree
 #define cudaFreeHost musaFreeHost
 #define cudaGetDevice musaGetDevice
-#define cudaGetDeviceCount musaGetDeviceCount
+#define cuda_Get_Device_গুনতি musa_Get_Device_গুনতি
 #define cudaGetDeviceProperties musaGetDeviceProperties
 #define cudaGetErrorString musaGetErrorString
 #define cudaGetLastError musaGetLastError
@@ -140,15 +140,15 @@
 #define cudaGraphExecUpdateResult musaGraphExecUpdateResult
 #define cudaGraphGetNodes musaGraphGetNodes
 #define cudaGraphInstantiate musaGraphInstantiate
-#define cudaGraphKernelNodeGetParams musaGraphKernelNodeGetParams
-#define cudaGraphKernelNodeSetParams musaGraphKernelNodeSetParams
+#define cuda_Graph_Kernel_গ্ৰন্থি_Get_Params musa_Graph_Kernel_গ্ৰন্থি_Get_Params
+#define cuda_Graph_Kernel_গ্ৰন্থি_Set_Params musa_Graph_Kernel_গ্ৰন্থি_Set_Params
 #define cudaGraphLaunch musaGraphLaunch
-#define cudaGraphNodeGetType musaGraphNodeGetType
-#define cudaGraphNode_t musaGraphNode_t
-#define cudaGraphNodeType musaGraphNodeType
-#define cudaGraphNodeTypeKernel musaGraphNodeTypeKernel
+#define cuda_Graph_গ্ৰন্থি_Get_Type musa_Graph_গ্ৰন্থি_Get_Type
+#define cuda_Graph_গ্ৰন্থি_t musa_Graph_গ্ৰন্থি_t
+#define cuda_Graph_গ্ৰন্থি_Type musa_Graph_গ্ৰন্থি_Type
+#define cuda_Graph_গ্ৰন্থি_Type_Kernel musa_Graph_গ্ৰন্থি_Type_Kernel
 #define cudaGraph_t musaGraph_t
-#define cudaKernelNodeParams musaKernelNodeParams
+#define cuda_Kernel_গ্ৰন্থি_Params musa_Kernel_গ্ৰন্থি_Params
 #define cudaStreamCaptureModeRelaxed musaStreamCaptureModeRelaxed
 #define cudaStreamBeginCapture musaStreamBeginCapture
 #define cudaStreamEndCapture musaStreamEndCapture
@@ -157,5 +157,5 @@
 #define cudaStreamIsCapturing musaStreamIsCapturing
 #define cudaOccupancyMaxActiveBlocksPerMultiprocessor musaOccupancyMaxActiveBlocksPerMultiprocessor
 
-typedef __mt_bfloat16 nv_bfloat16;
-typedef __mt_bfloat162 nv_bfloat162;
+প্রকারনির্দেশ __mt_bfloat16 nv_bfloat16;
+প্রকারনির্দেশ __mt_bfloat162 nv_bfloat162;
