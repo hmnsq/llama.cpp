@@ -1,63 +1,63 @@
-#include "ggml-remoting.h"
+#ضمن "ggml-remoting.h"
 
-#include <mutex>
+#ضمن <mutex>
 
-static const char * ggml_backend_remoting_device_get_name(ggml_backend_dev_t dev) {
+ساكن ثابت حرف * ggml_backend_remoting_device_get_name(ggml_backend_dev_t dev) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
     // Return the prefixed name that was built once during initialization
-    return gpu->cached_device_info.name;
+    أرجع gpu->cached_device_info.name;
 }
 
-static const char * ggml_backend_remoting_device_get_description(ggml_backend_dev_t dev) {
+ساكن ثابت حرف * ggml_backend_remoting_device_get_description(ggml_backend_dev_t dev) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
     // Return the pre-cached description from the virtgpu structure
-    return gpu->cached_device_info.description;
+    أرجع gpu->cached_device_info.description;
 }
 
-static enum ggml_backend_dev_type ggml_backend_remoting_device_get_type(ggml_backend_dev_t dev) {
+ساكن تعداد ggml_backend_dev_type ggml_backend_remoting_device_get_type(ggml_backend_dev_t dev) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
-    return (enum ggml_backend_dev_type) gpu->cached_device_info.type;
+    أرجع (تعداد ggml_backend_dev_type) gpu->cached_device_info.type;
 }
 
-static void ggml_backend_remoting_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+ساكن فراغ ggml_backend_remoting_device_get_memory(ggml_backend_dev_t dev, size_t * حرر, size_t * total) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
-    *free  = gpu->cached_device_info.memory_free;
+    *حرر  = gpu->cached_device_info.memory_free;
     *total = gpu->cached_device_info.memory_total;
 }
 
-static bool ggml_backend_remoting_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
-#if USE_ALWAYS_TRUE_SUPPORTS_OP == 1
+ساكن منطقي ggml_backend_remoting_device_supports_op(ggml_backend_dev_t dev, ثابت ggml_tensor * op) {
+#إذا USE_ALWAYS_TRUE_SUPPORTS_OP == 1
     /* ggml-rpc cheats it like this */
     /* with the current implementation of serialize_tensor, the src/view aren't properly passed */
     UNUSED(dev);
     UNUSED(op);
 
-    return true;
-#else
+    أرجع true;
+#وإلا
     virtgpu * gpu = DEV_TO_GPU(dev);
 
-    return apir_device_supports_op(gpu, op);
+    أرجع apir_device_supports_op(gpu, op);
 #endif
 }
 
-static bool ggml_backend_remoting_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    bool supported = buft->device == dev;
+ساكن منطقي ggml_backend_remoting_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
+    منطقي supported = buft->device == dev;
 
-    return supported;
+    أرجع supported;
 }
 
-static bool ggml_backend_remoting_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+ساكن منطقي ggml_backend_remoting_device_offload_op(ggml_backend_dev_t dev, ثابت ggml_tensor * op) {
     UNUSED(dev);
     UNUSED(op);
 
-    return false;
+    أرجع خطأ;
 }
 
-static void ggml_backend_remoting_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
+ساكن فراغ ggml_backend_remoting_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
     props->name        = ggml_backend_remoting_device_get_name(dev);
     props->description = ggml_backend_remoting_device_get_description(dev);
     props->type        = ggml_backend_remoting_device_get_type(dev);
@@ -67,65 +67,65 @@ static void ggml_backend_remoting_device_get_props(ggml_backend_dev_t dev, ggml_
     apir_device_get_props(gpu, &props->caps.async, &props->caps.host_buffer, &props->caps.buffer_from_host_ptr,
                           &props->caps.events, &props->caps.mmap_support);
 
-    props->caps.buffer_from_host_ptr = false;
-    props->caps.async                = false;
-    props->caps.events               = false;
+    props->caps.buffer_from_host_ptr = خطأ;
+    props->caps.async                = خطأ;
+    props->caps.events               = خطأ;
 }
 
 ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_type(ggml_backend_dev_t dev) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
-    static std::atomic<bool>        initialized = false;
-    static ggml_backend_buffer_type buft;
+    ساكن std::atomic<منطقي>        initialized = خطأ;
+    ساكن ggml_backend_buffer_type buft;
 
-    if (!initialized) {
-        static std::mutex           mutex;
+    إذا (!initialized) {
+        ساكن std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
 
-        if (!initialized) {
+        إذا (!initialized) {
             buft = {
                 /* .iface    = */ ggml_backend_remoting_buffer_type_interface,
                 /* .device   = */ dev,
-                /* .context  = */ (void *) gpu->cached_buffer_type.host_handle,
+                /* .context  = */ (فراغ *) gpu->cached_buffer_type.host_handle,
             };
             initialized = true;
         }
     }
 
-    return &buft;
+    أرجع &buft;
 }
 
-static ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_from_ptr_type(ggml_backend_dev_t dev) {
+ساكن ggml_backend_buffer_type_t ggml_backend_remoting_device_get_buffer_from_ptr_type(ggml_backend_dev_t dev) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
-    static std::atomic<bool>        initialized = false;
-    static ggml_backend_buffer_type buft;
+    ساكن std::atomic<منطقي>        initialized = خطأ;
+    ساكن ggml_backend_buffer_type buft;
 
-    if (!initialized) {
-        static std::mutex           mutex;
+    إذا (!initialized) {
+        ساكن std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
 
-        if (!initialized) {
+        إذا (!initialized) {
             buft = {
                 /* .iface    = */ ggml_backend_remoting_buffer_from_ptr_type_interface,
                 /* .device   = */ dev,
-                /* .context  = */ (void *) gpu->cached_buffer_type.host_handle,
+                /* .context  = */ (فراغ *) gpu->cached_buffer_type.host_handle,
             };
             initialized = true;
         }
     }
 
-    return &buft;
+    أرجع &buft;
 }
 
-static ggml_backend_buffer_t ggml_backend_remoting_device_buffer_from_ptr(ggml_backend_dev_t dev,
-                                                                          void *             ptr,
+ساكن ggml_backend_buffer_t ggml_backend_remoting_device_buffer_from_ptr(ggml_backend_dev_t dev,
+                                                                          فراغ *             ptr,
                                                                           size_t             size,
                                                                           size_t             max_tensor_size) {
     virtgpu * gpu = DEV_TO_GPU(dev);
 
-    ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) malloc(sizeof(*context));
-    if (!context) {
+    ggml_backend_remoting_buffer_context * context = (ggml_backend_remoting_buffer_context *) malloc(حجم(*context));
+    إذا (!context) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate the buffer context ...", __func__);
     }
 
@@ -136,12 +136,12 @@ static ggml_backend_buffer_t ggml_backend_remoting_device_buffer_from_ptr(ggml_b
 
     ggml_backend_buffer_t buffer =
         ggml_backend_buffer_init(ggml_backend_remoting_device_get_buffer_from_ptr_type(dev),
-                                 ggml_backend_remoting_buffer_from_ptr_interface, (void *) context, size);
+                                 ggml_backend_remoting_buffer_from_ptr_interface, (فراغ *) context, size);
 
-    return buffer;
+    أرجع buffer;
 }
 
-const ggml_backend_device_i ggml_backend_remoting_device_interface = {
+ثابت ggml_backend_device_i ggml_backend_remoting_device_interface = {
     /* .get_name             = */ ggml_backend_remoting_device_get_name,
     /* .get_description      = */ ggml_backend_remoting_device_get_description,
     /* .get_memory           = */ ggml_backend_remoting_device_get_memory,
@@ -149,12 +149,12 @@ const ggml_backend_device_i ggml_backend_remoting_device_interface = {
     /* .get_props            = */ ggml_backend_remoting_device_get_props,
     /* .init_backend         = */ ggml_backend_remoting_device_init,
     /* .get_buffer_type      = */ ggml_backend_remoting_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
+    /* .get_host_buffer_type = */ عدم,
     /* .buffer_from_host_ptr = */ ggml_backend_remoting_device_buffer_from_ptr,
     /* .supports_op          = */ ggml_backend_remoting_device_supports_op,
     /* .supports_buft        = */ ggml_backend_remoting_device_supports_buft,
     /* .offload_op           = */ ggml_backend_remoting_device_offload_op,
-    /* .event_new            = */ NULL,
-    /* .event_free           = */ NULL,
-    /* .event_synchronize    = */ NULL,
+    /* .event_new            = */ عدم,
+    /* .event_free           = */ عدم,
+    /* .event_synchronize    = */ عدم,
 };
