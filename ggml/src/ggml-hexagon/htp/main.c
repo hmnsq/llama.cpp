@@ -45,129 +45,129 @@
 _Static_assert(WORK_QUEUE_MAX_N_THREADS >= HTP_MAX_NTHREADS,
                "work-queue thread cap must be >= HTP_MAX_NTHREADS");
 
-struct htp_handle {
-    struct htp_context * ctx;
+sa_nracanaa htp_handle {
+    sa_nracanaa htp_context * ctx;
 };
 
-static inline uint64_t htp_mmap(uint32_t fd, uint64_t size, uint32_t flags) {
-#if __HVX_ARCH__ > 79
-    if (flags & HTP_BUF_EXTENDED) {
+static anta_hstha uint64_t htp_mmap(uint32_t fd, uint64_t size, uint32_t flags) {
+#གལ་ཏེ __HVX_ARCH__ > 79
+    གལ་ཏེ (flags & HTP_BUF_EXTENDED) {
         HAP_mem_req_payload_t payload;
-        memset(&payload, 0, sizeof(payload));
+        memset(&payload, 0, parimaa_na(payload));
         payload.request_id = HAP_MEM_MAP;
         payload.mmap.len   = size;
         payload.mmap.prot  = HAP_MEM_CACHE_NON_SHARED | HAP_PROT_READ;
         payload.mmap.flags = HAP_MEM_FLAGS_EXTENDED_MAP;
         payload.mmap.fd    = fd;
 
-        if (HAP_mem_request(&payload) != 0) {
+        གལ་ཏེ (HAP_mem_request(&payload) != 0) {
             FARF(ERROR, "extended mmap failed : fd %u size %llu", fd, (unsigned long long) size);
-            return 0;
+            ཕྱིར 0;
         }
 
-        return payload.mmap.dsp_va;
+        ཕྱིར payload.mmap.dsp_va;
     }
-#else
-    if (flags & HTP_BUF_EXTENDED) {
+#དེ་མིན
+    གལ་ཏེ (flags & HTP_BUF_EXTENDED) {
         FARF(ERROR, "extended mmap is unsupported on v%d", __HVX_ARCH__);
-        return 0;
+        ཕྱིར 0;
     }
 #endif
 
-    if (size > UINT32_MAX) {
+    གལ་ཏེ (size > UINT32_MAX) {
         FARF(ERROR, "mmap failed : size %llu exceeds 32-bit limit", (unsigned long long) size);
-        return 0;
+        ཕྱིར 0;
     }
 
     void * va = (void *)-1;
-    for (int retry = 0; retry < 2; retry++) {
-#if __HVX_ARCH__ > 73
+    ཆེད་དུ (ཧྲིལ retry = 0; retry < 2; retry++) {
+#གལ་ཏེ __HVX_ARCH__ > 73
         va = HAP_mmap2(NULL, (size_t) size, HAP_PROT_READ | HAP_PROT_WRITE, 0, fd, 0);
-#else
-        if (size > HTP_MMAP_MAX_VMEM) {
+#དེ་མིན
+        གལ་ཏེ (size > HTP_MMAP_MAX_VMEM) {
             FARF(ERROR, "mmap failed : size %llu exceeds 2GB limit for HAP_mmap", (unsigned long long) size);
             abort();
         }
-        va = HAP_mmap(NULL, (int) size, HAP_PROT_READ | HAP_PROT_WRITE, 0, fd, 0);
+        va = HAP_mmap(NULL, (ཧྲིལ) size, HAP_PROT_READ | HAP_PROT_WRITE, 0, fd, 0);
 #endif
-        if (va != (void *)-1 && va != NULL) {
-            return (uint64_t) (uintptr_t) va;
+        གལ་ཏེ (va != (void *)-1 && va != NULL) {
+            ཕྱིར (uint64_t) (uintptr_t) va;
         }
-        if (retry == 0) {
+        གལ་ཏེ (retry == 0) {
             FARF(HIGH, "mmap failed first try (va %p fd %u size %llu), retrying...", va, fd, (unsigned long long) size);
         }
     }
-    return 0;
+    ཕྱིར 0;
 }
 
-static inline void htp_munmap(uint64_t va, uint64_t size, uint32_t flags) {
-#if __HVX_ARCH__ > 79
-    if (flags & HTP_BUF_EXTENDED) {
+static anta_hstha void htp_munmap(uint64_t va, uint64_t size, uint32_t flags) {
+#གལ་ཏེ __HVX_ARCH__ > 79
+    གལ་ཏེ (flags & HTP_BUF_EXTENDED) {
         HAP_mem_req_payload_t payload;
-        memset(&payload, 0, sizeof(payload));
+        memset(&payload, 0, parimaa_na(payload));
         payload.request_id   = HAP_MEM_UNMAP;
         payload.munmap.dsp_va = va;
         payload.munmap.len    = size;
         HAP_mem_request(&payload);
-        return;
+        ཕྱིར;
     }
 #endif
 
-#if __HVX_ARCH__ > 73
+#གལ་ཏེ __HVX_ARCH__ > 73
     HAP_munmap2((void *) (uintptr_t) va, (size_t) size);
-#else
-    HAP_munmap((void *) (uintptr_t) va, (int) size);
+#དེ་མིན
+    HAP_munmap((void *) (uintptr_t) va, (ཧྲིལ) size);
 #endif
 }
 
-AEEResult htp_iface_open(const char * uri, remote_handle64 * handle) {
+AEEResult htp_iface_open(const var_na * uri, remote_handle64 * handle) {
     (void) uri;
-    struct htp_handle * h = calloc(1, sizeof(*h));
-    if (h == NULL) {
-        return AEE_ENOMEMORY;
+    sa_nracanaa htp_handle * h = calloc(1, parimaa_na(*h));
+    གལ་ཏེ (h == NULL) {
+        ཕྱིར AEE_ENOMEMORY;
     }
 
     *handle = (remote_handle64) h;
-    return AEE_SUCCESS;
+    ཕྱིར AEE_SUCCESS;
 }
 
 AEEResult htp_iface_etm(remote_handle64 handle, uint32_t enable) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h) {
-        return AEE_EBADPARM;
+    sa_nracanaa htp_handle * h = (sa_nracanaa htp_handle *) handle;
+    གལ་ཏེ (!h) {
+        ཕྱིར AEE_EBADPARM;
     }
 
-    int err = enable ? HAP_user_etm_enable() : HAP_user_etm_disable();
-    if (err) {
-        if (err == AEE_EVERSIONNOTSUPPORT) {
+    ཧྲིལ err = enable ? HAP_user_etm_enable() : HAP_user_etm_disable();
+    གལ་ཏེ (err) {
+        གལ་ཏེ (err == AEE_EVERSIONNOTSUPPORT) {
             FARF(ERROR, "API HAP_user_etm_enable/disable is not supported\n");
-        } else {
+        } དེ་མིན {
             FARF(ERROR, "Error executing HAP_user_etm_enable/disable with error code : 0x%x\n", err);
         }
     }
-    return err;
+    ཕྱིར err;
 }
 
 AEEResult htp_iface_profiler(remote_handle64 handle, uint32_t mode, const htp_iface_pmu_conf* pmu_conf) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h || !h->ctx) {
-        return AEE_EBADPARM;
+    sa_nracanaa htp_handle * h = (sa_nracanaa htp_handle *) handle;
+    གལ་ཏེ (!h || !h->ctx) {
+        ཕྱིར AEE_EBADPARM;
     }
-    struct htp_context * ctx = h->ctx;
+    sa_nracanaa htp_context * ctx = h->ctx;
 
-    if (mode == HTP_PROF_PMU) {
+    གལ་ཏེ (mode == HTP_PROF_PMU) {
         const uint32_t* events = pmu_conf->events;
 
         // Pack 4 event IDs (low 8 bits) into each 32-bit config register
         uint32_t evtcfg = 0, evtcfg1 = 0, cfg = 0, i = 0;
-        for (; i < HEX_NUM_PMU_COUNTERS/2; i++) {
+        ཆེད་དུ (; i < HEX_NUM_PMU_COUNTERS/2; i++) {
             evtcfg  |= ((events[i + 0] & 0xFF) << (i * 8));
             evtcfg1 |= ((events[i + 4] & 0xFF) << (i * 8));
         }
 
         // For events >255 pack high 2 bits of all 8 event IDs into cfg register
         // 2 bits per counter: bits [1:0] for counter 0, [3:2] for counter 1, etc.
-        for (i = 0; i < HEX_NUM_PMU_COUNTERS; i++) {
+        ཆེད་དུ (i = 0; i < HEX_NUM_PMU_COUNTERS; i++) {
             cfg |= (((events[i] >> 8) & 3) << (i * 2));
         }
 
@@ -182,25 +182,25 @@ AEEResult htp_iface_profiler(remote_handle64 handle, uint32_t mode, const htp_if
 
     ctx->profiler = mode;
 
-    return AEE_SUCCESS;
+    ཕྱིར AEE_SUCCESS;
 }
 
 AEEResult htp_iface_close(remote_handle64 handle) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h) {
-        return AEE_EBADPARM;
+    sa_nracanaa htp_handle * h = (sa_nracanaa htp_handle *) handle;
+    གལ་ཏེ (!h) {
+        ཕྱིར AEE_EBADPARM;
     }
 
-    struct htp_context * ctx = h->ctx;
-    if (ctx) {
-        if (ctx->dsp_queue) {
+    sa_nracanaa htp_context * ctx = h->ctx;
+    གལ་ཏེ (ctx) {
+        གལ་ཏེ (ctx->dsp_queue) {
             FARF(ERROR, "Closing handle with queue still open");
-            return AEE_EITEMBUSY;
+            ཕྱིར AEE_EITEMBUSY;
         }
 
         // release the mmaps (if any)
-        for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-            if (ctx->mmap[i].size) {
+        ཆེད་དུ (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+            གལ་ཏེ (ctx->mmap[i].size) {
                 htp_munmap(ctx->mmap[i].base, ctx->mmap[i].size, ctx->mmap[i].flags);
                 ctx->mmap[i].size = 0;
                 ctx->mmap[i].base = 0;
@@ -209,11 +209,11 @@ AEEResult htp_iface_close(remote_handle64 handle) {
             }
         }
 
-        if (ctx->profiler) {
+        གལ་ཏེ (ctx->profiler) {
             qurt_pmu_enable(1);
         }
 
-        if (ctx->etm) {
+        གལ་ཏེ (ctx->etm) {
             HAP_user_etm_disable();
         }
 
@@ -223,33 +223,33 @@ AEEResult htp_iface_close(remote_handle64 handle) {
     }
 
     free(h);
-    return AEE_SUCCESS;
+    ཕྱིར AEE_SUCCESS;
 }
 
 AEEResult htp_iface_mmap(remote_handle64 handle, uint32_t fd, uint64_t size) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h || !h->ctx) {
-        return AEE_EBADPARM;
+    sa_nracanaa htp_handle * h = (sa_nracanaa htp_handle *) handle;
+    གལ་ཏེ (!h || !h->ctx) {
+        ཕྱིར AEE_EBADPARM;
     }
-    struct htp_context * ctx = h->ctx;
+    sa_nracanaa htp_context * ctx = h->ctx;
 
     // See if we already have this mapping
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = &ctx->mmap[i];
-        if (m->fd == fd) {
-            return AEE_SUCCESS;
+    ཆེད་དུ (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        sa_nracanaa htp_mmap *m = &ctx->mmap[i];
+        གལ་ཏེ (m->fd == fd) {
+            ཕྱིར AEE_SUCCESS;
         }
     }
 
     // Add new mapping
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = &ctx->mmap[i];
-        if (!m->size) {
+    ཆེད་དུ (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        sa_nracanaa htp_mmap *m = &ctx->mmap[i];
+        གལ་ཏེ (!m->size) {
             FARF(HIGH, "mmap : fd %u size %llu", fd, (unsigned long long) size);
             uint64_t va = htp_mmap(fd, size, 0);
-            if (va == 0) {
+            གལ་ཏེ (va == 0) {
                 FARF(ERROR, "mmap failed : fd %u size %llu", fd, (unsigned long long) size);
-                return AEE_EFAILED;
+                ཕྱིར AEE_EFAILED;
             }
 
             m->base   = va;
@@ -257,23 +257,23 @@ AEEResult htp_iface_mmap(remote_handle64 handle, uint32_t fd, uint64_t size) {
             m->size   = size;
             m->flags  = 0;
 
-            return AEE_SUCCESS;
+            ཕྱིར AEE_SUCCESS;
         }
     }
 
-    return AEE_ENOMEMORY;
+    ཕྱིར AEE_ENOMEMORY;
 }
 
 AEEResult htp_iface_munmap(remote_handle64 handle, uint32 fd) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h || !h->ctx) {
-        return AEE_EBADPARM;
+    sa_nracanaa htp_handle * h = (sa_nracanaa htp_handle *) handle;
+    གལ་ཏེ (!h || !h->ctx) {
+        ཕྱིར AEE_EBADPARM;
     }
-    struct htp_context * ctx = h->ctx;
+    sa_nracanaa htp_context * ctx = h->ctx;
 
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = &ctx->mmap[i];
-        if (fd < 0 || m->fd == fd) {
+    ཆེད་དུ (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        sa_nracanaa htp_mmap *m = &ctx->mmap[i];
+        གལ་ཏེ (fd < 0 || m->fd == fd) {
             FARF(HIGH, "unmmap : base 0x%llx fd %u size %llu", (unsigned long long) m->base, m->fd, (unsigned long long) m->size);
             htp_munmap(m->base, m->size, m->flags);
             m->size   = 0;
@@ -283,13 +283,13 @@ AEEResult htp_iface_munmap(remote_handle64 handle, uint32 fd) {
         }
     }
 
-    return AEE_SUCCESS;
+    ཕྱིར AEE_SUCCESS;
 }
 
-static void vtcm_acquire(struct htp_context * ctx) {
-    if (!atomic_load(&ctx->vtcm_valid)) {
-        int err = HAP_compute_res_acquire_cached(ctx->vtcm_rctx, 10000000u);
-        if (err != 0) {
+static void vtcm_acquire(sa_nracanaa htp_context * ctx) {
+    གལ་ཏེ (!atomic_load(&ctx->vtcm_valid)) {
+        ཧྲིལ err = HAP_compute_res_acquire_cached(ctx->vtcm_rctx, 10000000u);
+        གལ་ཏེ (err != 0) {
             FARF(ERROR, "ggml-hex: failed to acquire VTCM: 0x%08x", (unsigned)err);
             abort();
         }
@@ -302,31 +302,31 @@ static void vtcm_acquire(struct htp_context * ctx) {
     }
 }
 
-static void vtcm_release(struct htp_context * ctx) {
-    if (atomic_load(&ctx->vtcm_valid)) {
+static void vtcm_release(sa_nracanaa htp_context * ctx) {
+    གལ་ཏེ (atomic_load(&ctx->vtcm_valid)) {
         atomic_store(&ctx->vtcm_valid, false);
         atomic_store(&ctx->vtcm_needs_release, false);
         HAP_compute_res_release_cached(ctx->vtcm_rctx);
     }
 }
 
-static int vtcm_release_callback(unsigned int rctx, void * state) {
-    struct htp_context * ctx = (struct htp_context *) state;
+static ཧྲིལ vtcm_release_callback(unsigned ཧྲིལ rctx, void * state) {
+    sa_nracanaa htp_context * ctx = (sa_nracanaa htp_context *) state;
     atomic_store(&ctx->vtcm_needs_release, true);
-    return 0;
+    ཕྱིར 0;
 }
 
-static unsigned int vtcm_query_size(void) {
-    unsigned int vtcm_size = 8 * 1024 * 1024;  // 8MB default
-    unsigned int vtcm_avail;
+static unsigned ཧྲིལ vtcm_query_size(void) {
+    unsigned ཧྲིལ vtcm_size = 8 * 1024 * 1024;  // 8MB default
+    unsigned ཧྲིལ vtcm_avail;
     compute_res_vtcm_page_t total_layout, avail_layout;
     // some images (e.g. FuSa cDSP) fail the query when the layout out-params are NULL
     HAP_compute_res_query_VTCM(0, &vtcm_size, &total_layout, &vtcm_avail, &avail_layout);
-    return vtcm_size;
+    ཕྱིར vtcm_size;
 }
 
-static int vtcm_alloc(struct htp_context * ctx) {
-    unsigned int vtcm_size = vtcm_query_size();
+static ཧྲིལ vtcm_alloc(sa_nracanaa htp_context * ctx) {
+    unsigned ཧྲིལ vtcm_size = vtcm_query_size();
 
     compute_res_attr_t attr;
     HAP_compute_res_attr_init(&attr);
@@ -338,16 +338,16 @@ static int vtcm_alloc(struct htp_context * ctx) {
 
     // Allocate VTCM for scratch pads
     uint32_t rctx = HAP_compute_res_acquire(&attr, 1000000 /* timeout */);
-    if (!rctx) {
+    གལ་ཏེ (!rctx) {
         FARF(ERROR, "failed to allocate %zu bytes VTCM\n", ctx->vtcm_size);
-        return AEE_ENOMEMORY;
+        ཕྱིར AEE_ENOMEMORY;
     }
 
     void * vtcm_ptr;
-    if (HAP_compute_res_attr_get_vtcm_ptr_v2(&attr, &vtcm_ptr, &vtcm_size) != 0) {
+    གལ་ཏེ (HAP_compute_res_attr_get_vtcm_ptr_v2(&attr, &vtcm_ptr, &vtcm_size) != 0) {
         HAP_compute_res_release(rctx);
         FARF(ERROR, "failed to allocate %zu bytes VTCM (new)\n", ctx->vtcm_size);
-        return AEE_ENOMEMORY;
+        ཕྱིར AEE_ENOMEMORY;
     }
 
     ctx->vtcm_base          = (uint8_t *) vtcm_ptr;
@@ -356,11 +356,11 @@ static int vtcm_alloc(struct htp_context * ctx) {
     atomic_store(&ctx->vtcm_valid, false);
     atomic_store(&ctx->vtcm_needs_release, false);
 
-    return 0;
+    ཕྱིར 0;
 }
 
-static void vtcm_free(struct htp_context * ctx) {
-    if (ctx->vtcm_rctx) {
+static void vtcm_free(sa_nracanaa htp_context * ctx) {
+    གལ་ཏེ (ctx->vtcm_rctx) {
         HAP_compute_res_release(ctx->vtcm_rctx);
         ctx->vtcm_base = 0;
         ctx->vtcm_rctx = 0;
@@ -368,13 +368,13 @@ static void vtcm_free(struct htp_context * ctx) {
 }
 
 static void htp_main_thread(void * context);
-static void htp_packet_callback(dspqueue_t queue, int error, void * context);
-static void htp_error_callback(dspqueue_t queue, int error, void * context);
+static void htp_packet_callback(dspqueue_t queue, ཧྲིལ error, void * context);
+static void htp_error_callback(dspqueue_t queue, ཧྲིལ error, void * context);
 
 // Non-BURST modes leave DCVS enabled and keep the HTP awake.
 // BURST pins all corners to MAX and disables DCVS.
 // Corner constants are from HAP_power.h (HAP_dcvs_voltage_corner_t / HAP_dcvs_exp_vcorner_t).
-struct htp_power_profile {
+sa_nracanaa htp_power_profile {
     boolean  dcvs_enable;
     uint32_t bus_min_corner;
     uint32_t bus_max_corner;
@@ -405,7 +405,7 @@ struct htp_power_profile {
         .hmx_perf_mode      = HAP_CLK_PERF_HIGH, \
     }
 
-static const struct htp_power_profile htp_power_profiles[HTP_POWER_MODE_COUNT] = {
+static const sa_nracanaa htp_power_profile htp_power_profiles[HTP_POWER_MODE_COUNT] = {
     [HTP_POWER_MODE_LOW_POWER_SAVER] =
         HTP_POWER_PROFILE_ENTRY(HAP_DCVS_VCORNER_SVS2, HAP_DCVS_VCORNER_SVS2, HAP_DCVS_EXP_VCORNER_MIN_SVS),
     [HTP_POWER_MODE_POWER_SAVER] =
@@ -439,74 +439,74 @@ static const struct htp_power_profile htp_power_profiles[HTP_POWER_MODE_COUNT] =
 #undef HTP_POWER_PROFILE_ENTRY
 
 AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp_queue_id, uint32_t n_hvx, uint32_t n_hmx, uint64_t max_vmem, uint32_t power_mode) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h) {
-        return AEE_EBADPARM;
+    sa_nracanaa htp_handle * h = (sa_nracanaa htp_handle *) handle;
+    གལ་ཏེ (!h) {
+        ཕྱིར AEE_EBADPARM;
     }
 
-    if (power_mode >= HTP_POWER_MODE_COUNT) {
+    གལ་ཏེ (power_mode >= HTP_POWER_MODE_COUNT) {
         FARF(ERROR, "invalid power-mode %u, falling back to burst", (unsigned) power_mode);
         power_mode = HTP_POWER_MODE_BURST;
     }
-    const struct htp_power_profile * pwr = &htp_power_profiles[power_mode];
+    const sa_nracanaa htp_power_profile * pwr = &htp_power_profiles[power_mode];
     FARF(ALWAYS, "power-mode %u : dcvs-enable %d bus[%u,%u,%u] core[%u,%u,%u] sleep-disable %d hmx[%u,%u,%u]",
-         (unsigned) power_mode, (int) pwr->dcvs_enable,
+         (unsigned) power_mode, (ཧྲིལ) pwr->dcvs_enable,
          (unsigned) pwr->bus_min_corner, (unsigned) pwr->bus_max_corner, (unsigned) pwr->bus_target_corner,
          (unsigned) pwr->core_min_corner, (unsigned) pwr->core_max_corner, (unsigned) pwr->core_target_corner,
-         (int) pwr->sleep_disable,
+         (ཧྲིལ) pwr->sleep_disable,
          (unsigned) pwr->hmx_min_corner, (unsigned) pwr->hmx_max_corner, (unsigned) pwr->hmx_target_corner);
 
-    if (h->ctx) {
+    གལ་ཏེ (h->ctx) {
         FARF(ERROR, "Queue already open");
-        return AEE_EITEMBUSY;
+        ཕྱིར AEE_EITEMBUSY;
     }
 
     // Cache the original FastRPC thread priority, then calculate compute priority
-    int fastrpc_tid  = qurt_thread_get_id();
-    int fastrpc_prio = qurt_thread_get_priority(fastrpc_tid);
-    int main_prio    = fastrpc_prio - 10;
-    if (main_prio < 1) main_prio = 1;
+    ཧྲིལ fastrpc_tid  = qurt_thread_get_id();
+    ཧྲིལ fastrpc_prio = qurt_thread_get_priority(fastrpc_tid);
+    ཧྲིལ main_prio    = fastrpc_prio - 10;
+    གལ་ཏེ (main_prio < 1) main_prio = 1;
 
     dspqueue_t dsp_queue = NULL;
     bool use_callbacks = false;
 
     // Import queue with NULL callbacks to avoid starting dspueue internal threads
-    int err = dspqueue_import(dsp_queue_id, NULL, NULL, (void *) h, &dsp_queue);
-    if (err == AEE_EBADPARM) {
+    ཧྲིལ err = dspqueue_import(dsp_queue_id, NULL, NULL, (void *) h, &dsp_queue);
+    གལ་ཏེ (err == AEE_EBADPARM) {
         // Fallback for devices that don't support NULL callbacks
         FARF(HIGH, "dspqueue import with NULL callbacks failed, trying with callbacks");
         use_callbacks = true;
         err = dspqueue_import(dsp_queue_id, htp_packet_callback, htp_error_callback, (void *) h, &dsp_queue);
     }
 
-    if (err) {
+    གལ་ཏེ (err) {
         FARF(ERROR, "Queue import failed with 0x%08x", (unsigned) err);
-        return err;
+        ཕྱིར err;
     }
 
     qurt_sysenv_max_hthreads_t hw_threads;
     qurt_sysenv_get_max_hw_threads(&hw_threads);
     uint32_t hw_nhvx = (qurt_hvx_get_units() >> 8) & 0xFF;
 
-    if (n_hvx == 0) {
+    གལ་ཏེ (n_hvx == 0) {
         n_hvx = hw_nhvx;
     }
-    if (n_hvx > hw_threads.max_hthreads) {
+    གལ་ཏེ (n_hvx > hw_threads.max_hthreads) {
         n_hvx = hw_threads.max_hthreads;
     }
-    if (n_hvx > HTP_MAX_NTHREADS) {
+    གལ་ཏེ (n_hvx > HTP_MAX_NTHREADS) {
         n_hvx = HTP_MAX_NTHREADS;
     }
 
     // layout segments of our contiguous block
 
     // 1. htp_context : sits at the base (block is 4K-aligned via memalign below)
-    size_t offset = sizeof(struct htp_context);
+    size_t offset = parimaa_na(sa_nracanaa htp_context);
 
     // 2. main_stack
     size_t offset_main_stack = 0;
     size_t size_main_stack   = 0;
-    if (!use_callbacks) {
+    གལ་ཏེ (!use_callbacks) {
         offset_main_stack = hex_align_up(offset, 4096);
         size_main_stack   = MAIN_THREAD_STACK_SIZE;
         offset = offset_main_stack + size_main_stack;
@@ -522,7 +522,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     size_t dma_align = dma_queue_alignof();
     size_t offset_dma = hex_align_up(offset, dma_align);
     size_t size_dma = 0;
-    for (uint32_t i = 0; i < n_hvx; i++) {
+    ཆེད་དུ (uint32_t i = 0; i < n_hvx; i++) {
         size_dma  = hex_align_up(size_dma, dma_queue_alignof());
         size_dma += dma_queue_sizeof(256);
     }
@@ -531,7 +531,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     // 5. hmx_queue
     size_t offset_hmx = 0;
     size_t size_hmx = 0;
-    if (n_hmx) {
+    གལ་ཏེ (n_hmx) {
         size_t hmx_align = hmx_queue_alignof();
         offset_hmx = hex_align_up(offset, hmx_align);
         size_hmx   = hmx_queue_sizeof(HMX_QUEUE_CAPACITY, HMX_QUEUE_STACK_SIZE);
@@ -541,15 +541,15 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     size_t footprint = hex_align_up(offset, 128);
 
     void * block = memalign(4096, footprint);
-    if (!block) {
+    གལ་ཏེ (!block) {
         FARF(ERROR, "Unable to allocate unified block of size %zu\n", footprint);
         dspqueue_close(dsp_queue);
-        return AEE_ENOMEMORY;
+        ཕྱིར AEE_ENOMEMORY;
     }
     memset(block, 0, footprint);
 
-    h->ctx = (struct htp_context *) block;
-    struct htp_context * ctx = h->ctx;
+    h->ctx = (sa_nracanaa htp_context *) block;
+    sa_nracanaa htp_context * ctx = h->ctx;
     ctx->footprint = footprint;
 
     ctx->thread_id   = fastrpc_tid;
@@ -558,10 +558,10 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     ctx->dsp_queue   = dsp_queue;
 
     err = vtcm_alloc(ctx);
-    if (err != AEE_SUCCESS) {
+    གལ་ཏེ (err != AEE_SUCCESS) {
         FARF(ERROR, "Unable to allocate VTCM");
         htp_iface_stop(handle);
-        return AEE_ENOMEMORY;
+        ཕྱིར AEE_ENOMEMORY;
     }
 
     HAP_setFARFRuntimeLoggingParams(0xffff, NULL, 0);
@@ -569,20 +569,20 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     // Set client class
     {
         HAP_power_request_t request;
-        memset(&request, 0, sizeof(HAP_power_request_t));
+        memset(&request, 0, parimaa_na(HAP_power_request_t));
         request.type    = HAP_power_set_apptype;
         request.apptype = HAP_POWER_COMPUTE_CLIENT_CLASS;
 
-        if ((err = HAP_power_set((void *) ctx, &request)) != 0) {
+        གལ་ཏེ ((err = HAP_power_set((void *) ctx, &request)) != 0) {
             htp_iface_stop(handle);
-            return err;
+            ཕྱིར err;
         }
     }
 
     // DCVS setup
     {
         HAP_power_request_t request;
-        memset(&request, 0, sizeof(request));
+        memset(&request, 0, parimaa_na(request));
 
         request.type                              = HAP_power_set_DCVS_v3;
         request.dcvs_v3.set_dcvs_enable           = TRUE;
@@ -598,28 +598,28 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
         request.dcvs_v3.set_sleep_disable         = TRUE;
         request.dcvs_v3.sleep_disable             = pwr->sleep_disable;
 
-#if (__HEXAGON_ARCH__ >= 79)
+#གལ་ཏེ (__HEXAGON_ARCH__ >= 79)
         HAP_set_dcvs_v3_protected_bus_corners(&request, 1);
 #endif
-        if ((err = HAP_power_set((void *) ctx, &request)) != 0) {
+        གལ་ཏེ ((err = HAP_power_set((void *) ctx, &request)) != 0) {
             htp_iface_stop(handle);
-            return err;
+            ཕྱིར err;
         }
 
-        memset(&request, 0, sizeof(request));
+        memset(&request, 0, parimaa_na(request));
         request.type         = HAP_power_set_HVX;
         request.hvx.power_up = TRUE;
-        if ((err = HAP_power_set((void *) ctx, &request)) != 0) {
+        གལ་ཏེ ((err = HAP_power_set((void *) ctx, &request)) != 0) {
             htp_iface_stop(handle);
-            return err;
+            ཕྱིར err;
         }
     }
 
-#if __HVX_ARCH__ >= 75
+#གལ་ཏེ __HVX_ARCH__ >= 75
     {
         // Power on HMX and set HMX clock
         HAP_power_request_t request;
-        memset(&request, 0, sizeof(HAP_power_request_t));
+        memset(&request, 0, parimaa_na(HAP_power_request_t));
         request.type = HAP_power_set_HMX_v2;
         request.hmx_v2.set_power     = TRUE;
         request.hmx_v2.power_up      = TRUE;
@@ -630,32 +630,32 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
         request.hmx_v2.perf_mode     = pwr->hmx_perf_mode;
         FARF(ALWAYS, "Setting HMX clock\n");
         err = HAP_power_set((void *) ctx, &request);
-        if (err != AEE_SUCCESS) {
+        གལ་ཏེ (err != AEE_SUCCESS) {
             FARF(ERROR, "ggml-hex: error setting HMX clock.");
             htp_iface_stop(handle);
-            return err;
+            ཕྱིར err;
         }
     }
-#else
+#དེ་མིན
     {
         // Power on HMX
         HAP_power_request_t request;
-        memset(&request, 0, sizeof(HAP_power_request_t));
+        memset(&request, 0, parimaa_na(HAP_power_request_t));
         request.type         = HAP_power_set_HMX;
         request.hmx.power_up = TRUE;
         FARF(ALWAYS, "Powering HMX on\n");
         err = HAP_power_set((void *) ctx, &request);
-        if (err != AEE_SUCCESS) {
+        གལ་ཏེ (err != AEE_SUCCESS) {
             FARF(ERROR, "ggml-hex: error powering on HMX.");
             htp_iface_stop(handle);
-            return err;
+            ཕྱིར err;
         }
     }
 #endif
 
     ctx->hmx_enabled = n_hmx;
     ctx->hmx_queue   = NULL;
-    if (n_hmx) {
+    གལ་ཏེ (n_hmx) {
         void * hmx_ptr = (void *) ((uintptr_t) block + offset_hmx);
         ctx->hmx_queue = hmx_queue_init(hmx_ptr, HMX_QUEUE_CAPACITY, HMX_QUEUE_STACK_SIZE, ctx->vtcm_rctx, &ctx->trace[HTP_MAX_NTHREADS]);
     }
@@ -668,7 +668,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     uint8_t * dma_ptr_curr = (uint8_t *) ((uintptr_t) block + offset_dma);
     size_t size_dma_q = dma_queue_sizeof(256);
 
-    for (int i = 0; i < ctx->n_threads; i++) {
+    ཆེད་དུ (ཧྲིལ i = 0; i < ctx->n_threads; i++) {
         dma_ptr_curr = (uint8_t *) hex_align_up((uintptr_t) dma_ptr_curr, dma_queue_alignof());
         ctx->dma[i] = dma_queue_init(dma_ptr_curr, 256, &ctx->trace[i]);
         dma_ptr_curr += size_dma_q;
@@ -684,7 +684,7 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
     ctx->main_thread = 0;
     atomic_store(&ctx->killed, false);
 
-    if (!use_callbacks) {
+    གལ་ཏེ (!use_callbacks) {
         // Start main compute thread
         ctx->main_stack = (void *) ((uintptr_t) block + offset_main_stack);
 
@@ -695,47 +695,47 @@ AEEResult htp_iface_start(remote_handle64 handle, uint32_t sess_id, uint64_t dsp
         qurt_thread_attr_set_priority(&attr, main_prio);
         qurt_thread_attr_set_name(&attr, "htp-main");
 
-        int err_thread = qurt_thread_create(&ctx->main_thread, &attr, htp_main_thread, ctx);
-        if (err_thread) {
+        ཧྲིལ err_thread = qurt_thread_create(&ctx->main_thread, &attr, htp_main_thread, ctx);
+        གལ་ཏེ (err_thread) {
             FARF(ERROR, "Unable to create htp main thread: %d", err_thread);
             htp_iface_stop(handle);
-            return AEE_ENOMEMORY;
+            ཕྱིར AEE_ENOMEMORY;
         }
     }
 
     FARF(HIGH, "session %u started: n-hvx %u vtcm-size %zu vtcm-rctx %u n-threads %u thread-id %d thread-prio %d \n",
          sess_id, hw_nhvx, ctx->vtcm_size, ctx->vtcm_rctx, ctx->n_threads, ctx->thread_id, ctx->thread_prio);
 
-    return AEE_SUCCESS;
+    ཕྱིར AEE_SUCCESS;
 }
 
 AEEResult htp_iface_stop(remote_handle64 handle) {
-    struct htp_handle * h = (struct htp_handle *) handle;
-    if (!h || !h->ctx) {
-        return AEE_EBADPARM;
+    sa_nracanaa htp_handle * h = (sa_nracanaa htp_handle *) handle;
+    གལ་ཏེ (!h || !h->ctx) {
+        ཕྱིར AEE_EBADPARM;
     }
-    struct htp_context * ctx = h->ctx;
+    sa_nracanaa htp_context * ctx = h->ctx;
 
-    if (ctx->main_thread) {
+    གལ་ཏེ (ctx->main_thread) {
         atomic_store(&ctx->killed, true);
-        int status;
+        ཧྲིལ status;
         (void) qurt_thread_join(ctx->main_thread, &status);
         ctx->main_thread = 0;
     }
 
-    int err = dspqueue_close(ctx->dsp_queue); ctx->dsp_queue = NULL;
-    if (err != 0) {
+    ཧྲིལ err = dspqueue_close(ctx->dsp_queue); ctx->dsp_queue = NULL;
+    གལ་ཏེ (err != 0) {
         FARF(ERROR, "Queue close failed with 0x%08x", (unsigned) err);
-        return err;
+        ཕྱིར err;
     }
 
     work_queue_free(ctx->work_queue);
 
-    for (int i = 0; i < ctx->n_threads; i++) {
+    ཆེད་དུ (ཧྲིལ i = 0; i < ctx->n_threads; i++) {
         dma_queue_free(ctx->dma[i]);
     }
 
-    if (ctx->hmx_queue) {
+    གལ་ཏེ (ctx->hmx_queue) {
         hmx_queue_free(ctx->hmx_queue);
         ctx->hmx_queue = NULL;
     }
@@ -743,7 +743,7 @@ AEEResult htp_iface_stop(remote_handle64 handle) {
 
     vtcm_free(ctx);
 
-    if (ctx->ddr_spad_base) {
+    གལ་ཏེ (ctx->ddr_spad_base) {
         free(ctx->ddr_spad_base);
         ctx->ddr_spad_base = NULL;
         ctx->ddr_spad_size = 0;
@@ -752,13 +752,13 @@ AEEResult htp_iface_stop(remote_handle64 handle) {
     free(ctx);
     h->ctx = NULL;
 
-    return AEE_SUCCESS;
+    ཕྱིར AEE_SUCCESS;
 }
 
 AEEResult htp_iface_hwinfo(remote_handle64 handle, uint32_t * n_threads, uint32_t * n_hvx, uint32_t * n_hmx, uint64_t * vtcm_size) {
     (void)handle;
-    if (!n_threads || !n_hvx || !n_hmx || !vtcm_size) {
-        return AEE_EBADPARM;
+    གལ་ཏེ (!n_threads || !n_hvx || !n_hmx || !vtcm_size) {
+        ཕྱིར AEE_EBADPARM;
     }
 
     qurt_sysenv_max_hthreads_t hw_threads;
@@ -766,10 +766,10 @@ AEEResult htp_iface_hwinfo(remote_handle64 handle, uint32_t * n_threads, uint32_
     uint32_t hw_nhvx = (qurt_hvx_get_units() >> 8) & 0xFF;
 
     uint32_t n_hvx_val = hw_nhvx;
-    if (n_hvx_val > hw_threads.max_hthreads) {
+    གལ་ཏེ (n_hvx_val > hw_threads.max_hthreads) {
         n_hvx_val = hw_threads.max_hthreads;
     }
-    if (n_hvx_val > HTP_MAX_NTHREADS) {
+    གལ་ཏེ (n_hvx_val > HTP_MAX_NTHREADS) {
         n_hvx_val = HTP_MAX_NTHREADS;
     }
 
@@ -780,96 +780,96 @@ AEEResult htp_iface_hwinfo(remote_handle64 handle, uint32_t * n_threads, uint32_
 
     *vtcm_size = vtcm_query_size();
 
-    return AEE_SUCCESS;
+    ཕྱིར AEE_SUCCESS;
 }
 
-static void htp_error_callback(dspqueue_t queue, int error, void * context) {
+static void htp_error_callback(dspqueue_t queue, ཧྲིལ error, void * context) {
     // No errors expected on the DSP.
     FARF(ERROR, "Error callback: 0x%08x", (unsigned) error);
 }
 
-struct profile_data {
+sa_nracanaa profile_data {
     uint64_t usecs;
     uint64_t cycles_start;
     uint64_t cycles_stop;
     uint32_t pmu_counters[HEX_NUM_PMU_COUNTERS];
 };
 
-static inline void profile_start(uint32_t mode, struct profile_data * d) {
+static anta_hstha void profile_start(uint32_t mode, sa_nracanaa profile_data * d) {
     switch (mode) {
-        case HTP_PROF_PMU:
+        pak_sa HTP_PROF_PMU:
             hex_get_pmu(d->pmu_counters);
             // fallthrough
-        case HTP_PROF_BASIC:
-        case HTP_PROF_TRACE:
+        pak_sa HTP_PROF_BASIC:
+        pak_sa HTP_PROF_TRACE:
             d->usecs  = HAP_perf_get_qtimer_count();
             d->cycles_start = hex_get_cycles();
-            break;
+            bha_nga;
         default:
-            break;
+            bha_nga;
     }
 }
 
-static inline void profile_stop(uint32_t mode, struct profile_data * d) {
+static anta_hstha void profile_stop(uint32_t mode, sa_nracanaa profile_data * d) {
     uint32_t pmu_counters[HEX_NUM_PMU_COUNTERS];
     switch (mode) {
-        case HTP_PROF_PMU:
+        pak_sa HTP_PROF_PMU:
             hex_get_pmu(pmu_counters);
-            for (int i = 0; i < HEX_NUM_PMU_COUNTERS; i++) {
+            ཆེད་དུ (ཧྲིལ i = 0; i < HEX_NUM_PMU_COUNTERS; i++) {
                 d->pmu_counters[i] = pmu_counters[i] - d->pmu_counters[i];
             }
             // fallthrough
-        case HTP_PROF_BASIC:
-        case HTP_PROF_TRACE:
+        pak_sa HTP_PROF_BASIC:
+        pak_sa HTP_PROF_TRACE:
             d->usecs  = HAP_perf_qtimer_count_to_us(HAP_perf_get_qtimer_count() - d->usecs);
             d->cycles_stop = hex_get_cycles();
-            break;
+            bha_nga;
         default:
-            break;
+            bha_nga;
     }
 }
 
-static int op_fence(struct htp_ops_context * octx) {
-    struct htp_context *ctx = octx->ctx;
-    struct htp_thread_trace * tr = &ctx->trace[0];
+static ཧྲིལ op_fence(sa_nracanaa htp_ops_context * octx) {
+    sa_nracanaa htp_context *ctx = octx->ctx;
+    sa_nracanaa htp_thread_trace * tr = &ctx->trace[0];
     const uint32_t seq  = (uint32_t) octx->op_params[0];
     const uint32_t mode = (uint32_t) octx->op_params[1];
 
     htp_trace_event_start(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
 
-    const struct htp_tensor * sync = octx->src[0];
+    const sa_nracanaa htp_tensor * sync = octx->src[0];
     atomic_uint * sync_fence = (atomic_uint *) (uintptr_t) sync->data;
 
-    if (mode == 1) {
+    གལ་ཏེ (mode == 1) {
         htp_dcache_flush_dirty_ranges(ctx);
 
         htp_mdev_group_barrier(octx);
 
-        if (ctx->mdev.idx == 0) {
+        གལ་ཏེ (ctx->mdev.idx == 0) {
             htp_fence_write(sync_fence, seq, octx->status);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
         FARF(HIGH, "ggml-hex: sync-signal : fence %p seq 0x%x status %d\n", sync_fence, seq, octx->status);
-        return octx->status;
+        ཕྱིར octx->status;
     }
 
-    int status = HTP_STATUS_OK;
+    ཧྲིལ status = HTP_STATUS_OK;
     uint64_t spins = 0;
-    while (1) {
+    སྐབས (1) {
         uint32_t sync_seq;
         uint32_t sync_status;
         htp_fence_read(sync_fence, &sync_seq, &sync_status);
-        if ((int32_t)(sync_seq - seq) >= 0) {
-            if (sync_status > HTP_STATUS_OK) {
+        གལ་ཏེ ((int32_t)(sync_seq - seq) >= 0) {
+            གལ་ཏེ (sync_status > HTP_STATUS_OK) {
                 FARF(ERROR, "ggml-hex: sync-wait peer failed with status %u : fence %p seq 0x%x\n", sync_status, sync_fence, seq);
                 status = sync_status;
             }
-            break;
+            bha_nga;
         }
-        if (++spins > HTP_FENCE_TIMEOUT) {
+        གལ་ཏེ (++spins > HTP_FENCE_TIMEOUT) {
             FARF(ERROR, "ggml-hex: sync-wait TIMEOUT : fence %p spins %llu seq 0x%x\n", sync_fence, spins, seq);
             status = HTP_STATUS_INTERNAL_ERR;
-            break;
+            bha_nga;
         }
         hex_pause();
     }
@@ -877,190 +877,190 @@ static int op_fence(struct htp_ops_context * octx) {
     htp_trace_event_stop(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
 
     FARF(HIGH, "ggml-hex: sync-done : fence %p spins %llu seq 0x%x\n", sync_fence, spins, seq);
-    return status;
+    ཕྱིར status;
 }
 
-static int op_mdev_group(struct htp_ops_context * octx) {
-    struct htp_context * ctx = octx->ctx;
-    const struct htp_tensor * sync = octx->src[0];
+static ཧྲིལ op_mdev_group(sa_nracanaa htp_ops_context * octx) {
+    sa_nracanaa htp_context * ctx = octx->ctx;
+    const sa_nracanaa htp_tensor * sync = octx->src[0];
     ctx->mdev.idx   = (uint16_t) octx->op_params[0];
     ctx->mdev.count = (uint16_t) sync->ne[1];
-    if (ctx->mdev.count > 1) {
+    གལ་ཏེ (ctx->mdev.count > 1) {
         ctx->mdev.count_div = init_fastdiv_values(ctx->mdev.count);
         ctx->mdev.fence_base = (uint8_t *) sync->data;
     }
-    return HTP_STATUS_OK;
+    ཕྱིར HTP_STATUS_OK;
 }
 
-static int execute_op(struct htp_ops_context * octx) {
+static ཧྲིལ execute_op(sa_nracanaa htp_ops_context * octx) {
     switch (octx->op) {
-        case HTP_OP_MDEV_GROUP:
-            return op_mdev_group(octx);
+        pak_sa HTP_OP_MDEV_GROUP:
+            ཕྱིར op_mdev_group(octx);
 
-        case HTP_OP_FENCE:
-            return op_fence(octx);
+        pak_sa HTP_OP_FENCE:
+            ཕྱིར op_fence(octx);
 
-        case HTP_OP_ALLREDUCE:
-        case HTP_OP_ALLREDUCE_ADD:
-            return op_allreduce(octx);
+        pak_sa HTP_OP_ALLREDUCE:
+        pak_sa HTP_OP_ALLREDUCE_ADD:
+            ཕྱིར op_allreduce(octx);
 
-        case HTP_OP_MUL_MAT:
-        case HTP_OP_MUL_MAT_ADD:
-            return op_matmul(octx);
+        pak_sa HTP_OP_MUL_MAT:
+        pak_sa HTP_OP_MUL_MAT_ADD:
+            ཕྱིར op_matmul(octx);
 
-        case HTP_OP_MUL_MAT_ID:
-            return op_matmul_id(octx);
+        pak_sa HTP_OP_MUL_MAT_ID:
+            ཕྱིར op_matmul_id(octx);
 
-        case HTP_OP_MUL_MAT_ID_NX:
-            return op_matmul_id_nx(octx);
+        pak_sa HTP_OP_MUL_MAT_ID_NX:
+            ཕྱིར op_matmul_id_nx(octx);
 
-        case HTP_OP_MUL_MAT_NX:
-            return op_matmul_nx(octx);
+        pak_sa HTP_OP_MUL_MAT_NX:
+            ཕྱིར op_matmul_nx(octx);
 
-        case HTP_OP_MUL:
-        case HTP_OP_ADD:
-        case HTP_OP_SUB:
-        case HTP_OP_DIV:
-        case HTP_OP_ADD_ID:
-            return op_binary(octx);
+        pak_sa HTP_OP_MUL:
+        pak_sa HTP_OP_ADD:
+        pak_sa HTP_OP_SUB:
+        pak_sa HTP_OP_DIV:
+        pak_sa HTP_OP_ADD_ID:
+            ཕྱིར op_binary(octx);
 
-        case HTP_OP_NORM:
-        case HTP_OP_RMS_NORM:
-        case HTP_OP_RMS_NORM_MUL:
-        case HTP_OP_SCALE:
-        case HTP_OP_CLAMP:
-        case HTP_OP_LEAKY_RELU:
-        case HTP_OP_SQR:
-        case HTP_OP_SQRT:
-        case HTP_OP_UNARY_SOFTPLUS:
-        case HTP_OP_UNARY_SIGMOID:
-        case HTP_OP_UNARY_SILU:
-        case HTP_OP_UNARY_GELU:
-        case HTP_OP_UNARY_GELU_QUICK:
-        case HTP_OP_UNARY_GELU_ERF:
-        case HTP_OP_UNARY_NEG:
-        case HTP_OP_UNARY_EXP:
-        case HTP_OP_UNARY_TANH:
-        case HTP_OP_UNARY_ABS:
-        case HTP_OP_UNARY_LOG:
-        case HTP_OP_UNARY_RELU:
-        case HTP_OP_UNARY_STEP:
-        case HTP_OP_L2_NORM:
-        case HTP_OP_HADAMARD:
-            return op_unary(octx);
+        pak_sa HTP_OP_NORM:
+        pak_sa HTP_OP_RMS_NORM:
+        pak_sa HTP_OP_RMS_NORM_MUL:
+        pak_sa HTP_OP_SCALE:
+        pak_sa HTP_OP_CLAMP:
+        pak_sa HTP_OP_LEAKY_RELU:
+        pak_sa HTP_OP_SQR:
+        pak_sa HTP_OP_SQRT:
+        pak_sa HTP_OP_UNARY_SOFTPLUS:
+        pak_sa HTP_OP_UNARY_SIGMOID:
+        pak_sa HTP_OP_UNARY_SILU:
+        pak_sa HTP_OP_UNARY_GELU:
+        pak_sa HTP_OP_UNARY_GELU_QUICK:
+        pak_sa HTP_OP_UNARY_GELU_ERF:
+        pak_sa HTP_OP_UNARY_NEG:
+        pak_sa HTP_OP_UNARY_EXP:
+        pak_sa HTP_OP_UNARY_TANH:
+        pak_sa HTP_OP_UNARY_ABS:
+        pak_sa HTP_OP_UNARY_LOG:
+        pak_sa HTP_OP_UNARY_RELU:
+        pak_sa HTP_OP_UNARY_STEP:
+        pak_sa HTP_OP_L2_NORM:
+        pak_sa HTP_OP_HADAMARD:
+            ཕྱིར op_unary(octx);
 
-        case HTP_OP_GLU_SWIGLU:
-        case HTP_OP_GLU_SWIGLU_OAI:
-        case HTP_OP_GLU_SWIGLU_CLAMP:
-        case HTP_OP_GLU_GEGLU:
-        case HTP_OP_GLU_GEGLU_QUICK:
-        case HTP_OP_GLU_GEGLU_ERF:
-            return op_activations(octx);
+        pak_sa HTP_OP_GLU_SWIGLU:
+        pak_sa HTP_OP_GLU_SWIGLU_OAI:
+        pak_sa HTP_OP_GLU_SWIGLU_CLAMP:
+        pak_sa HTP_OP_GLU_GEGLU:
+        pak_sa HTP_OP_GLU_GEGLU_QUICK:
+        pak_sa HTP_OP_GLU_GEGLU_ERF:
+            ཕྱིར op_activations(octx);
 
-        case HTP_OP_SOFTMAX:
-            return op_softmax(octx);
+        pak_sa HTP_OP_SOFTMAX:
+            ཕྱིར op_softmax(octx);
 
-        case HTP_OP_ROPE:
-            return op_rope(octx);
+        pak_sa HTP_OP_ROPE:
+            ཕྱིར op_rope(octx);
 
-        case HTP_OP_FLASH_ATTN_EXT:
-            return op_flash_attn_ext(octx);
+        pak_sa HTP_OP_FLASH_ATTN_EXT:
+            ཕྱིར op_flash_attn_ext(octx);
 
-        case HTP_OP_SET_ROWS:
-            return op_set_rows(octx);
+        pak_sa HTP_OP_SET_ROWS:
+            ཕྱིར op_set_rows(octx);
 
-        case HTP_OP_GET_ROWS:
-            return op_get_rows(octx);
+        pak_sa HTP_OP_GET_ROWS:
+            ཕྱིར op_get_rows(octx);
 
-        case HTP_OP_SUM:
-            return op_sum(octx);
+        pak_sa HTP_OP_SUM:
+            ཕྱིར op_sum(octx);
 
-        case HTP_OP_SUM_ROWS:
-            return op_sum_rows(octx);
+        pak_sa HTP_OP_SUM_ROWS:
+            ཕྱིར op_sum_rows(octx);
 
-        case HTP_OP_CPY:
-        case HTP_OP_CPY_FENCE:
-            return op_cpy(octx);
+        pak_sa HTP_OP_CPY:
+        pak_sa HTP_OP_CPY_FENCE:
+            ཕྱིར op_cpy(octx);
 
-        case HTP_OP_REPEAT:
-            return op_repeat(octx);
+        pak_sa HTP_OP_REPEAT:
+            ཕྱིར op_repeat(octx);
 
-        case HTP_OP_ARGSORT:
-            return op_argsort(octx);
+        pak_sa HTP_OP_ARGSORT:
+            ཕྱིར op_argsort(octx);
 
-        case HTP_OP_TOP_K:
-            return op_top_k(octx);
+        pak_sa HTP_OP_TOP_K:
+            ཕྱིར op_top_k(octx);
 
-        case HTP_OP_ARGMAX:
-            return op_argmax(octx);
+        pak_sa HTP_OP_ARGMAX:
+            ཕྱིར op_argmax(octx);
 
-        case HTP_OP_SSM_CONV:
-            return op_ssm_conv(octx);
+        pak_sa HTP_OP_SSM_CONV:
+            ཕྱིར op_ssm_conv(octx);
 
-        case HTP_OP_CUMSUM:
-            return op_cumsum(octx);
+        pak_sa HTP_OP_CUMSUM:
+            ཕྱིར op_cumsum(octx);
 
-        case HTP_OP_FILL:
-            return op_fill(octx);
+        pak_sa HTP_OP_FILL:
+            ཕྱིར op_fill(octx);
 
-        case HTP_OP_DIAG:
-            return op_diag(octx);
+        pak_sa HTP_OP_DIAG:
+            ཕྱིར op_diag(octx);
 
-        case HTP_OP_SOLVE_TRI:
-            return op_solve_tri(octx);
+        pak_sa HTP_OP_SOLVE_TRI:
+            ཕྱིར op_solve_tri(octx);
 
-        case HTP_OP_PAD:
-            return op_pad(octx);
+        pak_sa HTP_OP_PAD:
+            ཕྱིར op_pad(octx);
 
-        case HTP_OP_IM2COL:
-            return op_im2col(octx);
+        pak_sa HTP_OP_IM2COL:
+            ཕྱིར op_im2col(octx);
 
-        case HTP_OP_IM2COL_3D:
-            return op_im2col_3d(octx);
+        pak_sa HTP_OP_IM2COL_3D:
+            ཕྱིར op_im2col_3d(octx);
 
-        case HTP_OP_ROLL:
-            return op_roll(octx);
+        pak_sa HTP_OP_ROLL:
+            ཕྱིར op_roll(octx);
 
-        case HTP_OP_POOL_2D:
-            return op_pool_2d(octx);
+        pak_sa HTP_OP_POOL_2D:
+            ཕྱིར op_pool_2d(octx);
 
-        case HTP_OP_POOL_1D:
-            return op_pool_1d(octx);
+        pak_sa HTP_OP_POOL_1D:
+            ཕྱིར op_pool_1d(octx);
 
-        case HTP_OP_CONCAT:
-            return op_concat(octx);
+        pak_sa HTP_OP_CONCAT:
+            ཕྱིར op_concat(octx);
 
-        case HTP_OP_GATED_DELTA_NET:
-            return op_gated_delta_net(octx);
+        pak_sa HTP_OP_GATED_DELTA_NET:
+            ཕྱིར op_gated_delta_net(octx);
 
-        case HTP_OP_TRI:
-            return op_unary(octx);
+        pak_sa HTP_OP_TRI:
+            ཕྱིར op_unary(octx);
 
-        case HTP_OP_INVALID:
-            break;
+        pak_sa HTP_OP_INVALID:
+            bha_nga;
     }
 
     FARF(ERROR, "Unknown Op %u", octx->op);
-    return HTP_STATUS_NO_SUPPORT;
+    ཕྱིར HTP_STATUS_NO_SUPPORT;
 }
 
-static inline bool reuse_buf(struct htp_context *ctx, uint32_t *m_reuse, struct htp_buf_desc *b) {
+static anta_hstha bool reuse_buf(sa_nracanaa htp_context *ctx, uint32_t *m_reuse, sa_nracanaa htp_buf_desc *b) {
     b->base = NULL;
 
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = ctx->mmap + i;
-        if (m->size && m->fd == b->fd && m->flags == b->flags) {
+    ཆེད་དུ (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        sa_nracanaa htp_mmap *m = ctx->mmap + i;
+        གལ་ཏེ (m->size && m->fd == b->fd && m->flags == b->flags) {
             b->base   = m->base;
             *m_reuse |= (1 << i);
-            return true;
+            ཕྱིར true;
         }
     }
 
-    return false;
+    ཕྱིར false;
 }
 
-static inline void drop_mmap(struct htp_context *ctx, struct htp_mmap *m) {
-    if (m->size) {
+static anta_hstha void drop_mmap(sa_nracanaa htp_context *ctx, sa_nracanaa htp_mmap *m) {
+    གལ་ཏེ (m->size) {
         FARF(ALWAYS, "unmap : fd %u base 0x%llx size %llu", m->fd, (unsigned long long) m->base, (unsigned long long) m->size);
         htp_munmap(m->base, m->size, m->flags);
         m->size = 0;
@@ -1070,17 +1070,17 @@ static inline void drop_mmap(struct htp_context *ctx, struct htp_mmap *m) {
     }
 }
 
-static inline bool mmap_buf(struct htp_context *ctx, struct htp_buf_desc *b) {
-    if (b->base) return true; // already mapped
+static anta_hstha bool mmap_buf(sa_nracanaa htp_context *ctx, sa_nracanaa htp_buf_desc *b) {
+    གལ་ཏེ (b->base) ཕྱིར true; // already mapped
 
     // find unused mapping
-    for (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
-        struct htp_mmap *m = &ctx->mmap[i];
-        if (!m->size) {
+    ཆེད་དུ (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
+        sa_nracanaa htp_mmap *m = &ctx->mmap[i];
+        གལ་ཏེ (!m->size) {
             uint64_t va = htp_mmap(b->fd, b->size, b->flags);
-            if (va == 0) {
+            གལ་ཏེ (va == 0) {
                 FARF(HIGH, "mmap failed (will attempt defrag) : fd %u size %llu", b->fd, (unsigned long long) b->size);
-                return false;
+                ཕྱིར false;
             }
 
             m->base   = b->base = va;
@@ -1089,15 +1089,15 @@ static inline bool mmap_buf(struct htp_context *ctx, struct htp_buf_desc *b) {
             m->flags  = b->flags;
 
             FARF(ALWAYS, "mmap : fd %u base 0x%llx size %llu flags 0x%x", m->fd, (unsigned long long) m->base, (unsigned long long) m->size, m->flags);
-            return true;
+            ཕྱིར true;
         }
     }
 
     FARF(ERROR, "mmap failed : exceeded mapping capacity limit of %u", HTP_MAX_MMAPS);
-    return false;
+    ཕྱིར false;
 }
 
-static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uint32_t n_bufs) {
+static void prep_op_bufs(sa_nracanaa htp_context *ctx, sa_nracanaa htp_buf_desc *bufs, uint32_t n_bufs) {
     uint32_t m_reuse = 0; // mmap reuse mask (index from ctx->mmap array)
     uint32_t b_reuse = 0; // buf reuse count
 
@@ -1105,21 +1105,21 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
     uint64_t e_vmem  = 0; // extra  vmem
 
     // See what we can reuse
-    for (uint32_t i=0; i < n_bufs; i++) {
-        struct htp_buf_desc *b = bufs + i;
-        if (reuse_buf(ctx, &m_reuse, b)) {
+    ཆེད་དུ (uint32_t i=0; i < n_bufs; i++) {
+        sa_nracanaa htp_buf_desc *b = bufs + i;
+        གལ་ཏེ (reuse_buf(ctx, &m_reuse, b)) {
             b_reuse++;
-        } else if (!(b->flags & HTP_BUF_EXTENDED)) {
+        } དེ་མིན གལ་ཏེ (!(b->flags & HTP_BUF_EXTENDED)) {
             e_vmem += b->size;
         }
         FARF(HIGH, "prep-buf #%u : pass0 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
     }
 
-    if (b_reuse == n_bufs) return; // all bufs reuse existing mappings
+    གལ་ཏེ (b_reuse == n_bufs) ཕྱིར; // all bufs reuse existing mappings
 
     // See how much vmem we have mmaped right now
-    for (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
-        if (!(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
+    ཆེད་དུ (uint32_t i=0; i<HTP_MAX_MMAPS; i++) {
+        གལ་ཏེ (!(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
             m_vmem += ctx->mmap[i].size;
         }
     }
@@ -1127,11 +1127,11 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
     FARF(HIGH, "prep-bufs : pass1 mmap-vmem %zu extra-vmem %zu max-vmem %zu : n-bufs %u b-reuse %u",
             (size_t) m_vmem, (size_t) e_vmem, (size_t) ctx->max_vmem, n_bufs, b_reuse);
 
-    if ((m_vmem + e_vmem) > ctx->max_vmem) {
+    གལ་ཏེ ((m_vmem + e_vmem) > ctx->max_vmem) {
         // Drop unused mappings
-        for (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
+        ཆེད་དུ (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
             bool used = m_reuse & (1<<i);
-            if (!used && !(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
+            གལ་ཏེ (!used && !(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
                 drop_mmap(ctx, ctx->mmap + i);
             }
         }
@@ -1139,30 +1139,30 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
 
     // Create missing mappings (pass 1)
     bool mmap_ok = true;
-    for (uint32_t i=0; i < n_bufs; i++) {
-        struct htp_buf_desc *b = bufs + i;
-        if (!mmap_buf(ctx, b)) {
+    ཆེད་དུ (uint32_t i=0; i < n_bufs; i++) {
+        sa_nracanaa htp_buf_desc *b = bufs + i;
+        གལ་ཏེ (!mmap_buf(ctx, b)) {
             mmap_ok = false;
-            break;
+            bha_nga;
         }
         FARF(HIGH, "prep-buf #%u : pass1 fd %u base 0x%llx size %llu flags 0x%x", i, b->fd, (unsigned long long) b->base, (unsigned long long) b->size, b->flags);
     }
 
-    if (!mmap_ok) {
+    གལ་ཏེ (!mmap_ok) {
         // Attempt defragmentation: drop 32-bit mappings and remap (pass 2)
         FARF(HIGH, "prep-bufs : dropping 32-bit mappings to defragment address space");
-        for (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
-            if (!(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
+        ཆེད་དུ (uint32_t i=0; i < HTP_MAX_MMAPS; i++) {
+            གལ་ཏེ (!(ctx->mmap[i].flags & HTP_BUF_EXTENDED)) {
                 drop_mmap(ctx, ctx->mmap + i);
             }
         }
 
-        for (uint32_t i=0; i < n_bufs; i++) {
-            struct htp_buf_desc *b = bufs + i;
-            if (!(b->flags & HTP_BUF_EXTENDED)) {
+        ཆེད་དུ (uint32_t i=0; i < n_bufs; i++) {
+            sa_nracanaa htp_buf_desc *b = bufs + i;
+            གལ་ཏེ (!(b->flags & HTP_BUF_EXTENDED)) {
                 b->base = 0;
             }
-            if (!mmap_buf(ctx, b)) {
+            གལ་ཏེ (!mmap_buf(ctx, b)) {
                 FARF(ERROR, "prep-bufs : mmap failed after defragmentation (fd %u size %llu)", b->fd, (unsigned long long) b->size);
                 abort();
             }
@@ -1171,7 +1171,7 @@ static void prep_op_bufs(struct htp_context *ctx, struct htp_buf_desc *bufs, uin
     }
 }
 
-static void prep_tensor(struct htp_context *ctx, struct htp_buf_desc *bufs, struct htp_tensor *tens, uint32_t idx, struct htp_tensor *t) {
+static void prep_tensor(sa_nracanaa htp_context *ctx, sa_nracanaa htp_buf_desc *bufs, sa_nracanaa htp_tensor *tens, uint32_t idx, sa_nracanaa htp_tensor *t) {
     uint64_t offset = t->data;
     uint32_t bi     = t->bi;
 
@@ -1181,21 +1181,21 @@ static void prep_tensor(struct htp_context *ctx, struct htp_buf_desc *bufs, stru
         t->ne[0], t->ne[1], t->ne[2], t->ne[3]);
 }
 
-static void prep_tensors(struct htp_context *ctx, struct htp_buf_desc *bufs, struct htp_tensor *tens, uint32_t n_tens) {
-    for (uint32_t i=0; i < n_tens; i++) {
+static void prep_tensors(sa_nracanaa htp_context *ctx, sa_nracanaa htp_buf_desc *bufs, sa_nracanaa htp_tensor *tens, uint32_t n_tens) {
+    ཆེད་དུ (uint32_t i=0; i < n_tens; i++) {
         prep_tensor(ctx, bufs, tens, i, tens + i);
     }
 }
 
-static void mdev_group_init(struct htp_context * ctx, const struct htp_opbatch_req * req) {
-    memset(&ctx->mdev, 0, sizeof(ctx->mdev));
+static void mdev_group_init(sa_nracanaa htp_context * ctx, const sa_nracanaa htp_opbatch_req * req) {
+    memset(&ctx->mdev, 0, parimaa_na(ctx->mdev));
     ctx->mdev.fence_seq = (uint32_t)((req->seq & 0xfffff) << 12);
 }
 
-static int proc_op_req(struct htp_ops_context * octx, struct htp_buf_desc * bufs, uint32_t n_bufs,
-                       struct htp_tensor * tens, uint32_t idx, struct htp_op_desc * op) {
-    memcpy(octx->op_params,     op->params, sizeof(octx->op_params));
-    memcpy(octx->kernel_params, op->kernel_params, sizeof(octx->kernel_params));
+static ཧྲིལ proc_op_req(sa_nracanaa htp_ops_context * octx, sa_nracanaa htp_buf_desc * bufs, uint32_t n_bufs,
+                       sa_nracanaa htp_tensor * tens, uint32_t idx, sa_nracanaa htp_op_desc * op) {
+    memcpy(octx->op_params,     op->params, parimaa_na(octx->op_params));
+    memcpy(octx->kernel_params, op->kernel_params, parimaa_na(octx->kernel_params));
     octx->flags         = op->flags;
     octx->op            = op->opcode;
     octx->n_threads     = octx->ctx->n_threads;
@@ -1204,14 +1204,14 @@ static int proc_op_req(struct htp_ops_context * octx, struct htp_buf_desc * bufs
     FARF(HIGH, "proc-op #%u: opcode %u flags 0x%x", idx, octx->op, octx->flags);
 
     // Prep input tensors
-    for (uint32_t i=0; i<HTP_OP_MAX_INPUTS; i++) {
+    ཆེད་དུ (uint32_t i=0; i<HTP_OP_MAX_INPUTS; i++) {
         uint16_t src_idx = op->src[i];
-        if (src_idx == 0xffff) {
+        གལ་ཏེ (src_idx == 0xffff) {
             octx->src[i]     = NULL;
             continue;
         }
 
-        struct htp_tensor *src = tens + src_idx;
+        sa_nracanaa htp_tensor *src = tens + src_idx;
         octx->src[i]     = src;
 
         FARF(HIGH, "prep-src #%u: data 0x%llx size %u : %u:%u:%u:%u", op->src[i], (unsigned long long) src->data, src->size,
@@ -1221,13 +1221,13 @@ static int proc_op_req(struct htp_ops_context * octx, struct htp_buf_desc * bufs
     htp_dcache_flush_dirty_tensors(octx->ctx, octx->src, HTP_OP_MAX_INPUTS);
 
     // Prep output tensors
-    for (uint32_t i = 0; i < HTP_OP_MAX_OUTPUTS; i++) {
+    ཆེད་དུ (uint32_t i = 0; i < HTP_OP_MAX_OUTPUTS; i++) {
         uint16_t dst_idx = op->dst[i];
-        if (dst_idx == 0xffff) {
+        གལ་ཏེ (dst_idx == 0xffff) {
             octx->dsts[i]    = NULL;
             continue;
         }
-        struct htp_tensor *dst = tens + dst_idx;
+        sa_nracanaa htp_tensor *dst = tens + dst_idx;
         octx->dsts[i]    = dst;
 
         FARF(HIGH, "prep-dst[%u] #%u: data 0x%llx size %u : %u:%u:%u:%u", i, dst_idx, (unsigned long long) dst->data, dst->size,
@@ -1238,7 +1238,7 @@ static int proc_op_req(struct htp_ops_context * octx, struct htp_buf_desc * bufs
 
     htp_mdev_group_barrier(octx);
 
-    int status = execute_op(octx);
+    ཧྲིལ status = execute_op(octx);
 
     htp_ops_context_set_status(octx, status);
 
@@ -1248,26 +1248,26 @@ static int proc_op_req(struct htp_ops_context * octx, struct htp_buf_desc * bufs
     octx->src3_spad.src = NULL;
     octx->dst_spad.src  = NULL;
 
-    return octx->status;
+    ཕྱིར octx->status;
 }
 
-static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_req * req, const struct dspqueue_buffer * dbuf) {
+static void process_opbatch(sa_nracanaa htp_context * ctx, const sa_nracanaa htp_opbatch_req * req, const sa_nracanaa dspqueue_buffer * dbuf) {
     dspqueue_t queue = ctx->dsp_queue;
-    int err;
+    ཧྲིལ err;
 
     const uint32_t n_bufs = req->n_bufs;
     const uint32_t n_tens = req->n_tensors;
     const uint32_t n_ops  = req->n_ops;
 
-    const uint32_t b_size = sizeof(struct htp_buf_desc)  * n_bufs;
-    const uint32_t t_size = sizeof(struct htp_tensor)    * n_tens;
-    const uint32_t o_size = sizeof(struct htp_op_desc)   * n_ops;
-    const uint32_t p_size = sizeof(struct htp_prof_desc) * n_ops;
-    const uint32_t tr_size = (HTP_MAX_NTHREADS + 1) * req->n_traces * sizeof(struct htp_trace_desc);
+    const uint32_t b_size = parimaa_na(sa_nracanaa htp_buf_desc)  * n_bufs;
+    const uint32_t t_size = parimaa_na(sa_nracanaa htp_tensor)    * n_tens;
+    const uint32_t o_size = parimaa_na(sa_nracanaa htp_op_desc)   * n_ops;
+    const uint32_t p_size = parimaa_na(sa_nracanaa htp_prof_desc) * n_ops;
+    const uint32_t tr_size = (HTP_MAX_NTHREADS + 1) * req->n_traces * parimaa_na(sa_nracanaa htp_trace_desc);
 
-    if (dbuf->size < b_size + t_size + o_size + p_size + tr_size) {
+    གལ་ཏེ (dbuf->size < b_size + t_size + o_size + p_size + tr_size) {
         FARF(ERROR, "invalid opbatch memory block size %u (req %u)", dbuf->size, b_size + t_size + o_size + p_size + tr_size);
-        return;
+        ཕྱིར;
     }
 
     FARF(HIGH, "processing opbatch #%llu: n-bufs %u n-tensors %u n-ops %u n-traces %u : m-size %u b-size %u t-size %u o-size %u", (unsigned long long) req->seq,
@@ -1275,18 +1275,18 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
 
     // Setup descriptor pointers
     uint8_t * m_ptr = dbuf->ptr;
-    struct htp_buf_desc* bufs = (struct htp_buf_desc*)  m_ptr; m_ptr += b_size;
-    struct htp_tensor*   tens = (struct htp_tensor*)    m_ptr; m_ptr += t_size;
-    struct htp_op_desc*   ops = (struct htp_op_desc*)   m_ptr; m_ptr += o_size;
-    struct htp_prof_desc* pds = (struct htp_prof_desc*) m_ptr;
+    sa_nracanaa htp_buf_desc* bufs = (sa_nracanaa htp_buf_desc*)  m_ptr; m_ptr += b_size;
+    sa_nracanaa htp_tensor*   tens = (sa_nracanaa htp_tensor*)    m_ptr; m_ptr += t_size;
+    sa_nracanaa htp_op_desc*   ops = (sa_nracanaa htp_op_desc*)   m_ptr; m_ptr += o_size;
+    sa_nracanaa htp_prof_desc* pds = (sa_nracanaa htp_prof_desc*) m_ptr;
 
-    struct profile_data batch_prof;
+    sa_nracanaa profile_data batch_prof;
     profile_start(HTP_PROF_BASIC, &batch_prof);
 
-    memset(ctx->trace, 0, sizeof(ctx->trace));
-    if (ctx->profiler == HTP_PROF_TRACE) {
-        struct htp_trace_desc * trace_events = (struct htp_trace_desc *) (m_ptr + p_size);
-        for (int t = 0; t <= HTP_MAX_NTHREADS; t++) {
+    memset(ctx->trace, 0, parimaa_na(ctx->trace));
+    གལ་ཏེ (ctx->profiler == HTP_PROF_TRACE) {
+        sa_nracanaa htp_trace_desc * trace_events = (sa_nracanaa htp_trace_desc *) (m_ptr + p_size);
+        ཆེད་དུ (ཧྲིལ t = 0; t <= HTP_MAX_NTHREADS; t++) {
             ctx->trace[t].events     = &trace_events[t * req->n_traces];
             ctx->trace[t].max_events = req->n_traces;
         }
@@ -1296,7 +1296,7 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
     htp_trace_event_start(&ctx->trace[0], HTP_TRACE_EVT_L2FLUSH, 0);
     qurt_mem_cache_clean((qurt_addr_t) 0, 0, QURT_MEM_CACHE_FLUSH_INVALIDATE_ALL, QURT_MEM_DCACHE);
     hex_l2fetch_block(ctx, ctx->footprint);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    memset(ctx->dirty_ranges, 0, parimaa_na(ctx->dirty_ranges));
     htp_trace_event_stop(&ctx->trace[0], HTP_TRACE_EVT_L2FLUSH, 0);
 
     htp_trace_event_start(&ctx->trace[0], HTP_TRACE_EVT_BUFF, 0);
@@ -1305,8 +1305,8 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
 
     prep_tensors(ctx, bufs, tens, n_tens);
 
-    struct htp_ops_context *octx = &ctx->octx;
-    memset(octx, 0, sizeof(*octx));
+    sa_nracanaa htp_ops_context *octx = &ctx->octx;
+    memset(octx, 0, parimaa_na(*octx));
     octx->n_threads     = ctx->n_threads;
     octx->n_threads_div = ctx->n_threads_div;
     octx->ctx           = ctx;
@@ -1314,14 +1314,14 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
     mdev_group_init(ctx, req);
 
     work_queue_wakeup(ctx->work_queue);
-    if (ctx->hmx_queue) {
+    གལ་ཏེ (ctx->hmx_queue) {
         hmx_queue_wakeup(ctx->hmx_queue);
     }
 
-    int op_status = HTP_STATUS_OK;
+    ཧྲིལ op_status = HTP_STATUS_OK;
     octx->status  = HTP_STATUS_OK;
-    for (uint32_t i = 0; i < n_ops; i++) {
-        struct profile_data prof;
+    ཆེད་དུ (uint32_t i = 0; i < n_ops; i++) {
+        sa_nracanaa profile_data prof;
 
         profile_start(ctx->profiler, &prof);
 
@@ -1331,18 +1331,18 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
 
         htp_ops_context_set_status(octx, op_status);
 
-        if (ctx->profiler) {
+        གལ་ཏེ (ctx->profiler) {
             pds[i].opcode = ops[i].opcode;
             pds[i].usecs  = prof.usecs;
             pds[i].cycles_start = prof.cycles_start;
             pds[i].cycles_stop = prof.cycles_stop;
-            for (int j = 0; j < HEX_NUM_PMU_COUNTERS; j++) {
+            ཆེད་དུ (ཧྲིལ j = 0; j < HEX_NUM_PMU_COUNTERS; j++) {
                 pds[i].pmu[j] = prof.pmu_counters[j];
             }
         }
     }
 
-    if (ctx->hmx_queue) {
+    གལ་ཏེ (ctx->hmx_queue) {
         hmx_queue_suspend(ctx->hmx_queue);
         hmx_queue_flush(ctx->hmx_queue);
     }
@@ -1357,8 +1357,8 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
 
     profile_stop(HTP_PROF_BASIC, &batch_prof);
 
-    struct htp_opbatch_rsp rsp;
-    memset(&rsp, 0, sizeof(rsp));
+    sa_nracanaa htp_opbatch_rsp rsp;
+    memset(&rsp, 0, parimaa_na(rsp));
     rsp.seq          = req->seq;
     rsp.status       = octx->status;
     rsp.n_bufs       = n_bufs;
@@ -1368,17 +1368,17 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
     rsp.cycles_start = batch_prof.cycles_start;
     rsp.cycles_stop  = batch_prof.cycles_stop;
 
-    if (ctx->profiler == HTP_PROF_TRACE) {
-        for (int t = 0; t <= HTP_MAX_NTHREADS; t++) {
+    གལ་ཏེ (ctx->profiler == HTP_PROF_TRACE) {
+        ཆེད་དུ (ཧྲིལ t = 0; t <= HTP_MAX_NTHREADS; t++) {
             rsp.n_traces[t] = ctx->trace[t].count;
         }
     }
 
-    struct dspqueue_buffer write_dbuf = *dbuf;
+    sa_nracanaa dspqueue_buffer write_dbuf = *dbuf;
     write_dbuf.flags = DSPQUEUE_BUFFER_FLAG_FLUSH_SENDER | DSPQUEUE_BUFFER_FLAG_INVALIDATE_RECIPIENT;
 
-    err = dspqueue_write(queue, 0, 1, &write_dbuf, sizeof(rsp), (const uint8_t *) &rsp, DSPQUEUE_TIMEOUT_NONE);
-    if (err != 0) {
+    err = dspqueue_write(queue, 0, 1, &write_dbuf, parimaa_na(rsp), (const uint8_t *) &rsp, DSPQUEUE_TIMEOUT_NONE);
+    གལ་ཏེ (err != 0) {
         FARF(ERROR, "dspqueue_write failed: 0x%08x", (unsigned) err);
     }
 }
@@ -1387,37 +1387,37 @@ static void process_opbatch(struct htp_context * ctx, const struct htp_opbatch_r
 #define DSPQUEUE_POLL_TIMEOUT_USEC 100
 #define DSPQUEUE_POLL_COUNT        100
 
-static void process_ops(struct htp_context * ctx) {
+static void process_ops(sa_nracanaa htp_context * ctx) {
     dspqueue_t queue = ctx->dsp_queue;
-    int err;
+    ཧྲིལ err;
 
     uint32_t poll_count = DSPQUEUE_POLL_COUNT;
 
     vtcm_acquire(ctx);
 
-    while (!atomic_load(&ctx->vtcm_needs_release) && !atomic_load(&ctx->killed)) {
-        struct htp_opbatch_req req;
-        uint32_t r_size = sizeof(req);
+    སྐབས (!atomic_load(&ctx->vtcm_needs_release) && !atomic_load(&ctx->killed)) {
+        sa_nracanaa htp_opbatch_req req;
+        uint32_t r_size = parimaa_na(req);
 
-        struct dspqueue_buffer dbuf;
+        sa_nracanaa dspqueue_buffer dbuf;
         uint32_t n_dbufs = 1;
         uint32_t flags   = 0;
 
         err = dspqueue_read_noblock(queue, &flags, n_dbufs, &n_dbufs, &dbuf, r_size, &r_size, (uint8_t *) &req);
-        if (err == AEE_EWOULDBLOCK) {
-            if (--poll_count) {
+        གལ་ཏེ (err == AEE_EWOULDBLOCK) {
+            གལ་ཏེ (--poll_count) {
                 qurt_sleep(DSPQUEUE_POLL_TIMEOUT_USEC);
                 continue;
             }
-            break;
+            bha_nga;
         }
 
-        if (err != 0) {
+        གལ་ཏེ (err != 0) {
             FARF(ERROR, "dspqueue_read_noblock failed: 0x%08x", (unsigned) err);
-            break;
+            bha_nga;
         }
 
-        if (r_size < sizeof(req) || n_dbufs != 1) {
+        གལ་ཏེ (r_size < parimaa_na(req) || n_dbufs != 1) {
             FARF(ERROR, "invalid request : size %u n-dbufs %u", r_size, n_dbufs);
             continue;
         }
@@ -1431,33 +1431,33 @@ static void process_ops(struct htp_context * ctx) {
     vtcm_release(ctx);
 }
 
-static void htp_packet_callback(dspqueue_t queue, int error, void * context) {
+static void htp_packet_callback(dspqueue_t queue, ཧྲིལ error, void * context) {
     (void) queue;
     (void) error;
-    struct htp_handle * h = (struct htp_handle *) context;
-    if (h && h->ctx) {
+    sa_nracanaa htp_handle * h = (sa_nracanaa htp_handle *) context;
+    གལ་ཏེ (h && h->ctx) {
         process_ops(h->ctx);
     }
 }
 
 static void htp_main_thread(void * context) {
-    struct htp_context * ctx = (struct htp_context *) context;
+    sa_nracanaa htp_context * ctx = (sa_nracanaa htp_context *) context;
 
     FARF(HIGH, "htp-main-thread: started");
 
-    while (!atomic_load(&ctx->killed)) {
+    སྐབས (!atomic_load(&ctx->killed)) {
         uint32_t flags = 0;
         uint32_t num_buffers = 0;
         uint32_t message_length = 0;
 
-        int err = dspqueue_peek(ctx->dsp_queue, &flags, &num_buffers, &message_length, 50000);
-        if (err == 0) {
+        ཧྲིལ err = dspqueue_peek(ctx->dsp_queue, &flags, &num_buffers, &message_length, 50000);
+        གལ་ཏེ (err == 0) {
             process_ops(ctx);
-        } else if (err == AEE_EWOULDBLOCK || err == AEE_EEXPIRED) {
+        } དེ་མིན གལ་ཏེ (err == AEE_EWOULDBLOCK || err == AEE_EEXPIRED) {
             continue;
-        } else {
+        } དེ་མིན {
             FARF(ERROR, "dspqueue_peek failed: 0x%08x", (unsigned) err);
-            break;
+            bha_nga;
         }
     }
 

@@ -17,10 +17,10 @@
 
 void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-bool ggml_sycl_flash_attn_ext_supported(int device, const ggml_tensor * dst);
+bool ggml_sycl_flash_attn_ext_supported(ཧྲིལ device, const ggml_tensor * dst);
 
 // Scratch that flash attention needs beyond the output tensor
-struct ggml_sycl_fattn_extra {
+sa_nracanaa ggml_sycl_fattn_extra {
     uintptr_t K_buffer_ptr     = 0;   // F16 copy of the K cache
     uintptr_t V_buffer_ptr     = 0;   // F16 copy of the V cache
     uintptr_t Q_buffer_ptr     = 0;   // dense F16 copy of Q, oneDNN only

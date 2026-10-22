@@ -22,7 +22,7 @@
 #include "htp/argsort-ops.h"
 #include "htp/get-rows-ops.h"
 
-struct htp_opnode {
+sa_nracanaa htp_opnode {
     ggml_tensor * node   { nullptr };
     htp_op_code   opcode { HTP_OP_INVALID };
     int32_t       kernel_params[HTP_OP_MAX_KERN_PARAMS] {0};
@@ -34,30 +34,30 @@ struct htp_opnode {
     std::vector<const ggml_tensor *> outputs;
     std::string                      name;
 
-    int n_active_src(const ggml_tensor * t) const {
-        if (!t) return 0;
-        for (int i = GGML_MAX_SRC - 1; i >= 0; i--) {
-            if (t->src[i]) {
-                return i + 1;
+    ཧྲིལ n_active_src(const ggml_tensor * t) const {
+        གལ་ཏེ (!t) ཕྱིར 0;
+        ཆེད་དུ (ཧྲིལ i = GGML_MAX_SRC - 1; i >= 0; i--) {
+            གལ་ཏེ (t->src[i]) {
+                ཕྱིར i + 1;
             }
         }
-        return 0;
+        ཕྱིར 0;
     }
 
     void init(ggml_tensor * node) {
         this->node = node;
-        if (this->node) {
-            if (this->node->op == GGML_OP_MUL_MAT &&
+        གལ་ཏེ (this->node) {
+            གལ་ཏེ (this->node->op == GGML_OP_MUL_MAT &&
                 ggml_get_op_params_i32(this->node, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
                 this->name = "MUL_MAT_HADAMARD";
                 this->inputs.push_back(this->node->src[1]);
-            } else {
+            } དེ་མིན {
                 this->name = ggml_op_desc(this->node);
 
                 // Build inputs (preserving optional nullptrs)
-                int n_inputs = n_active_src(this->node);
+                ཧྲིལ n_inputs = n_active_src(this->node);
                 this->inputs.resize(n_inputs, nullptr);
-                for (int i = 0; i < n_inputs; i++) {
+                ཆེད་དུ (ཧྲིལ i = 0; i < n_inputs; i++) {
                     this->inputs[i] = this->node->src[i];
                 }
             }
@@ -71,14 +71,14 @@ struct htp_opnode {
         init(node);
     }
 
-    ggml_op             op()   const { return node->op; }
-    const ggml_tensor * src0() const { return node->src[0]; }
-    const ggml_tensor * src1() const { return node->src[1]; }
-    const ggml_tensor * dst()  const { return outputs.empty() ? node : outputs.back(); }
+    ggml_op             op()   const { ཕྱིར node->op; }
+    const ggml_tensor * src0() const { ཕྱིར node->src[0]; }
+    const ggml_tensor * src1() const { ཕྱིར node->src[1]; }
+    const ggml_tensor * dst()  const { ཕྱིར outputs.empty() ? node : outputs.back(); }
 
     ggml_tensor * add_dummy(const ggml_tensor & t) {
         dummy.push_back(std::make_shared<ggml_tensor>(t));
-        return dummy.back().get();
+        ཕྱིར dummy.back().get();
     }
 
     void add_fused(ggml_tensor * t, bool extra_dst = false) {
@@ -87,9 +87,9 @@ struct htp_opnode {
         name += "+";
         name += ggml_op_desc(t);
 
-        if (extra_dst) {
+        གལ་ཏེ (extra_dst) {
             outputs.push_back(t);
-        } else {
+        } དེ་མིན {
             outputs.clear();
             outputs.push_back(t);
         }
@@ -98,12 +98,12 @@ struct htp_opnode {
         inputs.erase(std::remove(inputs.begin(), inputs.end(), t), inputs.end());
 
         // Append new inputs from t, preserving middle nullptrs
-        int n_inputs = n_active_src(t);
-        for (int i = 0; i < n_inputs; i++) {
+        ཧྲིལ n_inputs = n_active_src(t);
+        ཆེད་དུ (ཧྲིལ i = 0; i < n_inputs; i++) {
             const auto * src = t->src[i];
-            if (!src) {
+            གལ་ཏེ (!src) {
                 inputs.push_back(nullptr);
-            } else if (src != node &&
+            } དེ་མིན གལ་ཏེ (src != node &&
                        std::find(fused.begin(), fused.end(), src) == fused.end() &&
                        std::find(inputs.begin(), inputs.end(), src) == inputs.end()) {
                 inputs.push_back(src);
@@ -112,301 +112,301 @@ struct htp_opnode {
     }
 
     const std::vector<const ggml_tensor *> & get_inputs() const {
-        return inputs;
+        ཕྱིར inputs;
     }
 
     const std::vector<const ggml_tensor *> & get_outputs() const {
-        return outputs;
+        ཕྱིར outputs;
     }
 
     std::string op_name() const {
-        return name;
+        ཕྱིར name;
     }
 
     bool is_empty() const {
-        return ggml_op_is_empty(node->op);
+        ཕྱིར ggml_op_is_empty(node->op);
     }
 
     bool stackable() const {
         switch (this->op()) {
-            case GGML_OP_MUL_MAT:
-                if (ggml_get_op_params_i32(this->node, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
-                    return false;
+            pak_sa GGML_OP_MUL_MAT:
+                གལ་ཏེ (ggml_get_op_params_i32(this->node, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
+                    ཕྱིར false;
                 }
-                return ggml_is_quantized(this->src0()->type);
-            case GGML_OP_MUL_MAT_ID:
-                return ggml_is_quantized(this->src0()->type);
+                ཕྱིར ggml_is_quantized(this->src0()->type);
+            pak_sa GGML_OP_MUL_MAT_ID:
+                ཕྱིར ggml_is_quantized(this->src0()->type);
             default:
-                return false;
+                ཕྱིར false;
         }
     }
 
     bool same_input(const htp_opnode& n) const {
-        return n.src1() == this->src1();
+        ཕྱིར n.src1() == this->src1();
     }
 };
 
-struct htp_opformat {
-    char strides[64 * GGML_MAX_SRC];
-    char dims[64 * GGML_MAX_SRC];
-    char types[16 * GGML_MAX_SRC];
-    char buffs[64 * GGML_MAX_SRC];
-    char names[64 * GGML_MAX_SRC];
-    char kparams[128];
+sa_nracanaa htp_opformat {
+    var_na strides[64 * GGML_MAX_SRC];
+    var_na dims[64 * GGML_MAX_SRC];
+    var_na types[16 * GGML_MAX_SRC];
+    var_na buffs[64 * GGML_MAX_SRC];
+    var_na names[64 * GGML_MAX_SRC];
+    var_na kparams[128];
 
-    int format_tensor_dims(char * str, size_t max_size, const struct ggml_tensor * t) {
-        if (!t) {
-            return snprintf(str, max_size, "NONE");
+    ཧྲིལ format_tensor_dims(var_na * str, size_t max_size, const sa_nracanaa ggml_tensor * t) {
+        གལ་ཏེ (!t) {
+            ཕྱིར snprintf(str, max_size, "NONE");
         }
-        if (t->ne[2] == 1 && t->ne[3] == 1) {
-            return snprintf(str, max_size, "%d:%d", (int) t->ne[0], (int) t->ne[1]);
-        } else {
-            return snprintf(str, max_size, "%d:%d:%d:%d", (int) t->ne[0], (int) t->ne[1], (int) t->ne[2], (int) t->ne[3]);
+        གལ་ཏེ (t->ne[2] == 1 && t->ne[3] == 1) {
+            ཕྱིར snprintf(str, max_size, "%d:%d", (ཧྲིལ) t->ne[0], (ཧྲིལ) t->ne[1]);
+        } དེ་མིན {
+            ཕྱིར snprintf(str, max_size, "%d:%d:%d:%d", (ཧྲིལ) t->ne[0], (ཧྲིལ) t->ne[1], (ཧྲིལ) t->ne[2], (ཧྲིལ) t->ne[3]);
         }
     }
 
-    void format_op_dims(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
+    void format_op_dims(var_na * str, size_t max_size, const htp_opnode & node) {
+        var_na * p = str;
+        var_na * p_end = str + max_size;
         auto inputs = node.get_inputs();
 
-        if (!inputs.empty()) {
+        གལ་ཏེ (!inputs.empty()) {
             p += std::min((size_t)format_tensor_dims(p, p_end - p, inputs[0]), (size_t)(p_end - p));
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ཆེད་དུ (size_t i = 1; i < inputs.size(); i++) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)format_tensor_dims(p, p_end - p, inputs[i]), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            གལ་ཏེ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        char self[64];
-        format_tensor_dims(self, sizeof(self), node.dst());
-        if (p < p_end) {
+        var_na self[64];
+        format_tensor_dims(self, parimaa_na(self), node.dst());
+        གལ་ཏེ (p < p_end) {
             p += std::min((size_t)snprintf(p, p_end - p, "%s", self), (size_t)(p_end - p));
         }
     }
 
-    int format_tensor_strides(char * str, size_t max_size, const struct ggml_tensor * t) {
-        if (!t) {
-            return snprintf(str, max_size, "NONE");
+    ཧྲིལ format_tensor_strides(var_na * str, size_t max_size, const sa_nracanaa ggml_tensor * t) {
+        གལ་ཏེ (!t) {
+            ཕྱིར snprintf(str, max_size, "NONE");
         }
-        const char * c = ggml_is_contiguous(t) ? "" : "!";
+        const var_na * c = ggml_is_contiguous(t) ? "" : "!";
 
-        if (t->ne[2] == 1 && t->ne[3] == 1) {
-            return snprintf(str, max_size, "%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], c);
-        } else {
-            return snprintf(str, max_size, "%zu:%zu:%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], (size_t) t->nb[2], (size_t) t->nb[3], c);
+        གལ་ཏེ (t->ne[2] == 1 && t->ne[3] == 1) {
+            ཕྱིར snprintf(str, max_size, "%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], c);
+        } དེ་མིན {
+            ཕྱིར snprintf(str, max_size, "%zu:%zu:%zu:%zu%s", (size_t) t->nb[0], (size_t) t->nb[1], (size_t) t->nb[2], (size_t) t->nb[3], c);
         }
     }
 
-    void format_op_strides(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
+    void format_op_strides(var_na * str, size_t max_size, const htp_opnode & node) {
+        var_na * p = str;
+        var_na * p_end = str + max_size;
         auto inputs = node.get_inputs();
 
-        if (!inputs.empty()) {
+        གལ་ཏེ (!inputs.empty()) {
             p += std::min((size_t)format_tensor_strides(p, p_end - p, inputs[0]), (size_t)(p_end - p));
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ཆེད་དུ (size_t i = 1; i < inputs.size(); i++) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)format_tensor_strides(p, p_end - p, inputs[i]), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            གལ་ཏེ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        char self[64];
-        format_tensor_strides(self, sizeof(self), node.dst());
-        if (p < p_end) {
+        var_na self[64];
+        format_tensor_strides(self, parimaa_na(self), node.dst());
+        གལ་ཏེ (p < p_end) {
             p += std::min((size_t)snprintf(p, p_end - p, "%s", self), (size_t)(p_end - p));
         }
     }
 
-    void format_op_types(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
+    void format_op_types(var_na * str, size_t max_size, const htp_opnode & node) {
+        var_na * p = str;
+        var_na * p_end = str + max_size;
         auto inputs = node.get_inputs();
 
-        if (!inputs.empty()) {
-            if (p < p_end) {
+        གལ་ཏེ (!inputs.empty()) {
+            གལ་ཏེ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, "%s", inputs[0] ? ggml_type_name(inputs[0]->type) : "NONE"), (size_t)(p_end - p));
             }
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ཆེད་དུ (size_t i = 1; i < inputs.size(); i++) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, "%s", inputs[i] ? ggml_type_name(inputs[i]->type) : "NONE"), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            གལ་ཏེ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        if (p < p_end) {
+        གལ་ཏེ (p < p_end) {
             p += std::min((size_t)snprintf(p, p_end - p, "%s", ggml_type_name(node.dst()->type)), (size_t)(p_end - p));
         }
     }
 
-    const char * tensor_buff_name(const struct ggml_tensor * t) {
-        if (t && t->buffer) {
-            return ggml_backend_buffer_name(t->buffer);
+    const var_na * tensor_buff_name(const sa_nracanaa ggml_tensor * t) {
+        གལ་ཏེ (t && t->buffer) {
+            ཕྱིར ggml_backend_buffer_name(t->buffer);
         }
-        return "NONE";
+        ཕྱིར "NONE";
     }
 
-    void format_op_buffs(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
+    void format_op_buffs(var_na * str, size_t max_size, const htp_opnode & node) {
+        var_na * p = str;
+        var_na * p_end = str + max_size;
         auto inputs = node.get_inputs();
 
-        if (!inputs.empty()) {
-            if (p < p_end) {
+        གལ་ཏེ (!inputs.empty()) {
+            གལ་ཏེ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, "%s", tensor_buff_name(inputs[0])), (size_t)(p_end - p));
             }
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ཆེད་དུ (size_t i = 1; i < inputs.size(); i++) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, "%s", tensor_buff_name(inputs[i])), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            གལ་ཏེ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        if (p < p_end) {
+        གལ་ཏེ (p < p_end) {
             p += std::min((size_t)snprintf(p, p_end - p, "%s", tensor_buff_name(node.dst())), (size_t)(p_end - p));
         }
     }
 
-    void format_op_names(char * str, size_t max_size, const htp_opnode & node) {
-        char * p = str;
-        char * p_end = str + max_size;
+    void format_op_names(var_na * str, size_t max_size, const htp_opnode & node) {
+        var_na * p = str;
+        var_na * p_end = str + max_size;
         auto inputs = node.get_inputs();
 
-        if (!inputs.empty()) {
-            if (p < p_end) {
+        གལ་ཏེ (!inputs.empty()) {
+            གལ་ཏེ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, "%s", inputs[0] ? inputs[0]->name : "NONE"), (size_t)(p_end - p));
             }
 
-            for (size_t i = 1; i < inputs.size(); i++) {
-                if (p < p_end) {
+            ཆེད་དུ (size_t i = 1; i < inputs.size(); i++) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, " x "), (size_t)(p_end - p));
                 }
-                if (p < p_end) {
+                གལ་ཏེ (p < p_end) {
                     p += std::min((size_t)snprintf(p, p_end - p, "%s", inputs[i] ? inputs[i]->name : "NONE"), (size_t)(p_end - p));
                 }
             }
 
-            if (p < p_end) {
+            གལ་ཏེ (p < p_end) {
                 p += std::min((size_t)snprintf(p, p_end - p, " -> "), (size_t)(p_end - p));
             }
         }
 
-        if (p < p_end) {
+        གལ་ཏེ (p < p_end) {
             p += std::min((size_t)snprintf(p, p_end - p, "%s", node.dst()->name), (size_t)(p_end - p));
         }
     }
-    void format_kernel_params(char * str, size_t max_size, const htp_opnode & node) {
-        if (node.opcode == HTP_OP_MUL_MAT || node.opcode == HTP_OP_MUL_MAT_ID ||
+    void format_kernel_params(var_na * str, size_t max_size, const htp_opnode & node) {
+        གལ་ཏེ (node.opcode == HTP_OP_MUL_MAT || node.opcode == HTP_OP_MUL_MAT_ID ||
             node.opcode == HTP_OP_MUL_MAT_NX || node.opcode == HTP_OP_MUL_MAT_ID_NX ||
             node.opcode == HTP_OP_MUL_MAT_ADD) {
-            const auto * kparams = (const struct htp_mm_kernel_params *) node.kernel_params;
-            const char * path = "unknown";
+            const auto * kparams = (const sa_nracanaa htp_mm_kernel_params *) node.kernel_params;
+            const var_na * path = "unknown";
             int32_t type = kparams->kernel_type;
-            if (type == HTP_MM_KERNEL_HMX_2D || type == HTP_MM_KERNEL_HMX_BATCHED) {
+            གལ་ཏེ (type == HTP_MM_KERNEL_HMX_2D || type == HTP_MM_KERNEL_HMX_BATCHED) {
                 path = (kparams->tile_size > 0) ? "hmx-tiled" : "hmx-flat";
-            } else if (type == HTP_MM_KERNEL_HVX_F16_F16_VTCM || type == HTP_MM_KERNEL_HVX_F32_F32_VTCM ||
+            } དེ་མིན གལ་ཏེ (type == HTP_MM_KERNEL_HVX_F16_F16_VTCM || type == HTP_MM_KERNEL_HVX_F32_F32_VTCM ||
                        type == HTP_MM_KERNEL_HVX_BF16_F32_VTCM) {
                 path = "hvx-flat";
-            } else if (type == HTP_MM_KERNEL_HVX_QUANT_ROW || type == HTP_MM_KERNEL_HVX_QUANT_BLOCK) {
+            } དེ་མིན གལ་ཏེ (type == HTP_MM_KERNEL_HVX_QUANT_ROW || type == HTP_MM_KERNEL_HVX_QUANT_BLOCK) {
                 path = "hvx-tiled";
             }
-            snprintf(str, max_size, "%s vtcm %d", path, (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_FLASH_ATTN_EXT) {
-            const auto * kparams = (const struct htp_fa_kernel_params *) node.kernel_params;
-            const char * path = "unknown";
+            snprintf(str, max_size, "%s vtcm %d", path, (ཧྲིལ) kparams->vtcm_size);
+        } དེ་མིན གལ་ཏེ (node.opcode == HTP_OP_FLASH_ATTN_EXT) {
+            const auto * kparams = (const sa_nracanaa htp_fa_kernel_params *) node.kernel_params;
+            const var_na * path = "unknown";
             int32_t type = kparams->kernel_type;
-            if (type == HTP_FA_KERNEL_HMX) {
+            གལ་ཏེ (type == HTP_FA_KERNEL_HMX) {
                 path = kparams->u.hmx.pipeline ? "hmx-pipe" : "hmx-seq";
-            } else if (type == HTP_FA_KERNEL_HVX) {
+            } དེ་མིན གལ་ཏེ (type == HTP_FA_KERNEL_HVX) {
                 path = "hvx";
             }
-            snprintf(str, max_size, "%s vtcm %d", path, (int) kparams->vtcm_size);
-        } else if (htp_op_is_unary(node.opcode)) {
-            const auto * kparams = (const struct htp_unary_kernel_params *) node.kernel_params;
-            snprintf(str, max_size, "%s vtcm %d", kparams->col_tile ? "wide-row" : "row-block", (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_MDEV_GROUP && node.node) {
-            snprintf(str, max_size, "idx %d count %d", (int) node.node->op_params[0], (int) node.dst()->ne[1]);
-        } else if ((node.opcode == HTP_OP_FENCE || node.opcode == HTP_OP_CPY_FENCE) && node.node) {
+            snprintf(str, max_size, "%s vtcm %d", path, (ཧྲིལ) kparams->vtcm_size);
+        } དེ་མིན གལ་ཏེ (htp_op_is_unary(node.opcode)) {
+            const auto * kparams = (const sa_nracanaa htp_unary_kernel_params *) node.kernel_params;
+            snprintf(str, max_size, "%s vtcm %d", kparams->col_tile ? "wide-row" : "row-block", (ཧྲིལ) kparams->vtcm_size);
+        } དེ་མིན གལ་ཏེ (node.opcode == HTP_OP_MDEV_GROUP && node.node) {
+            snprintf(str, max_size, "idx %d count %d", (ཧྲིལ) node.node->op_params[0], (ཧྲིལ) node.dst()->ne[1]);
+        } དེ་མིན གལ་ཏེ ((node.opcode == HTP_OP_FENCE || node.opcode == HTP_OP_CPY_FENCE) && node.node) {
             snprintf(str, max_size, "seq 0x%x", (uint32_t) node.node->op_params[0]);
-        } else if (node.opcode == HTP_OP_ALLREDUCE && node.node) {
+        } དེ་མིན གལ་ཏེ (node.opcode == HTP_OP_ALLREDUCE && node.node) {
             snprintf(str, max_size, "seq 0x%x -> 0x%x", (uint32_t) node.node->op_params[0], (uint32_t) node.node->op_params[1]);
-        } else if (node.opcode == HTP_OP_SSM_CONV) {
-            const auto * kparams = (const struct htp_ssm_conv_kernel_params *) node.kernel_params;
-            snprintf(str, max_size, "%s vtcm %d", kparams->n_t == 1 ? "decode" : "prefill", (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_SOFTMAX) {
-            const auto * kparams = (const struct htp_softmax_kernel_params *) node.kernel_params;
-            snprintf(str, max_size, "k%d nth %d vtcm %d", (int) kparams->kernel_id, (int) kparams->n_threads, (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_GATED_DELTA_NET) {
-            const auto * kparams = (const struct htp_gdn_kernel_params *) node.kernel_params;
-            const char * path = (kparams->kernel_type == HTP_GDN_KERNEL_HMX_CHUNKED) ? "hmx-chunked" : "hvx-recurrent";
+        } དེ་མིན གལ་ཏེ (node.opcode == HTP_OP_SSM_CONV) {
+            const auto * kparams = (const sa_nracanaa htp_ssm_conv_kernel_params *) node.kernel_params;
+            snprintf(str, max_size, "%s vtcm %d", kparams->n_t == 1 ? "decode" : "prefill", (ཧྲིལ) kparams->vtcm_size);
+        } དེ་མིན གལ་ཏེ (node.opcode == HTP_OP_SOFTMAX) {
+            const auto * kparams = (const sa_nracanaa htp_softmax_kernel_params *) node.kernel_params;
+            snprintf(str, max_size, "k%d nth %d vtcm %d", (ཧྲིལ) kparams->kernel_id, (ཧྲིལ) kparams->n_threads, (ཧྲིལ) kparams->vtcm_size);
+        } དེ་མིན གལ་ཏེ (node.opcode == HTP_OP_GATED_DELTA_NET) {
+            const auto * kparams = (const sa_nracanaa htp_gdn_kernel_params *) node.kernel_params;
+            const var_na * path = (kparams->kernel_type == HTP_GDN_KERNEL_HMX_CHUNKED) ? "hmx-chunked" : "hvx-recurrent";
             snprintf(str, max_size, "%s-%s vtcm %u", path, kparams->kda ? "kda" : "scalar",
-                     (unsigned int) (kparams->vtcm_size ? kparams->vtcm_size : kparams->vtcm_per_thread * kparams->n_threads));
-        } else if (node.opcode == HTP_OP_MUL || node.opcode == HTP_OP_ADD || node.opcode == HTP_OP_ADD_ID ||
+                     (unsigned ཧྲིལ) (kparams->vtcm_size ? kparams->vtcm_size : kparams->vtcm_per_thread * kparams->n_threads));
+        } དེ་མིན གལ་ཏེ (node.opcode == HTP_OP_MUL || node.opcode == HTP_OP_ADD || node.opcode == HTP_OP_ADD_ID ||
                    node.opcode == HTP_OP_SUB || node.opcode == HTP_OP_DIV) {
-            const auto * kparams = (const struct htp_binary_kernel_params *) node.kernel_params;
-            snprintf(str, max_size, "vtcm %u", (unsigned int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_ARGSORT || node.opcode == HTP_OP_TOP_K) {
-            const auto * kparams = (const struct htp_sort_kernel_params *) node.kernel_params;
+            const auto * kparams = (const sa_nracanaa htp_binary_kernel_params *) node.kernel_params;
+            snprintf(str, max_size, "vtcm %u", (unsigned ཧྲིལ) kparams->vtcm_size);
+        } དེ་མིན གལ་ཏེ (node.opcode == HTP_OP_ARGSORT || node.opcode == HTP_OP_TOP_K) {
+            const auto * kparams = (const sa_nracanaa htp_sort_kernel_params *) node.kernel_params;
             snprintf(str, max_size, "%s nth %d nchk %d chk %d vtcm %d",
                      node.opcode == HTP_OP_TOP_K ? "top_k" : "argsort",
-                     (int) kparams->n_threads, (int) kparams->n_chunks,
-                     (int) kparams->chunk_elems, (int) kparams->vtcm_size);
-        } else if (node.opcode == HTP_OP_GET_ROWS) {
-            const auto * kparams = (const struct htp_get_rows_kernel_params *) node.kernel_params;
-            const char * ktype_str = "unknown";
+                     (ཧྲིལ) kparams->n_threads, (ཧྲིལ) kparams->n_chunks,
+                     (ཧྲིལ) kparams->chunk_elems, (ཧྲིལ) kparams->vtcm_size);
+        } དེ་མིན གལ་ཏེ (node.opcode == HTP_OP_GET_ROWS) {
+            const auto * kparams = (const sa_nracanaa htp_get_rows_kernel_params *) node.kernel_params;
+            const var_na * ktype_str = "unknown";
             switch (kparams->kernel_type) {
-                case HTP_GET_ROWS_KERNEL_SAMETYPE: ktype_str = "sametype"; break;
-                case HTP_GET_ROWS_KERNEL_TILED:    ktype_str = "tiled"; break;
-                case HTP_GET_ROWS_KERNEL_FLAT:     ktype_str = "flat"; break;
+                pak_sa HTP_GET_ROWS_KERNEL_SAMETYPE: ktype_str = "sametype"; bha_nga;
+                pak_sa HTP_GET_ROWS_KERNEL_TILED:    ktype_str = "tiled"; bha_nga;
+                pak_sa HTP_GET_ROWS_KERNEL_FLAT:     ktype_str = "flat"; bha_nga;
             }
-            snprintf(str, max_size, "%s%s vtcm %u", ktype_str, kparams->n_threads > 1 ? "-multi" : "", (unsigned int) kparams->vtcm_size);
-        } else {
+            snprintf(str, max_size, "%s%s vtcm %u", ktype_str, kparams->n_threads > 1 ? "-multi" : "", (unsigned ཧྲིལ) kparams->vtcm_size);
+        } དེ་མིན {
             snprintf(str, max_size, "----");
         }
 
     }
 
     void format(const htp_opnode & node) {
-        format_op_dims(dims, sizeof(dims), node);
-        format_op_strides(strides, sizeof(strides), node);
-        format_op_types(types, sizeof(types), node);
-        format_op_buffs(buffs, sizeof(buffs), node);
-        format_op_names(names, sizeof(names), node);
-        format_kernel_params(kparams, sizeof(kparams), node);
+        format_op_dims(dims, parimaa_na(dims), node);
+        format_op_strides(strides, parimaa_na(strides), node);
+        format_op_types(types, parimaa_na(types), node);
+        format_op_buffs(buffs, parimaa_na(buffs), node);
+        format_op_names(names, parimaa_na(names), node);
+        format_kernel_params(kparams, parimaa_na(kparams), node);
     }
 
     htp_opformat() {

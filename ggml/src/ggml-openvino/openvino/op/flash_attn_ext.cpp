@@ -56,7 +56,7 @@ static ov::Output<ov::Node> reshape_flat_kv(const ov::Output<ov::Node> & kv_flat
     // transpose: {1, n_kv, n_head, head_size} -> {1, n_head, n_kv, head_size}
     auto perm = ov::op::v0::Constant::create(ov::element::i64, {4}, {0, 2, 1, 3});
     auto ret = std::make_shared<ov::op::v1::Transpose>(reshaped, perm);
-    return ret;
+    ཕྱིར ret;
 }
 
 OutputVector translate_flash_attn_ext(const NodeContext & context) {
@@ -65,17 +65,17 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
     auto q_f32 = context.get_input(0);
     auto k = context.get_input(1);
     auto v = context.get_input(2);
-    const int op_case = context.get_op_case();
+    const ཧྲིལ op_case = context.get_op_case();
 
-    if (op_case == 1 || op_case == 2) {
+    གལ་ཏེ (op_case == 1 || op_case == 2) {
         int64_t n_state_head = (int64_t) context.get_view_input_ggml_shape(1, 0)[3];
         int64_t n_head = (int64_t) context.get_view_input_ggml_shape(1, 0)[1];
         size_t nb1 = context.get_view_input_stride(1, 0)[2];
         size_t offset = context.get_view_input_offset(1, 0);
         ov::Output<ov::Node> attention_size;
-        if (op_case == 1) {
+        གལ་ཏེ (op_case == 1) {
             attention_size = context.get_input("attention_size");
-        } else {
+        } དེ་མིན {
             attention_size = context.get_input("attention_size_static");
         }
         k = reshape_flat_kv(k, offset, nb1, n_head, n_state_head, attention_size);
@@ -94,16 +94,16 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
 
     // For stateful
     ov::Output<ov::Node> mask;
-    if (has_mask) {
+    གལ་ཏེ (has_mask) {
         mask = context.get_input(3);
         std::string mask_name = "KQ_mask_sliced";
-        if (context.get_input_names()[3].find("swa") != std::string::npos) {
+        གལ་ཏེ (context.get_input_names()[3].find("swa") != std::string::npos) {
             mask_name = "KQ_mask_swa_sliced";
         }
-        if (context.has_input(mask_name)) {
+        གལ་ཏེ (context.has_input(mask_name)) {
             mask = context.get_input(mask_name);
         }
-        if (mask.get_element_type() != ov::element::f16) {
+        གལ་ཏེ (mask.get_element_type() != ov::element::f16) {
             mask = std::make_shared<ov::op::v0::Convert>(mask, ov::element::f16);
         }
     }
@@ -122,16 +122,16 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
     // Set GGML_OPENVINO_MANUAL_GQA_ATTN to a positive value (e.g. 1) to force-enable,
     // or to 0 to force-disable. Unset falls back to the device-based default.
     static const bool manual_gqa_enabled = []() {
-        const char * env = ggml_openvino_getenv_str("GGML_OPENVINO_MANUAL_GQA_ATTN");
-        if (env != nullptr) {
-            return ggml_openvino_getenv_int("GGML_OPENVINO_MANUAL_GQA_ATTN") > 0;
+        const var_na * env = ggml_openvino_getenv_str("GGML_OPENVINO_MANUAL_GQA_ATTN");
+        གལ་ཏེ (env != nullptr) {
+            ཕྱིར ggml_openvino_getenv_int("GGML_OPENVINO_MANUAL_GQA_ATTN") > 0;
         }
-        return ggml_openvino_is_gpu();
+        ཕྱིར ggml_openvino_is_gpu();
     }();
     const bool use_manual_gqa_attention =
         manual_gqa_enabled && factor > 1 && num_heads_kv > 1 && !context.is_stateful();
 
-    if (use_manual_gqa_attention) {
+    གལ་ཏེ (use_manual_gqa_attention) {
         // Q, K, V arrive as [B, n_heads(_kv), S, head_size], where B is the active
         // batch (n_seq_active) and may be > 1 (llama-perplexity, llama-server -np > 1)
         // or dynamic. Reshape to
@@ -161,11 +161,11 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
         // [B, num_heads_kv, factor, S_q, S_k] scores: B==B, then 1→num_heads_kv and
         // 1→factor on the head dims.
         ov::Output<ov::Node> qk_masked;
-        if (has_mask) {
+        གལ་ཏེ (has_mask) {
             auto mask_unsq1 =
                 std::make_shared<ov::op::v0::Unsqueeze>(mask, ov::op::v0::Constant::create(ov::element::i64, {1}, {2}));
             qk_masked = std::make_shared<ov::op::v1::Add>(qk_scaled, mask_unsq1);
-        } else {
+        } དེ་མིན {
             qk_masked = qk_scaled;
         }
 
@@ -185,7 +185,7 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
         res = std::make_shared<ov::op::v1::Transpose>(
             out_4d, ov::op::v0::Constant::create(ov::element::i64, {4}, {0, 2, 1, 3}));
         res = std::make_shared<ov::op::v0::Convert>(res, ov::element::f32);
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ཕྱིར rename_outputs_with_suffix({res}, context.get_name());
     }
 
     // Default path: explicit Broadcast → SDPA. Kept as the fallback because
@@ -193,7 +193,7 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
     // tiles via DPAS), and (b) the manual path above is still being validated.
     auto tile_kv = [&](int64_t n_heads, int64_t n_heads_kv, int64_t hs, ov::Output<Node> kv) {
         int64_t f = n_heads / n_heads_kv;
-        if (f > 1 && n_heads_kv > 1) {
+        གལ་ཏེ (f > 1 && n_heads_kv > 1) {
             ov::Output<ov::Node> kv_broadcast_shape;
             ov::Output<ov::Node> kv_unsqueezed;
             ov::Output<ov::Node> new_kv_shape;
@@ -212,7 +212,7 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
                                                          ov::op::BroadcastType::BIDIRECTIONAL);
             kv = std::make_shared<ov::op::v1::Reshape>(kv, new_kv_shape, true);
         }
-        return kv;
+        ཕྱིར kv;
     };
 
     //auto q_shape = context.get_input_shape(0).to_shape();
@@ -223,17 +223,17 @@ OutputVector translate_flash_attn_ext(const NodeContext & context) {
     v = tile_kv(num_heads, num_heads_kv, head_size, v);
 
     constexpr auto causal = false;
-    if (has_mask) {
+    གལ་ཏེ (has_mask) {
         auto sdpa = std::make_shared<ov::op::v13::ScaledDotProductAttention>(q, k, v, mask, scale_node, causal);
         res = std::make_shared<ov::op::v1::Transpose>(
             sdpa, ov::op::v0::Constant::create(ov::element::i64, {4}, {0, 2, 1, 3}));
-    } else {
+    } དེ་མིན {
         auto sdpa = std::make_shared<ov::op::v13::ScaledDotProductAttention>(q, k, v, scale_node, causal);
         res = std::make_shared<ov::op::v1::Transpose>(
             sdpa, ov::op::v0::Constant::create(ov::element::i64, {4}, {0, 2, 1, 3}));
     }
     res = std::make_shared<ov::op::v0::Convert>(res, ov::element::f32);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ཕྱིར rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -15,29 +15,29 @@
 
 std::shared_ptr<rt::IRuntime> ggml_et_runtime();
 
-struct ggml_backend_et_buffer_type_context {
-    int         devidx;
+sa_nracanaa ggml_backend_et_buffer_type_context {
+    ཧྲིལ         devidx;
     std::string name;
 };
 
-struct ggml_backend_et_buffer_context {
-    int          devidx;
+sa_nracanaa ggml_backend_et_buffer_context {
+    ཧྲིལ          devidx;
     void *       data;  // Device memory pointer
     size_t       size;
     rt::DeviceId rtid;
 };
 
-struct ggml_backend_et_context {
-    int devidx;
+sa_nracanaa ggml_backend_et_context {
+    ཧྲིལ devidx;
 };
 
-struct ggml_backend_et_device_context;
+sa_nracanaa ggml_backend_et_device_context;
 
 // One slot in the uberkernel ring. The host vectors back the H2D copy and
 // must outlive the upload; the device buffers feed the kernel that consumes
 // them. pending_event lets us know when both have drained so the slot can
 // be recycled.
-struct ggml_backend_et_uberkernel_slot {
+sa_nracanaa ggml_backend_et_uberkernel_slot {
     std::vector<ggml_et_uberkernel_inst> insts;
     std::vector<std::byte>               params_blob;
 
@@ -50,7 +50,7 @@ struct ggml_backend_et_uberkernel_slot {
     bool        has_pending = false;
 };
 
-struct ggml_backend_et_uberkernel_context {
+sa_nracanaa ggml_backend_et_uberkernel_context {
     bool     failed     = false;
     uint64_t shire_mask = 0;
 
@@ -62,8 +62,8 @@ struct ggml_backend_et_uberkernel_context {
     size_t                          current_slot = 0;
 };
 
-struct ggml_backend_et_device_context {
-    int                        devidx;
+sa_nracanaa ggml_backend_et_device_context {
+    ཧྲིལ                        devidx;
     rt::DeviceId               rtid;
     std::string                name;
     std::string                desc;
@@ -81,6 +81,6 @@ struct ggml_backend_et_device_context {
     ggml_backend_et_uberkernel_context uberkernel;
 };
 
-struct ggml_backend_et_reg_ctx {
+sa_nracanaa ggml_backend_et_reg_ctx {
     std::vector<ggml_backend_dev_t> devices;
 };

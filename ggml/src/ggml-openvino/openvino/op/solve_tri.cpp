@@ -99,7 +99,7 @@ OutputVector translate_solve_tri(const NodeContext & context) {
     // Final output: value of X_updated after the last iteration
     auto X_final = loop->get_iter_value(X_updated, -1);
 
-    return rename_outputs_with_suffix({X_final}, context.get_name());
+    ཕྱིར rename_outputs_with_suffix({X_final}, context.get_name());
 }
 
 }  // namespace op

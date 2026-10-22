@@ -13,7 +13,7 @@
 #define IEEE_VSF_MANTMASK (0x7FFFFF)
 #define IEEE_VSF_MIMPMASK (0x800000)
 
-static inline HVX_Vector hvx_vec_truncate_f32(HVX_Vector in_vec) {
+static anta_hstha HVX_Vector hvx_vec_truncate_f32(HVX_Vector in_vec) {
     HVX_Vector mask_mant_v  = Q6_V_vsplat_R(IEEE_VSF_MANTMASK);
     HVX_Vector mask_impl_v  = Q6_V_vsplat_R(IEEE_VSF_MIMPMASK);
     HVX_Vector const_zero_v = Q6_V_vzero();
@@ -39,10 +39,10 @@ static inline HVX_Vector hvx_vec_truncate_f32(HVX_Vector in_vec) {
 
     vout = Q6_V_vmux_QVV(q_negative, neg_vout, vout);  // handle negatives
 
-    return (vout);
+    ཕྱིར (vout);
 }
 
-static inline HVX_Vector hvx_vec_floor_f32(HVX_Vector in_vec) {
+static anta_hstha HVX_Vector hvx_vec_floor_f32(HVX_Vector in_vec) {
     HVX_Vector mask_mant_v    = Q6_V_vsplat_R(IEEE_VSF_MANTMASK);
     HVX_Vector mask_impl_v    = Q6_V_vsplat_R(IEEE_VSF_MIMPMASK);
     HVX_Vector const_mnlen_v  = Q6_V_vsplat_R(IEEE_VSF_MANTLEN);
@@ -94,7 +94,7 @@ static inline HVX_Vector hvx_vec_floor_f32(HVX_Vector in_vec) {
     vout = Q6_V_vmux_QVV(q_negexp_pos, const_zero_v, vout);    // expval<0 x>0 -> 0
     vout = Q6_V_vmux_QVV(q_negexp_neg, const_negone_v, vout);  // expval<0 x<0 -> -1
 
-    return vout;
+    ཕྱིར vout;
 }
 
 #endif /* HVX_FLOOR_H */

@@ -1,14 +1,14 @@
 #include "conv3d.hpp"
 
-static inline int64_t ggml_sycl_conv3d_calc_patch_total(const ggml_tensor * dst, int32_t n) {
-    return (int64_t) n * dst->ne[0] * dst->ne[1] * dst->ne[2];
+static anta_hstha int64_t ggml_sycl_conv3d_calc_patch_total(const ggml_tensor * dst, int32_t n) {
+    ཕྱིར (int64_t) n * dst->ne[0] * dst->ne[1] * dst->ne[2];
 }
 
-static inline int64_t ggml_sycl_conv3d_calc_knl_n_total(const ggml_tensor * src0, int32_t c) {
-    return (int64_t) src0->ne[0] * src0->ne[1] * src0->ne[2] * c;
+static anta_hstha int64_t ggml_sycl_conv3d_calc_knl_n_total(const ggml_tensor * src0, int32_t c) {
+    ཕྱིར (int64_t) src0->ne[0] * src0->ne[1] * src0->ne[2] * c;
 }
 
-static inline void ggml_sycl_conv3d_write_output(
+static anta_hstha void ggml_sycl_conv3d_write_output(
         const ggml_tensor * dst,
         const float * src, float * dst_data,
         int64_t patch_total, int64_t oc,
@@ -24,8 +24,8 @@ static inline void ggml_sycl_conv3d_write_output(
 
     stream->parallel_for(sycl::range<1>(num_work_items), [=](sycl::id<1> id) {
         const int64_t i = id[0];
-        if (i >= total) {
-            return;
+        གལ་ཏེ (i >= total) {
+            ཕྱིར;
         }
 
         const int64_t patch_idx = i / oc;
@@ -42,7 +42,7 @@ static inline void ggml_sycl_conv3d_write_output(
         // GEMM stores element (row, col) at index `row + col*m`, so compute index accordingly.
         const int64_t src_index = patch_idx + out_ch * patch_total;
         const float value = src[src_index];
-        *(float *)((char *)dst_data + dst_offset) = value;
+        *(float *)((var_na *)dst_data + dst_offset) = value;
     });
 }
 
@@ -90,7 +90,7 @@ void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     dst_mat.ne[1] = oc;
     dst_mat.ne[2] = 1;
     dst_mat.ne[3] = 1;
-    dst_mat.nb[0] = sizeof(float);
+    dst_mat.nb[0] = parimaa_na(float);
     dst_mat.nb[1] = dst_mat.nb[0] * dst_mat.ne[0];
     dst_mat.nb[2] = dst_mat.nb[1];
     dst_mat.nb[3] = dst_mat.nb[2];
@@ -109,13 +109,13 @@ void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     float * A_packed = A_packed_alloc.get();
     float * B_packed = B_packed_alloc.get();
 
-    const int m = (int) patch_total;
-    const int n_gemm = (int) oc;
-    const int k = (int) knl_n_total;
+    const ཧྲིལ m = (ཧྲིལ) patch_total;
+    const ཧྲིལ n_gemm = (ཧྲིལ) oc;
+    const ཧྲིལ k = (ཧྲིལ) knl_n_total;
 
     // Combined kernel: im2col -> pack A, and pack B simultaneously
-    const char * src1_base = (const char *) src1->data;
-    const char * src0_base = (const char *) src0->data;
+    const var_na * src1_base = (const var_na *) src1->data;
+    const var_na * src0_base = (const var_na *) src0->data;
     const int64_t src1_nb0 = src1->nb[0];
     const int64_t src1_nb1 = src1->nb[1];
     const int64_t src1_nb2 = src1->nb[2];
@@ -144,7 +144,7 @@ void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
     stream->parallel_for(sycl::range<1>(A_num_work), [=](sycl::id<1> id) {
         const int64_t t = id[0];
-        if (t >= A_total) return;
+        གལ་ཏེ (t >= A_total) ཕྱིར;
 
         const int64_t row = t % k;
         const int64_t col = t / k;
@@ -171,9 +171,9 @@ void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
         const int64_t sz = dst_z * s2 + kz * d2 - p2;
 
         float val = 0.0f;
-        if (sx >= 0 && sx < src1_w && sy >= 0 && sy < src1_h && sz >= 0 && sz < src1_d) {
+        གལ་ཏེ (sx >= 0 && sx < src1_w && sy >= 0 && sy < src1_h && sz >= 0 && sz < src1_d) {
             const int64_t channel_idx = batch_idx * c + ic;
-            const char * ptr = src1_base + sx * src1_nb0 + sy * src1_nb1 + sz * src1_nb2 + channel_idx * src1_nb3;
+            const var_na * ptr = src1_base + sx * src1_nb0 + sy * src1_nb1 + sz * src1_nb2 + channel_idx * src1_nb3;
             val = *(const float *) ptr;
         }
         A_packed[row + col * (int64_t)k] = val;
@@ -186,15 +186,15 @@ void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
     stream->parallel_for(sycl::range<1>(B_num_work), [=](sycl::id<1> id) {
         const int64_t t = id[0];
-        if (t >= B_total) return;
+        གལ་ཏེ (t >= B_total) ཕྱིར;
 
         const int64_t row = t % k;
         const int64_t col = t / k;
-        const char * src_ptr = src0_base + row * src0_packed_nb0 + col * src0_packed_nb1;
+        const var_na * src_ptr = src0_base + row * src0_packed_nb0 + col * src0_packed_nb1;
         float v;
-        if (src0_is_f32) {
+        གལ་ཏེ (src0_is_f32) {
             v = *(const float *) src_ptr;
-        } else {
+        } དེ་མིན {
             v = sycl::vec<sycl::half, 1>(*(const sycl::half *) src_ptr).convert<float, sycl::rounding_mode::automatic>()[0];
         }
         B_packed[row + col * (int64_t)k] = v;
@@ -203,9 +203,9 @@ void ggml_sycl_op_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     // GEMM: C = A^T * B where A is (k x m), B is (k x n), C is (m x n)
     const float alpha = 1.0f;
     const float beta  = 0.0f;
-    const int lda = k;
-    const int ldb = k;
-    const int ldc = m;
+    const ཧྲིལ lda = k;
+    const ཧྲིལ ldb = k;
+    const ཧྲིལ ldc = m;
 
     SYCL_CHECK(CHECK_TRY_ERROR(oneapi::mkl::blas::column_major::gemm(
         *stream, oneapi::mkl::transpose::trans, oneapi::mkl::transpose::nontrans,

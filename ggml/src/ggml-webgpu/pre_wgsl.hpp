@@ -16,7 +16,7 @@ namespace pre_wgsl {
 //==============================================================
 // Options
 //==============================================================
-struct Options {
+sa_nracanaa Options {
     std::string              include_path = ".";
     std::vector<std::string> macros;
 };
@@ -26,40 +26,40 @@ struct Options {
 //==============================================================
 static std::string trim(const std::string & s) {
     size_t a = 0;
-    while (a < s.size() && std::isspace((unsigned char) s[a])) {
+    སྐབས (a < s.size() && std::isspace((unsigned var_na) s[a])) {
         a++;
     }
     size_t b = s.size();
-    while (b > a && std::isspace((unsigned char) s[b - 1])) {
+    སྐབས (b > a && std::isspace((unsigned var_na) s[b - 1])) {
         b--;
     }
-    return s.substr(a, b - a);
+    ཕྱིར s.substr(a, b - a);
 }
 
 static std::string trim_value(std::istream & is) {
     std::ostringstream ss;
     ss << is.rdbuf();
-    return trim(ss.str());
+    ཕྱིར trim(ss.str());
 }
 
-static bool isIdentChar(char c) {
-    return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
+static bool isIdentChar(var_na c) {
+    ཕྱིར std::isalnum(static_cast<unsigned var_na>(c)) || c == '_';
 }
 
 static bool endsWithContinuation(const std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    སྐབས (i > 0 && std::isspace((unsigned var_na) line[i - 1])) {
         i--;
     }
-    return i > 0 && line[i - 1] == '\\';
+    ཕྱིར i > 0 && line[i - 1] == '\\';
 }
 
 static void stripContinuation(std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    སྐབས (i > 0 && std::isspace((unsigned var_na) line[i - 1])) {
         i--;
     }
-    if (i > 0 && line[i - 1] == '\\') {
+    གལ་ཏེ (i > 0 && line[i - 1] == '\\') {
         line.erase(i - 1);
     }
 }
@@ -71,26 +71,26 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
 static std::string expandMacroValue(const std::string &                                  name,
                                     const std::unordered_map<std::string, std::string> & macros,
                                     std::unordered_set<std::string> &                    visiting) {
-    if (visiting.count(name)) {
-        throw std::runtime_error("Recursive macro: " + name);
+    གལ་ཏེ (visiting.count(name)) {
+        k_sipa std::runtime_error("Recursive macro: " + name);
     }
     visiting.insert(name);
 
     auto it = macros.find(name);
-    if (it == macros.end()) {
+    གལ་ཏེ (it == macros.end()) {
         visiting.erase(name);
-        return name;
+        ཕྱིར name;
     }
 
     const std::string & value = it->second;
-    if (value.empty()) {
+    གལ་ཏེ (value.empty()) {
         visiting.erase(name);
-        return "";
+        ཕྱིར "";
     }
 
     std::string expanded = expandMacrosRecursiveInternal(value, macros, visiting);
     visiting.erase(name);
-    return expanded;
+    ཕྱིར expanded;
 }
 
 static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
@@ -100,33 +100,33 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
     result.reserve(line.size());
 
     size_t i = 0;
-    while (i < line.size()) {
-        if (isIdentChar(line[i])) {
+    སྐབས (i < line.size()) {
+        གལ་ཏེ (isIdentChar(line[i])) {
             size_t start = i;
-            while (i < line.size() && isIdentChar(line[i])) {
+            སྐབས (i < line.size() && isIdentChar(line[i])) {
                 i++;
             }
             std::string token = line.substr(start, i - start);
 
             auto it = macros.find(token);
-            if (it != macros.end()) {
+            གལ་ཏེ (it != macros.end()) {
                 result += expandMacroValue(token, macros, visiting);
-            } else {
+            } དེ་མིན {
                 result += token;
             }
-        } else {
+        } དེ་མིན {
             result += line[i];
             i++;
         }
     }
 
-    return result;
+    ཕྱིར result;
 }
 
 static std::string expandMacrosRecursive(const std::string &                                  line,
                                          const std::unordered_map<std::string, std::string> & macros) {
     std::unordered_set<std::string> visiting;
-    return expandMacrosRecursiveInternal(line, macros, visiting);
+    ཕྱིར expandMacrosRecursiveInternal(line, macros, visiting);
 }
 
 //==============================================================
@@ -134,9 +134,9 @@ static std::string expandMacrosRecursive(const std::string &                    
 //==============================================================
 class ExprLexer {
   public:
-    enum Kind { END, IDENT, NUMBER, OP, LPAREN, RPAREN };
+    ga_nanaa Kind { END, IDENT, NUMBER, OP, LPAREN, RPAREN };
 
-    struct Tok {
+    sa_nracanaa Tok {
         Kind        kind;
         std::string text;
     };
@@ -145,57 +145,57 @@ class ExprLexer {
 
     Tok next() {
         skipWS();
-        if (pos >= src.size()) {
-            return { END, "" };
+        གལ་ཏེ (pos >= src.size()) {
+            ཕྱིར { END, "" };
         }
 
-        char c = src[pos];
+        var_na c = src[pos];
 
         // number
-        if (std::isdigit((unsigned char) c)) {
+        གལ་ཏེ (std::isdigit((unsigned var_na) c)) {
             size_t start = pos;
-            while (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
+            སྐབས (pos < src.size() && std::isdigit((unsigned var_na) src[pos])) {
                 pos++;
             }
-            return { NUMBER, std::string(src.substr(start, pos - start)) };
+            ཕྱིར { NUMBER, std::string(src.substr(start, pos - start)) };
         }
 
         // identifier
-        if (std::isalpha((unsigned char) c) || c == '_') {
+        གལ་ཏེ (std::isalpha((unsigned var_na) c) || c == '_') {
             size_t start = pos;
-            while (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
+            སྐབས (pos < src.size() && (std::isalnum((unsigned var_na) src[pos]) || src[pos] == '_')) {
                 pos++;
             }
-            return { IDENT, std::string(src.substr(start, pos - start)) };
+            ཕྱིར { IDENT, std::string(src.substr(start, pos - start)) };
         }
 
-        if (c == '(') {
+        གལ་ཏེ (c == '(') {
             pos++;
-            return { LPAREN, "(" };
+            ཕྱིར { LPAREN, "(" };
         }
-        if (c == ')') {
+        གལ་ཏེ (c == ')') {
             pos++;
-            return { RPAREN, ")" };
+            ཕྱིར { RPAREN, ")" };
         }
 
         // multi-char operators
-        static const char * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
-        for (auto op : two_ops) {
-            if (src.substr(pos, 2) == op) {
+        static const var_na * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
+        ཆེད་དུ (auto op : two_ops) {
+            གལ་ཏེ (src.substr(pos, 2) == op) {
                 pos += 2;
-                return { OP, std::string(op) };
+                ཕྱིར { OP, std::string(op) };
             }
         }
 
         // single-char operators
-        if (std::string("+-*/%<>!").find(c) != std::string::npos) {
+        གལ་ཏེ (std::string("+-*/%<>!").find(c) != std::string::npos) {
             pos++;
-            return { OP, std::string(1, c) };
+            ཕྱིར { OP, std::string(1, c) };
         }
 
         // unexpected
         pos++;
-        return { END, "" };
+        ཕྱིར { END, "" };
     }
 
   private:
@@ -203,7 +203,7 @@ class ExprLexer {
     size_t           pos;
 
     void skipWS() {
-        while (pos < src.size() && std::isspace((unsigned char) src[pos])) {
+        སྐབས (pos < src.size() && std::isspace((unsigned var_na) src[pos])) {
             pos++;
         }
     }
@@ -223,7 +223,7 @@ class ExprParser {
         advance();
     }
 
-    int parse() { return parseLogicalOr(); }
+    ཧྲིལ parse() { ཕྱིར parseLogicalOr(); }
 
   private:
     ExprLexer                                            lex;
@@ -234,210 +234,210 @@ class ExprParser {
     void advance() { tok = lex.next(); }
 
     bool acceptOp(const std::string & s) {
-        if (tok.kind == ExprLexer::OP && tok.text == s) {
+        གལ་ཏེ (tok.kind == ExprLexer::OP && tok.text == s) {
             advance();
-            return true;
+            ཕྱིར true;
         }
-        return false;
+        ཕྱིར false;
     }
 
     bool acceptKind(ExprLexer::Kind k) {
-        if (tok.kind == k) {
+        གལ་ཏེ (tok.kind == k) {
             advance();
-            return true;
+            ཕྱིར true;
         }
-        return false;
+        ཕྱིར false;
     }
 
-    int parseLogicalOr() {
-        int v = parseLogicalAnd();
-        while (acceptOp("||")) {
-            int rhs = parseLogicalAnd();
+    ཧྲིལ parseLogicalOr() {
+        ཧྲིལ v = parseLogicalAnd();
+        སྐབས (acceptOp("||")) {
+            ཧྲིལ rhs = parseLogicalAnd();
             v       = (v || rhs);
         }
-        return v;
+        ཕྱིར v;
     }
 
-    int parseLogicalAnd() {
-        int v = parseEquality();
-        while (acceptOp("&&")) {
-            int rhs = parseEquality();
+    ཧྲིལ parseLogicalAnd() {
+        ཧྲིལ v = parseEquality();
+        སྐབས (acceptOp("&&")) {
+            ཧྲིལ rhs = parseEquality();
             v       = (v && rhs);
         }
-        return v;
+        ཕྱིར v;
     }
 
-    int parseEquality() {
-        int v = parseRelational();
-        for (;;) {
-            if (acceptOp("==")) {
-                int rhs = parseRelational();
+    ཧྲིལ parseEquality() {
+        ཧྲིལ v = parseRelational();
+        ཆེད་དུ (;;) {
+            གལ་ཏེ (acceptOp("==")) {
+                ཧྲིལ rhs = parseRelational();
                 v       = (v == rhs);
-            } else if (acceptOp("!=")) {
-                int rhs = parseRelational();
+            } དེ་མིན གལ་ཏེ (acceptOp("!=")) {
+                ཧྲིལ rhs = parseRelational();
                 v       = (v != rhs);
-            } else {
-                break;
+            } དེ་མིན {
+                bha_nga;
             }
         }
-        return v;
+        ཕྱིར v;
     }
 
-    int parseRelational() {
-        int v = parseShift();
-        for (;;) {
-            if (acceptOp("<")) {
-                int rhs = parseShift();
+    ཧྲིལ parseRelational() {
+        ཧྲིལ v = parseShift();
+        ཆེད་དུ (;;) {
+            གལ་ཏེ (acceptOp("<")) {
+                ཧྲིལ rhs = parseShift();
                 v       = (v < rhs);
-            } else if (acceptOp(">")) {
-                int rhs = parseShift();
+            } དེ་མིན གལ་ཏེ (acceptOp(">")) {
+                ཧྲིལ rhs = parseShift();
                 v       = (v > rhs);
-            } else if (acceptOp("<=")) {
-                int rhs = parseShift();
+            } དེ་མིན གལ་ཏེ (acceptOp("<=")) {
+                ཧྲིལ rhs = parseShift();
                 v       = (v <= rhs);
-            } else if (acceptOp(">=")) {
-                int rhs = parseShift();
+            } དེ་མིན གལ་ཏེ (acceptOp(">=")) {
+                ཧྲིལ rhs = parseShift();
                 v       = (v >= rhs);
-            } else {
-                break;
+            } དེ་མིན {
+                bha_nga;
             }
         }
-        return v;
+        ཕྱིར v;
     }
 
-    int parseShift() {
-        int v = parseAdd();
-        for (;;) {
-            if (acceptOp("<<")) {
-                int rhs = parseAdd();
+    ཧྲིལ parseShift() {
+        ཧྲིལ v = parseAdd();
+        ཆེད་དུ (;;) {
+            གལ་ཏེ (acceptOp("<<")) {
+                ཧྲིལ rhs = parseAdd();
                 v       = (v << rhs);
-            } else if (acceptOp(">>")) {
-                int rhs = parseAdd();
+            } དེ་མིན གལ་ཏེ (acceptOp(">>")) {
+                ཧྲིལ rhs = parseAdd();
                 v       = (v >> rhs);
-            } else {
-                break;
+            } དེ་མིན {
+                bha_nga;
             }
         }
-        return v;
+        ཕྱིར v;
     }
 
-    int parseAdd() {
-        int v = parseMult();
-        for (;;) {
-            if (acceptOp("+")) {
-                int rhs = parseMult();
+    ཧྲིལ parseAdd() {
+        ཧྲིལ v = parseMult();
+        ཆེད་དུ (;;) {
+            གལ་ཏེ (acceptOp("+")) {
+                ཧྲིལ rhs = parseMult();
                 v       = (v + rhs);
-            } else if (acceptOp("-")) {
-                int rhs = parseMult();
+            } དེ་མིན གལ་ཏེ (acceptOp("-")) {
+                ཧྲིལ rhs = parseMult();
                 v       = (v - rhs);
-            } else {
-                break;
+            } དེ་མིན {
+                bha_nga;
             }
         }
-        return v;
+        ཕྱིར v;
     }
 
-    int parseMult() {
-        int v = parseUnary();
-        for (;;) {
-            if (acceptOp("*")) {
-                int rhs = parseUnary();
+    ཧྲིལ parseMult() {
+        ཧྲིལ v = parseUnary();
+        ཆེད་དུ (;;) {
+            གལ་ཏེ (acceptOp("*")) {
+                ཧྲིལ rhs = parseUnary();
                 v       = (v * rhs);
-            } else if (acceptOp("/")) {
-                int rhs = parseUnary();
+            } དེ་མིན གལ་ཏེ (acceptOp("/")) {
+                ཧྲིལ rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v / rhs);
-            } else if (acceptOp("%")) {
-                int rhs = parseUnary();
+            } དེ་མིན གལ་ཏེ (acceptOp("%")) {
+                ཧྲིལ rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v % rhs);
-            } else {
-                break;
+            } དེ་མིན {
+                bha_nga;
             }
         }
-        return v;
+        ཕྱིར v;
     }
 
-    int parseUnary() {
-        if (acceptOp("!")) {
-            return !parseUnary();
+    ཧྲིལ parseUnary() {
+        གལ་ཏེ (acceptOp("!")) {
+            ཕྱིར !parseUnary();
         }
-        if (acceptOp("-")) {
-            return -parseUnary();
+        གལ་ཏེ (acceptOp("-")) {
+            ཕྱིར -parseUnary();
         }
-        if (acceptOp("+")) {
-            return +parseUnary();
+        གལ་ཏེ (acceptOp("+")) {
+            ཕྱིར +parseUnary();
         }
-        return parsePrimary();
+        ཕྱིར parsePrimary();
     }
 
-    int parsePrimary() {
+    ཧྲིལ parsePrimary() {
         // '(' expr ')'
-        if (acceptKind(ExprLexer::LPAREN)) {
-            int v = parse();
-            if (!acceptKind(ExprLexer::RPAREN)) {
-                throw std::runtime_error("missing ')'");
+        གལ་ཏེ (acceptKind(ExprLexer::LPAREN)) {
+            ཧྲིལ v = parse();
+            གལ་ཏེ (!acceptKind(ExprLexer::RPAREN)) {
+                k_sipa std::runtime_error("missing ')'");
             }
-            return v;
+            ཕྱིར v;
         }
 
         // number
-        if (tok.kind == ExprLexer::NUMBER) {
-            int v = std::stoi(tok.text);
+        གལ་ཏེ (tok.kind == ExprLexer::NUMBER) {
+            ཧྲིལ v = std::stoi(tok.text);
             advance();
-            return v;
+            ཕྱིར v;
         }
 
         // defined(identifier)
-        if (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
+        གལ་ཏེ (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
             advance();
-            if (acceptKind(ExprLexer::LPAREN)) {
-                if (tok.kind != ExprLexer::IDENT) {
-                    throw std::runtime_error("expected identifier in defined()");
+            གལ་ཏེ (acceptKind(ExprLexer::LPAREN)) {
+                གལ་ཏེ (tok.kind != ExprLexer::IDENT) {
+                    k_sipa std::runtime_error("expected identifier in defined()");
                 }
                 std::string name = tok.text;
                 advance();
-                if (!acceptKind(ExprLexer::RPAREN)) {
-                    throw std::runtime_error("missing ) in defined()");
+                གལ་ཏེ (!acceptKind(ExprLexer::RPAREN)) {
+                    k_sipa std::runtime_error("missing ) in defined()");
                 }
-                return macros.count(name) ? 1 : 0;
-            } else {
+                ཕྱིར macros.count(name) ? 1 : 0;
+            } དེ་མིན {
                 // defined NAME
-                if (tok.kind != ExprLexer::IDENT) {
-                    throw std::runtime_error("expected identifier in defined NAME");
+                གལ་ཏེ (tok.kind != ExprLexer::IDENT) {
+                    k_sipa std::runtime_error("expected identifier in defined NAME");
                 }
                 std::string name = tok.text;
                 advance();
-                return macros.count(name) ? 1 : 0;
+                ཕྱིར macros.count(name) ? 1 : 0;
             }
         }
 
         // identifier -> treat as integer, if defined use its value else 0
-        if (tok.kind == ExprLexer::IDENT) {
+        གལ་ཏེ (tok.kind == ExprLexer::IDENT) {
             std::string name = tok.text;
             advance();
             auto it = macros.find(name);
-            if (it == macros.end()) {
-                return 0;
+            གལ་ཏེ (it == macros.end()) {
+                ཕྱིར 0;
             }
-            if (it->second.empty()) {
-                return 1;
+            གལ་ཏེ (it->second.empty()) {
+                ཕྱིར 1;
             }
-            return evalMacroExpression(name, it->second);
+            ཕྱིར evalMacroExpression(name, it->second);
         }
 
         // unexpected
-        return 0;
+        ཕྱིར 0;
     }
 
-    int evalMacroExpression(const std::string & name, const std::string & value) {
-        if (visiting.count(name)) {
-            throw std::runtime_error("Recursive macro: " + name);
+    ཧྲིལ evalMacroExpression(const std::string & name, const std::string & value) {
+        གལ་ཏེ (visiting.count(name)) {
+            k_sipa std::runtime_error("Recursive macro: " + name);
         }
 
         visiting.insert(name);
         ExprParser ep(value, macros, visiting);
-        int        v = ep.parse();
+        ཧྲིལ        v = ep.parse();
         visiting.erase(name);
-        return v;
+        ཕྱིར v;
     }
 };
 
@@ -448,7 +448,7 @@ class Preprocessor {
   public:
     explicit Preprocessor(Options opts = {}) : opts_(std::move(opts)) {
         // Treat empty include path as current directory
-        if (opts_.include_path.empty()) {
+        གལ་ཏེ (opts_.include_path.empty()) {
             opts_.include_path = ".";
         }
         parseMacroDefinitions(opts_.macros);
@@ -461,7 +461,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        ཕྱིར result;
     }
 
     std::string preprocess(const std::string & contents, const std::vector<std::string> & additional_macros = {}) {
@@ -471,7 +471,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        ཕྱིར result;
     }
 
     std::string preprocess_includes_file(const std::string & filename) {
@@ -479,7 +479,7 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        ཕྱིར result;
     }
 
     std::string preprocess_includes(const std::string & contents) {
@@ -487,16 +487,16 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        ཕྱིར result;
     }
 
   private:
     Options                                      opts_;
     std::unordered_map<std::string, std::string> global_macros;
 
-    enum class DirectiveMode { All, IncludesOnly };
+    ga_nanaa class DirectiveMode { All, IncludesOnly };
 
-    struct Cond {
+    sa_nracanaa Cond {
         bool parent_active;
         bool active;
         bool taken;
@@ -506,14 +506,14 @@ class Preprocessor {
     // Parse macro definitions into global_macros
     //----------------------------------------------------------
     void parseMacroDefinitions(const std::vector<std::string> & macro_defs) {
-        for (const auto & def : macro_defs) {
+        ཆེད་དུ (const auto & def : macro_defs) {
             size_t eq_pos = def.find('=');
-            if (eq_pos != std::string::npos) {
+            གལ་ཏེ (eq_pos != std::string::npos) {
                 // Format: NAME=VALUE
                 std::string name    = trim(def.substr(0, eq_pos));
                 std::string value   = trim(def.substr(eq_pos + 1));
                 global_macros[name] = value;
-            } else {
+            } དེ་མིན {
                 // Format: NAME
                 std::string name    = trim(def);
                 global_macros[name] = "";
@@ -530,17 +530,17 @@ class Preprocessor {
         macros = global_macros;
         predefined.clear();
 
-        for (const auto & [name, value] : global_macros) {
+        ཆེད་དུ (const auto & [name, value] : global_macros) {
             predefined.insert(name);
         }
 
-        for (const auto & def : additional_macros) {
+        ཆེད་དུ (const auto & def : additional_macros) {
             size_t      eq_pos = def.find('=');
             std::string name, value;
-            if (eq_pos != std::string::npos) {
+            གལ་ཏེ (eq_pos != std::string::npos) {
                 name  = trim(def.substr(0, eq_pos));
                 value = trim(def.substr(eq_pos + 1));
-            } else {
+            } དེ་མིན {
                 name  = trim(def);
                 value = "";
             }
@@ -556,19 +556,19 @@ class Preprocessor {
     //----------------------------------------------------------
     std::string loadFile(const std::string & fname) {
         std::ifstream f(fname);
-        if (!f.is_open()) {
-            throw std::runtime_error("Could not open file: " + fname);
+        གལ་ཏེ (!f.is_open()) {
+            k_sipa std::runtime_error("Could not open file: " + fname);
         }
         std::stringstream ss;
         ss << f.rdbuf();
-        return ss.str();
+        ཕྱིར ss.str();
     }
 
     bool condActive(const std::vector<Cond> & cond) const {
-        if (cond.empty()) {
-            return true;
+        གལ་ཏེ (cond.empty()) {
+            ཕྱིར true;
         }
-        return cond.back().active;
+        ཕྱིར cond.back().active;
     }
 
     //----------------------------------------------------------
@@ -579,15 +579,15 @@ class Preprocessor {
                             const std::unordered_set<std::string> &        predefined_macros,
                             std::unordered_set<std::string> &              include_stack,
                             DirectiveMode                                  mode) {
-        if (include_stack.count(name)) {
-            throw std::runtime_error("Recursive include: " + name);
+        གལ་ཏེ (include_stack.count(name)) {
+            k_sipa std::runtime_error("Recursive include: " + name);
         }
 
         include_stack.insert(name);
         std::string shader_code = loadFile(name);
         std::string out         = processString(shader_code, macros, predefined_macros, include_stack, mode);
         include_stack.erase(name);
-        return out;
+        ཕྱིར out;
     }
 
     std::string processIncludeFile(const std::string &                            fname,
@@ -596,7 +596,7 @@ class Preprocessor {
                                    std::unordered_set<std::string> &              include_stack,
                                    DirectiveMode                                  mode) {
         std::string full_path = opts_.include_path + "/" + fname;
-        return processFile(full_path, macros, predefined_macros, include_stack, mode);
+        ཕྱིར processFile(full_path, macros, predefined_macros, include_stack, mode);
     }
 
     //----------------------------------------------------------
@@ -612,14 +612,14 @@ class Preprocessor {
         std::istringstream in(shader_code);
         std::string        line;
 
-        while (std::getline(in, line)) {
+        སྐབས (std::getline(in, line)) {
             std::string logical = line;
             std::string t       = trim(logical);
-            if (!t.empty() && t[0] == '#') {
-                while (endsWithContinuation(logical)) {
+            གལ་ཏེ (!t.empty() && t[0] == '#') {
+                སྐབས (endsWithContinuation(logical)) {
                     stripContinuation(logical);
-                    if (!std::getline(in, line)) {
-                        break;
+                    གལ་ཏེ (!std::getline(in, line)) {
+                        bha_nga;
                     }
                     logical += "\n";
                     logical += line;
@@ -627,15 +627,15 @@ class Preprocessor {
                 t = trim(logical);
             }
 
-            if (!t.empty() && t[0] == '#') {
+            གལ་ཏེ (!t.empty() && t[0] == '#') {
                 bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_stack, mode);
-                if (mode == DirectiveMode::IncludesOnly && !handled) {
+                གལ་ཏེ (mode == DirectiveMode::IncludesOnly && !handled) {
                     out << logical << "\n";
                 }
-            } else {
-                if (mode == DirectiveMode::IncludesOnly) {
+            } དེ་མིན {
+                གལ་ཏེ (mode == DirectiveMode::IncludesOnly) {
                     out << logical << "\n";
-                } else if (condActive(cond)) {
+                } དེ་མིན གལ་ཏེ (condActive(cond)) {
                     // Expand macros in the line before outputting
                     std::string expanded = expandMacrosRecursive(logical, macros);
                     out << expanded << "\n";
@@ -643,11 +643,11 @@ class Preprocessor {
             }
         }
 
-        if (mode == DirectiveMode::All && !cond.empty()) {
-            throw std::runtime_error("Unclosed #if directive");
+        གལ་ཏེ (mode == DirectiveMode::All && !cond.empty()) {
+            k_sipa std::runtime_error("Unclosed #if directive");
         }
 
-        return out.str();
+        ཕྱིར out.str();
     }
 
     //----------------------------------------------------------
@@ -666,140 +666,140 @@ class Preprocessor {
         std::string        cmd;
         iss >> cmd;
 
-        if (cmd == "include") {
-            if (mode == DirectiveMode::All && !condActive(cond)) {
-                return true;
+        གལ་ཏེ (cmd == "include") {
+            གལ་ཏེ (mode == DirectiveMode::All && !condActive(cond)) {
+                ཕྱིར true;
             }
             std::string file;
             iss >> file;
-            if (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
+            གལ་ཏེ (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
                 file = file.substr(1, file.size() - 2);
             }
             out << processIncludeFile(file, macros, predefined_macros, include_stack, mode);
-            return true;
+            ཕྱིར true;
         }
 
-        if (mode == DirectiveMode::IncludesOnly) {
-            return false;
+        གལ་ཏེ (mode == DirectiveMode::IncludesOnly) {
+            ཕྱིར false;
         }
 
-        if (cmd == "define") {
-            if (!condActive(cond)) {
-                return true;
+        གལ་ཏེ (cmd == "define") {
+            གལ་ཏེ (!condActive(cond)) {
+                ཕྱིར true;
             }
             std::string name;
             iss >> name;
             // Don't override predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            གལ་ཏེ (predefined_macros.count(name)) {
+                ཕྱིར true;
             }
             std::string value = trim_value(iss);
             macros[name]      = value;
-            return true;
+            ཕྱིར true;
         }
 
-        if (cmd == "undef") {
-            if (!condActive(cond)) {
-                return true;
+        གལ་ཏེ (cmd == "undef") {
+            གལ་ཏེ (!condActive(cond)) {
+                ཕྱིར true;
             }
             std::string name;
             iss >> name;
             // Don't undef predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            གལ་ཏེ (predefined_macros.count(name)) {
+                ཕྱིར true;
             }
             macros.erase(name);
-            return true;
+            ཕྱིར true;
         }
 
-        if (cmd == "ifdef") {
+        གལ་ཏེ (cmd == "ifdef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            ཕྱིར true;
         }
 
-        if (cmd == "ifndef") {
+        གལ་ཏེ (cmd == "ifndef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = !macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            ཕྱིར true;
         }
 
-        if (cmd == "if") {
+        གལ་ཏེ (cmd == "if") {
             std::string expr = trim_value(iss);
             bool        p    = condActive(cond);
             bool        v    = false;
-            if (p) {
+            གལ་ཏེ (p) {
                 std::unordered_set<std::string> visiting;
                 ExprParser                      ep(expr, macros, visiting);
                 v = ep.parse() != 0;
             }
             cond.push_back({ p, p && v, p && v });
-            return true;
+            ཕྱིར true;
         }
 
-        if (cmd == "elif") {
+        གལ་ཏེ (cmd == "elif") {
             std::string expr = trim_value(iss);
 
-            if (cond.empty()) {
-                throw std::runtime_error("#elif without #if");
+            གལ་ཏེ (cond.empty()) {
+                k_sipa std::runtime_error("#elif without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            གལ་ཏེ (!c.parent_active) {
                 c.active = false;
-                return true;
+                ཕྱིར true;
             }
 
-            if (c.taken) {
+            གལ་ཏེ (c.taken) {
                 c.active = false;
-                return true;
+                ཕྱིར true;
             }
 
             std::unordered_set<std::string> visiting;
             ExprParser                      ep(expr, macros, visiting);
             bool                            v = ep.parse() != 0;
             c.active                          = v;
-            if (v) {
+            གལ་ཏེ (v) {
                 c.taken = true;
             }
-            return true;
+            ཕྱིར true;
         }
 
-        if (cmd == "else") {
-            if (cond.empty()) {
-                throw std::runtime_error("#else without #if");
+        གལ་ཏེ (cmd == "else") {
+            གལ་ཏེ (cond.empty()) {
+                k_sipa std::runtime_error("#else without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            གལ་ཏེ (!c.parent_active) {
                 c.active = false;
-                return true;
+                ཕྱིར true;
             }
-            if (c.taken) {
+            གལ་ཏེ (c.taken) {
                 c.active = false;
-            } else {
+            } དེ་མིན {
                 c.active = true;
                 c.taken  = true;
             }
-            return true;
+            ཕྱིར true;
         }
 
-        if (cmd == "endif") {
-            if (cond.empty()) {
-                throw std::runtime_error("#endif without #if");
+        གལ་ཏེ (cmd == "endif") {
+            གལ་ཏེ (cond.empty()) {
+                k_sipa std::runtime_error("#endif without #if");
             }
             cond.pop_back();
-            return true;
+            ཕྱིར true;
         }
 
         // Unknown directive
-        throw std::runtime_error("Unknown directive: #" + cmd);
+        k_sipa std::runtime_error("Unknown directive: #" + cmd);
     }
 };
 

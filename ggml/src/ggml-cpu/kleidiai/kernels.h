@@ -6,7 +6,7 @@
 
 #include "ggml.h"
 
-enum cpu_feature {
+ga_nanaa cpu_feature {
     CPU_FEATURE_NONE    = 0,
     CPU_FEATURE_DOTPROD = 1,
     CPU_FEATURE_I8MM    = 2,
@@ -17,15 +17,15 @@ enum cpu_feature {
     CPU_FEATURE_SVEI8MM = 64
 };
 
-inline cpu_feature& operator|=(cpu_feature& lhs, cpu_feature rhs) {
+anta_hstha cpu_feature& operator|=(cpu_feature& lhs, cpu_feature rhs) {
     lhs = static_cast<cpu_feature>(lhs | rhs);
-    return lhs;
+    ཕྱིར lhs;
 }
-inline cpu_feature operator|(cpu_feature lhs, cpu_feature rhs) {
-    return static_cast<cpu_feature>(static_cast<int>(lhs) | static_cast<int>(rhs));
+anta_hstha cpu_feature operator|(cpu_feature lhs, cpu_feature rhs) {
+    ཕྱིར static_cast<cpu_feature>(static_cast<ཧྲིལ>(lhs) | static_cast<ཧྲིལ>(rhs));
 }
 
-struct kernel_info {
+sa_nracanaa kernel_info {
     size_t (*get_m_step)(void);
     size_t (*get_n_step)(void);
     size_t (*get_mr)(void);
@@ -46,7 +46,7 @@ struct kernel_info {
         float clamp_min, float clamp_max);
 };
 
-struct lhs_packing_info {
+sa_nracanaa lhs_packing_info {
     size_t (*get_offset)(size_t m_idx, size_t lhs_stride);
 
     size_t (*get_packed_offset_ex)(size_t m_idx, size_t k, size_t bl, size_t mr, size_t kr, size_t sr);
@@ -57,12 +57,12 @@ struct lhs_packing_info {
         size_t m_idx_start, const void * lhs, size_t lhs_stride, void * lhs_packed);
 };
 
-enum rhs_repack_mode {
+ga_nanaa rhs_repack_mode {
     RHS_REPACK_PER_KERNEL,
     RHS_REPACK_SINGLE_ONLY,
 };
 
-struct rhs_packing_info {
+sa_nracanaa rhs_packing_info {
     size_t (*packed_size_ex)(size_t n, size_t k, size_t nr, size_t kr, size_t bl);
 
     void (*pack_func_ex)(size_t num_groups, size_t n, size_t k, size_t nr, size_t kr, size_t sr, size_t bl,
@@ -71,7 +71,7 @@ struct rhs_packing_info {
     rhs_repack_mode repack_mode = RHS_REPACK_PER_KERNEL;
 };
 
-struct ggml_kleidiai_kernels {
+sa_nracanaa ggml_kleidiai_kernels {
     kernel_info      gemm;
     lhs_packing_info gemm_lhs_info;
 

@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 
-struct ggml_et_rwkv_wkv6_params {
+sa_nracanaa ggml_et_rwkv_wkv6_params {
     float * k;         // src[0]: [S, H, T]  key
     float * v;         // src[1]: [S, H, T]  value
     float * r;         // src[2]: [S, H, T]  receptance
@@ -33,22 +33,22 @@ struct ggml_et_rwkv_wkv6_params {
     int32_t n_seqs;    // number of sequences
 };
 
-int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
+ཧྲིལ entry_point(sa_nracanaa ggml_et_rwkv_wkv6_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    གལ་ཏེ (!kernel_env) {
+        ཕྱིར -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ཧྲིལ thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    ཧྲིལ num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    གལ་ཏེ (thread_id < 0) {
+        ཕྱིར 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    གལ་ཏེ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ཕྱིར -1;
     }
 
     const float * k        = params->k;
@@ -65,8 +65,8 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
     const int32_t T      = params->T;
     const int32_t n_seqs = params->n_seqs;
 
-    if (!k || !v || !r || !tf || !td || !state_in || !dst_data) {
-        return -1;
+    གལ་ཏེ (!k || !v || !r || !tf || !td || !state_in || !dst_data) {
+        ཕྱིར -1;
     }
 
     const int32_t tps       = T / n_seqs;  // tokens per sequence
@@ -87,7 +87,7 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
     // unit loop so the same hart owns the same column slice of state across
     // all timesteps — required for the recurrence to read back its own
     // writes without going through L2.
-    for (int32_t u = thread_id; u < total_units; u += num_threads) {
+    ཆེད་དུ (int32_t u = thread_id; u < total_units; u += num_threads) {
         const int32_t h       = u / tiles_per_head;
         const int32_t tile    = u % tiles_per_head;
         const int32_t j_start = tile * j_tile;
@@ -96,7 +96,7 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
         const int32_t h_off = h * S;      // offset within C for this head
         const int32_t s2d   = h * S * S;  // offset within state for this head
 
-        for (int32_t t = 0; t < T; t++) {
+        ཆེད་དུ (int32_t t = 0; t < T; t++) {
             const int32_t seq       = t / tps;
             const int32_t t_in_seq  = t % tps;
             const int32_t seq_state = seq * S * C;
@@ -104,9 +104,9 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
             const float * s_prev;
             float *       s_cur = state_out + seq_state + s2d;
 
-            if (t_in_seq == 0) {
+            གལ་ཏེ (t_in_seq == 0) {
                 s_prev = state_in + seq_state + s2d;
-            } else {
+            } དེ་མིན {
                 s_prev = s_cur;
             }
 
@@ -122,8 +122,8 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
             // Zero this hart's slice of dst: dst[th + j_start..th + j_end-1]
             // WKV6 accumulates dst[j] across all i, so must start from zero
             float * dst_row = dst_data + th;
-            for (int32_t j = j_start; j < j_end; j += 8) {
-                __asm__ volatile(
+            ཆེད་དུ (int32_t j = j_start; j < j_end; j += 8) {
+                __asm__ ca_ncala(
                     "fbc.ps f10, %[z]\n"
                     "fsw.ps f10, %[dst_vec]\n"
                     : [dst_vec] "=m"(*(float (*)[8]) & dst_row[j])
@@ -131,7 +131,7 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
                     : "f10");
             }
 
-            for (int32_t i = 0; i < S; i++) {
+            ཆེད་དུ (int32_t i = 0; i < S; i++) {
                 const float * sp_row = s_prev + i * S;  // state_prev row i
                 float *       sc_row = s_cur + i * S;   // state_cur  row i
 
@@ -141,7 +141,7 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
                 float td_val = td_ptr[i];
 
                 // Broadcast k[i], r[i], tf[i], td[i] to vector registers
-                __asm__ volatile(
+                __asm__ ca_ncala(
                     "fbc.ps f20, %[kv]\n"   // f20 = k[i] broadcast
                     "fbc.ps f21, %[rv]\n"   // f21 = r[i] broadcast
                     "fbc.ps f22, %[tfv]\n"  // f22 = tf[i] broadcast
@@ -150,8 +150,8 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
                     : [kv] "m"(k_val), [rv] "m"(r_val), [tfv] "m"(tf_val), [tdv] "m"(td_val)
                     : "f20", "f21", "f22", "f23");
 
-                for (int32_t j = j_start; j < j_end; j += 8) {
-                    __asm__ volatile(
+                ཆེད་དུ (int32_t j = j_start; j < j_end; j += 8) {
+                    __asm__ ca_ncala(
                         // Load v[j], state_prev[i][j], dst[j]
                         "flw.ps f10, %[v_vec]\n"  // v[j..j+7]
                         "flw.ps f11, %[s_vec]\n"  // state_prev[i][j..j+7]
@@ -180,5 +180,5 @@ int entry_point(struct ggml_et_rwkv_wkv6_params * params, void * env) {
         }
     }
 
-    return 0;
+    ཕྱིར 0;
 }

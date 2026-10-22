@@ -28,7 +28,7 @@ OutputVector translate_diag(const NodeContext & context) {
     auto eye = std::make_shared<ov::op::v9::Eye>(n, n, zero_diag, x.get_element_type());
     auto res = std::make_shared<ov::op::v1::Multiply>(x, eye);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ཕྱིར rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op
