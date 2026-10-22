@@ -1,9 +1,9 @@
-#include "ggml_tensor.h"
-#include "platform.h"
-#include "tensor.h"
+#अन्तर्भाव "ggml_tensor.h"
+#अन्तर्भाव "platform.h"
+#अन्तर्भाव "tensor.h"
 
-#include <etsoc/common/utils.h>
-#include <stdint.h>
+#अन्तर्भाव <etsoc/common/utils.h>
+#अन्तर्भाव <stdint.h>
 
 /*
  * F32 Matrix Multiply for ET-SoC-1 — TensorFMA32.
@@ -13,143 +13,143 @@
  * This is the last known working version.
  */
 
-#define NUM_COMPUTE_SHIRES 32
-#define MINIONS_PER_SHIRE  32
-#define TILE_K             16
-#define TILE_M             16
+#परिभाषय अङ्कः_COMPUTE_SHIRES 32
+#परिभाषय MINIONS_प्रत्येकम्_SHIRE  32
+#परिभाषय TILE_K             16
+#परिभाषय TILE_M             16
 
 /* ── Tuning knobs ───────────────────────────────────────────────────── */
-#define TILE_N      16
-#define CACHEOP_MAX 0
-#define REP_RATE    0
+#परिभाषय TILE_N      16
+#परिभाषय CACHEOP_MAX 0
+#परिभाषय REP_दरः    0
 
 /* ─────────────────────────────────────────────────────────────────── */
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+पूर्णाङ्क प्रविष्टिः_point(संरचना ggml_et_द्विमान_params * params, शून्य * env) {
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    यदि (shire_id >= अङ्कः_COMPUTE_SHIRES) {
+        प्रत्यागम 0;
     }
-    if (hart_id & 1) {
-        return 0;
+    यदि (hart_id & 1) {
+        प्रत्यागम 0;
     }
 
     uint64_t local_minion = (hart_id >> 1) & 0x1F;
     uint64_t my_minion_id = get_minion_id();
 
-    const int64_t K = params->src0.ne[0];
-    const int64_t M = params->src0.ne[1];
-    const int64_t N = params->src1.ne[1];
+    ध्रुव int64_t K = params->src0.ne[0];
+    ध्रुव int64_t M = params->src0.ne[1];
+    ध्रुव int64_t N = params->src1.ne[1];
 
-    const int64_t ne2_0 = params->src0.ne[2], ne3_0 = params->src0.ne[3];
-    const int64_t ne2_1 = params->src1.ne[2], ne3_1 = params->src1.ne[3];
+    ध्रुव int64_t ne2_0 = params->src0.ne[2], ne3_0 = params->src0.ne[3];
+    ध्रुव int64_t ne2_1 = params->src1.ne[2], ne3_1 = params->src1.ne[3];
 
-    const int64_t nb1_0 = params->src0.nb[1];
-    const int64_t nb2_0 = params->src0.nb[2], nb3_0 = params->src0.nb[3];
-    const int64_t nb1_1 = params->src1.nb[1];
-    const int64_t nb2_1 = params->src1.nb[2], nb3_1 = params->src1.nb[3];
-    const int64_t nb1_d = params->dst.nb[1];
-    const int64_t nb2_d = params->dst.nb[2], nb3_d = params->dst.nb[3];
+    ध्रुव int64_t nb1_0 = params->src0.nb[1];
+    ध्रुव int64_t nb2_0 = params->src0.nb[2], nb3_0 = params->src0.nb[3];
+    ध्रुव int64_t nb1_1 = params->src1.nb[1];
+    ध्रुव int64_t nb2_1 = params->src1.nb[2], nb3_1 = params->src1.nb[3];
+    ध्रुव int64_t nb1_d = params->dst.nb[1];
+    ध्रुव int64_t nb2_d = params->dst.nb[2], nb3_d = params->dst.nb[3];
 
-    const char * src0_base = (const char *) params->src0.data;
-    const char * src1_base = (const char *) params->src1.data;
-    char *       dst_base  = (char *) params->dst.data;
+    ध्रुव वर्ण * src0_आधारः = (ध्रुव वर्ण *) params->src0.दत्त;
+    ध्रुव वर्ण * src1_आधारः = (ध्रुव वर्ण *) params->src1.दत्त;
+    वर्ण *       dst_आधारः  = (वर्ण *) params->dst.दत्त;
 
-    setup_cache_scp();
-#if CACHEOP_MAX > 0 || REP_RATE > 0
-    ucache_control(1, REP_RATE, CACHEOP_MAX);
-#endif
+    सज्जता_cache_scp();
+#यदि CACHEOP_MAX > 0 || REP_दरः > 0
+    ucache_control(1, REP_दरः, CACHEOP_MAX);
+#यदि_अन्तः
     CLEAR_TENSOR_ERROR;
 
-    const int64_t m_tiles     = M / TILE_M;
-    const int64_t n_tiles     = (N + TILE_N - 1) / TILE_N;
-    const int64_t batch_count = ne2_1 * ne3_1;
-    const int64_t base_tiles  = m_tiles * n_tiles * batch_count;
+    ध्रुव int64_t m_tiles     = M / TILE_M;
+    ध्रुव int64_t n_tiles     = (N + TILE_N - 1) / TILE_N;
+    ध्रुव int64_t batch_गणनम् = ne2_1 * ne3_1;
+    ध्रुव int64_t आधारः_tiles  = m_tiles * n_tiles * batch_गणनम्;
 
-    const int64_t r2 = ne2_1 / ne2_0;
-    const int64_t r3 = ne3_1 / ne3_0;
+    ध्रुव int64_t r2 = ne2_1 / ne2_0;
+    ध्रुव int64_t r3 = ne3_1 / ne3_0;
 
-    const int64_t total_harts = NUM_COMPUTE_SHIRES * MINIONS_PER_SHIRE;
-    const int64_t k_steps     = K / TILE_K;
+    ध्रुव int64_t योग_harts = अङ्कः_COMPUTE_SHIRES * MINIONS_प्रत्येकम्_SHIRE;
+    ध्रुव int64_t k_चरणाः     = K / TILE_K;
     int64_t       k_splits    = 1;
-    if (base_tiles < total_harts) {
-        k_splits   = (total_harts + base_tiles - 1) / base_tiles;
+    यदि (आधारः_tiles < योग_harts) {
+        k_splits   = (योग_harts + आधारः_tiles - 1) / आधारः_tiles;
         int64_t ks = 1;
-        while (ks * 2 <= k_splits && ks * 2 <= 32 && k_steps % (ks * 2) == 0) {
+        यावत् (ks * 2 <= k_splits && ks * 2 <= 32 && k_चरणाः % (ks * 2) == 0) {
             ks *= 2;
         }
         k_splits = ks;
     }
 
-    const int64_t tiles_per_shire = MINIONS_PER_SHIRE / k_splits;
-    const int64_t k_split         = local_minion % k_splits;
-    const int64_t local_tile_idx  = local_minion / k_splits;
-    const int64_t tiles_stride    = (int64_t) NUM_COMPUTE_SHIRES * tiles_per_shire;
+    ध्रुव int64_t tiles_प्रत्येकम्_shire = MINIONS_प्रत्येकम्_SHIRE / k_splits;
+    ध्रुव int64_t k_विभज         = local_minion % k_splits;
+    ध्रुव int64_t local_tile_idx  = local_minion / k_splits;
+    ध्रुव int64_t tiles_stride    = (int64_t) अङ्कः_COMPUTE_SHIRES * tiles_प्रत्येकम्_shire;
 
-    const int64_t k_steps_per_split = k_steps / k_splits;
-    const int64_t k_start           = k_split * k_steps_per_split * TILE_K;
-    const int64_t k_end             = k_start + k_steps_per_split * TILE_K;
+    ध्रुव int64_t k_चरणाः_प्रत्येकम्_विभज = k_चरणाः / k_splits;
+    ध्रुव int64_t k_start           = k_विभज * k_चरणाः_प्रत्येकम्_विभज * TILE_K;
+    ध्रुव int64_t k_अन्तः             = k_start + k_चरणाः_प्रत्येकम्_विभज * TILE_K;
 
-    const uint64_t group_base_global = my_minion_id - k_split;
+    ध्रुव uint64_t गणः_आधारः_global = my_minion_id - k_विभज;
 
-    for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+    प्रति (int64_t tile = (int64_t) shire_id + local_tile_idx * अङ्कः_COMPUTE_SHIRES; tile < आधारः_tiles;
          tile += tiles_stride) {
-        const int64_t tiles_per_batch = m_tiles * n_tiles;
-        const int64_t batch_idx       = tile / tiles_per_batch;
-        const int64_t tile_in_batch   = tile % tiles_per_batch;
-        const int64_t nb_idx          = tile_in_batch / m_tiles;
-        const int64_t mb_idx          = tile_in_batch % m_tiles;
+        ध्रुव int64_t tiles_प्रत्येकम्_batch = m_tiles * n_tiles;
+        ध्रुव int64_t batch_idx       = tile / tiles_प्रत्येकम्_batch;
+        ध्रुव int64_t tile_अन्तर्_batch   = tile % tiles_प्रत्येकम्_batch;
+        ध्रुव int64_t nb_idx          = tile_अन्तर्_batch / m_tiles;
+        ध्रुव int64_t mb_idx          = tile_अन्तर्_batch % m_tiles;
 
-        const int64_t i3   = batch_idx / ne2_1;
-        const int64_t i2   = batch_idx % ne2_1;
-        const int64_t i2_0 = i2 / r2;
-        const int64_t i3_0 = i3 / r3;
+        ध्रुव int64_t i3   = batch_idx / ne2_1;
+        ध्रुव int64_t i2   = batch_idx % ne2_1;
+        ध्रुव int64_t i2_0 = i2 / r2;
+        ध्रुव int64_t i3_0 = i3 / r3;
 
-        const char * src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
-        const char * src1_batch = src1_base + i3 * nb3_1 + i2 * nb2_1;
-        char *       dst_batch  = dst_base + i3 * nb3_d + i2 * nb2_d;
+        ध्रुव वर्ण * src0_batch = src0_आधारः + i3_0 * nb3_0 + i2_0 * nb2_0;
+        ध्रुव वर्ण * src1_batch = src1_आधारः + i3 * nb3_1 + i2 * nb2_1;
+        वर्ण *       dst_batch  = dst_आधारः + i3 * nb3_d + i2 * nb2_d;
 
-        const int64_t mb    = mb_idx * TILE_M;
-        const int64_t nb    = nb_idx * TILE_N;
-        const int64_t n_cur = (nb + TILE_N <= N) ? TILE_N : (N - nb);
+        ध्रुव int64_t mb    = mb_idx * TILE_M;
+        ध्रुव int64_t nb    = nb_idx * TILE_N;
+        ध्रुव int64_t n_cur = (nb + TILE_N <= N) ? TILE_N : (N - nb);
 
-        for (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
-            tensor_load(false, false, 0, 0, 0, (uint64_t) (src1_batch + nb * nb1_1 + kb * sizeof(float)), 0, n_cur - 1,
+        प्रति (int64_t kb = k_start; kb < k_अन्तः; kb += TILE_K) {
+            tensor_आरोपय(false, false, 0, 0, 0, (uint64_t) (src1_batch + nb * nb1_1 + kb * परिमाण(भिन्न)), 0, n_cur - 1,
                         (uint64_t) nb1_1, 0);
 
-            tensor_load(false, false, TILE_K, 7, 0, (uint64_t) (src0_batch + mb * nb1_0 + kb * sizeof(float)), 0,
+            tensor_आरोपय(false, false, TILE_K, 7, 0, (uint64_t) (src0_batch + mb * nb1_0 + kb * परिमाण(भिन्न)), 0,
                         TILE_K - 1, (uint64_t) nb1_0, 1);
 
-            tensor_wait(TENSOR_LOAD_WAIT_0);
-            tensor_wait(TENSOR_LOAD_WAIT_1);
+            tensor_wait(TENSOR_आरोपय_WAIT_0);
+            tensor_wait(TENSOR_आरोपय_WAIT_1);
 
             tensor_fma(false, 3, n_cur - 1, TILE_K - 1, 0, false, false, false, false, TILE_K, 0, 0, (kb == k_start));
 
             tensor_wait(TENSOR_FMA_WAIT);
         }
 
-        if (k_splits > 1) {
-            const uint64_t num_regs = (uint64_t) n_cur * 2;
+        यदि (k_splits > 1) {
+            ध्रुव uint64_t अङ्कः_regs = (uint64_t) n_cur * 2;
 
-            if (k_split > 0) {
-                tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, num_regs, group_base_global + k_split - 1);
+            यदि (k_विभज > 0) {
+                tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, अङ्कः_regs, गणः_आधारः_global + k_विभज - 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
-            if (k_split < k_splits - 1) {
-                tensor_reduce_send(0, num_regs, group_base_global + k_split + 1);
+            यदि (k_विभज < k_splits - 1) {
+                tensor_reduce_send(0, अङ्कः_regs, गणः_आधारः_global + k_विभज + 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
         }
 
-        if (k_split == k_splits - 1) {
-            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * sizeof(float)), 0,
+        यदि (k_विभज == k_splits - 1) {
+            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * परिमाण(भिन्न)), 0,
                          (uint64_t) nb1_d);
             tensor_wait(TENSOR_STORE_WAIT);
         }
     }
 
     FENCE;
-    return 0;
+    प्रत्यागम 0;
 }

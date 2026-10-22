@@ -3,92 +3,92 @@
 // dst[i] = src0[i] * scale + bias
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#अन्तर्भाव "ggml_tensor.h"
+#अन्तर्भाव "platform.h"
 
-#include <stdint.h>
+#अन्तर्भाव <stdint.h>
 
-struct ggml_et_scale_params {
-    struct ggml_tensor src0;   // F32 input tensor
-    struct ggml_tensor dst;    // F32 output tensor
-    float              scale;  // Scale factor
-    float              bias;   // Bias (additive offset)
+संरचना ggml_et_scale_params {
+    संरचना ggml_tensor src0;   // F32 input tensor
+    संरचना ggml_tensor dst;    // F32 output tensor
+    भिन्न              scale;  // Scale factor
+    भिन्न              bias;   // Bias (additive offset)
 };
 
-int entry_point(struct ggml_et_scale_params * params, void * env) {
+पूर्णाङ्क प्रविष्टिः_point(संरचना ggml_et_scale_params * params, शून्य * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    यदि (!kernel_env) {
+        प्रत्यागम -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    पूर्णाङ्क thread_id   = get_relative_thread_id(kernel_env->shire_आवरणम्);
+    पूर्णाङ्क अङ्कः_तन्तवः = get_अङ्कः_तन्तवः(kernel_env->shire_आवरणम्);
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    यदि (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        प्रत्यागम -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    संरचना ggml_tensor * src0 = &params->src0;
+    संरचना ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    यदि (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        प्रत्यागम -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    भिन्न * src0_दत्त = (भिन्न *) src0->दत्त;
+    भिन्न * dst_दत्त  = (भिन्न *) dst->दत्त;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    यदि (!src0_दत्त || !dst_दत्त) {
+        प्रत्यागम -1;
     }
 
 
-    float scale = params->scale;
-    float bias  = params->bias;
+    भिन्न scale = params->scale;
+    भिन्न bias  = params->bias;
 
     // Total elements across all dimensions
-    const int64_t total_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ध्रुव int64_t योग_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
 
     // Cache line = 64 bytes = 16 floats, but vector width = 8 floats
     // Parallelize at cache line granularity (16 floats)
-    const int64_t elements_per_cacheline = 16;
-    const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
+    ध्रुव int64_t elements_प्रत्येकम्_cacheline = 16;
+    ध्रुव int64_t योग_cachelines       = (योग_elements + elements_प्रत्येकम्_cacheline - 1) / elements_प्रत्येकम्_cacheline;
 
-    int64_t cachelines_per_thread = (total_cachelines + num_threads - 1) / num_threads;
-    int64_t start_cacheline       = thread_id * cachelines_per_thread;
-    int64_t end_cacheline         = start_cacheline + cachelines_per_thread;
+    int64_t cachelines_प्रत्येकम्_thread = (योग_cachelines + अङ्कः_तन्तवः - 1) / अङ्कः_तन्तवः;
+    int64_t start_cacheline       = thread_id * cachelines_प्रत्येकम्_thread;
+    int64_t अन्तः_cacheline         = start_cacheline + cachelines_प्रत्येकम्_thread;
 
-    if (end_cacheline > total_cachelines) {
-        end_cacheline = total_cachelines;
+    यदि (अन्तः_cacheline > योग_cachelines) {
+        अन्तः_cacheline = योग_cachelines;
     }
 
-    if (start_cacheline >= total_cachelines) {
-        return 0;
+    यदि (start_cacheline >= योग_cachelines) {
+        प्रत्यागम 0;
     }
 
-    int64_t start_elem = start_cacheline * elements_per_cacheline;
-    int64_t end_elem   = end_cacheline * elements_per_cacheline;
-    if (end_elem > total_elements) {
-        end_elem = total_elements;
+    int64_t start_elem = start_cacheline * elements_प्रत्येकम्_cacheline;
+    int64_t अन्तः_elem   = अन्तः_cacheline * elements_प्रत्येकम्_cacheline;
+    यदि (अन्तः_elem > योग_elements) {
+        अन्तः_elem = योग_elements;
     }
 
-    unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
-    __asm__ volatile("fbc.ps f20, %[scale_ptr]\n" : : [scale_ptr] "m"(scale) : "f20");
-    __asm__ volatile("fbc.ps f21, %[bias_ptr]\n" : : [bias_ptr] "m"(bias) : "f21");
+    अचिह्नित दीर्घ अस्थायी_आवरणम्;
+    __asm__ चञ्चल("mova.x.m %0" : "=r"(अस्थायी_आवरणम्));
+    __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");
+    __asm__ चञ्चल("fbc.ps f20, %[scale_ptr]\n" : : [scale_ptr] "m"(scale) : "f20");
+    __asm__ चञ्चल("fbc.ps f21, %[bias_ptr]\n" : : [bias_ptr] "m"(bias) : "f21");
 
-    for (int64_t i = start_elem; i < end_elem; i += 8) {
-        __asm__ volatile(
+    प्रति (int64_t i = start_elem; i < अन्तः_elem; i += 8) {
+        __asm__ चञ्चल(
             "flw.ps f10, %[src]\n"
             "fmadd.ps f10, f10, f20, f21\n"  // dst = src*scale + bias
             "fsw.ps f10, %[dst_out]\n"
-            : [dst_out] "=m"(*(float (*)[8]) & dst_data[i])
-            : [src] "m"(*(const float (*)[8]) & src0_data[i])
+            : [dst_बहिर्गमनम्] "=m"(*(भिन्न (*)[8]) & dst_दत्त[i])
+            : [src] "m"(*(ध्रुव भिन्न (*)[8]) & src0_दत्त[i])
             : "f10", "f20", "f21");
     }
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ चञ्चल("mova.m.x %0" ::"r"(अस्थायी_आवरणम्));
 
-    return 0;
+    प्रत्यागम 0;
 }

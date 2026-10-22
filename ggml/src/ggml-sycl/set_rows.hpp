@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_SET_ROWS_HPP
-#define GGML_SYCL_SET_ROWS_HPP
+#यदि_अपरिभाषितम् GGML_SYCL_समुच्चयः_पङ्क्तिकाः_HPP
+#परिभाषय GGML_SYCL_समुच्चयः_पङ्क्तिकाः_HPP
 
-#include "common.hpp"
+#अन्तर्भाव "common.hpp"
 
-void ggml_sycl_op_set_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+शून्य ggml_sycl_op_समुच्चयः_पङ्क्तिकाः(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_SET_ROWS_HPP
+#यदि_अन्तः // GGML_SYCL_SET_ROWS_HPP

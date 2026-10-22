@@ -1,554 +1,554 @@
-#include "spine_mem_pool.h"
+#अन्तर्भाव "spine_mem_pool.h"
 
-#include "common.h"
-#include "ime_env.h"
-#include "spine_tcm.h"
+#अन्तर्भाव "common.h"
+#अन्तर्भाव "ime_env.h"
+#अन्तर्भाव "spine_tcm.h"
 
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <unistd.h>
+#अन्तर्भाव <fcntl.h>
+#अन्तर्भाव <sys/ioctl.h>
+#अन्तर्भाव <sys/mman.h>
+#अन्तर्भाव <unistd.h>
 
-#include <algorithm>
-#include <cerrno>
-#include <cstdint>
-#include <cstdlib>
-#include <limits>
-#include <memory>
-#include <mutex>
-#include <unordered_map>
-#include <vector>
+#अन्तर्भाव <algorithm>
+#अन्तर्भाव <cerrno>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <cstdlib>
+#अन्तर्भाव <limits>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <mutex>
+#अन्तर्भाव <unordered_map>
+#अन्तर्भाव <vector>
 
-namespace ggml::cpu::riscv64_spacemit {
-namespace {
+नामाकाश ggml::cpu::riscv64_spacemit {
+नामाकाश {
 
-constexpr size_t   SPINE_MEM_POOL_CHUNK_SIZE         = 512ull * 1024ull * 1024ull;
-constexpr size_t   SPINE_SHARE_MEM_POOL_CHUNK_SIZE   = 512ull * 1024ull;
-constexpr size_t   SPINE_MEM_POOL_1G_REGION_SIZE     = 1ull << 30;
+constexpr size_t   SPINE_MEM_POOL_CHUNK_आकार         = 512ull * 1024ull * 1024ull;
+constexpr size_t   SPINE_SHARE_MEM_POOL_CHUNK_आकार   = 512ull * 1024ull;
+constexpr size_t   SPINE_MEM_POOL_1_G_REGION_आकार     = 1ull << 30;
 constexpr uint64_t HUGETLB_1G_FLAG_REQUIRE_PUD       = 1ull << 0;
-constexpr char     SPINE_MEM_POOL_HUGETLB_1G_DEV[]   = "/dev/hugetlb_1g";
-constexpr char     SPINE_MEM_POOL_TCM_SYNC_MEM_DEV[] = "/dev/tcm_sync_mem";
+constexpr वर्ण     SPINE_MEM_POOL_HUGETLB_1G_DEV[]   = "/dev/hugetlb_1g";
+constexpr वर्ण     SPINE_MEM_POOL_TCM_SYNC_MEM_DEV[] = "/dev/tcm_sync_mem";
 
-struct hugetlb_1g_region {
+संरचना hugetlb_1g_region {
     uint64_t size{ 0 };
     uint64_t dma_addr{ 0 };
     uint64_t flags{ 0 };
     uint64_t reserved{ 0 };
 };
 
-#define HUGETLB_1G_IOC_MAGIC 'M'
-#define HUGETLB_1G_IOC_ALLOC _IOWR(HUGETLB_1G_IOC_MAGIC, 0x00, struct hugetlb_1g_region)
-#define HUGETLB_1G_IOC_FREE  _IO(HUGETLB_1G_IOC_MAGIC, 0x01)
+#परिभाषय HUGETLB_1G_IOC_MAGIC 'M'
+#परिभाषय HUGETLB_1G_IOC_ALLOC _IOWR(HUGETLB_1G_IOC_MAGIC, 0x00, संरचना hugetlb_1g_region)
+#परिभाषय HUGETLB_1G_IOC_FREE  _IO(HUGETLB_1G_IOC_MAGIC, 0x01)
 
-struct free_block {
-    size_t offset{ 0 };
+संरचना free_खण्डम् {
+    size_t विस्थापनम्{ 0 };
     size_t size{ 0 };
 };
 
-struct pool_chunk {
-    uint8_t *               base{ nullptr };
+संरचना pool_chunk {
+    uint8_t *               आधारः{ शून्यसूचकः };
     size_t                  size{ 0 };
-    int                     fd{ -1 };
-    std::vector<free_block> free_blocks;
+    पूर्णाङ्क                     fd{ -1 };
+    std::vector<free_खण्डम्> free_खण्डानि;
 };
 
-struct pool_allocation {
-    void * chunk_base{ nullptr };
-    size_t chunk_size{ 0 };
-    void * base{ nullptr };
+संरचना pool_आवण्टनम् {
+    शून्य * chunk_आधारः{ शून्यसूचकः };
+    size_t chunk_आकार{ 0 };
+    शून्य * आधारः{ शून्यसूचकः };
     size_t size{ 0 };
 };
 
-bool is_power_of_two(size_t value) {
-    return value != 0 && (value & (value - 1)) == 0;
+तार्किक is_power_सम्बन्धि_two(size_t value) {
+    प्रत्यागम value != 0 && (value & (value - 1)) == 0;
 }
 
-bool align_up(size_t value, size_t alignment, size_t * aligned_value) {
-    if (aligned_value == nullptr || alignment == 0) {
-        return false;
+तार्किक align_ऊर्ध्वम्(size_t value, size_t alignment, size_t * aligned_मानम्) {
+    यदि (aligned_मानम् == शून्यसूचकः || alignment == 0) {
+        प्रत्यागम असत्य;
     }
 
-    const size_t remainder = value % alignment;
-    if (remainder == 0) {
-        *aligned_value = value;
-        return true;
+    ध्रुव size_t remainder = value % alignment;
+    यदि (remainder == 0) {
+        *aligned_मानम् = value;
+        प्रत्यागम सत्य;
     }
 
-    const size_t padding = alignment - remainder;
-    if (value > std::numeric_limits<size_t>::max() - padding) {
-        return false;
+    ध्रुव size_t padding = alignment - remainder;
+    यदि (value > std::numeric_limits<size_t>::max() - padding) {
+        प्रत्यागम असत्य;
     }
 
-    *aligned_value = value + padding;
-    return true;
+    *aligned_मानम् = value + padding;
+    प्रत्यागम सत्य;
 }
 
-bool align_up_uintptr(uintptr_t value, size_t alignment, uintptr_t * aligned_value) {
-    if (aligned_value == nullptr || alignment == 0) {
-        return false;
+तार्किक align_ऊर्ध्वम्_uintptr(uintptr_t value, size_t alignment, uintptr_t * aligned_मानम्) {
+    यदि (aligned_मानम् == शून्यसूचकः || alignment == 0) {
+        प्रत्यागम असत्य;
     }
 
-    const uintptr_t remainder = value % alignment;
-    if (remainder == 0) {
-        *aligned_value = value;
-        return true;
+    ध्रुव uintptr_t remainder = value % alignment;
+    यदि (remainder == 0) {
+        *aligned_मानम् = value;
+        प्रत्यागम सत्य;
     }
 
-    const uintptr_t padding = alignment - remainder;
-    if (value > std::numeric_limits<uintptr_t>::max() - padding) {
-        return false;
+    ध्रुव uintptr_t padding = alignment - remainder;
+    यदि (value > std::numeric_limits<uintptr_t>::max() - padding) {
+        प्रत्यागम असत्य;
     }
 
-    *aligned_value = value + padding;
-    return true;
+    *aligned_मानम् = value + padding;
+    प्रत्यागम सत्य;
 }
 
-class spine_mem_pool_manager {
-  public:
-    explicit spine_mem_pool_manager(size_t default_chunk_size) : default_chunk_size_(default_chunk_size) {}
+वर्ग spine_mem_pool_manager {
+  सार्वजनिक:
+    स्पष्ट spine_mem_pool_manager(size_t default_chunk_आकार) : default_chunk_आकार_2(default_chunk_आकार) {}
 
-    virtual ~spine_mem_pool_manager() = default;
+    आभास ~spine_mem_pool_manager() = स्वभाव;
 
-    void * alloc(size_t size, size_t alignment) {
-        if (size == 0 || !is_power_of_two(alignment)) {
-            return nullptr;
+    शून्य * alloc(size_t size, size_t alignment) {
+        यदि (size == 0 || !is_power_सम्बन्धि_two(alignment)) {
+            प्रत्यागम शून्यसूचकः;
         }
 
-        size_t aligned_size = 0;
-        if (!align_up(size, alignment, &aligned_size)) {
+        size_t aligned_आकार = 0;
+        यदि (!align_ऊर्ध्वम्(size, alignment, &aligned_आकार)) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: align_up failed for size %zu alignment %zu\n", __func__, size,
                            alignment);
-            return nullptr;
+            प्रत्यागम शून्यसूचकः;
         }
 
-        pool_allocation allocation;
+        pool_आवण्टनम् आवण्टनम्;
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> तालकम्(mutex_);
 
-        if (!try_alloc_locked(aligned_size, alignment, &allocation)) {
-            if (!add_chunk_locked(aligned_size, alignment)) {
-                return nullptr;
+        यदि (!try_alloc_locked(aligned_आकार, alignment, &आवण्टनम्)) {
+            यदि (!सङ्कलय_chunk_locked(aligned_आकार, alignment)) {
+                प्रत्यागम शून्यसूचकः;
             }
 
-            if (!try_alloc_locked(aligned_size, alignment, &allocation)) {
+            यदि (!try_alloc_locked(aligned_आकार, alignment, &आवण्टनम्)) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: allocation retry failed for size %zu alignment %zu\n",
-                               __func__, aligned_size, alignment);
-                return nullptr;
+                               __func__, aligned_आकार, alignment);
+                प्रत्यागम शून्यसूचकः;
             }
         }
 
-        try {
-            const auto [allocation_it, inserted] = allocations_.emplace(allocation.base, allocation);
-            if (!inserted) {
-                GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: duplicate allocation key %p\n", __func__, allocation.base);
-                rollback_allocation_locked(allocation);
-                return nullptr;
+        यत्न {
+            ध्रुव स्वचालित [आवण्टनम्_it, inserted] = allocations_.emplace(आवण्टनम्.आधारः, आवण्टनम्);
+            यदि (!inserted) {
+                GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: duplicate allocation key %p\n", __func__, आवण्टनम्.आधारः);
+                rollback_आवण्टनम्_locked(आवण्टनम्);
+                प्रत्यागम शून्यसूचकः;
             }
-        } catch (const std::bad_alloc &) {
-            rollback_allocation_locked(allocation);
-            throw;
+        } गृहाण (ध्रुव std::bad_alloc &) {
+            rollback_आवण्टनम्_locked(आवण्टनम्);
+            क्षिप;
         }
 
-        return allocation.base;
+        प्रत्यागम आवण्टनम्.आधारः;
     }
 
-    void free(void * base) {
-        if (base == nullptr) {
-            return;
+    शून्य मुक्त(शून्य * आधारः) {
+        यदि (आधारः == शून्यसूचकः) {
+            प्रत्यागम;
         }
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> तालकम्(mutex_);
 
-        auto allocation_it = allocations_.find(base);
-        if (allocation_it == allocations_.end()) {
-            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: unknown allocation %p\n", __func__, base);
-            return;
+        स्वचालित आवण्टनम्_it = allocations_.find(आधारः);
+        यदि (आवण्टनम्_it == allocations_.end()) {
+            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: unknown allocation %p\n", __func__, आधारः);
+            प्रत्यागम;
         }
 
-        pool_allocation allocation = allocation_it->second;
-        allocations_.erase(allocation_it);
+        pool_आवण्टनम् आवण्टनम् = आवण्टनम्_it->second;
+        allocations_.erase(आवण्टनम्_it);
 
-        auto chunk_it = find_chunk_locked(allocation);
-        if (chunk_it == chunks_.end()) {
+        स्वचालित chunk_it = find_chunk_locked(आवण्टनम्);
+        यदि (chunk_it == chunks_.end()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: unknown chunk for allocation %p size %zu\n", __func__,
-                           allocation.base, allocation.size);
-            return;
+                           आवण्टनम्.आधारः, आवण्टनम्.size);
+            प्रत्यागम;
         }
 
-        auto * chunk_base = chunk_it->base;
-        auto * alloc_base = static_cast<uint8_t *>(allocation.base);
-        if (alloc_base < chunk_base || alloc_base >= chunk_base + chunk_it->size) {
+        स्वचालित * chunk_आधारः = chunk_it->आधारः;
+        स्वचालित * alloc_आधारः = static_cast<uint8_t *>(आवण्टनम्.आधारः);
+        यदि (alloc_आधारः < chunk_आधारः || alloc_आधारः >= chunk_आधारः + chunk_it->size) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: allocation %p out of chunk range %p..%p\n", __func__,
-                           allocation.base, chunk_base, chunk_base + chunk_it->size);
-            return;
+                           आवण्टनम्.आधारः, chunk_आधारः, chunk_आधारः + chunk_it->size);
+            प्रत्यागम;
         }
 
-        const size_t offset = static_cast<size_t>(alloc_base - chunk_base);
-        if (offset > chunk_it->size || allocation.size > chunk_it->size - offset) {
+        ध्रुव size_t विस्थापनम् = static_cast<size_t>(alloc_आधारः - chunk_आधारः);
+        यदि (विस्थापनम् > chunk_it->size || आवण्टनम्.size > chunk_it->size - विस्थापनम्) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: allocation %p size %zu exceeds chunk size %zu\n", __func__,
-                           allocation.base, allocation.size, chunk_it->size);
-            return;
+                           आवण्टनम्.आधारः, आवण्टनम्.size, chunk_it->size);
+            प्रत्यागम;
         }
 
-        insert_free_block_locked(*chunk_it, { offset, allocation.size });
-        maybe_release_empty_chunk_locked(chunk_it);
+        निवेशय_free_खण्डम्_locked(*chunk_it, { विस्थापनम्, आवण्टनम्.size });
+        maybe_release_रिक्तानि_chunk_locked(chunk_it);
     }
 
-  protected:
-    void release_chunks() {
-        std::lock_guard<std::mutex> lock(mutex_);
+  रक्षित:
+    शून्य release_chunks() {
+        std::lock_guard<std::mutex> तालकम्(mutex_);
 
         allocations_.clear();
-        for (auto & chunk : chunks_) {
+        प्रति (स्वचालित & chunk : chunks_) {
             dealloc_chunk(&chunk);
         }
         chunks_.clear();
     }
 
-    size_t default_chunk_size() const { return default_chunk_size_; }
+    size_t default_chunk_आकार() ध्रुव { प्रत्यागम default_chunk_आकार_2; }
 
-    static void clear_chunk(pool_chunk * chunk) {
-        chunk->base = nullptr;
+    स्थिर शून्य clear_chunk(pool_chunk * chunk) {
+        chunk->आधारः = शून्यसूचकः;
         chunk->size = 0;
         chunk->fd   = -1;
-        chunk->free_blocks.clear();
+        chunk->free_खण्डानि.clear();
     }
 
-    virtual bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) = 0;
-    virtual void dealloc_chunk(pool_chunk * chunk)                                                    = 0;
+    आभास तार्किक alloc_chunk(size_t min_आकार, size_t alignment, शून्य * hint_addr, pool_chunk * chunk) = 0;
+    आभास शून्य dealloc_chunk(pool_chunk * chunk)                                                    = 0;
 
-  private:
-    struct alloc_candidate {
-        size_t    chunk_index{ 0 };
-        size_t    block_index{ 0 };
-        size_t    aligned_offset{ 0 };
+  गुप्त:
+    संरचना alloc_candidate {
+        size_t    chunk_सूचकांक{ 0 };
+        size_t    खण्डम्_सूचकांक{ 0 };
+        size_t    aligned_विस्थापनम्{ 0 };
         uintptr_t address{ std::numeric_limits<uintptr_t>::max() };
-        bool      valid{ false };
+        तार्किक      valid{ असत्य };
     };
 
-    std::vector<pool_chunk>::iterator find_chunk_locked(const pool_allocation & allocation) {
-        return std::find_if(chunks_.begin(), chunks_.end(), [&](const pool_chunk & chunk) {
-            return chunk.base == allocation.chunk_base && chunk.size == allocation.chunk_size;
+    std::vector<pool_chunk>::iterator find_chunk_locked(ध्रुव pool_आवण्टनम् & आवण्टनम्) {
+        प्रत्यागम std::find_if(chunks_.begin(), chunks_.end(), [&](ध्रुव pool_chunk & chunk) {
+            प्रत्यागम chunk.आधारः == आवण्टनम्.chunk_आधारः && chunk.size == आवण्टनम्.chunk_आकार;
         });
     }
 
-    bool add_chunk_locked(size_t min_size, size_t alignment) {
+    तार्किक सङ्कलय_chunk_locked(size_t min_आकार, size_t alignment) {
         pool_chunk   chunk;
-        const size_t chunk_request = default_chunk_size_ == 0 ? min_size : std::max(min_size, default_chunk_size_);
-        void *       hint_addr     = nullptr;
+        ध्रुव size_t chunk_request = default_chunk_आकार_2 == 0 ? min_आकार : std::max(min_आकार, default_chunk_आकार_2);
+        शून्य *       hint_addr     = शून्यसूचकः;
 
-        for (const auto & existing_chunk : chunks_) {
-            auto * chunk_end = existing_chunk.base + existing_chunk.size;
-            if (hint_addr == nullptr || chunk_end > hint_addr) {
-                hint_addr = chunk_end;
+        प्रति (ध्रुव स्वचालित & existing_chunk : chunks_) {
+            स्वचालित * chunk_अन्तः = existing_chunk.आधारः + existing_chunk.size;
+            यदि (hint_addr == शून्यसूचकः || chunk_अन्तः > hint_addr) {
+                hint_addr = chunk_अन्तः;
             }
         }
 
-        if (!alloc_chunk(chunk_request, alignment, hint_addr, &chunk)) {
-            return false;
+        यदि (!alloc_chunk(chunk_request, alignment, hint_addr, &chunk)) {
+            प्रत्यागम असत्य;
         }
 
-        if (chunk.base == nullptr || chunk.size < min_size) {
+        यदि (chunk.आधारः == शून्यसूचकः || chunk.size < min_आकार) {
             GGML_LOG_ERROR(
                 "CPU_RISCV64_SPACEMIT: %s: invalid chunk returned for request size %zu, chunk_base=%p chunk_size=%zu\n",
-                __func__, min_size, chunk.base, chunk.size);
+                __func__, min_आकार, chunk.आधारः, chunk.size);
             dealloc_chunk(&chunk);
-            return false;
+            प्रत्यागम असत्य;
         }
 
-        try {
-            chunk.free_blocks.push_back({ 0, chunk.size });
+        यत्न {
+            chunk.free_खण्डानि.push_back({ 0, chunk.size });
             chunks_.push_back(std::move(chunk));
-        } catch (const std::bad_alloc &) {
+        } गृहाण (ध्रुव std::bad_alloc &) {
             dealloc_chunk(&chunk);
-            throw;
+            क्षिप;
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    void rollback_allocation_locked(const pool_allocation & allocation) {
-        auto chunk_it = find_chunk_locked(allocation);
-        if (chunk_it == chunks_.end()) {
+    शून्य rollback_आवण्टनम्_locked(ध्रुव pool_आवण्टनम् & आवण्टनम्) {
+        स्वचालित chunk_it = find_chunk_locked(आवण्टनम्);
+        यदि (chunk_it == chunks_.end()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to rollback allocation %p, owning chunk not found\n",
-                           __func__, allocation.base);
-            return;
+                           __func__, आवण्टनम्.आधारः);
+            प्रत्यागम;
         }
 
-        auto * chunk_base = chunk_it->base;
-        auto * alloc_base = static_cast<uint8_t *>(allocation.base);
-        if (alloc_base < chunk_base || alloc_base >= chunk_base + chunk_it->size) {
+        स्वचालित * chunk_आधारः = chunk_it->आधारः;
+        स्वचालित * alloc_आधारः = static_cast<uint8_t *>(आवण्टनम्.आधारः);
+        यदि (alloc_आधारः < chunk_आधारः || alloc_आधारः >= chunk_आधारः + chunk_it->size) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to rollback allocation %p, chunk range is invalid\n",
-                           __func__, allocation.base);
-            return;
+                           __func__, आवण्टनम्.आधारः);
+            प्रत्यागम;
         }
 
-        const size_t offset = static_cast<size_t>(alloc_base - chunk_base);
-        if (offset > chunk_it->size || allocation.size > chunk_it->size - offset) {
+        ध्रुव size_t विस्थापनम् = static_cast<size_t>(alloc_आधारः - chunk_आधारः);
+        यदि (विस्थापनम् > chunk_it->size || आवण्टनम्.size > chunk_it->size - विस्थापनम्) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to rollback allocation %p size %zu\n", __func__,
-                           allocation.base, allocation.size);
-            return;
+                           आवण्टनम्.आधारः, आवण्टनम्.size);
+            प्रत्यागम;
         }
 
-        insert_free_block_locked(*chunk_it, { offset, allocation.size });
-        maybe_release_empty_chunk_locked(chunk_it);
+        निवेशय_free_खण्डम्_locked(*chunk_it, { विस्थापनम्, आवण्टनम्.size });
+        maybe_release_रिक्तानि_chunk_locked(chunk_it);
     }
 
-    bool try_alloc_locked(size_t size, size_t alignment, pool_allocation * allocation) {
+    तार्किक try_alloc_locked(size_t size, size_t alignment, pool_आवण्टनम् * आवण्टनम्) {
         alloc_candidate best;
 
-        for (size_t chunk_index = 0; chunk_index < chunks_.size(); ++chunk_index) {
-            const auto & chunk = chunks_[chunk_index];
-            for (size_t block_index = 0; block_index < chunk.free_blocks.size(); ++block_index) {
-                const auto & block = chunk.free_blocks[block_index];
+        प्रति (size_t chunk_सूचकांक = 0; chunk_सूचकांक < chunks_.size(); ++chunk_सूचकांक) {
+            ध्रुव स्वचालित & chunk = chunks_[chunk_सूचकांक];
+            प्रति (size_t खण्डम्_सूचकांक = 0; खण्डम्_सूचकांक < chunk.free_खण्डानि.size(); ++खण्डम्_सूचकांक) {
+                ध्रुव स्वचालित & खण्डम् = chunk.free_खण्डानि[खण्डम्_सूचकांक];
 
                 uintptr_t  aligned_addr = 0;
-                const auto block_addr   = reinterpret_cast<uintptr_t>(chunk.base + block.offset);
-                if (!align_up_uintptr(block_addr, alignment, &aligned_addr)) {
-                    continue;
+                ध्रुव स्वचालित खण्डम्_addr   = reinterpret_cast<uintptr_t>(chunk.आधारः + खण्डम्.विस्थापनम्);
+                यदि (!align_ऊर्ध्वम्_uintptr(खण्डम्_addr, alignment, &aligned_addr)) {
+                    अनुवर्त;
                 }
 
-                if (aligned_addr < block_addr) {
-                    continue;
+                यदि (aligned_addr < खण्डम्_addr) {
+                    अनुवर्त;
                 }
 
-                const size_t aligned_offset = block.offset + static_cast<size_t>(aligned_addr - block_addr);
-                const size_t padding        = aligned_offset - block.offset;
-                if (padding > block.size || size > block.size - padding) {
-                    continue;
+                ध्रुव size_t aligned_विस्थापनम् = खण्डम्.विस्थापनम् + static_cast<size_t>(aligned_addr - खण्डम्_addr);
+                ध्रुव size_t padding        = aligned_विस्थापनम् - खण्डम्.विस्थापनम्;
+                यदि (padding > खण्डम्.size || size > खण्डम्.size - padding) {
+                    अनुवर्त;
                 }
 
-                if (!best.valid || aligned_addr < best.address) {
-                    best.chunk_index    = chunk_index;
-                    best.block_index    = block_index;
-                    best.aligned_offset = aligned_offset;
+                यदि (!best.valid || aligned_addr < best.address) {
+                    best.chunk_सूचकांक    = chunk_सूचकांक;
+                    best.खण्डम्_सूचकांक    = खण्डम्_सूचकांक;
+                    best.aligned_विस्थापनम् = aligned_विस्थापनम्;
                     best.address        = aligned_addr;
-                    best.valid          = true;
+                    best.valid          = सत्य;
                 }
             }
         }
 
-        if (!best.valid) {
-            return false;
+        यदि (!best.valid) {
+            प्रत्यागम असत्य;
         }
 
-        auto &           chunk     = chunks_[best.chunk_index];
-        const free_block block     = chunk.free_blocks[best.block_index];
-        const size_t     padding   = best.aligned_offset - block.offset;
-        const size_t     alloc_end = best.aligned_offset + size;
-        const size_t     block_end = block.offset + block.size;
+        स्वचालित &           chunk     = chunks_[best.chunk_सूचकांक];
+        ध्रुव free_खण्डम् खण्डम्     = chunk.free_खण्डानि[best.खण्डम्_सूचकांक];
+        ध्रुव size_t     padding   = best.aligned_विस्थापनम् - खण्डम्.विस्थापनम्;
+        ध्रुव size_t     alloc_अन्तः = best.aligned_विस्थापनम् + size;
+        ध्रुव size_t     खण्डम्_अन्तः = खण्डम्.विस्थापनम् + खण्डम्.size;
 
-        chunk.free_blocks.erase(chunk.free_blocks.begin() + best.block_index);
-        auto insert_it = chunk.free_blocks.begin() + best.block_index;
-        if (padding != 0) {
-            insert_it = chunk.free_blocks.insert(insert_it, { block.offset, padding });
-            ++insert_it;
+        chunk.free_खण्डानि.erase(chunk.free_खण्डानि.begin() + best.खण्डम्_सूचकांक);
+        स्वचालित निवेशय_it = chunk.free_खण्डानि.begin() + best.खण्डम्_सूचकांक;
+        यदि (padding != 0) {
+            निवेशय_it = chunk.free_खण्डानि.insert(निवेशय_it, { खण्डम्.विस्थापनम्, padding });
+            ++निवेशय_it;
         }
-        if (alloc_end < block_end) {
-            chunk.free_blocks.insert(insert_it, { alloc_end, block_end - alloc_end });
+        यदि (alloc_अन्तः < खण्डम्_अन्तः) {
+            chunk.free_खण्डानि.insert(निवेशय_it, { alloc_अन्तः, खण्डम्_अन्तः - alloc_अन्तः });
         }
 
-        allocation->chunk_base = chunk.base;
-        allocation->chunk_size = chunk.size;
-        allocation->base       = chunk.base + best.aligned_offset;
-        allocation->size       = size;
-        return true;
+        आवण्टनम्->chunk_आधारः = chunk.आधारः;
+        आवण्टनम्->chunk_आकार = chunk.size;
+        आवण्टनम्->आधारः       = chunk.आधारः + best.aligned_विस्थापनम्;
+        आवण्टनम्->size       = size;
+        प्रत्यागम सत्य;
     }
 
-    void maybe_release_empty_chunk_locked(std::vector<pool_chunk>::iterator chunk_it) {
-        if (chunk_it->free_blocks.size() != 1) {
-            return;
+    शून्य maybe_release_रिक्तानि_chunk_locked(std::vector<pool_chunk>::iterator chunk_it) {
+        यदि (chunk_it->free_खण्डानि.size() != 1) {
+            प्रत्यागम;
         }
 
-        const auto & block = chunk_it->free_blocks.front();
-        if (block.offset != 0 || block.size != chunk_it->size) {
-            return;
+        ध्रुव स्वचालित & खण्डम् = chunk_it->free_खण्डानि.front();
+        यदि (खण्डम्.विस्थापनम् != 0 || खण्डम्.size != chunk_it->size) {
+            प्रत्यागम;
         }
 
         dealloc_chunk(&*chunk_it);
         chunks_.erase(chunk_it);
     }
 
-    void insert_free_block_locked(pool_chunk & chunk, free_block block) {
-        auto it = chunk.free_blocks.begin();
-        while (it != chunk.free_blocks.end() && it->offset < block.offset) {
+    शून्य निवेशय_free_खण्डम्_locked(pool_chunk & chunk, free_खण्डम् खण्डम्) {
+        स्वचालित it = chunk.free_खण्डानि.begin();
+        यावत् (it != chunk.free_खण्डानि.end() && it->विस्थापनम् < खण्डम्.विस्थापनम्) {
             ++it;
         }
 
-        if (it != chunk.free_blocks.begin()) {
-            const auto & prev = *(it - 1);
-            if (prev.offset + prev.size > block.offset) {
+        यदि (it != chunk.free_खण्डानि.begin()) {
+            ध्रुव स्वचालित & पूर्व = *(it - 1);
+            यदि (पूर्व.विस्थापनम् + पूर्व.size > खण्डम्.विस्थापनम्) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: overlapping free block at offset %zu size %zu\n", __func__,
-                               block.offset, block.size);
-                return;
+                               खण्डम्.विस्थापनम्, खण्डम्.size);
+                प्रत्यागम;
             }
         }
 
-        if (it != chunk.free_blocks.end() && block.offset + block.size > it->offset) {
+        यदि (it != chunk.free_खण्डानि.end() && खण्डम्.विस्थापनम् + खण्डम्.size > it->विस्थापनम्) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: overlapping next free block at offset %zu size %zu\n", __func__,
-                           block.offset, block.size);
-            return;
+                           खण्डम्.विस्थापनम्, खण्डम्.size);
+            प्रत्यागम;
         }
 
-        it = chunk.free_blocks.insert(it, block);
+        it = chunk.free_खण्डानि.insert(it, खण्डम्);
 
-        if (it != chunk.free_blocks.begin()) {
-            auto prev = it - 1;
-            if (prev->offset + prev->size == it->offset) {
-                it->offset = prev->offset;
-                it->size += prev->size;
-                it = chunk.free_blocks.erase(prev);
+        यदि (it != chunk.free_खण्डानि.begin()) {
+            स्वचालित पूर्व = it - 1;
+            यदि (पूर्व->विस्थापनम् + पूर्व->size == it->विस्थापनम्) {
+                it->विस्थापनम् = पूर्व->विस्थापनम्;
+                it->size += पूर्व->size;
+                it = chunk.free_खण्डानि.erase(पूर्व);
             }
         }
 
-        if (it + 1 != chunk.free_blocks.end() && it->offset + it->size == (it + 1)->offset) {
+        यदि (it + 1 != chunk.free_खण्डानि.end() && it->विस्थापनम् + it->size == (it + 1)->विस्थापनम्) {
             it->size += (it + 1)->size;
-            chunk.free_blocks.erase(it + 1);
+            chunk.free_खण्डानि.erase(it + 1);
         }
     }
 
     std::mutex                                  mutex_;
     std::vector<pool_chunk>                     chunks_;
-    std::unordered_map<void *, pool_allocation> allocations_;
-    size_t                                      default_chunk_size_{ 0 };
+    std::unordered_map<शून्य *, pool_आवण्टनम्> allocations_;
+    size_t                                      default_chunk_आकार_2{ 0 };
 };
 
-class spine_mem_pool_posix final : public spine_mem_pool_manager {
-  public:
+वर्ग spine_mem_pool_posix final : सार्वजनिक spine_mem_pool_manager {
+  सार्वजनिक:
     spine_mem_pool_posix() : spine_mem_pool_manager(0) {}
 
     ~spine_mem_pool_posix() override { release_chunks(); }
 
-  private:
-    bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
-        (void) hint_addr;
+  गुप्त:
+    तार्किक alloc_chunk(size_t min_आकार, size_t alignment, शून्य * hint_addr, pool_chunk * chunk) override {
+        (शून्य) hint_addr;
 
-        const size_t alloc_alignment = std::max(alignment, sizeof(void *));
-        void *       base            = nullptr;
-        const int    rc              = posix_memalign(&base, alloc_alignment, min_size);
-        if (rc != 0) {
+        ध्रुव size_t alloc_alignment = std::max(alignment, परिमाण(शून्य *));
+        शून्य *       आधारः            = शून्यसूचकः;
+        ध्रुव पूर्णाङ्क    rc              = posix_memalign(&आधारः, alloc_alignment, min_आकार);
+        यदि (rc != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: posix_memalign failed for size %zu alignment %zu, rc=%d\n",
-                           __func__, min_size, alloc_alignment, rc);
-            return false;
+                           __func__, min_आकार, alloc_alignment, rc);
+            प्रत्यागम असत्य;
         }
 
-        chunk->base = static_cast<uint8_t *>(base);
-        chunk->size = min_size;
+        chunk->आधारः = static_cast<uint8_t *>(आधारः);
+        chunk->size = min_आकार;
         chunk->fd   = -1;
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    void dealloc_chunk(pool_chunk * chunk) override {
-        std::free(chunk->base);
+    शून्य dealloc_chunk(pool_chunk * chunk) override {
+        std::मुक्त(chunk->आधारः);
         clear_chunk(chunk);
     }
 };
 
-class spine_mem_pool_transparent_hugepage final : public spine_mem_pool_manager {
-  public:
-    spine_mem_pool_transparent_hugepage() : spine_mem_pool_manager(SPINE_MEM_POOL_CHUNK_SIZE) {}
+वर्ग spine_mem_pool_transparent_hugepage final : सार्वजनिक spine_mem_pool_manager {
+  सार्वजनिक:
+    spine_mem_pool_transparent_hugepage() : spine_mem_pool_manager(SPINE_MEM_POOL_CHUNK_आकार) {}
 
     ~spine_mem_pool_transparent_hugepage() override { release_chunks(); }
 
-  private:
-    bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
-        (void) alignment;
+  गुप्त:
+    तार्किक alloc_chunk(size_t min_आकार, size_t alignment, शून्य * hint_addr, pool_chunk * chunk) override {
+        (शून्य) alignment;
 
-        size_t chunk_size = 0;
-        if (!align_up(min_size, default_chunk_size(), &chunk_size)) {
-            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round chunk size for %zu\n", __func__, min_size);
-            return false;
+        size_t chunk_आकार = 0;
+        यदि (!align_ऊर्ध्वम्(min_आकार, default_chunk_आकार(), &chunk_आकार)) {
+            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round chunk size for %zu\n", __func__, min_आकार);
+            प्रत्यागम असत्य;
         }
 
-        void * map_addr = mmap(hint_addr, chunk_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        if (map_addr == MAP_FAILED) {
-            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for chunk size %zu, errno=%d\n", __func__, chunk_size,
+        शून्य * map_addr = mmap(hint_addr, chunk_आकार, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        यदि (map_addr == MAP_FAILED) {
+            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for chunk size %zu, errno=%d\n", __func__, chunk_आकार,
                            errno);
-            return false;
+            प्रत्यागम असत्य;
         }
 
-        if (madvise(map_addr, chunk_size, MADV_HUGEPAGE) != 0) {
+        यदि (madvise(map_addr, chunk_आकार, MADV_HUGEPAGE) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: madvise(MADV_HUGEPAGE) failed for chunk size %zu, errno=%d\n",
-                           __func__, chunk_size, errno);
-            munmap(map_addr, chunk_size);
-            return false;
+                           __func__, chunk_आकार, errno);
+            munmap(map_addr, chunk_आकार);
+            प्रत्यागम असत्य;
         }
 
-        chunk->base = static_cast<uint8_t *>(map_addr);
-        chunk->size = chunk_size;
+        chunk->आधारः = static_cast<uint8_t *>(map_addr);
+        chunk->size = chunk_आकार;
         chunk->fd   = -1;
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    void dealloc_chunk(pool_chunk * chunk) override {
-        if (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
+    शून्य dealloc_chunk(pool_chunk * chunk) override {
+        यदि (chunk->आधारः != शून्यसूचकः && chunk->size != 0 && munmap(chunk->आधारः, chunk->size) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: munmap failed for chunk %p size %zu, errno=%d\n", __func__,
-                           chunk->base, chunk->size, errno);
+                           chunk->आधारः, chunk->size, errno);
         }
 
         clear_chunk(chunk);
     }
 };
 
-class spine_mem_pool_hugetlb_1g final : public spine_mem_pool_manager {
-  public:
-    spine_mem_pool_hugetlb_1g() : spine_mem_pool_manager(SPINE_MEM_POOL_1G_REGION_SIZE) {}
+वर्ग spine_mem_pool_hugetlb_1g final : सार्वजनिक spine_mem_pool_manager {
+  सार्वजनिक:
+    spine_mem_pool_hugetlb_1g() : spine_mem_pool_manager(SPINE_MEM_POOL_1_G_REGION_आकार) {}
 
     ~spine_mem_pool_hugetlb_1g() override { release_chunks(); }
 
-  private:
-    bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
-        (void) alignment;
-        (void) hint_addr;
+  गुप्त:
+    तार्किक alloc_chunk(size_t min_आकार, size_t alignment, शून्य * hint_addr, pool_chunk * chunk) override {
+        (शून्य) alignment;
+        (शून्य) hint_addr;
 
-        size_t region_size = 0;
-        if (!align_up(min_size, SPINE_MEM_POOL_1G_REGION_SIZE, &region_size)) {
-            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round hugetlb_1g size for %zu\n", __func__, min_size);
-            return false;
+        size_t region_आकार = 0;
+        यदि (!align_ऊर्ध्वम्(min_आकार, SPINE_MEM_POOL_1_G_REGION_आकार, &region_आकार)) {
+            GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to round hugetlb_1g size for %zu\n", __func__, min_आकार);
+            प्रत्यागम असत्य;
         }
 
-        const int fd = open(SPINE_MEM_POOL_HUGETLB_1G_DEV, O_RDWR);
-        if (fd < 0) {
+        ध्रुव पूर्णाङ्क fd = उद्घाटय(SPINE_MEM_POOL_HUGETLB_1G_DEV, O_RDWR);
+        यदि (fd < 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: open(%s) failed, errno=%d\n", __func__,
                            SPINE_MEM_POOL_HUGETLB_1G_DEV, errno);
-            return false;
+            प्रत्यागम असत्य;
         }
 
         hugetlb_1g_region region;
-        region.size  = region_size;
+        region.size  = region_आकार;
         region.flags = HUGETLB_1G_FLAG_REQUIRE_PUD;
-        if (ioctl(fd, HUGETLB_1G_IOC_ALLOC, &region) < 0) {
+        यदि (ioctl(fd, HUGETLB_1G_IOC_ALLOC, &region) < 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: HUGETLB_1G_IOC_ALLOC failed for size %zu, errno=%d\n", __func__,
-                           region_size, errno);
+                           region_आकार, errno);
             close(fd);
-            return false;
+            प्रत्यागम असत्य;
         }
 
-        void * map_addr = mmap(nullptr, region.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (map_addr == MAP_FAILED) {
+        शून्य * map_addr = mmap(शून्यसूचकः, region.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        यदि (map_addr == MAP_FAILED) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for hugetlb_1g size %llu, errno=%d\n", __func__,
-                           static_cast<unsigned long long>(region.size), errno);
+                           static_cast<अचिह्नित दीर्घ दीर्घ>(region.size), errno);
             ioctl(fd, HUGETLB_1G_IOC_FREE);
             close(fd);
-            return false;
+            प्रत्यागम असत्य;
         }
 
-        chunk->base = static_cast<uint8_t *>(map_addr);
+        chunk->आधारः = static_cast<uint8_t *>(map_addr);
         chunk->size = region.size;
         chunk->fd   = fd;
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    void dealloc_chunk(pool_chunk * chunk) override {
-        if (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
+    शून्य dealloc_chunk(pool_chunk * chunk) override {
+        यदि (chunk->आधारः != शून्यसूचकः && chunk->size != 0 && munmap(chunk->आधारः, chunk->size) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: munmap failed for hugetlb_1g chunk %p size %zu, errno=%d\n",
-                           __func__, chunk->base, chunk->size, errno);
+                           __func__, chunk->आधारः, chunk->size, errno);
         }
 
-        if (chunk->fd >= 0) {
-            if (ioctl(chunk->fd, HUGETLB_1G_IOC_FREE) < 0) {
+        यदि (chunk->fd >= 0) {
+            यदि (ioctl(chunk->fd, HUGETLB_1G_IOC_FREE) < 0) {
                 GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: HUGETLB_1G_IOC_FREE failed for chunk %p, errno=%d\n",
-                               __func__, chunk->base, errno);
+                               __func__, chunk->आधारः, errno);
             }
 
             close(chunk->fd);
@@ -558,55 +558,55 @@ class spine_mem_pool_hugetlb_1g final : public spine_mem_pool_manager {
     }
 };
 
-class spine_mem_pool_shared_mem final : public spine_mem_pool_manager {
-  public:
-    spine_mem_pool_shared_mem() : spine_mem_pool_manager(SPINE_SHARE_MEM_POOL_CHUNK_SIZE) {}
+वर्ग spine_mem_pool_shared_mem final : सार्वजनिक spine_mem_pool_manager {
+  सार्वजनिक:
+    spine_mem_pool_shared_mem() : spine_mem_pool_manager(SPINE_SHARE_MEM_POOL_CHUNK_आकार) {}
 
     ~spine_mem_pool_shared_mem() override { release_chunks(); }
 
-  private:
-    bool alloc_chunk(size_t min_size, size_t alignment, void * hint_addr, pool_chunk * chunk) override {
-        (void) alignment;
+  गुप्त:
+    तार्किक alloc_chunk(size_t min_आकार, size_t alignment, शून्य * hint_addr, pool_chunk * chunk) override {
+        (शून्य) alignment;
 
-        if (hint_addr != nullptr) {
+        यदि (hint_addr != शून्यसूचकः) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: shared_mem does not support multiple active chunks\n", __func__);
-            return false;
+            प्रत्यागम असत्य;
         }
 
-        if (min_size > default_chunk_size()) {
+        यदि (min_आकार > default_chunk_आकार()) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: shared_mem request %zu exceeds chunk size %zu\n", __func__,
-                           min_size, default_chunk_size());
-            return false;
+                           min_आकार, default_chunk_आकार());
+            प्रत्यागम असत्य;
         }
 
-        const int fd = open(SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, O_RDWR | O_SYNC);
-        if (fd < 0) {
+        ध्रुव पूर्णाङ्क fd = उद्घाटय(SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, O_RDWR | O_SYNC);
+        यदि (fd < 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: open(%s) failed, errno=%d\n", __func__,
                            SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, errno);
-            return false;
+            प्रत्यागम असत्य;
         }
 
-        void * map_addr = mmap(nullptr, default_chunk_size(), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (map_addr == MAP_FAILED) {
+        शून्य * map_addr = mmap(शून्यसूचकः, default_chunk_आकार(), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        यदि (map_addr == MAP_FAILED) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: mmap failed for %s size %zu, errno=%d\n", __func__,
-                           SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, default_chunk_size(), errno);
+                           SPINE_MEM_POOL_TCM_SYNC_MEM_DEV, default_chunk_आकार(), errno);
             close(fd);
-            return false;
+            प्रत्यागम असत्य;
         }
 
-        chunk->base = static_cast<uint8_t *>(map_addr);
-        chunk->size = default_chunk_size();
+        chunk->आधारः = static_cast<uint8_t *>(map_addr);
+        chunk->size = default_chunk_आकार();
         chunk->fd   = fd;
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    void dealloc_chunk(pool_chunk * chunk) override {
-        if (chunk->base != nullptr && chunk->size != 0 && munmap(chunk->base, chunk->size) != 0) {
+    शून्य dealloc_chunk(pool_chunk * chunk) override {
+        यदि (chunk->आधारः != शून्यसूचकः && chunk->size != 0 && munmap(chunk->आधारः, chunk->size) != 0) {
             GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: munmap failed for shared_mem chunk %p size %zu, errno=%d\n",
-                           __func__, chunk->base, chunk->size, errno);
+                           __func__, chunk->आधारः, chunk->size, errno);
         }
 
-        if (chunk->fd >= 0) {
+        यदि (chunk->fd >= 0) {
             close(chunk->fd);
         }
 
@@ -615,146 +615,146 @@ class spine_mem_pool_shared_mem final : public spine_mem_pool_manager {
 };
 
 spine_mem_pool_manager & get_spine_mem_pool_manager() {
-    static std::once_flag                          pool_once;
-    static std::unique_ptr<spine_mem_pool_manager> selected_pool;
-    static spine_mem_pool_backend                  selected_backend = spine_mem_pool_backend::none;
+    स्थिर std::once_flag                          pool_once;
+    स्थिर std::unique_ptr<spine_mem_pool_manager> selected_pool;
+    स्थिर spine_mem_pool_backend                  selected_backend = spine_mem_pool_backend::none;
 
     spine_mem_pool_backend backend = global_spine_env_info.mem_backend;
-    if (backend == spine_mem_pool_backend::none) {
+    यदि (backend == spine_mem_pool_backend::none) {
         backend = spine_mem_pool_backend::transparent_hugepage;
     }
 
     std::call_once(pool_once, [&]() {
         selected_backend = backend;
 
-        switch (selected_backend) {
-            case spine_mem_pool_backend::posix_memalign:
+        विकल्प (selected_backend) {
+            पक्ष spine_mem_pool_backend::posix_memalign:
                 selected_pool = std::make_unique<spine_mem_pool_posix>();
-                break;
-            case spine_mem_pool_backend::transparent_hugepage:
+                भङ्ग;
+            पक्ष spine_mem_pool_backend::transparent_hugepage:
                 selected_pool = std::make_unique<spine_mem_pool_transparent_hugepage>();
-                break;
-            case spine_mem_pool_backend::hugetlb_1g:
+                भङ्ग;
+            पक्ष spine_mem_pool_backend::hugetlb_1g:
                 selected_pool = std::make_unique<spine_mem_pool_hugetlb_1g>();
-                break;
-            case spine_mem_pool_backend::none:
+                भङ्ग;
+            पक्ष spine_mem_pool_backend::none:
                 selected_backend = spine_mem_pool_backend::transparent_hugepage;
                 selected_pool    = std::make_unique<spine_mem_pool_transparent_hugepage>();
-                break;
+                भङ्ग;
         }
     });
 
-    if (backend != selected_backend) {
+    यदि (backend != selected_backend) {
         GGML_LOG_ERROR(
             "CPU_RISCV64_SPACEMIT: %s: mem pool backend is process-global and mutually exclusive, requested=%d but "
             "selected=%d\n",
-            __func__, static_cast<int>(backend), static_cast<int>(selected_backend));
+            __func__, static_cast<पूर्णाङ्क>(backend), static_cast<पूर्णाङ्क>(selected_backend));
     }
 
-    if (selected_pool) {
-        return *selected_pool;
+    यदि (selected_pool) {
+        प्रत्यागम *selected_pool;
     }
 
-    throw std::bad_alloc();
+    क्षिप std::bad_alloc();
 }
 
 spine_mem_pool_manager & get_spine_mem_pool_shared_mem_manager() {
-    static std::once_flag                             shared_mem_pool_once;
-    static std::unique_ptr<spine_mem_pool_shared_mem> shared_mem_pool;
+    स्थिर std::once_flag                             shared_mem_pool_once;
+    स्थिर std::unique_ptr<spine_mem_pool_shared_mem> shared_mem_pool;
 
     std::call_once(shared_mem_pool_once, [&]() { shared_mem_pool = std::make_unique<spine_mem_pool_shared_mem>(); });
 
-    if (shared_mem_pool) {
-        return *shared_mem_pool;
+    यदि (shared_mem_pool) {
+        प्रत्यागम *shared_mem_pool;
     }
 
-    throw std::bad_alloc();
+    क्षिप std::bad_alloc();
 }
 
 }  // namespace
 
-bool spine_mem_pool_tcm_init(spine_mem_pool_tcm_info * info) noexcept {
-    if (info == nullptr) {
-        return false;
+तार्किक spine_mem_pool_tcm_init(spine_mem_pool_tcm_info * info) noexcept {
+    यदि (info == शून्यसूचकः) {
+        प्रत्यागम असत्य;
     }
 
     *info = {};
 
-    if (spine_tcm_open_handle(NULL) != 0 || !spine_tcm_is_available()) {
-        return false;
+    यदि (spine_tcm_open_handle(रिक्त) != 0 || !spine_tcm_is_उपलब्धम्()) {
+        प्रत्यागम असत्य;
     }
 
     spine_tcm_mem_info_t mem_info;
-    if (spine_tcm_mem_info(&mem_info) != 0) {
-        return false;
+    यदि (spine_tcm_mem_info(&mem_info) != 0) {
+        प्रत्यागम असत्य;
     }
 
-    info->available   = true;
-    info->blk_size    = mem_info.blk_size;
-    info->blk_num     = mem_info.blk_num;
+    info->उपलब्धम्   = सत्य;
+    info->blk_आकार    = mem_info.blk_आकार;
+    info->blk_अङ्कः     = mem_info.blk_अङ्कः;
     info->is_fake_tcm = mem_info.is_fake_tcm != 0;
-    return true;
+    प्रत्यागम सत्य;
 }
 
-void * spine_mem_pool_tcm_mem_get(int cpu_id) noexcept {
-    return spine_tcm_mem_get(cpu_id);
+शून्य * spine_mem_pool_tcm_mem_get(पूर्णाङ्क cpu_id) noexcept {
+    प्रत्यागम spine_tcm_mem_get(cpu_id);
 }
 
-void * spine_mem_pool_tcm_mem_wait(int cpu_id) noexcept {
-    return spine_tcm_mem_try_wait(cpu_id, 1000 * 1000);
+शून्य * spine_mem_pool_tcm_mem_wait(पूर्णाङ्क cpu_id) noexcept {
+    प्रत्यागम spine_tcm_mem_try_wait(cpu_id, 1000 * 1000);
 }
 
-int spine_mem_pool_tcm_mem_release(int cpu_id) noexcept {
-    return spine_tcm_mem_release(cpu_id);
+पूर्णाङ्क spine_mem_pool_tcm_mem_release(पूर्णाङ्क cpu_id) noexcept {
+    प्रत्यागम spine_tcm_mem_release(cpu_id);
 }
 
-void * spine_mem_pool_alloc(size_t size, size_t alignment) noexcept {
-    try {
-        return get_spine_mem_pool_manager().alloc(size, alignment);
-    } catch (const std::bad_alloc &) {
+शून्य * spine_mem_pool_alloc(size_t size, size_t alignment) noexcept {
+    यत्न {
+        प्रत्यागम get_spine_mem_pool_manager().alloc(size, alignment);
+    } गृहाण (ध्रुव std::bad_alloc &) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while allocating size %zu\n", __func__, size);
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
 }
 
-void * spine_mem_pool_shared_mem_alloc(size_t size, size_t alignment) noexcept {
-    try {
-        return get_spine_mem_pool_shared_mem_manager().alloc(size, alignment);
-    } catch (const std::bad_alloc &) {
+शून्य * spine_mem_pool_shared_mem_alloc(size_t size, size_t alignment) noexcept {
+    यत्न {
+        प्रत्यागम get_spine_mem_pool_shared_mem_manager().alloc(size, alignment);
+    } गृहाण (ध्रुव std::bad_alloc &) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while allocating shared memory size %zu\n", __func__, size);
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
 }
 
-void spine_mem_pool_free(void * base) noexcept {
-    try {
-        get_spine_mem_pool_manager().free(base);
-    } catch (const std::bad_alloc &) {
-        GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing allocation %p\n", __func__, base);
+शून्य spine_mem_pool_free(शून्य * आधारः) noexcept {
+    यत्न {
+        get_spine_mem_pool_manager().मुक्त(आधारः);
+    } गृहाण (ध्रुव std::bad_alloc &) {
+        GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing allocation %p\n", __func__, आधारः);
     }
 }
 
-void spine_mem_pool_shared_mem_free(void * base) noexcept {
-    try {
-        get_spine_mem_pool_shared_mem_manager().free(base);
-    } catch (const std::bad_alloc &) {
-        GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing shared allocation %p\n", __func__, base);
+शून्य spine_mem_pool_shared_mem_free(शून्य * आधारः) noexcept {
+    यत्न {
+        get_spine_mem_pool_shared_mem_manager().मुक्त(आधारः);
+    } गृहाण (ध्रुव std::bad_alloc &) {
+        GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: bad_alloc while freeing shared allocation %p\n", __func__, आधारः);
     }
 }
 
 }  // namespace ggml::cpu::riscv64_spacemit
 
-extern "C" {
-void * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t size, size_t alignment) {
-    void * result = ggml::cpu::riscv64_spacemit::spine_mem_pool_shared_mem_alloc(size, alignment);
-    if (result == nullptr) {
+बाह्य "C" {
+शून्य * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t size, size_t alignment) {
+    शून्य * परिणाम = ggml::cpu::riscv64_spacemit::spine_mem_pool_shared_mem_alloc(size, alignment);
+    यदि (परिणाम == शून्यसूचकः) {
         GGML_LOG_ERROR("CPU_RISCV64_SPACEMIT: %s: failed to allocate shared memory size %zu alignment %zu\n", __func__,
                        size, alignment);
     }
-    return result;
+    प्रत्यागम परिणाम;
 }
 
-void ggml_backend_cpu_riscv64_spacemit_free_shared(void * ptr) {
+शून्य ggml_backend_cpu_riscv64_spacemit_free_shared(शून्य * ptr) {
     ggml::cpu::riscv64_spacemit::spine_mem_pool_shared_mem_free(ptr);
 }
 }

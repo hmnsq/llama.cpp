@@ -1,59 +1,59 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#निर्देशः clang diagnostic ignored "-Wunused-variable"
+#निर्देशः clang diagnostic ignored "-Wunused-function"
+#निर्देशः clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#अन्तर्भाव <HAP_farf.h>
+#अन्तर्भाव <HAP_perf.h>
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-types.h"
-#include "hvx-utils.h"
-#include "dma-queue.h"
+#परिभाषय GGML_COMMON_DECL_C
+#अन्तर्भाव "ggml-common.h"
+#अन्तर्भाव "hex-common.h"
+#अन्तर्भाव "hex-profile.h"
+#अन्तर्भाव "htp-ctx.h"
+#अन्तर्भाव "htp-ops.h"
+#अन्तर्भाव "htp-tensor.h"
+#अन्तर्भाव "hvx-types.h"
+#अन्तर्भाव "hvx-utils.h"
+#अन्तर्भाव "dma-queue.h"
 
-#define htp_cumsum_tensors_preamble                         \
-    const struct htp_tensor * restrict src0 = octx->src[0]; \
-    const struct htp_tensor * restrict dst  = octx->dst;    \
+#परिभाषय htp_cumsum_tensors_preamble                         \
+    ध्रुव संरचना htp_tensor * सीमित src0 = octx->src[0]; \
+    ध्रुव संरचना htp_tensor * सीमित dst  = octx->dst;    \
                                                             \
-    const uint32_t ne00 = src0->ne[0];                      \
-    const uint32_t ne01 = src0->ne[1];                      \
-    const uint32_t ne02 = src0->ne[2];                      \
-    const uint32_t ne03 = src0->ne[3];                      \
+    ध्रुव uint32_t ne00 = src0->ne[0];                      \
+    ध्रुव uint32_t ne01 = src0->ne[1];                      \
+    ध्रुव uint32_t ne02 = src0->ne[2];                      \
+    ध्रुव uint32_t ne03 = src0->ne[3];                      \
                                                             \
-    const uint32_t ne0 = dst->ne[0];                        \
-    const uint32_t ne1 = dst->ne[1];                        \
-    const uint32_t ne2 = dst->ne[2];                        \
-    const uint32_t ne3 = dst->ne[3];                        \
+    ध्रुव uint32_t ne0 = dst->ne[0];                        \
+    ध्रुव uint32_t ne1 = dst->ne[1];                        \
+    ध्रुव uint32_t ne2 = dst->ne[2];                        \
+    ध्रुव uint32_t ne3 = dst->ne[3];                        \
                                                             \
-    const uint32_t nb00 = src0->nb[0];                      \
-    const uint32_t nb01 = src0->nb[1];                      \
-    const uint32_t nb02 = src0->nb[2];                      \
-    const uint32_t nb03 = src0->nb[3];                      \
+    ध्रुव uint32_t nb00 = src0->nb[0];                      \
+    ध्रुव uint32_t nb01 = src0->nb[1];                      \
+    ध्रुव uint32_t nb02 = src0->nb[2];                      \
+    ध्रुव uint32_t nb03 = src0->nb[3];                      \
                                                             \
-    const uint32_t nb0 = dst->nb[0];                        \
-    const uint32_t nb1 = dst->nb[1];                        \
-    const uint32_t nb2 = dst->nb[2];                        \
-    const uint32_t nb3 = dst->nb[3];
+    ध्रुव uint32_t nb0 = dst->nb[0];                        \
+    ध्रुव uint32_t nb1 = dst->nb[1];                        \
+    ध्रुव uint32_t nb2 = dst->nb[2];                        \
+    ध्रुव uint32_t nb3 = dst->nb[3];
 
-struct htp_cumsum_context {
-    struct htp_ops_context * octx;
-    size_t          src_row_size;
-    size_t          dst_row_size;
-    size_t          src_row_size_aligned;
-    size_t          dst_row_size_aligned;
-    uint32_t        rows_per_thread;
-    uint32_t        total_rows;
+संरचना htp_cumsum_context {
+    संरचना htp_ops_context * octx;
+    size_t          src_row_आकार;
+    size_t          dst_row_आकार;
+    size_t          src_row_आकार_aligned;
+    size_t          dst_row_आकार_aligned;
+    uint32_t        पङ्क्तिकाः_प्रत्येकम्_thread;
+    uint32_t        योग_पङ्क्तिकाः;
     uint32_t        row_start;
 };
 
-#define htp_cumsum_preamble                                                \
-    struct htp_cumsum_context * cctx = (struct htp_cumsum_context *) data; \
-    struct htp_ops_context *    octx = cctx->octx;                         \
+#परिभाषय htp_cumsum_preamble                                                \
+    संरचना htp_cumsum_context * cctx = (संरचना htp_cumsum_context *) दत्त; \
+    संरचना htp_ops_context *    octx = cctx->octx;                         \
     htp_cumsum_tensors_preamble;                                           \
     dma_queue * dma_q = octx->ctx->dma[ith];
 
@@ -61,53 +61,53 @@ struct htp_cumsum_context {
 // HVX prefix scan helpers
 // ---------------------------------------------------------------------------
 
-#if __HVX_ARCH__ > 75
-static inline HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
-    return Q6_Vsf_vadd_VsfVsf(a, b);
+#यदि __HVX_ARCH__ > 75
+स्थिर अन्तःस्थ HVX_सदिशम् hvx_cumsum_vadd(HVX_सदिशम् a, HVX_सदिशम् b) {
+    प्रत्यागम Q6_Vsf_vadd_VsfVsf(a, b);
 }
-#else
-static inline HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
-    return Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b));
+#अन्यथा
+स्थिर अन्तःस्थ HVX_सदिशम् hvx_cumsum_vadd(HVX_सदिशम् a, HVX_सदिशम् b) {
+    प्रत्यागम Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b));
 }
-#endif  // __HVX_ARCH__ > 75
+#यदि_अन्तः  // __HVX_ARCH__ > 75
 
-static inline HVX_Vector hvx_prefix_scan_f32(HVX_Vector v, HVX_Vector carry_in) {
-    const HVX_Vector zero = Q6_V_vsplat_R(0);
+स्थिर अन्तःस्थ HVX_सदिशम् hvx_उपसर्गः_अवलोकनम्_f32(HVX_सदिशम् v, HVX_सदिशम् carry_अन्तर्) {
+    ध्रुव HVX_सदिशम् zero = Q6_V_vsplat_R(0);
 
     v = hvx_cumsum_vadd(v, Q6_V_vlalign_VVR(v, zero,  4));
     v = hvx_cumsum_vadd(v, Q6_V_vlalign_VVR(v, zero,  8));
     v = hvx_cumsum_vadd(v, Q6_V_vlalign_VVR(v, zero, 16));
     v = hvx_cumsum_vadd(v, Q6_V_vlalign_VVR(v, zero, 32));
     v = hvx_cumsum_vadd(v, Q6_V_vlalign_VVR(v, zero, 64));
-    v = hvx_cumsum_vadd(v, carry_in);
+    v = hvx_cumsum_vadd(v, carry_अन्तर्);
 
-    return v;
+    प्रत्यागम v;
 }
 
-static inline HVX_Vector hvx_splat_last_f32(HVX_Vector v) {
-    return hvx_vec_repl4(Q6_V_vror_VR(v, 124));
+स्थिर अन्तःस्थ HVX_सदिशम् hvx_splat_चरमः_f32(HVX_सदिशम् v) {
+    प्रत्यागम hvx_vec_repl4(Q6_V_vror_VR(v, 124));
 }
 
-static inline void hvx_cumsum_row_f32(const float * restrict src, float * restrict dst, uint32_t n) {
-    const uint32_t nvec = n / VLEN_FP32;
-    const uint32_t nloe = n % VLEN_FP32;
+स्थिर अन्तःस्थ शून्य hvx_cumsum_row_f32(ध्रुव भिन्न * सीमित src, भिन्न * सीमित dst, uint32_t n) {
+    ध्रुव uint32_t nvec = n / VLEN_FP32;
+    ध्रुव uint32_t nloe = n % VLEN_FP32;
 
-    HVX_Vector carry = Q6_V_vsplat_R(0);
+    HVX_सदिशम् carry = Q6_V_vsplat_R(0);
 
-    for (uint32_t i = 0; i < nvec; i++) {
-        HVX_Vector v = *((const HVX_UVector *) (src + i * VLEN_FP32));
-        v = hvx_prefix_scan_f32(v, carry);
+    प्रति (uint32_t i = 0; i < nvec; i++) {
+        HVX_सदिशम् v = *((ध्रुव HVX_UVector *) (src + i * VLEN_FP32));
+        v = hvx_उपसर्गः_अवलोकनम्_f32(v, carry);
         hvx_vec_store_u(dst + i * VLEN_FP32, VLEN, v);
-        carry = hvx_splat_last_f32(v);
+        carry = hvx_splat_चरमः_f32(v);
     }
 
-    if (nloe) {
-        float acc = hvx_vec_get_f32(carry);
-        const float * src_tail = src + nvec * VLEN_FP32;
-        float       * dst_tail = dst + nvec * VLEN_FP32;
-        for (uint32_t i = 0; i < nloe; i++) {
-            acc        += src_tail[i];
-            dst_tail[i] = acc;
+    यदि (nloe) {
+        भिन्न acc = hvx_vec_get_f32(carry);
+        ध्रुव भिन्न * src_पुच्छ = src + nvec * VLEN_FP32;
+        भिन्न       * dst_पुच्छ = dst + nvec * VLEN_FP32;
+        प्रति (uint32_t i = 0; i < nloe; i++) {
+            acc        += src_पुच्छ[i];
+            dst_पुच्छ[i] = acc;
         }
     }
 }
@@ -116,64 +116,64 @@ static inline void hvx_cumsum_row_f32(const float * restrict src, float * restri
 // Per thread worker: Double-buffered DMA
 // ---------------------------------------------------------------------------
 
-static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * data) {
+स्थिर शून्य cumsum_thread_f32_dma(अचिह्नित पूर्णाङ्क nth, अचिह्नित पूर्णाङ्क ith, शून्य * दत्त) {
     htp_cumsum_preamble;
 
-    const uint32_t ir0 = cctx->row_start + cctx->rows_per_thread * ith;
-    const uint32_t ir1 = MIN(ir0 + cctx->rows_per_thread, cctx->row_start + cctx->total_rows);
+    ध्रुव uint32_t ir0 = cctx->row_start + cctx->पङ्क्तिकाः_प्रत्येकम्_thread * ith;
+    ध्रुव uint32_t ir1 = MIN(ir0 + cctx->पङ्क्तिकाः_प्रत्येकम्_thread, cctx->row_start + cctx->योग_पङ्क्तिकाः);
 
-    if (ir0 >= ir1) {
-        return;
+    यदि (ir0 >= ir1) {
+        प्रत्यागम;
     }
 
-    const size_t src_row_size         = cctx->src_row_size;
-    const size_t dst_row_size         = cctx->dst_row_size;
-    const size_t src_row_size_aligned = cctx->src_row_size_aligned;
-    const size_t dst_row_size_aligned = cctx->dst_row_size_aligned;
+    ध्रुव size_t src_row_आकार         = cctx->src_row_आकार;
+    ध्रुव size_t dst_row_आकार         = cctx->dst_row_आकार;
+    ध्रुव size_t src_row_आकार_aligned = cctx->src_row_आकार_aligned;
+    ध्रुव size_t dst_row_आकार_aligned = cctx->dst_row_आकार_aligned;
 
-    const dma_addr_t src_data = src0->data;
-    const dma_addr_t dst_data = dst->data;
+    ध्रुव dma_addr_t src_दत्त = src0->दत्त;
+    ध्रुव dma_addr_t dst_दत्त = dst->दत्त;
 
-    uint8_t * src_spad = octx->src0_spad.data + (ith * src_row_size_aligned * 2);
-    uint8_t * dst_spad = octx->dst_spad.data  + (ith * dst_row_size_aligned * 2);
+    uint8_t * src_spad = octx->src0_spad.दत्त + (ith * src_row_आकार_aligned * 2);
+    uint8_t * dst_spad = octx->dst_spad.दत्त  + (ith * dst_row_आकार_aligned * 2);
 
-    for (uint32_t ir = ir0, spad_idx = 0; ir < ir1 && spad_idx < 2; ir++, spad_idx++) {
+    प्रति (uint32_t ir = ir0, spad_idx = 0; ir < ir1 && spad_idx < 2; ir++, spad_idx++) {
         // Dummy dst writeback to establish queue ordering
-        dma_queue_push(dma_q,
-                       dma_make_data(dst_data, dst_spad + (spad_idx * dst_row_size_aligned)),
-                       dst_row_size, dst_row_size_aligned, dst_row_size, 0);
+        dma_queue_प्रक्षिप(dma_q,
+                       dma_make_दत्त(dst_दत्त, dst_spad + (spad_idx * dst_row_आकार_aligned)),
+                       dst_row_आकार, dst_row_आकार_aligned, dst_row_आकार, 0);
 
-        dma_queue_push(dma_q,
-                       dma_make_data(src_spad + (spad_idx * src_row_size_aligned),
-                                     src_data + (ir * src_row_size)),
-                       src_row_size_aligned, src_row_size, src_row_size, 1);
+        dma_queue_प्रक्षिप(dma_q,
+                       dma_make_दत्त(src_spad + (spad_idx * src_row_आकार_aligned),
+                                     src_दत्त + (ir * src_row_आकार)),
+                       src_row_आकार_aligned, src_row_आकार, src_row_आकार, 1);
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = ir0; ir < ir1; ir++) {
-        float * dst_spad_row = (float *) dma_queue_pop(dma_q).src;
-        float * src_spad_row = (float *) dma_queue_pop(dma_q).dst;
+    प्रति (uint32_t ir = ir0; ir < ir1; ir++) {
+        भिन्न * dst_spad_row = (भिन्न *) dma_queue_निष्कासय(dma_q).src;
+        भिन्न * src_spad_row = (भिन्न *) dma_queue_निष्कासय(dma_q).dst;
 
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
         hvx_cumsum_row_f32(src_spad_row, dst_spad_row, ne00);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
-        dma_queue_push(dma_q,
-                       dma_make_data(dst_data + (ir * dst_row_size), dst_spad_row),
-                       dst_row_size, dst_row_size_aligned, dst_row_size, 1);
+        dma_queue_प्रक्षिप(dma_q,
+                       dma_make_दत्त(dst_दत्त + (ir * dst_row_आकार), dst_spad_row),
+                       dst_row_आकार, dst_row_आकार_aligned, dst_row_आकार, 1);
 
-        const uint32_t next_row = ir + 2;
-        if (next_row < ir1) {
-            dma_queue_push(dma_q,
-                           dma_make_data(src_spad_row, src_data + (next_row * src_row_size)),
-                           src_row_size_aligned, src_row_size, src_row_size, 1);
+        ध्रुव uint32_t अग्र_row = ir + 2;
+        यदि (अग्र_row < ir1) {
+            dma_queue_प्रक्षिप(dma_q,
+                           dma_make_दत्त(src_spad_row, src_दत्त + (अग्र_row * src_row_आकार)),
+                           src_row_आकार_aligned, src_row_आकार, src_row_आकार, 1);
         }
     }
 
     dma_queue_flush(dma_q);
 
-    FARF(HIGH, "cumsum-f32-dma %d/%d: %ux%ux%ux%u (%u:%u) -> %ux%ux%ux%u\n",
+    FARF(उच्चः_2, "cumsum-f32-dma %d/%d: %ux%ux%ux%u (%u:%u) -> %ux%ux%ux%u\n",
          ith, nth, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], ir0, ir1,
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
 }
@@ -182,102 +182,102 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
 // Per thread worker: Direct HVX (no DMA)
 // ---------------------------------------------------------------------------
 
-static void cumsum_thread_f32(unsigned int nth, unsigned int ith, void * data) {
+स्थिर शून्य cumsum_thread_f32(अचिह्नित पूर्णाङ्क nth, अचिह्नित पूर्णाङ्क ith, शून्य * दत्त) {
     htp_cumsum_preamble;
 
-    const uint8_t * src_data = (const uint8_t *) src0->data;
-    uint8_t *       dst_data = (uint8_t *) dst->data;
+    ध्रुव uint8_t * src_दत्त = (ध्रुव uint8_t *) src0->दत्त;
+    uint8_t *       dst_दत्त = (uint8_t *) dst->दत्त;
 
-    const uint32_t ir0 = cctx->row_start + cctx->rows_per_thread * ith;
-    const uint32_t ir1 = MIN(ir0 + cctx->rows_per_thread, cctx->row_start + cctx->total_rows);
+    ध्रुव uint32_t ir0 = cctx->row_start + cctx->पङ्क्तिकाः_प्रत्येकम्_thread * ith;
+    ध्रुव uint32_t ir1 = MIN(ir0 + cctx->पङ्क्तिकाः_प्रत्येकम्_thread, cctx->row_start + cctx->योग_पङ्क्तिकाः);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir0);
 
-    for (uint32_t ir = ir0; ir < ir1; ir++) {
-        const float * restrict src_row = (const float *) (src_data + ir * cctx->src_row_size);
-        float       * restrict dst_row = (float *)       (dst_data + ir * cctx->dst_row_size);
+    प्रति (uint32_t ir = ir0; ir < ir1; ir++) {
+        ध्रुव भिन्न * सीमित src_row = (ध्रुव भिन्न *) (src_दत्त + ir * cctx->src_row_आकार);
+        भिन्न       * सीमित dst_row = (भिन्न *)       (dst_दत्त + ir * cctx->dst_row_आकार);
         hvx_cumsum_row_f32(src_row, dst_row, ne00);
     }
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir0);
 
-    FARF(HIGH, "cumsum-f32 %d/%d: %ux%ux%ux%u (%u:%u) -> %ux%ux%ux%u\n",
+    FARF(उच्चः_2, "cumsum-f32 %d/%d: %ux%ux%ux%u (%u:%u) -> %ux%ux%ux%u\n",
          ith, nth, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], ir0, ir1,
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
 }
 
-int op_cumsum_f32(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+पूर्णाङ्क op_cumsum_f32(संरचना htp_ops_context * octx) {
+    ध्रुव संरचना htp_tensor * src0 = octx->src[0];
+    ध्रुव संरचना htp_tensor * dst  = octx->dst;
 
-    const uint32_t total_rows      = src0->ne[1] * src0->ne[2] * src0->ne[3];
-    const size_t dst_data_row_size = dst->ne[0] * sizeof(float);
+    ध्रुव uint32_t योग_पङ्क्तिकाः      = src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ध्रुव size_t dst_दत्त_row_आकार = dst->ne[0] * परिमाण(भिन्न);
 
     uint32_t row_start = 0;
-    uint32_t nrows     = total_rows;
+    uint32_t nrows     = योग_पङ्क्तिकाः;
 
-    if (octx->ctx->mdev.count > 1) {
-        uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_data_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+    यदि (octx->ctx->mdev.गणनम् > 1) {
+        uint32_t पङ्क्तिकाः_प्रत्येकम्_chunk = 0;
+        htp_tensor_mdev_पङ्क्तिकाः_प्रत्येकम्_chunk(dst, परिमाण(भिन्न), (uint32_t) dst_दत्त_row_आकार, &पङ्क्तिकाः_प्रत्येकम्_chunk);
+        ध्रुव संरचना htp_tensor_mdev_range range = htp_tensor_mdev_partition(योग_पङ्क्तिकाः, पङ्क्तिकाः_प्रत्येकम्_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.गणनम्, &octx->ctx->mdev.गणनम्_div);
         row_start = range.start;
-        nrows     = range.count;
+        nrows     = range.गणनम्;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    यदि (nrows == 0) {
+        प्रत्यागम HTP_स्थितिः_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
+    ध्रुव uint32_t n_तन्तवः = octx->n_तन्तवः;
 
-    const size_t src_row_size         = src0->nb[1];
-    const size_t dst_row_size         = dst->nb[1];
-    const size_t src_row_size_aligned = hex_round_up(src_row_size, VLEN);
-    const size_t dst_row_size_aligned = hex_round_up(dst_row_size, VLEN);
+    ध्रुव size_t src_row_आकार         = src0->nb[1];
+    ध्रुव size_t dst_row_आकार         = dst->nb[1];
+    ध्रुव size_t src_row_आकार_aligned = hex_आवर्तनम्_ऊर्ध्वम्(src_row_आकार, VLEN);
+    ध्रुव size_t dst_row_आकार_aligned = hex_आवर्तनम्_ऊर्ध्वम्(dst_row_आकार, VLEN);
 
     // 2 ping-pong buffers per thread for src and dst
-    const size_t spad_per_thread = 2 * (src_row_size_aligned + dst_row_size_aligned);
+    ध्रुव size_t spad_प्रत्येकम्_thread = 2 * (src_row_आकार_aligned + dst_row_आकार_aligned);
 
-    octx->src0_spad.size_per_thread = src_row_size_aligned * 2;
-    octx->dst_spad.size_per_thread  = dst_row_size_aligned * 2;
+    octx->src0_spad.आकार_प्रत्येकम्_thread = src_row_आकार_aligned * 2;
+    octx->dst_spad.आकार_प्रत्येकम्_thread  = dst_row_आकार_aligned * 2;
 
-    octx->src0_spad.size  = n_threads * octx->src0_spad.size_per_thread;
-    octx->dst_spad.size   = n_threads * octx->dst_spad.size_per_thread;
+    octx->src0_spad.आकार  = n_तन्तवः * octx->src0_spad.आकार_प्रत्येकम्_thread;
+    octx->dst_spad.आकार   = n_तन्तवः * octx->dst_spad.आकार_प्रत्येकम्_thread;
 
-    octx->src0_spad.data  = octx->ctx->vtcm_base;                        octx->src0_spad.src = NULL;
-    octx->dst_spad.data   = octx->src0_spad.data + octx->src0_spad.size; octx->dst_spad.src  = NULL;
+    octx->src0_spad.दत्त  = octx->ctx->vtcm_आधारः;                        octx->src0_spad.src = रिक्त;
+    octx->dst_spad.दत्त   = octx->src0_spad.दत्त + octx->src0_spad.आकार; octx->dst_spad.src  = रिक्त;
 
-    struct htp_cumsum_context cctx = {
+    संरचना htp_cumsum_context cctx = {
         .octx                 = octx,
-        .src_row_size         = src_row_size,
-        .dst_row_size         = dst_row_size,
-        .src_row_size_aligned = src_row_size_aligned,
-        .dst_row_size_aligned = dst_row_size_aligned,
-        .rows_per_thread      = fastdiv(nrows + n_threads - 1, &octx->n_threads_div),
-        .total_rows           = nrows,
+        .src_row_आकार         = src_row_आकार,
+        .dst_row_आकार         = dst_row_आकार,
+        .src_row_आकार_aligned = src_row_आकार_aligned,
+        .dst_row_आकार_aligned = dst_row_आकार_aligned,
+        .पङ्क्तिकाः_प्रत्येकम्_thread      = fastdiv(nrows + n_तन्तवः - 1, &octx->n_तन्तवः_div),
+        .योग_पङ्क्तिकाः           = nrows,
         .row_start            = row_start,
     };
 
-    if (octx->ctx->vtcm_size < spad_per_thread * n_threads) {
-        if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-            return HTP_STATUS_NO_SUPPORT;
+    यदि (octx->ctx->vtcm_आकार < spad_प्रत्येकम्_thread * n_तन्तवः) {
+        यदि (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+            प्रत्यागम HTP_स्थितिः_NO_SUPPORT;
         }
-        work_queue_run(octx->ctx->work_queue, cumsum_thread_f32, &cctx, n_threads);
-    } else {
-        work_queue_run(octx->ctx->work_queue, cumsum_thread_f32_dma, &cctx, n_threads);
+        work_queue_सततम्(octx->ctx->work_queue, cumsum_thread_f32, &cctx, n_तन्तवः);
+    } अन्यथा {
+        work_queue_सततम्(octx->ctx->work_queue, cumsum_thread_f32_dma, &cctx, n_तन्तवः);
     }
 
-    return HTP_STATUS_OK;
+    प्रत्यागम HTP_स्थितिः_OK;
 }
 
-int op_cumsum(struct htp_ops_context * octx) {
-    const struct htp_tensor * dst = octx->dst;
+पूर्णाङ्क op_cumsum(संरचना htp_ops_context * octx) {
+    ध्रुव संरचना htp_tensor * dst = octx->dst;
 
-    switch (dst->type) {
-        case HTP_TYPE_F32:
-            return op_cumsum_f32(octx);
-        default:
-            return HTP_STATUS_NO_SUPPORT;
+    विकल्प (dst->type) {
+        पक्ष HTP_TYPE_F32:
+            प्रत्यागम op_cumsum_f32(octx);
+        स्वभाव:
+            प्रत्यागम HTP_स्थितिः_NO_SUPPORT;
     }
 }

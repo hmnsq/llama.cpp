@@ -1,66 +1,66 @@
-#ifndef HVX_QUANT_H
-#define HVX_QUANT_H
+#यदि_अपरिभाषितम् HVX_QUANT_H
+#परिभाषय HVX_QUANT_H
 
-#include <math.h>
-#include <stdint.h>
-#include <string.h>
+#अन्तर्भाव <math.h>
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <string.h>
 
-#include "htp-tensor.h"
-#include "hvx-arith.h"
-#include "hvx-base.h"
-#include "hvx-reduce.h"
-#include "hvx-repl.h"
-#include "hvx-utils.h"
+#अन्तर्भाव "htp-tensor.h"
+#अन्तर्भाव "hvx-arith.h"
+#अन्तर्भाव "hvx-base.h"
+#अन्तर्भाव "hvx-reduce.h"
+#अन्तर्भाव "hvx-repl.h"
+#अन्तर्भाव "hvx-utils.h"
 
-#ifndef GGML_COMMON_DECL_C
-#define GGML_COMMON_DECL_C
-#endif
-#include "ggml-common.h"
-#include "ggml-impl.h"
+#यदि_अपरिभाषितम् GGML_COMMON_DECL_C
+#परिभाषय GGML_COMMON_DECL_C
+#यदि_अन्तः
+#अन्तर्भाव "ggml-common.h"
+#अन्तर्भाव "ggml-impl.h"
 
-static inline void hvx_quantize_row_q8_0_f32(void * restrict dst_ptr, const float * restrict src_ptr, int n) {
-    const int nb = n / QK8_0;
-    block_q8_0 * dst = (block_q8_0 *) dst_ptr;
-    HVX_Vector zero = Q6_V_vzero();
+स्थिर अन्तःस्थ शून्य hvx_quantize_row_q8_0_f32(शून्य * सीमित dst_ptr, ध्रुव भिन्न * सीमित src_ptr, पूर्णाङ्क n) {
+    ध्रुव पूर्णाङ्क nb = n / QK8_0;
+    खण्डम्_q8_0 * dst = (खण्डम्_q8_0 *) dst_ptr;
+    HVX_सदिशम् zero = Q6_V_vzero();
 
-    int i = 0;
-    for (; i + 3 < nb; i += 4) {
-        HVX_Vector * vx = (HVX_Vector *) (src_ptr + i * QK8_0);
+    पूर्णाङ्क i = 0;
+    प्रति (; i + 3 < nb; i += 4) {
+        HVX_सदिशम् * vx = (HVX_सदिशम् *) (src_ptr + i * QK8_0);
 
-        HVX_Vector vmax0_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[0]));
-        HVX_Vector vmax1_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[1]));
-        HVX_Vector vmax2_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[2]));
-        HVX_Vector vmax3_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[3]));
+        HVX_सदिशम् vmax0_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[0]));
+        HVX_सदिशम् vmax1_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[1]));
+        HVX_सदिशम् vmax2_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[2]));
+        HVX_सदिशम् vmax3_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[3]));
 
-        HVX_Vector vx0_qf = Q6_Vqf32_vsub_VsfVsf(vx[0], zero);
-        HVX_Vector vx1_qf = Q6_Vqf32_vsub_VsfVsf(vx[1], zero);
-        HVX_Vector vx2_qf = Q6_Vqf32_vsub_VsfVsf(vx[2], zero);
-        HVX_Vector vx3_qf = Q6_Vqf32_vsub_VsfVsf(vx[3], zero);
+        HVX_सदिशम् vx0_qf = Q6_Vqf32_vsub_VsfVsf(vx[0], zero);
+        HVX_सदिशम् vx1_qf = Q6_Vqf32_vsub_VsfVsf(vx[1], zero);
+        HVX_सदिशम् vx2_qf = Q6_Vqf32_vsub_VsfVsf(vx[2], zero);
+        HVX_सदिशम् vx3_qf = Q6_Vqf32_vsub_VsfVsf(vx[3], zero);
 
-        HVX_Vector vmax0_qf = Q6_Vqf32_vsub_VsfVsf(vmax0_sf, zero);
-        HVX_Vector vmax1_qf = Q6_Vqf32_vsub_VsfVsf(vmax1_sf, zero);
-        HVX_Vector vmax2_qf = Q6_Vqf32_vsub_VsfVsf(vmax2_sf, zero);
-        HVX_Vector vmax3_qf = Q6_Vqf32_vsub_VsfVsf(vmax3_sf, zero);
+        HVX_सदिशम् vmax0_qf = Q6_Vqf32_vsub_VsfVsf(vmax0_sf, zero);
+        HVX_सदिशम् vmax1_qf = Q6_Vqf32_vsub_VsfVsf(vmax1_sf, zero);
+        HVX_सदिशम् vmax2_qf = Q6_Vqf32_vsub_VsfVsf(vmax2_sf, zero);
+        HVX_सदिशम् vmax3_qf = Q6_Vqf32_vsub_VsfVsf(vmax3_sf, zero);
 
-        HVX_Vector vmax01_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax1_qf, vmax0_qf)));
-        HVX_Vector vmax23_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax3_qf, vmax2_qf)));
+        HVX_सदिशम् vmax01_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax1_qf, vmax0_qf)));
+        HVX_सदिशम् vmax23_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vmax3_qf, vmax2_qf)));
 
-        HVX_Vector vx01_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx1_qf, vx0_qf)));
-        HVX_Vector vx23_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx3_qf, vx2_qf)));
+        HVX_सदिशम् vx01_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx1_qf, vx0_qf)));
+        HVX_सदिशम् vx23_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(vx3_qf, vx2_qf)));
 
-        HVX_Vector vd01_qf16 = Q6_Vqf16_vmpy_VhfVhf(vmax01_hf, Q6_Vh_vsplat_R(0x2008));  // 1.0 / 127.0
-        HVX_Vector vd23_qf16 = Q6_Vqf16_vmpy_VhfVhf(vmax23_hf, Q6_Vh_vsplat_R(0x2008));  // 1.0 / 127.0
-        HVX_Vector vd01_hf   = Q6_Vhf_equals_Vqf16(vd01_qf16);
-        HVX_Vector vd23_hf   = Q6_Vhf_equals_Vqf16(vd23_qf16);
+        HVX_सदिशम् vd01_qf16 = Q6_Vqf16_vmpy_VhfVhf(vmax01_hf, Q6_Vh_vsplat_R(0x2008));  // 1.0 / 127.0
+        HVX_सदिशम् vd23_qf16 = Q6_Vqf16_vmpy_VhfVhf(vmax23_hf, Q6_Vh_vsplat_R(0x2008));  // 1.0 / 127.0
+        HVX_सदिशम् vd01_hf   = Q6_Vhf_equals_Vqf16(vd01_qf16);
+        HVX_सदिशम् vd23_hf   = Q6_Vhf_equals_Vqf16(vd23_qf16);
 
-        HVX_Vector vd01_inv_hf = hvx_vec_inverse_f16(vd01_hf);
-        HVX_Vector vd23_inv_hf = hvx_vec_inverse_f16(vd23_hf);
+        HVX_सदिशम् vd01_inv_hf = hvx_vec_inverse_f16(vd01_hf);
+        HVX_सदिशम् vd23_inv_hf = hvx_vec_inverse_f16(vd23_hf);
         vx01_hf              = Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(vx01_hf, vd01_inv_hf));
         vx23_hf              = Q6_Vhf_equals_Vqf16(Q6_Vqf16_vmpy_VhfVhf(vx23_hf, vd23_inv_hf));
 
-        HVX_Vector vx01_i16 = hvx_vec_i16_from_hf_rnd_sat(vx01_hf);
-        HVX_Vector vx23_i16 = hvx_vec_i16_from_hf_rnd_sat(vx23_hf);
-        HVX_Vector vx_i8    = Q6_Vb_vpack_VhVh_sat(vx23_i16, vx01_i16);
+        HVX_सदिशम् vx01_i16 = hvx_vec_i16_from_hf_rnd_sat(vx01_hf);
+        HVX_सदिशम् vx23_i16 = hvx_vec_i16_from_hf_rnd_sat(vx23_hf);
+        HVX_सदिशम् vx_i8    = Q6_Vb_vpack_VhVh_sat(vx23_i16, vx01_i16);
 
         hvx_vec_store_u(&dst[i + 0].d, 2, vd01_hf);
         hvx_vec_store_u(dst[i + 0].qs, 32, vx_i8);
@@ -75,262 +75,262 @@ static inline void hvx_quantize_row_q8_0_f32(void * restrict dst_ptr, const floa
         hvx_vec_store_u(dst[i + 3].qs, 32, Q6_V_vror_VR(vx_i8, 96));
     }
 
-    for (; i < nb; i++) {
-        const float * block_src = src_ptr + i * QK8_0;
-        HVX_Vector vx = *(const HVX_UVector *) block_src;
-        HVX_Vector v_abs = hvx_vec_abs_f32(vx);
-        HVX_Vector v_max = hvx_vec_reduce_max_f32(v_abs);
-        float amax = hvx_vec_get_f32(v_max);
+    प्रति (; i < nb; i++) {
+        ध्रुव भिन्न * खण्डम्_src = src_ptr + i * QK8_0;
+        HVX_सदिशम् vx = *(ध्रुव HVX_UVector *) खण्डम्_src;
+        HVX_सदिशम् v_abs = hvx_vec_abs_f32(vx);
+        HVX_सदिशम् v_max = hvx_vec_reduce_max_f32(v_abs);
+        भिन्न amax = hvx_vec_get_f32(v_max);
 
-        const float d = amax / 127.0f;
-        const float id = d ? (1.0f / d) : 0.0f;
-        dst[i].d = GGML_FP32_TO_FP16(d);
+        ध्रुव भिन्न d = amax / 127.0f;
+        ध्रुव भिन्न id = d ? (1.0f / d) : 0.0f;
+        dst[i].d = GGML_FP32_गन्तव्यम्_FP16(d);
 
-        HVX_Vector vid = hvx_vec_splat_f32(id);
-        HVX_Vector v_scaled = hvx_vec_mul_f32_f32(vx, vid);
-        HVX_Vector v_scaled_qf = Q6_Vqf32_vsub_VsfVsf(v_scaled, zero);
-        HVX_Vector v_scaled_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(zero, v_scaled_qf)));
-        HVX_Vector v_i16 = hvx_vec_i16_from_hf_rnd_sat(v_scaled_hf);
-        HVX_Vector v_i8  = Q6_Vb_vpack_VhVh_sat(zero, v_i16);
+        HVX_सदिशम् vid = hvx_vec_splat_f32(id);
+        HVX_सदिशम् v_scaled = hvx_vec_mul_f32_f32(vx, vid);
+        HVX_सदिशम् v_scaled_qf = Q6_Vqf32_vsub_VsfVsf(v_scaled, zero);
+        HVX_सदिशम् v_scaled_hf = Q6_Vh_vdeal_Vh(Q6_Vhf_equals_Wqf32(Q6_W_vcombine_VV(zero, v_scaled_qf)));
+        HVX_सदिशम् v_i16 = hvx_vec_i16_from_hf_rnd_sat(v_scaled_hf);
+        HVX_सदिशम् v_i8  = Q6_Vb_vpack_VhVh_sat(zero, v_i16);
 
         hvx_vec_store_u(dst[i].qs, 32, v_i8);
     }
 }
 
-static inline void hvx_dequantize_row_flat_q8_0_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK8_0;
-    const block_q8_0 * src = (const block_q8_0 *) src_ptr;
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_q8_0_f32(भिन्न * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    ध्रुव पूर्णाङ्क nb = n / QK8_0;
+    ध्रुव खण्डम्_q8_0 * src = (ध्रुव खण्डम्_q8_0 *) src_ptr;
 
-    for (int i = 0; i < nb; i++) {
-        HVX_Vector vd_f16     = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
-        HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(vd_f16);
-        HVX_Vector vd         = Q6_V_lo_W(vp_f32);
+    प्रति (पूर्णाङ्क i = 0; i < nb; i++) {
+        HVX_सदिशम् vd_f16     = Q6_Vh_vsplat_R(*(ध्रुव int16_t *) &src[i].d);
+        HVX_सदिशम्_Pair vp_f32 = hvx_vec_f16_गन्तव्यम्_f32(vd_f16);
+        HVX_सदिशम् vd         = Q6_V_lo_W(vp_f32);
 
-        HVX_Vector vq_i8 = *(const HVX_UVector *) src[i].qs;
+        HVX_सदिशम् vq_i8 = *(ध्रुव HVX_UVector *) src[i].qs;
 
-        HVX_VectorPair p16   = Q6_Wh_vunpack_Vb(vq_i8);
-        HVX_Vector     v_i16 = Q6_V_lo_W(p16);
-        HVX_VectorPair p32   = Q6_Ww_vunpack_Vh(v_i16);
-        HVX_Vector     v_i32 = Q6_V_lo_W(p32);
+        HVX_सदिशम्_Pair p16   = Q6_Wh_vunpack_Vb(vq_i8);
+        HVX_सदिशम्     v_i16 = Q6_V_lo_W(p16);
+        HVX_सदिशम्_Pair p32   = Q6_Ww_vunpack_Vh(v_i16);
+        HVX_सदिशम्     v_i32 = Q6_V_lo_W(p32);
 
-        HVX_Vector v_f32 = Q6_Vsf_equals_Vw(v_i32);
-        HVX_Vector res   = hvx_vec_mul_f32_f32(v_f32, vd);
+        HVX_सदिशम् v_f32 = Q6_Vsf_equals_Vw(v_i32);
+        HVX_सदिशम् res   = hvx_vec_mul_f32_f32(v_f32, vd);
 
-        float * block_dst = dst_ptr + i * QK8_0;
-        hvx_vmem(block_dst) = res;
+        भिन्न * खण्डम्_dst = dst_ptr + i * QK8_0;
+        hvx_vmem(खण्डम्_dst) = res;
     }
 }
 
-static inline void hvx_dequantize_row_flat_q8_0_f16(__fp16 * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK8_0;
-    const block_q8_0 * src = (const block_q8_0 *) src_ptr;
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_q8_0_f16(__fp16 * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    ध्रुव पूर्णाङ्क nb = n / QK8_0;
+    ध्रुव खण्डम्_q8_0 * src = (ध्रुव खण्डम्_q8_0 *) src_ptr;
 
-    for (int i = nb - 1; i >= 0; i--) {
-        HVX_Vector vd_f16     = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
-        HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(vd_f16);
-        HVX_Vector vd         = Q6_V_lo_W(vp_f32);
+    प्रति (पूर्णाङ्क i = nb - 1; i >= 0; i--) {
+        HVX_सदिशम् vd_f16     = Q6_Vh_vsplat_R(*(ध्रुव int16_t *) &src[i].d);
+        HVX_सदिशम्_Pair vp_f32 = hvx_vec_f16_गन्तव्यम्_f32(vd_f16);
+        HVX_सदिशम् vd         = Q6_V_lo_W(vp_f32);
 
-        HVX_Vector vq_i8 = *(const HVX_UVector *) src[i].qs;
+        HVX_सदिशम् vq_i8 = *(ध्रुव HVX_UVector *) src[i].qs;
 
-        HVX_VectorPair p16   = Q6_Wh_vunpack_Vb(vq_i8);
-        HVX_Vector     v_i16 = Q6_V_lo_W(p16);
-        HVX_VectorPair p32   = Q6_Ww_vunpack_Vh(v_i16);
-        HVX_Vector     v_i32 = Q6_V_lo_W(p32);
+        HVX_सदिशम्_Pair p16   = Q6_Wh_vunpack_Vb(vq_i8);
+        HVX_सदिशम्     v_i16 = Q6_V_lo_W(p16);
+        HVX_सदिशम्_Pair p32   = Q6_Ww_vunpack_Vh(v_i16);
+        HVX_सदिशम्     v_i32 = Q6_V_lo_W(p32);
 
-        HVX_Vector v_f32 = Q6_Vsf_equals_Vw(v_i32);
-        HVX_Vector res_f32 = hvx_vec_mul_f32_f32(v_f32, vd);
+        HVX_सदिशम् v_f32 = Q6_Vsf_equals_Vw(v_i32);
+        HVX_सदिशम् res_f32 = hvx_vec_mul_f32_f32(v_f32, vd);
 
-        HVX_Vector res_f16 = hvx_vec_f32_to_f16(res_f32, Q6_V_vzero());
+        HVX_सदिशम् res_f16 = hvx_vec_f32_गन्तव्यम्_f16(res_f32, Q6_V_vzero());
 
-        __fp16 * block_dst = dst_ptr + i * QK8_0;
-        hvx_vec_store_u(block_dst, QK8_0 * sizeof(__fp16), res_f16);
+        __fp16 * खण्डम्_dst = dst_ptr + i * QK8_0;
+        hvx_vec_store_u(खण्डम्_dst, QK8_0 * परिमाण(__fp16), res_f16);
     }
 }
 
-static inline void hvx_dequantize_row_flat_f16_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const uint32_t nvec = n / VLEN_FP32;
-    const uint32_t nloe = n % VLEN_FP32;
-    const _Float16 * src = (const _Float16 *) src_ptr;
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_f16_f32(भिन्न * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    ध्रुव uint32_t nvec = n / VLEN_FP32;
+    ध्रुव uint32_t nloe = n % VLEN_FP32;
+    ध्रुव _Float16 * src = (ध्रुव _Float16 *) src_ptr;
 
-    for (uint32_t i = 0; i < nvec; i++) {
-        HVX_Vector v_f16 = *(const HVX_UVector *) (src + i * VLEN_FP32);
-        HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(v_f16);
-        HVX_Vector res = Q6_V_lo_W(vp_f32);
+    प्रति (uint32_t i = 0; i < nvec; i++) {
+        HVX_सदिशम् v_f16 = *(ध्रुव HVX_UVector *) (src + i * VLEN_FP32);
+        HVX_सदिशम्_Pair vp_f32 = hvx_vec_f16_गन्तव्यम्_f32(v_f16);
+        HVX_सदिशम् res = Q6_V_lo_W(vp_f32);
 
         hvx_vmem(dst_ptr + i * VLEN_FP32) = res;
     }
 
-    if (nloe) {
-        HVX_Vector v_f16 = *(const HVX_UVector *) (src + nvec * VLEN_FP32);
-        HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(v_f16);
-        HVX_Vector res = Q6_V_lo_W(vp_f32);
+    यदि (nloe) {
+        HVX_सदिशम् v_f16 = *(ध्रुव HVX_UVector *) (src + nvec * VLEN_FP32);
+        HVX_सदिशम्_Pair vp_f32 = hvx_vec_f16_गन्तव्यम्_f32(v_f16);
+        HVX_सदिशम् res = Q6_V_lo_W(vp_f32);
 
-        hvx_vec_store_a(dst_ptr + nvec * VLEN_FP32, nloe * sizeof(float), res);
+        hvx_vec_store_a(dst_ptr + nvec * VLEN_FP32, nloe * परिमाण(भिन्न), res);
     }
 }
 
-static inline void hvx_dequantize_row_flat_bf16_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const uint32_t nvec = n / VLEN_FP32;
-    const uint32_t nloe = n % VLEN_FP32;
-    const uint16_t * src = (const uint16_t *) src_ptr;
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_bf16_f32(भिन्न * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    ध्रुव uint32_t nvec = n / VLEN_FP32;
+    ध्रुव uint32_t nloe = n % VLEN_FP32;
+    ध्रुव uint16_t * src = (ध्रुव uint16_t *) src_ptr;
 
-    for (uint32_t i = 0; i < nvec; i++) {
-        HVX_Vector v_bf16 = *(const HVX_UVector *) (src + i * VLEN_FP32);
-        HVX_VectorPair p = Q6_Ww_vunpack_Vh(v_bf16);
-        HVX_Vector res = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
+    प्रति (uint32_t i = 0; i < nvec; i++) {
+        HVX_सदिशम् v_bf16 = *(ध्रुव HVX_UVector *) (src + i * VLEN_FP32);
+        HVX_सदिशम्_Pair p = Q6_Ww_vunpack_Vh(v_bf16);
+        HVX_सदिशम् res = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
 
         hvx_vmem(dst_ptr + i * VLEN_FP32) = res;
     }
 
-    if (nloe) {
-        HVX_Vector v_bf16 = *(const HVX_UVector *) (src + nvec * VLEN_FP32);
-        HVX_VectorPair p = Q6_Ww_vunpack_Vh(v_bf16);
-        HVX_Vector res = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
+    यदि (nloe) {
+        HVX_सदिशम् v_bf16 = *(ध्रुव HVX_UVector *) (src + nvec * VLEN_FP32);
+        HVX_सदिशम्_Pair p = Q6_Ww_vunpack_Vh(v_bf16);
+        HVX_सदिशम् res = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
 
-        hvx_vec_store_a(dst_ptr + nvec * VLEN_FP32, nloe * sizeof(float), res);
+        hvx_vec_store_a(dst_ptr + nvec * VLEN_FP32, nloe * परिमाण(भिन्न), res);
     }
 }
 
-static inline void hvx_dequantize_row_flat_q1_0_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    static const uint32_t __attribute__((aligned(128))) bit_mask[32] = {
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_q1_0_f32(भिन्न * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    स्थिर ध्रुव uint32_t __attribute__((aligned(128))) bit_आवरणम्[32] = {
         1u <<  0, 1u <<  1, 1u <<  2, 1u <<  3, 1u <<  4, 1u <<  5, 1u <<  6, 1u <<  7,
         1u <<  8, 1u <<  9, 1u << 10, 1u << 11, 1u << 12, 1u << 13, 1u << 14, 1u << 15,
         1u << 16, 1u << 17, 1u << 18, 1u << 19, 1u << 20, 1u << 21, 1u << 22, 1u << 23,
         1u << 24, 1u << 25, 1u << 26, 1u << 27, 1u << 28, 1u << 29, 1u << 30, 1u << 31,
     };
-    const int nb = n / QK1_0;
-    const block_q1_0 * src = (const block_q1_0 *) src_ptr;
-    const HVX_Vector v_bit_mask = *(const HVX_Vector *) bit_mask;
-    const HVX_Vector v_zero     = Q6_V_vzero();
-    const HVX_Vector v_sign_bit = Q6_V_vsplat_R(0x80000000);
+    ध्रुव पूर्णाङ्क nb = n / QK1_0;
+    ध्रुव खण्डम्_q1_0 * src = (ध्रुव खण्डम्_q1_0 *) src_ptr;
+    ध्रुव HVX_सदिशम् v_bit_आवरणम् = *(ध्रुव HVX_सदिशम् *) bit_आवरणम्;
+    ध्रुव HVX_सदिशम् v_zero     = Q6_V_vzero();
+    ध्रुव HVX_सदिशम् v_sign_bit = Q6_V_vsplat_R(0x80000000);
 
-    for (int i = 0; i < nb; i++) {
-        HVX_Vector vd_f16 = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
-        HVX_Vector vd     = Q6_V_lo_W(hvx_vec_f16_to_f32(vd_f16));
-        HVX_Vector neg_vd = Q6_V_vxor_VV(vd, v_sign_bit);
-        HVX_Vector v_qs   = *(const HVX_UVector *) src[i].qs;
+    प्रति (पूर्णाङ्क i = 0; i < nb; i++) {
+        HVX_सदिशम् vd_f16 = Q6_Vh_vsplat_R(*(ध्रुव int16_t *) &src[i].d);
+        HVX_सदिशम् vd     = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(vd_f16));
+        HVX_सदिशम् neg_vd = Q6_V_vxor_VV(vd, v_sign_bit);
+        HVX_सदिशम् v_qs   = *(ध्रुव HVX_UVector *) src[i].qs;
 
-        float * block_dst = dst_ptr + i * QK1_0;
-        #pragma unroll
-        for (int q = 0; q < 4; q++) {
-            HVX_Vector v_bits = hvx_vec_repl_u32(q == 0 ? v_qs : Q6_V_vror_VR(v_qs, 4 * q));
-            HVX_VectorPred q_zero = Q6_Q_vcmp_eq_VwVw(Q6_V_vand_VV(v_bits, v_bit_mask), v_zero);
-            hvx_vmem(block_dst + q * 32) = Q6_V_vmux_QVV(q_zero, neg_vd, vd);
+        भिन्न * खण्डम्_dst = dst_ptr + i * QK1_0;
+        #निर्देशः unroll
+        प्रति (पूर्णाङ्क q = 0; q < 4; q++) {
+            HVX_सदिशम् v_द्वयङ्काः = hvx_vec_repl_u32(q == 0 ? v_qs : Q6_V_vror_VR(v_qs, 4 * q));
+            HVX_सदिशम्_Pred q_zero = Q6_Q_vcmp_eq_VwVw(Q6_V_vand_VV(v_द्वयङ्काः, v_bit_आवरणम्), v_zero);
+            hvx_vmem(खण्डम्_dst + q * 32) = Q6_V_vmux_QVV(q_zero, neg_vd, vd);
         }
     }
 }
 
-static inline void hvx_dequantize_row_flat_q2_0_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK2_0;
-    const block_q2_0 * src = (const block_q2_0 *) src_ptr;
-    const HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
-    const HVX_Vector v_one   = Q6_Vb_vsplat_R(1);
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_q2_0_f32(भिन्न * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    ध्रुव पूर्णाङ्क nb = n / QK2_0;
+    ध्रुव खण्डम्_q2_0 * src = (ध्रुव खण्डम्_q2_0 *) src_ptr;
+    ध्रुव HVX_सदिशम् आवरणम्_03 = Q6_Vb_vsplat_R(0x03);
+    ध्रुव HVX_सदिशम् v_one   = Q6_Vb_vsplat_R(1);
 
-    for (int i = 0; i < nb; i++) {
-        HVX_Vector vd_f16 = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
-        HVX_Vector vd     = Q6_V_lo_W(hvx_vec_f16_to_f32(vd_f16));
+    प्रति (पूर्णाङ्क i = 0; i < nb; i++) {
+        HVX_सदिशम् vd_f16 = Q6_Vh_vsplat_R(*(ध्रुव int16_t *) &src[i].d);
+        HVX_सदिशम् vd     = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(vd_f16));
 
-        HVX_Vector vq  = *(const HVX_UVector *) src[i].qs;
-        HVX_Vector v0  = Q6_V_vand_VV(vq, mask_03);
-        HVX_Vector v1  = Q6_V_vand_VV(Q6_Vub_vlsr_VubR(vq, 2), mask_03);
-        HVX_Vector v2  = Q6_V_vand_VV(Q6_Vub_vlsr_VubR(vq, 4), mask_03);
-        HVX_Vector v3  = Q6_Vub_vlsr_VubR(vq, 6);
+        HVX_सदिशम् vq  = *(ध्रुव HVX_UVector *) src[i].qs;
+        HVX_सदिशम् v0  = Q6_V_vand_VV(vq, आवरणम्_03);
+        HVX_सदिशम् v1  = Q6_V_vand_VV(Q6_Vub_vlsr_VubR(vq, 2), आवरणम्_03);
+        HVX_सदिशम् v2  = Q6_V_vand_VV(Q6_Vub_vlsr_VubR(vq, 4), आवरणम्_03);
+        HVX_सदिशम् v3  = Q6_Vub_vlsr_VubR(vq, 6);
 
-        HVX_Vector v01 = Q6_V_lo_W(Q6_W_vshuff_VVR(v1, v0, -1));
-        HVX_Vector v23 = Q6_V_lo_W(Q6_W_vshuff_VVR(v3, v2, -1));
-        HVX_Vector v64 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(Q6_W_vshuff_VVR(v23, v01, -2)), v_one);
+        HVX_सदिशम् v01 = Q6_V_lo_W(Q6_W_vshuff_VVR(v1, v0, -1));
+        HVX_सदिशम् v23 = Q6_V_lo_W(Q6_W_vshuff_VVR(v3, v2, -1));
+        HVX_सदिशम् v64 = Q6_Vb_vsub_VbVb(Q6_V_lo_W(Q6_W_vshuff_VVR(v23, v01, -2)), v_one);
 
-        HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(v64);
-        HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
+        HVX_सदिशम्_Pair p16 = Q6_Wh_vunpack_Vb(v64);
+        HVX_सदिशम्_Pair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
 
-        float * block_dst = dst_ptr + i * QK2_0;
-        hvx_vmem(block_dst + 0)  = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), vd);
-        hvx_vmem(block_dst + 32) = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_hi_W(p32)), vd);
+        भिन्न * खण्डम्_dst = dst_ptr + i * QK2_0;
+        hvx_vmem(खण्डम्_dst + 0)  = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), vd);
+        hvx_vmem(खण्डम्_dst + 32) = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_hi_W(p32)), vd);
     }
 }
 
-static inline void hvx_dequantize_row_flat_q4_0_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK4_0;
-    const block_q4_0 * src = (const block_q4_0 *) src_ptr;
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_q4_0_f32(भिन्न * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    ध्रुव पूर्णाङ्क nb = n / QK4_0;
+    ध्रुव खण्डम्_q4_0 * src = (ध्रुव खण्डम्_q4_0 *) src_ptr;
 
-    const HVX_VectorPred q16 = Q6_Q_vsetq_R(16);
-    const HVX_Vector v_eight = Q6_Vb_vsplat_R(8);
-    const HVX_Vector v_zero  = Q6_V_vzero();
+    ध्रुव HVX_सदिशम्_Pred q16 = Q6_Q_vsetq_R(16);
+    ध्रुव HVX_सदिशम् v_eight = Q6_Vb_vsplat_R(8);
+    ध्रुव HVX_सदिशम् v_zero  = Q6_V_vzero();
 
-    for (int i = 0; i < nb; i++) {
-        HVX_Vector vd_f16     = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
-        HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(vd_f16);
-        HVX_Vector vd         = Q6_V_lo_W(vp_f32);
+    प्रति (पूर्णाङ्क i = 0; i < nb; i++) {
+        HVX_सदिशम् vd_f16     = Q6_Vh_vsplat_R(*(ध्रुव int16_t *) &src[i].d);
+        HVX_सदिशम्_Pair vp_f32 = hvx_vec_f16_गन्तव्यम्_f32(vd_f16);
+        HVX_सदिशम् vd         = Q6_V_lo_W(vp_f32);
 
-        HVX_Vector vq = *(const HVX_UVector *) src[i].qs;
-        HVX_Vector v_lo = Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F));
-        HVX_Vector v_hi = Q6_Vub_vlsr_VubR(vq, 4);
+        HVX_सदिशम् vq = *(ध्रुव HVX_UVector *) src[i].qs;
+        HVX_सदिशम् v_lo = Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F));
+        HVX_सदिशम् v_hi = Q6_Vub_vlsr_VubR(vq, 4);
 
-        HVX_Vector v_lo_s8 = Q6_Vb_vsub_VbVb(v_lo, v_eight);
-        HVX_Vector v_hi_s8 = Q6_Vb_vsub_VbVb(v_hi, v_eight);
+        HVX_सदिशम् v_lo_s8 = Q6_Vb_vsub_VbVb(v_lo, v_eight);
+        HVX_सदिशम् v_hi_s8 = Q6_Vb_vsub_VbVb(v_hi, v_eight);
 
-        HVX_Vector v32 = Q6_V_vmux_QVV(q16, v_lo_s8, Q6_V_vlalign_VVR(v_hi_s8, v_zero, 16));
+        HVX_सदिशम् v32 = Q6_V_vmux_QVV(q16, v_lo_s8, Q6_V_vlalign_VVR(v_hi_s8, v_zero, 16));
 
-        HVX_VectorPair p16   = Q6_Wh_vunpack_Vb(v32);
-        HVX_Vector     v_i16 = Q6_V_lo_W(p16);
-        HVX_VectorPair p32   = Q6_Ww_vunpack_Vh(v_i16);
-        HVX_Vector     v_i32 = Q6_V_lo_W(p32);
+        HVX_सदिशम्_Pair p16   = Q6_Wh_vunpack_Vb(v32);
+        HVX_सदिशम्     v_i16 = Q6_V_lo_W(p16);
+        HVX_सदिशम्_Pair p32   = Q6_Ww_vunpack_Vh(v_i16);
+        HVX_सदिशम्     v_i32 = Q6_V_lo_W(p32);
 
-        HVX_Vector v_f32 = Q6_Vsf_equals_Vw(v_i32);
-        HVX_Vector res   = hvx_vec_mul_f32_f32(v_f32, vd);
+        HVX_सदिशम् v_f32 = Q6_Vsf_equals_Vw(v_i32);
+        HVX_सदिशम् res   = hvx_vec_mul_f32_f32(v_f32, vd);
 
         hvx_vmem(dst_ptr + i * QK4_0) = res;
     }
 }
 
-static inline void hvx_dequantize_row_flat_q4_k_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK_K;
-    const block_q4_K * src = (const block_q4_K *) src_ptr;
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_q4_k_f32(भिन्न * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    ध्रुव पूर्णाङ्क nb = n / QK_K;
+    ध्रुव खण्डम्_q4_K * src = (ध्रुव खण्डम्_q4_K *) src_ptr;
 
-    for (int i = 0; i < nb; i++) {
-        const float d   = GGML_FP16_TO_FP32(src[i].d);
-        const float min = GGML_FP16_TO_FP32(src[i].dmin);
-        const uint8_t * sc = src[i].scales;
+    प्रति (पूर्णाङ्क i = 0; i < nb; i++) {
+        ध्रुव भिन्न d   = GGML_FP16_गन्तव्यम्_FP32(src[i].d);
+        ध्रुव भिन्न min = GGML_FP16_गन्तव्यम्_FP32(src[i].dmin);
+        ध्रुव uint8_t * sc = src[i].scales;
 
-        float * y = dst_ptr + i * QK_K;
+        भिन्न * y = dst_ptr + i * QK_K;
 
-        for (int step = 0; step < 4; ++step) {
+        प्रति (पूर्णाङ्क चरणः = 0; चरणः < 4; ++चरणः) {
             uint8_t sc1, m1_u, sc2, m2_u;
-            if (step < 2) {
-                sc1  = sc[2 * step + 0] & 63;
-                m1_u = sc[2 * step + 4] & 63;
-                sc2  = sc[2 * step + 1] & 63;
-                m2_u = sc[2 * step + 5] & 63;
-            } else {
-                const int s = step - 2;
+            यदि (चरणः < 2) {
+                sc1  = sc[2 * चरणः + 0] & 63;
+                m1_u = sc[2 * चरणः + 4] & 63;
+                sc2  = sc[2 * चरणः + 1] & 63;
+                m2_u = sc[2 * चरणः + 5] & 63;
+            } अन्यथा {
+                ध्रुव पूर्णाङ्क s = चरणः - 2;
                 sc1  = (sc[8 + 2 * s + 0] & 0xF) | ((sc[2 * s + 0] >> 6) << 4);
                 m1_u = (sc[8 + 2 * s + 0] >>  4) | ((sc[4 + 2 * s + 0] >> 6) << 4);
                 sc2  = (sc[8 + 2 * s + 1] & 0xF) | ((sc[2 * s + 1] >> 6) << 4);
                 m2_u = (sc[8 + 2 * s + 1] >>  4) | ((sc[4 + 2 * s + 1] >> 6) << 4);
             }
 
-            HVX_Vector vq = *(const HVX_UVector *) (src[i].qs + step * 32);
-            HVX_Vector v_lo = Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F));
-            HVX_Vector v_hi = Q6_Vub_vlsr_VubR(vq, 4);
+            HVX_सदिशम् vq = *(ध्रुव HVX_UVector *) (src[i].qs + चरणः * 32);
+            HVX_सदिशम् v_lo = Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F));
+            HVX_सदिशम् v_hi = Q6_Vub_vlsr_VubR(vq, 4);
 
-            HVX_VectorPair p16_lo = Q6_Wuh_vunpack_Vub(v_lo);
-            HVX_VectorPair p32_lo = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_lo));
-            HVX_Vector     v_i32_lo = Q6_V_lo_W(p32_lo);
-            HVX_Vector     v_f32_lo = Q6_Vsf_equals_Vw(v_i32_lo);
+            HVX_सदिशम्_Pair p16_lo = Q6_Wuh_vunpack_Vub(v_lo);
+            HVX_सदिशम्_Pair p32_lo = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_lo));
+            HVX_सदिशम्     v_i32_lo = Q6_V_lo_W(p32_lo);
+            HVX_सदिशम्     v_f32_lo = Q6_Vsf_equals_Vw(v_i32_lo);
 
-            HVX_Vector vd1 = hvx_vec_splat_f32(d * sc1);
-            HVX_Vector vm1 = hvx_vec_splat_f32(min * m1_u);
-            HVX_Vector v_out1 = hvx_vec_sub_f32_f32(hvx_vec_mul_f32_f32(v_f32_lo, vd1), vm1);
+            HVX_सदिशम् vd1 = hvx_vec_splat_f32(d * sc1);
+            HVX_सदिशम् vm1 = hvx_vec_splat_f32(min * m1_u);
+            HVX_सदिशम् v_out1 = hvx_vec_sub_f32_f32(hvx_vec_mul_f32_f32(v_f32_lo, vd1), vm1);
             hvx_vmem(y + 0) = v_out1;
 
-            HVX_VectorPair p16_hi = Q6_Wuh_vunpack_Vub(v_hi);
-            HVX_VectorPair p32_hi = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_hi));
-            HVX_Vector     v_i32_hi = Q6_V_lo_W(p32_hi);
-            HVX_Vector     v_f32_hi = Q6_Vsf_equals_Vw(v_i32_hi);
+            HVX_सदिशम्_Pair p16_hi = Q6_Wuh_vunpack_Vub(v_hi);
+            HVX_सदिशम्_Pair p32_hi = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_hi));
+            HVX_सदिशम्     v_i32_hi = Q6_V_lo_W(p32_hi);
+            HVX_सदिशम्     v_f32_hi = Q6_Vsf_equals_Vw(v_i32_hi);
 
-            HVX_Vector vd2 = hvx_vec_splat_f32(d * sc2);
-            HVX_Vector vm2 = hvx_vec_splat_f32(min * m2_u);
-            HVX_Vector v_out2 = hvx_vec_sub_f32_f32(hvx_vec_mul_f32_f32(v_f32_hi, vd2), vm2);
+            HVX_सदिशम् vd2 = hvx_vec_splat_f32(d * sc2);
+            HVX_सदिशम् vm2 = hvx_vec_splat_f32(min * m2_u);
+            HVX_सदिशम् v_out2 = hvx_vec_sub_f32_f32(hvx_vec_mul_f32_f32(v_f32_hi, vd2), vm2);
             hvx_vmem(y + 32) = v_out2;
 
             y += 64;
@@ -338,61 +338,61 @@ static inline void hvx_dequantize_row_flat_q4_k_f32(float * restrict dst_ptr, co
     }
 }
 
-static inline void hvx_dequantize_row_flat_q5_k_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK_K;
-    const block_q5_K * src = (const block_q5_K *) src_ptr;
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_q5_k_f32(भिन्न * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    ध्रुव पूर्णाङ्क nb = n / QK_K;
+    ध्रुव खण्डम्_q5_K * src = (ध्रुव खण्डम्_q5_K *) src_ptr;
 
-    for (int i = 0; i < nb; i++) {
-        const float d   = GGML_FP16_TO_FP32(src[i].d);
-        const float min = GGML_FP16_TO_FP32(src[i].dmin);
-        const uint8_t * sc = src[i].scales;
+    प्रति (पूर्णाङ्क i = 0; i < nb; i++) {
+        ध्रुव भिन्न d   = GGML_FP16_गन्तव्यम्_FP32(src[i].d);
+        ध्रुव भिन्न min = GGML_FP16_गन्तव्यम्_FP32(src[i].dmin);
+        ध्रुव uint8_t * sc = src[i].scales;
 
-        HVX_Vector v_qh = *(const HVX_UVector *) src[i].qh;
-        float * y = dst_ptr + i * QK_K;
+        HVX_सदिशम् v_qh = *(ध्रुव HVX_UVector *) src[i].qh;
+        भिन्न * y = dst_ptr + i * QK_K;
 
-        for (int step = 0; step < 4; ++step) {
+        प्रति (पूर्णाङ्क चरणः = 0; चरणः < 4; ++चरणः) {
             uint8_t sc1, m1_u, sc2, m2_u;
-            if (step < 2) {
-                sc1  = sc[2 * step + 0] & 63;
-                m1_u = sc[2 * step + 4] & 63;
-                sc2  = sc[2 * step + 1] & 63;
-                m2_u = sc[2 * step + 5] & 63;
-            } else {
-                const int s = step - 2;
+            यदि (चरणः < 2) {
+                sc1  = sc[2 * चरणः + 0] & 63;
+                m1_u = sc[2 * चरणः + 4] & 63;
+                sc2  = sc[2 * चरणः + 1] & 63;
+                m2_u = sc[2 * चरणः + 5] & 63;
+            } अन्यथा {
+                ध्रुव पूर्णाङ्क s = चरणः - 2;
                 sc1  = (sc[8 + 2 * s + 0] & 0xF) | ((sc[2 * s + 0] >> 6) << 4);
                 m1_u = (sc[8 + 2 * s + 0] >>  4) | ((sc[4 + 2 * s + 0] >> 6) << 4);
                 sc2  = (sc[8 + 2 * s + 1] & 0xF) | ((sc[2 * s + 1] >> 6) << 4);
                 m2_u = (sc[8 + 2 * s + 1] >>  4) | ((sc[4 + 2 * s + 1] >> 6) << 4);
             }
 
-            HVX_Vector v_ql = *(const HVX_UVector *) (src[i].qs + step * 32);
-            HVX_Vector v_lo = Q6_V_vand_VV(v_ql, Q6_Vb_vsplat_R(0x0F));
-            HVX_Vector v_hi = Q6_Vub_vlsr_VubR(v_ql, 4);
+            HVX_सदिशम् v_ql = *(ध्रुव HVX_UVector *) (src[i].qs + चरणः * 32);
+            HVX_सदिशम् v_lo = Q6_V_vand_VV(v_ql, Q6_Vb_vsplat_R(0x0F));
+            HVX_सदिशम् v_hi = Q6_Vub_vlsr_VubR(v_ql, 4);
 
-            HVX_Vector v_h1 = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 2 * step), Q6_Vb_vsplat_R(1)), 4);
-            HVX_Vector v_val1 = Q6_V_vor_VV(v_lo, v_h1);
+            HVX_सदिशम् v_h1 = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 2 * चरणः), Q6_Vb_vsplat_R(1)), 4);
+            HVX_सदिशम् v_val1 = Q6_V_vor_VV(v_lo, v_h1);
 
-            HVX_VectorPair p16_1 = Q6_Wuh_vunpack_Vub(v_val1);
-            HVX_VectorPair p32_1 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_1));
-            HVX_Vector     v_i32_1 = Q6_V_lo_W(p32_1);
-            HVX_Vector     v_f32_1 = Q6_Vsf_equals_Vw(v_i32_1);
+            HVX_सदिशम्_Pair p16_1 = Q6_Wuh_vunpack_Vub(v_val1);
+            HVX_सदिशम्_Pair p32_1 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_1));
+            HVX_सदिशम्     v_i32_1 = Q6_V_lo_W(p32_1);
+            HVX_सदिशम्     v_f32_1 = Q6_Vsf_equals_Vw(v_i32_1);
 
-            HVX_Vector vd1 = hvx_vec_splat_f32(d * sc1);
-            HVX_Vector vm1 = hvx_vec_splat_f32(min * m1_u);
-            HVX_Vector v_out1 = hvx_vec_sub_f32_f32(hvx_vec_mul_f32_f32(v_f32_1, vd1), vm1);
+            HVX_सदिशम् vd1 = hvx_vec_splat_f32(d * sc1);
+            HVX_सदिशम् vm1 = hvx_vec_splat_f32(min * m1_u);
+            HVX_सदिशम् v_out1 = hvx_vec_sub_f32_f32(hvx_vec_mul_f32_f32(v_f32_1, vd1), vm1);
             hvx_vmem(y + 0) = v_out1;
 
-            HVX_Vector v_h2 = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 2 * step + 1), Q6_Vb_vsplat_R(1)), 4);
-            HVX_Vector v_val2 = Q6_V_vor_VV(v_hi, v_h2);
+            HVX_सदिशम् v_h2 = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 2 * चरणः + 1), Q6_Vb_vsplat_R(1)), 4);
+            HVX_सदिशम् v_val2 = Q6_V_vor_VV(v_hi, v_h2);
 
-            HVX_VectorPair p16_2 = Q6_Wuh_vunpack_Vub(v_val2);
-            HVX_VectorPair p32_2 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_2));
-            HVX_Vector     v_i32_2 = Q6_V_lo_W(p32_2);
-            HVX_Vector     v_f32_2 = Q6_Vsf_equals_Vw(v_i32_2);
+            HVX_सदिशम्_Pair p16_2 = Q6_Wuh_vunpack_Vub(v_val2);
+            HVX_सदिशम्_Pair p32_2 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_2));
+            HVX_सदिशम्     v_i32_2 = Q6_V_lo_W(p32_2);
+            HVX_सदिशम्     v_f32_2 = Q6_Vsf_equals_Vw(v_i32_2);
 
-            HVX_Vector vd2 = hvx_vec_splat_f32(d * sc2);
-            HVX_Vector vm2 = hvx_vec_splat_f32(min * m2_u);
-            HVX_Vector v_out2 = hvx_vec_sub_f32_f32(hvx_vec_mul_f32_f32(v_f32_2, vd2), vm2);
+            HVX_सदिशम् vd2 = hvx_vec_splat_f32(d * sc2);
+            HVX_सदिशम् vm2 = hvx_vec_splat_f32(min * m2_u);
+            HVX_सदिशम् v_out2 = hvx_vec_sub_f32_f32(hvx_vec_mul_f32_f32(v_f32_2, vd2), vm2);
             hvx_vmem(y + 32) = v_out2;
 
             y += 64;
@@ -400,73 +400,73 @@ static inline void hvx_dequantize_row_flat_q5_k_f32(float * restrict dst_ptr, co
     }
 }
 
-static inline void hvx_dequantize_row_flat_q6_k_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK_K;
-    const block_q6_K * src = (const block_q6_K *) src_ptr;
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_flat_q6_k_f32(भिन्न * सीमित dst_ptr, ध्रुव शून्य * सीमित src_ptr, uint32_t n) {
+    ध्रुव पूर्णाङ्क nb = n / QK_K;
+    ध्रुव खण्डम्_q6_K * src = (ध्रुव खण्डम्_q6_K *) src_ptr;
 
-    const HVX_VectorPred q64 = Q6_Q_vsetq_R(64);
-    const HVX_Vector v32_b   = Q6_Vb_vsplat_R(32);
-    const HVX_Vector mask_0f = Q6_Vb_vsplat_R(0x0F);
-    const HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
+    ध्रुव HVX_सदिशम्_Pred q64 = Q6_Q_vsetq_R(64);
+    ध्रुव HVX_सदिशम् v32_b   = Q6_Vb_vsplat_R(32);
+    ध्रुव HVX_सदिशम् आवरणम्_0f = Q6_Vb_vsplat_R(0x0F);
+    ध्रुव HVX_सदिशम् आवरणम्_03 = Q6_Vb_vsplat_R(0x03);
 
-    for (int i = 0; i < nb; i++) {
-        const float d = GGML_FP16_TO_FP32(src[i].d);
+    प्रति (पूर्णाङ्क i = 0; i < nb; i++) {
+        ध्रुव भिन्न d = GGML_FP16_गन्तव्यम्_FP32(src[i].d);
 
-        const uint8_t * restrict ql = src[i].ql;
-        const uint8_t * restrict qh = src[i].qh;
-        const int8_t  * restrict sc = src[i].scales;
+        ध्रुव uint8_t * सीमित ql = src[i].ql;
+        ध्रुव uint8_t * सीमित qh = src[i].qh;
+        ध्रुव int8_t  * सीमित sc = src[i].scales;
 
-        float * y = dst_ptr + i * QK_K;
+        भिन्न * y = dst_ptr + i * QK_K;
 
-        for (int half = 0; half < 2; ++half) {
-            float s[8];
-            for (int j = 0; j < 8; ++j) {
+        प्रति (पूर्णाङ्क half = 0; half < 2; ++half) {
+            भिन्न s[8];
+            प्रति (पूर्णाङ्क j = 0; j < 8; ++j) {
                 s[j] = d * sc[j];
             }
 
-            HVX_Vector vscale1 = Q6_V_vmux_QVV(q64, hvx_vec_splat_f32(s[0]), hvx_vec_splat_f32(s[1]));
-            HVX_Vector vscale2 = Q6_V_vmux_QVV(q64, hvx_vec_splat_f32(s[2]), hvx_vec_splat_f32(s[3]));
-            HVX_Vector vscale3 = Q6_V_vmux_QVV(q64, hvx_vec_splat_f32(s[4]), hvx_vec_splat_f32(s[5]));
-            HVX_Vector vscale4 = Q6_V_vmux_QVV(q64, hvx_vec_splat_f32(s[6]), hvx_vec_splat_f32(s[7]));
+            HVX_सदिशम् vscale1 = Q6_V_vmux_QVV(q64, hvx_vec_splat_f32(s[0]), hvx_vec_splat_f32(s[1]));
+            HVX_सदिशम् vscale2 = Q6_V_vmux_QVV(q64, hvx_vec_splat_f32(s[2]), hvx_vec_splat_f32(s[3]));
+            HVX_सदिशम् vscale3 = Q6_V_vmux_QVV(q64, hvx_vec_splat_f32(s[4]), hvx_vec_splat_f32(s[5]));
+            HVX_सदिशम् vscale4 = Q6_V_vmux_QVV(q64, hvx_vec_splat_f32(s[6]), hvx_vec_splat_f32(s[7]));
 
-            HVX_Vector v_ql0 = *(const HVX_UVector *) (ql);
-            HVX_Vector v_ql1 = *(const HVX_UVector *) (ql + 32);
-            HVX_Vector v_qh  = *(const HVX_UVector *) (qh);
+            HVX_सदिशम् v_ql0 = *(ध्रुव HVX_UVector *) (ql);
+            HVX_सदिशम् v_ql1 = *(ध्रुव HVX_UVector *) (ql + 32);
+            HVX_सदिशम् v_qh  = *(ध्रुव HVX_UVector *) (qh);
 
-            HVX_Vector ql0_lo = Q6_V_vand_VV(v_ql0, mask_0f);
-            HVX_Vector qh_0   = Q6_Vw_vasl_VwR(Q6_V_vand_VV(v_qh, mask_03), 4);
-            HVX_Vector v_q1   = Q6_Vb_vsub_VbVb(Q6_V_vor_VV(ql0_lo, qh_0), v32_b);
+            HVX_सदिशम् ql0_lo = Q6_V_vand_VV(v_ql0, आवरणम्_0f);
+            HVX_सदिशम् qh_0   = Q6_Vw_vasl_VwR(Q6_V_vand_VV(v_qh, आवरणम्_03), 4);
+            HVX_सदिशम् v_q1   = Q6_Vb_vsub_VbVb(Q6_V_vor_VV(ql0_lo, qh_0), v32_b);
 
-            HVX_Vector ql1_lo = Q6_V_vand_VV(v_ql1, mask_0f);
-            HVX_Vector qh_1   = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 2), mask_03), 4);
-            HVX_Vector v_q2   = Q6_Vb_vsub_VbVb(Q6_V_vor_VV(ql1_lo, qh_1), v32_b);
+            HVX_सदिशम् ql1_lo = Q6_V_vand_VV(v_ql1, आवरणम्_0f);
+            HVX_सदिशम् qh_1   = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 2), आवरणम्_03), 4);
+            HVX_सदिशम् v_q2   = Q6_Vb_vsub_VbVb(Q6_V_vor_VV(ql1_lo, qh_1), v32_b);
 
-            HVX_Vector ql0_hi = Q6_Vub_vlsr_VubR(v_ql0, 4);
-            HVX_Vector qh_2   = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 4), mask_03), 4);
-            HVX_Vector v_q3   = Q6_Vb_vsub_VbVb(Q6_V_vor_VV(ql0_hi, qh_2), v32_b);
+            HVX_सदिशम् ql0_hi = Q6_Vub_vlsr_VubR(v_ql0, 4);
+            HVX_सदिशम् qh_2   = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 4), आवरणम्_03), 4);
+            HVX_सदिशम् v_q3   = Q6_Vb_vsub_VbVb(Q6_V_vor_VV(ql0_hi, qh_2), v32_b);
 
-            HVX_Vector ql1_hi = Q6_Vub_vlsr_VubR(v_ql1, 4);
-            HVX_Vector qh_3   = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 6), mask_03), 4);
-            HVX_Vector v_q4   = Q6_Vb_vsub_VbVb(Q6_V_vor_VV(ql1_hi, qh_3), v32_b);
+            HVX_सदिशम् ql1_hi = Q6_Vub_vlsr_VubR(v_ql1, 4);
+            HVX_सदिशम् qh_3   = Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_qh, 6), आवरणम्_03), 4);
+            HVX_सदिशम् v_q4   = Q6_Vb_vsub_VbVb(Q6_V_vor_VV(ql1_hi, qh_3), v32_b);
 
-            HVX_VectorPair p16_1 = Q6_Wh_vunpack_Vb(v_q1);
-            HVX_VectorPair p32_1 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_1));
-            HVX_Vector     v_f32_1 = Q6_Vsf_equals_Vw(Q6_V_lo_W(p32_1));
+            HVX_सदिशम्_Pair p16_1 = Q6_Wh_vunpack_Vb(v_q1);
+            HVX_सदिशम्_Pair p32_1 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_1));
+            HVX_सदिशम्     v_f32_1 = Q6_Vsf_equals_Vw(Q6_V_lo_W(p32_1));
             hvx_vmem(y + 0) = hvx_vec_mul_f32_f32(v_f32_1, vscale1);
 
-            HVX_VectorPair p16_2 = Q6_Wh_vunpack_Vb(v_q2);
-            HVX_VectorPair p32_2 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_2));
-            HVX_Vector     v_f32_2 = Q6_Vsf_equals_Vw(Q6_V_lo_W(p32_2));
+            HVX_सदिशम्_Pair p16_2 = Q6_Wh_vunpack_Vb(v_q2);
+            HVX_सदिशम्_Pair p32_2 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_2));
+            HVX_सदिशम्     v_f32_2 = Q6_Vsf_equals_Vw(Q6_V_lo_W(p32_2));
             hvx_vmem(y + 32) = hvx_vec_mul_f32_f32(v_f32_2, vscale2);
 
-            HVX_VectorPair p16_3 = Q6_Wh_vunpack_Vb(v_q3);
-            HVX_VectorPair p32_3 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_3));
-            HVX_Vector     v_f32_3 = Q6_Vsf_equals_Vw(Q6_V_lo_W(p32_3));
+            HVX_सदिशम्_Pair p16_3 = Q6_Wh_vunpack_Vb(v_q3);
+            HVX_सदिशम्_Pair p32_3 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_3));
+            HVX_सदिशम्     v_f32_3 = Q6_Vsf_equals_Vw(Q6_V_lo_W(p32_3));
             hvx_vmem(y + 64) = hvx_vec_mul_f32_f32(v_f32_3, vscale3);
 
-            HVX_VectorPair p16_4 = Q6_Wh_vunpack_Vb(v_q4);
-            HVX_VectorPair p32_4 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_4));
-            HVX_Vector     v_f32_4 = Q6_Vsf_equals_Vw(Q6_V_lo_W(p32_4));
+            HVX_सदिशम्_Pair p16_4 = Q6_Wh_vunpack_Vb(v_q4);
+            HVX_सदिशम्_Pair p32_4 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16_4));
+            HVX_सदिशम्     v_f32_4 = Q6_Vsf_equals_Vw(Q6_V_lo_W(p32_4));
             hvx_vmem(y + 96) = hvx_vec_mul_f32_f32(v_f32_4, vscale4);
 
             y  += 128;
@@ -478,191 +478,191 @@ static inline void hvx_dequantize_row_flat_q6_k_f32(float * restrict dst_ptr, co
 }
 
 // bytes row, row + 32, row + 64 and row + 96 of v, to bytes 0..3
-static inline HVX_Vector hvx_dequantize_gather4(HVX_Vector v, uint32_t row) {
+स्थिर अन्तःस्थ HVX_सदिशम् hvx_dequantize_gather4(HVX_सदिशम् v, uint32_t row) {
     v = Q6_V_vror_VR(v, row);
-    HVX_Vector packed = Q6_V_vmux_QVV(Q6_Q_vsetq_R(1), v, Q6_V_vror_VR(v, 31));
+    HVX_सदिशम् packed = Q6_V_vmux_QVV(Q6_Q_vsetq_R(1), v, Q6_V_vror_VR(v, 31));
     packed = Q6_V_vmux_QVV(Q6_Q_vsetq_R(2), packed, Q6_V_vror_VR(v, 62));
-    return Q6_V_vmux_QVV(Q6_Q_vsetq_R(3), packed, Q6_V_vror_VR(v, 93));
+    प्रत्यागम Q6_V_vmux_QVV(Q6_Q_vsetq_R(3), packed, Q6_V_vror_VR(v, 93));
 }
 
-static inline void hvx_dequantize_row_tiled_q8_0_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
-    const HVX_VectorPred first2 = Q6_Q_vsetq_R(2);
-    const HVX_VectorPred first4 = Q6_Q_vsetq_R(4);
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_tiled_q8_0_f32(भिन्न * dst_spad, ध्रुव uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
+    ध्रुव HVX_सदिशम्_Pred first2 = Q6_Q_vsetq_R(2);
+    ध्रुव HVX_सदिशम्_Pred first4 = Q6_Q_vsetq_R(4);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
-        const uint8_t * tile = src_spad + k_tile * tile_stride;
-        float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
+    प्रति (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+        ध्रुव uint8_t * tile = src_spad + k_tile * tile_stride;
+        भिन्न * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_स्तम्भसङ्ख्या;
 
-        HVX_Vector vq = Q6_V_vzero();
-        for (int group = 7; group >= 0; --group) {
-            const HVX_Vector v = Q6_V_vror_VR(hvx_vmem(tile + group * VLEN), 2 * row);
-            const HVX_Vector packed = Q6_V_vmux_QVV(first2, v, Q6_V_vror_VR(v, 62));
+        HVX_सदिशम् vq = Q6_V_vzero();
+        प्रति (पूर्णाङ्क गणः = 7; गणः >= 0; --गणः) {
+            ध्रुव HVX_सदिशम् v = Q6_V_vror_VR(hvx_vmem(tile + गणः * VLEN), 2 * row);
+            ध्रुव HVX_सदिशम् packed = Q6_V_vmux_QVV(first2, v, Q6_V_vror_VR(v, 62));
             vq = Q6_V_vmux_QVV(first4, packed, Q6_V_vror_VR(vq, VLEN - 4));
         }
 
-        const HVX_Vector scales = hvx_vmem(tile + 1024);
-        const HVX_Vector scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
-        const HVX_Vector scale = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_hf));
-        const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(vq);
-        const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
-        HVX_Vector values = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
-        *(HVX_Vector *) dst = values;
+        ध्रुव HVX_सदिशम् scales = hvx_vmem(tile + 1024);
+        ध्रुव HVX_सदिशम् scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
+        ध्रुव HVX_सदिशम् scale = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(scale_hf));
+        ध्रुव HVX_सदिशम्_Pair p16 = Q6_Wh_vunpack_Vb(vq);
+        ध्रुव HVX_सदिशम्_Pair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
+        HVX_सदिशम् मानानि = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
+        *(HVX_सदिशम् *) dst = मानानि;
     }
 }
 
-static inline void hvx_dequantize_row_tiled_q4_0_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
-    const HVX_VectorPred first4 = Q6_Q_vsetq_R(4);
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_tiled_q4_0_f32(भिन्न * dst_spad, ध्रुव uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
+    ध्रुव HVX_सदिशम्_Pred first4 = Q6_Q_vsetq_R(4);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
-        const uint8_t * tile = src_spad + k_tile * tile_stride;
-        float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
+    प्रति (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+        ध्रुव uint8_t * tile = src_spad + k_tile * tile_stride;
+        भिन्न * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_स्तम्भसङ्ख्या;
 
-        HVX_Vector vq = Q6_V_vzero();
-        for (int group = 3; group >= 0; --group) {
-            vq = Q6_V_vmux_QVV(first4, hvx_dequantize_gather4(hvx_vmem(tile + group * VLEN), row), Q6_V_vror_VR(vq, VLEN - 4));
+        HVX_सदिशम् vq = Q6_V_vzero();
+        प्रति (पूर्णाङ्क गणः = 3; गणः >= 0; --गणः) {
+            vq = Q6_V_vmux_QVV(first4, hvx_dequantize_gather4(hvx_vmem(tile + गणः * VLEN), row), Q6_V_vror_VR(vq, VLEN - 4));
         }
 
-        const HVX_Vector lo = Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F));
-        const HVX_Vector hi = Q6_Vub_vlsr_VubR(vq, 4);
+        ध्रुव HVX_सदिशम् lo = Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F));
+        ध्रुव HVX_सदिशम् hi = Q6_Vub_vlsr_VubR(vq, 4);
         vq = Q6_V_lo_W(Q6_W_vshuff_VVR(hi, lo, -1));
         vq = Q6_Vb_vsub_VbVb(vq, Q6_Vb_vsplat_R(8));
 
-        const HVX_Vector scales = hvx_vmem(tile + 512);
-        const HVX_Vector scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
-        const HVX_Vector scale = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_hf));
-        const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(vq);
-        const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
-        HVX_Vector values = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
-        *(HVX_Vector *) dst = values;
+        ध्रुव HVX_सदिशम् scales = hvx_vmem(tile + 512);
+        ध्रुव HVX_सदिशम् scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
+        ध्रुव HVX_सदिशम् scale = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(scale_hf));
+        ध्रुव HVX_सदिशम्_Pair p16 = Q6_Wh_vunpack_Vb(vq);
+        ध्रुव HVX_सदिशम्_Pair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
+        HVX_सदिशम् मानानि = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
+        *(HVX_सदिशम् *) dst = मानानि;
     }
 }
 
-static inline void hvx_dequantize_row_tiled_q4_k_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
-    const HVX_VectorPred first4 = Q6_Q_vsetq_R(4);
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_tiled_q4_k_f32(भिन्न * dst_spad, ध्रुव uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
+    ध्रुव HVX_सदिशम्_Pred first4 = Q6_Q_vsetq_R(4);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
-        const uint8_t * tile = src_spad + k_tile * tile_stride;
-        float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
+    प्रति (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+        ध्रुव uint8_t * tile = src_spad + k_tile * tile_stride;
+        भिन्न * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_स्तम्भसङ्ख्या;
 
-        HVX_Vector vq = Q6_V_vzero();
-        for (int group = 3; group >= 0; --group) {
-            vq = Q6_V_vmux_QVV(first4, hvx_dequantize_gather4(hvx_vmem(tile + group * VLEN), row), Q6_V_vror_VR(vq, VLEN - 4));
+        HVX_सदिशम् vq = Q6_V_vzero();
+        प्रति (पूर्णाङ्क गणः = 3; गणः >= 0; --गणः) {
+            vq = Q6_V_vmux_QVV(first4, hvx_dequantize_gather4(hvx_vmem(tile + गणः * VLEN), row), Q6_V_vror_VR(vq, VLEN - 4));
         }
 
-        const HVX_Vector lo = Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F));
-        const HVX_Vector hi = Q6_Vub_vlsr_VubR(vq, 4);
+        ध्रुव HVX_सदिशम् lo = Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F));
+        ध्रुव HVX_सदिशम् hi = Q6_Vub_vlsr_VubR(vq, 4);
         vq = Q6_V_lo_W(Q6_W_vshuff_VVR(hi, lo, -1));
 
-        const HVX_Vector scales = hvx_vmem(tile + 512);
-        const HVX_Vector scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 4 * row));
-        const HVX_Vector scale = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_hf));
-        const HVX_Vector offset_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 4 * row + 2));
-        const HVX_Vector offset = Q6_V_lo_W(hvx_vec_f16_to_f32(offset_hf));
+        ध्रुव HVX_सदिशम् scales = hvx_vmem(tile + 512);
+        ध्रुव HVX_सदिशम् scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 4 * row));
+        ध्रुव HVX_सदिशम् scale = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(scale_hf));
+        ध्रुव HVX_सदिशम् विस्थापनम्_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 4 * row + 2));
+        ध्रुव HVX_सदिशम् विस्थापनम् = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(विस्थापनम्_hf));
 
-        const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(vq);
-        const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
-        HVX_Vector values = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
-        *(HVX_Vector *) dst = hvx_vec_add_f32_f32(values, offset);
+        ध्रुव HVX_सदिशम्_Pair p16 = Q6_Wh_vunpack_Vb(vq);
+        ध्रुव HVX_सदिशम्_Pair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
+        HVX_सदिशम् मानानि = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
+        *(HVX_सदिशम् *) dst = hvx_vec_सङ्कलय_f32_f32(मानानि, विस्थापनम्);
     }
 }
 
-static inline void hvx_dequantize_row_tiled_q5_k_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
-    const HVX_VectorPred first4 = Q6_Q_vsetq_R(4);
-    const HVX_Vector one = Q6_Vb_vsplat_R(1);
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_tiled_q5_k_f32(भिन्न * dst_spad, ध्रुव uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
+    ध्रुव HVX_सदिशम्_Pred first4 = Q6_Q_vsetq_R(4);
+    ध्रुव HVX_सदिशम् one = Q6_Vb_vsplat_R(1);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
-        const uint8_t * tile = src_spad + k_tile * tile_stride;
-        float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
+    प्रति (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+        ध्रुव uint8_t * tile = src_spad + k_tile * tile_stride;
+        भिन्न * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_स्तम्भसङ्ख्या;
 
-        const HVX_Vector p5 = hvx_dequantize_gather4(hvx_vmem(tile + 640), row);
-        HVX_Vector vq = Q6_V_vzero();
-        HVX_Vector vh = Q6_V_vzero();
-        for (int group = 3; group >= 0; --group) {
-            vq = Q6_V_vmux_QVV(first4, hvx_dequantize_gather4(hvx_vmem(tile + group * VLEN), row), Q6_V_vror_VR(vq, VLEN - 4));
-            vh = Q6_V_vmux_QVV(first4, Q6_Vub_vlsr_VubR(p5, 2 * group), Q6_V_vror_VR(vh, VLEN - 4));
+        ध्रुव HVX_सदिशम् p5 = hvx_dequantize_gather4(hvx_vmem(tile + 640), row);
+        HVX_सदिशम् vq = Q6_V_vzero();
+        HVX_सदिशम् vh = Q6_V_vzero();
+        प्रति (पूर्णाङ्क गणः = 3; गणः >= 0; --गणः) {
+            vq = Q6_V_vmux_QVV(first4, hvx_dequantize_gather4(hvx_vmem(tile + गणः * VLEN), row), Q6_V_vror_VR(vq, VLEN - 4));
+            vh = Q6_V_vmux_QVV(first4, Q6_Vub_vlsr_VubR(p5, 2 * गणः), Q6_V_vror_VR(vh, VLEN - 4));
         }
 
-        const HVX_Vector lo = Q6_V_vor_VV(Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F)), Q6_Vw_vasl_VwR(Q6_V_vand_VV(vh, one), 4));
-        const HVX_Vector hi = Q6_V_vor_VV(Q6_Vub_vlsr_VubR(vq, 4), Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(vh, 1), one), 4));
+        ध्रुव HVX_सदिशम् lo = Q6_V_vor_VV(Q6_V_vand_VV(vq, Q6_Vb_vsplat_R(0x0F)), Q6_Vw_vasl_VwR(Q6_V_vand_VV(vh, one), 4));
+        ध्रुव HVX_सदिशम् hi = Q6_V_vor_VV(Q6_Vub_vlsr_VubR(vq, 4), Q6_Vw_vasl_VwR(Q6_V_vand_VV(Q6_Vub_vlsr_VubR(vh, 1), one), 4));
         vq = Q6_V_lo_W(Q6_W_vshuff_VVR(hi, lo, -1));
 
-        const HVX_Vector scales = hvx_vmem(tile + 512);
-        const HVX_Vector scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 4 * row));
-        const HVX_Vector scale = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_hf));
-        const HVX_Vector offset_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 4 * row + 2));
-        const HVX_Vector offset = Q6_V_lo_W(hvx_vec_f16_to_f32(offset_hf));
+        ध्रुव HVX_सदिशम् scales = hvx_vmem(tile + 512);
+        ध्रुव HVX_सदिशम् scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 4 * row));
+        ध्रुव HVX_सदिशम् scale = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(scale_hf));
+        ध्रुव HVX_सदिशम् विस्थापनम्_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 4 * row + 2));
+        ध्रुव HVX_सदिशम् विस्थापनम् = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(विस्थापनम्_hf));
 
-        const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(vq);
-        const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
-        HVX_Vector values = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
-        *(HVX_Vector *) dst = hvx_vec_add_f32_f32(values, offset);
+        ध्रुव HVX_सदिशम्_Pair p16 = Q6_Wh_vunpack_Vb(vq);
+        ध्रुव HVX_सदिशम्_Pair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
+        HVX_सदिशम् मानानि = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
+        *(HVX_सदिशम् *) dst = hvx_vec_सङ्कलय_f32_f32(मानानि, विस्थापनम्);
     }
 }
 
-static inline void hvx_dequantize_row_tiled_q6_k_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
-    const HVX_VectorPred first4 = Q6_Q_vsetq_R(4);
-    const HVX_VectorPred first16 = Q6_Q_vsetq_R(16 * sizeof(float));
-    const HVX_Vector mask_0f = Q6_Vb_vsplat_R(0x0F);
-    const HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_tiled_q6_k_f32(भिन्न * dst_spad, ध्रुव uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
+    ध्रुव HVX_सदिशम्_Pred first4 = Q6_Q_vsetq_R(4);
+    ध्रुव HVX_सदिशम्_Pred first16 = Q6_Q_vsetq_R(16 * परिमाण(भिन्न));
+    ध्रुव HVX_सदिशम् आवरणम्_0f = Q6_Vb_vsplat_R(0x0F);
+    ध्रुव HVX_सदिशम् आवरणम्_03 = Q6_Vb_vsplat_R(0x03);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
-        const uint8_t * tile = src_spad + k_tile * tile_stride;
-        float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
+    प्रति (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+        ध्रुव uint8_t * tile = src_spad + k_tile * tile_stride;
+        भिन्न * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_स्तम्भसङ्ख्या;
 
-        HVX_Vector vq = Q6_V_vzero();
-        for (int group = 7; group >= 0; --group) {
-            const HVX_Vector lo_plane = Q6_V_vror_VR(hvx_vmem(tile + (group >> 1) * VLEN), 4 * row);
-            const HVX_Vector hi_plane = Q6_V_vror_VR(hvx_vmem(tile + 512 + (group >> 2) * VLEN), 4 * row);
-            const HVX_Vector lo = (group & 1) ? Q6_Vub_vlsr_VubR(lo_plane, 4) : Q6_V_vand_VV(lo_plane, mask_0f);
-            const HVX_Vector hi = Q6_Vub_vlsr_VubR(hi_plane, 2 * (group & 3));
-            const HVX_Vector packed = Q6_V_vor_VV(lo, Q6_Vw_vasl_VwR(Q6_V_vand_VV(hi, mask_03), 4));
+        HVX_सदिशम् vq = Q6_V_vzero();
+        प्रति (पूर्णाङ्क गणः = 7; गणः >= 0; --गणः) {
+            ध्रुव HVX_सदिशम् lo_plane = Q6_V_vror_VR(hvx_vmem(tile + (गणः >> 1) * VLEN), 4 * row);
+            ध्रुव HVX_सदिशम् hi_plane = Q6_V_vror_VR(hvx_vmem(tile + 512 + (गणः >> 2) * VLEN), 4 * row);
+            ध्रुव HVX_सदिशम् lo = (गणः & 1) ? Q6_Vub_vlsr_VubR(lo_plane, 4) : Q6_V_vand_VV(lo_plane, आवरणम्_0f);
+            ध्रुव HVX_सदिशम् hi = Q6_Vub_vlsr_VubR(hi_plane, 2 * (गणः & 3));
+            ध्रुव HVX_सदिशम् packed = Q6_V_vor_VV(lo, Q6_Vw_vasl_VwR(Q6_V_vand_VV(hi, आवरणम्_03), 4));
             vq = Q6_V_vmux_QVV(first4, packed, Q6_V_vror_VR(vq, VLEN - 4));
         }
 
-        const HVX_Vector scales = hvx_vmem(tile + 768);
-        const HVX_Vector scale_lo_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
-        const HVX_Vector scale_hi_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 64 + 2 * row));
-        const HVX_Vector scale_lo = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_lo_hf));
-        const HVX_Vector scale_hi = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_hi_hf));
-        const HVX_Vector scale = Q6_V_vmux_QVV(first16, scale_lo, scale_hi);
-        const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(Q6_Vb_vsub_VbVb(vq, Q6_Vb_vsplat_R(32)));
-        const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
-        *(HVX_Vector *) dst = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
+        ध्रुव HVX_सदिशम् scales = hvx_vmem(tile + 768);
+        ध्रुव HVX_सदिशम् scale_lo_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
+        ध्रुव HVX_सदिशम् scale_hi_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 64 + 2 * row));
+        ध्रुव HVX_सदिशम् scale_lo = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(scale_lo_hf));
+        ध्रुव HVX_सदिशम् scale_hi = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(scale_hi_hf));
+        ध्रुव HVX_सदिशम् scale = Q6_V_vmux_QVV(first16, scale_lo, scale_hi);
+        ध्रुव HVX_सदिशम्_Pair p16 = Q6_Wh_vunpack_Vb(Q6_Vb_vsub_VbVb(vq, Q6_Vb_vsplat_R(32)));
+        ध्रुव HVX_सदिशम्_Pair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
+        *(HVX_सदिशम् *) dst = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
     }
 }
 
-static inline HVX_Vector hvx_dequantize_tiled_f16_gather4(const uint8_t * p, uint32_t r_byte) {
-    HVX_Vector w0  = Q6_V_vror_VR(hvx_vmem(p + 0 * VLEN), r_byte);
-    HVX_Vector w1  = Q6_V_vror_VR(hvx_vmem(p + 1 * VLEN), r_byte);
-    HVX_Vector w01 = Q6_V_lo_W(Q6_W_vshuff_VVR(w1, w0, 4));
-    HVX_Vector w2  = Q6_V_vror_VR(hvx_vmem(p + 2 * VLEN), r_byte);
-    HVX_Vector w3  = Q6_V_vror_VR(hvx_vmem(p + 3 * VLEN), r_byte);
-    HVX_Vector w23 = Q6_V_lo_W(Q6_W_vshuff_VVR(w3, w2, 4));
-    return Q6_V_lo_W(Q6_W_vshuff_VVR(w23, w01, 8));
+स्थिर अन्तःस्थ HVX_सदिशम् hvx_dequantize_tiled_f16_gather4(ध्रुव uint8_t * p, uint32_t r_byte) {
+    HVX_सदिशम् w0  = Q6_V_vror_VR(hvx_vmem(p + 0 * VLEN), r_byte);
+    HVX_सदिशम् w1  = Q6_V_vror_VR(hvx_vmem(p + 1 * VLEN), r_byte);
+    HVX_सदिशम् w01 = Q6_V_lo_W(Q6_W_vshuff_VVR(w1, w0, 4));
+    HVX_सदिशम् w2  = Q6_V_vror_VR(hvx_vmem(p + 2 * VLEN), r_byte);
+    HVX_सदिशम् w3  = Q6_V_vror_VR(hvx_vmem(p + 3 * VLEN), r_byte);
+    HVX_सदिशम् w23 = Q6_V_lo_W(Q6_W_vshuff_VVR(w3, w2, 4));
+    प्रत्यागम Q6_V_lo_W(Q6_W_vshuff_VVR(w23, w01, 8));
 }
 
-static inline void hvx_dequantize_row_tiled_f16_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
-    const uint32_t r_byte = 4 * row;
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_tiled_f16_f32(भिन्न * dst_spad, ध्रुव uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
+    ध्रुव uint32_t r_byte = 4 * row;
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
-        const uint8_t * tile = src_spad + k_tile * tile_stride;
-        float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
+    प्रति (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+        ध्रुव uint8_t * tile = src_spad + k_tile * tile_stride;
+        भिन्न * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_स्तम्भसङ्ख्या;
 
-        HVX_Vector g0 = hvx_dequantize_tiled_f16_gather4(tile + 0 * VLEN, r_byte);
-        HVX_Vector g1 = hvx_dequantize_tiled_f16_gather4(tile + 4 * VLEN, r_byte);
-        HVX_Vector g01 = Q6_V_lo_W(Q6_W_vshuff_VVR(g1, g0, 16));
+        HVX_सदिशम् g0 = hvx_dequantize_tiled_f16_gather4(tile + 0 * VLEN, r_byte);
+        HVX_सदिशम् g1 = hvx_dequantize_tiled_f16_gather4(tile + 4 * VLEN, r_byte);
+        HVX_सदिशम् g01 = Q6_V_lo_W(Q6_W_vshuff_VVR(g1, g0, 16));
 
-        HVX_Vector g2 = hvx_dequantize_tiled_f16_gather4(tile + 8 * VLEN, r_byte);
-        HVX_Vector g3 = hvx_dequantize_tiled_f16_gather4(tile + 12 * VLEN, r_byte);
-        HVX_Vector g23 = Q6_V_lo_W(Q6_W_vshuff_VVR(g3, g2, 16));
+        HVX_सदिशम् g2 = hvx_dequantize_tiled_f16_gather4(tile + 8 * VLEN, r_byte);
+        HVX_सदिशम् g3 = hvx_dequantize_tiled_f16_gather4(tile + 12 * VLEN, r_byte);
+        HVX_सदिशम् g23 = Q6_V_lo_W(Q6_W_vshuff_VVR(g3, g2, 16));
 
-        HVX_Vector g = Q6_V_lo_W(Q6_W_vshuff_VVR(g23, g01, 32));
-        *(HVX_Vector *) dst = Q6_V_lo_W(hvx_vec_f16_to_f32(g));
+        HVX_सदिशम् g = Q6_V_lo_W(Q6_W_vshuff_VVR(g23, g01, 32));
+        *(HVX_सदिशम् *) dst = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(g));
     }
 }
 
-static inline void hvx_dequantize_row_tiled_q1_0_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
-    static const uint32_t __attribute__((aligned(128))) bit_mask[32] = {
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_tiled_q1_0_f32(भिन्न * dst_spad, ध्रुव uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
+    स्थिर ध्रुव uint32_t __attribute__((aligned(128))) bit_आवरणम्[32] = {
         1u <<  0, 1u <<  8, 1u << 16, 1u << 24,
         1u <<  1, 1u <<  9, 1u << 17, 1u << 25,
         1u <<  2, 1u << 10, 1u << 18, 1u << 26,
@@ -672,55 +672,55 @@ static inline void hvx_dequantize_row_tiled_q1_0_f32(float * dst_spad, const uin
         1u <<  6, 1u << 14, 1u << 22, 1u << 30,
         1u <<  7, 1u << 15, 1u << 23, 1u << 31,
     };
-    const HVX_Vector v_bit_mask = *(const HVX_Vector *) bit_mask;
-    const HVX_Vector v_zero     = Q6_V_vzero();
-    const HVX_Vector v_sign_bit = Q6_V_vsplat_R(0x80000000);
+    ध्रुव HVX_सदिशम् v_bit_आवरणम् = *(ध्रुव HVX_सदिशम् *) bit_आवरणम्;
+    ध्रुव HVX_सदिशम् v_zero     = Q6_V_vzero();
+    ध्रुव HVX_सदिशम् v_sign_bit = Q6_V_vsplat_R(0x80000000);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
-        const uint8_t * tile = src_spad + k_tile * tile_stride;
-        float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_K_Q1_0;
+    प्रति (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+        ध्रुव uint8_t * tile = src_spad + k_tile * tile_stride;
+        भिन्न * dst = dst_spad + k_tile * HTP_TENSOR_TILE_K_Q1_0;
 
-        const HVX_Vector scales   = hvx_vmem(tile + 512);
-        const HVX_Vector scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
-        const HVX_Vector vd       = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_hf));
-        const HVX_Vector neg_vd   = Q6_V_vxor_VV(vd, v_sign_bit);
+        ध्रुव HVX_सदिशम् scales   = hvx_vmem(tile + 512);
+        ध्रुव HVX_सदिशम् scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
+        ध्रुव HVX_सदिशम् vd       = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(scale_hf));
+        ध्रुव HVX_सदिशम् neg_vd   = Q6_V_vxor_VV(vd, v_sign_bit);
 
-        #pragma unroll
-        for (int q = 0; q < 4; ++q) {
-            const HVX_Vector v_bits = hvx_vec_repl_u32(Q6_V_vror_VR(hvx_vmem(tile + q * VLEN), 4 * row));
-            const HVX_VectorPred q_zero = Q6_Q_vcmp_eq_VwVw(Q6_V_vand_VV(v_bits, v_bit_mask), v_zero);
+        #निर्देशः unroll
+        प्रति (पूर्णाङ्क q = 0; q < 4; ++q) {
+            ध्रुव HVX_सदिशम् v_द्वयङ्काः = hvx_vec_repl_u32(Q6_V_vror_VR(hvx_vmem(tile + q * VLEN), 4 * row));
+            ध्रुव HVX_सदिशम्_Pred q_zero = Q6_Q_vcmp_eq_VwVw(Q6_V_vand_VV(v_द्वयङ्काः, v_bit_आवरणम्), v_zero);
             hvx_vmem(dst + q * 32) = Q6_V_vmux_QVV(q_zero, neg_vd, vd);
         }
     }
 }
 
-static inline void hvx_dequantize_row_tiled_q2_0_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
-    const HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
-    const HVX_Vector v_one   = Q6_Vb_vsplat_R(1);
+स्थिर अन्तःस्थ शून्य hvx_dequantize_row_tiled_q2_0_f32(भिन्न * dst_spad, ध्रुव uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
+    ध्रुव HVX_सदिशम् आवरणम्_03 = Q6_Vb_vsplat_R(0x03);
+    ध्रुव HVX_सदिशम् v_one   = Q6_Vb_vsplat_R(1);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
-        const uint8_t * tile = src_spad + k_tile * tile_stride;
-        float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_K_Q2_0;
+    प्रति (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+        ध्रुव uint8_t * tile = src_spad + k_tile * tile_stride;
+        भिन्न * dst = dst_spad + k_tile * HTP_TENSOR_TILE_K_Q2_0;
 
-        const HVX_Vector v_packed = hvx_dequantize_tiled_f16_gather4(tile, 4 * row);
-        const HVX_Vector p0 = Q6_V_vand_VV(v_packed, mask_03);
-        const HVX_Vector p1 = Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_packed, 2), mask_03);
-        const HVX_Vector p2 = Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_packed, 4), mask_03);
-        const HVX_Vector p3 = Q6_Vub_vlsr_VubR(v_packed, 6);
+        ध्रुव HVX_सदिशम् v_packed = hvx_dequantize_tiled_f16_gather4(tile, 4 * row);
+        ध्रुव HVX_सदिशम् p0 = Q6_V_vand_VV(v_packed, आवरणम्_03);
+        ध्रुव HVX_सदिशम् p1 = Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_packed, 2), आवरणम्_03);
+        ध्रुव HVX_सदिशम् p2 = Q6_V_vand_VV(Q6_Vub_vlsr_VubR(v_packed, 4), आवरणम्_03);
+        ध्रुव HVX_सदिशम् p3 = Q6_Vub_vlsr_VubR(v_packed, 6);
 
-        const HVX_Vector p01 = Q6_V_lo_W(Q6_W_vshuff_VVR(p1, p0, -4));
-        const HVX_Vector p23 = Q6_V_lo_W(Q6_W_vshuff_VVR(p3, p2, -4));
-        const HVX_Vector vq  = Q6_Vb_vsub_VbVb(Q6_V_lo_W(Q6_W_vshuff_VVR(p23, p01, -8)), v_one);
+        ध्रुव HVX_सदिशम् p01 = Q6_V_lo_W(Q6_W_vshuff_VVR(p1, p0, -4));
+        ध्रुव HVX_सदिशम् p23 = Q6_V_lo_W(Q6_W_vshuff_VVR(p3, p2, -4));
+        ध्रुव HVX_सदिशम् vq  = Q6_Vb_vsub_VbVb(Q6_V_lo_W(Q6_W_vshuff_VVR(p23, p01, -8)), v_one);
 
-        const HVX_Vector scales   = hvx_vmem(tile + 512);
-        const HVX_Vector scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
-        const HVX_Vector scale    = Q6_V_lo_W(hvx_vec_f16_to_f32(scale_hf));
+        ध्रुव HVX_सदिशम् scales   = hvx_vmem(tile + 512);
+        ध्रुव HVX_सदिशम् scale_hf = hvx_vec_repl_f16(Q6_V_vror_VR(scales, 2 * row));
+        ध्रुव HVX_सदिशम् scale    = Q6_V_lo_W(hvx_vec_f16_गन्तव्यम्_f32(scale_hf));
 
-        const HVX_VectorPair p16 = Q6_Wh_vunpack_Vb(vq);
-        const HVX_VectorPair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
+        ध्रुव HVX_सदिशम्_Pair p16 = Q6_Wh_vunpack_Vb(vq);
+        ध्रुव HVX_सदिशम्_Pair p32 = Q6_Ww_vunpack_Vh(Q6_V_lo_W(p16));
         hvx_vmem(dst + 0)  = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_lo_W(p32)), scale);
         hvx_vmem(dst + 32) = hvx_vec_mul_f32_f32(Q6_Vsf_equals_Vw(Q6_V_hi_W(p32)), scale);
     }
 }
 
-#endif // HVX_QUANT_H
+#यदि_अन्तः // HVX_QUANT_H

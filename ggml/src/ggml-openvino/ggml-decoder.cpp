@@ -1,135 +1,135 @@
-#include "ggml-decoder.h"
+#अन्तर्भाव "ggml-decoder.h"
 
-#include "ggml-impl.h"
-#include "ggml-openvino-extra.h"
-#include "ggml-openvino.h"
-#include "ggml-quants.h"
-#include "ggml.h"
-#include "utils.h"
+#अन्तर्भाव "ggml-impl.h"
+#अन्तर्भाव "ggml-openvino-extra.h"
+#अन्तर्भाव "ggml-openvino.h"
+#अन्तर्भाव "ggml-quants.h"
+#अन्तर्भाव "ggml.h"
+#अन्तर्भाव "utils.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <fstream>
-#include <iomanip>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <openvino/core/dimension.hpp>
-#include <openvino/core/except.hpp>
-#include <openvino/core/node.hpp>
-#include <openvino/core/partial_shape.hpp>
-#include <openvino/core/type/bfloat16.hpp>
-#include <openvino/core/type/element_type.hpp>
-#include <openvino/core/type/float16.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/runtime/tensor.hpp>
-#include <ostream>
-#include <set>
-#include <stdexcept>
-#include <string>
-#include <cstring>
-#include <unordered_map>
-#include <vector>
+#अन्तर्भाव <algorithm>
+#अन्तर्भाव <cassert>
+#अन्तर्भाव <cstddef>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <cstdlib>
+#अन्तर्भाव <fstream>
+#अन्तर्भाव <iomanip>
+#अन्तर्भाव <map>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <mutex>
+#अन्तर्भाव <openvino/core/dimension.hpp>
+#अन्तर्भाव <openvino/core/except.hpp>
+#अन्तर्भाव <openvino/core/node.hpp>
+#अन्तर्भाव <openvino/core/partial_shape.hpp>
+#अन्तर्भाव <openvino/core/type/bfloat16.hpp>
+#अन्तर्भाव <openvino/core/type/element_type.hpp>
+#अन्तर्भाव <openvino/core/type/float16.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/convert.hpp>
+#अन्तर्भाव <openvino/runtime/tensor.hpp>
+#अन्तर्भाव <ostream>
+#अन्तर्भाव <set>
+#अन्तर्भाव <stdexcept>
+#अन्तर्भाव <string>
+#अन्तर्भाव <cstring>
+#अन्तर्भाव <unordered_map>
+#अन्तर्भाव <vector>
 
 GgmlOvDecoder::GgmlOvDecoder(ggml_cgraph * cgraph,
                              ModelParams & model_params,
                              ComputeParams & compute_params,
                              std::map<std::string, std::shared_ptr<ov::Node>> & model_weights,
-                             bool is_static,
-                             bool is_stateful,
-                             bool model_is_splitted,
-                             bool is_prefill,
-                             int prefill_chunk_size) :
+                             तार्किक is_static,
+                             तार्किक is_stateful,
+                             तार्किक model_is_splitted,
+                             तार्किक is_prefill,
+                             पूर्णाङ्क prefill_chunk_आकार) :
     m_is_static(is_static),
     m_is_stateful(is_stateful),
     m_is_prefill(is_prefill),
-    m_naive(false),
-    m_prefill_chunk_size(prefill_chunk_size),
+    m_naive(असत्य),
+    m_prefill_chunk_आकार(prefill_chunk_आकार),
     m_model_is_splitted(model_is_splitted),
     m_cgraph(cgraph),
     m_model_weights(model_weights),
     m_model_params(model_params),
     m_compute_params(compute_params) {
-    static bool printed_address_map = false;
-    if (!printed_address_map) {
-        if (ggml_openvino_getenv_int("GGML_OPENVINO_PRINT_CGRAPH_TENSOR_ADDRESS")) {
-            printed_address_map = true;
-            print_tensor_address_map(cgraph);
+    स्थिर तार्किक printed_स्थानाङ्कः_map = असत्य;
+    यदि (!printed_स्थानाङ्कः_map) {
+        यदि (ggml_openvino_getenv_int("GGML_OPENVINO_PRINT_CGRAPH_TENSOR_ADDRESS")) {
+            printed_स्थानाङ्कः_map = सत्य;
+            print_tensor_स्थानाङ्कः_map(cgraph);
         }
     }
 
     validate_cgraph();
 
-    set_input_output();
-    compute_node_dynamic_dims();
+    समुच्चयः_निवेशः_output();
+    compute_ग्रन्थिः_dynamic_dims();
     compute_model_inputs();
     compute_model_outputs();
 
-    for (int node_n = 0; node_n < cgraph->n_nodes; node_n++) {
-        m_node_info_list[node_n].node_op_case = compute_op_case(m_node_info_list[node_n].node);
-        m_node_info_list[node_n].node_op_type = compute_op_type(m_node_info_list[node_n].node);
+    प्रति (पूर्णाङ्क ग्रन्थिः_n = 0; ग्रन्थिः_n < cgraph->n_nodes; ग्रन्थिः_n++) {
+        m_ग्रन्थिः_info_list[ग्रन्थिः_n].ग्रन्थिः_op_case = compute_op_case(m_ग्रन्थिः_info_list[ग्रन्थिः_n].ग्रन्थिः);
+        m_ग्रन्थिः_info_list[ग्रन्थिः_n].ग्रन्थिः_op_type = compute_op_type(m_ग्रन्थिः_info_list[ग्रन्थिः_n].ग्रन्थिः);
     }
 
-    add_extra_inputs();
+    सङ्कलय_extra_inputs();
 }
 
-void GgmlOvDecoder::update_io(ggml_cgraph * cgraph) {
+शून्य GgmlOvDecoder::update_io(ggml_cgraph * cgraph) {
     m_cgraph = cgraph;
     m_model_inputs.clear();
     m_model_outputs.clear();
-    m_node_info_list.clear();
-    set_input_output();
+    m_ग्रन्थिः_info_list.clear();
+    समुच्चयः_निवेशः_output();
     compute_model_inputs();
     compute_model_outputs();
 }
 
 // llama keeps separate graphs for batches with and without outputs, so a cache hit can come from a
 // graph built in other memory. The decoder then still points at the old graph's tensors.
-bool GgmlOvDecoder::is_bound_to(const ggml_cgraph * cgraph) const {
-    return m_cgraph == cgraph && cgraph->n_nodes > 0 && m_node_info_list.size() == (size_t) cgraph->n_nodes &&
-           m_node_info_list.front().node == cgraph->nodes[0] &&
-           m_node_info_list.back().node == cgraph->nodes[cgraph->n_nodes - 1];
+तार्किक GgmlOvDecoder::is_bound_गन्तव्यम्(ध्रुव ggml_cgraph * cgraph) ध्रुव {
+    प्रत्यागम m_cgraph == cgraph && cgraph->n_nodes > 0 && m_ग्रन्थिः_info_list.size() == (size_t) cgraph->n_nodes &&
+           m_ग्रन्थिः_info_list.front().ग्रन्थिः == cgraph->nodes[0] &&
+           m_ग्रन्थिः_info_list.back().ग्रन्थिः == cgraph->nodes[cgraph->n_nodes - 1];
 }
 
 GgmlOvDecoder::GgmlOvDecoder(ggml_cgraph * cgraph, std::map<std::string, std::shared_ptr<ov::Node>> & model_weights) {
     m_cgraph = cgraph;
     m_model_weights = model_weights;
-    m_naive = true;
-    set_input_output();
+    m_naive = सत्य;
+    समुच्चयः_निवेशः_output();
     compute_model_inputs();
     compute_model_outputs();
-    for (int node_n = 0; node_n < cgraph->n_nodes; node_n++) {
-        m_node_info_list[node_n].node_op_case = compute_op_case(m_node_info_list[node_n].node);
-        m_node_info_list[node_n].node_op_type = compute_op_type(m_node_info_list[node_n].node);
+    प्रति (पूर्णाङ्क ग्रन्थिः_n = 0; ग्रन्थिः_n < cgraph->n_nodes; ग्रन्थिः_n++) {
+        m_ग्रन्थिः_info_list[ग्रन्थिः_n].ग्रन्थिः_op_case = compute_op_case(m_ग्रन्थिः_info_list[ग्रन्थिः_n].ग्रन्थिः);
+        m_ग्रन्थिः_info_list[ग्रन्थिः_n].ग्रन्थिः_op_type = compute_op_type(m_ग्रन्थिः_info_list[ग्रन्थिः_n].ग्रन्थिः);
     }
 }
 
-namespace {
-bool is_inplace_op(const ggml_tensor * node) {
-    return node->op == GGML_OP_SET_ROWS || node->op == GGML_OP_CPY || (node->op == GGML_OP_SCALE && node->view_src);
+नामाकाश {
+तार्किक is_inplace_op(ध्रुव ggml_tensor * ग्रन्थिः) {
+    प्रत्यागम ग्रन्थिः->op == GGML_OP_समुच्चयः_पङ्क्तिकाः || ग्रन्थिः->op == GGML_OP_CPY || (ग्रन्थिः->op == GGML_OP_SCALE && ग्रन्थिः->view_src);
 }
 
-bool is_same_shape(const ggml_tensor * a, const ggml_tensor * b) {
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (a->ne[i] != b->ne[i]) {
-            return false;
+तार्किक is_same_shape(ध्रुव ggml_tensor * a, ध्रुव ggml_tensor * b) {
+    प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+        यदि (a->ne[i] != b->ne[i]) {
+            प्रत्यागम असत्य;
         }
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-bool is_conv_states_all_tensor(const ggml_tensor * tensor) {
-    return tensor != nullptr && strncmp(tensor->name, "conv_states_all", strlen("conv_states_all")) == 0;
+तार्किक is_conv_अवस्थाः_all_tensor(ध्रुव ggml_tensor * tensor) {
+    प्रत्यागम tensor != शून्यसूचकः && वाक्ये_तुलय(tensor->name, "conv_states_all", वाक्यदैर्घ्यम्("conv_states_all")) == 0;
 }
 
-bool is_full_single_slot_writeback(const ggml_tensor * node) {
-    return node->view_src != nullptr && node->view_src->ne[1] == 1 && node->src[1] != nullptr &&
-           node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src == node->view_src &&
-           node->src[1]->view_offs == 0 && ggml_nbytes(node->src[1]) == ggml_nbytes(node->view_src);
+तार्किक is_पूर्णम्_single_slot_writeback(ध्रुव ggml_tensor * ग्रन्थिः) {
+    प्रत्यागम ग्रन्थिः->view_src != शून्यसूचकः && ग्रन्थिः->view_src->ne[1] == 1 && ग्रन्थिः->src[1] != शून्यसूचकः &&
+           ग्रन्थिः->src[1]->op == GGML_OP_VIEW && ग्रन्थिः->src[1]->view_src == ग्रन्थिः->view_src &&
+           ग्रन्थिः->src[1]->view_offs == 0 && ggml_nbytes(ग्रन्थिः->src[1]) == ggml_nbytes(ग्रन्थिः->view_src);
 }
 }  // namespace
 
@@ -140,223 +140,223 @@ bool is_full_single_slot_writeback(const ggml_tensor * node) {
 // same-stride VIEW of one common base tensor, indexed by a distinct expert-plane offset, and
 // that the chain covers every plane of that base (leaf count == base->ne[1]). Only the
 // outermost ADD of the chain satisfies this (inner ADDs see fewer leaves than base->ne[1]).
-bool is_moe_expert_sum_add(const ggml_tensor * node) {
-    std::vector<const ggml_tensor *> leaves;
-    const ggml_tensor * cur = node;
-    while (cur->op == GGML_OP_ADD) {
-        if (cur->src[0] == nullptr || cur->src[1] == nullptr) {
-            return false;
+तार्किक is_moe_expert_योग_सङ्कलय(ध्रुव ggml_tensor * ग्रन्थिः) {
+    std::vector<ध्रुव ggml_tensor *> leaves;
+    ध्रुव ggml_tensor * cur = ग्रन्थिः;
+    यावत् (cur->op == GGML_OP_सङ्कलय) {
+        यदि (cur->src[0] == शून्यसूचकः || cur->src[1] == शून्यसूचकः) {
+            प्रत्यागम असत्य;
         }
         leaves.push_back(cur->src[1]);
         cur = cur->src[0];
     }
     leaves.push_back(cur);
 
-    const ggml_tensor * base = nullptr;
+    ध्रुव ggml_tensor * आधारः = शून्यसूचकः;
     std::set<int64_t> plane_indices;
-    for (const ggml_tensor * leaf : leaves) {
-        if (leaf->op != GGML_OP_VIEW || leaf->src[0] == nullptr) {
-            return false;
+    प्रति (ध्रुव ggml_tensor * पर्णम् : leaves) {
+        यदि (पर्णम्->op != GGML_OP_VIEW || पर्णम्->src[0] == शून्यसूचकः) {
+            प्रत्यागम असत्य;
         }
-        const ggml_tensor * leaf_base = leaf->src[0];
-        if (base == nullptr) {
-            base = leaf_base;
-        } else if (leaf_base != base) {
-            return false;
+        ध्रुव ggml_tensor * पर्णम्_आधारः = पर्णम्->src[0];
+        यदि (आधारः == शून्यसूचकः) {
+            आधारः = पर्णम्_आधारः;
+        } अन्यथा यदि (पर्णम्_आधारः != आधारः) {
+            प्रत्यागम असत्य;
         }
-        if (leaf->ne[0] != base->ne[0] || leaf->ne[1] != base->ne[2] || leaf->ne[2] != 1 || leaf->ne[3] != 1 ||
-            leaf->nb[1] != base->nb[2]) {
-            return false;
+        यदि (पर्णम्->ne[0] != आधारः->ne[0] || पर्णम्->ne[1] != आधारः->ne[2] || पर्णम्->ne[2] != 1 || पर्णम्->ne[3] != 1 ||
+            पर्णम्->nb[1] != आधारः->nb[2]) {
+            प्रत्यागम असत्य;
         }
-        if (base->nb[1] == 0 || leaf->view_offs % base->nb[1] != 0) {
-            return false;
+        यदि (आधारः->nb[1] == 0 || पर्णम्->view_offs % आधारः->nb[1] != 0) {
+            प्रत्यागम असत्य;
         }
-        int64_t plane = static_cast<int64_t>(leaf->view_offs / base->nb[1]);
-        if (plane < 0 || plane >= base->ne[1] || !plane_indices.insert(plane).second) {
-            return false;
+        int64_t plane = static_cast<int64_t>(पर्णम्->view_offs / आधारः->nb[1]);
+        यदि (plane < 0 || plane >= आधारः->ne[1] || !plane_indices.insert(plane).second) {
+            प्रत्यागम असत्य;
         }
     }
 
-    return base != nullptr && base->ne[1] > 1 && plane_indices.size() == static_cast<size_t>(base->ne[1]);
+    प्रत्यागम आधारः != शून्यसूचकः && आधारः->ne[1] > 1 && plane_indices.size() == static_cast<size_t>(आधारः->ne[1]);
 }
 
-std::string GgmlOvDecoder::get_tensor_name(const ggml_cgraph * cgraph, const ggml_tensor * tensor) {
-    if (tensor == nullptr) {
-        return "";
+std::string GgmlOvDecoder::get_tensor_name(ध्रुव ggml_cgraph * cgraph, ध्रुव ggml_tensor * tensor) {
+    यदि (tensor == शून्यसूचकः) {
+        प्रत्यागम "";
     }
-    if ((tensor->flags & GGML_TENSOR_FLAG_COMPUTE) || is_kvcache(tensor, nullptr)) {
+    यदि ((tensor->flags & GGML_TENSOR_FLAG_COMPUTE) || is_kvcache(tensor, शून्यसूचकः)) {
         // Hash-table slots depend on tensor addresses and differ between contexts.
         // Graph ordinals disambiguate duplicate names while keeping compiled-model
         // ports identical for equivalent graphs in different contexts.
-        const auto * node = std::find(cgraph->nodes, cgraph->nodes + cgraph->n_nodes, tensor);
-        if (node != cgraph->nodes + cgraph->n_nodes) {
-            return std::string(tensor->name) + "#n" + std::to_string(node - cgraph->nodes);
+        ध्रुव स्वचालित * ग्रन्थिः = std::find(cgraph->nodes, cgraph->nodes + cgraph->n_nodes, tensor);
+        यदि (ग्रन्थिः != cgraph->nodes + cgraph->n_nodes) {
+            प्रत्यागम std::string(tensor->name) + "#n" + std::to_string(ग्रन्थिः - cgraph->nodes);
         }
-        const auto * leaf = std::find(cgraph->leafs, cgraph->leafs + cgraph->n_leafs, tensor);
-        if (leaf != cgraph->leafs + cgraph->n_leafs) {
-            return std::string(tensor->name) + "#l" + std::to_string(leaf - cgraph->leafs);
+        ध्रुव स्वचालित * पर्णम् = std::find(cgraph->leafs, cgraph->leafs + cgraph->n_leafs, tensor);
+        यदि (पर्णम् != cgraph->leafs + cgraph->n_leafs) {
+            प्रत्यागम std::string(tensor->name) + "#l" + std::to_string(पर्णम् - cgraph->leafs);
         }
     }
-    return tensor->name;
+    प्रत्यागम tensor->name;
 }
 
-static std::string get_tensor_ov_name(const ggml_cgraph * cgraph, const ggml_tensor * tensor) {
-    return GgmlOvDecoder::get_tensor_name(cgraph, tensor);
+स्थिर std::string get_tensor_ov_name(ध्रुव ggml_cgraph * cgraph, ध्रुव ggml_tensor * tensor) {
+    प्रत्यागम GgmlOvDecoder::get_tensor_name(cgraph, tensor);
 }
 
-static std::string get_tensor_graph_input_ov_name(const GgmlOvDecoder * decoder,
-                                                  const ggml_cgraph * cgraph,
-                                                  const ggml_tensor * tensor,
-                                                  const ggml_tensor * op) {
-    if (GgmlOvDecoder::is_inp_pos(tensor, op)) {
-        return "inp_pos";
+स्थिर std::string get_tensor_graph_निवेशः_ov_name(ध्रुव GgmlOvDecoder * decoder,
+                                                  ध्रुव ggml_cgraph * cgraph,
+                                                  ध्रुव ggml_tensor * tensor,
+                                                  ध्रुव ggml_tensor * op) {
+    यदि (GgmlOvDecoder::is_inp_pos(tensor, op)) {
+        प्रत्यागम "inp_pos";
     }
-    if (GgmlOvDecoder::is_inp_emb(tensor, op)) {
-        return "embd";
+    यदि (GgmlOvDecoder::is_inp_emb(tensor, op)) {
+        प्रत्यागम "embd";
     }
-    if (GgmlOvDecoder::is_inp_mask(tensor, op)) {
+    यदि (GgmlOvDecoder::is_inp_आवरणम्(tensor, op)) {
         // Give the two attention masks distinct OV parameter names. build_attn_inp_kq_mask()
         // names the full-attention mask and the sliding-window mask identically, so keying a
         // parameter off the name alone makes the second mask overwrite the first and both
         // attention types read one parameter. Tell them apart by tensor identity, using the
         // SWA classification computed in compute_llm_params(). An empty swa_layers set means
         // there is only one mask in play and the plain name is correct.
-        const bool is_swa = decoder->is_swa_mask(tensor);
-        if (decoder->is_stateful()) {
-            return is_swa ? "self_kq_mask_swa" : "self_kq_mask";
+        ध्रुव तार्किक is_swa = decoder->is_swa_आवरणम्(tensor);
+        यदि (decoder->is_stateful()) {
+            प्रत्यागम is_swa ? "self_kq_mask_swa" : "self_kq_mask";
         }
-        if (is_swa) {
-            return get_tensor_ov_name(cgraph, tensor) + "_swa";
+        यदि (is_swa) {
+            प्रत्यागम get_tensor_ov_name(cgraph, tensor) + "_swa";
         }
     }
-    return get_tensor_ov_name(cgraph, tensor);
+    प्रत्यागम get_tensor_ov_name(cgraph, tensor);
 }
 
-void GgmlOvDecoder::set_input_output() {
-    for (int node_n = 0; node_n < m_cgraph->n_nodes; node_n++) {
-        auto * node = m_cgraph->nodes[node_n];
+शून्य GgmlOvDecoder::समुच्चयः_निवेशः_output() {
+    प्रति (पूर्णाङ्क ग्रन्थिः_n = 0; ग्रन्थिः_n < m_cgraph->n_nodes; ग्रन्थिः_n++) {
+        स्वचालित * ग्रन्थिः = m_cgraph->nodes[ग्रन्थिः_n];
 
-        NodeInfo current_node_info;
-        auto node_name = get_tensor_ov_name(m_cgraph, node);
+        ग्रन्थिः_Info current_ग्रन्थिः_info;
+        स्वचालित ग्रन्थिः_name = get_tensor_ov_name(m_cgraph, ग्रन्थिः);
 
-        current_node_info.node = node;
-        current_node_info.node_name = node_name;
-        current_node_info.node_op_case = 0;
-        current_node_info.data_addr = node->data;
+        current_ग्रन्थिः_info.ग्रन्थिः = ग्रन्थिः;
+        current_ग्रन्थिः_info.ग्रन्थिः_name = ग्रन्थिः_name;
+        current_ग्रन्थिः_info.ग्रन्थिः_op_case = 0;
+        current_ग्रन्थिः_info.दत्त_addr = ग्रन्थिः->दत्त;
 
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            auto * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+        प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_SRC; i++) {
+            स्वचालित * src = ग्रन्थिः->src[i];
+            यदि (src == शून्यसूचकः) {
+                अनुवर्त;
             }
-            auto src_name = get_tensor_ov_name(m_cgraph, src);
-            if (src->flags & GGML_TENSOR_FLAG_INPUT) {
-                src_name = get_tensor_graph_input_ov_name(this, m_cgraph, src, node);
+            स्वचालित src_name = get_tensor_ov_name(m_cgraph, src);
+            यदि (src->flags & GGML_TENSOR_FLAG_निवेशः) {
+                src_name = get_tensor_graph_निवेशः_ov_name(एतत्, m_cgraph, src, ग्रन्थिः);
             }
-            current_node_info.node_inputs[src_name] = src;
-            current_node_info.node_inputs_names.push_back(src_name);
+            current_ग्रन्थिः_info.ग्रन्थिः_inputs[src_name] = src;
+            current_ग्रन्थिः_info.ग्रन्थिः_inputs_नामानि.push_back(src_name);
 
-            if (src->op == GGML_OP_VIEW) {
+            यदि (src->op == GGML_OP_VIEW) {
                 // Traverse upward through nested VIEW operations
-                std::remove_reference_t<decltype(current_node_info.node_inputs_views[src_name])> view_chain;
-                auto * current = src;
+                std::remove_reference_t<decltype(current_ग्रन्थिः_info.ग्रन्थिः_inputs_views[src_name])> view_chain;
+                स्वचालित * current = src;
 
-                while (current != nullptr) {
-                    auto current_name = get_tensor_ov_name(m_cgraph, current);
-                    if (current->flags & GGML_TENSOR_FLAG_INPUT) {
-                        current_name = get_tensor_graph_input_ov_name(this, m_cgraph, current, node);
+                यावत् (current != शून्यसूचकः) {
+                    स्वचालित current_name = get_tensor_ov_name(m_cgraph, current);
+                    यदि (current->flags & GGML_TENSOR_FLAG_निवेशः) {
+                        current_name = get_tensor_graph_निवेशः_ov_name(एतत्, m_cgraph, current, ग्रन्थिः);
                     }
                     view_chain.emplace_back(current_name, current);
                     // If current src is also a VIEW, continue traversing
-                    if (current->src[0] != nullptr && current->src[0]->op == GGML_OP_VIEW) {
+                    यदि (current->src[0] != शून्यसूचकः && current->src[0]->op == GGML_OP_VIEW) {
                         current = current->src[0];
-                    } else {
-                        break;
+                    } अन्यथा {
+                        भङ्ग;
                     }
                 }
 
                 // Assign all collected view inputs to node_inputs_views
-                current_node_info.node_inputs_views[src_name] = view_chain;
+                current_ग्रन्थिः_info.ग्रन्थिः_inputs_views[src_name] = view_chain;
             }
         }
 
-        m_node_info_list.push_back(current_node_info);
+        m_ग्रन्थिः_info_list.push_back(current_ग्रन्थिः_info);
     }
 }
 
-int GgmlOvDecoder::compute_op_case(const ggml_tensor * node) const {
-    int op_case = 0;
-    switch (node->op) {
-    case GGML_OP_RESHAPE: {
-        if (m_naive) {
-            break;
+पूर्णाङ्क GgmlOvDecoder::compute_op_case(ध्रुव ggml_tensor * ग्रन्थिः) ध्रुव {
+    पूर्णाङ्क op_case = 0;
+    विकल्प (ग्रन्थिः->op) {
+    पक्ष GGML_OP_RESHAPE: {
+        यदि (m_naive) {
+            भङ्ग;
         }
-        auto name = std::string(node->name);
-        auto * src = node->src[0];
+        स्वचालित name = std::string(ग्रन्थिः->name);
+        स्वचालित * src = ग्रन्थिः->src[0];
         // Identify recurrent sequence reshapes before size checks, which are ambiguous for one token.
-        bool recurrent_sequence = false;
-        for (int i = 0; i < m_cgraph->n_nodes && !recurrent_sequence; ++i) {
-            const auto * consumer = m_cgraph->nodes[i];
-            if (consumer->op == GGML_OP_MUL_MAT_ID && consumer->src[1] == node) {
-                return 1;
-            } else if (consumer->op == GGML_OP_SSM_CONV) {
-                const auto * concat = consumer->src[0];
-                if (concat->op == GGML_OP_CONCAT) {
-                    const auto * transposed = concat->src[1];
-                    recurrent_sequence = transposed->op == GGML_OP_TRANSPOSE && transposed->src[0] == node;
+        तार्किक recurrent_sequence = असत्य;
+        प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes && !recurrent_sequence; ++i) {
+            ध्रुव स्वचालित * उपभोक्ता = m_cgraph->nodes[i];
+            यदि (उपभोक्ता->op == GGML_OP_MUL_MAT_ID && उपभोक्ता->src[1] == ग्रन्थिः) {
+                प्रत्यागम 1;
+            } अन्यथा यदि (उपभोक्ता->op == GGML_OP_SSM_CONV) {
+                ध्रुव स्वचालित * concat = उपभोक्ता->src[0];
+                यदि (concat->op == GGML_OP_CONCAT) {
+                    ध्रुव स्वचालित * transposed = concat->src[1];
+                    recurrent_sequence = transposed->op == GGML_OP_TRANSPOSE && transposed->src[0] == ग्रन्थिः;
                 }
-            } else if (consumer->op == GGML_OP_UNARY && ggml_get_unary_op(consumer) == GGML_UNARY_OP_SOFTPLUS) {
-                const auto * biased = consumer->src[0];
-                recurrent_sequence = biased->op == GGML_OP_ADD && biased->src[0] == node;
+            } अन्यथा यदि (उपभोक्ता->op == GGML_OP_UNARY && ggml_get_unary_op(उपभोक्ता) == GGML_UNARY_OP_SOFTPLUS) {
+                ध्रुव स्वचालित * biased = उपभोक्ता->src[0];
+                recurrent_sequence = biased->op == GGML_OP_सङ्कलय && biased->src[0] == ग्रन्थिः;
             }
         }
-        if (recurrent_sequence && node->ne[0] == src->ne[0] && node->ne[3] == 1) {
-            return 6;
+        यदि (recurrent_sequence && ग्रन्थिः->ne[0] == src->ne[0] && ग्रन्थिः->ne[3] == 1) {
+            प्रत्यागम 6;
         }
-        if (node->ne[0] == src->ne[0] && node->ne[2] == 1 && node->ne[3] == 1) {
-            return 5;
+        यदि (ग्रन्थिः->ne[0] == src->ne[0] && ग्रन्थिः->ne[2] == 1 && ग्रन्थिः->ne[3] == 1) {
+            प्रत्यागम 5;
         }
-        if (src->op == GGML_OP_RESHAPE && src->src[0]->ne[0] == node->ne[0] && src->src[0]->ne[1] == node->ne[1]) {
+        यदि (src->op == GGML_OP_RESHAPE && src->src[0]->ne[0] == ग्रन्थिः->ne[0] && src->src[0]->ne[1] == ग्रन्थिः->ne[1]) {
             op_case = 4;
-        } else if (node->ne[0] * node->ne[1] == src->ne[0]) {
+        } अन्यथा यदि (ग्रन्थिः->ne[0] * ग्रन्थिः->ne[1] == src->ne[0]) {
             op_case = 1;
-        } else if (src->ne[0] * src->ne[1] == node->ne[0]) {
+        } अन्यथा यदि (src->ne[0] * src->ne[1] == ग्रन्थिः->ne[0]) {
             op_case = 2;
-            if (src->ne[2] * src->ne[3] == node->ne[1]) {
+            यदि (src->ne[2] * src->ne[3] == ग्रन्थिः->ne[1]) {
                 op_case = 5;
             }
-        } else if (node->ne[0] == 1 && src->ne[0] * src->ne[1] * src->ne[2] == node->ne[1]) {
+        } अन्यथा यदि (ग्रन्थिः->ne[0] == 1 && src->ne[0] * src->ne[1] * src->ne[2] == ग्रन्थिः->ne[1]) {
             op_case = 3;
-        } else if (name.find("linear_attn_qkv_mixed") == 0 || name.find("alpha") == 0) {
+        } अन्यथा यदि (name.find("linear_attn_qkv_mixed") == 0 || name.find("alpha") == 0) {
             op_case = 6;
-        } else if (name.find("linear_attn_out") == 0) {
+        } अन्यथा यदि (name.find("linear_attn_out") == 0) {
             op_case = 7;
-        } else if (name.find("state_predelta") == 0) {
+        } अन्यथा यदि (name.find("state_predelta") == 0) {
             op_case = 8;
         }
-        if (op_case == 1 && m_is_stateful) {
+        यदि (op_case == 1 && m_is_stateful) {
             // Recurrent convolution and GDN gates retain their rank-4 layout.
             // The gathered states may come through a view of the one gather of all states (see build_rs).
-            const auto * gather = src->op == GGML_OP_VIEW ? src->src[0] : src;
-            bool recurrent = gather->op == GGML_OP_GET_ROWS && is_recurrent_cache(gather->src[0]);
-            for (int i = 0; i < m_cgraph->n_nodes && !recurrent; ++i) {
-                const auto * consumer = m_cgraph->nodes[i];
-                if (consumer->op == GGML_OP_GATED_DELTA_NET) {
-                    for (int j : {3, 4}) {
-                        const auto * gate = consumer->src[j];
-                        if (gate->op == GGML_OP_UNARY) {
+            ध्रुव स्वचालित * gather = src->op == GGML_OP_VIEW ? src->src[0] : src;
+            तार्किक recurrent = gather->op == GGML_OP_GET_पङ्क्तिकाः && is_recurrent_cache(gather->src[0]);
+            प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes && !recurrent; ++i) {
+                ध्रुव स्वचालित * उपभोक्ता = m_cgraph->nodes[i];
+                यदि (उपभोक्ता->op == GGML_OP_GATED_DELTA_NET) {
+                    प्रति (पूर्णाङ्क j : {3, 4}) {
+                        ध्रुव स्वचालित * gate = उपभोक्ता->src[j];
+                        यदि (gate->op == GGML_OP_UNARY) {
                             gate = gate->src[0];
                         }
-                        recurrent = recurrent || gate == node;
+                        recurrent = recurrent || gate == ग्रन्थिः;
                     }
-                } else if (consumer->op == GGML_OP_MUL) {
-                    for (int j = 0; j < 2; ++j) {
-                        const auto * gate = consumer->src[j];
-                        const auto * norm = consumer->src[1 - j];
-                        if (gate->op != GGML_OP_UNARY || gate->src[0] != node) {
-                            continue;
+                } अन्यथा यदि (उपभोक्ता->op == GGML_OP_MUL) {
+                    प्रति (पूर्णाङ्क j = 0; j < 2; ++j) {
+                        ध्रुव स्वचालित * gate = उपभोक्ता->src[j];
+                        ध्रुव स्वचालित * norm = उपभोक्ता->src[1 - j];
+                        यदि (gate->op != GGML_OP_UNARY || gate->src[0] != ग्रन्थिः) {
+                            अनुवर्त;
                         }
-                        if (norm->op == GGML_OP_MUL) {
+                        यदि (norm->op == GGML_OP_MUL) {
                             norm = norm->src[0];
                         }
                         recurrent = recurrent || (norm->op == GGML_OP_RMS_NORM && norm->src[0]->op == GGML_OP_VIEW &&
@@ -364,106 +364,106 @@ int GgmlOvDecoder::compute_op_case(const ggml_tensor * node) const {
                     }
                 }
             }
-            if (recurrent) {
+            यदि (recurrent) {
                 op_case = 9;
             }
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_PERMUTE: {
-        if (node->src[0]->op != GGML_OP_VIEW) {
+    पक्ष GGML_OP_PERMUTE: {
+        यदि (ग्रन्थिः->src[0]->op != GGML_OP_VIEW) {
             op_case = 1;
-        } else if (node->src[0]->src[0]->op == GGML_OP_NONE) {
+        } अन्यथा यदि (ग्रन्थिः->src[0]->src[0]->op == GGML_OP_NONE) {
             // kv cache tensor
-            std::string src_name(node->view_src->name);
-            int layer = extract_layer_from_name(src_name).value();
-            if (ggml_is_contiguous(node->src[0])) {
+            std::string src_name(ग्रन्थिः->view_src->name);
+            पूर्णाङ्क layer = extract_layer_from_name(src_name).value();
+            यदि (ggml_is_contiguous(ग्रन्थिः->src[0])) {
                 // -  19: [    64,     8,   256,     1] VIEW            cache_k_l0 (view)             [ 2,   128,  1024, 1048576]
                 //         [   512,  1024,     1,     1]      0: NONE     cache_k_l0                    [ 2,  1024, 1048576, 1048576]
                 // -  20: [    64,   256,     8,     1] PERMUTE         cache_k_l0 (view) (permuted)  [ 2,  1024,   128, 1048576]
                 //         [    64,     8,   256,     1]      0: VIEW     cache_k_l0 (view)             [ 2,   128,  1024, 1048576]
-                if (!is_swa_layer(layer)) {
+                यदि (!is_swa_layer(layer)) {
                     op_case = 3;
-                } else {
+                } अन्यथा {
                     op_case = 4;
                 }
-            } else {
+            } अन्यथा {
                 // special case of cache v when `-fa off`
                 // -  17: [   256,     8,    64,     1] VIEW            cache_v_l0 (view)             [ 2, 131072,  2048, 1048576]
                 //         [   512,  1024,     1,     1]      0: NONE     cache_v_l0                   [ 2,  1024, 1048576, 1048576]
                 // -  18: [   256,    64,     8,     1] PERMUTE         cache_v_l0 (view) (permuted)  [ 2,  2048, 131072, 1048576]
                 //         [   256,     8,    64,     1]      0: VIEW     cache_v_l0 (view)            [ 2, 131072,  2048, 1048576]
-                if (!is_swa_layer(layer)) {
+                यदि (!is_swa_layer(layer)) {
                     op_case = 5;
-                } else {
+                } अन्यथा {
                     op_case = 6;
                 }
             }
-        } else {
+        } अन्यथा {
             // rope'ed query tensor
             op_case = 2;
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_MUL_MAT: {
-        if (node->src[1]->op == GGML_OP_SOFT_MAX) {
+    पक्ष GGML_OP_MUL_MAT: {
+        यदि (ग्रन्थिः->src[1]->op == GGML_OP_SOFT_MAX) {
             // In the case of `-fa off`, softmax is used, v_trans=true, the dynamic dim is ne[0] for cache_v
             op_case = 2;
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_GET_ROWS: {
+    पक्ष GGML_OP_GET_पङ्क्तिकाः: {
         // GET_ROWS gathering recurrent state cache rows via the inp->s_copy index list:
         // src[0] is a reshape of cache_r/cache_s, src[1] is a view of the s_copy leaf, or the leaf itself
         // when one gather covers all states (see build_rs).
         // op_case 1/2: active/extra rows of a multi-slot cache
         // op_case 3/4: active/extra rows of a single-slot cache
-        if (node->src[0]->op == GGML_OP_RESHAPE && node->src[0]->src[0] != nullptr &&
-            is_recurrent_cache(node->src[0]->src[0])) {
-            const bool single_slot = node->src[0]->src[0]->ne[1] == 1;
-            if (node->src[1]->op == GGML_OP_VIEW) {
-                op_case = (node->src[1]->view_offs == 0 ? 1 : 2) + (single_slot ? 2 : 0);
-            } else if (single_slot) {
+        यदि (ग्रन्थिः->src[0]->op == GGML_OP_RESHAPE && ग्रन्थिः->src[0]->src[0] != शून्यसूचकः &&
+            is_recurrent_cache(ग्रन्थिः->src[0]->src[0])) {
+            ध्रुव तार्किक single_slot = ग्रन्थिः->src[0]->src[0]->ne[1] == 1;
+            यदि (ग्रन्थिः->src[1]->op == GGML_OP_VIEW) {
+                op_case = (ग्रन्थिः->src[1]->view_offs == 0 ? 1 : 2) + (single_slot ? 2 : 0);
+            } अन्यथा यदि (single_slot) {
                 // a single-slot cache holds exactly the one state the gather selects
                 op_case = 3;
             }
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_ROPE: {
-        const int mode = node->op_params[2];
-        switch (mode) {
-        case GGML_ROPE_TYPE_NEOX: {
+    पक्ष GGML_OP_ROPE: {
+        ध्रुव पूर्णाङ्क mode = ग्रन्थिः->op_params[2];
+        विकल्प (mode) {
+        पक्ष GGML_ROPE_TYPE_NEOX: {
             op_case = 1;
-            break;
+            भङ्ग;
         }
-        case GGML_ROPE_TYPE_IMROPE: {
+        पक्ष GGML_ROPE_TYPE_IMROPE: {
             op_case = 2;
-            break;
+            भङ्ग;
         }
-        case GGML_ROPE_TYPE_VISION: {
+        पक्ष GGML_ROPE_TYPE_VISION: {
             op_case = 3;
-            break;
+            भङ्ग;
         }
-        case GGML_ROPE_TYPE_MROPE: {
+        पक्ष GGML_ROPE_TYPE_MROPE: {
             op_case = 4;
-            break;
+            भङ्ग;
         }
-        default:
+        स्वभाव:
             op_case = 0;
-            break;
+            भङ्ग;
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_VIEW: {
-        if (!m_model_params.has_rs_rollback && node->src[0] != nullptr &&
-            node->src[0]->op == GGML_OP_GATED_DELTA_NET) {
+    पक्ष GGML_OP_VIEW: {
+        यदि (!m_model_params.has_rs_rollback && ग्रन्थिः->src[0] != शून्यसूचकः &&
+            ग्रन्थिः->src[0]->op == GGML_OP_GATED_DELTA_NET) {
             // The GDN translator publishes native attention/state outputs under these VIEW names.
             op_case = 2;
-            break;
+            भङ्ग;
         }
-        if (m_is_static && node->src[0] != nullptr &&
-            (node->src[0]->op == GGML_OP_GATED_DELTA_NET || node->src[0]->op == GGML_OP_CONCAT)) {
+        यदि (m_is_static && ग्रन्थिः->src[0] != शून्यसूचकः &&
+            (ग्रन्थिः->src[0]->op == GGML_OP_GATED_DELTA_NET || ग्रन्थिः->src[0]->op == GGML_OP_CONCAT)) {
             // VIEW slicing a GATED_DELTA_NET combined [attn|state] output, or the conv_input
             // CONCAT. The consuming CPY/RMS_NORM op recovers the true window at runtime via
             // ssm_state_size / the fixed conv kernel width, so this VIEW must stay an identity
@@ -472,207 +472,207 @@ int GgmlOvDecoder::compute_op_case(const ggml_tensor * node) const {
             // cgraph's token count, which is wrong once the compiled static model runs with a
             // different token count (prefill chunk size or 1).
             op_case = 1;
-            break;
+            भङ्ग;
         }
-        if (node->src[0]->op == GGML_OP_VIEW) {
-            auto * src = node->src[0];
-            if (ggml_nelements(node) != ggml_nelements(src)) {
+        यदि (ग्रन्थिः->src[0]->op == GGML_OP_VIEW) {
+            स्वचालित * src = ग्रन्थिः->src[0];
+            यदि (ggml_nelements(ग्रन्थिः) != ggml_nelements(src)) {
                 // throw std::runtime_error("Unsupported VIEW case");
             }
             op_case = 0;
-            if (m_model_is_splitted && m_model_inputs.find(get_tensor_ov_name(m_cgraph, src)) != m_model_inputs.end()) {
+            यदि (m_model_is_splitted && m_model_inputs.find(get_tensor_ov_name(m_cgraph, src)) != m_model_inputs.end()) {
                 op_case = 0;
             }
         }
         {
-            auto * src = node->src[0];
-            if (ggml_nelements(node) != ggml_nelements(src)) {
+            स्वचालित * src = ग्रन्थिः->src[0];
+            यदि (ggml_nelements(ग्रन्थिः) != ggml_nelements(src)) {
                 // Case 4: select one slice on src dim1 (via view offset), keep src dim2 as output dim1.
                 // Typical pattern:
                 //   src: ne=[N, M, K, 1], nb=[b0, b1, b2, b3]
                 //   dst: ne=[N, K, 1, 1], nb=[b0, b2, b3, b3]
-                if (node->ne[0] == src->ne[0] && node->ne[1] == src->ne[2] && node->ne[2] == 1 &&
-                    node->nb[0] == src->nb[0] && node->nb[1] == src->nb[2] && src->ne[1] > 1) {
+                यदि (ग्रन्थिः->ne[0] == src->ne[0] && ग्रन्थिः->ne[1] == src->ne[2] && ग्रन्थिः->ne[2] == 1 &&
+                    ग्रन्थिः->nb[0] == src->nb[0] && ग्रन्थिः->nb[1] == src->nb[2] && src->ne[1] > 1) {
                     op_case = 0;
-                    break;
+                    भङ्ग;
                 }
 
                 // General case 3: shape differs from source (one or more dims) and is handled as VIEW slicing.
-                int diff_count = 0;
-                for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                    if (node->ne[i] != src->ne[i]) {
-                        diff_count++;
+                पूर्णाङ्क diff_गणनम् = 0;
+                प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+                    यदि (ग्रन्थिः->ne[i] != src->ne[i]) {
+                        diff_गणनम्++;
                     }
                     // if node ne[i] > src ne[i], case = 0
-                    if (node->ne[i] > src->ne[i]) {
-                        return 0;
+                    यदि (ग्रन्थिः->ne[i] > src->ne[i]) {
+                        प्रत्यागम 0;
                     }
                 }
-                if (diff_count >= 1) {
+                यदि (diff_गणनम् >= 1) {
                     op_case = 0;
                 }
             }
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_RMS_NORM: {
-        if (node->src[0]->op == GGML_OP_VIEW) {
-            if (is_same_shape(node->src[0]->src[0], node->src[0])) {
+    पक्ष GGML_OP_RMS_NORM: {
+        यदि (ग्रन्थिः->src[0]->op == GGML_OP_VIEW) {
+            यदि (is_same_shape(ग्रन्थिः->src[0]->src[0], ग्रन्थिः->src[0])) {
                 op_case = 1;
-            } else if (!m_model_params.has_rs_rollback &&
-                       node->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
+            } अन्यथा यदि (!m_model_params.has_rs_rollback &&
+                       ग्रन्थिः->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
                 // GDN attention is routed directly to this VIEW by get_output_names().
                 op_case = 3;
-            } else if (node->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
+            } अन्यथा यदि (ग्रन्थिः->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
                 op_case = 2;
             }
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_POOL_2D: {
-        const ggml_op_pool pool_mode = static_cast<ggml_op_pool>(node->op_params[0]);
-        switch (pool_mode) {
-        case GGML_OP_POOL_MAX: {
+    पक्ष GGML_OP_POOL_2D: {
+        ध्रुव ggml_op_pool pool_बहुलकम् = static_cast<ggml_op_pool>(ग्रन्थिः->op_params[0]);
+        विकल्प (pool_बहुलकम्) {
+        पक्ष GGML_OP_POOL_MAX: {
             op_case = 1;
-            break;
+            भङ्ग;
         }
-        case GGML_OP_POOL_AVG: {
+        पक्ष GGML_OP_POOL_AVG: {
             op_case = 2;
-            break;
+            भङ्ग;
         }
-        default:
+        स्वभाव:
             op_case = 0;
-            break;
+            भङ्ग;
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_UPSCALE: {
-        const int32_t mode_flags = node->op_params[0];
-        const ggml_scale_mode scale_mode = static_cast<ggml_scale_mode>(mode_flags & 0xFF);
-        switch (scale_mode) {
-        case GGML_SCALE_MODE_NEAREST: {
+    पक्ष GGML_OP_UPSCALE: {
+        ध्रुव int32_t बहुलकम्_flags = ग्रन्थिः->op_params[0];
+        ध्रुव ggml_scale_बहुलकम् scale_बहुलकम् = static_cast<ggml_scale_बहुलकम्>(बहुलकम्_flags & 0xFF);
+        विकल्प (scale_बहुलकम्) {
+        पक्ष GGML_SCALE_बहुलकम्_निकटतमः: {
             op_case = 1;
-            break;
+            भङ्ग;
         }
-        case GGML_SCALE_MODE_BILINEAR: {
+        पक्ष GGML_SCALE_बहुलकम्_BILINEAR: {
             op_case = 2;
-            break;
+            भङ्ग;
         }
-        case GGML_SCALE_MODE_BICUBIC: {
+        पक्ष GGML_SCALE_बहुलकम्_BICUBIC: {
             op_case = 3;
-            break;
+            भङ्ग;
         }
-        default:
+        स्वभाव:
             op_case = 0;
-            break;
+            भङ्ग;
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_CPY: {
-        if (node->src[0]->op == GGML_OP_VIEW) {
-            if (node->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
-                if (!m_model_params.has_rs_rollback) {
+    पक्ष GGML_OP_CPY: {
+        यदि (ग्रन्थिः->src[0]->op == GGML_OP_VIEW) {
+            यदि (ग्रन्थिः->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET) {
+                यदि (!m_model_params.has_rs_rollback) {
                     // op_case 7 replaces a single-slot cache; op_case 10 writes native GDN state
                     // into an active range of a larger non-rollback cache.
-                    op_case = is_full_single_slot_writeback(node) ? 7 : 10;
-                } else {
+                    op_case = is_पूर्णम्_single_slot_writeback(ग्रन्थिः) ? 7 : 10;
+                } अन्यथा {
                     op_case = 1;
                 }
-            } else if (GgmlOvDecoder::is_conv_state_writeback(node)) {
-                op_case = is_full_single_slot_writeback(node) ? 8 : 2;
-                break;
-            } else if (is_conv_states_all_tensor(node->view_src) && node->src[1] != nullptr &&
-                       node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src == node->view_src) {
+            } अन्यथा यदि (GgmlOvDecoder::is_conv_state_writeback(ग्रन्थिः)) {
+                op_case = is_पूर्णम्_single_slot_writeback(ग्रन्थिः) ? 8 : 2;
+                भङ्ग;
+            } अन्यथा यदि (is_conv_अवस्थाः_all_tensor(ग्रन्थिः->view_src) && ग्रन्थिः->src[1] != शून्यसूचकः &&
+                       ग्रन्थिः->src[1]->op == GGML_OP_VIEW && ग्रन्थिः->src[1]->view_src == ग्रन्थिः->view_src) {
                 op_case = 4;
-                break;
-            } else if (node->src[0]->src[0]->op == GGML_OP_GET_ROWS && node->src[1] != nullptr &&
-                       node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src != nullptr &&
-                       is_recurrent_cache(node->src[1]->view_src) && node->src[1]->view_src->ne[1] == 1) {
+                भङ्ग;
+            } अन्यथा यदि (ग्रन्थिः->src[0]->src[0]->op == GGML_OP_GET_पङ्क्तिकाः && ग्रन्थिः->src[1] != शून्यसूचकः &&
+                       ग्रन्थिः->src[1]->op == GGML_OP_VIEW && ग्रन्थिः->src[1]->view_src != शून्यसूचकः &&
+                       is_recurrent_cache(ग्रन्थिः->src[1]->view_src) && ग्रन्थिः->src[1]->view_src->ne[1] == 1) {
                 // defrag remainder writeback of a single-slot cache, taken from a view of the one gather of
                 // all states (see build_rs)
                 op_case = 9;
             }
-        } else if (node->src[0]->op == GGML_OP_GET_ROWS && node->src[1] != nullptr &&
-                   node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src != nullptr &&
-                   is_recurrent_cache(node->src[1]->view_src)) {
+        } अन्यथा यदि (ग्रन्थिः->src[0]->op == GGML_OP_GET_पङ्क्तिकाः && ग्रन्थिः->src[1] != शून्यसूचकः &&
+                   ग्रन्थिः->src[1]->op == GGML_OP_VIEW && ग्रन्थिः->src[1]->view_src != शून्यसूचकः &&
+                   is_recurrent_cache(ग्रन्थिः->src[1]->view_src)) {
             // s_copy defrag remainder writeback: gathered extra state rows copied back into the cache
-            op_case = node->src[1]->view_src->ne[1] == 1 ? 9 : 3;
-        } else if (node->src[1] != nullptr && node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src != nullptr) {
+            op_case = ग्रन्थिः->src[1]->view_src->ne[1] == 1 ? 9 : 3;
+        } अन्यथा यदि (ग्रन्थिः->src[1] != शून्यसूचकः && ग्रन्थिः->src[1]->op == GGML_OP_VIEW && ग्रन्थिः->src[1]->view_src != शून्यसूचकः) {
             // op_case 5: KV write for decoder self-attention (dynamic write offset)
             // op_case 6: KV write for encoder self-attn or cross-attn (static offset)
-            const ggml_tensor * kv_buf = node->src[1]->view_src;
-            if (kv_buf->ne[1] == 1 && kv_buf->ne[2] == 1 && kv_buf->ne[3] == 1) {
+            ध्रुव ggml_tensor * kv_buf = ग्रन्थिः->src[1]->view_src;
+            यदि (kv_buf->ne[1] == 1 && kv_buf->ne[2] == 1 && kv_buf->ne[3] == 1) {
                 op_case = 6;
                 // Forward-scan the graph for a FLASH_ATTN_EXT that reads from
                 // the same buffer. Having a mask (src[3] != nullptr) implies
                 // decoder self-attention and the write offset is dynamic.
-                for (int i = 0; i < m_cgraph->n_nodes; i++) {
-                    const ggml_tensor * n = m_cgraph->nodes[i];
-                    if (n->op != GGML_OP_FLASH_ATTN_EXT) {
-                        continue;
+                प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes; i++) {
+                    ध्रुव ggml_tensor * n = m_cgraph->nodes[i];
+                    यदि (n->op != GGML_OP_FLASH_ATTN_EXT) {
+                        अनुवर्त;
                     }
                     // K (src[1]) and V (src[2]) are 3-D views whose view_src is
                     // the flat KV buffer we are writing to.
-                    if ((n->src[1] != nullptr && n->src[1]->view_src == kv_buf) ||
-                        (n->src[2] != nullptr && n->src[2]->view_src == kv_buf)) {
-                        if (n->src[3] != nullptr) {
+                    यदि ((n->src[1] != शून्यसूचकः && n->src[1]->view_src == kv_buf) ||
+                        (n->src[2] != शून्यसूचकः && n->src[2]->view_src == kv_buf)) {
+                        यदि (n->src[3] != शून्यसूचकः) {
                             op_case = 5;  // decoder self-attention: mask present
                         }
-                        break;
+                        भङ्ग;
                     }
                 }
             }
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_ADD: {
-        if (is_moe_expert_sum_add(node)) {
+    पक्ष GGML_OP_सङ्कलय: {
+        यदि (is_moe_expert_योग_सङ्कलय(ग्रन्थिः)) {
             // Outermost ADD of a MoE expert-plane sum chain: translated as a single
             // ReduceSum over the base tensor instead of N-1 chained Adds over N Slices.
             op_case = 1;
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_SCALE: {
-        if (node->view_src && node->buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) {
-            op_case = node->view_src->ne[1] == 1 ? 2 : 1;
+    पक्ष GGML_OP_SCALE: {
+        यदि (ग्रन्थिः->view_src && ग्रन्थिः->बफर->usage == GGML_BACKEND_बफर_USAGE_ANY) {
+            op_case = ग्रन्थिः->view_src->ne[1] == 1 ? 2 : 1;
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_L2_NORM: {
-        if (std::string(node->name).find("predelta") != std::string::npos) {
+    पक्ष GGML_OP_L2_NORM: {
+        यदि (std::string(ग्रन्थिः->name).find("predelta") != std::string::npos) {
             op_case = 1;
         }
-        break;
+        भङ्ग;
     }
-    case GGML_OP_FLASH_ATTN_EXT: {
-        if (node->src[1] != nullptr && node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src != nullptr) {
-            const ggml_tensor * kv_buf = node->src[1]->view_src;
-            if (kv_buf->ne[1] == 1 && kv_buf->ne[2] == 1 && kv_buf->ne[3] == 1) {
-                op_case = (node->src[3] != nullptr) ? 1 : 2;
+    पक्ष GGML_OP_FLASH_ATTN_EXT: {
+        यदि (ग्रन्थिः->src[1] != शून्यसूचकः && ग्रन्थिः->src[1]->op == GGML_OP_VIEW && ग्रन्थिः->src[1]->view_src != शून्यसूचकः) {
+            ध्रुव ggml_tensor * kv_buf = ग्रन्थिः->src[1]->view_src;
+            यदि (kv_buf->ne[1] == 1 && kv_buf->ne[2] == 1 && kv_buf->ne[3] == 1) {
+                op_case = (ग्रन्थिः->src[3] != शून्यसूचकः) ? 1 : 2;
             }
         }
-        break;
+        भङ्ग;
     }
-    default:
-        break;
+    स्वभाव:
+        भङ्ग;
     }
-    return op_case;
+    प्रत्यागम op_case;
 }
 
-std::optional<int> extract_layer_from_name(const std::string & name) {
+std::optional<पूर्णाङ्क> extract_layer_from_name(ध्रुव std::string & name) {
     size_t pos1 = name.find("_l");
-    if (pos1 == std::string::npos) {
-        return std::nullopt;
+    यदि (pos1 == std::string::npos) {
+        प्रत्यागम std::nullopt;
     }
     pos1 += 2;
     size_t pos2 = name.find(' ', pos1);
-    if (pos2 == std::string::npos) {
-        pos2 = name.length();
+    यदि (pos2 == std::string::npos) {
+        pos2 = name.दीर्घता();
     }
     std::string layer_str = name.substr(pos1, pos2 - pos1);
-    int layer = std::stoi(layer_str);
-    return layer;
+    पूर्णाङ्क layer = std::stoi(layer_str);
+    प्रत्यागम layer;
 }
 
 // Recover the sliding window width from ggml's own SWA mask. llama.cpp never passes n_swa to a
@@ -681,110 +681,110 @@ std::optional<int> extract_layer_from_name(const std::string & name) {
 // looking for a contiguous band is what makes this work on the KV-cache mask, where columns are
 // physical cache cells in arbitrary order, not positions.
 // Assumes LLAMA_SWA_TYPE_STANDARD, the only type the caller reconstructs.
-static int get_swa_window_from_mask(const ggml_tensor * mask) {
-    if (mask->data == nullptr || !ggml_backend_buffer_is_host(mask->buffer)) {
-        return -1;
+स्थिर पूर्णाङ्क get_swa_गवाक्षः_from_आवरणम्(ध्रुव ggml_tensor * आवरणम्) {
+    यदि (आवरणम्->दत्त == शून्यसूचकः || !ggml_backend_बफर_is_host(आवरणम्->बफर)) {
+        प्रत्यागम -1;
     }
-    if (mask->type != GGML_TYPE_F16 && mask->type != GGML_TYPE_F32) {
-        return -1;
+    यदि (आवरणम्->type != GGML_TYPE_F16 && आवरणम्->type != GGML_TYPE_F32) {
+        प्रत्यागम -1;
     }
 
-    const int64_t n_kv = mask->ne[0];
-    const int64_t n_tokens = mask->ne[1];
-    int64_t window = 0;
+    ध्रुव int64_t n_kv = आवरणम्->ne[0];
+    ध्रुव int64_t n_tokens = आवरणम्->ne[1];
+    int64_t गवाक्षः = 0;
 
-    for (int64_t r = 0; r < n_tokens; r++) {
+    प्रति (int64_t r = 0; r < n_tokens; r++) {
         int64_t kept = 0;
-        for (int64_t c = 0; c < n_kv; c++) {
-            const size_t i = (size_t) r * n_kv + c;
-            const float v = mask->type == GGML_TYPE_F16 ? ggml_fp16_to_fp32(((const ggml_fp16_t *) mask->data)[i]) :
-                                                          ((const float *) mask->data)[i];
-            if (v > -INFINITY) {
+        प्रति (int64_t c = 0; c < n_kv; c++) {
+            ध्रुव size_t i = (size_t) r * n_kv + c;
+            ध्रुव भिन्न v = आवरणम्->type == GGML_TYPE_F16 ? ggml_fp16_गन्तव्यम्_fp32(((ध्रुव ggml_fp16_t *) आवरणम्->दत्त)[i]) :
+                                                          ((ध्रुव भिन्न *) आवरणम्->दत्त)[i];
+            यदि (v > -INFINITY) {
                 kept++;
             }
         }
-        window = std::max(window, kept);
+        गवाक्षः = std::max(गवाक्षः, kept);
     }
 
-    return window > 0 ? (int) window : -1;
+    प्रत्यागम गवाक्षः > 0 ? (पूर्णाङ्क) गवाक्षः : -1;
 }
 
-std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgraph * cgraph, bool is_static) {
+std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgraph * cgraph, तार्किक is_static) {
     ModelParams model_params;
     ComputeParams compute_params;
-    auto get_attention_pattern_case = [](const ggml_tensor * node) -> int {
-        if (node == nullptr) {
-            return -1;
+    स्वचालित get_attention_आदर्शः_case = [](ध्रुव ggml_tensor * ग्रन्थिः) -> पूर्णाङ्क {
+        यदि (ग्रन्थिः == शून्यसूचकः) {
+            प्रत्यागम -1;
         }
 
-        switch (node->op) {
-        case GGML_OP_FLASH_ATTN_EXT:
-            if (node->src[0] == nullptr || node->src[1] == nullptr) {
-                return -1;
+        विकल्प (ग्रन्थिः->op) {
+        पक्ष GGML_OP_FLASH_ATTN_EXT:
+            यदि (ग्रन्थिः->src[0] == शून्यसूचकः || ग्रन्थिः->src[1] == शून्यसूचकः) {
+                प्रत्यागम -1;
             }
-            switch (node->src[1]->op) {
-            case GGML_OP_PERMUTE:
+            विकल्प (ग्रन्थिः->src[1]->op) {
+            पक्ष GGML_OP_PERMUTE:
                 // case 0: src[1] is PERMUTE of a cache VIEW, mask required
-                if (node->src[3] != nullptr && node->src[1]->src[0] != nullptr &&
-                    node->src[1]->src[0]->op == GGML_OP_VIEW) {
-                    return 0;
+                यदि (ग्रन्थिः->src[3] != शून्यसूचकः && ग्रन्थिः->src[1]->src[0] != शून्यसूचकः &&
+                    ग्रन्थिः->src[1]->src[0]->op == GGML_OP_VIEW) {
+                    प्रत्यागम 0;
                 }
-                break;
-            case GGML_OP_CPY:
+                भङ्ग;
+            पक्ष GGML_OP_CPY:
                 // case 1: src[1] is CPY of a PERMUTE(VIEW), mask required
-                if (node->src[3] != nullptr && node->src[1]->src[0] != nullptr &&
-                    node->src[1]->src[0]->op == GGML_OP_PERMUTE && node->src[1]->src[0]->src[0] != nullptr &&
-                    node->src[1]->src[0]->src[0]->op == GGML_OP_VIEW) {
-                    return 1;
+                यदि (ग्रन्थिः->src[3] != शून्यसूचकः && ग्रन्थिः->src[1]->src[0] != शून्यसूचकः &&
+                    ग्रन्थिः->src[1]->src[0]->op == GGML_OP_PERMUTE && ग्रन्थिः->src[1]->src[0]->src[0] != शून्यसूचकः &&
+                    ग्रन्थिः->src[1]->src[0]->src[0]->op == GGML_OP_VIEW) {
+                    प्रत्यागम 1;
                 }
-                break;
-            case GGML_OP_VIEW:
+                भङ्ग;
+            पक्ष GGML_OP_VIEW:
                 // cases 4/5/6: whisper - K is a direct non-contiguous VIEW_3D of a KV cache
-                if (node->src[1]->view_src != nullptr) {
-                    if (node->src[3] != nullptr) {
-                        return 4;  // decoder self-attention
+                यदि (ग्रन्थिः->src[1]->view_src != शून्यसूचकः) {
+                    यदि (ग्रन्थिः->src[3] != शून्यसूचकः) {
+                        प्रत्यागम 4;  // decoder self-attention
                     }
-                    return 5;      // cross-attention or encoder self-attention
+                    प्रत्यागम 5;      // cross-attention or encoder self-attention
                 }
-                break;
-            default:
-                break;
+                भङ्ग;
+            स्वभाव:
+                भङ्ग;
             }
-            break;
-        case GGML_OP_SOFT_MAX:
+            भङ्ग;
+        पक्ष GGML_OP_SOFT_MAX:
             // case 2: node op is SOFT_MAX, src 0 not null & op is MUL_MAT & the src 0 of MUL_MAT is PERMUTE & the permuted tensor src is the view of cache k
-            if (node->src[0] != nullptr && node->src[1] != nullptr && node->src[0]->op == GGML_OP_MUL_MAT &&
-                node->src[0]->src[0] != nullptr && node->src[0]->src[1] != nullptr &&
-                node->src[0]->src[0]->op == GGML_OP_PERMUTE && node->src[0]->src[0]->src[0] != nullptr &&
-                node->src[0]->src[0]->src[0]->op == GGML_OP_VIEW) {
-                return 2;
+            यदि (ग्रन्थिः->src[0] != शून्यसूचकः && ग्रन्थिः->src[1] != शून्यसूचकः && ग्रन्थिः->src[0]->op == GGML_OP_MUL_MAT &&
+                ग्रन्थिः->src[0]->src[0] != शून्यसूचकः && ग्रन्थिः->src[0]->src[1] != शून्यसूचकः &&
+                ग्रन्थिः->src[0]->src[0]->op == GGML_OP_PERMUTE && ग्रन्थिः->src[0]->src[0]->src[0] != शून्यसूचकः &&
+                ग्रन्थिः->src[0]->src[0]->src[0]->op == GGML_OP_VIEW) {
+                प्रत्यागम 2;
             }
             // case 3: node op is SOFT_MAX, src 0 not null & op is ADD & the src 0 of ADD is MUL_MAT & the src 0 of MUL_MAT is PERMUTE
-            if (node->src[0]->op == GGML_OP_ADD && node->src[0]->src[0] != nullptr &&
-                node->src[0]->src[0]->op == GGML_OP_MUL_MAT && node->src[0]->src[0]->src[0] != nullptr &&
-                node->src[0]->src[0]->src[0]->op == GGML_OP_PERMUTE) {
-                return 3;
+            यदि (ग्रन्थिः->src[0]->op == GGML_OP_सङ्कलय && ग्रन्थिः->src[0]->src[0] != शून्यसूचकः &&
+                ग्रन्थिः->src[0]->src[0]->op == GGML_OP_MUL_MAT && ग्रन्थिः->src[0]->src[0]->src[0] != शून्यसूचकः &&
+                ग्रन्थिः->src[0]->src[0]->src[0]->op == GGML_OP_PERMUTE) {
+                प्रत्यागम 3;
             }
-            break;
-        default:
-            break;
+            भङ्ग;
+        स्वभाव:
+            भङ्ग;
         }
 
-        return -1;
+        प्रत्यागम -1;
     };
 
     // Resolve the attention mask an attention node consumes, mirroring the src layout that
     // get_attention_pattern_case() classifies. Used by the SWA pre-pass below.
-    auto get_attention_op_mask = [&get_attention_pattern_case](const ggml_tensor * node) -> const ggml_tensor * {
-        switch (get_attention_pattern_case(node)) {
-        case 0:
-        case 1:
-            return node->src[3];
-        case 2:
-        case 3:
-            return node->src[1];
-        default:
-            return nullptr;
+    स्वचालित get_attention_op_आवरणम् = [&get_attention_आदर्शः_case](ध्रुव ggml_tensor * ग्रन्थिः) -> ध्रुव ggml_tensor * {
+        विकल्प (get_attention_आदर्शः_case(ग्रन्थिः)) {
+        पक्ष 0:
+        पक्ष 1:
+            प्रत्यागम ग्रन्थिः->src[3];
+        पक्ष 2:
+        पक्ष 3:
+            प्रत्यागम ग्रन्थिः->src[1];
+        स्वभाव:
+            प्रत्यागम शून्यसूचकः;
         }
     };
 
@@ -813,333 +813,333 @@ std::pair<ModelParams, ComputeParams> GgmlOvDecoder::compute_llm_params(ggml_cgr
     // two agree while the context is shorter than the window, then diverge, and the mask add fails
     // shape inference ("Failed to broadcast-merge input shapes") partway into a long prompt.
     {
-        std::map<int, int64_t> layer_extent;                      // layer -> leaf cache_k cell count
-        std::map<int, const ggml_tensor *> layer_mask;            // layer -> mask it consumes
+        std::map<पूर्णाङ्क, int64_t> layer_extent;                      // layer -> leaf cache_k cell count
+        std::map<पूर्णाङ्क, ध्रुव ggml_tensor *> layer_आवरणम्;            // layer -> mask it consumes
         int64_t max_extent = 0;
 
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            const ggml_tensor * mask = get_attention_op_mask(cgraph->nodes[i]);
-            if (mask == nullptr) {
-                continue;
+        प्रति (पूर्णाङ्क i = 0; i < cgraph->n_nodes; i++) {
+            ध्रुव ggml_tensor * आवरणम् = get_attention_op_आवरणम्(cgraph->nodes[i]);
+            यदि (आवरणम् == शून्यसूचकः) {
+                अनुवर्त;
             }
-            const ggml_tensor * cache_k_permute = nullptr;
-            switch (get_attention_pattern_case(cgraph->nodes[i])) {
-            case 0:  cache_k_permute = cgraph->nodes[i]->src[1];                     break;
-            case 1:  cache_k_permute = cgraph->nodes[i]->src[1]->src[0];             break;
-            case 2:  cache_k_permute = cgraph->nodes[i]->src[0]->src[0];             break;
-            default: cache_k_permute = cgraph->nodes[i]->src[0]->src[0]->src[0];     break;
+            ध्रुव ggml_tensor * cache_k_permute = शून्यसूचकः;
+            विकल्प (get_attention_आदर्शः_case(cgraph->nodes[i])) {
+            पक्ष 0:  cache_k_permute = cgraph->nodes[i]->src[1];                     भङ्ग;
+            पक्ष 1:  cache_k_permute = cgraph->nodes[i]->src[1]->src[0];             भङ्ग;
+            पक्ष 2:  cache_k_permute = cgraph->nodes[i]->src[0]->src[0];             भङ्ग;
+            स्वभाव: cache_k_permute = cgraph->nodes[i]->src[0]->src[0]->src[0];     भङ्ग;
             }
-            const ggml_tensor * cache_k_view = cache_k_permute->src[0];
-            if (cache_k_view->op != GGML_OP_VIEW) {
-                continue;
+            ध्रुव ggml_tensor * cache_k_view = cache_k_permute->src[0];
+            यदि (cache_k_view->op != GGML_OP_VIEW) {
+                अनुवर्त;
             }
-            const ggml_tensor * leaf = cache_k_view->src[0];
-            auto layer = extract_layer_from_name(leaf->name);
-            if (!layer.has_value()) {
-                continue;
+            ध्रुव ggml_tensor * पर्णम् = cache_k_view->src[0];
+            स्वचालित layer = extract_layer_from_name(पर्णम्->name);
+            यदि (!layer.has_value()) {
+                अनुवर्त;
             }
-            layer_extent[layer.value()] = leaf->ne[1];
-            layer_mask[layer.value()] = mask;
-            max_extent = std::max(max_extent, leaf->ne[1]);
+            layer_extent[layer.value()] = पर्णम्->ne[1];
+            layer_आवरणम्[layer.value()] = आवरणम्;
+            max_extent = std::max(max_extent, पर्णम्->ne[1]);
         }
 
-        for (const auto & [layer, extent] : layer_extent) {
-            if (extent < max_extent) {
+        प्रति (ध्रुव स्वचालित & [layer, extent] : layer_extent) {
+            यदि (extent < max_extent) {
                 model_params.swa_layers.push_back(layer);
-                if (model_params.swa_mask == nullptr) {
-                    model_params.swa_mask = layer_mask[layer];
+                यदि (model_params.swa_आवरणम् == शून्यसूचकः) {
+                    model_params.swa_आवरणम् = layer_आवरणम्[layer];
                 }
             }
         }
         std::sort(model_params.swa_layers.begin(), model_params.swa_layers.end());
 
-        if (ggml_openvino_getenv_int("GGML_OPENVINO_LOG_SWA_LAYERS")) {
-            std::string per_layer;
-            for (const auto & [layer, extent] : layer_extent) {
-                per_layer += " " + std::to_string(layer) + ":" + std::to_string(extent) +
+        यदि (ggml_openvino_getenv_int("GGML_OPENVINO_LOG_SWA_LAYERS")) {
+            std::string प्रत्येकम्_layer;
+            प्रति (ध्रुव स्वचालित & [layer, extent] : layer_extent) {
+                प्रत्येकम्_layer += " " + std::to_string(layer) + ":" + std::to_string(extent) +
                              (extent < max_extent ? "(swa)" : "");
             }
             GGML_LOG_WARN("ov-swa: attn_layers=%zu max_extent=%ld swa_layers=%zu |%s\n", layer_extent.size(),
-                          (long) max_extent, model_params.swa_layers.size(), per_layer.c_str());
+                          (दीर्घ) max_extent, model_params.swa_layers.size(), प्रत्येकम्_layer.c_str());
         }
     }
 
-    bool rope_seen = false;
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        ggml_tensor * node = cgraph->nodes[i];
-        const int attention_pattern_case = get_attention_pattern_case(node);
-        if (attention_pattern_case != -1) {
-            ggml_tensor * cache_k_permute = nullptr;
-            ggml_tensor * mask = nullptr;
+    तार्किक rope_आलोकितम् = असत्य;
+    प्रति (पूर्णाङ्क i = 0; i < cgraph->n_nodes; i++) {
+        ggml_tensor * ग्रन्थिः = cgraph->nodes[i];
+        ध्रुव पूर्णाङ्क attention_आदर्शः_case = get_attention_आदर्शः_case(ग्रन्थिः);
+        यदि (attention_आदर्शः_case != -1) {
+            ggml_tensor * cache_k_permute = शून्यसूचकः;
+            ggml_tensor * आवरणम् = शून्यसूचकः;
 
-            switch (attention_pattern_case) {
-            case 0:
-                cache_k_permute = node->src[1];
-                mask = node->src[3];
-                break;
-            case 1:
-                cache_k_permute = node->src[1]->src[0];
-                mask = node->src[3];
-                break;
-            case 2:
-                cache_k_permute = node->src[0]->src[0];
-                mask = node->src[1];
-                break;
-            case 3:
-                cache_k_permute = node->src[0]->src[0]->src[0];
-                mask = node->src[1];
-                break;
-            case 4:
-            case 5: {
+            विकल्प (attention_आदर्शः_case) {
+            पक्ष 0:
+                cache_k_permute = ग्रन्थिः->src[1];
+                आवरणम् = ग्रन्थिः->src[3];
+                भङ्ग;
+            पक्ष 1:
+                cache_k_permute = ग्रन्थिः->src[1]->src[0];
+                आवरणम् = ग्रन्थिः->src[3];
+                भङ्ग;
+            पक्ष 2:
+                cache_k_permute = ग्रन्थिः->src[0]->src[0];
+                आवरणम् = ग्रन्थिः->src[1];
+                भङ्ग;
+            पक्ष 3:
+                cache_k_permute = ग्रन्थिः->src[0]->src[0]->src[0];
+                आवरणम् = ग्रन्थिः->src[1];
+                भङ्ग;
+            पक्ष 4:
+            पक्ष 5: {
                 // whisper: K is a direct VIEW_3D of the KV buffer, no PERMUTE node
-                auto * cache_k_view = node->src[1];  // VIEW_3D of kv_self.k or kv_cross.k`
-                compute_params.token_len_per_seq = node->src[0]->ne[1];
-                if (attention_pattern_case == 4) {
-                    compute_params.attention_size = cache_k_view->ne[1];
-                } else {
-                    compute_params.attention_size_static = cache_k_view->ne[1];
+                स्वचालित * cache_k_view = ग्रन्थिः->src[1];  // VIEW_3D of kv_self.k or kv_cross.k`
+                compute_params.token_len_प्रत्येकम्_seq = ग्रन्थिः->src[0]->ne[1];
+                यदि (attention_आदर्शः_case == 4) {
+                    compute_params.attention_आकार = cache_k_view->ne[1];
+                } अन्यथा {
+                    compute_params.attention_आकार_static = cache_k_view->ne[1];
                 }
-                continue;
+                अनुवर्त;
             }
-            default:
-                break;
+            स्वभाव:
+                भङ्ग;
             }
 
-            assert(cache_k_permute != nullptr);
+            प्रतिज्ञा(cache_k_permute != शून्यसूचकः);
 
-            model_params.head_size = cache_k_permute->ne[0];
+            model_params.शीर्ष_आकार = cache_k_permute->ne[0];
             model_params.n_heads_kv = cache_k_permute->ne[2];
-            compute_params.input_len = node->src[0]->ne[1];
-            compute_params.token_len_per_seq = node->src[0]->ne[1];
+            compute_params.निवेशः_len = ग्रन्थिः->src[0]->ne[1];
+            compute_params.token_len_प्रत्येकम्_seq = ग्रन्थिः->src[0]->ne[1];
 
-            auto * cache_k_view = cache_k_permute->src[0];
-            if (cache_k_view->op != GGML_OP_VIEW || mask == nullptr) {
-                continue;
+            स्वचालित * cache_k_view = cache_k_permute->src[0];
+            यदि (cache_k_view->op != GGML_OP_VIEW || आवरणम् == शून्यसूचकः) {
+                अनुवर्त;
             }
 
             ggml_tensor * cache_k = cache_k_view->src[0];
-            int layer = extract_layer_from_name(cache_k->name).value();
+            पूर्णाङ्क layer = extract_layer_from_name(cache_k->name).value();
 
             // Classified by the pre-pass above, which groups layers by mask tensor identity. The
             // mask NAME cannot be used: build_attn_inp_kq_mask() gives both masks the same name.
-            const bool layer_is_swa = std::find(model_params.swa_layers.begin(), model_params.swa_layers.end(),
+            ध्रुव तार्किक layer_is_swa = std::find(model_params.swa_layers.begin(), model_params.swa_layers.end(),
                                                 layer) != model_params.swa_layers.end();
 
-            model_params.kv_buffer_ctx_id = ggml_backend_openvino_buffer_get_ctx_id(cache_k->buffer);
-            model_params.n_heads_kv_per_layer[layer] = cache_k_permute->ne[2];
-            if (layer_is_swa) {
-                model_params.ctx_per_seq_swa = cache_k->ne[1];
-            } else {
-                model_params.ctx_per_seq = cache_k->ne[1];
+            model_params.kv_बफर_ctx_id = ggml_backend_openvino_बफर_get_ctx_id(cache_k->बफर);
+            model_params.n_heads_kv_प्रत्येकम्_layer[layer] = cache_k_permute->ne[2];
+            यदि (layer_is_swa) {
+                model_params.ctx_प्रत्येकम्_seq_swa = cache_k->ne[1];
+            } अन्यथा {
+                model_params.ctx_प्रत्येकम्_seq = cache_k->ne[1];
                 model_params.n_seq = cache_k->ne[2];
             }
 
-            compute_params.n_seq_active = mask->ne[3];
-            auto seq_size = cache_k->ne[0] * cache_k->ne[1] * ggml_type_size(cache_k->type);
-            size_t offset;
-            memcpy(&offset, cache_k_view->op_params, sizeof(size_t));
-            compute_params.seq_active_start = offset / seq_size;
+            compute_params.n_seq_सक्रिय = आवरणम्->ne[3];
+            स्वचालित seq_आकार = cache_k->ne[0] * cache_k->ne[1] * ggml_type_आकार(cache_k->type);
+            size_t विस्थापनम्;
+            स्मृतिं_प्रतिलिख(&विस्थापनम्, cache_k_view->op_params, परिमाण(size_t));
+            compute_params.seq_सक्रिय_start = विस्थापनम् / seq_आकार;
 
-            if (layer_is_swa) {
-                compute_params.attention_size_swa = mask->ne[0];
-                compute_params.swa_window = get_swa_window_from_mask(mask);
-            } else {
-                compute_params.attention_size = mask->ne[0];
+            यदि (layer_is_swa) {
+                compute_params.attention_आकार_swa = आवरणम्->ne[0];
+                compute_params.swa_गवाक्षः = get_swa_गवाक्षः_from_आवरणम्(आवरणम्);
+            } अन्यथा {
+                compute_params.attention_आकार = आवरणम्->ne[0];
             }
-            if (is_static) {
-                compute_params.attention_size = model_params.ctx_per_seq;
-                compute_params.attention_size_swa = model_params.ctx_per_seq_swa;
-                compute_params.token_len_per_seq = 1;
+            यदि (is_static) {
+                compute_params.attention_आकार = model_params.ctx_प्रत्येकम्_seq;
+                compute_params.attention_आकार_swa = model_params.ctx_प्रत्येकम्_seq_swa;
+                compute_params.token_len_प्रत्येकम्_seq = 1;
             }
         }
 
-        if (node->op == GGML_OP_MUL_MAT && node->src[0]->op == GGML_OP_PERMUTE &&
-            node->src[0]->src[0]->op == GGML_OP_VIEW && is_kvcache(node->src[0]->view_src, node->view_src)) {
-            if (node->src[1]->op == GGML_OP_PERMUTE && node->src[1]->src[0]->op == GGML_OP_VIEW &&
-                node->src[1]->src[0]->src[0]->op == GGML_OP_ROPE) {
-                compute_params.attention_size = node->ne[0];
+        यदि (ग्रन्थिः->op == GGML_OP_MUL_MAT && ग्रन्थिः->src[0]->op == GGML_OP_PERMUTE &&
+            ग्रन्थिः->src[0]->src[0]->op == GGML_OP_VIEW && is_kvcache(ग्रन्थिः->src[0]->view_src, ग्रन्थिः->view_src)) {
+            यदि (ग्रन्थिः->src[1]->op == GGML_OP_PERMUTE && ग्रन्थिः->src[1]->src[0]->op == GGML_OP_VIEW &&
+                ग्रन्थिः->src[1]->src[0]->src[0]->op == GGML_OP_ROPE) {
+                compute_params.attention_आकार = ग्रन्थिः->ne[0];
             }
         }
 
         // if the node op is TRANSPOSE and its input is PERMUTE and the source of the PERMUTE is VIEW, then get the attention size with the TRANSPOSE node ne[0] (in case no GGML_OP_FLASH_ATTN_EXT)
-        if (node->op == GGML_OP_TRANSPOSE && node->src[0]->op == GGML_OP_PERMUTE &&
-            node->src[0]->src[0]->op == GGML_OP_VIEW) {
-            compute_params.attention_size = node->ne[0];
-            if (is_static) {
-                compute_params.attention_size = model_params.ctx_per_seq;
+        यदि (ग्रन्थिः->op == GGML_OP_TRANSPOSE && ग्रन्थिः->src[0]->op == GGML_OP_PERMUTE &&
+            ग्रन्थिः->src[0]->src[0]->op == GGML_OP_VIEW) {
+            compute_params.attention_आकार = ग्रन्थिः->ne[0];
+            यदि (is_static) {
+                compute_params.attention_आकार = model_params.ctx_प्रत्येकम्_seq;
             }
         }
-        if (node->op == GGML_OP_ROPE) {
-            if (compute_params.token_len_per_seq == -1 && node->src[1] != nullptr) {
-                compute_params.token_len_per_seq = ggml_nelements(node->src[1]);
+        यदि (ग्रन्थिः->op == GGML_OP_ROPE) {
+            यदि (compute_params.token_len_प्रत्येकम्_seq == -1 && ग्रन्थिः->src[1] != शून्यसूचकः) {
+                compute_params.token_len_प्रत्येकम्_seq = ggml_nelements(ग्रन्थिः->src[1]);
             }
 
             // When multiple ROPE ops in the graph disagree on op_params (e.g. gemma4's
             // mixed SWA/non-SWA layers with different n_dims or freq_base), we cannot
             // share a single precomputed rope_sin/rope_cos. Track divergence so the
             // translator falls back to per-op make_sin_cos in that case.
-            static_assert(sizeof(model_params.rope_params) == sizeof(int32_t) * 16, "rope_params size");
-            if (!rope_seen) {
-                memcpy(model_params.rope_params, node->op_params, sizeof(int32_t) * 16);
-                rope_seen = true;
-            } else if (memcmp(model_params.rope_params, node->op_params, sizeof(int32_t) * 16) != 0) {
-                model_params.mixed_rope_params = true;
+            static_assert(परिमाण(model_params.rope_params) == परिमाण(int32_t) * 16, "rope_params size");
+            यदि (!rope_आलोकितम्) {
+                स्मृतिं_प्रतिलिख(model_params.rope_params, ग्रन्थिः->op_params, परिमाण(int32_t) * 16);
+                rope_आलोकितम् = सत्य;
+            } अन्यथा यदि (memcmp(model_params.rope_params, ग्रन्थिः->op_params, परिमाण(int32_t) * 16) != 0) {
+                model_params.mixed_rope_params = सत्य;
             }
         }
-        if (node->op == GGML_OP_GATED_DELTA_NET) {
-            model_params.state_size = node->src[0]->ne[0];
+        यदि (ग्रन्थिः->op == GGML_OP_GATED_DELTA_NET) {
+            model_params.state_आकार = ग्रन्थिः->src[0]->ne[0];
         }
-        if (node->op == GGML_OP_SCALE && node->view_src != nullptr && is_recurrent_cache(node->view_src)) {
-            if (model_params.n_rs_slots == -1) {
-                model_params.n_rs_slots = node->view_src->ne[1];
-            } else {
-                GGML_ASSERT(model_params.n_rs_slots == node->view_src->ne[1]);
+        यदि (ग्रन्थिः->op == GGML_OP_SCALE && ग्रन्थिः->view_src != शून्यसूचकः && is_recurrent_cache(ग्रन्थिः->view_src)) {
+            यदि (model_params.n_rs_slots == -1) {
+                model_params.n_rs_slots = ग्रन्थिः->view_src->ne[1];
+            } अन्यथा {
+                GGML_ASSERT(model_params.n_rs_slots == ग्रन्थिः->view_src->ne[1]);
             }
-            compute_params.cache_rs_reset_len = ggml_nelements(node) / node->view_src->ne[0];
-            compute_params.cache_rs_reset_idx = node->src[0]->view_offs / node->view_src->ne[0];
+            compute_params.cache_rs_reset_len = ggml_nelements(ग्रन्थिः) / ग्रन्थिः->view_src->ne[0];
+            compute_params.cache_rs_reset_idx = ग्रन्थिः->src[0]->view_offs / ग्रन्थिः->view_src->ne[0];
         }
         // Capture the destination slot block of every recurrent state cache writeback, plus the
         // source window needed by conv state and packed GDN rollback writes. The active sequences
         // occupy a contiguous slot block [begin, begin + n_seqs) of the cache; these offsets move
         // with the batch, so they are fed to the cached model as runtime inputs.
-        if (node->op == GGML_OP_CPY && node->view_src != nullptr && is_recurrent_cache(node->view_src) &&
-            node->src[1] != nullptr && node->src[1]->op == GGML_OP_VIEW && node->src[1]->view_src == node->view_src) {
-            const bool is_conv = is_conv_state_writeback(node);
-            const bool is_gdn = node->src[0]->op == GGML_OP_VIEW && node->src[0]->src[0] != nullptr &&
-                                node->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET;
-            const bool is_extra = node->src[0]->op == GGML_OP_GET_ROWS;
-            const bool is_gdn_rollback = is_gdn && is_same_shape(node->src[0], node->src[1]);
+        यदि (ग्रन्थिः->op == GGML_OP_CPY && ग्रन्थिः->view_src != शून्यसूचकः && is_recurrent_cache(ग्रन्थिः->view_src) &&
+            ग्रन्थिः->src[1] != शून्यसूचकः && ग्रन्थिः->src[1]->op == GGML_OP_VIEW && ग्रन्थिः->src[1]->view_src == ग्रन्थिः->view_src) {
+            ध्रुव तार्किक is_conv = is_conv_state_writeback(ग्रन्थिः);
+            ध्रुव तार्किक is_gdn = ग्रन्थिः->src[0]->op == GGML_OP_VIEW && ग्रन्थिः->src[0]->src[0] != शून्यसूचकः &&
+                                ग्रन्थिः->src[0]->src[0]->op == GGML_OP_GATED_DELTA_NET;
+            ध्रुव तार्किक is_extra = ग्रन्थिः->src[0]->op == GGML_OP_GET_पङ्क्तिकाः;
+            ध्रुव तार्किक is_gdn_rollback = is_gdn && is_same_shape(ग्रन्थिः->src[0], ग्रन्थिः->src[1]);
 
-            const ggml_tensor * dest_view = node->src[1];
-            const ggml_tensor * cache = node->view_src;
-            const size_t row_bytes = cache->ne[0] * ggml_type_size(cache->type);
-            if (is_gdn_rollback) {
+            ध्रुव ggml_tensor * dest_view = ग्रन्थिः->src[1];
+            ध्रुव ggml_tensor * cache = ग्रन्थिः->view_src;
+            ध्रुव size_t row_अष्टकानि = cache->ne[0] * ggml_type_आकार(cache->type);
+            यदि (is_gdn_rollback) {
                 // Rollback GDN exposes an already-flattened [state, seq, snapshot] VIEW and copies
                 // it to an identically-shaped cache VIEW. Non-rollback copies native 4-D state
                 // [value, key, head, seq] into flattened cache rows, so the shapes differ. This
                 // signature is local to the CPY and still works when fallback splits the graph.
-                model_params.has_rs_rollback = true;
+                model_params.has_rs_rollback = सत्य;
             }
-            if (row_bytes > 0 && (is_conv || is_gdn || is_extra) && !is_full_single_slot_writeback(node)) {
+            यदि (row_अष्टकानि > 0 && (is_conv || is_gdn || is_extra) && !is_पूर्णम्_single_slot_writeback(ग्रन्थिः)) {
                 ComputeParams::RsWriteback writeback;
-                writeback.slot_begin = (int) (dest_view->view_offs / row_bytes);
-                if (is_conv) {
-                    writeback.src_begin = (int) (node->src[0]->view_offs / node->src[0]->view_src->nb[0]);
-                } else if (is_gdn_rollback) {
-                    writeback.src_begin = (int) (node->src[0]->view_offs / node->src[0]->view_src->nb[1]);
+                writeback.slot_begin = (पूर्णाङ्क) (dest_view->view_offs / row_अष्टकानि);
+                यदि (is_conv) {
+                    writeback.src_begin = (पूर्णाङ्क) (ग्रन्थिः->src[0]->view_offs / ग्रन्थिः->src[0]->view_src->nb[0]);
+                } अन्यथा यदि (is_gdn_rollback) {
+                    writeback.src_begin = (पूर्णाङ्क) (ग्रन्थिः->src[0]->view_offs / ग्रन्थिः->src[0]->view_src->nb[1]);
                 }
-                compute_params.rs_writebacks[get_tensor_ov_name(cgraph, node)] = writeback;
+                compute_params.rs_writebacks[get_tensor_ov_name(cgraph, ग्रन्थिः)] = writeback;
             }
-            if ((is_conv || is_gdn) && !is_full_single_slot_writeback(node)) {
-                compute_params.s_copy_active_slot_len = (int) dest_view->ne[1];
+            यदि ((is_conv || is_gdn) && !is_पूर्णम्_single_slot_writeback(ग्रन्थिः)) {
+                compute_params.s_copy_सक्रिय_slot_len = (पूर्णाङ्क) dest_view->ne[1];
             }
         }
     }
-    if (model_params.n_heads_kv == -1) {
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            const auto * node = cgraph->nodes[i];
-            const ggml_tensor * mask = nullptr;
-            if (node->op == GGML_OP_SOFT_MAX) {
-                mask = node->src[1];
-            } else if (node->op == GGML_OP_FLASH_ATTN_EXT) {
-                mask = node->src[3];
-            } else {
-                continue;
+    यदि (model_params.n_heads_kv == -1) {
+        प्रति (पूर्णाङ्क i = 0; i < cgraph->n_nodes; i++) {
+            ध्रुव स्वचालित * ग्रन्थिः = cgraph->nodes[i];
+            ध्रुव ggml_tensor * आवरणम् = शून्यसूचकः;
+            यदि (ग्रन्थिः->op == GGML_OP_SOFT_MAX) {
+                आवरणम् = ग्रन्थिः->src[1];
+            } अन्यथा यदि (ग्रन्थिः->op == GGML_OP_FLASH_ATTN_EXT) {
+                आवरणम् = ग्रन्थिः->src[3];
+            } अन्यथा {
+                अनुवर्त;
             }
-            if (mask == nullptr || mask->op != GGML_OP_NONE || !(mask->flags & GGML_TENSOR_FLAG_INPUT) ||
-                node->src[0] == nullptr) {
-                continue;
+            यदि (आवरणम् == शून्यसूचकः || आवरणम्->op != GGML_OP_NONE || !(आवरणम्->flags & GGML_TENSOR_FLAG_निवेशः) ||
+                ग्रन्थिः->src[0] == शून्यसूचकः) {
+                अनुवर्त;
             }
-            model_params.is_cacheless_attn = true;
+            model_params.is_cacheless_attn = सत्य;
             model_params.n_seq = 1;
-            model_params.ctx_per_seq = mask->ne[0];
-            compute_params.input_len = node->src[0]->ne[1];
-            compute_params.token_len_per_seq = compute_params.input_len;
-            break;
+            model_params.ctx_प्रत्येकम्_seq = आवरणम्->ne[0];
+            compute_params.निवेशः_len = ग्रन्थिः->src[0]->ne[1];
+            compute_params.token_len_प्रत्येकम्_seq = compute_params.निवेशः_len;
+            भङ्ग;
         }
     }
 
-    auto * output_tensor = cgraph->nodes[cgraph->n_nodes - 1];
+    स्वचालित * output_tensor = cgraph->nodes[cgraph->n_nodes - 1];
     compute_params.output_len = output_tensor->ne[1];
-    if (model_params.is_cacheless_attn) {
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            const auto * node = cgraph->nodes[i];
-            if (node->op == GGML_OP_GET_ROWS && is_output_idx(node->src[1], node)) {
-                compute_params.output_len = node->src[1]->ne[0];
-                break;
+    यदि (model_params.is_cacheless_attn) {
+        प्रति (पूर्णाङ्क i = 0; i < cgraph->n_nodes; i++) {
+            ध्रुव स्वचालित * ग्रन्थिः = cgraph->nodes[i];
+            यदि (ग्रन्थिः->op == GGML_OP_GET_पङ्क्तिकाः && is_output_idx(ग्रन्थिः->src[1], ग्रन्थिः)) {
+                compute_params.output_len = ग्रन्थिः->src[1]->ne[0];
+                भङ्ग;
             }
         }
     }
     // for NPU, output_len is always 1 except for llama-perplexity
-    if (is_static && compute_params.output_len == 0) {
+    यदि (is_static && compute_params.output_len == 0) {
         compute_params.output_len = 1;
     }
-    model_params.ctx = model_params.ctx_per_seq * model_params.n_seq;
-    return {model_params, compute_params};
+    model_params.ctx = model_params.ctx_प्रत्येकम्_seq * model_params.n_seq;
+    प्रत्यागम {model_params, compute_params};
 }
 
-void GgmlOvDecoder::validate_cgraph() const {
-    if (m_model_params.n_seq > 1 && m_is_static == true) {
-        throw std::runtime_error("n_seq > 1 is not supported on NPU. Try setting -np 1.");
+शून्य GgmlOvDecoder::validate_cgraph() ध्रुव {
+    यदि (m_model_params.n_seq > 1 && m_is_static == सत्य) {
+        क्षिप std::runtime_error("n_seq > 1 is not supported on NPU. Try setting -np 1.");
     }
 }
 
-ov::PartialShape GgmlOvDecoder::get_graph_input_shape(const ggml_tensor * op,
-                                                      const ggml_tensor * input,
-                                                      int dynamic_dim_index) const {
-    if (m_naive) {
-        return input != nullptr ? ov::PartialShape{get_shape(input)} : ov::PartialShape{get_shape(op)};
+ov::PartialShape GgmlOvDecoder::get_graph_निवेशः_shape(ध्रुव ggml_tensor * op,
+                                                      ध्रुव ggml_tensor * निवेशः,
+                                                      पूर्णाङ्क dynamic_dim_सूचकांक) ध्रुव {
+    यदि (m_naive) {
+        प्रत्यागम निवेशः != शून्यसूचकः ? ov::PartialShape{get_shape(निवेशः)} : ov::PartialShape{get_shape(op)};
     }
-    ov::PartialShape input_shape;
+    ov::PartialShape निवेशः_shape;
 
-    if (is_inp_tok(input, op) || is_inp_pos(input, op)) {
+    यदि (is_inp_tok(निवेशः, op) || is_inp_pos(निवेशः, op)) {
         // tokens or positions
-        int len = m_is_static ? (m_is_prefill ? m_prefill_chunk_size : 1) : -1;
-        if (m_is_static && is_inp_pos(input, op)) {
+        पूर्णाङ्क len = m_is_static ? (m_is_prefill ? m_prefill_chunk_आकार : 1) : -1;
+        यदि (m_is_static && is_inp_pos(निवेशः, op)) {
             // IMROPE stacks n_planes (t/h/w/e) position planes back to back
             len *= get_inp_pos_n_planes(op);
         }
-        input_shape = ov::PartialShape{1, 1, 1, len};
+        निवेशः_shape = ov::PartialShape{1, 1, 1, len};
 
-    } else if (is_output_idx(input, op)) {
+    } अन्यथा यदि (is_output_idx(निवेशः, op)) {
         // output index
-        input_shape = ov::PartialShape{1, 1, 1, m_is_static ? m_compute_params.output_len : -1};
+        निवेशः_shape = ov::PartialShape{1, 1, 1, m_is_static ? m_compute_params.output_len : -1};
 
-    } else if (is_inp_mean(input, op)) {
-        input_shape = m_is_static ? ov::PartialShape{1, 1, input->ne[1], m_prefill_chunk_size} :
+    } अन्यथा यदि (is_inp_माध्यम्(निवेशः, op)) {
+        निवेशः_shape = m_is_static ? ov::PartialShape{1, 1, निवेशः->ne[1], m_prefill_chunk_आकार} :
                                     ov::PartialShape{1, 1, -1, -1};
 
-    } else if (is_inp_scale_rows(input, op)) {
-        input_shape = ov::PartialShape{1, 1, m_is_static ? (m_is_prefill ? m_prefill_chunk_size : 1) : -1, 1};
+    } अन्यथा यदि (is_inp_scale_पङ्क्तिकाः(निवेशः, op)) {
+        निवेशः_shape = ov::PartialShape{1, 1, m_is_static ? (m_is_prefill ? m_prefill_chunk_आकार : 1) : -1, 1};
 
-    } else if (is_inp_mask(input, op)) {
-        // mask
-        if (m_is_static) {
-            input_shape = ov::PartialShape{1, 1, m_is_prefill ? m_prefill_chunk_size : 1, m_model_params.ctx};
-        } else if (m_is_stateful) {
-            input_shape = ov::PartialShape{1, 1, -1, -1};
-        } else {
-            input_shape = ov::PartialShape{-1, 1, -1, -1};
+    } अन्यथा यदि (is_inp_आवरणम्(निवेशः, op)) {
+        //आवरणम्
+        यदि (m_is_static) {
+            निवेशः_shape = ov::PartialShape{1, 1, m_is_prefill ? m_prefill_chunk_आकार : 1, m_model_params.ctx};
+        } अन्यथा यदि (m_is_stateful) {
+            निवेशः_shape = ov::PartialShape{1, 1, -1, -1};
+        } अन्यथा {
+            निवेशः_shape = ov::PartialShape{-1, 1, -1, -1};
         }
 
-    } else if (is_recurrent_cache(input)) {
-        input_shape = ov::PartialShape{get_shape(input)};
-        if (!m_is_static && !m_is_stateful && input->ne[1] > 1) {
-            input_shape[2] = -1;
+    } अन्यथा यदि (is_recurrent_cache(निवेशः)) {
+        निवेशः_shape = ov::PartialShape{get_shape(निवेशः)};
+        यदि (!m_is_static && !m_is_stateful && निवेशः->ne[1] > 1) {
+            निवेशः_shape[2] = -1;
         }
 
-    } else if (is_kvcache(input, op)) {
+    } अन्यथा यदि (is_kvcache(निवेशः, op)) {
         // kvcache
-        input_shape = ov::PartialShape{get_shape(input)};
+        निवेशः_shape = ov::PartialShape{get_shape(निवेशः)};
         // Whisper.cpp uses a fixed size 1D KV buffer [N, 1, 1, 1] (GGML) or [1, 1, 1, N] (OV).
         // the token fill level is handled by token_len_per_seq + dynamic mask input.
         // skip dynamic dim and stateful reshape for this layout.
-        const bool is_flat_kv = (input->ne[1] == 1 && input->ne[2] == 1 && input->ne[3] == 1);
-        if (!m_is_static && !is_flat_kv) {
+        ध्रुव तार्किक is_flat_kv = (निवेशः->ne[1] == 1 && निवेशः->ne[2] == 1 && निवेशः->ne[3] == 1);
+        यदि (!m_is_static && !is_flat_kv) {
             // do not fix ctx size to make llama-bench work across test params
-            input_shape[2] = -1;
+            निवेशः_shape[2] = -1;
         }
-        if (is_stateful() && !is_flat_kv) {
+        यदि (is_stateful() && !is_flat_kv) {
             // Convert stateless KV cache layout [1, 1, seq, n_heads_kv * head_size]
             // to stateful layout [1, seq, n_heads_kv, head_size].
             // NOTE: Gemma4 uses per-layer-type KV shapes, so no single scalar describes every
@@ -1148,295 +1148,295 @@ ov::PartialShape GgmlOvDecoder::get_graph_input_shape(const ggml_tensor * op,
             // own layer type and derive the head size from its own combined dim, so both layer
             // types get the correct split. Using the model-level count split 12B's sliding
             // states as 1 x 2048 and decoded garbage.
-            assert(input_shape.size() == 4 && input_shape[0] == 1 && input_shape[1] == 1 &&
-                   input_shape[2].is_dynamic() && input_shape[3].is_static());
-            const int n_heads_kv = get_n_heads_kv_for_tensor(input);
-            assert(n_heads_kv > 0 && input_shape[3].get_length() % n_heads_kv == 0);
-            const int64_t combined_dim = input_shape[3].get_length();  // n_heads_kv * head_size
-            const int64_t head_size = combined_dim / n_heads_kv;
-            input_shape = {input_shape[0], ov::Dimension::dynamic(), n_heads_kv, head_size};
+            प्रतिज्ञा(निवेशः_shape.size() == 4 && निवेशः_shape[0] == 1 && निवेशः_shape[1] == 1 &&
+                   निवेशः_shape[2].is_dynamic() && निवेशः_shape[3].is_static());
+            ध्रुव पूर्णाङ्क n_heads_kv = get_n_heads_kv_for_tensor(निवेशः);
+            प्रतिज्ञा(n_heads_kv > 0 && निवेशः_shape[3].get_दीर्घता() % n_heads_kv == 0);
+            ध्रुव int64_t combined_dim = निवेशः_shape[3].get_दीर्घता();  // n_heads_kv * head_size
+            ध्रुव int64_t शीर्ष_आकार = combined_dim / n_heads_kv;
+            निवेशः_shape = {निवेशः_shape[0], ov::Dimension::dynamic(), n_heads_kv, शीर्ष_आकार};
         }
 
-    } else if (is_kv_idx(input, op)) {
+    } अन्यथा यदि (is_kv_idx(निवेशः, op)) {
         // kv update index
-        int len = m_is_static ? (m_is_prefill ? m_prefill_chunk_size : 1) : -1;
-        input_shape = ov::PartialShape{1, 1, 1, len};
+        पूर्णाङ्क len = m_is_static ? (m_is_prefill ? m_prefill_chunk_आकार : 1) : -1;
+        निवेशः_shape = ov::PartialShape{1, 1, 1, len};
 
-    } else if (is_inp_s_copy(input, op) || is_s_copy_leaf(input)) {
+    } अन्यथा यदि (is_inp_s_copy(निवेशः, op) || is_s_copy_पर्णम्(निवेशः)) {
         // On NPU the total slot count (n_seq_max) is fixed at translation time, so the s_copy
         // index list has a static length; on CPU/GPU it may change across compiles (defrag).
-        input_shape = m_is_static ? ov::PartialShape{get_shape(input)} : ov::PartialShape{1, 1, 1, -1};
+        निवेशः_shape = m_is_static ? ov::PartialShape{get_shape(निवेशः)} : ov::PartialShape{1, 1, 1, -1};
 
-    } else {
-        input_shape = ov::PartialShape{get_shape(input)};
+    } अन्यथा {
+        निवेशः_shape = ov::PartialShape{get_shape(निवेशः)};
     }
-    if (dynamic_dim_index != -1 && m_model_is_splitted) {
-        input_shape[3 - dynamic_dim_index] = -1;
+    यदि (dynamic_dim_सूचकांक != -1 && m_model_is_splitted) {
+        निवेशः_shape[3 - dynamic_dim_सूचकांक] = -1;
     }
-    if (op->op == GGML_OP_SOFT_MAX && op->src[1] != nullptr && op->src[1]->op == GGML_OP_NONE &&
-        op->src[1]->flags & GGML_TENSOR_FLAG_INPUT && op->src[1] == input) {
+    यदि (op->op == GGML_OP_SOFT_MAX && op->src[1] != शून्यसूचकः && op->src[1]->op == GGML_OP_NONE &&
+        op->src[1]->flags & GGML_TENSOR_FLAG_निवेशः && op->src[1] == निवेशः) {
         // for softmax input mask, the shape is [1, 1, seq_active, seq_active], where seq_active is determined by the input active sequence length instead of the kv cache sequence length
-        if (m_is_static) {
-            const int64_t seq_active = m_is_prefill ? m_prefill_chunk_size : 1;
-            input_shape[2] = seq_active;
-            input_shape[3] = seq_active;
-        } else {
-            input_shape[2] = -1;
-            input_shape[3] = -1;
+        यदि (m_is_static) {
+            ध्रुव int64_t seq_सक्रिय = m_is_prefill ? m_prefill_chunk_आकार : 1;
+            निवेशः_shape[2] = seq_सक्रिय;
+            निवेशः_shape[3] = seq_सक्रिय;
+        } अन्यथा {
+            निवेशः_shape[2] = -1;
+            निवेशः_shape[3] = -1;
         }
     }
-    return input_shape;
+    प्रत्यागम निवेशः_shape;
 }
 
-bool GgmlOvDecoder::is_s_copy_leaf(const ggml_tensor * tensor) const {
-    if (tensor == nullptr || tensor->op != GGML_OP_NONE || m_cgraph == nullptr) {
-        return false;
+तार्किक GgmlOvDecoder::is_s_copy_पर्णम्(ध्रुव ggml_tensor * tensor) ध्रुव {
+    यदि (tensor == शून्यसूचकः || tensor->op != GGML_OP_NONE || m_cgraph == शून्यसूचकः) {
+        प्रत्यागम असत्य;
     }
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        const ggml_tensor * node = m_cgraph->nodes[i];
-        if (node->op != GGML_OP_GET_ROWS || node->src[0] == nullptr || node->src[1] == nullptr) {
-            continue;
+    प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes; i++) {
+        ध्रुव ggml_tensor * ग्रन्थिः = m_cgraph->nodes[i];
+        यदि (ग्रन्थिः->op != GGML_OP_GET_पङ्क्तिकाः || ग्रन्थिः->src[0] == शून्यसूचकः || ग्रन्थिः->src[1] == शून्यसूचकः) {
+            अनुवर्त;
         }
         // The index list may reach the s_copy leaf through one or more VIEWs.
-        const ggml_tensor * idx = node->src[1];
-        while (idx != nullptr && idx->op == GGML_OP_VIEW) {
+        ध्रुव ggml_tensor * idx = ग्रन्थिः->src[1];
+        यावत् (idx != शून्यसूचकः && idx->op == GGML_OP_VIEW) {
             idx = idx->src[0];
         }
-        if (idx != tensor) {
-            continue;
+        यदि (idx != tensor) {
+            अनुवर्त;
         }
         // The gathered data must be a recurrent state cache (cache_r/cache_s).
-        const ggml_tensor * data = node->src[0];
-        while (data != nullptr && (data->op == GGML_OP_VIEW || data->op == GGML_OP_RESHAPE)) {
-            data = data->src[0];
+        ध्रुव ggml_tensor * दत्त = ग्रन्थिः->src[0];
+        यावत् (दत्त != शून्यसूचकः && (दत्त->op == GGML_OP_VIEW || दत्त->op == GGML_OP_RESHAPE)) {
+            दत्त = दत्त->src[0];
         }
-        if (data != nullptr && is_recurrent_cache(data)) {
-            return true;
+        यदि (दत्त != शून्यसूचकः && is_recurrent_cache(दत्त)) {
+            प्रत्यागम सत्य;
         }
     }
-    return false;
+    प्रत्यागम असत्य;
 }
 
-void GgmlOvDecoder::add_extra_inputs() {
+शून्य GgmlOvDecoder::सङ्कलय_extra_inputs() {
     // Extra inputs:
     // 1. `attention_size`, used in FLASH_ATTN where the shape of the matmul's are 256 aligned,
     //     see llama_kv_cache_unified::get_n_kv and llama_kv_cache_unified::get_padding.
     // 2. `n_seq_active` and `seq_active_start`, used in FLASH_ATTN_EXT to indicate the active sequences in the batch
 
-    auto create_1d_input = [this](const std::string & name, int64_t value, bool force_parameter = false) {
+    स्वचालित create_1d_निवेशः = [एतत्](ध्रुव std::string & name, int64_t value, तार्किक force_parameter = असत्य) {
         m_model_extra_inputs[name] = {ov::element::i64, ov::Shape{1}, value, force_parameter || !m_is_static};
     };
 
-    if (m_compute_params.attention_size != -1) {
-        create_1d_input("attention_size", m_compute_params.attention_size);
+    यदि (m_compute_params.attention_आकार != -1) {
+        create_1d_निवेशः("attention_size", m_compute_params.attention_आकार);
     }
-    if (m_compute_params.attention_size_static != -1) {
-        create_1d_input("attention_size_static", m_compute_params.attention_size_static);
+    यदि (m_compute_params.attention_आकार_static != -1) {
+        create_1d_निवेशः("attention_size_static", m_compute_params.attention_आकार_static);
     }
-    if (m_compute_params.attention_size_swa != -1) {
-        create_1d_input("attention_size_swa", m_compute_params.attention_size_swa);
+    यदि (m_compute_params.attention_आकार_swa != -1) {
+        create_1d_निवेशः("attention_size_swa", m_compute_params.attention_आकार_swa);
     }
     // only the stateful SWA mask consumes this
-    if (is_stateful() && m_compute_params.swa_window != -1) {
-        create_1d_input("swa_window", m_compute_params.swa_window);
+    यदि (is_stateful() && m_compute_params.swa_गवाक्षः != -1) {
+        create_1d_निवेशः("swa_window", m_compute_params.swa_गवाक्षः);
     }
-    create_1d_input("n_seq_active", m_compute_params.n_seq_active);
-    create_1d_input("seq_active_start", m_compute_params.seq_active_start);
-    create_1d_input("seq_active_end", m_compute_params.seq_active_start + m_compute_params.n_seq_active);
-    if (m_compute_params.token_len_per_seq != -1) {
-        create_1d_input("token_len_per_seq", m_compute_params.token_len_per_seq);
+    create_1d_निवेशः("n_seq_active", m_compute_params.n_seq_सक्रिय);
+    create_1d_निवेशः("seq_active_start", m_compute_params.seq_सक्रिय_start);
+    create_1d_निवेशः("seq_active_end", m_compute_params.seq_सक्रिय_start + m_compute_params.n_seq_सक्रिय);
+    यदि (m_compute_params.token_len_प्रत्येकम्_seq != -1) {
+        create_1d_निवेशः("token_len_per_seq", m_compute_params.token_len_प्रत्येकम्_seq);
     }
     // create_1d_input("token_len", m_compute_params.token_len_per_seq * m_compute_params.n_seq_active);
 
-    if (m_compute_params.cache_rs_reset_idx != -1 && m_model_params.n_rs_slots != 1) {
+    यदि (m_compute_params.cache_rs_reset_idx != -1 && m_model_params.n_rs_slots != 1) {
         // Whether/which cache slot to reset varies per compute call (e.g. a new sequence starting
         // vs. continued decoding). can_reuse_statically() does not invalidate the cached static
         // model on ComputeParams changes, so these must stay runtime Parameters even when static
         // (scale.cpp op_case 1 only uses them in value comparisons, never as Slice bounds, so this
         // does not reintroduce dynamic shapes).
-        create_1d_input("cache_rs_reset_idx", m_compute_params.cache_rs_reset_idx, /*force_parameter=*/true);
-        create_1d_input("cache_rs_reset_len", m_compute_params.cache_rs_reset_len, /*force_parameter=*/true);
+        create_1d_निवेशः("cache_rs_reset_idx", m_compute_params.cache_rs_reset_idx, /*force_parameter=*/सत्य);
+        create_1d_निवेशः("cache_rs_reset_len", m_compute_params.cache_rs_reset_len, /*force_parameter=*/सत्य);
     }
 
-    if (m_compute_params.s_copy_active_slot_len != -1) {
-        create_1d_input("s_copy_active_slot_len", m_compute_params.s_copy_active_slot_len);
-        if (m_is_static) {
+    यदि (m_compute_params.s_copy_सक्रिय_slot_len != -1) {
+        create_1d_निवेशः("s_copy_active_slot_len", m_compute_params.s_copy_सक्रिय_slot_len);
+        यदि (m_is_static) {
             // Number of real tokens in the current prefill chunk. The last chunk is padded with
             // fabricated token ids; attention masks them out, but the recurrent (GDN/conv) path
             // would otherwise fold them into cache_r/cache_s permanently. Varies per chunk, so it
             // must stay a runtime Parameter; it is only compared against a Range or used as Gather
             // indices, so it does not make any shape dynamic.
-            create_1d_input("chunk_valid_len", get_static_n_tokens(), /*force_parameter=*/true);
+            create_1d_निवेशः("chunk_valid_len", get_static_n_tokens(), /*force_parameter=*/सत्य);
         }
     }
 
-    for (const auto & [node_name, writeback] : m_compute_params.rs_writebacks) {
-        create_1d_input("rs_slot_begin_" + node_name, writeback.slot_begin);
-        if (!m_is_static && writeback.src_begin >= 0) {
-            create_1d_input("rs_src_begin_" + node_name, writeback.src_begin);
+    प्रति (ध्रुव स्वचालित & [ग्रन्थिः_name, writeback] : m_compute_params.rs_writebacks) {
+        create_1d_निवेशः("rs_slot_begin_" + ग्रन्थिः_name, writeback.slot_begin);
+        यदि (!m_is_static && writeback.src_begin >= 0) {
+            create_1d_निवेशः("rs_src_begin_" + ग्रन्थिः_name, writeback.src_begin);
         }
     }
 }
 
-bool GgmlOvDecoder::node_is_used_as_src(const int node_idx) {
-    ggml_tensor * node = m_cgraph->nodes[node_idx];
-    for (int i = node_idx; i < m_cgraph->n_nodes; i++) {
-        ggml_tensor * other_node = m_cgraph->nodes[i];
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (other_node->src[j] == node) {
-                return true;
+तार्किक GgmlOvDecoder::ग्रन्थिः_is_प्रयुक्तम्_as_src(ध्रुव पूर्णाङ्क ग्रन्थिः_idx) {
+    ggml_tensor * ग्रन्थिः = m_cgraph->nodes[ग्रन्थिः_idx];
+    प्रति (पूर्णाङ्क i = ग्रन्थिः_idx; i < m_cgraph->n_nodes; i++) {
+        ggml_tensor * other_ग्रन्थिः = m_cgraph->nodes[i];
+        प्रति (पूर्णाङ्क j = 0; j < GGML_MAX_SRC; j++) {
+            यदि (other_ग्रन्थिः->src[j] == ग्रन्थिः) {
+                प्रत्यागम सत्य;
             }
         }
     }
-    return false;
+    प्रत्यागम असत्य;
 }
 
-void GgmlOvDecoder::compute_model_inputs() {
+शून्य GgmlOvDecoder::compute_model_inputs() {
     m_model_inputs.clear();
     m_inputs.clear();
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        ggml_tensor * node = m_cgraph->nodes[i];
+    प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes; i++) {
+        ggml_tensor * ग्रन्थिः = m_cgraph->nodes[i];
         // the node op is NONE means this node maybe as input of later nodes, we should add it to model inputs for this node.
-        if (node->op == GGML_OP_NONE && node_is_used_as_src(i)) {
-            std::string node_name = get_tensor_ov_name(m_cgraph, node);
-            if (m_model_weights.find(node_name) == m_model_weights.end()) {
-                m_inputs[node_name] = node;
-                m_model_inputs[node_name] = {get_ov_type(node),
-                                             get_graph_input_shape(node, nullptr, m_node_dynamic_dims[node])};
+        यदि (ग्रन्थिः->op == GGML_OP_NONE && ग्रन्थिः_is_प्रयुक्तम्_as_src(i)) {
+            std::string ग्रन्थिः_name = get_tensor_ov_name(m_cgraph, ग्रन्थिः);
+            यदि (m_model_weights.find(ग्रन्थिः_name) == m_model_weights.end()) {
+                m_inputs[ग्रन्थिः_name] = ग्रन्थिः;
+                m_model_inputs[ग्रन्थिः_name] = {get_ov_type(ग्रन्थिः),
+                                             get_graph_निवेशः_shape(ग्रन्थिः, शून्यसूचकः, m_ग्रन्थिः_dynamic_dims[ग्रन्थिः])};
             }
-            continue;
+            अनुवर्त;
         }
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            auto * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+        प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_SRC; i++) {
+            स्वचालित * src = ग्रन्थिः->src[i];
+            यदि (src == शून्यसूचकः) {
+                अनुवर्त;
             }
             std::string src_name = get_tensor_ov_name(m_cgraph, src);
-            if (src->flags & GGML_TENSOR_FLAG_INPUT) {
-                src_name = get_tensor_graph_input_ov_name(this, m_cgraph, src, node);
+            यदि (src->flags & GGML_TENSOR_FLAG_निवेशः) {
+                src_name = get_tensor_graph_निवेशः_ov_name(एतत्, m_cgraph, src, ग्रन्थिः);
             }
-            if (m_model_weights.find(src_name) != m_model_weights.end()) {
-                continue;
+            यदि (m_model_weights.find(src_name) != m_model_weights.end()) {
+                अनुवर्त;
             }
             // A view over a weight is served by the base tensor's Constant, never by a Parameter.
-            if (src->view_src != nullptr &&
+            यदि (src->view_src != शून्यसूचकः &&
                 m_model_weights.find(get_tensor_ov_name(m_cgraph, src->view_src)) != m_model_weights.end()) {
-                continue;
+                अनुवर्त;
             }
 
-            bool is_intermediate_node = false;
-            for (const auto & node_info : m_node_info_list) {
-                if (node_info.node == src) {
-                    is_intermediate_node = true;
-                    break;
+            तार्किक is_intermediate_ग्रन्थिः = असत्य;
+            प्रति (ध्रुव स्वचालित & ग्रन्थिः_info : m_ग्रन्थिः_info_list) {
+                यदि (ग्रन्थिः_info.ग्रन्थिः == src) {
+                    is_intermediate_ग्रन्थिः = सत्य;
+                    भङ्ग;
                 }
             }
-            if (is_intermediate_node) {
-                continue;
+            यदि (is_intermediate_ग्रन्थिः) {
+                अनुवर्त;
             }
-            if (m_model_inputs.find(src_name) != m_model_inputs.end()) {
-                continue;
+            यदि (m_model_inputs.find(src_name) != m_model_inputs.end()) {
+                अनुवर्त;
             }
 
             m_inputs[src_name] = src;
 
-            ggml_backend_buffer * buffer = src->buffer;
+            ggml_backend_बफर * बफर = src->बफर;
             // GGML_BACKEND_BUFFER_USAGE_ANY are kv caches
-            if (buffer->usage == GGML_BACKEND_BUFFER_USAGE_ANY) {
-                if (auto it = std::find(m_model_params.kv_names.begin(), m_model_params.kv_names.end(), src_name);
-                    it == m_model_params.kv_names.end()) {
-                    m_model_params.kv_names.push_back(src_name);
+            यदि (बफर->usage == GGML_BACKEND_बफर_USAGE_ANY) {
+                यदि (स्वचालित it = std::find(m_model_params.kv_नामानि.begin(), m_model_params.kv_नामानि.end(), src_name);
+                    it == m_model_params.kv_नामानि.end()) {
+                    m_model_params.kv_नामानि.push_back(src_name);
                 }
             }
             // Resolve nested VIEW nodes by following src[0] until the first non-VIEW tensor.
-            while (src->op == GGML_OP_VIEW && src->src[0] != nullptr) {
+            यावत् (src->op == GGML_OP_VIEW && src->src[0] != शून्यसूचकः) {
                 src = src->src[0];
                 src_name = get_tensor_ov_name(m_cgraph, src);
             }
             m_inputs[src_name] = src;
             m_model_inputs[src_name] = {get_ov_type(src),
-                                        get_graph_input_shape(node, src, m_node_dynamic_dims[src])};
+                                        get_graph_निवेशः_shape(ग्रन्थिः, src, m_ग्रन्थिः_dynamic_dims[src])};
         }
     }
 }
 
-void GgmlOvDecoder::compute_model_outputs() {
+शून्य GgmlOvDecoder::compute_model_outputs() {
     m_model_outputs.clear();
-    m_model_output_names.clear();
-    for (int node_n = 0; node_n < m_cgraph->n_nodes; node_n++) {
-        auto * cur_node = m_cgraph->nodes[node_n];
+    m_model_output_नामानि.clear();
+    प्रति (पूर्णाङ्क ग्रन्थिः_n = 0; ग्रन्थिः_n < m_cgraph->n_nodes; ग्रन्थिः_n++) {
+        स्वचालित * cur_ग्रन्थिः = m_cgraph->nodes[ग्रन्थिः_n];
         // if the node op is NONE means this node is not used at all, we can skip it directly without adding to model outputs.
-        if (cur_node->op == GGML_OP_NONE || cur_node->op == GGML_OP_VIEW || cur_node->op == GGML_OP_RESHAPE) {
-            continue;
+        यदि (cur_ग्रन्थिः->op == GGML_OP_NONE || cur_ग्रन्थिः->op == GGML_OP_VIEW || cur_ग्रन्थिः->op == GGML_OP_RESHAPE) {
+            अनुवर्त;
         }
-        if (::is_inplace_op(cur_node) && ggml_nbytes(cur_node) == 0) {
-            continue;
+        यदि (::is_inplace_op(cur_ग्रन्थिः) && ggml_nbytes(cur_ग्रन्थिः) == 0) {
+            अनुवर्त;
         }
-        auto cur_node_use_count = m_cgraph->use_counts[ggml_hash_find(&m_cgraph->visited_hash_set, cur_node)];
-        if (cur_node_use_count == 0) {
+        स्वचालित cur_ग्रन्थिः_use_गणनम् = m_cgraph->use_counts[ggml_hash_find(&m_cgraph->visited_hash_समुच्चयः, cur_ग्रन्थिः)];
+        यदि (cur_ग्रन्थिः_use_गणनम् == 0) {
             // The output of in-place ops is the view_src tensor, which is updated in place. We should use the view_src name as the output name to make sure it can be correctly matched with the later ops that use the view_src.
-            if (cur_node != nullptr && ::is_inplace_op(cur_node) && ggml_nbytes(cur_node) > 0) {
-                cur_node = cur_node->view_src;
+            यदि (cur_ग्रन्थिः != शून्यसूचकः && ::is_inplace_op(cur_ग्रन्थिः) && ggml_nbytes(cur_ग्रन्थिः) > 0) {
+                cur_ग्रन्थिः = cur_ग्रन्थिः->view_src;
             }
-        } else {
-            int input_use_count = 0;
-            for (int i = 0; i < m_cgraph->n_nodes; i++) {
-                ggml_tensor * node = m_cgraph->nodes[i];
-                for (int j = 0; j < GGML_MAX_SRC; j++) {
-                    if (node->src[j] != NULL && node->src[j] == cur_node) {
-                        input_use_count++;
+        } अन्यथा {
+            पूर्णाङ्क निवेशः_use_गणनम् = 0;
+            प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes; i++) {
+                ggml_tensor * ग्रन्थिः = m_cgraph->nodes[i];
+                प्रति (पूर्णाङ्क j = 0; j < GGML_MAX_SRC; j++) {
+                    यदि (ग्रन्थिः->src[j] != रिक्त && ग्रन्थिः->src[j] == cur_ग्रन्थिः) {
+                        निवेशः_use_गणनम्++;
                     }
                 }
             }
-            if (input_use_count == cur_node_use_count) {
-                cur_node = nullptr;
+            यदि (निवेशः_use_गणनम् == cur_ग्रन्थिः_use_गणनम्) {
+                cur_ग्रन्थिः = शून्यसूचकः;
             }
         }
-        if (cur_node != nullptr) {
-            std::string cur_node_name = get_tensor_ov_name(m_cgraph, cur_node);
-            m_model_outputs[cur_node_name] = cur_node;
-            m_model_output_names.insert(cur_node_name);
+        यदि (cur_ग्रन्थिः != शून्यसूचकः) {
+            std::string cur_ग्रन्थिः_name = get_tensor_ov_name(m_cgraph, cur_ग्रन्थिः);
+            m_model_outputs[cur_ग्रन्थिः_name] = cur_ग्रन्थिः;
+            m_model_output_नामानि.insert(cur_ग्रन्थिः_name);
         }
     }
 }
 
-const ggml_tensor * GgmlOvDecoder::get_tensor_used_op(const ggml_tensor * tensor) const {
-    if (tensor == nullptr) {
-        return nullptr;
+ध्रुव ggml_tensor * GgmlOvDecoder::get_tensor_प्रयुक्तम्_op(ध्रुव ggml_tensor * tensor) ध्रुव {
+    यदि (tensor == शून्यसूचकः) {
+        प्रत्यागम शून्यसूचकः;
     }
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        const auto * node = m_cgraph->nodes[i];
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j] == tensor) {
-                return node;
+    प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes; i++) {
+        ध्रुव स्वचालित * ग्रन्थिः = m_cgraph->nodes[i];
+        प्रति (पूर्णाङ्क j = 0; j < GGML_MAX_SRC; j++) {
+            यदि (ग्रन्थिः->src[j] == tensor) {
+                प्रत्यागम ग्रन्थिः;
             }
         }
     }
-    return nullptr;
+    प्रत्यागम शून्यसूचकः;
 }
 
-const ggml_tensor * GgmlOvDecoder::get_tensor_from_name(const std::string & name) const {
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        const auto * node = m_cgraph->nodes[i];
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            const auto * src = node->src[j];
-            if (src == nullptr) {
-                break;
+ध्रुव ggml_tensor * GgmlOvDecoder::get_tensor_from_name(ध्रुव std::string & name) ध्रुव {
+    प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes; i++) {
+        ध्रुव स्वचालित * ग्रन्थिः = m_cgraph->nodes[i];
+        प्रति (पूर्णाङ्क j = 0; j < GGML_MAX_SRC; j++) {
+            ध्रुव स्वचालित * src = ग्रन्थिः->src[j];
+            यदि (src == शून्यसूचकः) {
+                भङ्ग;
             }
-            if (get_tensor_ov_name(m_cgraph, src) == name) {
-                return src;
+            यदि (get_tensor_ov_name(m_cgraph, src) == name) {
+                प्रत्यागम src;
             }
         }
     }
-    return nullptr;
+    प्रत्यागम शून्यसूचकः;
 }
 
-std::map<std::string, std::string> GgmlOvDecoder::get_kv_param_res_names() const {
-    std::map<std::string, std::string> kv_param_res_names;
-    for (const auto & name : m_model_params.kv_names) {
-        kv_param_res_names[name] = name;
+std::map<std::string, std::string> GgmlOvDecoder::get_kv_param_res_नामानि() ध्रुव {
+    std::map<std::string, std::string> kv_param_res_नामानि;
+    प्रति (ध्रुव स्वचालित & name : m_model_params.kv_नामानि) {
+        kv_param_res_नामानि[name] = name;
     }
-    return kv_param_res_names;
+    प्रत्यागम kv_param_res_नामानि;
 }
 
 // MUL_MAT_ID's src[0] is the [k, m, n_expert] expert-weight tensor. It is always a constant per-expert
@@ -1445,40 +1445,40 @@ std::map<std::string, std::string> GgmlOvDecoder::get_kv_param_res_names() const
 // flag, unlike real inference). Without this, non-quantized (F16/F32/BF16) expert weights would fall
 // through the check below as "not a weight", get decoded as a Parameter/activation instead of a
 // Constant, and crash GatherMatmul's "only constant weights are supported" check.
-static bool is_mul_mat_id_expert_weight(const ggml_tensor * node, int src_index) {
-    return node->op == GGML_OP_MUL_MAT_ID && src_index == 0;
+स्थिर तार्किक is_mul_mat_id_expert_weight(ध्रुव ggml_tensor * ग्रन्थिः, पूर्णाङ्क src_सूचकांक) {
+    प्रत्यागम ग्रन्थिः->op == GGML_OP_MUL_MAT_ID && src_सूचकांक == 0;
 }
 
-std::map<std::string, std::shared_ptr<ov::Node>> GgmlOvDecoder::create_weight_nodes(ggml_cgraph * cgraph, bool naive) {
+std::map<std::string, std::shared_ptr<ov::Node>> GgmlOvDecoder::create_weight_nodes(ggml_cgraph * cgraph, तार्किक naive) {
     std::map<std::string, std::shared_ptr<ov::Node>> model_weights;
-    auto * nodes = cgraph->nodes;
-    auto n_nodes = cgraph->n_nodes;
-    for (int node_i = 0; node_i < n_nodes; node_i++) {
-        auto * node = nodes[node_i];
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            auto * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+    स्वचालित * nodes = cgraph->nodes;
+    स्वचालित n_nodes = cgraph->n_nodes;
+    प्रति (पूर्णाङ्क ग्रन्थिः_i = 0; ग्रन्थिः_i < n_nodes; ग्रन्थिः_i++) {
+        स्वचालित * ग्रन्थिः = nodes[ग्रन्थिः_i];
+        प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_SRC; i++) {
+            स्वचालित * src = ग्रन्थिः->src[i];
+            यदि (src == शून्यसूचकः) {
+                अनुवर्त;
             }
 
             // A view over a weight is served by the base tensor's Constant.
-            ggml_tensor * base = src->view_src ? src->view_src : src;
-            std::string src_name = get_tensor_ov_name(cgraph, base);
-            if (is_rope_freqs_weight(base, node)) {
+            ggml_tensor * आधारः = src->view_src ? src->view_src : src;
+            std::string src_name = get_tensor_ov_name(cgraph, आधारः);
+            यदि (is_rope_freqs_weight(आधारः, ग्रन्थिः)) {
                 src_name = "rope_freqs.weight";
             }
-            ggml_backend_buffer * buffer = base->buffer;
-            if (buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS || ggml_is_quantized(base->type) ||
-                is_mul_mat_id_expert_weight(node, i)) {
-                if (model_weights.find(src_name) == model_weights.end()) {
-                    auto weight_node = create_weight_node(base, naive);
-                    weight_node->set_friendly_name(src_name);
-                    model_weights[src_name] = weight_node;
+            ggml_backend_बफर * बफर = आधारः->बफर;
+            यदि (बफर->usage == GGML_BACKEND_बफर_USAGE_WEIGHTS || ggml_is_quantized(आधारः->type) ||
+                is_mul_mat_id_expert_weight(ग्रन्थिः, i)) {
+                यदि (model_weights.find(src_name) == model_weights.end()) {
+                    स्वचालित weight_ग्रन्थिः = create_weight_ग्रन्थिः(आधारः, naive);
+                    weight_ग्रन्थिः->समुच्चयः_friendly_name(src_name);
+                    model_weights[src_name] = weight_ग्रन्थिः;
                 }
             }
         }
     }
-    return model_weights;
+    प्रत्यागम model_weights;
 }
 
 // Process-lifetime cache for weight nodes built from NON-OpenVINO buffers (e.g. the
@@ -1488,58 +1488,58 @@ std::map<std::string, std::shared_ptr<ov::Node>> GgmlOvDecoder::create_weight_no
 // F32 dequant each time. Keyed by tensor->data, which is stable for the process and
 // uniquely identifies the immutable weight bytes. OV-buffer weights keep using the
 // per-tensor extra cache and never reach here.
-static std::mutex g_nonov_weight_cache_mutex;
-static std::unordered_map<const void *, std::shared_ptr<ov::Node>> g_nonov_weight_cache;
+स्थिर std::mutex g_nonov_weight_cache_mutex;
+स्थिर std::unordered_map<ध्रुव शून्य *, std::shared_ptr<ov::Node>> g_nonov_weight_cache;
 
-std::set<std::string> GgmlOvDecoder::collect_weight_names(ggml_cgraph * cgraph) {
+std::set<std::string> GgmlOvDecoder::collect_weight_नामानि(ggml_cgraph * cgraph) {
     // Mirrors the name-selection logic of create_weight_nodes() but builds no nodes,
     // so topology checks don't trigger weight extraction/requantization.
-    std::set<std::string> names;
-    for (int node_i = 0; node_i < cgraph->n_nodes; node_i++) {
-        auto * node = cgraph->nodes[node_i];
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            auto * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+    std::set<std::string> नामानि;
+    प्रति (पूर्णाङ्क ग्रन्थिः_i = 0; ग्रन्थिः_i < cgraph->n_nodes; ग्रन्थिः_i++) {
+        स्वचालित * ग्रन्थिः = cgraph->nodes[ग्रन्थिः_i];
+        प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_SRC; i++) {
+            स्वचालित * src = ग्रन्थिः->src[i];
+            यदि (src == शून्यसूचकः) {
+                अनुवर्त;
             }
-            const ggml_tensor * base = src->view_src ? src->view_src : src;
-            std::string src_name(base->name);
-            if (is_rope_freqs_weight(base, node)) {
+            ध्रुव ggml_tensor * आधारः = src->view_src ? src->view_src : src;
+            std::string src_name(आधारः->name);
+            यदि (is_rope_freqs_weight(आधारः, ग्रन्थिः)) {
                 src_name = "rope_freqs.weight";
             }
-            ggml_backend_buffer * buffer = base->buffer;
-            if (buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS || ggml_is_quantized(base->type)) {
-                names.insert(src_name);
+            ggml_backend_बफर * बफर = आधारः->बफर;
+            यदि (बफर->usage == GGML_BACKEND_बफर_USAGE_WEIGHTS || ggml_is_quantized(आधारः->type)) {
+                नामानि.insert(src_name);
             }
         }
     }
-    return names;
+    प्रत्यागम नामानि;
 }
 
-std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor, bool naive) {
-    const bool is_ov_buffer = ggml_backend_buffer_is_openvino(tensor->buffer);
+std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_ग्रन्थिः(ggml_tensor * tensor, तार्किक naive) {
+    ध्रुव तार्किक is_ov_बफर = ggml_backend_बफर_is_openvino(tensor->बफर);
 
     // Check if we have a pre-built constant from the OpenVINO backend buffer
     // This is set during ggml_backend_openvino_buffer_set_tensor
-    if (tensor->extra) {
-        OPENVINO_ASSERT(is_ov_buffer, "Unsupported weight tensor: " + std::string(tensor->name) +
+    यदि (tensor->extra) {
+        OPENVINO_ASSERT(is_ov_बफर, "Unsupported weight tensor: " + std::string(tensor->name) +
                                           " Possibly this is a cpu backend repacked quantized weights");
         // Cast to our extra base type and check the type
-        auto * extra_base = static_cast<ggml_openvino_extra_base *>(tensor->extra);
+        स्वचालित * extra_आधारः = static_cast<ggml_openvino_extra_आधारः *>(tensor->extra);
 
-        if (extra_base->type == ggml_openvino_extra_base::Type::WEIGHT) {
+        यदि (extra_आधारः->type == ggml_openvino_extra_आधारः::Type::WEIGHT) {
             // F16/F32/BF16 weight with shared-memory constant
-            auto * weight_extra = static_cast<ggml_openvino_weight_extra *>(tensor->extra);
-            if (weight_extra->weight_node) {
+            स्वचालित * weight_extra = static_cast<ggml_openvino_weight_extra *>(tensor->extra);
+            यदि (weight_extra->weight_ग्रन्थिः) {
                 // GGML_LOG_DEBUG("%s: using pre-built weight node for %s\n", __func__, tensor->name);
-                return weight_extra->weight_node;
+                प्रत्यागम weight_extra->weight_ग्रन्थिः;
             }
-        } else if (extra_base->type == ggml_openvino_extra_base::Type::QUANTIZED_WEIGHT) {
+        } अन्यथा यदि (extra_आधारः->type == ggml_openvino_extra_आधारः::Type::QUANTIZED_WEIGHT) {
             // Quantized weight with pre-extracted data
-            auto * quant_extra = static_cast<ggml_openvino_quantized_weight_extra *>(tensor->extra);
-            if (quant_extra->weight_node) {
+            स्वचालित * quant_extra = static_cast<ggml_openvino_quantized_weight_extra *>(tensor->extra);
+            यदि (quant_extra->weight_ग्रन्थिः) {
                 // GGML_LOG_DEBUG("%s: using pre-extracted quantized weight node for %s\n", __func__, tensor->name);
-                return quant_extra->weight_node;
+                प्रत्यागम quant_extra->weight_ग्रन्थिः;
             }
         }
     }
@@ -1548,11 +1548,11 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
     // Keep the full reversed 4D shape when materializing non-quantized constants,
     // otherwise the expert dimension is collapsed and later Gather/MatMul logic
     // only sees a single expert slice.
-    if (!ggml_is_quantized(tensor->type) && (tensor->ne[2] > 1 || tensor->ne[3] > 1)) {
-        auto weight_tensor = ov::Tensor(get_ov_type(tensor), get_shape(tensor), tensor->data);
-        auto weight_node = std::make_shared<ov::op::v0::Constant>(weight_tensor);
-        weight_node->set_friendly_name(tensor->name);
-        return weight_node;
+    यदि (!ggml_is_quantized(tensor->type) && (tensor->ne[2] > 1 || tensor->ne[3] > 1)) {
+        स्वचालित weight_tensor = ov::Tensor(get_ov_type(tensor), get_shape(tensor), tensor->दत्त);
+        स्वचालित weight_ग्रन्थिः = std::make_shared<ov::op::v0::Constant>(weight_tensor);
+        weight_ग्रन्थिः->समुच्चयः_friendly_name(tensor->name);
+        प्रत्यागम weight_ग्रन्थिः;
     }
 
     // Non-OV-buffer weights (CPU/mmap, e.g. the GET_ROWS token_embd copy) have no buffer
@@ -1560,13 +1560,13 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
     // pointer to avoid re-extracting on every recompile. Opt-in via
     // GGML_OPENVINO_REDUCE_COMPILE_MEM or GGML_OPENVINO_MEMORY_OPTIMIZE. Skip
     // for `naive` (test/naive path) since use_bias changes the produced node.
-    const bool cacheable_nonov = ggml_openvino_reduce_compile_mem_enabled() && !is_ov_buffer &&
-                                 !naive && tensor->data != nullptr;
-    if (cacheable_nonov) {
-        std::lock_guard<std::mutex> lock(g_nonov_weight_cache_mutex);
-        auto it = g_nonov_weight_cache.find(tensor->data);
-        if (it != g_nonov_weight_cache.end()) {
-            return it->second;
+    ध्रुव तार्किक cacheable_nonov = ggml_openvino_reduce_compile_mem_enabled() && !is_ov_बफर &&
+                                 !naive && tensor->दत्त != शून्यसूचकः;
+    यदि (cacheable_nonov) {
+        std::lock_guard<std::mutex> तालकम्(g_nonov_weight_cache_mutex);
+        स्वचालित it = g_nonov_weight_cache.find(tensor->दत्त);
+        यदि (it != g_nonov_weight_cache.end()) {
+            प्रत्यागम it->second;
         }
     }
 
@@ -1576,63 +1576,63 @@ std::shared_ptr<ov::Node> GgmlOvDecoder::create_weight_node(ggml_tensor * tensor
     // 3. test-backend-ops. buffers in test-backend-ops does not set USAGE_WEIGHT so backend_buffer_set_tensor will not create weight node
 
     // GGML_LOG_DEBUG("%s: creating new weight node for %s\n", __func__, tensor->name);
-    static const std::set<ggml_type> weight_types = {GGML_TYPE_F32,  GGML_TYPE_F16,  GGML_TYPE_BF16, GGML_TYPE_Q8_0,
+    स्थिर ध्रुव std::set<ggml_type> weight_types = {GGML_TYPE_F32,  GGML_TYPE_F16,  GGML_TYPE_BF16, GGML_TYPE_Q8_0,
                                                      GGML_TYPE_Q4_0, GGML_TYPE_Q4_1, GGML_TYPE_Q5_1, GGML_TYPE_Q4_K,
                                                      GGML_TYPE_Q5_K, GGML_TYPE_Q6_K, GGML_TYPE_MXFP4};
-    if (weight_types.find(tensor->type) == weight_types.end()) {
-        throw std::runtime_error("Unexpected weight tensor type: " + std::string(tensor->name) + " with type " +
+    यदि (weight_types.find(tensor->type) == weight_types.end()) {
+        क्षिप std::runtime_error("Unexpected weight tensor type: " + std::string(tensor->name) + " with type " +
                                  ggml_type_name(tensor->type));
     }
 
     OvWeight ov_weight;
-    if (ggml_is_quantized(tensor->type)) {
-        auto use_bias = naive;
-        if (is_ov_buffer) {
+    यदि (ggml_is_quantized(tensor->type)) {
+        स्वचालित use_bias = naive;
+        यदि (is_ov_बफर) {
             // For quantized weights, copy raw data to a temp buffer first because
             // process_weight_tensor reads from data and writes extracted results
             // (weights/scales/zp) to output_base_ptr — they would overlap if both
             // point to tensor->data.
-            size_t raw_size = ggml_nbytes(tensor);
-            std::vector<uint8_t> tmp(raw_size);
-            memcpy(tmp.data(), tensor->data, raw_size);
-            ov_weight = process_weight_tensor(tensor, tmp.data(), tensor->data, use_bias);
-        } else {
-            ov_weight = process_weight_tensor(tensor, tensor->data, nullptr, use_bias);
+            size_t raw_आकार = ggml_nbytes(tensor);
+            std::vector<uint8_t> tmp(raw_आकार);
+            स्मृतिं_प्रतिलिख(tmp.दत्त(), tensor->दत्त, raw_आकार);
+            ov_weight = process_weight_tensor(tensor, tmp.दत्त(), tensor->दत्त, use_bias);
+        } अन्यथा {
+            ov_weight = process_weight_tensor(tensor, tensor->दत्त, शून्यसूचकः, use_bias);
         }
-    } else {
+    } अन्यथा {
         // For non-quantized weights (F16/F32/BF16), data is already in tensor->data.
         // process_weight_tensor will create an ov::Tensor wrapping tensor->data directly.
-        ov_weight = process_weight_tensor(tensor, tensor->data, tensor->data);
+        ov_weight = process_weight_tensor(tensor, tensor->दत्त, tensor->दत्त);
     }
 
-    ov_weight.weight_node->set_friendly_name(tensor->name);
-    if (!is_ov_buffer) {
-        if (cacheable_nonov) {
-            std::lock_guard<std::mutex> lock(g_nonov_weight_cache_mutex);
+    ov_weight.weight_ग्रन्थिः->समुच्चयः_friendly_name(tensor->name);
+    यदि (!is_ov_बफर) {
+        यदि (cacheable_nonov) {
+            std::lock_guard<std::mutex> तालकम्(g_nonov_weight_cache_mutex);
             // Another thread may have inserted concurrently; keep the first.
-            auto [it, inserted] = g_nonov_weight_cache.emplace(tensor->data, ov_weight.weight_node);
-            return it->second;
+            स्वचालित [it, inserted] = g_nonov_weight_cache.emplace(tensor->दत्त, ov_weight.weight_ग्रन्थिः);
+            प्रत्यागम it->second;
         }
-        return ov_weight.weight_node;
+        प्रत्यागम ov_weight.weight_ग्रन्थिः;
     }
 
-    ggml_openvino_extra_base * extra;
-    if (ov_weight.is_quantized()) {
-        extra = new ggml_openvino_quantized_weight_extra(std::move(ov_weight.weights), std::move(ov_weight.scales),
-                                                         std::move(ov_weight.zp), ov_weight.weight_node);
-    } else {
-        extra = new ggml_openvino_weight_extra(std::move(ov_weight.weights), ov_weight.weight_node);
+    ggml_openvino_extra_आधारः * extra;
+    यदि (ov_weight.is_quantized()) {
+        extra = नूतन ggml_openvino_quantized_weight_extra(std::move(ov_weight.weights), std::move(ov_weight.scales),
+                                                         std::move(ov_weight.zp), ov_weight.weight_ग्रन्थिः);
+    } अन्यथा {
+        extra = नूतन ggml_openvino_weight_extra(std::move(ov_weight.weights), ov_weight.weight_ग्रन्थिः);
     }
-    ggml_openvino_buffer_register_extra(tensor, extra);
+    ggml_openvino_बफर_पञ्जिकाकोशः_extra(tensor, extra);
 
-    return ov_weight.weight_node;
+    प्रत्यागम ov_weight.weight_ग्रन्थिः;
 }
 
-void GgmlOvDecoder::dump_cgraph(const ggml_cgraph * cgraph, std::string & filename) {
+शून्य GgmlOvDecoder::dump_cgraph(ध्रुव ggml_cgraph * cgraph, std::string & filename) {
     std::ofstream file(filename);
-    if (!file.is_open()) {
+    यदि (!file.is_open()) {
         std::cerr << "Failed to open file" << '\n';
-        return;
+        प्रत्यागम;
     }
 
     file << "=== GRAPH ===\n";
@@ -1647,38 +1647,38 @@ void GgmlOvDecoder::dump_cgraph(const ggml_cgraph * cgraph, std::string & filena
                 << std::setw(62) << "stride"
                 << std::setw(20) << "buffer_type"
                 << "\n";
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        ggml_tensor * node = cgraph->nodes[i];
+    प्रति (पूर्णाङ्क i = 0; i < cgraph->n_nodes; i++) {
+        ggml_tensor * ग्रन्थिः = cgraph->nodes[i];
 
         // Get buffer type name
-        const char * buf_name = "none";
-        ggml_backend_buffer_t buf = node->view_src ? node->view_src->buffer : node->buffer;
-        if (buf) {
-            buf_name = ggml_backend_buffer_name(buf);
+        ध्रुव वर्ण * buf_name = "none";
+        ggml_backend_बफर_t buf = ग्रन्थिः->view_src ? ग्रन्थिः->view_src->बफर : ग्रन्थिः->बफर;
+        यदि (buf) {
+            buf_name = ggml_backend_बफर_name(buf);
         }
 
         file << " - " << std::setw(3) << i << ": [ "
-             << std::setw(5) << node->ne[0] << ", "
-             << std::setw(5) << node->ne[1] << ", "
-             << std::setw(5) << node->ne[2] << ", "
-             << std::setw(5) << node->ne[3] << "] "
-             << std::left << std::setw(20) << ggml_op_name(node->op) << std::right << " "
-             << std::left << std::setw(45) << node->name << std::right
+             << std::setw(5) << ग्रन्थिः->ne[0] << ", "
+             << std::setw(5) << ग्रन्थिः->ne[1] << ", "
+             << std::setw(5) << ग्रन्थिः->ne[2] << ", "
+             << std::setw(5) << ग्रन्थिः->ne[3] << "] "
+             << std::वामतः << std::setw(20) << ggml_op_name(ग्रन्थिः->op) << std::दक्षिणतः << " "
+             << std::वामतः << std::setw(45) << ग्रन्थिः->name << std::दक्षिणतः
              << std::setw(2) << "[ "
-             << std::setw(0) << node->nb[0] << ", "
-             << std::setw(5) << node->nb[1] << ", "
-             << std::setw(5) << node->nb[2] << ", "
-             << std::setw(5) << node->nb[3] << "] "
-             << std::right << std::setw(15) << buf_name << std::right
+             << std::setw(0) << ग्रन्थिः->nb[0] << ", "
+             << std::setw(5) << ग्रन्थिः->nb[1] << ", "
+             << std::setw(5) << ग्रन्थिः->nb[2] << ", "
+             << std::setw(5) << ग्रन्थिः->nb[3] << "] "
+             << std::दक्षिणतः << std::setw(15) << buf_name << std::दक्षिणतः
              << "\n";
 
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            if (auto* src = node->src[i]) {
+        प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_SRC; i++) {
+            यदि (स्वचालित* src = ग्रन्थिः->src[i]) {
                 // Get buffer type name for source
-                const char * src_buf_name = "none";
-                ggml_backend_buffer_t src_buf = src->view_src ? src->view_src->buffer : src->buffer;
-                if (src_buf) {
-                    src_buf_name = ggml_backend_buffer_name(src_buf);
+                ध्रुव वर्ण * src_buf_name = "none";
+                ggml_backend_बफर_t src_buf = src->view_src ? src->view_src->बफर : src->बफर;
+                यदि (src_buf) {
+                    src_buf_name = ggml_backend_बफर_name(src_buf);
                 }
 
                 file << std::setw(10) << " [ "
@@ -1687,36 +1687,36 @@ void GgmlOvDecoder::dump_cgraph(const ggml_cgraph * cgraph, std::string & filena
                 << std::setw(5) << src->ne[2] << ", "
                 << std::setw(5) << src->ne[3] << "] "
                 << std::setw(12)
-                << i << ": " << std::left << std::setw(12) << ggml_op_name(src->op) << std::right;
-                file << std::left << std::setw(30) << src->name << std::right
+                << i << ": " << std::वामतः << std::setw(12) << ggml_op_name(src->op) << std::दक्षिणतः;
+                file << std::वामतः << std::setw(30) << src->name << std::दक्षिणतः
                 << std::setw(16) << "[ "
                 << std::setw(0) << src->nb[0] << ", "
                 << std::setw(5) << src->nb[1] << ", "
                 << std::setw(5) << src->nb[2] << ", "
                 << std::setw(5) << src->nb[3] << "] "
-                << std::right << std::setw(15) << src_buf_name << std::right
+                << std::दक्षिणतः << std::setw(15) << src_buf_name << std::दक्षिणतः
                 << "\n";
             }
         }
     }
 
     file << "n_leafs = " << cgraph->n_leafs << "\n";
-    for (int i = 0; i < cgraph->n_leafs; i++) {
-        ggml_tensor * node = cgraph->leafs[i];
+    प्रति (पूर्णाङ्क i = 0; i < cgraph->n_leafs; i++) {
+        ggml_tensor * ग्रन्थिः = cgraph->leafs[i];
 
         // Get buffer type name for leaf
-        const char * leaf_buf_name = "none";
-        ggml_backend_buffer_t leaf_buf = node->view_src ? node->view_src->buffer : node->buffer;
-        if (leaf_buf) {
-            leaf_buf_name = ggml_backend_buffer_name(leaf_buf);
+        ध्रुव वर्ण * पर्णम्_buf_name = "none";
+        ggml_backend_बफर_t पर्णम्_buf = ग्रन्थिः->view_src ? ग्रन्थिः->view_src->बफर : ग्रन्थिः->बफर;
+        यदि (पर्णम्_buf) {
+            पर्णम्_buf_name = ggml_backend_बफर_name(पर्णम्_buf);
         }
 
         file << " - " << std::setw(3) << i << ": [ "
-             << std::setw(5) << node->ne[0] << ", "
-             << std::setw(5) << node->ne[1] << "] "
-             << std::setw(8) << ggml_op_name(node->op) << " "
-             << std::setw(16) << ggml_get_name(node)
-             << std::setw(20) << leaf_buf_name << "\n";
+             << std::setw(5) << ग्रन्थिः->ne[0] << ", "
+             << std::setw(5) << ग्रन्थिः->ne[1] << "] "
+             << std::setw(8) << ggml_op_name(ग्रन्थिः->op) << " "
+             << std::setw(16) << ggml_get_name(ग्रन्थिः)
+             << std::setw(20) << पर्णम्_buf_name << "\n";
     }
     // clang-format on
     file << "========================================\n";
@@ -1724,426 +1724,426 @@ void GgmlOvDecoder::dump_cgraph(const ggml_cgraph * cgraph, std::string & filena
     file.close();
 }
 
-void print_tensor_address_map(const ggml_cgraph * cgraph) {
-    std::map<void *, std::vector<std::string>> address_map;
-    for (int node_n = 0; node_n < cgraph->n_nodes; node_n++) {
-        auto * node = cgraph->nodes[node_n];
-        if (node->data) {
-            auto it = address_map.find(node->data);
-            if (it == address_map.end()) {
-                address_map[node->data] = std::vector<std::string>();
+शून्य print_tensor_स्थानाङ्कः_map(ध्रुव ggml_cgraph * cgraph) {
+    std::map<शून्य *, std::vector<std::string>> स्थानाङ्कः_map;
+    प्रति (पूर्णाङ्क ग्रन्थिः_n = 0; ग्रन्थिः_n < cgraph->n_nodes; ग्रन्थिः_n++) {
+        स्वचालित * ग्रन्थिः = cgraph->nodes[ग्रन्थिः_n];
+        यदि (ग्रन्थिः->दत्त) {
+            स्वचालित it = स्थानाङ्कः_map.find(ग्रन्थिः->दत्त);
+            यदि (it == स्थानाङ्कः_map.end()) {
+                स्थानाङ्कः_map[ग्रन्थिः->दत्त] = std::vector<std::string>();
             }
-            address_map[node->data].push_back(node->name);
+            स्थानाङ्कः_map[ग्रन्थिः->दत्त].push_back(ग्रन्थिः->name);
         }
     }
-    for (const auto & pair : address_map) {
-        std::cout << "Address: " << pair.first << '\n';
-        for (const auto & name : pair.second) {
-            std::cout << name << " ; ";
+    प्रति (ध्रुव स्वचालित & pair : स्थानाङ्कः_map) {
+        std::निर्गमः << "Address: " << pair.first << '\n';
+        प्रति (ध्रुव स्वचालित & name : pair.second) {
+            std::निर्गमः << name << " ; ";
         }
-        std::cout << "\n\n";
+        std::निर्गमः << "\n\n";
     }
 }
 
-ov::Shape GgmlOvDecoder::get_shape(const ggml_tensor * tensor) {
+ov::Shape GgmlOvDecoder::get_shape(ध्रुव ggml_tensor * tensor) {
     std::vector<size_t> shape;
-    for (int i = GGML_MAX_DIMS - 1; i >= 0; --i) {
+    प्रति (पूर्णाङ्क i = GGML_MAX_DIMS - 1; i >= 0; --i) {
         shape.push_back(static_cast<size_t>(tensor->ne[i]));
     }
-    return shape;
+    प्रत्यागम shape;
 }
 
-std::vector<size_t> GgmlOvDecoder::get_stride(const ggml_tensor * tensor) {
+std::vector<size_t> GgmlOvDecoder::get_stride(ध्रुव ggml_tensor * tensor) {
     std::vector<size_t> stride;
-    for (int i = GGML_MAX_DIMS - 1; i >= 0; --i) {
+    प्रति (पूर्णाङ्क i = GGML_MAX_DIMS - 1; i >= 0; --i) {
         stride.push_back(static_cast<size_t>(tensor->nb[i]));
     }
-    return stride;
+    प्रत्यागम stride;
 }
 
-ov::element::Type GgmlOvDecoder::get_ov_type(const ggml_tensor * tensor) {
-    switch (tensor->type) {
-    case GGML_TYPE_F64:
-        return ov::element::f64;
-    case GGML_TYPE_F32:
-        return ov::element::f32;
-    case GGML_TYPE_F16:
-        return ov::element::f16;
-    case GGML_TYPE_BF16:
-        return ov::element::bf16;
-    case GGML_TYPE_I8:
-        return ov::element::i8;
-    case GGML_TYPE_I16:
-        return ov::element::i16;
-    case GGML_TYPE_I32:
-        return ov::element::i32;
-    case GGML_TYPE_I64:
-        return ov::element::i64;
-    default:
-        return ov::element::dynamic;
+ov::element::Type GgmlOvDecoder::get_ov_type(ध्रुव ggml_tensor * tensor) {
+    विकल्प (tensor->type) {
+    पक्ष GGML_TYPE_F64:
+        प्रत्यागम ov::element::f64;
+    पक्ष GGML_TYPE_F32:
+        प्रत्यागम ov::element::f32;
+    पक्ष GGML_TYPE_F16:
+        प्रत्यागम ov::element::f16;
+    पक्ष GGML_TYPE_BF16:
+        प्रत्यागम ov::element::bf16;
+    पक्ष GGML_TYPE_I8:
+        प्रत्यागम ov::element::i8;
+    पक्ष GGML_TYPE_I16:
+        प्रत्यागम ov::element::i16;
+    पक्ष GGML_TYPE_I32:
+        प्रत्यागम ov::element::i32;
+    पक्ष GGML_TYPE_I64:
+        प्रत्यागम ov::element::i64;
+    स्वभाव:
+        प्रत्यागम ov::element::dynamic;
     }
 }
 
-ov::PartialShape GgmlOvDecoder::get_input_shape(int node_idx, const std::string & name) const {
-    return ov::PartialShape(get_shape(m_node_info_list[node_idx].node_inputs.at(name)));
+ov::PartialShape GgmlOvDecoder::get_निवेशः_shape(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव {
+    प्रत्यागम ov::PartialShape(get_shape(m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs.at(name)));
 }
 
-std::vector<size_t> GgmlOvDecoder::get_input_stride(int node_idx, const std::string & name) const {
-    return get_stride(m_node_info_list[node_idx].node_inputs.at(name));
+std::vector<size_t> GgmlOvDecoder::get_निवेशः_stride(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव {
+    प्रत्यागम get_stride(m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs.at(name));
 }
 
-size_t GgmlOvDecoder::get_view_input_size(int node_idx, const std::string & name) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        return it->second.size();
+size_t GgmlOvDecoder::get_view_निवेशः_आकार(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        प्रत्यागम it->second.size();
     }
-    return 0;
+    प्रत्यागम 0;
 }
 
-size_t GgmlOvDecoder::get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            return it->second[view_index].second->view_offs;
+size_t GgmlOvDecoder::get_view_निवेशः_विस्थापनम्(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            प्रत्यागम it->second[view_सूचकांक].second->view_offs;
         }
     }
-    return 0;
+    प्रत्यागम 0;
 }
 
-size_t GgmlOvDecoder::get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
-                return view_tensor->src[0]->view_offs;
+size_t GgmlOvDecoder::get_view_निवेशः_src_विस्थापनम्(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            स्वचालित * view_tensor = it->second[view_सूचकांक].second;
+            यदि (view_tensor && view_tensor->src[0]) {
+                प्रत्यागम view_tensor->src[0]->view_offs;
             }
         }
     }
-    return 0;
+    प्रत्यागम 0;
 }
 
-std::vector<size_t> GgmlOvDecoder::get_view_input_stride(int node_idx,
-                                                         const std::string & name,
-                                                         size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            return get_stride(it->second[view_index].second);
+std::vector<size_t> GgmlOvDecoder::get_view_निवेशः_stride(पूर्णाङ्क ग्रन्थिः_idx,
+                                                         ध्रुव std::string & name,
+                                                         size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            प्रत्यागम get_stride(it->second[view_सूचकांक].second);
         }
     }
-    return {};
+    प्रत्यागम {};
 }
 
-std::vector<size_t> GgmlOvDecoder::get_view_input_src_stride(int node_idx,
-                                                             const std::string & name,
-                                                             size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
-                return get_stride(view_tensor->src[0]);
+std::vector<size_t> GgmlOvDecoder::get_view_निवेशः_src_stride(पूर्णाङ्क ग्रन्थिः_idx,
+                                                             ध्रुव std::string & name,
+                                                             size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            स्वचालित * view_tensor = it->second[view_सूचकांक].second;
+            यदि (view_tensor && view_tensor->src[0]) {
+                प्रत्यागम get_stride(view_tensor->src[0]);
             }
         }
     }
-    return {};
+    प्रत्यागम {};
 }
 
-ov::Shape GgmlOvDecoder::get_view_input_ggml_shape(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            return get_shape(it->second[view_index].second);
+ov::Shape GgmlOvDecoder::get_view_निवेशः_ggml_shape(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            प्रत्यागम get_shape(it->second[view_सूचकांक].second);
         }
     }
-    return {};
+    प्रत्यागम {};
 }
 
-ov::Shape GgmlOvDecoder::get_view_input_src_ggml_shape(int node_idx,
-                                                       const std::string & name,
-                                                       size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
-                return get_shape(view_tensor->src[0]);
+ov::Shape GgmlOvDecoder::get_view_निवेशः_src_ggml_shape(पूर्णाङ्क ग्रन्थिः_idx,
+                                                       ध्रुव std::string & name,
+                                                       size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            स्वचालित * view_tensor = it->second[view_सूचकांक].second;
+            यदि (view_tensor && view_tensor->src[0]) {
+                प्रत्यागम get_shape(view_tensor->src[0]);
             }
         }
     }
-    return {};
+    प्रत्यागम {};
 }
 
-ov::PartialShape GgmlOvDecoder::get_view_input_ov_shape(int node_idx,
-                                                        const std::string & name,
-                                                        size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            auto * tensor = it->second[view_index].second;
+ov::PartialShape GgmlOvDecoder::get_view_निवेशः_ov_shape(पूर्णाङ्क ग्रन्थिः_idx,
+                                                        ध्रुव std::string & name,
+                                                        size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            स्वचालित * tensor = it->second[view_सूचकांक].second;
             ov::PartialShape shape = ov::PartialShape{get_shape(tensor)};
 
             // Check if this tensor has a dynamic dimension
-            auto dynamic_it = m_node_dynamic_dims.find(tensor);
-            if (dynamic_it != m_node_dynamic_dims.end() && dynamic_it->second != -1) {
-                int dynamic_dim_index = dynamic_it->second;
+            स्वचालित dynamic_it = m_ग्रन्थिः_dynamic_dims.find(tensor);
+            यदि (dynamic_it != m_ग्रन्थिः_dynamic_dims.end() && dynamic_it->second != -1) {
+                पूर्णाङ्क dynamic_dim_सूचकांक = dynamic_it->second;
                 // GGML uses reverse indexing, so convert to OpenVINO indexing
-                shape[3 - dynamic_dim_index] = m_is_static ? get_static_n_tokens() : -1;
+                shape[3 - dynamic_dim_सूचकांक] = m_is_static ? get_static_n_tokens() : -1;
             }
 
-            return shape;
+            प्रत्यागम shape;
         }
     }
-    return {};
+    प्रत्यागम {};
 }
 
-ov::PartialShape GgmlOvDecoder::get_view_input_src_ov_shape(int node_idx,
-                                                            const std::string & name,
-                                                            size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
-                auto * src_tensor = view_tensor->src[0];
+ov::PartialShape GgmlOvDecoder::get_view_निवेशः_src_ov_shape(पूर्णाङ्क ग्रन्थिः_idx,
+                                                            ध्रुव std::string & name,
+                                                            size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            स्वचालित * view_tensor = it->second[view_सूचकांक].second;
+            यदि (view_tensor && view_tensor->src[0]) {
+                स्वचालित * src_tensor = view_tensor->src[0];
                 ov::PartialShape shape = ov::PartialShape{get_shape(src_tensor)};
 
                 // Check if this tensor has a dynamic dimension
-                auto dynamic_it = m_node_dynamic_dims.find(src_tensor);
-                if (dynamic_it != m_node_dynamic_dims.end() && dynamic_it->second != -1) {
-                    int dynamic_dim_index = dynamic_it->second;
+                स्वचालित dynamic_it = m_ग्रन्थिः_dynamic_dims.find(src_tensor);
+                यदि (dynamic_it != m_ग्रन्थिः_dynamic_dims.end() && dynamic_it->second != -1) {
+                    पूर्णाङ्क dynamic_dim_सूचकांक = dynamic_it->second;
                     // GGML uses reverse indexing, so convert to OpenVINO indexing
-                    shape[3 - dynamic_dim_index] = m_is_static ? get_static_n_tokens() : -1;
+                    shape[3 - dynamic_dim_सूचकांक] = m_is_static ? get_static_n_tokens() : -1;
                 }
 
-                return shape;
+                प्रत्यागम shape;
             }
         }
     }
-    return {};
+    प्रत्यागम {};
 }
 
-std::string GgmlOvDecoder::get_view_input_name(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            return it->second[view_index].first;
+std::string GgmlOvDecoder::get_view_निवेशः_name(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            प्रत्यागम it->second[view_सूचकांक].first;
         }
     }
-    return "";
+    प्रत्यागम "";
 }
 
-std::string GgmlOvDecoder::get_view_input_src_name(int node_idx, const std::string & name, size_t view_index) const {
-    auto it = m_node_info_list[node_idx].node_inputs_views.find(name);
-    if (it != m_node_info_list[node_idx].node_inputs_views.end()) {
-        if (view_index < it->second.size()) {
-            auto * view_tensor = it->second[view_index].second;
-            if (view_tensor && view_tensor->src[0]) {
-                return get_tensor_ov_name(m_cgraph, view_tensor->src[0]);
+std::string GgmlOvDecoder::get_view_निवेशः_src_name(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name, size_t view_सूचकांक) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.find(name);
+    यदि (it != m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_views.end()) {
+        यदि (view_सूचकांक < it->second.size()) {
+            स्वचालित * view_tensor = it->second[view_सूचकांक].second;
+            यदि (view_tensor && view_tensor->src[0]) {
+                प्रत्यागम get_tensor_ov_name(m_cgraph, view_tensor->src[0]);
             }
         }
     }
-    return "";
+    प्रत्यागम "";
 }
 
-ov::element::Type GgmlOvDecoder::get_input_type(int node_idx, const std::string & name) const {
-    return get_ov_type(m_node_info_list[node_idx].node_inputs.at(name));
+ov::element::Type GgmlOvDecoder::get_निवेशः_type(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव {
+    प्रत्यागम get_ov_type(m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs.at(name));
 }
 
-size_t GgmlOvDecoder::get_input_size() const {
-    return m_model_inputs.size();
+size_t GgmlOvDecoder::get_निवेशः_आकार() ध्रुव {
+    प्रत्यागम m_model_inputs.size();
 }
 
-size_t GgmlOvDecoder::get_input_size(int node_idx) const {
-    return m_node_info_list[node_idx].node_inputs_names.size();
+size_t GgmlOvDecoder::get_निवेशः_आकार(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    प्रत्यागम m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_नामानि.size();
 }
 
-std::vector<std::string> GgmlOvDecoder::get_input_names(int node_idx) const {
-    return m_node_info_list[node_idx].node_inputs_names;
+std::vector<std::string> GgmlOvDecoder::get_निवेशः_नामानि(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    प्रत्यागम m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs_नामानि;
 }
 
-ov::PartialShape GgmlOvDecoder::get_output_shape(int node_idx) const {
-    auto * ggml_tensor = m_node_info_list[node_idx].node;
-    return ov::PartialShape(get_shape(ggml_tensor));
+ov::PartialShape GgmlOvDecoder::get_output_shape(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    स्वचालित * ggml_tensor = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः;
+    प्रत्यागम ov::PartialShape(get_shape(ggml_tensor));
 }
 
-ov::element::Type GgmlOvDecoder::get_output_type(const int node_idx) const {
-    return get_ov_type(m_node_info_list[node_idx].node);
+ov::element::Type GgmlOvDecoder::get_output_type(ध्रुव पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    प्रत्यागम get_ov_type(m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः);
 }
 
-std::vector<size_t> GgmlOvDecoder::get_output_stride(int node_idx) const {
-    auto * ggml_tensor = m_node_info_list[node_idx].node;
-    return get_stride(ggml_tensor);
+std::vector<size_t> GgmlOvDecoder::get_output_stride(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    स्वचालित * ggml_tensor = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः;
+    प्रत्यागम get_stride(ggml_tensor);
 }
 
-std::vector<std::string> GgmlOvDecoder::get_output_names(int node_idx) const {
-    auto * node = m_node_info_list[node_idx].node;
-    if (node->op == GGML_OP_GATED_DELTA_NET && !m_model_params.has_rs_rollback) {
+std::vector<std::string> GgmlOvDecoder::get_output_नामानि(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    स्वचालित * ग्रन्थिः = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः;
+    यदि (ग्रन्थिः->op == GGML_OP_GATED_DELTA_NET && !m_model_params.has_rs_rollback) {
         std::string attn_name;
         std::string state_name;
-        for (int i = node_idx + 1; i < m_cgraph->n_nodes; i++) {
-            auto * consumer = m_cgraph->nodes[i];
-            if (consumer->op != GGML_OP_VIEW || consumer->src[0] != node) {
-                continue;
+        प्रति (पूर्णाङ्क i = ग्रन्थिः_idx + 1; i < m_cgraph->n_nodes; i++) {
+            स्वचालित * उपभोक्ता = m_cgraph->nodes[i];
+            यदि (उपभोक्ता->op != GGML_OP_VIEW || उपभोक्ता->src[0] != ग्रन्थिः) {
+                अनुवर्त;
             }
             // GGML packs [attention | state]. The attention VIEW starts at offset 0 and the
             // state VIEW starts after the token-dependent attention segment.
-            auto & name = consumer->view_offs == 0 ? attn_name : state_name;
-            if (!name.empty()) {
-                return {m_node_info_list[node_idx].node_name};
+            स्वचालित & name = उपभोक्ता->view_offs == 0 ? attn_name : state_name;
+            यदि (!name.रिक्तानि()) {
+                प्रत्यागम {m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_name};
             }
-            name = get_tensor_ov_name(m_cgraph, consumer);
+            name = get_tensor_ov_name(m_cgraph, उपभोक्ता);
         }
-        if (!attn_name.empty() && !state_name.empty()) {
-            return {attn_name, state_name};
+        यदि (!attn_name.रिक्तानि() && !state_name.रिक्तानि()) {
+            प्रत्यागम {attn_name, state_name};
         }
     }
-    return {m_node_info_list[node_idx].node_name};
+    प्रत्यागम {m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_name};
 }
 
-std::string GgmlOvDecoder::get_inplace_op_src(int node_idx) const {
-    auto * node = m_node_info_list[node_idx].node;
-    if (!::is_inplace_op(node) || node->view_src == nullptr || ggml_nbytes(node) == 0) {
-        return "";
+std::string GgmlOvDecoder::get_inplace_op_src(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    स्वचालित * ग्रन्थिः = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः;
+    यदि (!::is_inplace_op(ग्रन्थिः) || ग्रन्थिः->view_src == शून्यसूचकः || ggml_nbytes(ग्रन्थिः) == 0) {
+        प्रत्यागम "";
     }
-    const int op_case = m_node_info_list[node_idx].node_op_case;
-    if (node->op == GGML_OP_CPY && (op_case == 1 || op_case == 2 || op_case == 3) &&
-        m_compute_params.s_copy_active_slot_len == -1) {
-        return "";
+    ध्रुव पूर्णाङ्क op_case = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_op_case;
+    यदि (ग्रन्थिः->op == GGML_OP_CPY && (op_case == 1 || op_case == 2 || op_case == 3) &&
+        m_compute_params.s_copy_सक्रिय_slot_len == -1) {
+        प्रत्यागम "";
     }
-    return get_tensor_ov_name(m_cgraph, node->view_src);
+    प्रत्यागम get_tensor_ov_name(m_cgraph, ग्रन्थिः->view_src);
 }
 
-bool GgmlOvDecoder::is_view_like_alias_of(int node_idx, const std::string & view_src_name) const {
-    auto * node = m_node_info_list[node_idx].node;
-    if (node->view_src == nullptr || get_tensor_ov_name(m_cgraph, node->view_src) != view_src_name) {
-        return false;
+तार्किक GgmlOvDecoder::is_view_like_alias_सम्बन्धि(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & view_src_name) ध्रुव {
+    स्वचालित * ग्रन्थिः = m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः;
+    यदि (ग्रन्थिः->view_src == शून्यसूचकः || get_tensor_ov_name(m_cgraph, ग्रन्थिः->view_src) != view_src_name) {
+        प्रत्यागम असत्य;
     }
-    return node->op == GGML_OP_RESHAPE || node->op == GGML_OP_VIEW;
+    प्रत्यागम ग्रन्थिः->op == GGML_OP_RESHAPE || ग्रन्थिः->op == GGML_OP_VIEW;
 }
 
-const std::string & GgmlOvDecoder::get_op_name() const {
-    static const std::string unknown_name = "UNKNOWN_OP_NAME";
-    return unknown_name;
+ध्रुव std::string & GgmlOvDecoder::get_op_name() ध्रुव {
+    स्थिर ध्रुव std::string unknown_name = "UNKNOWN_OP_NAME";
+    प्रत्यागम unknown_name;
 }
 
-int32_t GgmlOvDecoder::get_op_dynamic_dim(int node_idx) const {
-    auto it = m_node_dynamic_dims.find(m_node_info_list[node_idx].node);
-    if (it == m_node_dynamic_dims.end()) {
-        return -1;
+int32_t GgmlOvDecoder::get_op_dynamic_dim(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    स्वचालित it = m_ग्रन्थिः_dynamic_dims.find(m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः);
+    यदि (it == m_ग्रन्थिः_dynamic_dims.end()) {
+        प्रत्यागम -1;
     }
-    return it->second;
+    प्रत्यागम it->second;
 }
 
-const std::string & GgmlOvDecoder::get_op_name(int node_idx) const {
-    return m_node_info_list[node_idx].node_name;
+ध्रुव std::string & GgmlOvDecoder::get_op_name(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    प्रत्यागम m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_name;
 }
 
-int32_t * GgmlOvDecoder::get_input_op_params(int node_idx, const std::string & name) const {
-    return m_node_info_list[node_idx].node_inputs.at(name)->op_params;
+int32_t * GgmlOvDecoder::get_निवेशः_op_params(पूर्णाङ्क ग्रन्थिः_idx, ध्रुव std::string & name) ध्रुव {
+    प्रत्यागम m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_inputs.at(name)->op_params;
 }
 
-int32_t * GgmlOvDecoder::get_output_op_params(int node_idx) const {
-    return m_node_info_list[node_idx].node->op_params;
+int32_t * GgmlOvDecoder::get_output_op_params(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    प्रत्यागम m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः->op_params;
 }
 
-size_t GgmlOvDecoder::get_output_op_offset(int node_idx) const {
-    return m_node_info_list[node_idx].node->view_offs;
+size_t GgmlOvDecoder::get_output_op_विस्थापनम्(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    प्रत्यागम m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः->view_offs;
 }
 
-void GgmlOvDecoder::visit_subgraph(std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const {
-    for (int node_idx = 0; node_idx < m_cgraph->n_nodes; node_idx++) {
-        if (m_cgraph->nodes[node_idx]->op == GGML_OP_NONE) {
-            continue;
+शून्य GgmlOvDecoder::दर्शय_subgraph(std::function<शून्य(std::shared_ptr<GgmlDecoder>, पूर्णाङ्क ग्रन्थिः_idx)> ग्रन्थिः_visitor) ध्रुव {
+    प्रति (पूर्णाङ्क ग्रन्थिः_idx = 0; ग्रन्थिः_idx < m_cgraph->n_nodes; ग्रन्थिः_idx++) {
+        यदि (m_cgraph->nodes[ग्रन्थिः_idx]->op == GGML_OP_NONE) {
+            अनुवर्त;
         }
-        node_visitor(std::make_shared<GgmlOvDecoder>(*this), node_idx);
+        ग्रन्थिः_visitor(std::make_shared<GgmlOvDecoder>(*एतत्), ग्रन्थिः_idx);
     }
 }
 
-std::string GgmlOvDecoder::compute_op_type(const ggml_tensor * node) {
-    switch (node->op) {
-    case GGML_OP_UNARY:
-        return std::string("GGML_UNARY_OP_") + ggml_unary_op_name(ggml_get_unary_op(node));
-    case GGML_OP_GLU:
-        return std::string("GGML_GLU_OP_") + ggml_glu_op_name(ggml_get_glu_op(node));
-    default:
-        return std::string("GGML_OP_") + ggml_op_name(node->op);
+std::string GgmlOvDecoder::compute_op_type(ध्रुव ggml_tensor * ग्रन्थिः) {
+    विकल्प (ग्रन्थिः->op) {
+    पक्ष GGML_OP_UNARY:
+        प्रत्यागम std::string("GGML_UNARY_OP_") + ggml_unary_op_name(ggml_get_unary_op(ग्रन्थिः));
+    पक्ष GGML_OP_GLU:
+        प्रत्यागम std::string("GGML_GLU_OP_") + ggml_glu_op_name(ggml_get_glu_op(ग्रन्थिः));
+    स्वभाव:
+        प्रत्यागम std::string("GGML_OP_") + ggml_op_name(ग्रन्थिः->op);
     }
 }
 
-const std::string & GgmlOvDecoder::get_op_type(int node_idx) const {
-    return m_node_info_list[node_idx].node_op_type;
+ध्रुव std::string & GgmlOvDecoder::get_op_type(पूर्णाङ्क ग्रन्थिः_idx) ध्रुव {
+    प्रत्यागम m_ग्रन्थिः_info_list[ग्रन्थिः_idx].ग्रन्थिः_op_type;
 }
 
-const std::string & GgmlOvDecoder::get_op_type() const {
-    static const std::string unknown_op = "UNKNOWN_GGML_OP";
-    return unknown_op;
+ध्रुव std::string & GgmlOvDecoder::get_op_type() ध्रुव {
+    स्थिर ध्रुव std::string unknown_op = "UNKNOWN_GGML_OP";
+    प्रत्यागम unknown_op;
 }
 
-void GgmlOvDecoder::compute_node_dynamic_dims() {
-    auto visit_node = [&](auto && self, ggml_tensor * node) -> void {
-        if (!node) {
-            return;
-        }
-
-        if (node->op == GGML_OP_CPY) {
-            m_node_dynamic_dims[node] = -1;
+शून्य GgmlOvDecoder::compute_ग्रन्थिः_dynamic_dims() {
+    स्वचालित दर्शय_ग्रन्थिः = [&](स्वचालित && self, ggml_tensor * ग्रन्थिः) -> शून्य {
+        यदि (!ग्रन्थिः) {
+            प्रत्यागम;
         }
 
-        if (m_node_dynamic_dims.count(node)) {
-            return;
+        यदि (ग्रन्थिः->op == GGML_OP_CPY) {
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
         }
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            ggml_tensor * src = node->src[i];
-            if (src == nullptr) {
-                continue;
+
+        यदि (m_ग्रन्थिः_dynamic_dims.count(ग्रन्थिः)) {
+            प्रत्यागम;
+        }
+        प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_SRC; i++) {
+            ggml_tensor * src = ग्रन्थिः->src[i];
+            यदि (src == शून्यसूचकः) {
+                अनुवर्त;
             }
-            struct ggml_tensor * root_src = nullptr;
+            संरचना ggml_tensor * मूलम्_src = शून्यसूचकः;
             // if (src->org_src) {
             //     root_src = src->org_src;
             // }
-            if (root_src) {
-                if (is_inp_tok(root_src, node) || is_inp_pos(root_src, node) || is_output_idx(root_src, node)) {
-                    m_node_dynamic_dims[root_src] = 0;
-                    m_node_dynamic_dims[src] = m_node_dynamic_dims[root_src];
-                    continue;
+            यदि (मूलम्_src) {
+                यदि (is_inp_tok(मूलम्_src, ग्रन्थिः) || is_inp_pos(मूलम्_src, ग्रन्थिः) || is_output_idx(मूलम्_src, ग्रन्थिः)) {
+                    m_ग्रन्थिः_dynamic_dims[मूलम्_src] = 0;
+                    m_ग्रन्थिः_dynamic_dims[src] = m_ग्रन्थिः_dynamic_dims[मूलम्_src];
+                    अनुवर्त;
                 }
-                self(self, root_src);
-                m_node_dynamic_dims[src] = m_node_dynamic_dims[root_src];
-            } else {
-                if (is_inp_tok(src, node) || is_inp_pos(src, node) || is_output_idx(src, node)) {
-                    m_node_dynamic_dims[src] = 0;
-                    continue;
+                self(self, मूलम्_src);
+                m_ग्रन्थिः_dynamic_dims[src] = m_ग्रन्थिः_dynamic_dims[मूलम्_src];
+            } अन्यथा {
+                यदि (is_inp_tok(src, ग्रन्थिः) || is_inp_pos(src, ग्रन्थिः) || is_output_idx(src, ग्रन्थिः)) {
+                    m_ग्रन्थिः_dynamic_dims[src] = 0;
+                    अनुवर्त;
                 }
-                if (is_inp_scale_rows(src, node)) {
-                    m_node_dynamic_dims[src] = 1;
-                    continue;
+                यदि (is_inp_scale_पङ्क्तिकाः(src, ग्रन्थिः)) {
+                    m_ग्रन्थिः_dynamic_dims[src] = 1;
+                    अनुवर्त;
                 }
-                if (node->op == GGML_OP_VIEW && src->op == GGML_OP_NONE && !is_stateful() && !m_model_is_splitted) {
-                    m_node_dynamic_dims[src] = 1;
-                    continue;
+                यदि (ग्रन्थिः->op == GGML_OP_VIEW && src->op == GGML_OP_NONE && !is_stateful() && !m_model_is_splitted) {
+                    m_ग्रन्थिः_dynamic_dims[src] = 1;
+                    अनुवर्त;
                 }
                 self(self, src);
             }
         }
-        switch (node->op) {
-        case GGML_OP_NONE:
-            m_node_dynamic_dims[node] = -1;
-            break;
-        case GGML_OP_GET_ROWS:
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[1]] != -1) {
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[1]];
-                if (dynamic_dim_idx == 0) {
-                    m_node_dynamic_dims[node] = 1;
-                } else {
-                    auto dynamic_dim_stride = node->src[1]->nb[dynamic_dim_idx] / ggml_type_size(node->src[1]->type) *
-                                              ggml_type_size(node->src[0]->type);
-                    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                        if (dynamic_dim_stride == node->src[0]->nb[i]) {
-                            m_node_dynamic_dims[node] = i;
-                            break;
+        विकल्प (ग्रन्थिः->op) {
+        पक्ष GGML_OP_NONE:
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            भङ्ग;
+        पक्ष GGML_OP_GET_पङ्क्तिकाः:
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[1]] != -1) {
+                स्वचालित dynamic_dim_idx = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[1]];
+                यदि (dynamic_dim_idx == 0) {
+                    m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 1;
+                } अन्यथा {
+                    स्वचालित dynamic_dim_stride = ग्रन्थिः->src[1]->nb[dynamic_dim_idx] / ggml_type_आकार(ग्रन्थिः->src[1]->type) *
+                                              ggml_type_आकार(ग्रन्थिः->src[0]->type);
+                    प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+                        यदि (dynamic_dim_stride == ग्रन्थिः->src[0]->nb[i]) {
+                            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = i;
+                            भङ्ग;
                         }
                     }
                 }
@@ -2151,69 +2151,69 @@ void GgmlOvDecoder::compute_node_dynamic_dims() {
                 //                 "Dynamic dim value mismatch for node: " + std::string(node->name) +
                 //                     " and its src[1]: " + std::string(node->src[1]->name));
             }
-            break;
-        case GGML_OP_MUL:
-        case GGML_OP_MUL_MAT:
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[0]];
+            भङ्ग;
+        पक्ष GGML_OP_MUL:
+        पक्ष GGML_OP_MUL_MAT:
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]] != -1) {
+                m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
             }
-            if (m_node_dynamic_dims[node->src[1]] != -1) {
-                m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[1]];
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[1]] != -1) {
+                m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[1]];
             }
-            break;
-        case GGML_OP_PERMUTE:
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[0]];
+            भङ्ग;
+        पक्ष GGML_OP_PERMUTE:
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]] != -1) {
+                स्वचालित dynamic_dim_idx = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
                 // auto dynamic_dim_value = node->src[0]->ne[dynamic_dim_idx];
-                for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                    if (node->op_params[i] == dynamic_dim_idx) {
-                        m_node_dynamic_dims[node] = i;
-                        break;
+                प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+                    यदि (ग्रन्थिः->op_params[i] == dynamic_dim_idx) {
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = i;
+                        भङ्ग;
                     }
                 }
                 // OPENVINO_ASSERT(dynamic_dim_value == node->ne[m_node_dynamic_dims[node]],
                 //                 "Dynamic dim value mismatch for node: " + std::string(node->name) +
                 //                     " and its src[0]: " + std::string(node->src[0]->name));
             }
-            break;
-        case GGML_OP_VIEW: {
+            भङ्ग;
+        पक्ष GGML_OP_VIEW: {
             // Use stride-based matching: the stride of a VIEW dimension directly
             // encodes which source dimension it indexes into, so it uniquely
             // identifies the dynamic dim even when two dims share the same size.
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                if (node->src[0]->op == GGML_OP_NONE) {
-                    m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[0]];
-                    break;
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]] != -1) {
+                यदि (ग्रन्थिः->src[0]->op == GGML_OP_NONE) {
+                    m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
+                    भङ्ग;
                 }
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[0]];
-                auto dynamic_dim_value = node->src[0]->ne[dynamic_dim_idx];
-                auto dynamic_dim_stride =
-                    node->src[0]->nb[dynamic_dim_idx] / ggml_type_size(node->src[0]->type) * ggml_type_size(node->type);
-                for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                    if (node->nb[i] == dynamic_dim_stride) {
-                        m_node_dynamic_dims[node] = i;
-                        break;
+                स्वचालित dynamic_dim_idx = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
+                स्वचालित dynamic_dim_मानम् = ग्रन्थिः->src[0]->ne[dynamic_dim_idx];
+                स्वचालित dynamic_dim_stride =
+                    ग्रन्थिः->src[0]->nb[dynamic_dim_idx] / ggml_type_आकार(ग्रन्थिः->src[0]->type) * ggml_type_आकार(ग्रन्थिः->type);
+                प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+                    यदि (ग्रन्थिः->nb[i] == dynamic_dim_stride) {
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = i;
+                        भङ्ग;
                     }
                 }
-                if (m_node_dynamic_dims[node] != -1 && dynamic_dim_value != node->ne[m_node_dynamic_dims[node]]) {
-                    m_node_dynamic_dims[node] = -1;
+                यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] != -1 && dynamic_dim_मानम् != ग्रन्थिः->ne[m_ग्रन्थिः_dynamic_dims[ग्रन्थिः]]) {
+                    m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
                     // an empty view, e.g. the extra states of a single-slot recurrent cache, always mismatches
-                    if (ggml_nelements(node) > 0) {
+                    यदि (ggml_nelements(ग्रन्थिः) > 0) {
                         GGML_LOG_WARN("ggml-openvino: dynamic dim value mismatch for VIEW node '%s', src[0]: '%s'\n",
-                                      node->name, node->src[0]->name);
+                                      ग्रन्थिः->name, ग्रन्थिः->src[0]->name);
                     }
                 }
             }
-            break;
+            भङ्ग;
         }
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_RESHAPE: {
-            if (is_same_shape(node->src[0], node)) {
-                m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[0]];
-                break;
+        पक्ष GGML_OP_TRANSPOSE:
+        पक्ष GGML_OP_RESHAPE: {
+            यदि (is_same_shape(ग्रन्थिः->src[0], ग्रन्थिः)) {
+                m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
+                भङ्ग;
             }
             // RESHAPE requires src[0] to be contiguous, so both src and result
             // have standard compact strides: nb[i] = type_size * prod(ne[0..i-1]).
@@ -2221,23 +2221,23 @@ void GgmlOvDecoder::compute_node_dynamic_dims() {
             // dimension whose flat-memory boundary aligns with the source dynamic
             // boundary. This is unambiguous (result strides are strictly monotone)
             // and handles merged-lower-dim cases that ne-value matching misses.
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[0]];
-                auto dynamic_dim_stride = node->src[0]->nb[dynamic_dim_idx];
-                for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                    if (node->nb[i] == dynamic_dim_stride && node->ne[i] == node->src[0]->ne[dynamic_dim_idx]) {
-                        m_node_dynamic_dims[node] = i;
-                        break;
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]] != -1) {
+                स्वचालित dynamic_dim_idx = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
+                स्वचालित dynamic_dim_stride = ग्रन्थिः->src[0]->nb[dynamic_dim_idx];
+                प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+                    यदि (ग्रन्थिः->nb[i] == dynamic_dim_stride && ग्रन्थिः->ne[i] == ग्रन्थिः->src[0]->ne[dynamic_dim_idx]) {
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = i;
+                        भङ्ग;
                     }
                 }
-                if (m_node_dynamic_dims[node] == -1) {
-                    GGML_LOG_WARN("ggml-openvino: cannot determine dynamic dim for RESHAPE node '%s'\n", node->name);
+                यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] == -1) {
+                    GGML_LOG_WARN("ggml-openvino: cannot determine dynamic dim for RESHAPE node '%s'\n", ग्रन्थिः->name);
                 }
             }
-            break;
+            भङ्ग;
         }
-        case GGML_OP_FLASH_ATTN_EXT: {
+        पक्ष GGML_OP_FLASH_ATTN_EXT: {
             // Output shape is hard-coded in ggml_flash_attn_ext as:
             //   ne = { v->ne[0], q->ne[2], q->ne[1], q->ne[3] }
             // i.e. output dim 0 <- v dim 0 (head_size, static)
@@ -2250,216 +2250,216 @@ void GgmlOvDecoder::compute_node_dynamic_dims() {
             //   q dim 2 -> output dim 1
             //   q dim 3 -> output dim 3
             //   q dim 0 -> output dim 0  (head_size axis, unlikely to be dynamic)
-            constexpr int q_to_out[GGML_MAX_DIMS] = {0, 2, 1, 3};
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                auto q_dynamic_dim = m_node_dynamic_dims[node->src[0]];
-                m_node_dynamic_dims[node] = q_to_out[q_dynamic_dim];
+            constexpr पूर्णाङ्क q_गन्तव्यम्_बहिर्गमनम्[GGML_MAX_DIMS] = {0, 2, 1, 3};
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]] != -1) {
+                स्वचालित q_dynamic_dim = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
+                m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = q_गन्तव्यम्_बहिर्गमनम्[q_dynamic_dim];
             }
-            break;
+            भङ्ग;
         }
-        case GGML_OP_CONT:
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[0]] != -1) {
-                auto dynamic_dim_idx = m_node_dynamic_dims[node->src[0]];
-                if (ggml_are_same_shape(node, node->src[0])) {
-                    m_node_dynamic_dims[node] = dynamic_dim_idx;
-                } else {
+        पक्ष GGML_OP_CONT:
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]] != -1) {
+                स्वचालित dynamic_dim_idx = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
+                यदि (ggml_are_same_shape(ग्रन्थिः, ग्रन्थिः->src[0])) {
+                    m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = dynamic_dim_idx;
+                } अन्यथा {
                     size_t src_logical_nb[GGML_MAX_DIMS];
-                    src_logical_nb[0] = ggml_type_size(node->src[0]->type);
-                    src_logical_nb[1] = src_logical_nb[0] * (node->src[0]->ne[0] / ggml_blck_size(node->src[0]->type));
-                    for (int i = 2; i < GGML_MAX_DIMS; i++) {
-                        src_logical_nb[i] = src_logical_nb[i - 1] * node->src[0]->ne[i - 1];
+                    src_logical_nb[0] = ggml_type_आकार(ग्रन्थिः->src[0]->type);
+                    src_logical_nb[1] = src_logical_nb[0] * (ग्रन्थिः->src[0]->ne[0] / ggml_blck_आकार(ग्रन्थिः->src[0]->type));
+                    प्रति (पूर्णाङ्क i = 2; i < GGML_MAX_DIMS; i++) {
+                        src_logical_nb[i] = src_logical_nb[i - 1] * ग्रन्थिः->src[0]->ne[i - 1];
                     }
 
-                    auto dynamic_dim_stride = src_logical_nb[dynamic_dim_idx] / ggml_type_size(node->src[0]->type) *
-                                              ggml_type_size(node->type);
-                    int matched_dim_count = 0;
-                    int first_matched_dim = -1;
-                    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                        if (node->nb[i] == dynamic_dim_stride && node->ne[i] == node->src[0]->ne[dynamic_dim_idx]) {
-                            if (first_matched_dim == -1) {
+                    स्वचालित dynamic_dim_stride = src_logical_nb[dynamic_dim_idx] / ggml_type_आकार(ग्रन्थिः->src[0]->type) *
+                                              ggml_type_आकार(ग्रन्थिः->type);
+                    पूर्णाङ्क matched_dim_गणनम् = 0;
+                    पूर्णाङ्क first_matched_dim = -1;
+                    प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+                        यदि (ग्रन्थिः->nb[i] == dynamic_dim_stride && ग्रन्थिः->ne[i] == ग्रन्थिः->src[0]->ne[dynamic_dim_idx]) {
+                            यदि (first_matched_dim == -1) {
                                 first_matched_dim = i;
                             }
-                            m_node_dynamic_dims[node] = i;
-                            matched_dim_count++;
+                            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = i;
+                            matched_dim_गणनम्++;
                         }
                     }
-                    if (matched_dim_count > 1 && node->src[0]->ne[dynamic_dim_idx] == 1) {
+                    यदि (matched_dim_गणनम् > 1 && ग्रन्थिः->src[0]->ne[dynamic_dim_idx] == 1) {
                         // Single-token capture: every trailing dim is size 1 with the same stride, so
                         // the match is ambiguous. The lowest index is the real axis; the rest are
                         // ggml's size-1 padding. Bailing out here would bake the captured token count
                         // into the static prefill model, which then runs with a different one.
-                        m_node_dynamic_dims[node] = first_matched_dim;
-                    } else if (matched_dim_count != 1) {
-                        m_node_dynamic_dims[node] = -1;
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = first_matched_dim;
+                    } अन्यथा यदि (matched_dim_गणनम् != 1) {
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
                         GGML_LOG_WARN("ggml-openvino: cannot determine dynamic dim for CONT node '%s', src[0]: '%s'\n",
-                                      node->name, node->src[0]->name);
+                                      ग्रन्थिः->name, ग्रन्थिः->src[0]->name);
                     }
                 }
             }
-            break;
-        case GGML_OP_CONCAT:
-            for (int i = 0; i < GGML_MAX_DIMS; i++) {
-                if (node->src[0]->ne[i] != node->ne[i]) {
-                    m_node_dynamic_dims[node] = i;
-                    break;
+            भङ्ग;
+        पक्ष GGML_OP_CONCAT:
+            प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+                यदि (ग्रन्थिः->src[0]->ne[i] != ग्रन्थिः->ne[i]) {
+                    m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = i;
+                    भङ्ग;
                 }
             }
-            break;
-        case GGML_OP_SSM_CONV:
-        case GGML_OP_GATED_DELTA_NET:
-            m_node_dynamic_dims[node] = 1;
-            break;
-        case GGML_OP_RMS_NORM:
-        case GGML_OP_L2_NORM:
-        case GGML_OP_NORM:
-        case GGML_OP_ADD:
-        case GGML_OP_SUB:
-        case GGML_OP_GLU:
-        case GGML_OP_ROPE:
-        case GGML_OP_SCALE:
-        case GGML_OP_SOFT_MAX:
-        case GGML_OP_ARGSORT:
-        case GGML_OP_ADD_ID:
-        case GGML_OP_UNARY:
-        case GGML_OP_CUMSUM:
-        case GGML_OP_FILL:
-        case GGML_OP_SET:
-        case GGML_OP_DIAG:
-        case GGML_OP_TRI:
-        case GGML_OP_REPEAT:
-        case GGML_OP_DUP:
+            भङ्ग;
+        पक्ष GGML_OP_SSM_CONV:
+        पक्ष GGML_OP_GATED_DELTA_NET:
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 1;
+            भङ्ग;
+        पक्ष GGML_OP_RMS_NORM:
+        पक्ष GGML_OP_L2_NORM:
+        पक्ष GGML_OP_NORM:
+        पक्ष GGML_OP_सङ्कलय:
+        पक्ष GGML_OP_SUB:
+        पक्ष GGML_OP_GLU:
+        पक्ष GGML_OP_ROPE:
+        पक्ष GGML_OP_SCALE:
+        पक्ष GGML_OP_SOFT_MAX:
+        पक्ष GGML_OP_ARGSORT:
+        पक्ष GGML_OP_सङ्कलय_ID:
+        पक्ष GGML_OP_UNARY:
+        पक्ष GGML_OP_CUMSUM:
+        पक्ष GGML_OP_FILL:
+        पक्ष GGML_OP_समुच्चयः:
+        पक्ष GGML_OP_DIAG:
+        पक्ष GGML_OP_TRI:
+        पक्ष GGML_OP_REPEAT:
+        पक्ष GGML_OP_DUP:
         // Shape-preserving elementwise ops: the dynamic dim is unchanged from src[0].
         // DIV/CLAMP are used in the MoE routing-weight normalization
         // (sum_rows -> clamp -> div). If they are left untracked here the dynamic
         // (token) dim is lost there, the captured prefill token count gets baked into
         // the downstream reshapes, and every decoder layer after layer 0 turns static
         // (which then triggers the GPU in-place-concat KV-cache corruption).
-        case GGML_OP_DIV:
-        case GGML_OP_CLAMP:
-        case GGML_OP_PAD:
-        case GGML_OP_UPSCALE:
-        case GGML_OP_SIN:
-        case GGML_OP_COS:
-        case GGML_OP_LOG:
-        case GGML_OP_ROLL:
-            m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[0]];
-            break;
-        case GGML_OP_SUM_ROWS:
+        पक्ष GGML_OP_DIV:
+        पक्ष GGML_OP_CLAMP:
+        पक्ष GGML_OP_PAD:
+        पक्ष GGML_OP_UPSCALE:
+        पक्ष GGML_OP_SIN:
+        पक्ष GGML_OP_COS:
+        पक्ष GGML_OP_LOG:
+        पक्ष GGML_OP_ROLL:
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
+            भङ्ग;
+        पक्ष GGML_OP_योग_पङ्क्तिकाः:
             // SUM_ROWS reduces ggml axis 0 to size 1 and preserves all other axes, so the
             // dynamic dim is preserved unless it was axis 0 (then it is summed away).
-            m_node_dynamic_dims[node] =
-                (m_node_dynamic_dims[node->src[0]] == 0) ? -1 : m_node_dynamic_dims[node->src[0]];
-            break;
-        case GGML_OP_MUL_MAT_ID:
-        case GGML_OP_SOLVE_TRI:
-            m_node_dynamic_dims[node] = m_node_dynamic_dims[node->src[1]];
-            break;
-        case GGML_OP_CPY:
-        case GGML_OP_SET_ROWS:
-        case GGML_OP_SUM:
-        case GGML_OP_MEAN:
-            m_node_dynamic_dims[node] = -1;
-            break;
-        case GGML_OP_IM2COL: {
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[1]] != -1) {
-                const bool is_2D = node->op_params[6] == 1;
-                const int src_dyn = m_node_dynamic_dims[node->src[1]];
-                if (is_2D) {
-                    if (src_dyn == 0) {
-                        m_node_dynamic_dims[node] = 1;  // IW -> OW
-                    } else if (src_dyn == 1) {
-                        m_node_dynamic_dims[node] = 2;  // IH -> OH
-                    } else if (src_dyn == 3) {
-                        m_node_dynamic_dims[node] = 3;  // N  -> N
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] =
+                (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]] == 0) ? -1 : m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[0]];
+            भङ्ग;
+        पक्ष GGML_OP_MUL_MAT_ID:
+        पक्ष GGML_OP_SOLVE_TRI:
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[1]];
+            भङ्ग;
+        पक्ष GGML_OP_CPY:
+        पक्ष GGML_OP_समुच्चयः_पङ्क्तिकाः:
+        पक्ष GGML_OP_योग:
+        पक्ष GGML_OP_माध्यम्:
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            भङ्ग;
+        पक्ष GGML_OP_IM2COL: {
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[1]] != -1) {
+                ध्रुव तार्किक is_2D = ग्रन्थिः->op_params[6] == 1;
+                ध्रुव पूर्णाङ्क src_dyn = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[1]];
+                यदि (is_2D) {
+                    यदि (src_dyn == 0) {
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 1;  // IW -> OW
+                    } अन्यथा यदि (src_dyn == 1) {
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 2;  // IH -> OH
+                    } अन्यथा यदि (src_dyn == 3) {
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 3;  // N  -> N
                     }
-                } else {
-                    if (src_dyn == 0) {
-                        m_node_dynamic_dims[node] = 1;  // IW -> OW
-                    } else if (src_dyn == 2) {
-                        m_node_dynamic_dims[node] = 2;  // N  -> N  (1D: b->ne[2] is the batch/channel dim)
+                } अन्यथा {
+                    यदि (src_dyn == 0) {
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 1;  // IW -> OW
+                    } अन्यथा यदि (src_dyn == 2) {
+                        m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 2;  // N  -> N  (1D: b->ne[2] is the batch/channel dim)
                     }
                 }
-                if (m_node_dynamic_dims[node] != -1) {
-                    OPENVINO_ASSERT(node->src[1]->ne[src_dyn] == node->ne[m_node_dynamic_dims[node]],
-                                    "Dynamic dim value mismatch for IM2COL node: " + std::string(node->name) +
-                                        " and its src[1]: " + std::string(node->src[1]->name));
+                यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] != -1) {
+                    OPENVINO_ASSERT(ग्रन्थिः->src[1]->ne[src_dyn] == ग्रन्थिः->ne[m_ग्रन्थिः_dynamic_dims[ग्रन्थिः]],
+                                    "Dynamic dim value mismatch for IM2COL node: " + std::string(ग्रन्थिः->name) +
+                                        " and its src[1]: " + std::string(ग्रन्थिः->src[1]->name));
                 }
             }
-            break;
+            भङ्ग;
         }
-        case GGML_OP_IM2COL_3D: {
-            m_node_dynamic_dims[node] = -1;
-            if (m_node_dynamic_dims[node->src[1]] != -1) {
-                const int src_dyn = m_node_dynamic_dims[node->src[1]];
-                if (src_dyn == 0) {
-                    m_node_dynamic_dims[node] = 1;  // IW -> OW
-                } else if (src_dyn == 1) {
-                    m_node_dynamic_dims[node] = 2;  // IH -> OH
-                } else if (src_dyn == 3) {
-                    m_node_dynamic_dims[node] = 3;  // N  -> N
+        पक्ष GGML_OP_IM2COL_3D: {
+            m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = -1;
+            यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[1]] != -1) {
+                ध्रुव पूर्णाङ्क src_dyn = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः->src[1]];
+                यदि (src_dyn == 0) {
+                    m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 1;  // IW -> OW
+                } अन्यथा यदि (src_dyn == 1) {
+                    m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 2;  // IH -> OH
+                } अन्यथा यदि (src_dyn == 3) {
+                    m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] = 3;  // N  -> N
                 }
-                if (m_node_dynamic_dims[node] != -1) {
-                    OPENVINO_ASSERT(node->src[1]->ne[src_dyn] == node->ne[m_node_dynamic_dims[node]],
-                                    "Dynamic dim value mismatch for IM2COL_3D node: " + std::string(node->name) +
-                                        " and its src[1]: " + std::string(node->src[1]->name));
+                यदि (m_ग्रन्थिः_dynamic_dims[ग्रन्थिः] != -1) {
+                    OPENVINO_ASSERT(ग्रन्थिः->src[1]->ne[src_dyn] == ग्रन्थिः->ne[m_ग्रन्थिः_dynamic_dims[ग्रन्थिः]],
+                                    "Dynamic dim value mismatch for IM2COL_3D node: " + std::string(ग्रन्थिः->name) +
+                                        " and its src[1]: " + std::string(ग्रन्थिः->src[1]->name));
                 }
             }
-            break;
+            भङ्ग;
         }
-        default:
+        स्वभाव:
             GGML_LOG_DEBUG("ggml-openvino: compute_node_dynamic_dims: unhandled op %s for node '%s'\n",
-                           ggml_op_name(node->op), node->name);
-            break;
+                           ggml_op_name(ग्रन्थिः->op), ग्रन्थिः->name);
+            भङ्ग;
         }
     };
 
-    for (int i = 0; i < m_cgraph->n_nodes; i++) {
-        ggml_tensor * node = m_cgraph->nodes[i];
-        visit_node(visit_node, node);
+    प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes; i++) {
+        ggml_tensor * ग्रन्थिः = m_cgraph->nodes[i];
+        दर्शय_ग्रन्थिः(दर्शय_ग्रन्थिः, ग्रन्थिः);
     }
 
     // print the nodes in m_cgraph name & shape with the dynamic dim (the dynamic dim is the dimension with -1 in m_node_dynamic_dims) for debugging
-    if (0) {
-        for (int i = 0; i < m_cgraph->n_nodes; i++) {
-            ggml_tensor * node = m_cgraph->nodes[i];
-            int dynamic_dim = m_node_dynamic_dims[node];
-            std::cout << "[" << i << "] " << "node_name: " << node->name << " op: " << ggml_op_name(node->op)
+    यदि (0) {
+        प्रति (पूर्णाङ्क i = 0; i < m_cgraph->n_nodes; i++) {
+            ggml_tensor * ग्रन्थिः = m_cgraph->nodes[i];
+            पूर्णाङ्क dynamic_dim = m_ग्रन्थिः_dynamic_dims[ग्रन्थिः];
+            std::निर्गमः << "[" << i << "] " << "node_name: " << ग्रन्थिः->name << " op: " << ggml_op_name(ग्रन्थिः->op)
                       << " shape: [";
-            for (int j = 0; j < 4; j++) {
-                if (j == dynamic_dim) {
-                    std::cout << "*";
-                } else {
-                    std::cout << node->ne[j];
+            प्रति (पूर्णाङ्क j = 0; j < 4; j++) {
+                यदि (j == dynamic_dim) {
+                    std::निर्गमः << "*";
+                } अन्यथा {
+                    std::निर्गमः << ग्रन्थिः->ne[j];
                 }
-                if (j < 3) {
-                    std::cout << ", ";
+                यदि (j < 3) {
+                    std::निर्गमः << ", ";
                 }
             }
-            std::cout << "]" << '\n';
+            std::निर्गमः << "]" << '\n';
             // print the src name & shape with the dynamic dim for debugging
-            for (int j = 0; j < GGML_MAX_SRC; j++) {
-                ggml_tensor * src = node->src[j];
-                if (src == nullptr) {
-                    continue;
+            प्रति (पूर्णाङ्क j = 0; j < GGML_MAX_SRC; j++) {
+                ggml_tensor * src = ग्रन्थिः->src[j];
+                यदि (src == शून्यसूचकः) {
+                    अनुवर्त;
                 }
-                int src_dynamic_dim = m_node_dynamic_dims[src];
-                std::cout << "    [" << j << "] src_name: " << src->name << " [";
-                for (int k = 0; k < 4; k++) {
-                    if (k == src_dynamic_dim) {
-                        std::cout << "*";
-                    } else {
-                        std::cout << src->ne[k];
+                पूर्णाङ्क src_dynamic_dim = m_ग्रन्थिः_dynamic_dims[src];
+                std::निर्गमः << "    [" << j << "] src_name: " << src->name << " [";
+                प्रति (पूर्णाङ्क k = 0; k < 4; k++) {
+                    यदि (k == src_dynamic_dim) {
+                        std::निर्गमः << "*";
+                    } अन्यथा {
+                        std::निर्गमः << src->ne[k];
                     }
-                    if (k < 3) {
-                        std::cout << ", ";
+                    यदि (k < 3) {
+                        std::निर्गमः << ", ";
                     }
                 }
-                std::cout << "]" << '\n';
+                std::निर्गमः << "]" << '\n';
             }
-            std::cout << '\n';
+            std::निर्गमः << '\n';
         }
     }
 }

@@ -1,15 +1,15 @@
-#ifndef HTP_GATHER_ROWS_H
-#define HTP_GATHER_ROWS_H
+#यदि_अपरिभाषितम् HTP_GATHER_पङ्क्तिकाः_H
+#परिभाषय HTP_GATHER_पङ्क्तिकाः_H
 
-#include "hex-common.h"
-#include <stdint.h>
-#include <stdbool.h>
+#अन्तर्भाव "hex-common.h"
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <stdbool.h>
 
-#ifndef GGML_MAX_DIMS
-#define GGML_MAX_DIMS 4
-#endif
+#यदि_अपरिभाषितम् GGML_MAX_DIMS
+#परिभाषय GGML_MAX_DIMS 4
+#यदि_अन्तः
 
-struct htp_gather_rows_params {
+संरचना htp_gather_पङ्क्तिकाः_params {
     uint32_t na;
     uint32_t nb;
     uint32_t ne;
@@ -18,98 +18,98 @@ struct htp_gather_rows_params {
     uint32_t nr_max;
     uint32_t v1;
     uint32_t span1;
-    uint32_t region_size;
-    uint32_t out_off;
+    uint32_t region_आकार;
+    uint32_t बहिर्गमनम्_off;
     uint32_t buf_stride;
-    uint32_t slice;
-    uint32_t total_rows;
-    uint32_t rows_per_thread;
+    uint32_t खण्डिका_2;
+    uint32_t योग_पङ्क्तिकाः;
+    uint32_t पङ्क्तिकाः_प्रत्येकम्_thread;
     uint8_t  b_dense;
     uint8_t  pad[3];
 };
 
-static inline bool htp_gather_rows_solve_layout(
-    struct htp_gather_rows_params * kparams,
+स्थिर अन्तःस्थ bool htp_gather_पङ्क्तिकाः_solve_layout(
+    संरचना htp_gather_पङ्क्तिकाः_params * kparams,
     uint32_t na, uint32_t a_nb1,
     uint32_t nb, uint32_t b_nb1, bool b_dense,
-    uint32_t elem_size,
-    uint32_t total_rows,
-    uint32_t n_threads,
-    uint32_t mdev_count,
-    uint32_t vtcm_size) {
+    uint32_t elem_आकार,
+    uint32_t योग_पङ्क्तिकाः,
+    uint32_t n_तन्तवः,
+    uint32_t mdev_गणनम्,
+    uint32_t vtcm_आकार) {
 
-    const uint32_t max_ne0 = 128 / elem_size;
-    const uint32_t ne = na + nb;
-    if (ne == 0 || ne > max_ne0) {
-        return false;
+    ध्रुव uint32_t max_ne0 = 128 / elem_आकार;
+    ध्रुव uint32_t ne = na + nb;
+    यदि (ne == 0 || ne > max_ne0) {
+        प्रत्यागम false;
     }
 
-    if (elem_size != 4 && elem_size != 2) {
-        return false;
+    यदि (elem_आकार != 4 && elem_आकार != 2) {
+        प्रत्यागम false;
     }
 
-    const uint32_t v_lanes = 128 / elem_size;
-    const uint32_t g       = hex_gcd_u32(ne, v_lanes);
-    const uint32_t rg      = v_lanes / g;
-    const uint32_t vg      = ne / g;
+    ध्रुव uint32_t v_lanes = 128 / elem_आकार;
+    ध्रुव uint32_t g       = hex_gcd_u32(ne, v_lanes);
+    ध्रुव uint32_t rg      = v_lanes / g;
+    ध्रुव uint32_t vg      = ne / g;
 
-    const uint32_t slice = (vtcm_size / n_threads) & ~127u;
-    const uint32_t total_chunks = total_rows / rg;
-    const uint32_t chunks_per_dev = (total_chunks + mdev_count - 1) / mdev_count;
-    const uint32_t max_rows_per_dev = (mdev_count > 1 && total_chunks >= mdev_count)
-        ? (chunks_per_dev * rg + (total_rows % rg))
-        : total_rows;
-    const uint32_t rows_per_thread = hex_round_up((max_rows_per_dev + n_threads - 1) / n_threads, rg);
+    ध्रुव uint32_t खण्डिका_2 = (vtcm_आकार / n_तन्तवः) & ~127u;
+    ध्रुव uint32_t योग_chunks = योग_पङ्क्तिकाः / rg;
+    ध्रुव uint32_t chunks_प्रत्येकम्_dev = (योग_chunks + mdev_गणनम् - 1) / mdev_गणनम्;
+    ध्रुव uint32_t max_पङ्क्तिकाः_प्रत्येकम्_dev = (mdev_गणनम् > 1 && योग_chunks >= mdev_गणनम्)
+        ? (chunks_प्रत्येकम्_dev * rg + (योग_पङ्क्तिकाः % rg))
+        : योग_पङ्क्तिकाः;
+    ध्रुव uint32_t पङ्क्तिकाः_प्रत्येकम्_thread = hex_आवर्तनम्_ऊर्ध्वम्((max_पङ्क्तिकाः_प्रत्येकम्_dev + n_तन्तवः - 1) / n_तन्तवः, rg);
 
-    const uint32_t fixed = 3 * vg * 128;
-    const uint32_t per_row = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0) + ne * elem_size;
-    if (slice <= fixed + 2 * per_row * rg) {
-        return false;
+    ध्रुव uint32_t fixed = 3 * vg * 128;
+    ध्रुव uint32_t प्रत्येकम्_row = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0) + ne * elem_आकार;
+    यदि (खण्डिका_2 <= fixed + 2 * प्रत्येकम्_row * rg) {
+        प्रत्यागम false;
     }
 
-    const uint32_t avail_per_buf = (slice - fixed) / 2;
-    uint32_t nr_max = MIN(avail_per_buf / per_row, rows_per_thread);
-    if (elem_size == 2) {
-        const uint32_t per_row_region = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0);
-        if (per_row_region > 0) {
-            nr_max = MIN(nr_max, (32768u - 256u) / per_row_region);
+    ध्रुव uint32_t avail_प्रत्येकम्_buf = (खण्डिका_2 - fixed) / 2;
+    uint32_t nr_max = MIN(avail_प्रत्येकम्_buf / प्रत्येकम्_row, पङ्क्तिकाः_प्रत्येकम्_thread);
+    यदि (elem_आकार == 2) {
+        ध्रुव uint32_t प्रत्येकम्_row_region = a_nb1 + (nb > 0 ? (b_dense ? b_nb1 : nb * b_nb1) : 0);
+        यदि (प्रत्येकम्_row_region > 0) {
+            nr_max = MIN(nr_max, (32768u - 256u) / प्रत्येकम्_row_region);
         }
     }
     nr_max = (nr_max / rg) * rg;
 
     uint32_t v1          = 0;
     uint32_t span1       = 0;
-    uint32_t region_size = 0;
-    uint32_t out_off     = 0;
+    uint32_t region_आकार = 0;
+    uint32_t बहिर्गमनम्_off     = 0;
     uint32_t buf_stride  = 0;
 
-    while (nr_max > 0) {
-        v1 = hex_round_up((nr_max - 1) * a_nb1 + na * elem_size, 128);
-        if (nb > 0) {
-            if (b_dense) {
-                span1       = elem_size;
-                region_size = v1 + (nr_max - 1) * b_nb1 + nb * elem_size;
-            } else {
-                span1       = (nr_max - 1) * b_nb1 + elem_size;
-                region_size = v1 + nb * span1;
+    यावत् (nr_max > 0) {
+        v1 = hex_आवर्तनम्_ऊर्ध्वम्((nr_max - 1) * a_nb1 + na * elem_आकार, 128);
+        यदि (nb > 0) {
+            यदि (b_dense) {
+                span1       = elem_आकार;
+                region_आकार = v1 + (nr_max - 1) * b_nb1 + nb * elem_आकार;
+            } अन्यथा {
+                span1       = (nr_max - 1) * b_nb1 + elem_आकार;
+                region_आकार = v1 + nb * span1;
             }
-        } else {
+        } अन्यथा {
             span1       = 0;
-            region_size = v1;
+            region_आकार = v1;
         }
 
-        out_off    = hex_round_up(region_size, 128);
-        buf_stride = hex_round_up(out_off + nr_max * ne * elem_size, 128);
+        बहिर्गमनम्_off    = hex_आवर्तनम्_ऊर्ध्वम्(region_आकार, 128);
+        buf_stride = hex_आवर्तनम्_ऊर्ध्वम्(बहिर्गमनम्_off + nr_max * ne * elem_आकार, 128);
 
-        if ((elem_size != 2 || region_size <= 32768) && fixed + 2 * buf_stride <= slice) {
-            break;
+        यदि ((elem_आकार != 2 || region_आकार <= 32768) && fixed + 2 * buf_stride <= खण्डिका_2) {
+            भङ्ग;
         }
 
         nr_max -= rg;
     }
 
-    if (nr_max == 0) {
-        return false;
+    यदि (nr_max == 0) {
+        प्रत्यागम false;
     }
 
     kparams->na              = na;
@@ -120,41 +120,41 @@ static inline bool htp_gather_rows_solve_layout(
     kparams->nr_max          = nr_max;
     kparams->v1              = v1;
     kparams->span1           = span1;
-    kparams->region_size     = region_size;
-    kparams->out_off         = out_off;
+    kparams->region_आकार     = region_आकार;
+    kparams->बहिर्गमनम्_off         = बहिर्गमनम्_off;
     kparams->buf_stride      = buf_stride;
-    kparams->slice           = slice;
-    kparams->total_rows      = total_rows;
-    kparams->rows_per_thread = rows_per_thread;
+    kparams->खण्डिका_2           = खण्डिका_2;
+    kparams->योग_पङ्क्तिकाः      = योग_पङ्क्तिकाः;
+    kparams->पङ्क्तिकाः_प्रत्येकम्_thread = पङ्क्तिकाः_प्रत्येकम्_thread;
     kparams->b_dense         = b_dense ? 1 : 0;
     kparams->pad[0]          = 0;
     kparams->pad[1]          = 0;
     kparams->pad[2]          = 0;
-    return true;
+    प्रत्यागम true;
 }
 
-#ifdef __cplusplus
-struct ggml_tensor;
-static inline bool htp_gather_rows_tensor_outer_contiguous(const struct ggml_tensor * t) {
-    size_t next_nb = ((const size_t *) t->nb)[1] * ((const int64_t *) t->ne)[1];
-    for (int i = 2; i < GGML_MAX_DIMS; i++) {
-        if (((const int64_t *) t->ne)[i] != 1 && ((const size_t *) t->nb)[i] != next_nb) {
-            return false;
+#यदि_परिभाषितम् __cplusplus
+संरचना ggml_tensor;
+स्थिर अन्तःस्थ bool htp_gather_पङ्क्तिकाः_tensor_outer_contiguous(ध्रुव संरचना ggml_tensor * t) {
+    size_t अग्र_nb = ((ध्रुव size_t *) t->nb)[1] * ((ध्रुव int64_t *) t->ne)[1];
+    प्रति (पूर्णाङ्क i = 2; i < GGML_MAX_DIMS; i++) {
+        यदि (((ध्रुव int64_t *) t->ne)[i] != 1 && ((ध्रुव size_t *) t->nb)[i] != अग्र_nb) {
+            प्रत्यागम false;
         }
-        next_nb *= ((const int64_t *) t->ne)[i];
+        अग्र_nb *= ((ध्रुव int64_t *) t->ne)[i];
     }
-    return true;
+    प्रत्यागम true;
 }
-#else
-struct htp_ops_context;
-struct htp_tensor;
+#अन्यथा
+संरचना htp_ops_context;
+संरचना htp_tensor;
 
-int htp_gather_rows(
-    struct htp_ops_context * octx,
-    const struct htp_tensor * a,
-    const struct htp_tensor * b,
-    const struct htp_gather_rows_params * kparams,
-    uint32_t n_threads);
-#endif
+पूर्णाङ्क htp_gather_पङ्क्तिकाः(
+    संरचना htp_ops_context * octx,
+    ध्रुव संरचना htp_tensor * a,
+    ध्रुव संरचना htp_tensor * b,
+    ध्रुव संरचना htp_gather_पङ्क्तिकाः_params * kparams,
+    uint32_t n_तन्तवः);
+#यदि_अन्तः
 
-#endif // HTP_GATHER_ROWS_H
+#यदि_अन्तः // HTP_GATHER_ROWS_H

@@ -1,16 +1,16 @@
-#pragma once
+#निर्देशः once
 
-#include <openvino/pass/matcher_pass.hpp>
+#अन्तर्भाव <openvino/pass/matcher_pass.hpp>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 namespace pass {
 
-class FuseMoeRouter : public ov::pass::MatcherPass {
-public:
+class Fuse_Moe_मार्गदर्शकः : सार्वजनिक ov::pass::MatcherPass {
+सार्वजनिक:
     OPENVINO_MATCHER_PASS_RTTI("ov::frontend::ggml::pass::FuseMoeRouter")
-    FuseMoeRouter();
+    Fuse_Moe_मार्गदर्शकः();
 };
 
 }  // namespace pass

@@ -1,63 +1,63 @@
-#ifndef HTP_CONCAT_OPS_H
-#define HTP_CONCAT_OPS_H
+#यदि_अपरिभाषितम् HTP_CONCAT_OPS_H
+#परिभाषय HTP_CONCAT_OPS_H
 
-#include "hex-common.h"
-#include "gather-rows.h"
-#include <stdint.h>
+#अन्तर्भाव "hex-common.h"
+#अन्तर्भाव "gather-rows.h"
+#अन्तर्भाव <stdint.h>
 
-enum htp_concat_kernel_type {
+गणना htp_concat_kernel_type {
     HTP_CONCAT_KERNEL_UNSUPPORTED = 0,
     HTP_CONCAT_KERNEL_REGULAR     = 1,
     HTP_CONCAT_KERNEL_TRANSPOSED  = 2,
-    HTP_CONCAT_KERNEL_GATHER_ROWS = 3,
+    HTP_CONCAT_KERNEL_GATHER_पङ्क्तिकाः = 3,
 };
 
-struct htp_concat_transposed_params {
-    uint32_t spad0_size_per_thread;
-    uint32_t spad1_size_per_thread;
+संरचना htp_concat_transposed_params {
+    uint32_t spad0_आकार_प्रत्येकम्_thread;
+    uint32_t spad1_आकार_प्रत्येकम्_thread;
 };
 
-struct htp_concat_kernel_params {
+संरचना htp_concat_kernel_params {
     uint8_t  kernel_type;
     uint8_t  dim;
-    uint8_t  n_threads;
+    uint8_t  n_तन्तवः;
     uint8_t  pad;
 
-    uint32_t vtcm_size;
+    uint32_t vtcm_आकार;
 
-    union {
-        struct htp_concat_transposed_params transposed;
-        struct htp_gather_rows_params       gather;
+    सङ्घ {
+        संरचना htp_concat_transposed_params transposed;
+        संरचना htp_gather_पङ्क्तिकाः_params       gather;
     } u;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
-#endif
+#यदि defined(__cplusplus)
+static_assert(परिमाण(संरचना htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
+#अन्यथा
+_Static_assert(परिमाण(संरचना htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
+#यदि_अन्तः
 
-struct htp_concat_transposed_vtcm_layout {
-    uint32_t src0_spad_size_per_thread;
-    uint32_t src1_spad_size_per_thread;
-    uint32_t total_bytes;
+संरचना htp_concat_transposed_vtcm_layout {
+    uint32_t src0_spad_आकार_प्रत्येकम्_thread;
+    uint32_t src1_spad_आकार_प्रत्येकम्_thread;
+    uint32_t योग_अष्टकानि;
 };
 
-static inline void htp_concat_transposed_vtcm_layout_build(
-    struct htp_concat_transposed_vtcm_layout * layout,
+स्थिर अन्तःस्थ शून्य htp_concat_transposed_vtcm_layout_build(
+    संरचना htp_concat_transposed_vtcm_layout * layout,
     uint32_t src0_ne0,
     uint32_t src1_ne0,
-    uint32_t type_size,
-    uint32_t n_threads) {
+    uint32_t type_आकार,
+    uint32_t n_तन्तवः) {
 
-    uint32_t block_i = (type_size == 4) ? 32 : 64;
-    uint32_t spad1_stride = block_i * type_size;
-    uint32_t src1_ne0_padded = hex_round_up(src1_ne0, block_i);
-    uint32_t spad0_row_bytes = hex_round_up(src0_ne0 * type_size, 128) + src1_ne0_padded * type_size;
+    uint32_t खण्डम्_i = (type_आकार == 4) ? 32 : 64;
+    uint32_t spad1_stride = खण्डम्_i * type_आकार;
+    uint32_t src1_ne0_padded = hex_आवर्तनम्_ऊर्ध्वम्(src1_ne0, खण्डम्_i);
+    uint32_t spad0_row_अष्टकानि = hex_आवर्तनम्_ऊर्ध्वम्(src0_ne0 * type_आकार, 128) + src1_ne0_padded * type_आकार;
 
-    layout->src0_spad_size_per_thread = block_i * spad0_row_bytes;
-    layout->src1_spad_size_per_thread = src1_ne0_padded * spad1_stride;
-    layout->total_bytes = n_threads * (layout->src0_spad_size_per_thread + layout->src1_spad_size_per_thread);
+    layout->src0_spad_आकार_प्रत्येकम्_thread = खण्डम्_i * spad0_row_अष्टकानि;
+    layout->src1_spad_आकार_प्रत्येकम्_thread = src1_ne0_padded * spad1_stride;
+    layout->योग_अष्टकानि = n_तन्तवः * (layout->src0_spad_आकार_प्रत्येकम्_thread + layout->src1_spad_आकार_प्रत्येकम्_thread);
 }
 
-#endif // HTP_CONCAT_OPS_H
+#यदि_अन्तः // HTP_CONCAT_OPS_H

@@ -1,79 +1,79 @@
-#include "amx.h"
-#include "common.h"
-#include "mmq.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "traits.h"
+#अन्तर्भाव "amx.h"
+#अन्तर्भाव "common.h"
+#अन्तर्भाव "mmq.h"
+#अन्तर्भाव "ggml-backend-impl.h"
+#अन्तर्भाव "ggml-backend.h"
+#अन्तर्भाव "ggml-impl.h"
+#अन्तर्भाव "ggml-cpu.h"
+#अन्तर्भाव "traits.h"
 
-#if defined(__linux__)
-#include <sys/syscall.h>
-#include <unistd.h>
-#endif
+#यदि defined(__linux__)
+#अन्तर्भाव <sys/syscall.h>
+#अन्तर्भाव <unistd.h>
+#यदि_अन्तः
 
-#include <cstdlib>
-#include <cstring>
-#include <memory>
+#अन्तर्भाव <cstdlib>
+#अन्तर्भाव <cstring>
+#अन्तर्भाव <memory>
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#यदि defined(__AMX_INT8__) && defined(__AVX512VNNI__)
 
 // AMX type_trais
-namespace ggml::cpu::amx {
-class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
+नामाकाश ggml::cpu::amx {
+वर्ग tensor_traits : सार्वजनिक ggml::cpu::tensor_traits {
+    तार्किक work_आकार(पूर्णाङ्क /* n_threads */, ध्रुव संरचना ggml_tensor * op, size_t & size) override {
         size = ggml_backend_amx_desired_wsize(op);
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
+    तार्किक compute_forward(संरचना ggml_compute_params * params, संरचना ggml_tensor * op) override {
+        यदि (op->op == GGML_OP_MUL_MAT) {
             ggml_backend_amx_mul_mat(params, op);
-            return true;
+            प्रत्यागम सत्य;
         }
-        return false;
+        प्रत्यागम असत्य;
     }
 };
 
-static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
-    static tensor_traits traits;
-    return &traits;
+स्थिर ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_बफर_t, संरचना ggml_tensor *) {
+    स्थिर tensor_traits traits;
+    प्रत्यागम &traits;
 }
 }  // namespace ggml::cpu::amx
 
 // AMX buffer interface
-static void ggml_backend_amx_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    free(buffer->context);
+स्थिर शून्य ggml_backend_amx_बफर_free_बफर(ggml_backend_बफर_t बफर) {
+    मुक्त(बफर->context);
 }
 
-static void * ggml_backend_amx_buffer_get_base(ggml_backend_buffer_t buffer) {
-    return (void *) (buffer->context);
+स्थिर शून्य * ggml_backend_amx_बफर_get_आधारः(ggml_backend_बफर_t बफर) {
+    प्रत्यागम (शून्य *) (बफर->context);
 }
 
-static enum ggml_status ggml_backend_amx_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    tensor->extra = (void *) ggml::cpu::amx::get_tensor_traits(buffer, tensor);
+स्थिर गणना ggml_स्थितिः ggml_backend_amx_बफर_init_tensor(ggml_backend_बफर_t बफर, संरचना ggml_tensor * tensor) {
+    tensor->extra = (शून्य *) ggml::cpu::amx::get_tensor_traits(बफर, tensor);
 
-    GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    GGML_अप्रयुक्तम्(बफर);
+    प्रत्यागम GGML_स्थितिः_SUCCESS;
 }
 
-static void ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                                  uint8_t value, size_t offset, size_t size) {
-    memset((char *) tensor->data + offset, value, size);
+स्थिर शून्य ggml_backend_amx_बफर_memset_tensor(ggml_backend_बफर_t बफर, संरचना ggml_tensor * tensor,
+                                                  uint8_t value, size_t विस्थापनम्, size_t size) {
+    स्मृतिं_पूरय((वर्ण *) tensor->दत्त + विस्थापनम्, value, size);
 
-    GGML_UNUSED(buffer);
+    GGML_अप्रयुक्तम्(बफर);
 }
 
-static void ggml_backend_amx_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                               const void * data, size_t offset, size_t size) {
-    if (qtype_has_amx_kernels(tensor->type)) {
+स्थिर शून्य ggml_backend_amx_बफर_समुच्चयः_tensor(ggml_backend_बफर_t बफर, संरचना ggml_tensor * tensor,
+                                               ध्रुव शून्य * दत्त, size_t विस्थापनम्, size_t size) {
+    यदि (qtype_has_amx_kernels(tensor->type)) {
         GGML_LOG_DEBUG("%s: amx repack tensor %s of type %s\n", __func__, tensor->name, ggml_type_name(tensor->type));
-        ggml_backend_amx_convert_weight(tensor, data, offset, size);
-    } else {
-        memcpy((char *) tensor->data + offset, data, size);
+        ggml_backend_amx_convert_weight(tensor, दत्त, विस्थापनम्, size);
+    } अन्यथा {
+        स्मृतिं_प्रतिलिख((वर्ण *) tensor->दत्त + विस्थापनम्, दत्त, size);
     }
 
-    GGML_UNUSED(buffer);
+    GGML_अप्रयुक्तम्(बफर);
 }
 
 /*
@@ -100,152 +100,152 @@ static bool ggml_backend_amx_buffer_cpy_tensor(ggml_backend_buffer_t buffer, con
 }
 */
 
-static void ggml_backend_amx_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    memset(buffer->context, value, buffer->size);
+स्थिर शून्य ggml_backend_amx_बफर_clear(ggml_backend_बफर_t बफर, uint8_t value) {
+    स्मृतिं_पूरय(बफर->context, value, बफर->size);
 }
 
-static ggml_backend_buffer_i ggml_backend_amx_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_amx_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_amx_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_amx_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_amx_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_amx_buffer_set_tensor,
-    /* .get_tensor      = */ nullptr,
-    /* .set_tensor_2d   = */ nullptr,
-    /* .get_tensor_2d   = */ nullptr,
-    /* .cpy_tensor      = */ nullptr,
-    /* .clear           = */ ggml_backend_amx_buffer_clear,
-    /* .reset           = */ nullptr,
+स्थिर ggml_backend_बफर_i ggml_backend_amx_बफर_interface = {
+    /* .free_buffer     = */ ggml_backend_amx_बफर_free_बफर,
+    /* .get_base        = */ ggml_backend_amx_बफर_get_आधारः,
+    /* .init_tensor     = */ ggml_backend_amx_बफर_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_amx_बफर_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_amx_बफर_समुच्चयः_tensor,
+    /* .get_tensor      = */ शून्यसूचकः,
+    /* .set_tensor_2d   = */ शून्यसूचकः,
+    /* .get_tensor_2d   = */ शून्यसूचकः,
+    /* .cpy_tensor      = */ शून्यसूचकः,
+    /* .clear           = */ ggml_backend_amx_बफर_clear,
+    /* .reset           = */ शून्यसूचकः,
 };
 
-static const char * ggml_backend_amx_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "AMX";
+स्थिर ध्रुव वर्ण * ggml_backend_amx_बफर_type_get_name(ggml_backend_बफर_type_t buft) {
+    प्रत्यागम "AMX";
 
-    GGML_UNUSED(buft);
+    GGML_अप्रयुक्तम्(buft);
 }
 
-static ggml_backend_buffer_t ggml_backend_amx_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    void * data = ggml_aligned_malloc(size);
-    if (data == NULL) {
+स्थिर ggml_backend_बफर_t ggml_backend_amx_बफर_type_alloc_बफर(ggml_backend_बफर_type_t buft, size_t size) {
+    शून्य * दत्त = ggml_aligned_malloc(size);
+    यदि (दत्त == रिक्त) {
         fprintf(stderr, "%s: failed to allocate buffer of size %zu\n", __func__, size);
-        return NULL;
+        प्रत्यागम रिक्त;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
+    प्रत्यागम ggml_backend_बफर_init(buft, ggml_backend_amx_बफर_interface, दत्त, size);
 }
 
-static size_t ggml_backend_amx_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+स्थिर size_t ggml_backend_amx_बफर_type_get_alignment(ggml_backend_बफर_type_t buft) {
+    प्रत्यागम TENSOR_ALIGNMENT;
 
-    GGML_UNUSED(buft);
+    GGML_अप्रयुक्तम्(buft);
 }
 
-namespace ggml::cpu::amx {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+नामाकाश ggml::cpu::amx {
+वर्ग extra_बफर_type : ggml::cpu::extra_बफर_type {
+    तार्किक supports_op(ggml_backend_dev_t, ध्रुव संरचना ggml_tensor * op) override {
+        यदि (op->op != GGML_OP_MUL_MAT) {
+            प्रत्यागम असत्य;
         }
-        auto * src0 = op->src[0];
-        auto * src1 = op->src[1];
+        स्वचालित * src0 = op->src[0];
+        स्वचालित * src1 = op->src[1];
 
-        if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
-            return false;
+        यदि (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
+            प्रत्यागम असत्य;
         }
-        if (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
-            return false;
+        यदि (!src0->बफर || src0->बफर->buft != ggml_backend_amx_बफर_type()) {
+            प्रत्यागम असत्य;
         }
-        if (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
-            return false;
+        यदि (src1->बफर && !ggml_backend_buft_is_host(src1->बफर->buft)) {
+            प्रत्यागम असत्य;
         }
-        if (op->ne[0] % (TILE_N * 2)) {
-            return false;
+        यदि (op->ne[0] % (TILE_N * 2)) {
+            प्रत्यागम असत्य;
         }
-        int alignment;
-        switch (src0->type) {
-            case GGML_TYPE_Q4_0:
-            case GGML_TYPE_Q4_1:
-            case GGML_TYPE_Q8_0:
+        पूर्णाङ्क alignment;
+        विकल्प (src0->type) {
+            पक्ष GGML_TYPE_Q4_0:
+            पक्ष GGML_TYPE_Q4_1:
+            पक्ष GGML_TYPE_Q8_0:
                 alignment = TILE_K;
-                break;
-            case GGML_TYPE_Q4_K:
-            case GGML_TYPE_Q5_K:
-            case GGML_TYPE_Q6_K:
-            case GGML_TYPE_IQ4_XS:
+                भङ्ग;
+            पक्ष GGML_TYPE_Q4_K:
+            पक्ष GGML_TYPE_Q5_K:
+            पक्ष GGML_TYPE_Q6_K:
+            पक्ष GGML_TYPE_IQ4_XS:
                 alignment = 256; // QK_K
-                break;
-            case GGML_TYPE_F16:
+                भङ्ग;
+            पक्ष GGML_TYPE_F16:
                 alignment = 16;
-                break;
-            default:
-                return false;
+                भङ्ग;
+            स्वभाव:
+                प्रत्यागम असत्य;
         }
-        if (src0->ne[0] % alignment) {
-            return false;
+        यदि (src0->ne[0] % alignment) {
+            प्रत्यागम असत्य;
         }
-        if (src1->type != GGML_TYPE_F32) {
-            return false;
+        यदि (src1->type != GGML_TYPE_F32) {
+            प्रत्यागम असत्य;
         }
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
-            op->src[0]->buffer->buft == ggml_backend_amx_buffer_type()) {
-            return (ggml::cpu::tensor_traits *) op->src[0]->extra;
+    ggml::cpu::tensor_traits * get_tensor_traits(ध्रुव संरचना ggml_tensor * op) override {
+        यदि (op->op == GGML_OP_MUL_MAT && op->src[0]->बफर &&
+            op->src[0]->बफर->buft == ggml_backend_amx_बफर_type()) {
+            प्रत्यागम (ggml::cpu::tensor_traits *) op->src[0]->extra;
         }
 
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
 };
 }  // namespace ggml::cpu::amx
 
-static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_amx_get_alloc_size(tensor);
+स्थिर size_t ggml_backend_amx_बफर_type_get_alloc_आकार(ggml_backend_बफर_type_t buft, ध्रुव ggml_tensor * tensor) {
+    प्रत्यागम ggml_backend_amx_get_alloc_आकार(tensor);
 
-    GGML_UNUSED(buft);
+    GGML_अप्रयुक्तम्(buft);
 }
 
-#define ARCH_GET_XCOMP_PERM     0x1022
-#define ARCH_REQ_XCOMP_PERM     0x1023
-#define XFEATURE_XTILECFG       17
-#define XFEATURE_XTILEDATA      18
+#परिभाषय ARCH_GET_XCOMP_PERM     0x1022
+#परिभाषय ARCH_REQ_XCOMP_PERM     0x1023
+#परिभाषय XFEATURE_XTILECFG       17
+#परिभाषय XFEATURE_XTILEDATA      18
 
-static bool ggml_amx_init() {
-#if defined(__linux__)
-    if (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
+स्थिर तार्किक ggml_amx_init() {
+#यदि defined(__linux__)
+    यदि (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
         fprintf(stderr, "AMX is not ready to be used!\n");
-        return false;
+        प्रत्यागम असत्य;
     }
-    return true;
-#elif defined(_WIN32)
-    return true;
-#else
-    return false;
-#endif
+    प्रत्यागम सत्य;
+#नोचेद्यदि defined(_WIN32)
+    प्रत्यागम सत्य;
+#अन्यथा
+    प्रत्यागम असत्य;
+#यदि_अन्तः
 }
 
-ggml_backend_buffer_type_t ggml_backend_amx_buffer_type() {
-    static struct ggml_backend_buffer_type ggml_backend_buffer_type_amx = {
+ggml_backend_बफर_type_t ggml_backend_amx_बफर_type() {
+    स्थिर संरचना ggml_backend_बफर_type ggml_backend_बफर_type_amx = {
         /* .iface = */ {
-                        /* .get_name            = */ ggml_backend_amx_buffer_type_get_name,
-                        /* .alloc_buffer        = */ ggml_backend_amx_buffer_type_alloc_buffer,
-                        /* .alloc_buffer_n      = */ nullptr,
-                        /* .get_alignment       = */ ggml_backend_amx_buffer_type_get_alignment,
-                        /* .get_max_size        = */ nullptr,  // defaults to SIZE_MAX
-                        /* .get_alloc_size      = */ ggml_backend_amx_buffer_type_get_alloc_size,
-                        /* .get_alloc_size_n    = */ NULL,
-                        /* .is_host             = */ nullptr,
+                        /* .get_name            = */ ggml_backend_amx_बफर_type_get_name,
+                        /* .alloc_buffer        = */ ggml_backend_amx_बफर_type_alloc_बफर,
+                        /* .alloc_buffer_n      = */ शून्यसूचकः,
+                        /* .get_alignment       = */ ggml_backend_amx_बफर_type_get_alignment,
+                        /* .get_max_size        = */ शून्यसूचकः,  // defaults to SIZE_MAX
+                        /* .get_alloc_size      = */ ggml_backend_amx_बफर_type_get_alloc_आकार,
+                        /* .get_alloc_size_n    = */ रिक्त,
+                        /* .is_host             = */ शून्यसूचकः,
                         },
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
-        /* .context = */ new ggml::cpu::amx::extra_buffer_type(),
+        /* .context = */ नूतन ggml::cpu::amx::extra_बफर_type(),
     };
 
-    if (!ggml_amx_init()) {
-        return nullptr;
+    यदि (!ggml_amx_init()) {
+        प्रत्यागम शून्यसूचकः;
     }
 
-    return &ggml_backend_buffer_type_amx;
+    प्रत्यागम &ggml_backend_बफर_type_amx;
 }
 
-#endif  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#यदि_अन्तः  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)

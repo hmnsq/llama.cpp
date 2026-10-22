@@ -1,101 +1,101 @@
-#ifndef HTP_DMA_COPY_H
-#define HTP_DMA_COPY_H
+#यदि_अपरिभाषितम् HTP_DMA_COPY_H
+#परिभाषय HTP_DMA_COPY_H
 
 // DDR<->DDR DMA copies of same-type, same-shape tensors with arbitrary strides.
 // Used by CPY for the copy itself and by CONCAT, which is two such copies into
 // two views of its destination. Every helper only pushes descriptors; the
 // caller flushes the queue when it needs the data.
 
-#include "dma-queue.h"
-#include "hex-common.h"
-#include "htp-tensor.h"
+#अन्तर्भाव "dma-queue.h"
+#अन्तर्भाव "hex-common.h"
+#अन्तर्भाव "htp-tensor.h"
 
-#include <stddef.h>
-#include <stdint.h>
+#अन्तर्भाव <stddef.h>
+#अन्तर्भाव <stdint.h>
 
 // Contiguous byte run, as 1d transfers of at most DMA_SAFE_CHUNK_SIZE each.
-static inline void dma_cpy_sametype_reshape_contig(dma_queue * dma_q,
+स्थिर अन्तःस्थ शून्य dma_cpy_sametype_reshape_contig(dma_queue * dma_q,
                                                    dma_addr_t  dst,
                                                    dma_addr_t  src0,
-                                                   uint32_t    total_bytes) {
-    if (total_bytes == 0) {
-        return;
+                                                   uint32_t    योग_अष्टकानि) {
+    यदि (योग_अष्टकानि == 0) {
+        प्रत्यागम;
     }
 
-    const uint32_t max_chunk = DMA_SAFE_CHUNK_SIZE;
-    while (total_bytes > 0) {
-        const uint32_t chunk = MIN(total_bytes, max_chunk);
-        if (!dma_queue_push(dma_q, dma_make_data(dst, src0), chunk, chunk, chunk, /*nrows=*/1)) {
+    ध्रुव uint32_t max_chunk = DMA_SAFE_CHUNK_आकार;
+    यावत् (योग_अष्टकानि > 0) {
+        ध्रुव uint32_t chunk = MIN(योग_अष्टकानि, max_chunk);
+        यदि (!dma_queue_प्रक्षिप(dma_q, dma_make_दत्त(dst, src0), chunk, chunk, chunk, /*nrows=*/1)) {
             dma_queue_flush(dma_q);
-            dma_queue_push(dma_q, dma_make_data(dst, src0), chunk, chunk, chunk, /*nrows=*/1);
+            dma_queue_प्रक्षिप(dma_q, dma_make_दत्त(dst, src0), chunk, chunk, chunk, /*nrows=*/1);
         }
         dst += chunk;
         src0 += chunk;
-        total_bytes -= chunk;
+        योग_अष्टकानि -= chunk;
     }
 }
 
 // One 2d transfer, split at the 16-bit nrows field.
-static inline void dma_cpy_push_2d_chunked(dma_queue * dma_q,
+स्थिर अन्तःस्थ शून्य dma_cpy_प्रक्षिप_2d_chunked(dma_queue * dma_q,
                                            dma_addr_t  dst,
                                            dma_addr_t  src,
                                            size_t      dst_stride,
                                            size_t      src_stride,
-                                           size_t      row_size,
+                                           size_t      row_आकार,
                                            uint32_t    nrows) {
-    if (row_size == 0 || nrows == 0) {
-        return;
+    यदि (row_आकार == 0 || nrows == 0) {
+        प्रत्यागम;
     }
 
-    while (nrows > 0) {
-        const uint32_t cur_rows = MIN(nrows, DMA_MAX_NROWS);
-        if (!dma_queue_push(dma_q, dma_make_data(dst, src), dst_stride, src_stride, row_size, cur_rows)) {
+    यावत् (nrows > 0) {
+        ध्रुव uint32_t cur_पङ्क्तिकाः = MIN(nrows, DMA_MAX_NROWS);
+        यदि (!dma_queue_प्रक्षिप(dma_q, dma_make_दत्त(dst, src), dst_stride, src_stride, row_आकार, cur_पङ्क्तिकाः)) {
             dma_queue_flush(dma_q);
-            dma_queue_push(dma_q, dma_make_data(dst, src), dst_stride, src_stride, row_size, cur_rows);
+            dma_queue_प्रक्षिप(dma_q, dma_make_दत्त(dst, src), dst_stride, src_stride, row_आकार, cur_पङ्क्तिकाः);
         }
-        dst += cur_rows * dst_stride;
-        src += cur_rows * src_stride;
-        nrows -= cur_rows;
+        dst += cur_पङ्क्तिकाः * dst_stride;
+        src += cur_पङ्क्तिकाः * src_stride;
+        nrows -= cur_पङ्क्तिकाः;
     }
 }
 
 // Copy a range of rows [row_start, row_start + nrows) from src0 into dst:
 // same type, same ne[], any nb[] above dim 0, dim 0 dense on both sides (nb[0] == elem_size).
-static inline void dma_cpy_sametype_sameshape_range(dma_queue *               dma_q,
-                                                    const struct htp_tensor * dst,
-                                                    const struct htp_tensor * src0,
-                                                    uint32_t                  elem_size,
+स्थिर अन्तःस्थ शून्य dma_cpy_sametype_sameshape_range(dma_queue *               dma_q,
+                                                    ध्रुव संरचना htp_tensor * dst,
+                                                    ध्रुव संरचना htp_tensor * src0,
+                                                    uint32_t                  elem_आकार,
                                                     uint32_t                  row_start,
                                                     uint32_t                  nrows) {
-    if (nrows == 0) {
-        return;
+    यदि (nrows == 0) {
+        प्रत्यागम;
     }
 
-    const uint32_t ne00 = src0->ne[0];
-    const uint32_t ne01 = src0->ne[1];
-    const uint32_t ne02 = src0->ne[2];
-    const uint32_t ne03 = src0->ne[3];
+    ध्रुव uint32_t ne00 = src0->ne[0];
+    ध्रुव uint32_t ne01 = src0->ne[1];
+    ध्रुव uint32_t ne02 = src0->ne[2];
+    ध्रुव uint32_t ne03 = src0->ne[3];
 
-    if (ne00 == 0 || ne01 == 0 || ne02 == 0 || ne03 == 0) {
-        return;
+    यदि (ne00 == 0 || ne01 == 0 || ne02 == 0 || ne03 == 0) {
+        प्रत्यागम;
     }
 
-    const uint32_t nb01 = src0->nb[1];
-    const uint32_t nb02 = src0->nb[2];
-    const uint32_t nb03 = src0->nb[3];
+    ध्रुव uint32_t nb01 = src0->nb[1];
+    ध्रुव uint32_t nb02 = src0->nb[2];
+    ध्रुव uint32_t nb03 = src0->nb[3];
 
-    const uint32_t nb1 = dst->nb[1];
-    const uint32_t nb2 = dst->nb[2];
-    const uint32_t nb3 = dst->nb[3];
+    ध्रुव uint32_t nb1 = dst->nb[1];
+    ध्रुव uint32_t nb2 = dst->nb[2];
+    ध्रुव uint32_t nb3 = dst->nb[3];
 
-    const bool contiguous = htp_tensor_is_contiguous(src0, elem_size) && htp_tensor_is_contiguous(dst, elem_size);
+    ध्रुव bool contiguous = htp_tensor_is_contiguous(src0, elem_आकार) && htp_tensor_is_contiguous(dst, elem_आकार);
 
-    if (contiguous) {
+    यदि (contiguous) {
         dma_cpy_sametype_reshape_contig(dma_q,
-                                        dst->data  + (dma_addr_t) row_start * ne00 * elem_size,
-                                        src0->data + (dma_addr_t) row_start * ne00 * elem_size,
-                                        nrows * ne00 * elem_size);
-        return;
+                                        dst->दत्त  + (dma_addr_t) row_start * ne00 * elem_आकार,
+                                        src0->दत्त + (dma_addr_t) row_start * ne00 * elem_आकार,
+                                        nrows * ne00 * elem_आकार);
+        प्रत्यागम;
     }
 
     // The single-descriptor path flattens (i01,i02,i03) into one row index, so every
@@ -108,62 +108,62 @@ static inline void dma_cpy_sametype_sameshape_range(dma_queue *               dm
     uint32_t exp_src          = ne01 * nb01;
     uint32_t exp_dst          = ne01 * nb1;
     bool     contiguous_outer = true;
-    if (ne02 != 1) {
+    यदि (ne02 != 1) {
         contiguous_outer = contiguous_outer && (nb02 == exp_src) && (nb2 == exp_dst);
     }
     exp_src *= ne02;
     exp_dst *= ne02;
-    if (ne03 != 1) {
+    यदि (ne03 != 1) {
         contiguous_outer = contiguous_outer && (nb03 == exp_src) && (nb3 == exp_dst);
     }
 
-    if (contiguous_outer) {
-        dma_cpy_push_2d_chunked(dma_q,
-                                dst->data  + (dma_addr_t) row_start * nb1,
-                                src0->data + (dma_addr_t) row_start * nb01,
-                                nb1, nb01, ne00 * elem_size, nrows);
-        return;
+    यदि (contiguous_outer) {
+        dma_cpy_प्रक्षिप_2d_chunked(dma_q,
+                                dst->दत्त  + (dma_addr_t) row_start * nb1,
+                                src0->दत्त + (dma_addr_t) row_start * nb01,
+                                nb1, nb01, ne00 * elem_आकार, nrows);
+        प्रत्यागम;
     }
 
-    const uint32_t ne02_ne01 = ne02 * ne01;
+    ध्रुव uint32_t ne02_ne01 = ne02 * ne01;
     uint32_t i03 = row_start / ne02_ne01;
     uint32_t rem = row_start - i03 * ne02_ne01;
     uint32_t i02 = rem / ne01;
     uint32_t i01 = rem - i02 * ne01;
 
-    dma_addr_t cur_dst  = dst->data  + (dma_addr_t) i01 * nb1  + (dma_addr_t) i02 * nb2  + (dma_addr_t) i03 * nb3;
-    dma_addr_t cur_src0 = src0->data + (dma_addr_t) i01 * nb01 + (dma_addr_t) i02 * nb02 + (dma_addr_t) i03 * nb03;
+    dma_addr_t cur_dst  = dst->दत्त  + (dma_addr_t) i01 * nb1  + (dma_addr_t) i02 * nb2  + (dma_addr_t) i03 * nb3;
+    dma_addr_t cur_src0 = src0->दत्त + (dma_addr_t) i01 * nb01 + (dma_addr_t) i02 * nb02 + (dma_addr_t) i03 * nb03;
 
     uint32_t r = row_start;
-    const uint32_t row_end = row_start + nrows;
-    while (r < row_end) {
-        uint32_t cur_rows = MIN(row_end - r, ne01 - i01);
-        dma_cpy_push_2d_chunked(dma_q, cur_dst, cur_src0, nb1, nb01, ne00 * elem_size, cur_rows);
-        r   += cur_rows;
-        i01 += cur_rows;
-        if (i01 == ne01) {
+    ध्रुव uint32_t row_अन्तः = row_start + nrows;
+    यावत् (r < row_अन्तः) {
+        uint32_t cur_पङ्क्तिकाः = MIN(row_अन्तः - r, ne01 - i01);
+        dma_cpy_प्रक्षिप_2d_chunked(dma_q, cur_dst, cur_src0, nb1, nb01, ne00 * elem_आकार, cur_पङ्क्तिकाः);
+        r   += cur_पङ्क्तिकाः;
+        i01 += cur_पङ्क्तिकाः;
+        यदि (i01 == ne01) {
             i01 = 0;
-            if (++i02 == ne02) {
+            यदि (++i02 == ne02) {
                 i02 = 0;
                 i03++;
             }
-            cur_dst  = dst->data  + (dma_addr_t) i02 * nb2  + (dma_addr_t) i03 * nb3;
-            cur_src0 = src0->data + (dma_addr_t) i02 * nb02 + (dma_addr_t) i03 * nb03;
-        } else {
-            cur_dst  += cur_rows * nb1;
-            cur_src0 += cur_rows * nb01;
+            cur_dst  = dst->दत्त  + (dma_addr_t) i02 * nb2  + (dma_addr_t) i03 * nb3;
+            cur_src0 = src0->दत्त + (dma_addr_t) i02 * nb02 + (dma_addr_t) i03 * nb03;
+        } अन्यथा {
+            cur_dst  += cur_पङ्क्तिकाः * nb1;
+            cur_src0 += cur_पङ्क्तिकाः * nb01;
         }
     }
 }
 
 // Copy src0 into dst: same type, same ne[], any nb[] above dim 0, dim 0 dense on
 // both sides (nb[0] == elem_size).
-static inline void dma_cpy_sametype_sameshape(dma_queue *               dma_q,
-                                              const struct htp_tensor * dst,
-                                              const struct htp_tensor * src0,
-                                              uint32_t                  elem_size) {
-    const uint32_t total_rows = src0->ne[1] * src0->ne[2] * src0->ne[3];
-    dma_cpy_sametype_sameshape_range(dma_q, dst, src0, elem_size, 0, total_rows);
+स्थिर अन्तःस्थ शून्य dma_cpy_sametype_sameshape(dma_queue *               dma_q,
+                                              ध्रुव संरचना htp_tensor * dst,
+                                              ध्रुव संरचना htp_tensor * src0,
+                                              uint32_t                  elem_आकार) {
+    ध्रुव uint32_t योग_पङ्क्तिकाः = src0->ne[1] * src0->ne[2] * src0->ne[3];
+    dma_cpy_sametype_sameshape_range(dma_q, dst, src0, elem_आकार, 0, योग_पङ्क्तिकाः);
 }
 
-#endif /* HTP_DMA_COPY_H */
+#यदि_अन्तः /* HTP_DMA_COPY_H */

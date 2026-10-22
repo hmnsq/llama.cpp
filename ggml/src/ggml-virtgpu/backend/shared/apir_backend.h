@@ -1,37 +1,37 @@
-#pragma once
+#निर्देशः once
 
-#include "apir_backend.gen.h"
+#अन्तर्भाव "apir_backend.gen.h"
 
-#include <stdint.h>  // for uintptr_t
-#include <time.h>    // for timespec, clock_gettime
+#अन्तर्भाव <stdint.h>  // for uintptr_t
+#अन्तर्भाव <time.h>    // for timespec, clock_gettime
 
-#define APIR_BACKEND_INITIALIZE_SUCCESS                     0
-#define APIR_BACKEND_INITIALIZE_CANNOT_OPEN_BACKEND_LIBRARY 1
-#define APIR_BACKEND_INITIALIZE_CANNOT_OPEN_GGML_LIBRARY    2
-#define APIR_BACKEND_INITIALIZE_MISSING_BACKEND_SYMBOLS     3
-#define APIR_BACKEND_INITIALIZE_MISSING_GGML_SYMBOLS        4
-#define APIR_BACKEND_INITIALIZE_BACKEND_FAILED              5
-#define APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED          6
-#define APIR_BACKEND_INITIALIZE_ALREADY_INITED              7
-#define APIR_BACKEND_INITIALIZE_NO_DEVICE                   8
-#define APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED         9
+#परिभाषय APIR_BACKEND_INITIALIZE_SUCCESS                     0
+#परिभाषय APIR_BACKEND_INITIALIZE_CANNOT_OPEN_BACKEND_LIBRARY 1
+#परिभाषय APIR_BACKEND_INITIALIZE_CANNOT_OPEN_GGML_LIBRARY    2
+#परिभाषय APIR_BACKEND_INITIALIZE_MISSING_BACKEND_SYMBOLS     3
+#परिभाषय APIR_BACKEND_INITIALIZE_MISSING_GGML_SYMBOLS        4
+#परिभाषय APIR_BACKEND_INITIALIZE_BACKEND_FAILED              5
+#परिभाषय APIR_BACKEND_INITIALIZE_BACKEND_REG_FAILED          6
+#परिभाषय APIR_BACKEND_INITIALIZE_ALREADY_INITED              7
+#परिभाषय APIR_BACKEND_INITIALIZE_NO_DEVICE                   8
+#परिभाषय APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED         9
 
 // new entries here need to be added to the apir_backend_initialize_error function below
 
-#define APIR_BACKEND_FORWARD_INDEX_INVALID 6
+#परिभाषय APIR_BACKEND_FORWARD_सूचकांक_INVALID 6
 
 // 0 is fast, 1 avoids the backend to crash if an unsupported tensor is received
-#define APIR_BACKEND_CHECK_SUPPORTS_OP 0
+#परिभाषय APIR_BACKEND_CHECK_SUPPORTS_OP 0
 
-typedef uintptr_t apir_buffer_type_host_handle_t;
-typedef uintptr_t apir_buffer_host_handle_t;
+प्रकारनिर्देश uintptr_t apir_बफर_type_host_handle_t;
+प्रकारनिर्देश uintptr_t apir_बफर_host_handle_t;
 
-static const char * apir_backend_initialize_error(int code) {
-#define APIR_BACKEND_INITIALIZE_ERROR(code_name) \
-    do {                                         \
-        if (code == code_name)                   \
-            return #code_name;                   \
-    } while (0)
+स्थिर ध्रुव वर्ण * apir_backend_initialize_error(पूर्णाङ्क संहिता) {
+#परिभाषय APIR_BACKEND_INITIALIZE_ERROR(संहिता_name) \
+    कुरु {                                         \
+        यदि (संहिता == संहिता_name)                   \
+            प्रत्यागम #code_name;                   \
+    } यावत् (0)
 
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_SUCCESS);
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_CANNOT_OPEN_BACKEND_LIBRARY);
@@ -44,7 +44,7 @@ static const char * apir_backend_initialize_error(int code) {
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_NO_DEVICE);
     APIR_BACKEND_INITIALIZE_ERROR(APIR_BACKEND_INITIALIZE_BACKEND_INIT_FAILED);
 
-    return "Unknown APIR_BACKEND_INITIALIZE error:/";
+    प्रत्यागम "Unknown APIR_BACKEND_INITIALIZE error:/";
 
-#undef APIR_BACKEND_INITIALIZE_ERROR
+#अपरिभाषय APIR_BACKEND_INITIALIZE_ERROR
 }

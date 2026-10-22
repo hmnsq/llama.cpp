@@ -1,58 +1,58 @@
-#include "apir_cs.h"
-#include "apir_cs_rpc.h"
-#include "ggml-impl.h"
+#अन्तर्भाव "apir_cs.h"
+#अन्तर्भाव "apir_cs_rpc.h"
+#अन्तर्भाव "ggml-impl.h"
 
 // ggml_buffer_to_apir_host_handle(ggml_backend_buffer_t buffer);
 
-static inline void apir_encode_ggml_buffer_host_handle(apir_encoder * enc, const apir_buffer_host_handle_t * handle);
+स्थिर अन्तःस्थ शून्य apir_encode_ggml_बफर_host_handle(apir_encoder * enc, ध्रुव apir_बफर_host_handle_t * handle);
 
-static inline ggml_backend_buffer_t apir_decode_ggml_buffer(apir_decoder * dec);
+स्थिर अन्तःस्थ ggml_backend_बफर_t apir_decode_ggml_बफर(apir_decoder * dec);
 
 /* apir_rpc_tensor */
 
-static inline void apir_encode_rcp_tensor(apir_encoder * enc, const apir_rpc_tensor * apir_rpc_tensor) {
-    size_t apir_rpc_tensor_size = sizeof(*apir_rpc_tensor);
-    apir_encode(enc, apir_rpc_tensor_size, apir_rpc_tensor, apir_rpc_tensor_size);
+स्थिर अन्तःस्थ शून्य apir_encode_rcp_tensor(apir_encoder * enc, ध्रुव apir_rpc_tensor * apir_rpc_tensor) {
+    size_t apir_rpc_tensor_आकार = परिमाण(*apir_rpc_tensor);
+    apir_encode(enc, apir_rpc_tensor_आकार, apir_rpc_tensor, apir_rpc_tensor_आकार);
 }
 
-static inline apir_rpc_tensor * apir_decode_apir_rpc_tensor_inplace(apir_decoder * dec) {
-    size_t apir_rpc_tensor_size = sizeof(apir_rpc_tensor);
+स्थिर अन्तःस्थ apir_rpc_tensor * apir_decode_apir_rpc_tensor_inplace(apir_decoder * dec) {
+    size_t apir_rpc_tensor_आकार = परिमाण(apir_rpc_tensor);
 
-    return (apir_rpc_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, apir_rpc_tensor_size);
+    प्रत्यागम (apir_rpc_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, apir_rpc_tensor_आकार);
 }
 
-static inline apir_rpc_tensor * apir_decode_apir_rpc_tensor_array_inplace(apir_decoder * dec, uint32_t n_tensors) {
-    size_t apir_rpc_tensor_size = sizeof(apir_rpc_tensor) * n_tensors;
+स्थिर अन्तःस्थ apir_rpc_tensor * apir_decode_apir_rpc_tensor_array_inplace(apir_decoder * dec, uint32_t n_tensors) {
+    size_t apir_rpc_tensor_आकार = परिमाण(apir_rpc_tensor) * n_tensors;
 
-    return (apir_rpc_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, apir_rpc_tensor_size);
+    प्रत्यागम (apir_rpc_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, apir_rpc_tensor_आकार);
 }
 
 /* ggml_tensor */
 
-static inline void apir_encode_ggml_tensor(apir_encoder * enc, const ggml_tensor * tensor) {
+स्थिर अन्तःस्थ शून्य apir_encode_ggml_tensor(apir_encoder * enc, ध्रुव ggml_tensor * tensor) {
     apir_rpc_tensor serialized = apir_serialize_tensor(tensor);
 
     apir_encode_rcp_tensor(enc, &serialized);
 }
 
-static inline const ggml_tensor * apir_decode_ggml_tensor(apir_decoder * dec) {
-    const apir_rpc_tensor * apir_rpc_tensor = apir_decode_apir_rpc_tensor_inplace(dec);
+स्थिर अन्तःस्थ ध्रुव ggml_tensor * apir_decode_ggml_tensor(apir_decoder * dec) {
+    ध्रुव apir_rpc_tensor * apir_rpc_tensor = apir_decode_apir_rpc_tensor_inplace(dec);
 
-    if (!apir_rpc_tensor) {
-        return NULL;
+    यदि (!apir_rpc_tensor) {
+        प्रत्यागम रिक्त;
     }
 
     ggml_init_params params{
         /*.mem_size   =*/ggml_tensor_overhead(),
-        /*.mem_buffer =*/NULL,
+        /*.mem_buffer =*/रिक्त,
         /*.no_alloc   =*/true,
     };
 
     ggml_context * ctx = ggml_init(params);
 
-    const ggml_tensor * tensor = apir_deserialize_tensor(ctx, apir_rpc_tensor);
+    ध्रुव ggml_tensor * tensor = apir_deserialize_tensor(ctx, apir_rpc_tensor);
 
-    return tensor;
+    प्रत्यागम tensor;
 }
 
 /* *** ggml_backend_buffer_type_t *** */
@@ -62,29 +62,29 @@ static inline const ggml_tensor * apir_decode_ggml_tensor(apir_decoder * dec) {
 // The guest stores it in `buft->context`.
 // The host simply writes the pointer address in the buffer variable.
 
-static inline void apir_encode_ggml_buffer_type(apir_encoder * enc, ggml_backend_buffer_type_t buft) {
-    apir_buffer_type_host_handle_t handle = ggml_buffer_type_to_apir_handle(buft);
-    apir_encoder_write(enc, sizeof(handle), &handle, sizeof(handle));
+स्थिर अन्तःस्थ शून्य apir_encode_ggml_बफर_type(apir_encoder * enc, ggml_backend_बफर_type_t buft) {
+    apir_बफर_type_host_handle_t handle = ggml_बफर_type_गन्तव्यम्_apir_handle(buft);
+    apir_encoder_write(enc, परिमाण(handle), &handle, परिमाण(handle));
 }
 
-static inline ggml_backend_buffer_type_t apir_decode_ggml_buffer_type(apir_decoder * dec) {
-    apir_buffer_type_host_handle_t handle;
+स्थिर अन्तःस्थ ggml_backend_बफर_type_t apir_decode_ggml_बफर_type(apir_decoder * dec) {
+    apir_बफर_type_host_handle_t handle;
 
-    apir_decoder_read(dec, sizeof(handle), &handle, sizeof(handle));
+    apir_decoder_read(dec, परिमाण(handle), &handle, परिमाण(handle));
 
-    return (ggml_backend_buffer_type_t) handle;
+    प्रत्यागम (ggml_backend_बफर_type_t) handle;
 }
 
-static inline void apir_encode_apir_buffer_type_host_handle(apir_encoder * enc, apir_buffer_type_host_handle_t handle) {
-    apir_encoder_write(enc, sizeof(handle), &handle, sizeof(handle));
+स्थिर अन्तःस्थ शून्य apir_encode_apir_बफर_type_host_handle(apir_encoder * enc, apir_बफर_type_host_handle_t handle) {
+    apir_encoder_write(enc, परिमाण(handle), &handle, परिमाण(handle));
 }
 
-static inline apir_buffer_type_host_handle_t apir_decode_apir_buffer_type_host_handle(apir_decoder * dec) {
-    apir_buffer_type_host_handle_t handle;
+स्थिर अन्तःस्थ apir_बफर_type_host_handle_t apir_decode_apir_बफर_type_host_handle(apir_decoder * dec) {
+    apir_बफर_type_host_handle_t handle;
 
-    apir_decoder_read(dec, sizeof(handle), &handle, sizeof(handle));
+    apir_decoder_read(dec, परिमाण(handle), &handle, परिमाण(handle));
 
-    return handle;
+    प्रत्यागम handle;
 }
 
 /* *** ggml_backend_type_t *** */
@@ -92,141 +92,141 @@ static inline apir_buffer_type_host_handle_t apir_decode_apir_buffer_type_host_h
 // ggml_backend_buffer_t is a POINTER.
 // same logic as for ggml_backend_buffer_type_t
 
-static inline void apir_encode_ggml_buffer(apir_encoder * enc, const ggml_backend_buffer_t buffer) {
-    apir_buffer_host_handle_t handle = BUFFER_TO_HOST_HANDLE(buffer);
-    apir_encoder_write(enc, sizeof(handle), &handle, sizeof(handle));
+स्थिर अन्तःस्थ शून्य apir_encode_ggml_बफर(apir_encoder * enc, ध्रुव ggml_backend_बफर_t बफर) {
+    apir_बफर_host_handle_t handle = बफर_गन्तव्यम्_HOST_HANDLE(बफर);
+    apir_encoder_write(enc, परिमाण(handle), &handle, परिमाण(handle));
 }
 
-static inline ggml_backend_buffer_t apir_decode_ggml_buffer(apir_decoder * dec) {
-    ggml_backend_buffer_t buffer;
-    size_t                buffer_ptr_size = sizeof(buffer);
+स्थिर अन्तःस्थ ggml_backend_बफर_t apir_decode_ggml_बफर(apir_decoder * dec) {
+    ggml_backend_बफर_t बफर;
+    size_t                बफर_ptr_आकार = परिमाण(बफर);
 
-    apir_decoder_read(dec, buffer_ptr_size, &buffer, buffer_ptr_size);
+    apir_decoder_read(dec, बफर_ptr_आकार, &बफर, बफर_ptr_आकार);
 
     // SECURITY: Validate buffer handle against tracked buffers to prevent
     // guest VM from providing arbitrary host memory addresses
-    if (buffer) {
-        extern std::unordered_set<ggml_backend_buffer_t> backend_buffers;
-        if (backend_buffers.find(buffer) == backend_buffers.end()) {
+    यदि (बफर) {
+        बाह्य std::unordered_समुच्चयः<ggml_backend_बफर_t> backend_buffers;
+        यदि (backend_buffers.find(बफर) == backend_buffers.अन्तः_2()) {
             GGML_LOG_WARN("ggml-virtgpu-backend: %s: Invalid buffer handle from guest: %p\n", __func__,
-                          (void *) buffer);
+                          (शून्य *) बफर);
             // Set fatal flag to prevent further processing with invalid handle
-            apir_decoder_set_fatal(dec);
-            return NULL;
+            apir_decoder_समुच्चयः_fatal(dec);
+            प्रत्यागम रिक्त;
         }
     }
 
-    return buffer;
+    प्रत्यागम बफर;
 }
 
 /* enum ggml_status */
 
-static inline void apir_encode_ggml_status(apir_encoder * enc, const ggml_status * status) {
-    apir_encoder_write(enc, sizeof(*status), status, sizeof(*status));
+स्थिर अन्तःस्थ शून्य apir_encode_ggml_स्थितिः(apir_encoder * enc, ध्रुव ggml_स्थितिः * स्थितिः) {
+    apir_encoder_write(enc, परिमाण(*स्थितिः), स्थितिः, परिमाण(*स्थितिः));
 }
 
-static inline void apir_decode_ggml_status(apir_decoder * dec, ggml_status * status) {
-    apir_decoder_read(dec, sizeof(*status), status, sizeof(*status));
+स्थिर अन्तःस्थ शून्य apir_decode_ggml_स्थितिः(apir_decoder * dec, ggml_स्थितिः * स्थितिः) {
+    apir_decoder_read(dec, परिमाण(*स्थितिः), स्थितिः, परिमाण(*स्थितिः));
 }
 
 /* virtgpu_shmem */
 
-static inline void apir_encode_virtgpu_shmem_res_id(apir_encoder * enc, uint32_t shmem_res_id) {
+स्थिर अन्तःस्थ शून्य apir_encode_virtgpu_shmem_res_id(apir_encoder * enc, uint32_t shmem_res_id) {
     apir_encode_uint32_t(enc, &shmem_res_id);
 }
 
-static inline void apir_decode_virtgpu_shmem_res_id(apir_decoder * dec, uint32_t * shmem_res_id) {
+स्थिर अन्तःस्थ शून्य apir_decode_virtgpu_shmem_res_id(apir_decoder * dec, uint32_t * shmem_res_id) {
     apir_decode_uint32_t(dec, shmem_res_id);
 }
 
 /* ggml_cgraph */
 
-static inline size_t apir_serialize_ggml_cgraph(ggml_cgraph * cgraph, std::vector<uint8_t> & cgraph_data) {
-    apir_serialize_graph(cgraph, cgraph_data);
+स्थिर अन्तःस्थ size_t apir_serialize_ggml_cgraph(ggml_cgraph * cgraph, std::सदिशम्<uint8_t> & cgraph_दत्त) {
+    apir_serialize_graph(cgraph, cgraph_दत्त);
 
-    return cgraph_data.size();
+    प्रत्यागम cgraph_दत्त.आकार();
 }
 
-static inline void apir_encode_cgraph_data(apir_encoder * enc, std::vector<uint8_t> & cgraph_data) {
-    size_t cgraph_size = cgraph_data.size();
+स्थिर अन्तःस्थ शून्य apir_encode_cgraph_दत्त(apir_encoder * enc, std::सदिशम्<uint8_t> & cgraph_दत्त) {
+    size_t cgraph_आकार = cgraph_दत्त.आकार();
 
-    apir_encode(enc, cgraph_size, cgraph_data.data(), cgraph_size);
+    apir_encode(enc, cgraph_आकार, cgraph_दत्त.दत्त(), cgraph_आकार);
 }
 
-static inline ggml_cgraph * apir_decode_ggml_cgraph(apir_decoder * dec, size_t cgraph_size) {
-    GGML_UNUSED(cgraph_size);
+स्थिर अन्तःस्थ ggml_cgraph * apir_decode_ggml_cgraph(apir_decoder * dec, size_t cgraph_आकार) {
+    GGML_अप्रयुक्तम्(cgraph_आकार);
 
     uint32_t n_nodes;
     apir_decode_uint32_t(dec, &n_nodes);
-    const uint64_t * nodes = apir_decode_uint64_t_array_inplace(dec, n_nodes);
+    ध्रुव uint64_t * nodes = apir_decode_uint64_t_array_inplace(dec, n_nodes);
 
     uint32_t n_tensors;
     apir_decode_uint32_t(dec, &n_tensors);
-    const apir_rpc_tensor * tensors = apir_decode_apir_rpc_tensor_array_inplace(dec, n_tensors);
+    ध्रुव apir_rpc_tensor * tensors = apir_decode_apir_rpc_tensor_array_inplace(dec, n_tensors);
 
-    return apir_deserialize_graph(n_nodes, n_tensors, tensors, nodes);
+    प्रत्यागम apir_deserialize_graph(n_nodes, n_tensors, tensors, nodes);
 }
 
-static inline void apir_encode_ggml_buffer_handle(apir_encoder * enc, const apir_buffer_host_handle_t * handle) {
-    apir_encoder_write(enc, sizeof(*handle), &handle, sizeof(*handle));
+स्थिर अन्तःस्थ शून्य apir_encode_ggml_बफर_handle(apir_encoder * enc, ध्रुव apir_बफर_host_handle_t * handle) {
+    apir_encoder_write(enc, परिमाण(*handle), &handle, परिमाण(*handle));
 }
 
-static inline void apir_encode_ggml_tensor_inline(apir_encoder * enc, const ggml_tensor * tensor) {
-    size_t tensor_size = sizeof(*tensor);
+स्थिर अन्तःस्थ शून्य apir_encode_ggml_tensor_inline(apir_encoder * enc, ध्रुव ggml_tensor * tensor) {
+    size_t tensor_आकार = परिमाण(*tensor);
 
-    if (tensor->extra) {
+    यदि (tensor->extra) {
         GGML_ABORT("%s: Cannot pass tensors with extra", __func__);
     }
 
-    if (tensor->src[0] && tensor->buffer) {
-        static int first = 1;
-        if (first) {
+    यदि (tensor->src[0] && tensor->बफर) {
+        स्थिर पूर्णाङ्क first = 1;
+        यदि (first) {
             GGML_LOG_WARN("%s: Cannot pass tensors with src and buffer\n", __func__);
             first = 0;
         }
     }
 
-    apir_encoder_write(enc, tensor_size, tensor, tensor_size);
+    apir_encoder_write(enc, tensor_आकार, tensor, tensor_आकार);
 
     // tensor->data is a pointer inside the device buffer. No need to touch it
     // tensor->buffer is a pointer to a buffer. Encoding the buffer handle in sequence.
     // (could also make a copy of the tensor, and update locally.)
 
-    if (tensor->buffer) {
-        apir_buffer_host_handle_t buffer_handle = ggml_buffer_to_apir_handle(tensor->buffer);
-        apir_encode_ggml_buffer_handle(enc, &buffer_handle);
+    यदि (tensor->बफर) {
+        apir_बफर_host_handle_t बफर_handle = ggml_बफर_गन्तव्यम्_apir_handle(tensor->बफर);
+        apir_encode_ggml_बफर_handle(enc, &बफर_handle);
     }
 
-    if (tensor->view_src) {
-        apir_encoder_write(enc, tensor_size, tensor->view_src, tensor_size);
+    यदि (tensor->view_src) {
+        apir_encoder_write(enc, tensor_आकार, tensor->view_src, tensor_आकार);
     }
 
-    for (int i = 0; tensor->src[i]; i++) {
-        const ggml_tensor * tensor_src = tensor->src[i];
-        apir_encoder_write(enc, tensor_size, tensor_src, tensor_size);
+    प्रति (पूर्णाङ्क i = 0; tensor->src[i]; i++) {
+        ध्रुव ggml_tensor * tensor_src = tensor->src[i];
+        apir_encoder_write(enc, tensor_आकार, tensor_src, tensor_आकार);
     }
 }
 
-static inline const ggml_tensor * apir_decode_ggml_tensor_inplace(apir_decoder * dec) {
+स्थिर अन्तःस्थ ध्रुव ggml_tensor * apir_decode_ggml_tensor_inplace(apir_decoder * dec) {
     // it safe to remove the `const` qualifier here, we *do* want to
     // modify the shared memory data to fix the `src` pointers.
-    ggml_tensor * tensor = (ggml_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, sizeof(ggml_tensor));
+    ggml_tensor * tensor = (ggml_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, परिमाण(ggml_tensor));
 
     // tensor->data is a pointer inside the device buffer. No need to touch it
     // tensor->buffer is a pointer to a buffer. Decode the buffer handle encoded in sequence.
-    if (tensor->buffer) {
-        tensor->buffer = apir_decode_ggml_buffer(dec);
+    यदि (tensor->बफर) {
+        tensor->बफर = apir_decode_ggml_बफर(dec);
     }
 
-    if (tensor->view_src) {
-        ggml_tensor * tensor_view_src = (ggml_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, sizeof(ggml_tensor));
+    यदि (tensor->view_src) {
+        ggml_tensor * tensor_view_src = (ggml_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, परिमाण(ggml_tensor));
         tensor->view_src              = tensor_view_src;
     }
 
-    for (int i = 0; tensor->src[i]; i++) {
-        ggml_tensor * tensor_src = (ggml_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, sizeof(ggml_tensor));
+    प्रति (पूर्णाङ्क i = 0; tensor->src[i]; i++) {
+        ggml_tensor * tensor_src = (ggml_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, परिमाण(ggml_tensor));
         tensor->src[i] = tensor_src;  // overwrite op->src[i] pointer with the actual location of the src tensor
     }
 
-    return tensor;
+    प्रत्यागम tensor;
 }

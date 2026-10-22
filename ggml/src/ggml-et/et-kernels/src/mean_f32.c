@@ -14,44 +14,44 @@
 // row start is not 32B-aligned).
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#अन्तर्भाव "ggml_tensor.h"
+#अन्तर्भाव "math_fp.h"
+#अन्तर्भाव "platform.h"
 
-#include <stdint.h>
+#अन्तर्भाव <stdint.h>
 
-struct ggml_et_mean_params {
-    struct ggml_tensor src0;  // F32 input  [ne00, ne01, ne02, ne03]
-    struct ggml_tensor dst;   // F32 output [1,    ne01, ne02, ne03]
+संरचना ggml_et_माध्यम्_params {
+    संरचना ggml_tensor src0;  // F32 input  [ne00, ne01, ne02, ne03]
+    संरचना ggml_tensor dst;   // F32 output [1,    ne01, ne02, ne03]
 };
 
 // Sum a contiguous F32 slice [base+i_lo, base+i_hi). Uses the 8-wide vector
 // path only when `base + i_lo` is 32B-aligned; the tail (and the whole slice
 // when misaligned) is summed with scalar fadd.s.
-static inline float partial_sum_slice(const float * base, int32_t i_lo, int32_t i_hi) {
-    if (i_lo >= i_hi) {
-        return 0.0f;
+स्थिर अन्तःस्थ भिन्न partial_योग_खण्डिका(ध्रुव भिन्न * आधारः, int32_t i_lo, int32_t i_hi) {
+    यदि (i_lo >= i_hi) {
+        प्रत्यागम 0.0f;
     }
 
-    const float * p   = base + i_lo;
+    ध्रुव भिन्न * p   = आधारः + i_lo;
     int32_t       n   = i_hi - i_lo;
-    float         acc = 0.0f;
+    भिन्न         acc = 0.0f;
     int32_t       i   = 0;
 
-    if (n >= 8 && (((uintptr_t) p) & 31) == 0) {
-        float zero = 0.0f;
-        __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+    यदि (n >= 8 && (((uintptr_t) p) & 31) == 0) {
+        भिन्न zero = 0.0f;
+        __asm__ चञ्चल("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-        for (; i + 8 <= n; i += 8) {
-            __asm__ volatile(
+        प्रति (; i + 8 <= n; i += 8) {
+            __asm__ चञ्चल(
                 "flw.ps  f11, %[x]\n"
                 "fadd.ps f10, f10, f11\n"
                 :
-                : [x] "m"(*(const float (*)[8]) & p[i])
+                : [x] "m"(*(ध्रुव भिन्न (*)[8]) & p[i])
                 : "f10", "f11");
         }
 
-        float vec_sum;
+        भिन्न vec_योग;
         __asm__ __volatile__(
             "fswizz.ps f1, f10, 0xB1 \n\t"
             "fadd.ps   f2, f10, f1, rne \n\t"
@@ -60,161 +60,161 @@ static inline float partial_sum_slice(const float * base, int32_t i_lo, int32_t 
             "fmvz.x.ps t0, f4, 4 \n\t"
             "fbcx.ps   f5, t0 \n\t"
             "fadd.ps   %[vout], f4, f5, rne \n\t"
-            : [vout] "=f"(vec_sum)::"t0", "f1", "f2", "f3", "f4", "f5");
-        acc = vec_sum;
+            : [vout] "=f"(vec_योग)::"t0", "f1", "f2", "f3", "f4", "f5");
+        acc = vec_योग;
     }
 
-    for (; i < n; i++) {
+    प्रति (; i < n; i++) {
         acc += p[i];
     }
-    return acc;
+    प्रत्यागम acc;
 }
 
-int entry_point(struct ggml_et_mean_params * params, void * env) {
+पूर्णाङ्क प्रविष्टिः_point(संरचना ggml_et_माध्यम्_params * params, शून्य * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    यदि (!kernel_env) {
+        प्रत्यागम -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    पूर्णाङ्क thread_id   = get_relative_thread_id(kernel_env->shire_आवरणम्);
+    पूर्णाङ्क अङ्कः_तन्तवः = get_अङ्कः_तन्तवः(kernel_env->shire_आवरणम्);
 
-    if (thread_id < 0) {
-        return 0;
+    यदि (thread_id < 0) {
+        प्रत्यागम 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    यदि (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        प्रत्यागम -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    संरचना ggml_tensor * src0 = &params->src0;
+    संरचना ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    यदि (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        प्रत्यागम -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    भिन्न * src0_दत्त = (भिन्न *) src0->दत्त;
+    भिन्न * dst_दत्त  = (भिन्न *) dst->दत्त;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    यदि (!src0_दत्त || !dst_दत्त) {
+        प्रत्यागम -1;
     }
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ध्रुव int64_t ne00 = src0->ne[0];
+    ध्रुव int64_t ne01 = src0->ne[1];
+    ध्रुव int64_t ne02 = src0->ne[2];
+    ध्रुव int64_t ne03 = src0->ne[3];
 
-    const size_t nb01 = src0->nb[1];
-    const size_t nb02 = src0->nb[2];
-    const size_t nb03 = src0->nb[3];
+    ध्रुव size_t nb01 = src0->nb[1];
+    ध्रुव size_t nb02 = src0->nb[2];
+    ध्रुव size_t nb03 = src0->nb[3];
 
-    const size_t nb1 = dst->nb[1];
-    const size_t nb2 = dst->nb[2];
-    const size_t nb3 = dst->nb[3];
+    ध्रुव size_t nb1 = dst->nb[1];
+    ध्रुव size_t nb2 = dst->nb[2];
+    ध्रुव size_t nb3 = dst->nb[3];
 
-    if (ne00 <= 0) {
-        return 0;
+    यदि (ne00 <= 0) {
+        प्रत्यागम 0;
     }
 
-    const int32_t total_rows    = (int32_t) (ne01 * ne02 * ne03);
-    const int     shire_threads = SOC_MINIONS_PER_SHIRE * NUM_HARTS_PER_MINION;
-    const float   inv_ne00      = et_fdiv(1.0f, (float) (int32_t) ne00);
+    ध्रुव int32_t योग_पङ्क्तिकाः    = (int32_t) (ne01 * ne02 * ne03);
+    ध्रुव पूर्णाङ्क     shire_तन्तवः = SOC_MINIONS_प्रत्येकम्_SHIRE * अङ्कः_HARTS_प्रत्येकम्_MINION;
+    ध्रुव भिन्न   inv_ne00      = et_fdiv(1.0f, (भिन्न) (int32_t) ne00);
 
     // Row-parallel: each thread owns whole rows.
-    if (total_rows >= shire_threads) {
-        for (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
-            const int64_t i03 = ir / (ne02 * ne01);
-            const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
-            const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
+    यदि (योग_पङ्क्तिकाः >= shire_तन्तवः) {
+        प्रति (int64_t ir = thread_id; ir < योग_पङ्क्तिकाः; ir += अङ्कः_तन्तवः) {
+            ध्रुव int64_t i03 = ir / (ne02 * ne01);
+            ध्रुव int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
+            ध्रुव int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
 
-            const float * src_row = (const float *) ((const char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
-            float *       dst_ptr = (float *) ((char *) dst_data + i01 * nb1 + i02 * nb2 + i03 * nb3);
+            ध्रुव भिन्न * src_row = (ध्रुव भिन्न *) ((ध्रुव वर्ण *) src0_दत्त + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            भिन्न *       dst_ptr = (भिन्न *) ((वर्ण *) dst_दत्त + i01 * nb1 + i02 * nb2 + i03 * nb3);
 
-            float row_sum = partial_sum_slice(src_row, 0, (int32_t) ne00);
-            atomic_store_f32(dst_ptr, row_sum * inv_ne00);
+            भिन्न row_योग = partial_योग_खण्डिका(src_row, 0, (int32_t) ne00);
+            atomic_store_f32(dst_ptr, row_योग * inv_ne00);
         }
         // Shire co-work
-    } else {
-        int shire_tid       = thread_id % shire_threads;
-        int threads_per_row = shire_threads / total_rows;
-        int my_row          = shire_tid / threads_per_row;
-        int local_tid       = shire_tid % threads_per_row;
-        int group_base      = my_row * threads_per_row;
+    } अन्यथा {
+        पूर्णाङ्क shire_tid       = thread_id % shire_तन्तवः;
+        पूर्णाङ्क तन्तवः_प्रत्येकम्_row = shire_तन्तवः / योग_पङ्क्तिकाः;
+        पूर्णाङ्क my_row          = shire_tid / तन्तवः_प्रत्येकम्_row;
+        पूर्णाङ्क local_tid       = shire_tid % तन्तवः_प्रत्येकम्_row;
+        पूर्णाङ्क गणः_आधारः      = my_row * तन्तवः_प्रत्येकम्_row;
 
-        if (my_row >= total_rows) {
+        यदि (my_row >= योग_पङ्क्तिकाः) {
             FENCE;
             et_barrier(ET_BARRIER_SHIRE);
-            return 0;
+            प्रत्यागम 0;
         }
 
         int64_t i1 = my_row % ne01;
         int64_t i2 = (my_row / ne01) % ne02;
         int64_t i3 = my_row / (ne01 * ne02);
 
-        const float * src_ptr = (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-        float *       dst_ptr = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
+        ध्रुव भिन्न * src_ptr = (ध्रुव भिन्न *) ((ध्रुव वर्ण *) src0_दत्त + i3 * nb03 + i2 * nb02 + i1 * nb01);
+        भिन्न *       dst_ptr = (भिन्न *) ((वर्ण *) dst_दत्त + i3 * nb3 + i2 * nb2 + i1 * nb1);
 
         // Chunk size in elements, rounded up to a multiple of 8 so that every
         // thread's slice start stays 32B-aligned relative to src_ptr (which
         // matters for the vector path inside partial_sum_slice).
-        int32_t chunk = ((int32_t) ne00 + threads_per_row - 1) / threads_per_row;
+        int32_t chunk = ((int32_t) ne00 + तन्तवः_प्रत्येकम्_row - 1) / तन्तवः_प्रत्येकम्_row;
         chunk         = (chunk + 7) & ~7;
-        if (chunk < 8) {
+        यदि (chunk < 8) {
             chunk = 8;
         }
 
         int32_t my_start = local_tid * chunk;
-        int32_t my_end   = my_start + chunk;
-        if (my_end > (int32_t) ne00) {
-            my_end = (int32_t) ne00;
+        int32_t my_अन्तः   = my_start + chunk;
+        यदि (my_अन्तः > (int32_t) ne00) {
+            my_अन्तः = (int32_t) ne00;
         }
-        if (my_start > (int32_t) ne00) {
-            my_start = my_end = (int32_t) ne00;
-        }
-
-        int workers = ((int32_t) ne00 + chunk - 1) / chunk;
-        if (workers > threads_per_row) {
-            workers = threads_per_row;
+        यदि (my_start > (int32_t) ne00) {
+            my_start = my_अन्तः = (int32_t) ne00;
         }
 
-        unsigned long saved_mask;
-        __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-        __asm__ volatile("mov.m.x m0, x0, 0xFF");
+        पूर्णाङ्क workers = ((int32_t) ne00 + chunk - 1) / chunk;
+        यदि (workers > तन्तवः_प्रत्येकम्_row) {
+            workers = तन्तवः_प्रत्येकम्_row;
+        }
 
-        float partial_sum = partial_sum_slice(src_ptr, my_start, my_end);
+        अचिह्नित दीर्घ saved_आवरणम्;
+        __asm__ चञ्चल("mova.x.m %0" : "=r"(saved_आवरणम्));
+        __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");
+
+        भिन्न partial_योग = partial_योग_खण्डिका(src_ptr, my_start, my_अन्तः);
 
         // Publish partial to shire-local L2 SCP slot (64B per slot, one per
         // hart). evict_to_l2 is required on the WRITER because scalar stores
         // land in L1D first; readers must also evict before reading.
-        volatile float * my_slot = (volatile float *) et_shire_l2scp_local((uint64_t) shire_tid * 64);
-        *my_slot                 = partial_sum;
+        चञ्चल भिन्न * my_slot = (चञ्चल भिन्न *) et_shire_l2scp_local((uint64_t) shire_tid * 64);
+        *my_slot                 = partial_योग;
         FENCE;
-        evict_to_l2((const void *) my_slot, 1, 64);
+        evict_गन्तव्यम्_l2((ध्रुव शून्य *) my_slot, 1, 64);
         WAIT_CACHEOPS;
 
         et_barrier(ET_BARRIER_SHIRE);
 
-        if (local_tid == 0) {
+        यदि (local_tid == 0) {
             // Reader-side evictions for every contributing peer slot.
-            for (int t = 0; t < workers; t++) {
-                volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
-                evict_to_l2((const void *) slot, 1, 64);
+            प्रति (पूर्णाङ्क t = 0; t < workers; t++) {
+                चञ्चल भिन्न * slot = (चञ्चल भिन्न *) et_shire_l2scp_local((uint64_t) (गणः_आधारः + t) * 64);
+                evict_गन्तव्यम्_l2((ध्रुव शून्य *) slot, 1, 64);
             }
             WAIT_CACHEOPS;
 
-            float total_sum = 0.0f;
-            for (int t = 0; t < workers; t++) {
-                volatile float * slot = (volatile float *) et_shire_l2scp_local((uint64_t) (group_base + t) * 64);
-                total_sum += *slot;
+            भिन्न योग_योग = 0.0f;
+            प्रति (पूर्णाङ्क t = 0; t < workers; t++) {
+                चञ्चल भिन्न * slot = (चञ्चल भिन्न *) et_shire_l2scp_local((uint64_t) (गणः_आधारः + t) * 64);
+                योग_योग += *slot;
             }
-            atomic_store_f32(dst_ptr, total_sum * inv_ne00);
+            atomic_store_f32(dst_ptr, योग_योग * inv_ne00);
         }
 
-        __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
+        __asm__ चञ्चल("mova.m.x %0" ::"r"(saved_आवरणम्));
     }
 
-    return 0;
+    प्रत्यागम 0;
 }

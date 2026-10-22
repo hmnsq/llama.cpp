@@ -1,13 +1,13 @@
-#pragma once
+#निर्देशः once
 
-#include "node_context.h"
+#अन्तर्भाव "node_context.h"
 
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <utility>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/core/node.hpp>
+#अन्तर्भाव <openvino/op/convert.hpp>
+#अन्तर्भाव <openvino/op/shape_of.hpp>
+#अन्तर्भाव <openvino/op/slice.hpp>
+#अन्तर्भाव <utility>
 
 namespace ov {
 namespace frontend {
@@ -15,85 +15,85 @@ namespace ggml {
 
 std::string getCurrentTime();
 
-void num_inputs_check(const NodeContext & context, size_t min_inputs, size_t max_inputs);
+शून्य अङ्कः_inputs_check(ध्रुव ग्रन्थिः_Context & context, size_t min_inputs, size_t max_inputs);
 
-int non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb);
+पूर्णाङ्क non_cont_dim(std::सदिशम्<size_t> ne, std::सदिशम्<size_t> nb);
 
-template <typename T> std::vector<int> argsort_descend(const std::vector<T> & v) {
-    std::vector<int> idx(v.size());
-    std::iota(idx.begin(), idx.end(), 0);
-    std::sort(idx.begin(), idx.end(), [&v](int i1, int i2) { return v[i1] > v[i2]; });
-    return idx;
+प्रतिरूपम् <typename T> std::सदिशम्<पूर्णाङ्क> argsort_descend(ध्रुव std::सदिशम्<T> & v) {
+    std::सदिशम्<पूर्णाङ्क> idx(v.आकार());
+    std::iota(idx.begin(), idx.अन्तः_2(), 0);
+    std::क्रमय(idx.begin(), idx.अन्तः_2(), [&v](पूर्णाङ्क i1, पूर्णाङ्क i2) { प्रत्यागम v[i1] > v[i2]; });
+    प्रत्यागम idx;
 }
 
-template <typename T> std::vector<T> sorted_descend(std::vector<T> v) {
-    std::sort(v.begin(), v.end(), [](T a, T b) { return a > b; });
-    return v;
+प्रतिरूपम् <typename T> std::सदिशम्<T> sorted_descend(std::सदिशम्<T> v) {
+    std::क्रमय(v.begin(), v.अन्तः_2(), [](T a, T b) { प्रत्यागम a > b; });
+    प्रत्यागम v;
 }
 
-template <typename T> bool is_permuted(const std::vector<T> & strides) {
-    for (size_t i = 0; i < strides.size() - 1; ++i) {
-        if (strides[i] < strides[i + 1]) {
-            return true;
+प्रतिरूपम् <typename T> bool is_permuted(ध्रुव std::सदिशम्<T> & strides) {
+    प्रति (size_t i = 0; i < strides.आकार() - 1; ++i) {
+        यदि (strides[i] < strides[i + 1]) {
+            प्रत्यागम true;
         }
     }
-    return false;
+    प्रत्यागम false;
 }
 
-template <typename T> std::vector<T> permute(const std::vector<T> & x, const std::vector<int> & perm) {
-    std::vector<T> result;
-    result.reserve(perm.size());
-    for (int i : perm) {
-        result.push_back(x[i]);
+प्रतिरूपम् <typename T> std::सदिशम्<T> permute(ध्रुव std::सदिशम्<T> & x, ध्रुव std::सदिशम्<पूर्णाङ्क> & perm) {
+    std::सदिशम्<T> परिणाम;
+    परिणाम.reserve(perm.आकार());
+    प्रति (पूर्णाङ्क i : perm) {
+        परिणाम.प्रक्षिप_पृष्ठभागः(x[i]);
     }
-    return result;
+    प्रत्यागम परिणाम;
 }
 
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::op::v3::ShapeOf> & shape,
-                                         const std::vector<int> & dims);
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::Node> & node, const std::vector<int> & dims);
+std::shared_ptr<ov::ग्रन्थिः_2> get_dimensions(ध्रुव std::shared_ptr<ov::op::v3::Shape_सम्बन्धि> & shape,
+                                         ध्रुव std::सदिशम्<पूर्णाङ्क> & dims);
+std::shared_ptr<ov::ग्रन्थिः_2> get_dimensions(ध्रुव std::shared_ptr<ov::ग्रन्थिः_2> & ग्रन्थिः, ध्रुव std::सदिशम्<पूर्णाङ्क> & dims);
 
-OutputVector rename_outputs_with_suffix(const OutputVector & outputs, const std::string & suffix);
+Output_सदिशम् rename_outputs_with_suffix(ध्रुव Output_सदिशम् & outputs, ध्रुव std::string & suffix);
 
-std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params,
-                                                           std::shared_ptr<ov::Node> inp_pos,
-                                                           std::shared_ptr<ov::Node> rope_freqs_weight = nullptr,
-                                                           int mode = 0,
+std::pair<ov::Output<ग्रन्थिः_2>, ov::Output<ग्रन्थिः_2>> make_sin_cos(int32_t * rope_params,
+                                                           std::shared_ptr<ov::ग्रन्थिः_2> inp_pos,
+                                                           std::shared_ptr<ov::ग्रन्थिः_2> rope_freqs_weight = nullptr,
+                                                           पूर्णाङ्क बहुलकम् = 0,
                                                            bool stateful = false,
-                                                           int64_t head_dim = 0);
+                                                           int64_t शीर्ष_dim = 0);
 
-ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_index, int slice_len = 0, int axis = -1);
+ov::Output<ov::ग्रन्थिः_2> process_view_निवेशः(ध्रुव ग्रन्थिः_Context & context, पूर्णाङ्क निवेशः_सूचकांक, पूर्णाङ्क खण्डिका_len = 0, पूर्णाङ्क axis = -1);
 
-ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int input_index);
+ov::Output<ov::ग्रन्थिः_2> process_view_निवेशः_new(ध्रुव ग्रन्थिः_Context & context, पूर्णाङ्क निवेशः_सूचकांक);
 
 namespace op {
-template <typename T> OutputVector translate_1to1_match_2_inputs(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+प्रतिरूपम् <typename T> Output_सदिशम् translate_1to1_मेलनम्_2_inputs(ध्रुव ग्रन्थिः_Context & context) {
+    अङ्कः_inputs_check(context, 2, 2);
+    स्वचालित निवेशः_0 = process_view_निवेशः_new(context, 0);
+    स्वचालित निवेशः_1 = process_view_निवेशः_new(context, 1);
 
-    auto output_type = context.get_output_type();
-    if (input_0.get_element_type() != input_1.get_element_type()) {
-        if (input_0.get_element_type() != ov::element::f32) {
-            input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
+    स्वचालित output_type = context.get_output_type();
+    यदि (निवेशः_0.get_element_type() != निवेशः_1.get_element_type()) {
+        यदि (निवेशः_0.get_element_type() != ov::element::f32) {
+            निवेशः_0 = std::make_shared<ov::op::v0::Convert>(निवेशः_0, ov::element::f32);
         }
-        if (input_1.get_element_type() != ov::element::f32) {
-            input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+        यदि (निवेशः_1.get_element_type() != ov::element::f32) {
+            निवेशः_1 = std::make_shared<ov::op::v0::Convert>(निवेशः_1, ov::element::f32);
         }
     }
 
-    ov::Output<ov::Node> res = std::make_shared<T>(input_0, input_1);
-    if (res.get_element_type() != output_type) {
+    ov::Output<ov::ग्रन्थिः_2> res = std::make_shared<T>(निवेशः_0, निवेशः_1);
+    यदि (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    प्रत्यागम rename_outputs_with_suffix({res}, context.get_name());
 }
 
-template <typename T> OutputVector translate_1to1_match_1_input(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
-    auto input = process_view_input_new(context, 0);
-    auto res = std::make_shared<T>(input);
-    return rename_outputs_with_suffix({res}, context.get_name());
+प्रतिरूपम् <typename T> Output_सदिशम् translate_1to1_मेलनम्_1_निवेशः(ध्रुव ग्रन्थिः_Context & context) {
+    अङ्कः_inputs_check(context, 1, 1);
+    स्वचालित निवेशः = process_view_निवेशः_new(context, 0);
+    स्वचालित res = std::make_shared<T>(निवेशः);
+    प्रत्यागम rename_outputs_with_suffix({res}, context.get_name());
 }
 }  // namespace op
 

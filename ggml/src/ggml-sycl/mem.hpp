@@ -1,16 +1,16 @@
-#ifndef GGML_SYCL_MEM_HPP
-#define GGML_SYCL_MEM_HPP
+#यदि_अपरिभाषितम् GGML_SYCL_MEM_HPP
+#परिभाषय GGML_SYCL_MEM_HPP
 
-#include <sycl/sycl.hpp>
+#अन्तर्भाव <sycl/sycl.hpp>
 
-enum MemoryAPIType {
-    MEMORY_API_TYPE_LEVEL_ZERO = 0,
-    MEMORY_API_TYPE_SYCL = 1,
+गणना स्मृतिः_APIType {
+    स्मृतिः_API_TYPE_LEVEL_ZERO = 0,
+    स्मृतिः_API_TYPE_SYCL = 1,
 };
 
-const char* mem_api_int2str(int mem_api);
+ध्रुव वर्ण* mem_api_int2str(पूर्णाङ्क mem_api);
 
-bool get_memory_size(sycl::device dev, size_t & free_bytes, size_t & total_bytes,
-    MemoryAPIType api_type);
+तार्किक get_स्मृतिः_आकार(sycl::device dev, size_t & free_अष्टकानि, size_t & योग_अष्टकानि,
+    स्मृतिः_APIType api_type);
 
-#endif  // GGML_SYCL_MEM_HPP
+#यदि_अन्तः  // GGML_SYCL_MEM_HPP

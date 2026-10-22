@@ -1,111 +1,111 @@
-#pragma once
+#निर्देशः once
 
-#include "ggml.h"
-#include "ggml-cpu-impl.h"
+#अन्तर्भाव "ggml.h"
+#अन्तर्भाव "ggml-cpu-impl.h"
 
-#include <algorithm>
-#include <memory>
-#include <type_traits>
+#अन्तर्भाव <algorithm>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <type_traits>
 
-#if defined(GGML_USE_OPENMP)
-#include <omp.h>
-#else
-#include <thread>
-#endif
+#यदि defined(GGML_USE_OPENMP)
+#अन्तर्भाव <omp.h>
+#अन्यथा
+#अन्तर्भाव <thread>
+#यदि_अन्तः
 
-#define TILE_M 16
-#define TILE_N 16
-#define TILE_K 32
-#define VNNI_BLK 4
+#परिभाषय TILE_M 16
+#परिभाषय TILE_N 16
+#परिभाषय TILE_K 32
+#परिभाषय VNNI_BLK 4
 
-#define AMX_BLK_SIZE 32
+#परिभाषय AMX_BLK_आकार 32
 
-#define TMM0 0
-#define TMM1 1
-#define TMM2 2
-#define TMM3 3
-#define TMM4 4
-#define TMM5 5
-#define TMM6 6
-#define TMM7 7
+#परिभाषय TMM0 0
+#परिभाषय TMM1 1
+#परिभाषय TMM2 2
+#परिभाषय TMM3 3
+#परिभाषय TMM4 4
+#परिभाषय TMM5 5
+#परिभाषय TMM6 6
+#परिभाषय TMM7 7
 
 // parallel routines
-template <typename T, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-inline T div_up(T x, T y) { return (x + y - 1) / y; }
+प्रतिरूपम् <typename T, typename std::enable_if<std::is_integral<T>::मानम्, पूर्णाङ्क>::type = 0>
+अन्तःस्थ T div_ऊर्ध्वम्(T x, T y) { प्रत्यागम (x + y - 1) / y; }
 
-template <typename T>
-inline void balance211(T n, T nth, T ith, T& n_start, T& n_end) {
-#if 0
+प्रतिरूपम् <typename T>
+अन्तःस्थ शून्य balance211(T n, T nth, T ith, T& n_start, T& n_अन्तः) {
+#यदि 0
     // onednn partition pattern
-    T& n_my = n_end;
-    if (nth <= 1 || n == 0) {
+    T& n_my = n_अन्तः;
+    यदि (nth <= 1 || n == 0) {
         n_start = 0;
         n_my = n;
-    } else {
-        T n1 = div_up(n, nth);
+    } अन्यथा {
+        T n1 = div_ऊर्ध्वम्(n, nth);
         T n2 = n1 - 1;
         T T1 = n - n2 * nth;
         n_my = ith < T1 ? n1 : n2;
         n_start = ith <= T1 ? ith*n1 : T1 * n1 + (ith - T1) * n2;
     }
-    n_end += n_start;
-#else
+    n_अन्तः += n_start;
+#अन्यथा
     // pytorch aten partition pattern
-    T n_my = div_up(n, nth);
+    T n_my = div_ऊर्ध्वम्(n, nth);
     n_start = ith * n_my;
-    n_end = std::min(n_start + n_my, n);
-#endif
+    n_अन्तः = std::min(n_start + n_my, n);
+#यदि_अन्तः
 }
 
-template <typename func_t>
-inline void parallel_for(int n, const func_t & f) {
-    if (n <= 0) {
-        return;
+प्रतिरूपम् <typename func_t>
+अन्तःस्थ शून्य parallel_for(पूर्णाङ्क n, ध्रुव func_t & f) {
+    यदि (n <= 0) {
+        प्रत्यागम;
     }
-#if defined(GGML_USE_OPENMP)
-    #pragma omp parallel
+#यदि defined(GGML_USE_OPENMP)
+    #निर्देशः omp parallel
     {
-        int nth = omp_get_num_threads();
-        int ith = omp_get_thread_num();
-        int tbegin, tend;
+        पूर्णाङ्क nth = omp_get_अङ्कः_तन्तवः();
+        पूर्णाङ्क ith = omp_get_thread_अङ्कः();
+        पूर्णाङ्क tbegin, tend;
         balance211(n, nth, ith, tbegin, tend);
         f(tbegin, tend);
     }
-#else
-    int nth = std::thread::hardware_concurrency();
-    if (nth <= 1) {
+#अन्यथा
+    पूर्णाङ्क nth = std::thread::hardware_concurrency();
+    यदि (nth <= 1) {
         f(0, n);
-        return;
+        प्रत्यागम;
     }
-    if (nth > n) {
+    यदि (nth > n) {
         nth = n;
     }
-    std::vector<std::thread> threads;
-    threads.reserve(nth);
-    for (int ith = 0; ith < nth; ++ith) {
-        threads.emplace_back([&f, n, ith, nth] {
-            int tbegin, tend;
+    std::सदिशम्<std::thread> तन्तवः;
+    तन्तवः.reserve(nth);
+    प्रति (पूर्णाङ्क ith = 0; ith < nth; ++ith) {
+        तन्तवः.emplace_पृष्ठभागः([&f, n, ith, nth] {
+            पूर्णाङ्क tbegin, tend;
             balance211(n, nth, ith, tbegin, tend);
             f(tbegin, tend);
         });
     }
-    for (auto & t : threads) {
+    प्रति (स्वचालित & t : तन्तवः) {
         t.join();
     }
-#endif
+#यदि_अन्तः
 }
 
-template <typename func_t>
-inline void parallel_for_ggml(const ggml_compute_params * params, int n, const func_t & f) {
-    int tbegin, tend;
+प्रतिरूपम् <typename func_t>
+अन्तःस्थ शून्य parallel_for_ggml(ध्रुव ggml_compute_params * params, पूर्णाङ्क n, ध्रुव func_t & f) {
+    पूर्णाङ्क tbegin, tend;
     balance211(n, params->nth, params->ith, tbegin, tend);
     f(tbegin, tend);
 }
 
 // quantized types that have AMX support
-inline bool qtype_has_amx_kernels(const enum ggml_type type) {
+अन्तःस्थ bool qtype_has_amx_kernels(ध्रुव गणना ggml_type type) {
     // TODO: fix padding for vnni format
-    return (type == GGML_TYPE_Q4_0) ||
+    प्रत्यागम (type == GGML_TYPE_Q4_0) ||
         (type == GGML_TYPE_Q4_1) ||
         (type == GGML_TYPE_Q8_0) ||
         (type == GGML_TYPE_Q4_K) ||

@@ -10,101 +10,101 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "common.hpp"
-#include <sycl/backend.hpp>
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-#include <level_zero/ze_api.h>
-#endif
+#अन्तर्भाव "common.hpp"
+#अन्तर्भाव <sycl/backend.hpp>
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#अन्तर्भाव <level_zero/ze_api.h>
+#यदि_अन्तः
 
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
+#अन्तर्भाव "ggml-backend-impl.h"
+#अन्तर्भाव "ggml-impl.h"
 
-int get_current_device_id() {
-  return dpct::dev_mgr::instance().current_device_id();
+पूर्णाङ्क get_current_device_id() {
+  प्रत्यागम dpct::dev_mgr::instance().current_device_id();
 }
 
-void* ggml_sycl_host_malloc(size_t size) try {
-  if (getenv("GGML_SYCL_NO_PINNED") != nullptr) {
-    return nullptr;
+शून्य* ggml_sycl_host_malloc(size_t size) यत्न {
+  यदि (getenv("GGML_SYCL_NO_PINNED") != शून्यसूचकः) {
+    प्रत्यागम शून्यसूचकः;
   }
 
-  void* ptr = nullptr;
+  शून्य* ptr = शून्यसूचकः;
   // allow to use dpct::get_in_order_queue() for host malloc
   dpct::err0 err = CHECK_TRY_ERROR(
-      ptr = (void*)sycl::malloc_host(size, dpct::get_in_order_queue()));
+      ptr = (शून्य*)sycl::malloc_host(size, dpct::get_अन्तर्_क्रमः_queue()));
 
-  if (err != 0) {
+  यदि (err != 0) {
     // clear the error
     GGML_LOG_ERROR("WARNING: failed to allocate %.2f MB of pinned memory: %s\n", size / 1024.0 / 1024.0,    "syclGetErrorString is not supported");
-    return nullptr;
+    प्रत्यागम शून्यसूचकः;
   }
 
-  return ptr;
-} catch (sycl::exception const& exc) {
+  प्रत्यागम ptr;
+} गृहाण (sycl::exception ध्रुव& exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-void ggml_sycl_host_free(void* ptr) try {
+शून्य ggml_sycl_host_free(शून्य* ptr) यत्न {
   // allow to use dpct::get_in_order_queue() for host malloc
-  SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(ptr, dpct::get_in_order_queue())));
-} catch (sycl::exception const& exc) {
+  SYCL_CHECK(CHECK_TRY_ERROR(sycl::मुक्त(ptr, dpct::get_अन्तर्_क्रमः_queue())));
+} गृहाण (sycl::exception ध्रुव& exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-bool gpu_has_xmx(sycl::device &dev) {
-    return dev.has(sycl::aspect::ext_intel_matrix);
+तार्किक gpu_has_xmx(sycl::device &dev) {
+    प्रत्यागम dev.has(sycl::aspect::ext_intel_matrix);
 }
 
-int ggml_sycl_get_env(const char *env_name, int default_val) {
-    char *user_device_string = getenv(env_name);
-    int user_number = default_val;
+पूर्णाङ्क ggml_sycl_get_env(ध्रुव वर्ण *env_name, पूर्णाङ्क default_val) {
+    वर्ण *user_device_string = getenv(env_name);
+    पूर्णाङ्क user_सङ्ख्या = default_val;
 
-    unsigned n;
-    if (user_device_string != NULL &&
-        sscanf(user_device_string, " %u", &n) == 1) {
-        user_number = (int)n;
-    } else {
-        user_number = default_val;
+    अचिह्नित n;
+    यदि (user_device_string != रिक्त &&
+        वाक्यात्_पठ(user_device_string, " %u", &n) == 1) {
+        user_सङ्ख्या = (पूर्णाङ्क)n;
+    } अन्यथा {
+        user_सङ्ख्या = default_val;
     }
-    return user_number;
+    प्रत्यागम user_सङ्ख्या;
 }
 
-int64_t downsample_sycl_global_range(int64_t accumulate_block_num, int64_t block_size) {
-  const int64_t max_range = std::numeric_limits<int>::max();
-  int64_t sycl_down_blk_size = block_size;
-  int64_t global_range = accumulate_block_num * sycl_down_blk_size;
-  while(global_range > max_range) {
-      sycl_down_blk_size /= 2;
-      global_range = accumulate_block_num * sycl_down_blk_size;
+int64_t downsample_sycl_global_range(int64_t accumulate_खण्डम्_अङ्कः, int64_t खण्डम्_आकार_3) {
+  ध्रुव int64_t max_range = std::numeric_limits<पूर्णाङ्क>::max();
+  int64_t sycl_अधस्तात्_blk_आकार = खण्डम्_आकार_3;
+  int64_t global_range = accumulate_खण्डम्_अङ्कः * sycl_अधस्तात्_blk_आकार;
+  यावत्(global_range > max_range) {
+      sycl_अधस्तात्_blk_आकार /= 2;
+      global_range = accumulate_खण्डम्_अङ्कः * sycl_अधस्तात्_blk_आकार;
   }
-  return sycl_down_blk_size;
+  प्रत्यागम sycl_अधस्तात्_blk_आकार;
 }
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-static bool ggml_sycl_use_level_zero_device_alloc(sycl::queue &q) {
-    return g_ggml_sycl_use_level_zero_api &&
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+स्थिर तार्किक ggml_sycl_use_level_zero_device_alloc(sycl::queue &q) {
+    प्रत्यागम g_ggml_sycl_use_level_zero_api &&
         q.get_device().is_gpu() &&
         q.get_backend() == sycl::backend::ext_oneapi_level_zero;
 }
-#endif
+#यदि_अन्तः
 
 // Use Level Zero zeMemAllocDevice to avoid sycl::malloc_device triggering
 // DMA-buf/TTM system RAM staging in the xe kernel driver during multi-GPU inference.
-void * ggml_sycl_malloc_device(size_t size, sycl::queue &q, ggml_sycl_mem_type type) {
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-    if (ggml_sycl_use_level_zero_device_alloc(q)) {
-        void *ptr = nullptr;
-        auto ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_context());
-        auto ze_dev = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_device());
-#ifdef ZE_RELAXED_ALLOCATION_LIMITS_EXP_NAME
-        ze_relaxed_allocation_limits_exp_desc_t relaxed_desc = {
-            ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC,
-            nullptr,
-            ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE,
+शून्य * ggml_sycl_malloc_device(size_t size, sycl::queue &q, ggml_sycl_mem_type type) {
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+    यदि (ggml_sycl_use_level_zero_device_alloc(q)) {
+        शून्य *ptr = शून्यसूचकः;
+        स्वचालित ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_context());
+        स्वचालित ze_dev = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_device());
+#यदि_परिभाषितम् ZE_RELAXED_आवण्टनम्_LIMITS_EXP_NAME
+        ze_relaxed_आवण्टनम्_limits_exp_desc_t relaxed_desc = {
+            ZE_STRUCTURE_TYPE_RELAXED_आवण्टनम्_LIMITS_EXP_DESC,
+            शून्यसूचकः,
+            ZE_RELAXED_आवण्टनम्_LIMITS_EXP_FLAG_MAX_आकार,
         };
         ze_device_mem_alloc_desc_t alloc_desc = {
             ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC,
@@ -112,52 +112,52 @@ void * ggml_sycl_malloc_device(size_t size, sycl::queue &q, ggml_sycl_mem_type t
             0,
             0,
         };
-#else
-        ze_device_mem_alloc_desc_t alloc_desc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, 0, 0};
-#endif
+#अन्यथा
+        ze_device_mem_alloc_desc_t alloc_desc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, शून्यसूचकः, 0, 0};
+#यदि_अन्तः
         // request SYCL_BUFFER_ALIGNMENT so tensor offsets aligned to it stay aligned in absolute terms
-        ze_result_t r = zeMemAllocDevice(ze_ctx, &alloc_desc, size, SYCL_BUFFER_ALIGNMENT, ze_dev, &ptr);
-        if (r == ZE_RESULT_SUCCESS && ptr) {
-            ggml_sycl_memtrace_add(type, ptr, size);
-            return ptr;
+        ze_परिणाम_t r = zeMemAllocDevice(ze_ctx, &alloc_desc, size, SYCL_बफर_ALIGNMENT, ze_dev, &ptr);
+        यदि (r == ZE_परिणाम_SUCCESS && ptr) {
+            ggml_sycl_memtrace_सङ्कलय(type, ptr, size);
+            प्रत्यागम ptr;
         }
         ggml_sycl_memtrace_fail(type, size);
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
-#endif
-    void * ptr = sycl::malloc_device(size, q);
-    if (ptr == nullptr) {
+#यदि_अन्तः
+    शून्य * ptr = sycl::malloc_device(size, q);
+    यदि (ptr == शून्यसूचकः) {
         ggml_sycl_memtrace_fail(type, size);
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
-    ggml_sycl_memtrace_add(type, ptr, size);
-    return ptr;
+    ggml_sycl_memtrace_सङ्कलय(type, ptr, size);
+    प्रत्यागम ptr;
 }
 
-void ggml_sycl_free_device(void *ptr, sycl::queue &q) {
-    if (!ptr) return;
+शून्य ggml_sycl_free_device(शून्य *ptr, sycl::queue &q) {
+    यदि (!ptr) प्रत्यागम;
     ggml_sycl_memtrace_del(ptr);
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-    if (ggml_sycl_use_level_zero_device_alloc(q)) {
-        auto ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_context());
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+    यदि (ggml_sycl_use_level_zero_device_alloc(q)) {
+        स्वचालित ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q.get_context());
         zeMemFree(ze_ctx, ptr);
-        return;
+        प्रत्यागम;
     }
-#endif
-    SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(ptr, q)));
+#यदि_अन्तः
+    SYCL_CHECK(CHECK_TRY_ERROR(sycl::मुक्त(ptr, q)));
 }
 
-void release_extra_gpu(ggml_tensor_extra_gpu * extra, std::vector<queue_ptr> streams) {
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        for (int64_t is = 0; is < GGML_SYCL_MAX_STREAMS; ++is) {
-            if (extra->events[i][is] != nullptr) {
+शून्य release_extra_gpu(ggml_tensor_extra_gpu * extra, std::vector<queue_ptr> streams) {
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+        प्रति (int64_t is = 0; is < GGML_SYCL_MAX_STREAMS; ++is) {
+            यदि (extra->events[i][is] != शून्यसूचकः) {
                 SYCL_CHECK(CHECK_TRY_ERROR(dpct::destroy_event(extra->events[i][is])));
             }
         }
-        if (extra->data_device[i] != nullptr && streams.size()>0) {
-            ggml_sycl_set_device(i);
-            SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(extra->data_device[i], *(streams[i]))));
+        यदि (extra->दत्त_device[i] != शून्यसूचकः && streams.size()>0) {
+            ggml_sycl_समुच्चयः_device(i);
+            SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(extra->दत्त_device[i], *(streams[i]))));
         }
     }
-    delete extra;
+    विलोपय extra;
 }

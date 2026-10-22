@@ -1,112 +1,112 @@
-#include "translate_session.h"
+#अन्तर्भाव "translate_session.h"
 
-#include "ggml-impl.h"
-#include "ggml-openvino/ggml-openvino-extra.h"
-#include "ggml-openvino/openvino/node_context.h"
-#include "ggml-openvino/openvino/utils.h"
-#include "input_model.h"
-#include "pass/fuse_argsort_topk.h"
-#include "pass/fuse_moe_router.h"
-#include "pass/align_eltwise_ranks.h"
-#include "pass/fuse_moe_compressed.h"
-#include "pass/fuse_to_conv.h"
-#include "pass/kv_state_seq_axis.h"
-#include "pass/mark_decompression_convert_constant_folding.h"
-#include "pass/mark_dequantization_subgraph.h"
-#include "pass/squeeze_matmul.h"
-#include "rt_info/weightless_caching_attributes.hpp"
+#अन्तर्भाव "ggml-impl.h"
+#अन्तर्भाव "ggml-openvino/ggml-openvino-extra.h"
+#अन्तर्भाव "ggml-openvino/openvino/node_context.h"
+#अन्तर्भाव "ggml-openvino/openvino/utils.h"
+#अन्तर्भाव "input_model.h"
+#अन्तर्भाव "pass/fuse_argsort_topk.h"
+#अन्तर्भाव "pass/fuse_moe_router.h"
+#अन्तर्भाव "pass/align_eltwise_ranks.h"
+#अन्तर्भाव "pass/fuse_moe_compressed.h"
+#अन्तर्भाव "pass/fuse_to_conv.h"
+#अन्तर्भाव "pass/kv_state_seq_axis.h"
+#अन्तर्भाव "pass/mark_decompression_convert_constant_folding.h"
+#अन्तर्भाव "pass/mark_dequantization_subgraph.h"
+#अन्तर्भाव "pass/squeeze_matmul.h"
+#अन्तर्भाव "rt_info/weightless_caching_attributes.hpp"
 
-#include <algorithm>
-#include <cstdint>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/preprocess/pre_post_process.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/core/type.hpp>
-#include <openvino/core/type/element_type.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/convert_like.hpp>
-#include <openvino/op/cos.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/greater_eq.hpp>
-#include <openvino/op/less.hpp>
-#include <openvino/op/logical_and.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/parameter.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/result.hpp>
-#include <openvino/op/select.hpp>
-#include <openvino/op/sin.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/strided_slice.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/pass/constant_folding.hpp>
-#include <openvino/pass/make_stateful.hpp>
-#include <limits>
-#include <sstream>
+#अन्तर्भाव <algorithm>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <cstdlib>
+#अन्तर्भाव <map>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/core/node.hpp>
+#अन्तर्भाव <openvino/core/preprocess/pre_post_process.hpp>
+#अन्तर्भाव <openvino/core/shape.hpp>
+#अन्तर्भाव <openvino/core/type.hpp>
+#अन्तर्भाव <openvino/core/type/element_type.hpp>
+#अन्तर्भाव <openvino/op/add.hpp>
+#अन्तर्भाव <openvino/op/broadcast.hpp>
+#अन्तर्भाव <openvino/op/concat.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/convert.hpp>
+#अन्तर्भाव <openvino/op/convert_like.hpp>
+#अन्तर्भाव <openvino/op/cos.hpp>
+#अन्तर्भाव <openvino/op/divide.hpp>
+#अन्तर्भाव <openvino/op/gather.hpp>
+#अन्तर्भाव <openvino/op/greater_eq.hpp>
+#अन्तर्भाव <openvino/op/less.hpp>
+#अन्तर्भाव <openvino/op/logical_and.hpp>
+#अन्तर्भाव <openvino/op/multiply.hpp>
+#अन्तर्भाव <openvino/op/parameter.hpp>
+#अन्तर्भाव <openvino/op/range.hpp>
+#अन्तर्भाव <openvino/op/reshape.hpp>
+#अन्तर्भाव <openvino/op/result.hpp>
+#अन्तर्भाव <openvino/op/select.hpp>
+#अन्तर्भाव <openvino/op/sin.hpp>
+#अन्तर्भाव <openvino/op/slice.hpp>
+#अन्तर्भाव <openvino/op/squeeze.hpp>
+#अन्तर्भाव <openvino/op/strided_slice.hpp>
+#अन्तर्भाव <openvino/op/subtract.hpp>
+#अन्तर्भाव <openvino/op/transpose.hpp>
+#अन्तर्भाव <openvino/op/unsqueeze.hpp>
+#अन्तर्भाव <openvino/pass/constant_folding.hpp>
+#अन्तर्भाव <openvino/pass/make_stateful.hpp>
+#अन्तर्भाव <limits>
+#अन्तर्भाव <sstream>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
 
-using namespace ov::op;
+उपयुज्य नामाकाश ov::op;
 
-namespace {
+नामाकाश {
 
-std::shared_ptr<ov::op::v0::Parameter> create_parameter(const std::string & name,
-                                                        const ModelInputInfo & input_info) {
-    auto param_node = std::make_shared<ov::op::v0::Parameter>(input_info.type, input_info.shape);
-    param_node->set_friendly_name(name);
-    param_node->output(0).get_tensor().set_names({name});
-    return param_node;
+std::shared_ptr<ov::op::v0::Parameter> create_parameter(ध्रुव std::string & name,
+                                                        ध्रुव Model_निवेशः_Info & निवेशः_info) {
+    स्वचालित param_ग्रन्थिः = std::make_shared<ov::op::v0::Parameter>(निवेशः_info.type, निवेशः_info.shape);
+    param_ग्रन्थिः->समुच्चयः_friendly_name(name);
+    param_ग्रन्थिः->output(0).get_tensor().समुच्चयः_नामानि({name});
+    प्रत्यागम param_ग्रन्थिः;
 }
 
-std::shared_ptr<ov::Node> create_extra_input(const std::string & name, const ModelExtraInputInfo & input_info) {
-    if (input_info.is_parameter) {
-        auto param_node = std::make_shared<ov::op::v0::Parameter>(input_info.type, input_info.shape);
-        param_node->set_friendly_name(name);
-        param_node->output(0).get_tensor().set_names({name});
-        return param_node;
+std::shared_ptr<ov::Node> create_extra_निवेशः(ध्रुव std::string & name, ध्रुव Model_Extra_निवेशः_Info & निवेशः_info) {
+    यदि (निवेशः_info.is_parameter) {
+        स्वचालित param_ग्रन्थिः = std::make_shared<ov::op::v0::Parameter>(निवेशः_info.type, निवेशः_info.shape);
+        param_ग्रन्थिः->समुच्चयः_friendly_name(name);
+        param_ग्रन्थिः->output(0).get_tensor().समुच्चयः_नामानि({name});
+        प्रत्यागम param_ग्रन्थिः;
     }
 
-    auto constant = std::make_shared<ov::op::v0::Constant>(input_info.type, input_info.shape,
-                                                          std::vector<int64_t>{input_info.value});
-    constant->set_friendly_name(name);
-    return constant;
+    स्वचालित constant = std::make_shared<ov::op::v0::Constant>(निवेशः_info.type, निवेशः_info.shape,
+                                                          std::vector<int64_t>{निवेशः_info.value});
+    constant->समुच्चयः_friendly_name(name);
+    प्रत्यागम constant;
 }
 
-ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
-    const std::shared_ptr<ov::Model> & model,
-    const std::map<std::string, std::string> & kv_param_res_names) {
-    ov::pass::MakeStateful::ParamResPairs pairs;
-    const auto & params = model->get_parameters();
-    const auto & results = model->get_results();
+ov::pass::MakeStateful::Param_Res_युग्मानि get_kv_param_res_युग्मानि(
+    ध्रुव std::shared_ptr<ov::Model> & model,
+    ध्रुव std::map<std::string, std::string> & kv_param_res_नामानि) {
+    ov::pass::MakeStateful::Param_Res_युग्मानि युग्मानि;
+    ध्रुव स्वचालित & params = model->get_parameters();
+    ध्रुव स्वचालित & results = model->get_results();
 
-    for (const auto & param_res : kv_param_res_names) {
-        const auto & param_name = param_res.first;
-        const auto & res_name = param_res.second;
+    प्रति (ध्रुव स्वचालित & param_res : kv_param_res_नामानि) {
+        ध्रुव स्वचालित & param_name = param_res.first;
+        ध्रुव स्वचालित & res_name = param_res.second;
 
-        auto param_it = std::find_if(params.begin(), params.end(), [&](const std::shared_ptr<v0::Parameter> & node) {
-            return node->get_friendly_name() == param_name;
+        स्वचालित param_it = std::find_if(params.begin(), params.end(), [&](ध्रुव std::shared_ptr<v0::Parameter> & ग्रन्थिः) {
+            प्रत्यागम ग्रन्थिः->get_friendly_name() == param_name;
         });
 
         OPENVINO_ASSERT(param_it != params.end(), "The tensor name ", param_name,
                         " is not associated with any of "
                         "Parameters in the network.");
 
-        auto res_it = std::find_if(results.begin(), results.end(), [&](const std::shared_ptr<v0::Result> & node) {
-            return node->get_friendly_name() == res_name;
+        स्वचालित res_it = std::find_if(results.begin(), results.end(), [&](ध्रुव std::shared_ptr<v0::परिणाम_2> & ग्रन्थिः) {
+            प्रत्यागम ग्रन्थिः->get_friendly_name() == res_name;
         });
 
         OPENVINO_ASSERT(res_it != results.end(), "The tensor name ", res_name,
@@ -114,51 +114,51 @@ ov::pass::MakeStateful::ParamResPairs get_kv_param_res_pairs(
                         "Results in the network.");
 
         std::shared_ptr<ov::op::v0::Parameter> param = *param_it;
-        std::shared_ptr<ov::op::v0::Result> res = *res_it;
-        pairs.emplace_back(param, res);
+        std::shared_ptr<ov::op::v0::परिणाम_2> res = *res_it;
+        युग्मानि.emplace_back(param, res);
     }
-    return pairs;
+    प्रत्यागम युग्मानि;
 }
 
-void add_sliced_mask_stateful(TensorMap & tensor_map, bool imrope) {
-    auto create_sliced_mask = [&](const std::string & mask_name, const std::string & sliced_name) {
-        if ((tensor_map.find(mask_name) != tensor_map.end()) &&
+शून्य सङ्कलय_sliced_आवरणम्_stateful(TensorMap & tensor_map, तार्किक imrope) {
+    स्वचालित create_sliced_आवरणम् = [&](ध्रुव std::string & आवरणम्_name, ध्रुव std::string & sliced_name) {
+        यदि ((tensor_map.find(आवरणम्_name) != tensor_map.end()) &&
             (tensor_map.find("token_len_per_seq") != tensor_map.end()) &&
             (tensor_map.find("inp_pos") != tensor_map.end())) {
-            auto token_len_per_seq = tensor_map.at("token_len_per_seq").get_node_shared_ptr();
-            auto mask = tensor_map.at(mask_name).get_node_shared_ptr();
-            std::shared_ptr<ov::Node> mask_sliced = mask;
-            auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-            auto zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-            auto three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-            auto neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+            स्वचालित token_len_प्रत्येकम्_seq = tensor_map.at("token_len_per_seq").get_ग्रन्थिः_shared_ptr();
+            स्वचालित आवरणम् = tensor_map.at(आवरणम्_name).get_ग्रन्थिः_shared_ptr();
+            std::shared_ptr<ov::Node> आवरणम्_sliced = आवरणम्;
+            स्वचालित one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+            स्वचालित zero = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+            स्वचालित three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+            स्वचालित neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
 
-            auto step = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-            auto axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+            स्वचालित चरणः = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+            स्वचालित axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
 
-            auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
+            स्वचालित inp_pos = tensor_map.at("inp_pos").get_ग्रन्थिः_shared_ptr();
             // IMROPE's fourth position plane is zero for text; use the token's first plane.
-            ov::Output<ov::Node> last_index = neg_one;
-            if (imrope) {
-                last_index = std::make_shared<ov::op::v1::Add>(token_len_per_seq, neg_one);
+            ov::Output<ov::Node> चरमः_सूचकांक = neg_one;
+            यदि (imrope) {
+                चरमः_सूचकांक = std::make_shared<ov::op::v1::सङ्कलय>(token_len_प्रत्येकम्_seq, neg_one);
             }
-            auto last_inp_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, last_index, three);
-            auto last_inp_pos_1d = std::make_shared<ov::op::v1::Reshape>(
-                last_inp_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {1}), false);
-            auto last_inp_pos_cvt = std::make_shared<ov::op::v0::Convert>(last_inp_pos_1d, ov::element::i64);
-            auto last_inp_pos_inc = std::make_shared<ov::op::v1::Add>(last_inp_pos_cvt, one);
+            स्वचालित चरमः_inp_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, चरमः_सूचकांक, three);
+            स्वचालित चरमः_inp_pos_1d = std::make_shared<ov::op::v1::Reshape>(
+                चरमः_inp_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {1}), असत्य);
+            स्वचालित चरमः_inp_pos_cvt = std::make_shared<ov::op::v0::Convert>(चरमः_inp_pos_1d, ov::element::i64);
+            स्वचालित चरमः_inp_pos_inc = std::make_shared<ov::op::v1::सङ्कलय>(चरमः_inp_pos_cvt, one);
 
-            mask_sliced = std::make_shared<ov::op::v8::Slice>(mask, zero, last_inp_pos_inc, step, axes);
-            mask_sliced = std::make_shared<ov::op::v0::Convert>(mask_sliced, ov::element::f16);
-            mask_sliced->set_friendly_name(sliced_name);
+            आवरणम्_sliced = std::make_shared<ov::op::v8::खण्डिका>(आवरणम्, zero, चरमः_inp_pos_inc, चरणः, axes);
+            आवरणम्_sliced = std::make_shared<ov::op::v0::Convert>(आवरणम्_sliced, ov::element::f16);
+            आवरणम्_sliced->समुच्चयः_friendly_name(sliced_name);
 
-            tensor_map.insert({sliced_name, mask_sliced->output(0)});
+            tensor_map.insert({sliced_name, आवरणम्_sliced->output(0)});
         }
     };
 
-    create_sliced_mask("self_kq_mask", "KQ_mask_sliced");
-    create_sliced_mask("KQ_mask", "KQ_mask_sliced");
-    create_sliced_mask("self_kq_mask_swa", "KQ_mask_swa_sliced");
+    create_sliced_आवरणम्("self_kq_mask", "KQ_mask_sliced");
+    create_sliced_आवरणम्("KQ_mask", "KQ_mask_sliced");
+    create_sliced_आवरणम्("self_kq_mask_swa", "KQ_mask_swa_sliced");
 }
 
 // Rebuild the sliding-window mask from absolute positions.
@@ -167,91 +167,91 @@ void add_sliced_mask_stateful(TensorMap & tensor_map, bool imrope) {
 // mask add fails. A pure-Concat state is ordered by position, so positions can rebuild the mask.
 // swa_window holds the real n_swa, read back from the ggml mask in ggml-decoder.cpp.
 // No-op when the graph has no SWA mask, or when the window could not be read back.
-void add_position_mask_stateful_swa(TensorMap & tensor_map) {
-    if (tensor_map.find("self_kq_mask_swa") == tensor_map.end() || tensor_map.find("inp_pos") == tensor_map.end() ||
+शून्य सङ्कलय_position_आवरणम्_stateful_swa(TensorMap & tensor_map) {
+    यदि (tensor_map.find("self_kq_mask_swa") == tensor_map.end() || tensor_map.find("inp_pos") == tensor_map.end() ||
         tensor_map.find("swa_window") == tensor_map.end()) {
-        return;
+        प्रत्यागम;
     }
 
-    auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
+    स्वचालित inp_pos = tensor_map.at("inp_pos").get_ग्रन्थिः_shared_ptr();
 
-    auto zero_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-    auto one_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-    auto three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-    auto neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+    स्वचालित zero_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+    स्वचालित one_i64 = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+    स्वचालित three = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
+    स्वचालित neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
 
-    auto query_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::i64);
-    auto query_pos_1d = std::make_shared<ov::op::v1::Reshape>(
-        query_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {-1}), false);
+    स्वचालित query_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::i64);
+    स्वचालित query_pos_1d = std::make_shared<ov::op::v1::Reshape>(
+        query_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {-1}), असत्य);
 
-    auto last_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, neg_one, three);
-    auto last_pos_1d = std::make_shared<ov::op::v1::Reshape>(last_pos, one_i64, false);
-    auto last_pos_cvt = std::make_shared<ov::op::v0::Convert>(last_pos_1d, ov::element::i64);
-    auto total_len = std::make_shared<ov::op::v1::Add>(last_pos_cvt, one_i64);
-    auto total_len_scalar = std::make_shared<ov::op::v0::Squeeze>(total_len);
+    स्वचालित चरमः_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, neg_one, three);
+    स्वचालित चरमः_pos_1d = std::make_shared<ov::op::v1::Reshape>(चरमः_pos, one_i64, असत्य);
+    स्वचालित चरमः_pos_cvt = std::make_shared<ov::op::v0::Convert>(चरमः_pos_1d, ov::element::i64);
+    स्वचालित योग_len = std::make_shared<ov::op::v1::सङ्कलय>(चरमः_pos_cvt, one_i64);
+    स्वचालित योग_len_scalar = std::make_shared<ov::op::v0::Squeeze>(योग_len);
 
-    auto cached_pos = std::make_shared<ov::op::v4::Range>(
-        ov::op::v0::Constant::create(ov::element::i64, {}, {0}), total_len_scalar,
+    स्वचालित cached_pos = std::make_shared<ov::op::v4::Range>(
+        ov::op::v0::Constant::create(ov::element::i64, {}, {0}), योग_len_scalar,
         ov::op::v0::Constant::create(ov::element::i64, {}, {1}), ov::element::i64);
 
-    auto query_col = std::make_shared<ov::op::v1::Reshape>(
-        query_pos_1d, ov::op::v0::Constant::create(ov::element::i64, {2}, {-1, 1}), false);
-    auto cached_row = std::make_shared<ov::op::v1::Reshape>(
-        cached_pos, ov::op::v0::Constant::create(ov::element::i64, {2}, {1, -1}), false);
-    auto diff = std::make_shared<ov::op::v1::Subtract>(query_col, cached_row);
+    स्वचालित query_col = std::make_shared<ov::op::v1::Reshape>(
+        query_pos_1d, ov::op::v0::Constant::create(ov::element::i64, {2}, {-1, 1}), असत्य);
+    स्वचालित cached_row = std::make_shared<ov::op::v1::Reshape>(
+        cached_pos, ov::op::v0::Constant::create(ov::element::i64, {2}, {1, -1}), असत्य);
+    स्वचालित diff = std::make_shared<ov::op::v1::व्यवकलय>(query_col, cached_row);
 
-    auto swa_window = tensor_map.at("swa_window").get_node_shared_ptr();
-    auto window = std::make_shared<ov::op::v0::Convert>(swa_window, ov::element::i64);
-    auto causal_ok = std::make_shared<ov::op::v1::GreaterEqual>(diff, zero_i64);
-    auto window_ok = std::make_shared<ov::op::v1::Less>(diff, window);
-    auto keep = std::make_shared<ov::op::v1::LogicalAnd>(causal_ok, window_ok);
+    स्वचालित swa_गवाक्षः = tensor_map.at("swa_window").get_ग्रन्थिः_shared_ptr();
+    स्वचालित गवाक्षः = std::make_shared<ov::op::v0::Convert>(swa_गवाक्षः, ov::element::i64);
+    स्वचालित causal_ok = std::make_shared<ov::op::v1::GreaterEqual>(diff, zero_i64);
+    स्वचालित गवाक्षः_ok = std::make_shared<ov::op::v1::Less>(diff, गवाक्षः);
+    स्वचालित keep = std::make_shared<ov::op::v1::LogicalAnd>(causal_ok, गवाक्षः_ok);
 
-    auto zero_f = ov::op::v0::Constant::create(ov::element::f32, {}, {0.0f});
-    auto neg_inf_f = ov::op::v0::Constant::create(ov::element::f32, {}, {-std::numeric_limits<float>::infinity()});
-    std::shared_ptr<ov::Node> mask = std::make_shared<ov::op::v1::Select>(keep, zero_f, neg_inf_f);
+    स्वचालित zero_f = ov::op::v0::Constant::create(ov::element::f32, {}, {0.0f});
+    स्वचालित neg_inf_f = ov::op::v0::Constant::create(ov::element::f32, {}, {-std::numeric_limits<भिन्न>::infinity()});
+    std::shared_ptr<ov::Node> आवरणम् = std::make_shared<ov::op::v1::Select>(keep, zero_f, neg_inf_f);
 
-    auto batch_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-    mask = std::make_shared<ov::op::v0::Unsqueeze>(mask, batch_axis);
-    mask = std::make_shared<ov::op::v0::Unsqueeze>(mask, batch_axis);
-    mask = std::make_shared<ov::op::v0::Convert>(mask, ov::element::f16);
-    mask->set_friendly_name("KQ_mask_swa_sliced");
+    स्वचालित batch_axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+    आवरणम् = std::make_shared<ov::op::v0::Unsqueeze>(आवरणम्, batch_axis);
+    आवरणम् = std::make_shared<ov::op::v0::Unsqueeze>(आवरणम्, batch_axis);
+    आवरणम् = std::make_shared<ov::op::v0::Convert>(आवरणम्, ov::element::f16);
+    आवरणम्->समुच्चयः_friendly_name("KQ_mask_swa_sliced");
 
-    tensor_map["KQ_mask_swa_sliced"] = mask->output(0);
+    tensor_map["KQ_mask_swa_sliced"] = आवरणम्->output(0);
 }
 
-void add_rope_sin_cos(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
+शून्य सङ्कलय_rope_sin_cos(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
     // When ROPE ops in the graph have divergent op_params (e.g. gemma4's mixed
     // SWA/non-SWA layers with different n_dims or freq_base), a shared sin/cos
     // precompute cannot broadcast across every ROPE use. Skip it here and let
     // translate_rope() build sin/cos per-op from its own op_params.
-    if (ggml_model_decoder.has_mixed_rope_params()) {
-        return;
+    यदि (ggml_model_decoder.has_mixed_rope_params()) {
+        प्रत्यागम;
     }
     int32_t * rope_params = ggml_model_decoder.get_rope_params();
-    if (tensor_map.find("inp_pos") == tensor_map.end() || rope_params == nullptr) {
-        return;
+    यदि (tensor_map.find("inp_pos") == tensor_map.end() || rope_params == शून्यसूचकः) {
+        प्रत्यागम;
     }
-    auto inp_pos = tensor_map.at("inp_pos").get_node_shared_ptr();
+    स्वचालित inp_pos = tensor_map.at("inp_pos").get_ग्रन्थिः_shared_ptr();
     std::shared_ptr<ov::Node> rope_freqs_weight;
-    if (tensor_map.find("rope_freqs.weight") != tensor_map.end()) {
-        rope_freqs_weight = tensor_map.at("rope_freqs.weight").get_node_shared_ptr();
+    यदि (tensor_map.find("rope_freqs.weight") != tensor_map.end()) {
+        rope_freqs_weight = tensor_map.at("rope_freqs.weight").get_ग्रन्थिः_shared_ptr();
     }
 
-    auto sin_cos = make_sin_cos(rope_params, inp_pos, rope_freqs_weight);
-    auto sin_theta = sin_cos.first;
-    auto cos_theta = sin_cos.second;
+    स्वचालित sin_cos = make_sin_cos(rope_params, inp_pos, rope_freqs_weight);
+    स्वचालित sin_theta = sin_cos.first;
+    स्वचालित cos_theta = sin_cos.second;
 
-    cos_theta.get_node_shared_ptr()->set_friendly_name("rope_cos");
-    sin_theta.get_node_shared_ptr()->set_friendly_name("rope_sin");
+    cos_theta.get_ग्रन्थिः_shared_ptr()->समुच्चयः_friendly_name("rope_cos");
+    sin_theta.get_ग्रन्थिः_shared_ptr()->समुच्चयः_friendly_name("rope_sin");
     tensor_map.insert({"rope_cos", cos_theta});
     tensor_map.insert({"rope_sin", sin_theta});
 }
 
 // Create common patterns
-void preprocess(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
-    if (ggml_model_decoder.is_stateful()) {
-        add_sliced_mask_stateful(tensor_map, ggml_model_decoder.get_rope_params()[2] == GGML_ROPE_TYPE_IMROPE);
-        add_position_mask_stateful_swa(tensor_map);
+शून्य preprocess(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
+    यदि (ggml_model_decoder.is_stateful()) {
+        सङ्कलय_sliced_आवरणम्_stateful(tensor_map, ggml_model_decoder.get_rope_params()[2] == GGML_ROPE_TYPE_IMROPE);
+        सङ्कलय_position_आवरणम्_stateful_swa(tensor_map);
     }
     // This optimization is error-prone
     // add_rope_sin_cos(tensor_map, ggml_model_decoder);
@@ -259,82 +259,82 @@ void preprocess(TensorMap & tensor_map, GgmlDecoder & ggml_model_decoder) {
 
 }  // namespace
 
-TranslateSession::TranslateSession(const frontend::InputModel::Ptr & input_model,
-                                   const std::unordered_map<std::string, CreatorFunction> & translator_map,
-                                   bool naive) :
-    m_input_model(input_model),
+TranslateSession::TranslateSession(ध्रुव frontend::निवेशः_Model::Ptr & निवेशः_model,
+                                   ध्रुव std::unordered_map<std::string, CreatorFunction> & translator_map,
+                                   तार्किक naive) :
+    m_निवेशः_model(निवेशः_model),
     m_translator_map(translator_map),
-    m_ov_model(nullptr),
+    m_ov_model(शून्यसूचकः),
     m_naive(naive) {}
 
 std::shared_ptr<Model> TranslateSession::get_converted_model() {
-    if (m_ov_model) {
-        return m_ov_model;
+    यदि (m_ov_model) {
+        प्रत्यागम m_ov_model;
     }
-    m_ov_model = translate_graph(m_input_model);
-    return m_ov_model;
+    m_ov_model = translate_graph(m_निवेशः_model);
+    प्रत्यागम m_ov_model;
 }
 
-std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputModel::Ptr & input_model) {
-    ov::ParameterVector params;
-    ov::ResultVector results;
-    auto tensor_map = std::make_shared<TensorMap>();
+std::shared_ptr<Model> TranslateSession::translate_graph(ध्रुव frontend::निवेशः_Model::Ptr & निवेशः_model) {
+    ov::Parameter_सदिशम् params;
+    ov::परिणाम_सदिशम् results;
+    स्वचालित tensor_map = std::make_shared<TensorMap>();
     std::shared_ptr<Model> resulting_model;
 
-    const auto & ggml_model = ov::as_type_ptr<InputModel>(input_model);
+    ध्रुव स्वचालित & ggml_model = ov::as_type_ptr<निवेशः_Model>(निवेशः_model);
     std::shared_ptr<GgmlDecoder> ggml_model_decoder = ggml_model->get_model_decoder();
 
-    for (const auto & it : ggml_model_decoder->get_model_inputs()) {
-        auto param_node = create_parameter(it.first, it.second);
-        params.push_back(param_node);
-        (*tensor_map)[it.first] = param_node;
+    प्रति (ध्रुव स्वचालित & it : ggml_model_decoder->get_model_inputs()) {
+        स्वचालित param_ग्रन्थिः = create_parameter(it.first, it.second);
+        params.push_back(param_ग्रन्थिः);
+        (*tensor_map)[it.first] = param_ग्रन्थिः;
     }
 
-    for (const auto & it : ggml_model_decoder->get_model_extra_inputs()) {
-        auto input_node = create_extra_input(it.first, it.second);
-        if (it.second.is_parameter) {
-            params.push_back(ov::as_type_ptr<ov::op::v0::Parameter>(input_node));
+    प्रति (ध्रुव स्वचालित & it : ggml_model_decoder->get_model_extra_inputs()) {
+        स्वचालित निवेशः_ग्रन्थिः = create_extra_निवेशः(it.first, it.second);
+        यदि (it.second.is_parameter) {
+            params.push_back(ov::as_type_ptr<ov::op::v0::Parameter>(निवेशः_ग्रन्थिः));
         }
-        (*tensor_map)[it.first] = input_node;
+        (*tensor_map)[it.first] = निवेशः_ग्रन्थिः;
     }
 
-    for (const auto & it : ggml_model_decoder->get_model_weights()) {
+    प्रति (ध्रुव स्वचालित & it : ggml_model_decoder->get_model_weights()) {
         (*tensor_map)[it.first] = it.second;
     }
 
-    auto translate_node = [&](const std::shared_ptr<GgmlDecoder> & decoder, int node_idx) {
-        auto operation_type = decoder->get_op_type(node_idx);
-        if (operation_type == "GGML_OP_NONE") {
-            return ov::OutputVector{};
+    स्वचालित translate_ग्रन्थिः = [&](ध्रुव std::shared_ptr<GgmlDecoder> & decoder, पूर्णाङ्क ग्रन्थिः_idx) {
+        स्वचालित operation_type = decoder->get_op_type(ग्रन्थिः_idx);
+        यदि (operation_type == "GGML_OP_NONE") {
+            प्रत्यागम ov::Output_सदिशम्{};
         }
 
-        const auto & node_output_names = decoder->get_output_names(node_idx);
-        if (operation_type == "GGML_OP_VIEW" && decoder->get_op_case(node_idx) == 2 && node_output_names.size() == 1) {
-            auto direct_output = tensor_map->find(node_output_names[0]);
-            if (direct_output != tensor_map->end()) {
+        ध्रुव स्वचालित & ग्रन्थिः_output_नामानि = decoder->get_output_नामानि(ग्रन्थिः_idx);
+        यदि (operation_type == "GGML_OP_VIEW" && decoder->get_op_case(ग्रन्थिः_idx) == 2 && ग्रन्थिः_output_नामानि.size() == 1) {
+            स्वचालित प्रत्यक्षम्_output = tensor_map->find(ग्रन्थिः_output_नामानि[0]);
+            यदि (प्रत्यक्षम्_output != tensor_map->end()) {
                 // GDN publishes its native attention/state outputs under the two GGML VIEW names.
                 // Keep those mappings instead of rebuilding slices of a packed temporary.
-                return ov::OutputVector{direct_output->second};
+                प्रत्यागम ov::Output_सदिशम्{प्रत्यक्षम्_output->second};
             }
         }
 
-        auto it = m_translator_map.find(operation_type);
-        FRONT_END_OP_CONVERSION_CHECK(it != m_translator_map.end(), "Translation for operation type ", operation_type,
+        स्वचालित it = m_translator_map.find(operation_type);
+        FRONT_अन्तः_OP_CONVERSION_CHECK(it != m_translator_map.end(), "Translation for operation type ", operation_type,
                                       " is not implemented.");
-        NodeContext node_context(decoder, tensor_map, node_idx, this);
-        ov::OutputVector converted_outputs = it->second(node_context);
+        ग्रन्थिः_Context ग्रन्थिः_context(decoder, tensor_map, ग्रन्थिः_idx, एतत्);
+        ov::Output_सदिशम् converted_outputs = it->second(ग्रन्थिः_context);
 
-        FRONT_END_OP_CONVERSION_CHECK(node_output_names.size() == converted_outputs.size(), "Number of ",
+        FRONT_अन्तः_OP_CONVERSION_CHECK(ग्रन्थिः_output_नामानि.size() == converted_outputs.size(), "Number of ",
                                       operation_type, " outputs greater than number of converted outputs, which are ",
-                                      node_output_names.size(), " and ", converted_outputs.size(), " respectively.");
+                                      ग्रन्थिः_output_नामानि.size(), " and ", converted_outputs.size(), " respectively.");
 
-        for (size_t i = 0; i < node_output_names.size(); ++i) {
-            auto output_name = node_output_names[i];
-            if (i < converted_outputs.size() && converted_outputs[i].get_node_shared_ptr() != nullptr) {
+        प्रति (size_t i = 0; i < ग्रन्थिः_output_नामानि.size(); ++i) {
+            स्वचालित output_name = ग्रन्थिः_output_नामानि[i];
+            यदि (i < converted_outputs.size() && converted_outputs[i].get_ग्रन्थिः_shared_ptr() != शून्यसूचकः) {
                 (*tensor_map)[output_name] = converted_outputs[i];
             }
         }
-        return converted_outputs;
+        प्रत्यागम converted_outputs;
     };
 
     // To handle cases like this
@@ -352,41 +352,41 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // The scale is in-place which modifies cache_r_l0 (reshaped)#3
     // The translation of scale overwrites cache_r in the tensor_map,
     // but we also need to overwrite the old cache_r_l0 (reshaped)#3
-    auto refresh_inplace_aliases = [&](const std::shared_ptr<GgmlDecoder> & decoder, int inplace_node_idx,
-                                       const std::string & view_src_name) {
-        for (int node_idx = 0; node_idx < inplace_node_idx; node_idx++) {
-            if (decoder->is_view_like_alias_of(node_idx, view_src_name)) {
-                translate_node(decoder, node_idx);
+    स्वचालित refresh_inplace_aliases = [&](ध्रुव std::shared_ptr<GgmlDecoder> & decoder, पूर्णाङ्क inplace_ग्रन्थिः_idx,
+                                       ध्रुव std::string & view_src_name) {
+        प्रति (पूर्णाङ्क ग्रन्थिः_idx = 0; ग्रन्थिः_idx < inplace_ग्रन्थिः_idx; ग्रन्थिः_idx++) {
+            यदि (decoder->is_view_like_alias_सम्बन्धि(ग्रन्थिः_idx, view_src_name)) {
+                translate_ग्रन्थिः(decoder, ग्रन्थिः_idx);
             }
         }
     };
 
-    auto node_visitor = [&](const std::shared_ptr<GgmlDecoder> & decoder, int node_idx) {
-        auto converted_outputs = translate_node(decoder, node_idx);
-        if (converted_outputs.empty()) {
-            return;
+    स्वचालित ग्रन्थिः_visitor = [&](ध्रुव std::shared_ptr<GgmlDecoder> & decoder, पूर्णाङ्क ग्रन्थिः_idx) {
+        स्वचालित converted_outputs = translate_ग्रन्थिः(decoder, ग्रन्थिः_idx);
+        यदि (converted_outputs.रिक्तानि()) {
+            प्रत्यागम;
         }
-        const auto inplace_src = decoder->get_inplace_op_src(node_idx);
-        if (inplace_src.empty()) {
-            return;
+        ध्रुव स्वचालित inplace_src = decoder->get_inplace_op_src(ग्रन्थिः_idx);
+        यदि (inplace_src.रिक्तानि()) {
+            प्रत्यागम;
         }
-        if (converted_outputs[0].get_node_shared_ptr() != nullptr) {
+        यदि (converted_outputs[0].get_ग्रन्थिः_shared_ptr() != शून्यसूचकः) {
             (*tensor_map)[inplace_src] = converted_outputs[0];
         }
-        refresh_inplace_aliases(decoder, node_idx, inplace_src);
+        refresh_inplace_aliases(decoder, ग्रन्थिः_idx, inplace_src);
     };
 
-    if (!m_naive) {
+    यदि (!m_naive) {
         preprocess(*tensor_map, *ggml_model_decoder);
     }
-    ggml_model_decoder->visit_subgraph(node_visitor);
+    ggml_model_decoder->दर्शय_subgraph(ग्रन्थिः_visitor);
 
-    for (const auto & name : ggml_model_decoder->get_model_output_names()) {
-        FRONT_END_GENERAL_CHECK(tensor_map->find(name) != tensor_map->end(),
+    प्रति (ध्रुव स्वचालित & name : ggml_model_decoder->get_model_output_नामानि()) {
+        FRONT_अन्तः_GENERAL_CHECK(tensor_map->find(name) != tensor_map->end(),
                                 "Output name not found in tensor map: ", name);
-        auto result = std::make_shared<v0::Result>(tensor_map->at(name));
-        result->set_friendly_name(name);
-        results.push_back(result);
+        स्वचालित परिणाम = std::make_shared<v0::परिणाम_2>(tensor_map->at(name));
+        परिणाम->समुच्चयः_friendly_name(name);
+        results.push_back(परिणाम);
     }
 
     // Debug-only hook: GGML_OPENVINO_DEBUG_NODE=<name1>,<name2>,... adds extra
@@ -408,37 +408,37 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // name is matched either exactly, or as the "name" part before "#" of a
     // suffixed key (first match wins; ambiguous requests should include the
     // full "name#hash" form seen in a previous run's log/dump).
-    if (const char * debug_nodes = ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
+    यदि (ध्रुव वर्ण * debug_nodes = ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
         std::stringstream ss(debug_nodes);
         std::string name;
-        while (std::getline(ss, name, ',')) {
-            auto it = tensor_map->find(name);
-            if (it == tensor_map->end()) {
-                it = std::find_if(tensor_map->begin(), tensor_map->end(), [&](const auto & entry) {
-                    return entry.first.compare(0, name.size(), name) == 0 && entry.first.size() > name.size() &&
-                           entry.first[name.size()] == '#';
+        यावत् (std::getline(ss, name, ',')) {
+            स्वचालित it = tensor_map->find(name);
+            यदि (it == tensor_map->end()) {
+                it = std::find_if(tensor_map->begin(), tensor_map->end(), [&](ध्रुव स्वचालित & प्रविष्टिः) {
+                    प्रत्यागम प्रविष्टिः.first.compare(0, name.size(), name) == 0 && प्रविष्टिः.first.size() > name.size() &&
+                           प्रविष्टिः.first[name.size()] == '#';
                 });
             }
-            if (it == tensor_map->end()) {
+            यदि (it == tensor_map->end()) {
                 GGML_LOG_WARN("GGML_OPENVINO_DEBUG_NODE: node '%s' not found in tensor map, skipping\n", name.c_str());
-                continue;
+                अनुवर्त;
             }
-            auto result = std::make_shared<v0::Result>(it->second);
-            result->set_friendly_name("__debug_" + it->first);
-            results.push_back(result);
+            स्वचालित परिणाम = std::make_shared<v0::परिणाम_2>(it->second);
+            परिणाम->समुच्चयः_friendly_name("__debug_" + it->first);
+            results.push_back(परिणाम);
         }
     }
 
-    ov::ParameterVector used_params;
-    for (const auto & param : params) {
-        if (!param->output(0).get_target_inputs().empty()) {
-            used_params.push_back(param);
+    ov::Parameter_सदिशम् प्रयुक्तम्_params;
+    प्रति (ध्रुव स्वचालित & param : params) {
+        यदि (!param->output(0).get_target_inputs().रिक्तानि()) {
+            प्रयुक्तम्_params.push_back(param);
         }
     }
     // if (auto diff = params.size() - used_params.size()) {
     //     GGML_LOG_INFO("%zu parameters are not used in the model.", diff);
     // }
-    resulting_model = std::make_shared<Model>(results, used_params);
+    resulting_model = std::make_shared<Model>(results, प्रयुक्तम्_params);
 
     apply_transformations(resulting_model);
 
@@ -459,44 +459,44 @@ std::shared_ptr<Model> TranslateSession::translate_graph(const frontend::InputMo
     // Note: use shape_size() rather than byte_size()/element_type().size() - GatherMatmul's default
     // bias is a Constant(element::dynamic, Shape{0}), whose element_type().size() is 0 and would
     // divide by zero.
-    size_t offset = 0;
-    for (auto & node : resulting_model->get_ordered_ops()) {
-        if (auto cnst = ov::as_type_ptr<ov::op::v0::Constant>(node); cnst && ov::shape_size(cnst->get_shape()) >= 16) {
-            auto & rt_info = cnst->get_rt_info();
-            if (rt_info.find(ov::WeightlessCacheAttribute::get_type_info_static()) == rt_info.end()) {
+    size_t विस्थापनम् = 0;
+    प्रति (स्वचालित & ग्रन्थिः : resulting_model->get_ordered_ops()) {
+        यदि (स्वचालित cnst = ov::as_type_ptr<ov::op::v0::Constant>(ग्रन्थिः); cnst && ov::shape_आकार(cnst->get_shape()) >= 16) {
+            स्वचालित & rt_info = cnst->get_rt_info();
+            यदि (rt_info.find(ov::WeightlessCacheAttribute::get_type_info_static()) == rt_info.end()) {
                 rt_info[ov::WeightlessCacheAttribute::get_type_info_static()] =
-                    ov::WeightlessCacheAttribute(cnst->get_byte_size(), offset++, cnst->get_element_type());
+                    ov::WeightlessCacheAttribute(cnst->get_byte_आकार(), विस्थापनम्++, cnst->get_element_type());
             }
         }
     }
-    return resulting_model;
+    प्रत्यागम resulting_model;
 }
 
 std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<Model> model) {
-    auto ggml_model_decoder = ov::as_type_ptr<InputModel>(m_input_model)->get_model_decoder();
+    स्वचालित ggml_model_decoder = ov::as_type_ptr<निवेशः_Model>(m_निवेशः_model)->get_model_decoder();
     {
         ov::pass::Manager manager;
-        manager.set_per_pass_validation(true);
-        manager.register_pass<ov::pass::MarkCompressedFloatConstants>();
+        manager.समुच्चयः_प्रत्येकम्_pass_validation(सत्य);
+        manager.पञ्जिकाकोशः_pass<ov::pass::MarkCompressedFloatConstants>();
         // Marks the Convert/Subtract/Multiply nodes of our GatherMatmul dequantization chain
         // (make_int4_weights/make_int8_weights, for_gather_matmul=true) with disable_constant_folding,
         // so it survives ConstantFolding regardless of whether the target plugin's own
         // is_decompression_multiply() recognizes GatherMatmul as a valid consumer.
-        manager.register_pass<ov::pass::MarkDequantization>(
+        manager.पञ्जिकाकोशः_pass<ov::pass::MarkDequantization>(
             std::vector<ov::element::Type>{ov::element::u8, ov::element::i8, ov::element::u4, ov::element::i4});
-        manager.register_pass<pass::FuseToConv>();
-        manager.register_pass<pass::FuseArgsortTopK>();
+        manager.पञ्जिकाकोशः_pass<pass::Fuse_गन्तव्यम्_Conv>();
+        manager.पञ्जिकाकोशः_pass<pass::Fuse_Argsort_शिखरम्_K>();
 
         // MOECompressed has no CPU plugin implementation, so enable it by default only on GPU.
         // GGML_OPENVINO_MOE_OP=0 keeps the unfused GatherMatmul path for fallback/debugging.
-        if (ggml_openvino_is_gpu() &&
+        यदि (ggml_openvino_is_gpu() &&
             ggml_openvino_getenv_int("GGML_OPENVINO_MOE_OP", 1) != 0) {
-            manager.register_pass<pass::FuseMoeRouter>();
-            manager.register_pass<pass::FuseMoeCompressed>();
+            manager.पञ्जिकाकोशः_pass<pass::Fuse_Moe_मार्गदर्शकः>();
+            manager.पञ्जिकाकोशः_pass<pass::FuseMoeCompressed>();
             // Same fusion for models whose gate and up projections share one fused expert
             // weight (gemma-4). It only matches that shape and only when the experts carry an
             // integer zero point, so it is a no-op on the separate-gate/up models above.
-            manager.register_pass<pass::FuseMoeCompressedFusedGateUp>();
+            manager.पञ्जिकाकोशः_pass<pass::Fuse_Moe_Compressed_Fused_Gate_ऊर्ध्वम्>();
         }
 
         // Workaround for an OpenVINO GPU-plugin defect: an eltwise op whose operands differ in
@@ -506,39 +506,39 @@ std::shared_ptr<Model> TranslateSession::apply_transformations(std::shared_ptr<M
         // NUMPY broadcasting and makes the fused path correct.
         // Remove once the plugin guards that fusion. Opt out with
         // GGML_OPENVINO_DISABLE_ELTWISE_RANK_ALIGN=1.
-        if (ggml_openvino_is_gpu() && !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_ELTWISE_RANK_ALIGN")) {
-            manager.register_pass<pass::AlignEltwiseOperandRanks>();
+        यदि (ggml_openvino_is_gpu() && !ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_ELTWISE_RANK_ALIGN")) {
+            manager.पञ्जिकाकोशः_pass<pass::Align_Eltwise_सङ्कार्यम्_Ranks>();
         }
 
-        if (ggml_model_decoder->is_stateful()) {
-            const auto kv_param_res_names = ggml_model_decoder->get_kv_param_res_names();
-            const auto kv_param_res_pairs = get_kv_param_res_pairs(model, kv_param_res_names);
-            manager.register_pass<ov::pass::MakeStateful>(kv_param_res_pairs);
+        यदि (ggml_model_decoder->is_stateful()) {
+            ध्रुव स्वचालित kv_param_res_नामानि = ggml_model_decoder->get_kv_param_res_नामानि();
+            ध्रुव स्वचालित kv_param_res_युग्मानि = get_kv_param_res_युग्मानि(model, kv_param_res_नामानि);
+            manager.पञ्जिकाकोशः_pass<ov::pass::MakeStateful>(kv_param_res_युग्मानि);
             // Must run after MakeStateful, which is what creates the ReadValue/Assign pairs.
-            if (!ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_STATE_RELAYOUT")) {
-                manager.register_pass<pass::KVStateSeqAxis>();
+            यदि (!ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_KV_STATE_RELAYOUT")) {
+                manager.पञ्जिकाकोशः_pass<pass::KVStateSeqAxis>();
             }
         }
 
-        if (ggml_model_decoder->is_static()) {
-            manager.register_pass<pass::SqueezeMatmul>();
+        यदि (ggml_model_decoder->is_static()) {
+            manager.पञ्जिकाकोशः_pass<pass::SqueezeMatmul>();
         }
-        manager.run_passes(model);
-        if (ggml_model_decoder->is_stateful()) {
+        manager.सततम्_passes(model);
+        यदि (ggml_model_decoder->is_stateful()) {
             ov::preprocess::PrePostProcessor ppp(model);
-            for (size_t i = 0; i < model->get_output_size(); i++) {
-                auto model_output_shape = model->output(i).get_partial_shape();
-                if (model_output_shape.rank().is_static() && model_output_shape.rank().get_length() == 3) {
-                    ppp.output(i).postprocess().custom([](const ov::Output<ov::Node>& node) {
-                        auto axes = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{1}, {0});
-                        return std::make_shared<ov::op::v0::Unsqueeze>(node, axes);
+            प्रति (size_t i = 0; i < model->get_output_आकार(); i++) {
+                स्वचालित model_output_shape = model->output(i).get_partial_shape();
+                यदि (model_output_shape.rank().is_static() && model_output_shape.rank().get_दीर्घता() == 3) {
+                    ppp.output(i).postprocess().custom([](ध्रुव ov::Output<ov::Node>& ग्रन्थिः) {
+                        स्वचालित axes = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{1}, {0});
+                        प्रत्यागम std::make_shared<ov::op::v0::Unsqueeze>(ग्रन्थिः, axes);
                     });
                 }
             }
             model = ppp.build();
         }
     }
-    return model;
+    प्रत्यागम model;
 }
 
 }  // namespace ggml

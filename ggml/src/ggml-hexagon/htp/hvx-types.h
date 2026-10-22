@@ -1,36 +1,36 @@
-#ifndef HVX_TYPES_H
-#define HVX_TYPES_H
+#यदि_अपरिभाषितम् HVX_TYPES_H
+#परिभाषय HVX_TYPES_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#अन्तर्भाव <stdbool.h>
+#अन्तर्भाव <stdint.h>
 
-#include <hexagon_types.h>
+#अन्तर्भाव <hexagon_types.h>
 
-#define SIZEOF_FP32 (4)
-#define SIZEOF_FP16 (2)
-#define VLEN        (128)
-#define VLEN_FP32   (VLEN / SIZEOF_FP32)
-#define VLEN_FP16   (VLEN / SIZEOF_FP16)
+#परिभाषय SIZEOF_FP32 (4)
+#परिभाषय SIZEOF_FP16 (2)
+#परिभाषय VLEN        (128)
+#परिभाषय VLEN_FP32   (VLEN / SIZEOF_FP32)
+#परिभाषय VLEN_FP16   (VLEN / SIZEOF_FP16)
 
-typedef union {
-    HVX_Vector v;
+प्रकारनिर्देश सङ्घ {
+    HVX_सदिशम् v;
     uint8_t    b[VLEN];
     uint16_t   h[VLEN_FP16];
     uint32_t   w[VLEN_FP32];
     __fp16     fp16[VLEN_FP16];
-    float      fp32[VLEN_FP32];
-} __attribute__((aligned(VLEN), packed)) HVX_VectorAlias;
+    भिन्न      fp32[VLEN_FP32];
+} __attribute__((aligned(VLEN), packed)) HVX_सदिशम्_Alias;
 
-typedef struct {
-    HVX_Vector v[2];
-} HVX_Vector_x2;
+प्रकारनिर्देश संरचना {
+    HVX_सदिशम् v[2];
+} HVX_सदिशम्_x2;
 
-typedef struct {
-    HVX_Vector v[4];
-} HVX_Vector_x4;
+प्रकारनिर्देश संरचना {
+    HVX_सदिशम् v[4];
+} HVX_सदिशम्_x4;
 
-typedef struct {
-    HVX_Vector v[8];
-} HVX_Vector_x8;
+प्रकारनिर्देश संरचना {
+    HVX_सदिशम् v[8];
+} HVX_सदिशम्_x8;
 
-#endif /* HVX_TYPES_H */
+#यदि_अन्तः /* HVX_TYPES_H */

@@ -10,24 +10,24 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_MMQ_HPP
-#define GGML_SYCL_MMQ_HPP
+#यदि_अपरिभाषितम् GGML_SYCL_MMQ_HPP
+#परिभाषय GGML_SYCL_MMQ_HPP
 
-#include "common.hpp"
+#अन्तर्भाव "common.hpp"
 
-void ggml_sycl_op_mul_mat_q(
+शून्य ggml_sycl_op_mul_mat_q(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor* src0,
-    const ggml_tensor* src1,
+    ध्रुव ggml_tensor* src0,
+    ध्रुव ggml_tensor* src1,
     ggml_tensor* dst,
-    const char* src0_dd_i,
-    const float* src1_ddf_i,
-    const char* src1_ddq_i,
-    float* dst_dd_i,
-    const int64_t row_low,
-    const int64_t row_high,
-    const int64_t src1_ncols,
-    const int64_t src1_padded_row_size,
-    const dpct::queue_ptr& stream);
+    ध्रुव वर्ण* src0_dd_i,
+    ध्रुव भिन्न* src1_ddf_i,
+    ध्रुव वर्ण* src1_ddq_i,
+    भिन्न* dst_dd_i,
+    ध्रुव int64_t row_नीचः,
+    ध्रुव int64_t row_उच्चः,
+    ध्रुव int64_t src1_ncols,
+    ध्रुव int64_t src1_padded_row_आकार,
+    ध्रुव dpct::queue_ptr& stream);
 
-#endif // GGML_SYCL_MMQ_HPP
+#यदि_अन्तः // GGML_SYCL_MMQ_HPP

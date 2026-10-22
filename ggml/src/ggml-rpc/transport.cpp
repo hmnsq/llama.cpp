@@ -1,14 +1,14 @@
-#include "transport.h"
-#include "log.h"
+#अन्तर्भाव "transport.h"
+#अन्तर्भाव "log.h"
 
-#ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN
+#यदि_परिभाषितम् _WIN32
+#  define WIN32_LEAN_AND_माध्यम्
 #  ifndef NOMINMAX
 #     define NOMINMAX
 #  endif
 #  include <windows.h>
 #  include <winsock2.h>
-#else
+#अन्यथा
 #  include <arpa/inet.h>
 #  include <sys/socket.h>
 #  include <sys/types.h>
@@ -16,13 +16,13 @@
 #  include <netinet/tcp.h>
 #  include <netdb.h>
 #  include <unistd.h>
-#endif
-#include <cstdlib>
-#include <cstring>
-#include <mutex>
-#include <optional>
+#यदि_अन्तः
+#अन्तर्भाव <cstdlib>
+#अन्तर्भाव <cstring>
+#अन्तर्भाव <mutex>
+#अन्तर्भाव <optional>
 
-#ifdef GGML_RPC_RDMA
+#यदि_परिभाषितम् GGML_RPC_RDMA
 #  include <infiniband/verbs.h>
 #  include <array>
 #  include <cerrno>
@@ -34,140 +34,140 @@
 #  ifdef GGML_RPC_RDMA_APPLE
 #    include "transport-apple.h"
 #  endif
-#endif // GGML_RPC_RDMA
+#यदि_अन्तः // GGML_RPC_RDMA
 
-#ifdef _WIN32
-typedef SOCKET sockfd_t;
-using ssize_t = __int64;
-#else
-typedef int sockfd_t;
-#endif
+#यदि_परिभाषितम् _WIN32
+प्रकारनिर्देश SOCKET sockfd_t;
+उपयुज्य ssize_t = __int64;
+#अन्यथा
+प्रकारनिर्देश पूर्णाङ्क sockfd_t;
+#यदि_अन्तः
 
-#ifdef GGML_RPC_RDMA
-static constexpr size_t RDMA_GID_SIZE = 16;            // RoCE GID / IB GID is always 16 bytes
-using rdma_gid_t = std::array<uint8_t, RDMA_GID_SIZE>;
-#endif // GGML_RPC_RDMA
+#यदि_परिभाषितम् GGML_RPC_RDMA
+स्थिर constexpr size_t RDMA_GID_आकार = 16;            // RoCE GID / IB GID is always 16 bytes
+उपयुज्य rdma_gid_t = std::array<uint8_t, RDMA_GID_आकार>;
+#यदि_अन्तः // GGML_RPC_RDMA
 
-#if defined(GGML_RPC_RDMA) && !defined(GGML_RPC_RDMA_APPLE)
-static constexpr size_t RDMA_CHUNK    = 256 * 1024;   // 256 KiB per send/recv (fits default 8 MiB memlock)
-static constexpr int    RDMA_RX_DEPTH = 24;            // pre-posted recv ring: 24 × 256 KiB = 6 MiB
+#यदि defined(GGML_RPC_RDMA) && !defined(GGML_RPC_RDMA_APPLE)
+स्थिर constexpr size_t RDMA_CHUNK    = 256 * 1024;   // 256 KiB per send/recv (fits default 8 MiB memlock)
+स्थिर constexpr पूर्णाङ्क    RDMA_RX_गभीरता = 24;            // pre-posted recv ring: 24 × 256 KiB = 6 MiB
 // keep polling the CQ for this long after the last activity, then sleep until the next completion
-static constexpr auto   RDMA_SPIN_TIME = std::chrono::milliseconds(100);
+स्थिर constexpr स्वचालित   RDMA_SPIN_TIME = std::chrono::milliseconds(100);
 
-struct rdma_conn {
-    struct ibv_context * ctx = nullptr;
-    struct ibv_pd * pd  = nullptr;
-    struct ibv_cq * scq = nullptr;   // send completions
-    struct ibv_cq * rcq = nullptr;   // recv completions
-    struct ibv_qp * qp  = nullptr;
-    struct ibv_comp_channel * ch = nullptr; // CQ events, so an idle connection can sleep instead of spinning
+संरचना rdma_conn {
+    संरचना ibv_context * ctx = शून्यसूचकः;
+    संरचना ibv_pd * pd  = शून्यसूचकः;
+    संरचना ibv_cq * scq = शून्यसूचकः;   // send completions
+    संरचना ibv_cq * rcq = शून्यसूचकः;   // recv completions
+    संरचना ibv_qp * qp  = शून्यसूचकः;
+    संरचना ibv_comp_channel * ch = शून्यसूचकः; // CQ events, so an idle connection can sleep instead of spinning
 
-    std::chrono::steady_clock::time_point last_active; // last completion or posted send
+    std::chrono::steady_clock::time_point चरमः_सक्रिय; // last completion or posted send
 
-    void          * tx_buf = nullptr;
-    struct ibv_mr * tx_mr  = nullptr;
+    शून्य          * tx_buf = शून्यसूचकः;
+    संरचना ibv_mr * tx_mr  = शून्यसूचकः;
 
-    void          * rx_buf = nullptr; // RDMA_RX_DEPTH × RDMA_CHUNK contiguous
-    struct ibv_mr * rx_mr  = nullptr;
-    int             rx_head = 0;
+    शून्य          * rx_buf = शून्यसूचकः; // RDMA_RX_DEPTH × RDMA_CHUNK contiguous
+    संरचना ibv_mr * rx_mr  = शून्यसूचकः;
+    पूर्णाङ्क             rx_शीर्ष = 0;
 
     uint32_t        max_inline = 0;
 
-    uint8_t * rx_slot(int i) const {
-        return static_cast<uint8_t *>(rx_buf) + static_cast<size_t>(i) * RDMA_CHUNK;
+    uint8_t * rx_slot(पूर्णाङ्क i) ध्रुव {
+        प्रत्यागम static_cast<uint8_t *>(rx_buf) + static_cast<size_t>(i) * RDMA_CHUNK;
     }
 
-    bool post_rx(int i) {
-        struct ibv_sge sge = {};
+    तार्किक post_rx(पूर्णाङ्क i) {
+        संरचना ibv_sge sge = {};
         sge.addr   = (uintptr_t)rx_slot(i);
-        sge.length = RDMA_CHUNK;
+        sge.दीर्घता = RDMA_CHUNK;
         sge.lkey   = rx_mr->lkey;
-        struct ibv_recv_wr wr = {}, * bad = nullptr;
+        संरचना ibv_recv_wr wr = {}, * bad = शून्यसूचकः;
         wr.wr_id   = (uint64_t)i;
         wr.sg_list = &sge;
-        wr.num_sge = 1;
-        return ibv_post_recv(qp, &wr, &bad) == 0;
+        wr.अङ्कः_sge = 1;
+        प्रत्यागम ibv_post_recv(qp, &wr, &bad) == 0;
     }
 
     ~rdma_conn() {
-        if (tx_mr) ibv_dereg_mr(tx_mr);
-        if (rx_mr) ibv_dereg_mr(rx_mr);
-        free(tx_buf);
-        free(rx_buf);
-        if (qp)  ibv_destroy_qp(qp);
-        if (scq) ibv_destroy_cq(scq);
-        if (rcq) ibv_destroy_cq(rcq);
-        if (ch)  ibv_destroy_comp_channel(ch);
-        if (pd)  ibv_dealloc_pd(pd);
-        if (ctx) ibv_close_device(ctx);
+        यदि (tx_mr) ibv_dereg_mr(tx_mr);
+        यदि (rx_mr) ibv_dereg_mr(rx_mr);
+        मुक्त(tx_buf);
+        मुक्त(rx_buf);
+        यदि (qp)  ibv_destroy_qp(qp);
+        यदि (scq) ibv_destroy_cq(scq);
+        यदि (rcq) ibv_destroy_cq(rcq);
+        यदि (ch)  ibv_destroy_comp_channel(ch);
+        यदि (pd)  ibv_dealloc_pd(pd);
+        यदि (ctx) ibv_close_device(ctx);
     }
 };
 
 // Local RDMA parameters captured during the probe phase and later consumed
 // by rdma_activate() after the remote side's caps arrive via HELLO.
-struct rdma_local_info {
+संरचना rdma_local_info {
     uint32_t qpn     = 0;
     uint32_t psn     = 0;
-    uint8_t  gid[RDMA_GID_SIZE] = {};
-    uint8_t  ib_port = 0;
-    int      gid_idx = 0;
-    enum ibv_mtu path_mtu = IBV_MTU_1024;
+    uint8_t  gid[RDMA_GID_आकार] = {};
+    uint8_t  ib_पत्तनम् = 0;
+    पूर्णाङ्क      gid_idx = 0;
+    गणना ibv_mtu मार्गः_mtu = IBV_MTU_1024;
 };
 
-struct rdma_caps {
+संरचना rdma_caps {
     uint32_t qpn;
     uint32_t psn;
-    uint8_t  gid[RDMA_GID_SIZE];
+    uint8_t  gid[RDMA_GID_आकार];
 };
 
-static_assert(sizeof(rdma_caps) == RPC_CONN_CAPS_SIZE, "rdma_caps must match conn_caps size");
+static_assert(परिमाण(rdma_caps) == RPC_CONN_CAPS_आकार, "rdma_caps must match conn_caps size");
 
-#endif // GGML_RPC_RDMA && !GGML_RPC_RDMA_APPLE
+#यदि_अन्तः // GGML_RPC_RDMA && !GGML_RPC_RDMA_APPLE
 
-struct socket_t::impl {
-    impl(sockfd_t fd) : use_rdma(false), fd(fd) {}
+संरचना socket_t::impl {
+    impl(sockfd_t fd) : use_rdma(असत्य), fd(fd) {}
     ~impl();
-    bool send_data(const void * data, size_t size);
-    bool recv_data(void * data, size_t size);
-    bool flush();
-    void get_caps(uint8_t * local_caps);
-    void update_caps(const uint8_t * remote_caps);
+    तार्किक send_दत्त(ध्रुव शून्य * दत्त, size_t size);
+    तार्किक recv_दत्त(शून्य * दत्त, size_t size);
+    तार्किक flush();
+    शून्य get_caps(uint8_t * local_caps);
+    शून्य update_caps(ध्रुव uint8_t * remote_caps);
 
-#ifdef GGML_RPC_RDMA
+#यदि_परिभाषितम् GGML_RPC_RDMA
     std::optional<rdma_gid_t> rdma_build_target_gid();
 
 #  ifdef GGML_RPC_RDMA_APPLE
     std::unique_ptr<apple_rdma> rdma;
-#  else
-    bool rdma_probe();
-    bool rdma_send(const void * data, size_t size);
-    bool rdma_recv(void * data, size_t size);
-    bool tcp_peer_closed();
-    bool rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, const uint8_t * remote_gid);
-    bool rdma_poll(struct ibv_cq * cq, struct ibv_wc * wc);
-    bool rdma_wait_event();
+#  अन्यथा
+    तार्किक rdma_probe();
+    तार्किक rdma_send(ध्रुव शून्य * दत्त, size_t size);
+    तार्किक rdma_recv(शून्य * दत्त, size_t size);
+    तार्किक tcp_peer_closed();
+    तार्किक rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, ध्रुव uint8_t * remote_gid);
+    तार्किक rdma_poll(संरचना ibv_cq * cq, संरचना ibv_wc * wc);
+    तार्किक rdma_wait_event();
 
     std::unique_ptr<rdma_conn> rdma;
     rdma_local_info            rdma_local = {};
 #  endif
-#endif // GGML_RPC_RDMA
-    bool     use_rdma;
+#यदि_अन्तः // GGML_RPC_RDMA
+    तार्किक     use_rdma;
     sockfd_t fd;
 };
 
 socket_t::impl::~impl() {
-#ifdef GGML_RPC_RDMA
+#यदि_परिभाषितम् GGML_RPC_RDMA
     rdma.reset();
-#endif // GGML_RPC_RDMA
-    LOG_DBG("[%s] closing socket %d\n", __func__, this->fd);
-#ifdef _WIN32
-    if (fd != INVALID_SOCKET) closesocket(this->fd);
-#else
-    if (fd >= 0) close(this->fd);
-#endif
+#यदि_अन्तः // GGML_RPC_RDMA
+    LOG_DBG("[%s] closing socket %d\n", __func__, एतत्->fd);
+#यदि_परिभाषितम् _WIN32
+    यदि (fd != INVALID_SOCKET) closesocket(एतत्->fd);
+#अन्यथा
+    यदि (fd >= 0) close(एतत्->fd);
+#यदि_अन्तः
 }
 
-#ifdef GGML_RPC_RDMA
+#यदि_परिभाषितम् GGML_RPC_RDMA
 
 // Build a RoCE GID-shaped 16-byte target from a TCP socket's local address.
 // Used to match the socket's local IP against the kernel's GID table so that
@@ -178,632 +178,632 @@ socket_t::impl::~impl() {
 // Returns std::nullopt on unsupported family or getsockname failure.
 std::optional<rdma_gid_t> socket_t::impl::rdma_build_target_gid() {
     sockaddr_storage addr = {};
-    socklen_t addr_len = sizeof(addr);
-    if (getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &addr_len) != 0) {
-        return std::nullopt;
+    socklen_t addr_len = परिमाण(addr);
+    यदि (getsockname(fd, reinterpret_cast<sockaddr *>(&addr), &addr_len) != 0) {
+        प्रत्यागम std::nullopt;
     }
     rdma_gid_t target = {};
-    if (addr.ss_family == AF_INET) {
-        const auto * a = reinterpret_cast<const sockaddr_in *>(&addr);
+    यदि (addr.ss_family == AF_INET) {
+        ध्रुव स्वचालित * a = reinterpret_cast<ध्रुव sockaddr_अन्तर् *>(&addr);
         target[10] = 0xff;
         target[11] = 0xff;
-        memcpy(&target[12], &a->sin_addr, 4);
-        return target;
+        स्मृतिं_प्रतिलिख(&target[12], &a->sin_addr, 4);
+        प्रत्यागम target;
     }
-    if (addr.ss_family == AF_INET6) {
-        const auto * a = reinterpret_cast<const sockaddr_in6 *>(&addr);
-        memcpy(target.data(), &a->sin6_addr, RDMA_GID_SIZE);
-        return target;
+    यदि (addr.ss_family == AF_INET6) {
+        ध्रुव स्वचालित * a = reinterpret_cast<ध्रुव sockaddr_in6 *>(&addr);
+        स्मृतिं_प्रतिलिख(target.दत्त(), &a->sin6_addr, RDMA_GID_आकार);
+        प्रत्यागम target;
     }
-    return std::nullopt;
+    प्रत्यागम std::nullopt;
 }
 
-#ifndef GGML_RPC_RDMA_APPLE
+#यदि_अपरिभाषितम् GGML_RPC_RDMA_APPLE
 
-bool socket_t::impl::tcp_peer_closed() {
-    if (fd < 0) return false;
-#ifndef _WIN32
-    struct pollfd pfd = { fd, POLLIN | POLLRDHUP, 0 };
-    int r = poll(&pfd, 1, 0);
-    return r > 0 && (pfd.revents & (POLLHUP | POLLERR | POLLRDHUP));
-#else
-    return false;
-#endif
+तार्किक socket_t::impl::tcp_peer_closed() {
+    यदि (fd < 0) प्रत्यागम असत्य;
+#यदि_अपरिभाषितम् _WIN32
+    संरचना pollfd pfd = { fd, POLLIN | POLLRDHUP, 0 };
+    पूर्णाङ्क r = poll(&pfd, 1, 0);
+    प्रत्यागम r > 0 && (pfd.revents & (POLLHUP | POLLERR | POLLRDHUP));
+#अन्यथा
+    प्रत्यागम असत्य;
+#यदि_अन्तः
 }
 
-bool socket_t::impl::rdma_probe() {
-    const char * dev_env = std::getenv("GGML_RDMA_DEV");
-    const char * gid_env = std::getenv("GGML_RDMA_GID");
+तार्किक socket_t::impl::rdma_probe() {
+    ध्रुव वर्ण * dev_env = std::getenv("GGML_RDMA_DEV");
+    ध्रुव वर्ण * gid_env = std::getenv("GGML_RDMA_GID");
 
-    auto target_gid = rdma_build_target_gid();
-    if (!target_gid) {
-        return false;
+    स्वचालित target_gid = rdma_build_target_gid();
+    यदि (!target_gid) {
+        प्रत्यागम असत्य;
     }
 
-    const uint8_t ib_port = 1;
-    int num_devs = 0;
-    ibv_device ** devs = ibv_get_device_list(&num_devs);
-    if (!devs || num_devs == 0) return false;
+    ध्रुव uint8_t ib_पत्तनम् = 1;
+    पूर्णाङ्क अङ्कः_devs = 0;
+    ibv_device ** devs = ibv_get_device_list(&अङ्कः_devs);
+    यदि (!devs || अङ्कः_devs == 0) प्रत्यागम असत्य;
 
-    ibv_context * ibctx = nullptr;
-    const char * matched_dev = nullptr;
-    int gid_idx = gid_env ? atoi(gid_env) : -1;
-    int gid_version = IBV_GID_TYPE_IB;  // 0 = unknown/IB
+    ibv_context * ibctx = शून्यसूचकः;
+    ध्रुव वर्ण * matched_dev = शून्यसूचकः;
+    पूर्णाङ्क gid_idx = gid_env ? atoi(gid_env) : -1;
+    पूर्णाङ्क gid_संस्करणम् = IBV_GID_TYPE_IB;  // 0 = unknown/IB
 
-    for (int d = 0; d < num_devs; d++) {
-        const char * dn = ibv_get_device_name(devs[d]);
-        if (dev_env && strcmp(dev_env, dn) != 0) continue;
+    प्रति (पूर्णाङ्क d = 0; d < अङ्कः_devs; d++) {
+        ध्रुव वर्ण * dn = ibv_get_device_name(devs[d]);
+        यदि (dev_env && वाक्यं_तुलय(dev_env, dn) != 0) अनुवर्त;
 
         ibv_context * ctx = ibv_open_device(devs[d]);
-        if (!ctx) continue;
+        यदि (!ctx) अनुवर्त;
 
-        ibv_port_attr pa;
-        if (ibv_query_port(ctx, ib_port, &pa) != 0) { ibv_close_device(ctx); continue; }
+        ibv_पत्तनम्_attr pa;
+        यदि (ibv_query_पत्तनम्(ctx, ib_पत्तनम्, &pa) != 0) { ibv_close_device(ctx); अनुवर्त; }
 
-        int found_gid = gid_idx;
-        int found_version = IBV_GID_TYPE_IB;
-        if (found_gid < 0) {
+        पूर्णाङ्क प्राप्तम्_gid = gid_idx;
+        पूर्णाङ्क प्राप्तम्_संस्करणम् = IBV_GID_TYPE_IB;
+        यदि (प्राप्तम्_gid < 0) {
             // Find a GID on this port whose bytes equal the local TCP address
             // (IPv4 or IPv6). Prefer RoCE v2 (UDP/IP, L3-routable) over v1
             // (raw Ethernet, same-L2 only) so silent hangs on L3-routed paths
             // are avoided. ibv_query_gid_ex returns gid+type in one call.
-            int v2_idx = -1;
-            int v1_idx = -1;
-            for (int i = 0; i < pa.gid_tbl_len; i++) {
-                ibv_gid_entry entry = {};
-                if (ibv_query_gid_ex(ctx, ib_port, i, &entry, 0) != 0) continue;
-                if (memcmp(entry.gid.raw, target_gid->data(), RDMA_GID_SIZE) != 0) continue;
-                if (entry.gid_type == IBV_GID_TYPE_ROCE_V2 && v2_idx < 0) {
+            पूर्णाङ्क v2_idx = -1;
+            पूर्णाङ्क v1_idx = -1;
+            प्रति (पूर्णाङ्क i = 0; i < pa.gid_tbl_len; i++) {
+                ibv_gid_प्रविष्टिः प्रविष्टिः = {};
+                यदि (ibv_query_gid_ex(ctx, ib_पत्तनम्, i, &प्रविष्टिः, 0) != 0) अनुवर्त;
+                यदि (memcmp(प्रविष्टिः.gid.raw, target_gid->दत्त(), RDMA_GID_आकार) != 0) अनुवर्त;
+                यदि (प्रविष्टिः.gid_type == IBV_GID_TYPE_ROCE_V2 && v2_idx < 0) {
                     v2_idx = i;
-                } else if (entry.gid_type == IBV_GID_TYPE_ROCE_V1 && v1_idx < 0) {
+                } अन्यथा यदि (प्रविष्टिः.gid_type == IBV_GID_TYPE_ROCE_V1 && v1_idx < 0) {
                     v1_idx = i;
                 }
             }
-            if (v2_idx >= 0) {
-                found_gid = v2_idx;
-                found_version = IBV_GID_TYPE_ROCE_V2;
-            } else if (v1_idx >= 0) {
-                found_gid = v1_idx;
-                found_version = IBV_GID_TYPE_ROCE_V1;
+            यदि (v2_idx >= 0) {
+                प्राप्तम्_gid = v2_idx;
+                प्राप्तम्_संस्करणम् = IBV_GID_TYPE_ROCE_V2;
+            } अन्यथा यदि (v1_idx >= 0) {
+                प्राप्तम्_gid = v1_idx;
+                प्राप्तम्_संस्करणम् = IBV_GID_TYPE_ROCE_V1;
             }
-        } else {
+        } अन्यथा {
             // Explicit GID index from GGML_RDMA_GID — fetch its type for logging.
-            ibv_gid_entry entry = {};
-            if (ibv_query_gid_ex(ctx, ib_port, found_gid, &entry, 0) == 0) {
-                found_version = entry.gid_type;
+            ibv_gid_प्रविष्टिः प्रविष्टिः = {};
+            यदि (ibv_query_gid_ex(ctx, ib_पत्तनम्, प्राप्तम्_gid, &प्रविष्टिः, 0) == 0) {
+                प्राप्तम्_संस्करणम् = प्रविष्टिः.gid_type;
             }
         }
-        if (found_gid >= 0) {
+        यदि (प्राप्तम्_gid >= 0) {
             ibctx = ctx;
-            gid_idx = found_gid;
-            gid_version = found_version;
+            gid_idx = प्राप्तम्_gid;
+            gid_संस्करणम् = प्राप्तम्_संस्करणम्;
             matched_dev = dn;
-            rdma_local.path_mtu = pa.active_mtu;
-            break;
+            rdma_local.मार्गः_mtu = pa.सक्रिय_mtu;
+            भङ्ग;
         }
         ibv_close_device(ctx);
     }
     ibv_free_device_list(devs);
-    if (!ibctx) return false;
+    यदि (!ibctx) प्रत्यागम असत्य;
 
-    rdma_local.ib_port = ib_port;
+    rdma_local.ib_पत्तनम् = ib_पत्तनम्;
     rdma_local.gid_idx = gid_idx;
 
     rdma = std::make_unique<rdma_conn>();
     rdma->ctx = ibctx;
 
     rdma->pd = ibv_alloc_pd(ibctx);
-    if (!rdma->pd) return false;
+    यदि (!rdma->pd) प्रत्यागम असत्य;
 
     // without a completion channel rdma_poll() spins all the time, as before
     rdma->ch  = ibv_create_comp_channel(ibctx);
-    rdma->scq = ibv_create_cq(ibctx, 16, nullptr, rdma->ch, 0);
-    rdma->rcq = ibv_create_cq(ibctx, RDMA_RX_DEPTH + 4, nullptr, rdma->ch, 0);
-    if (!rdma->scq || !rdma->rcq) return false;
+    rdma->scq = ibv_create_cq(ibctx, 16, शून्यसूचकः, rdma->ch, 0);
+    rdma->rcq = ibv_create_cq(ibctx, RDMA_RX_गभीरता + 4, शून्यसूचकः, rdma->ch, 0);
+    यदि (!rdma->scq || !rdma->rcq) प्रत्यागम असत्य;
 
     ibv_qp_init_attr qia = {};
     qia.send_cq = rdma->scq;
     qia.recv_cq = rdma->rcq;
     qia.qp_type = IBV_QPT_RC;
     qia.cap.max_send_wr     = 4;
-    qia.cap.max_recv_wr     = RDMA_RX_DEPTH + 4;
+    qia.cap.max_recv_wr     = RDMA_RX_गभीरता + 4;
     qia.cap.max_send_sge    = 1;
     qia.cap.max_recv_sge    = 1;
-    qia.cap.max_inline_data = 256;
+    qia.cap.max_inline_दत्त = 256;
 
     rdma->qp = ibv_create_qp(rdma->pd, &qia);
-    if (!rdma->qp) return false;
-    rdma->max_inline = qia.cap.max_inline_data;
+    यदि (!rdma->qp) प्रत्यागम असत्य;
+    rdma->max_inline = qia.cap.max_inline_दत्त;
 
     rdma->tx_buf = aligned_alloc(4096, RDMA_CHUNK);
-    rdma->rx_buf = aligned_alloc(4096, static_cast<size_t>(RDMA_RX_DEPTH) * RDMA_CHUNK);
-    if (!rdma->tx_buf || !rdma->rx_buf) return false;
+    rdma->rx_buf = aligned_alloc(4096, static_cast<size_t>(RDMA_RX_गभीरता) * RDMA_CHUNK);
+    यदि (!rdma->tx_buf || !rdma->rx_buf) प्रत्यागम असत्य;
 
     rdma->tx_mr = ibv_reg_mr(rdma->pd, rdma->tx_buf, RDMA_CHUNK, IBV_ACCESS_LOCAL_WRITE);
-    rdma->rx_mr = ibv_reg_mr(rdma->pd, rdma->rx_buf, static_cast<size_t>(RDMA_RX_DEPTH) * RDMA_CHUNK,
+    rdma->rx_mr = ibv_reg_mr(rdma->pd, rdma->rx_buf, static_cast<size_t>(RDMA_RX_गभीरता) * RDMA_CHUNK,
                            IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
-    if (!rdma->tx_mr || !rdma->rx_mr) return false;
+    यदि (!rdma->tx_mr || !rdma->rx_mr) प्रत्यागम असत्य;
 
     ibv_gid local_gid;
-    if (ibv_query_gid(ibctx, ib_port, gid_idx, &local_gid) != 0) return false;
+    यदि (ibv_query_gid(ibctx, ib_पत्तनम्, gid_idx, &local_gid) != 0) प्रत्यागम असत्य;
 
-    rdma_local.qpn = rdma->qp->qp_num;
-    rdma_local.psn = rdma->qp->qp_num & 0xffffff;
-    memcpy(&rdma_local.gid, &local_gid, RDMA_GID_SIZE);
+    rdma_local.qpn = rdma->qp->qp_अङ्कः;
+    rdma_local.psn = rdma->qp->qp_अङ्कः & 0xffffff;
+    स्मृतिं_प्रतिलिख(&rdma_local.gid, &local_gid, RDMA_GID_आकार);
 
-    const char * ver_str = "";
-    if (gid_version == IBV_GID_TYPE_ROCE_V2) {
+    ध्रुव वर्ण * ver_str = "";
+    यदि (gid_संस्करणम् == IBV_GID_TYPE_ROCE_V2) {
         ver_str = " RoCEv2";
-    } else if (gid_version == IBV_GID_TYPE_ROCE_V1) {
+    } अन्यथा यदि (gid_संस्करणम् == IBV_GID_TYPE_ROCE_V1) {
         ver_str = " RoCEv1";
     }
     LOG_INFO("RDMA probed: dev=%s gid=%d%s qpn=%u inline=%u\n",
                   matched_dev, gid_idx, ver_str, rdma_local.qpn, rdma->max_inline);
-    return true;
+    प्रत्यागम सत्य;
 }
 
 // Phase 2: Given remote QPN/PSN/GID, transition QP: RESET->INIT->pre-post->RTR->RTS.
 // On success, the connection is live and ready for rdma_send/rdma_recv.
-bool socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, const uint8_t * remote_gid) {
+तार्किक socket_t::impl::rdma_activate(uint32_t remote_qpn, uint32_t remote_psn, ध्रुव uint8_t * remote_gid) {
     // RESET -> INIT
     {
-        struct ibv_qp_attr a = {};
+        संरचना ibv_qp_attr a = {};
         a.qp_state        = IBV_QPS_INIT;
-        a.port_num        = rdma_local.ib_port;
-        a.pkey_index      = 0;
+        a.पत्तनम्_अङ्कः        = rdma_local.ib_पत्तनम्;
+        a.pkey_सूचकांक      = 0;
         a.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_LOCAL_WRITE;
-        if (ibv_modify_qp(rdma->qp, &a,
-                IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS) != 0) {
-            return false;
+        यदि (ibv_modify_qp(rdma->qp, &a,
+                IBV_QP_STATE | IBV_QP_PKEY_सूचकांक | IBV_QP_पत्तनम् | IBV_QP_ACCESS_FLAGS) != 0) {
+            प्रत्यागम असत्य;
         }
     }
 
-    for (int i = 0; i < RDMA_RX_DEPTH; i++) {
-        if (!rdma->post_rx(i)) return false;
+    प्रति (पूर्णाङ्क i = 0; i < RDMA_RX_गभीरता; i++) {
+        यदि (!rdma->post_rx(i)) प्रत्यागम असत्य;
     }
 
     // INIT -> RTR
     {
-        struct ibv_qp_attr a = {};
+        संरचना ibv_qp_attr a = {};
         a.qp_state           = IBV_QPS_RTR;
-        a.path_mtu           = rdma_local.path_mtu;
-        a.dest_qp_num        = remote_qpn;
+        a.मार्गः_mtu           = rdma_local.मार्गः_mtu;
+        a.dest_qp_अङ्कः        = remote_qpn;
         a.rq_psn             = remote_psn;
         a.max_dest_rd_atomic = 1;
         a.min_rnr_timer      = 1;
         a.ah_attr.is_global  = 1;
-        memcpy(&a.ah_attr.grh.dgid, remote_gid, RDMA_GID_SIZE);
-        a.ah_attr.grh.hop_limit  = 1;
-        a.ah_attr.grh.sgid_index = rdma_local.gid_idx;
+        स्मृतिं_प्रतिलिख(&a.ah_attr.grh.dgid, remote_gid, RDMA_GID_आकार);
+        a.ah_attr.grh.hop_सीमा  = 1;
+        a.ah_attr.grh.sgid_सूचकांक = rdma_local.gid_idx;
         a.ah_attr.dlid       = 0;
-        a.ah_attr.port_num   = rdma_local.ib_port;
-        if (ibv_modify_qp(rdma->qp, &a,
-                IBV_QP_STATE | IBV_QP_AV | IBV_QP_PATH_MTU | IBV_QP_DEST_QPN |
+        a.ah_attr.पत्तनम्_अङ्कः   = rdma_local.ib_पत्तनम्;
+        यदि (ibv_modify_qp(rdma->qp, &a,
+                IBV_QP_STATE | IBV_QP_AV | IBV_QP_मार्गः_MTU | IBV_QP_DEST_QPN |
                 IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER) != 0) {
-            return false;
+            प्रत्यागम असत्य;
         }
     }
 
     // RTR -> RTS
     {
-        struct ibv_qp_attr a = {};
+        संरचना ibv_qp_attr a = {};
         a.qp_state     = IBV_QPS_RTS;
         a.timeout      = 14;
         a.retry_cnt    = 7;
         a.rnr_retry    = 7;
         a.sq_psn       = rdma_local.psn;
         a.max_rd_atomic = 1;
-        if (ibv_modify_qp(rdma->qp, &a,
+        यदि (ibv_modify_qp(rdma->qp, &a,
                 IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT | IBV_QP_RNR_RETRY |
                 IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC) != 0) {
-            return false;
+            प्रत्यागम असत्य;
         }
     }
 
-    rdma->last_active = std::chrono::steady_clock::now();
+    rdma->चरमः_सक्रिय = std::chrono::steady_clock::now();
 
     LOG_INFO("RDMA activated: qpn=%u->%u mtu=%d rx_depth=%d\n",
-                  rdma_local.qpn, remote_qpn, 128 << rdma_local.path_mtu, RDMA_RX_DEPTH);
-    return true;
+                  rdma_local.qpn, remote_qpn, 128 << rdma_local.मार्गः_mtu, RDMA_RX_गभीरता);
+    प्रत्यागम सत्य;
 }
 
 // Sleep until the completion channel has an event or the TCP peer closes.
-bool socket_t::impl::rdma_wait_event() {
+तार्किक socket_t::impl::rdma_wait_event() {
     rdma_conn * c = rdma.get();
     // POLLHUP and POLLERR are always reported, the TCP socket carries no data after the RDMA upgrade
-    struct pollfd pfds[2] = {
+    संरचना pollfd pfds[2] = {
         { c->ch->fd, POLLIN,    0 },
         { fd,        POLLRDHUP, 0 },
     };
-    if (poll(pfds, 2, -1) < 0) {
-        return errno == EINTR;
+    यदि (poll(pfds, 2, -1) < 0) {
+        प्रत्यागम errno == EINTR;
     }
-    if (pfds[1].revents & (POLLHUP | POLLERR | POLLRDHUP)) {
-        return false;
+    यदि (pfds[1].revents & (POLLHUP | POLLERR | POLLRDHUP)) {
+        प्रत्यागम असत्य;
     }
-    if (pfds[0].revents & POLLIN) {
-        struct ibv_cq * ev_cq  = nullptr;
-        void          * ev_ctx = nullptr;
-        if (ibv_get_cq_event(c->ch, &ev_cq, &ev_ctx) != 0) {
-            return false;
+    यदि (pfds[0].revents & POLLIN) {
+        संरचना ibv_cq * ev_cq  = शून्यसूचकः;
+        शून्य          * ev_ctx = शून्यसूचकः;
+        यदि (ibv_get_cq_event(c->ch, &ev_cq, &ev_ctx) != 0) {
+            प्रत्यागम असत्य;
         }
         ibv_ack_cq_events(ev_cq, 1);
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-bool socket_t::impl::rdma_poll(struct ibv_cq * cq, struct ibv_wc * wc) {
+तार्किक socket_t::impl::rdma_poll(संरचना ibv_cq * cq, संरचना ibv_wc * wc) {
     rdma_conn * c = rdma.get();
-    bool armed = false;
-    for (uint64_t s = 1; ; s++) {
-        int n = ibv_poll_cq(cq, 1, wc);
-        if (n > 0) {
-            c->last_active = std::chrono::steady_clock::now();
-            if (wc->status != IBV_WC_SUCCESS) {
+    तार्किक armed = असत्य;
+    प्रति (uint64_t s = 1; ; s++) {
+        पूर्णाङ्क n = ibv_poll_cq(cq, 1, wc);
+        यदि (n > 0) {
+            c->चरमः_सक्रिय = std::chrono::steady_clock::now();
+            यदि (wc->स्थितिः != IBV_WC_SUCCESS) {
                 LOG_ERROR("RDMA CQ wc error: status=%d (%s) vendor_err=0x%x\n",
-                    wc->status, ibv_wc_status_str(wc->status), wc->vendor_err);
+                    wc->स्थितिः, ibv_wc_स्थितिः_str(wc->स्थितिः), wc->vendor_err);
             }
-            return wc->status == IBV_WC_SUCCESS;
+            प्रत्यागम wc->स्थितिः == IBV_WC_SUCCESS;
         }
-        if (n < 0) return false;
-        if (armed) {
+        यदि (n < 0) प्रत्यागम असत्य;
+        यदि (armed) {
             // armed and still empty: sleep until the next completion
-            if (!rdma_wait_event()) {
-                return false;
+            यदि (!rdma_wait_event()) {
+                प्रत्यागम असत्य;
             }
-            armed = false;
-            continue;
+            armed = असत्य;
+            अनुवर्त;
         }
         // spin while the connection is busy, arm the CQ once it has been idle for RDMA_SPIN_TIME
         // a completion that arrives before arming raises no event, so poll once more after arming
-        if (c->ch && (s & 0x3FF) == 0 && std::chrono::steady_clock::now() - c->last_active > RDMA_SPIN_TIME) {
-            if (ibv_req_notify_cq(cq, 0) != 0) {
-                return false;
+        यदि (c->ch && (s & 0x3FF) == 0 && std::chrono::steady_clock::now() - c->चरमः_सक्रिय > RDMA_SPIN_TIME) {
+            यदि (ibv_req_notify_cq(cq, 0) != 0) {
+                प्रत्यागम असत्य;
             }
-            armed = true;
-            continue;
+            armed = सत्य;
+            अनुवर्त;
         }
-        if ((s & 0xFFFFF) == 0) {
-            if (tcp_peer_closed()) {
-                return false;
+        यदि ((s & 0xFFFFF) == 0) {
+            यदि (tcp_peer_closed()) {
+                प्रत्यागम असत्य;
             }
         }
     }
 }
 
-bool socket_t::impl::rdma_send(const void * data, size_t size) {
+तार्किक socket_t::impl::rdma_send(ध्रुव शून्य * दत्त, size_t size) {
     rdma_conn * c = rdma.get();
-    const uint8_t * src = (const uint8_t *)data;
+    ध्रुव uint8_t * src = (ध्रुव uint8_t *)दत्त;
     size_t rem = size;
-    while (rem > 0) {
+    यावत् (rem > 0) {
         size_t chunk = std::min(rem, RDMA_CHUNK);
 
-        struct ibv_sge sge = {};
-        struct ibv_send_wr wr = {}, * bad = nullptr;
+        संरचना ibv_sge sge = {};
+        संरचना ibv_send_wr wr = {}, * bad = शून्यसूचकः;
         wr.opcode  = IBV_WR_SEND;
         wr.sg_list = &sge;
-        wr.num_sge = 1;
+        wr.अङ्कः_sge = 1;
 
-        if (chunk <= c->max_inline) {
+        यदि (chunk <= c->max_inline) {
             sge.addr   = (uintptr_t)src;
-            sge.length = chunk;
+            sge.दीर्घता = chunk;
             wr.send_flags = IBV_SEND_SIGNALED | IBV_SEND_INLINE;
-        } else {
-            memcpy(c->tx_buf, src, chunk);
+        } अन्यथा {
+            स्मृतिं_प्रतिलिख(c->tx_buf, src, chunk);
             sge.addr   = (uintptr_t)c->tx_buf;
-            sge.length = chunk;
+            sge.दीर्घता = chunk;
             sge.lkey   = c->tx_mr->lkey;
             wr.send_flags = IBV_SEND_SIGNALED;
         }
 
-        if (ibv_post_send(c->qp, &wr, &bad) != 0) return false;
-        c->last_active = std::chrono::steady_clock::now();
-        struct ibv_wc wc;
-        if (!rdma_poll(c->scq, &wc)) return false;
+        यदि (ibv_post_send(c->qp, &wr, &bad) != 0) प्रत्यागम असत्य;
+        c->चरमः_सक्रिय = std::chrono::steady_clock::now();
+        संरचना ibv_wc wc;
+        यदि (!rdma_poll(c->scq, &wc)) प्रत्यागम असत्य;
 
         src += chunk;
         rem -= chunk;
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-bool socket_t::impl::rdma_recv(void * data, size_t size) {
+तार्किक socket_t::impl::rdma_recv(शून्य * दत्त, size_t size) {
     rdma_conn * c = rdma.get();
-    uint8_t * dst = (uint8_t *)data;
+    uint8_t * dst = (uint8_t *)दत्त;
     size_t rem = size;
-    while (rem > 0) {
-        struct ibv_wc wc;
-        if (!rdma_poll(c->rcq, &wc)) return false;
+    यावत् (rem > 0) {
+        संरचना ibv_wc wc;
+        यदि (!rdma_poll(c->rcq, &wc)) प्रत्यागम असत्य;
 
-        int slot = (int)wc.wr_id;
+        पूर्णाङ्क slot = (पूर्णाङ्क)wc.wr_id;
         size_t got = wc.byte_len;
-        memcpy(dst, c->rx_slot(slot), got);
+        स्मृतिं_प्रतिलिख(dst, c->rx_slot(slot), got);
 
-        if (!c->post_rx(slot)) return false;
+        यदि (!c->post_rx(slot)) प्रत्यागम असत्य;
 
         dst += got;
         rem -= got;
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-#endif // !GGML_RPC_RDMA_APPLE (Linux RC transport)
+#यदि_अन्तः // !GGML_RPC_RDMA_APPLE (Linux RC transport)
 
-#endif // GGML_RPC_RDMA
+#यदि_अन्तः // GGML_RPC_RDMA
 
-bool socket_t::impl::send_data(const void * data, size_t size) {
-    LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_size(size).c_str());
-#ifdef GGML_RPC_RDMA_APPLE
-    if (use_rdma) {
-        return rdma->send(data, size);
+तार्किक socket_t::impl::send_दत्त(ध्रुव शून्य * दत्त, size_t size) {
+    LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_आकार(size).c_str());
+#यदि_परिभाषितम् GGML_RPC_RDMA_APPLE
+    यदि (use_rdma) {
+        प्रत्यागम rdma->send(दत्त, size);
     }
-#elif defined(GGML_RPC_RDMA)
-    if (use_rdma) {
-        return rdma_send(data, size);
+#नोचेद्यदि defined(GGML_RPC_RDMA)
+    यदि (use_rdma) {
+        प्रत्यागम rdma_send(दत्त, size);
     }
-#endif
-    size_t bytes_sent = 0;
-    while (bytes_sent < size) {
-        size_t size_to_send = std::min(size - bytes_sent, MAX_CHUNK_SIZE);
-        ssize_t n = send(fd, (const char *)data + bytes_sent, size_to_send, 0);
-        if (n < 0) {
+#यदि_अन्तः
+    size_t अष्टकानि_प्रेषितम् = 0;
+    यावत् (अष्टकानि_प्रेषितम् < size) {
+        size_t आकार_गन्तव्यम्_send = std::min(size - अष्टकानि_प्रेषितम्, MAX_CHUNK_आकार);
+        ssize_t n = send(fd, (ध्रुव वर्ण *)दत्त + अष्टकानि_प्रेषितम्, आकार_गन्तव्यम्_send, 0);
+        यदि (n < 0) {
             LOG_ERROR("send failed (bytes_sent=%zu, size_to_send=%zu)\n",
-                           bytes_sent, size_to_send);
-            return false;
+                           अष्टकानि_प्रेषितम्, आकार_गन्तव्यम्_send);
+            प्रत्यागम असत्य;
         }
-        bytes_sent += (size_t)n;
+        अष्टकानि_प्रेषितम् += (size_t)n;
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-bool socket_t::impl::recv_data(void * data, size_t size) {
-    LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_size(size).c_str());
-#ifdef GGML_RPC_RDMA_APPLE
-    if (use_rdma) {
-        return rdma->recv(data, size);
+तार्किक socket_t::impl::recv_दत्त(शून्य * दत्त, size_t size) {
+    LOG_DBG3("[%s] transport: %s, size: %s\n", __func__, use_rdma ? "RDMA" : "TCP", rpc_log_format_आकार(size).c_str());
+#यदि_परिभाषितम् GGML_RPC_RDMA_APPLE
+    यदि (use_rdma) {
+        प्रत्यागम rdma->recv(दत्त, size);
     }
-#elif defined(GGML_RPC_RDMA)
-    if (use_rdma) {
-        return rdma_recv(data, size);
+#नोचेद्यदि defined(GGML_RPC_RDMA)
+    यदि (use_rdma) {
+        प्रत्यागम rdma_recv(दत्त, size);
     }
-#endif
-    size_t bytes_recv = 0;
-    while (bytes_recv < size) {
-        size_t size_to_recv = std::min(size - bytes_recv, MAX_CHUNK_SIZE);
-        ssize_t n = recv(fd, (char *)data + bytes_recv, size_to_recv, 0);
-        if (n < 0) {
+#यदि_अन्तः
+    size_t अष्टकानि_recv = 0;
+    यावत् (अष्टकानि_recv < size) {
+        size_t आकार_गन्तव्यम्_recv = std::min(size - अष्टकानि_recv, MAX_CHUNK_आकार);
+        ssize_t n = recv(fd, (वर्ण *)दत्त + अष्टकानि_recv, आकार_गन्तव्यम्_recv, 0);
+        यदि (n < 0) {
             LOG_ERROR("recv failed (bytes_recv=%zu, size_to_recv=%zu)\n",
-                           bytes_recv, size_to_recv);
-            return false;
+                           अष्टकानि_recv, आकार_गन्तव्यम्_recv);
+            प्रत्यागम असत्य;
         }
-        if (n == 0) {
+        यदि (n == 0) {
             LOG_WARN("recv returned 0 (peer closed?)\n");
-            return false;
+            प्रत्यागम असत्य;
         }
-        bytes_recv += (size_t)n;
+        अष्टकानि_recv += (size_t)n;
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-void socket_t::impl::get_caps(uint8_t * local_caps) {
-    memset(local_caps, 0, RPC_CONN_CAPS_SIZE);
-#ifdef GGML_RPC_RDMA
-    if (std::getenv("GGML_RPC_NO_RDMA")) {
-        return;
+शून्य socket_t::impl::get_caps(uint8_t * local_caps) {
+    स्मृतिं_पूरय(local_caps, 0, RPC_CONN_CAPS_आकार);
+#यदि_परिभाषितम् GGML_RPC_RDMA
+    यदि (std::getenv("GGML_RPC_NO_RDMA")) {
+        प्रत्यागम;
     }
 #  ifdef GGML_RPC_RDMA_APPLE
-    auto target_gid = rdma_build_target_gid();
-    if (target_gid) {
-        rdma = apple_rdma::probe(fd, target_gid->data(), local_caps);
+    स्वचालित target_gid = rdma_build_target_gid();
+    यदि (target_gid) {
+        rdma = apple_rdma::probe(fd, target_gid->दत्त(), local_caps);
     }
-    if (!rdma) {
+    यदि (!rdma) {
         LOG_DBG2("[%s] RDMA probe failed, continuing with TCP\n", __func__);
     }
-#  else
+#  अन्यथा
     rdma_local = {};
-    if (rdma_probe()) {
+    यदि (rdma_probe()) {
         rdma_caps rc = {};
         rc.qpn = rdma_local.qpn;
         rc.psn = rdma_local.psn;
-        memcpy(rc.gid, rdma_local.gid, RDMA_GID_SIZE);
-        memcpy(local_caps, &rc, sizeof(rc));
-    } else {
+        स्मृतिं_प्रतिलिख(rc.gid, rdma_local.gid, RDMA_GID_आकार);
+        स्मृतिं_प्रतिलिख(local_caps, &rc, परिमाण(rc));
+    } अन्यथा {
         rdma.reset();
         LOG_DBG2("[%s] RDMA probe failed, continuing with TCP\n", __func__);
     }
 #  endif
-#endif // GGML_RPC_RDMA
+#यदि_अन्तः // GGML_RPC_RDMA
 }
 
-void socket_t::impl::update_caps(const uint8_t * remote_caps) {
-#ifdef GGML_RPC_RDMA
+शून्य socket_t::impl::update_caps(ध्रुव uint8_t * remote_caps) {
+#यदि_परिभाषितम् GGML_RPC_RDMA
     // a peer that has no RDMA advertises all-zero caps and takes no further part
     // in the negotiation, so drop to TCP without reporting a failure
-    bool remote_rdma = false;
-    for (size_t i = 0; i < RPC_CONN_CAPS_SIZE; i++) {
+    तार्किक remote_rdma = असत्य;
+    प्रति (size_t i = 0; i < RPC_CONN_CAPS_आकार; i++) {
         remote_rdma |= remote_caps[i] != 0;
     }
-    if (!rdma || !remote_rdma) {
-        if (rdma && !remote_rdma) {
+    यदि (!rdma || !remote_rdma) {
+        यदि (rdma && !remote_rdma) {
             LOG_WARN("[%s] peer does not support RDMA, continuing with TCP\n", __func__);
         }
         rdma.reset();
-        return;
+        प्रत्यागम;
     }
 #  ifdef GGML_RPC_RDMA_APPLE
-    bool activated = rdma->activate(remote_caps);
-#  else
+    तार्किक activated = rdma->activate(remote_caps);
+#  अन्यथा
     rdma_caps rc = {};
-    memcpy(&rc, remote_caps, sizeof(rc));
-    bool activated = rdma_activate(rc.qpn, rc.psn, rc.gid);
+    स्मृतिं_प्रतिलिख(&rc, remote_caps, परिमाण(rc));
+    तार्किक activated = rdma_activate(rc.qpn, rc.psn, rc.gid);
 #  endif
-    if (activated) {
-        use_rdma = true;
-    } else {
+    यदि (activated) {
+        use_rdma = सत्य;
+    } अन्यथा {
         LOG_WARN("RDMA activate failed, staying on TCP\n");
         rdma.reset();
     }
-#else
-    (void)remote_caps;
-#endif // GGML_RPC_RDMA
+#अन्यथा
+    (शून्य)remote_caps;
+#यदि_अन्तः // GGML_RPC_RDMA
 }
 
-bool socket_t::impl::flush() {
-#ifdef GGML_RPC_RDMA_APPLE
-    if (use_rdma) {
-        return rdma->flush();
+तार्किक socket_t::impl::flush() {
+#यदि_परिभाषितम् GGML_RPC_RDMA_APPLE
+    यदि (use_rdma) {
+        प्रत्यागम rdma->flush();
     }
-#endif
-    return true;
+#यदि_अन्तः
+    प्रत्यागम सत्य;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 socket_t::socket_t(std::unique_ptr<impl> p) : pimpl(std::move(p)) {}
 
-socket_t::~socket_t() = default;
+socket_t::~socket_t() = स्वभाव;
 
-bool socket_t::send_data(const void * data, size_t size) {
-    return pimpl->send_data(data, size);
+तार्किक socket_t::send_दत्त(ध्रुव शून्य * दत्त, size_t size) {
+    प्रत्यागम pimpl->send_दत्त(दत्त, size);
 }
 
-bool socket_t::recv_data(void * data, size_t size) {
-    return pimpl->recv_data(data, size);
+तार्किक socket_t::recv_दत्त(शून्य * दत्त, size_t size) {
+    प्रत्यागम pimpl->recv_दत्त(दत्त, size);
 }
 
-bool socket_t::flush() {
-    return pimpl->flush();
+तार्किक socket_t::flush() {
+    प्रत्यागम pimpl->flush();
 }
 
-void socket_t::get_caps(uint8_t * local_caps) {
-    return pimpl->get_caps(local_caps);
+शून्य socket_t::get_caps(uint8_t * local_caps) {
+    प्रत्यागम pimpl->get_caps(local_caps);
 }
 
-void socket_t::update_caps(const uint8_t * remote_caps) {
-    return pimpl->update_caps(remote_caps);
+शून्य socket_t::update_caps(ध्रुव uint8_t * remote_caps) {
+    प्रत्यागम pimpl->update_caps(remote_caps);
 }
 
-const char * socket_t::transport_name() const {
-    return pimpl->use_rdma ? "RDMA" : "TCP";
+ध्रुव वर्ण * socket_t::transport_name() ध्रुव {
+    प्रत्यागम pimpl->use_rdma ? "RDMA" : "TCP";
 }
 
-static bool is_valid_fd(sockfd_t sockfd) {
-#ifdef _WIN32
-    return sockfd != INVALID_SOCKET;
-#else
-    return sockfd >= 0;
-#endif
+स्थिर तार्किक is_valid_fd(sockfd_t sockfd) {
+#यदि_परिभाषितम् _WIN32
+    प्रत्यागम sockfd != INVALID_SOCKET;
+#अन्यथा
+    प्रत्यागम sockfd >= 0;
+#यदि_अन्तः
 }
 
-static bool set_no_delay(sockfd_t sockfd) {
-    int flag = 1;
+स्थिर तार्किक समुच्चयः_no_delay(sockfd_t sockfd) {
+    पूर्णाङ्क flag = 1;
     // set TCP_NODELAY to disable Nagle's algorithm
-    int ret = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
-    return ret == 0;
+    पूर्णाङ्क ret = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (वर्ण *)&flag, परिमाण(पूर्णाङ्क));
+    प्रत्यागम ret == 0;
 }
 
-static bool set_reuse_addr(sockfd_t sockfd) {
-    int flag = 1;
-    int ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char *)&flag, sizeof(int));
-    return ret == 0;
+स्थिर तार्किक समुच्चयः_reuse_addr(sockfd_t sockfd) {
+    पूर्णाङ्क flag = 1;
+    पूर्णाङ्क ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (वर्ण *)&flag, परिमाण(पूर्णाङ्क));
+    प्रत्यागम ret == 0;
 }
 
 socket_ptr socket_t::accept() {
-    auto client_socket_fd = ::accept(pimpl->fd, NULL, NULL);
-    if (!is_valid_fd(client_socket_fd)) {
-        return nullptr;
+    स्वचालित client_socket_fd = ::accept(pimpl->fd, रिक्त, रिक्त);
+    यदि (!is_valid_fd(client_socket_fd)) {
+        प्रत्यागम शून्यसूचकः;
     }
-    if (!set_no_delay(client_socket_fd)) {
+    यदि (!समुच्चयः_no_delay(client_socket_fd)) {
         LOG_ERROR("Failed to set TCP_NODELAY\n");
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
     LOG_DBG("[%s] accepted client connection\n", __func__);
-    return socket_ptr(new socket_t(std::make_unique<impl>(client_socket_fd)));
+    प्रत्यागम socket_ptr(नूतन socket_t(std::make_unique<impl>(client_socket_fd)));
 }
 
-socket_ptr socket_t::create_server(const char * host, int port) {
-    auto sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (!is_valid_fd(sockfd)) {
-        return nullptr;
+socket_ptr socket_t::create_server(ध्रुव वर्ण * host, पूर्णाङ्क पत्तनम्) {
+    स्वचालित sockfd = socket(AF_INET, SOCK_प्रवाहः, 0);
+    यदि (!is_valid_fd(sockfd)) {
+        प्रत्यागम शून्यसूचकः;
     }
-    if (!set_reuse_addr(sockfd)) {
+    यदि (!समुच्चयः_reuse_addr(sockfd)) {
         LOG_ERROR("Failed to set SO_REUSEADDR\n");
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
-    if (inet_addr(host) == INADDR_NONE) {
+    यदि (inet_addr(host) == INADDR_NONE) {
         LOG_ERROR("Invalid host address: %s\n", host);
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
-    struct sockaddr_in serv_addr;
+    संरचना sockaddr_अन्तर् serv_addr;
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(host);
-    serv_addr.sin_port = htons(port);
+    serv_addr.sin_पत्तनम् = htons(पत्तनम्);
 
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        return nullptr;
+    यदि (bind(sockfd, (संरचना sockaddr *) &serv_addr, परिमाण(serv_addr)) < 0) {
+        प्रत्यागम शून्यसूचकः;
     }
-    if (listen(sockfd, 1) < 0) {
-        return nullptr;
+    यदि (listen(sockfd, 1) < 0) {
+        प्रत्यागम शून्यसूचकः;
     }
-    LOG_DBG("[%s] listening on %s:%d\n", __func__, host, port);
-    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
+    LOG_DBG("[%s] listening on %s:%d\n", __func__, host, पत्तनम्);
+    प्रत्यागम socket_ptr(नूतन socket_t(std::make_unique<impl>(sockfd)));
 }
 
-socket_ptr socket_t::connect(const char * host, int port) {
-    auto sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (!is_valid_fd(sockfd)) {
-        return nullptr;
+socket_ptr socket_t::connect(ध्रुव वर्ण * host, पूर्णाङ्क पत्तनम्) {
+    स्वचालित sockfd = socket(AF_INET, SOCK_प्रवाहः, 0);
+    यदि (!is_valid_fd(sockfd)) {
+        प्रत्यागम शून्यसूचकः;
     }
-    if (!set_no_delay(sockfd)) {
+    यदि (!समुच्चयः_no_delay(sockfd)) {
         LOG_ERROR("Failed to set TCP_NODELAY\n");
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
-    struct sockaddr_in addr;
+    संरचना sockaddr_अन्तर् addr;
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    struct hostent * server = gethostbyname(host);
-    if (server == NULL) {
+    addr.sin_पत्तनम् = htons(पत्तनम्);
+    संरचना hostent * server = gethostbyname(host);
+    यदि (server == रिक्त) {
         LOG_ERROR("Cannot resolve host '%s'\n", host);
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
-    memcpy(&addr.sin_addr.s_addr, server->h_addr, server->h_length);
-    if (::connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        return nullptr;
+    स्मृतिं_प्रतिलिख(&addr.sin_addr.s_addr, server->h_addr, server->h_दीर्घता);
+    यदि (::connect(sockfd, (संरचना sockaddr *)&addr, परिमाण(addr)) < 0) {
+        प्रत्यागम शून्यसूचकः;
     }
-    LOG_DBG("[%s] connected to %s:%d\n", __func__, host, port);
-    return socket_ptr(new socket_t(std::make_unique<impl>(sockfd)));
+    LOG_DBG("[%s] connected to %s:%d\n", __func__, host, पत्तनम्);
+    प्रत्यागम socket_ptr(नूतन socket_t(std::make_unique<impl>(sockfd)));
 }
 
-#ifdef _WIN32
-static std::mutex g_rpc_transport_mu;
-static bool g_rpc_transport_wsa_started = false;
-#endif
+#यदि_परिभाषितम् _WIN32
+स्थिर std::mutex g_rpc_transport_mu;
+स्थिर तार्किक g_rpc_transport_wsa_started = असत्य;
+#यदि_अन्तः
 
-bool rpc_transport_init() {
-#ifdef _WIN32
-    std::lock_guard<std::mutex> lock(g_rpc_transport_mu);
-    if (g_rpc_transport_wsa_started) {
-        return true;
+तार्किक rpc_transport_init() {
+#यदि_परिभाषितम् _WIN32
+    std::lock_guard<std::mutex> तालकम्(g_rpc_transport_mu);
+    यदि (g_rpc_transport_wsa_started) {
+        प्रत्यागम सत्य;
     }
-    WSADATA wsaData;
-    int res = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (res != 0) {
-        return false;
+    WSADATA wsa_दत्त;
+    पूर्णाङ्क res = WSAStartup(MAKEWORD(2, 2), &wsa_दत्त);
+    यदि (res != 0) {
+        प्रत्यागम असत्य;
     }
-    g_rpc_transport_wsa_started = true;
-    return true;
-#else
-    return true;
-#endif
+    g_rpc_transport_wsa_started = सत्य;
+    प्रत्यागम सत्य;
+#अन्यथा
+    प्रत्यागम सत्य;
+#यदि_अन्तः
 }
 
-void rpc_transport_shutdown() {
-#ifdef _WIN32
-    std::lock_guard<std::mutex> lock(g_rpc_transport_mu);
-    if (!g_rpc_transport_wsa_started) {
-        return;
+शून्य rpc_transport_shutdown() {
+#यदि_परिभाषितम् _WIN32
+    std::lock_guard<std::mutex> तालकम्(g_rpc_transport_mu);
+    यदि (!g_rpc_transport_wsa_started) {
+        प्रत्यागम;
     }
     WSACleanup();
-    g_rpc_transport_wsa_started = false;
-#endif
+    g_rpc_transport_wsa_started = असत्य;
+#यदि_अन्तः
 }

@@ -1,20 +1,20 @@
-#ifndef HTP_DCACHE_H
-#define HTP_DCACHE_H
+#यदि_अपरिभाषितम् HTP_DCACHE_H
+#परिभाषय HTP_DCACHE_H
 
-#include <stdint.h>
-#include "htp-ops.h"
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव "htp-ops.h"
 
-#define HTP_MAX_DIRTY_RANGES 64
+#परिभाषय HTP_MAX_DIRTY_RANGES 64
 
-struct htp_dirty_range {
+संरचना htp_dirty_range {
     uint32_t start;
-    uint32_t end;
+    uint32_t अन्तः_2;
 };
 
-struct htp_context;
+संरचना htp_context;
 
-void htp_dcache_flush_dirty_ranges(struct htp_context * ctx);
-void htp_dcache_flush_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n);
-void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n);
+शून्य htp_dcache_flush_dirty_ranges(संरचना htp_context * ctx);
+शून्य htp_dcache_flush_dirty_tensors(संरचना htp_context * ctx, ध्रुव संरचना htp_tensor * ध्रुव * tensors, uint32_t n);
+शून्य htp_dcache_mark_dirty_tensors(संरचना htp_context * ctx, ध्रुव संरचना htp_tensor * ध्रुव * tensors, uint32_t n);
 
-#endif // HTP_DCACHE_H
+#यदि_अन्तः // HTP_DCACHE_H

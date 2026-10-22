@@ -1,134 +1,134 @@
 // SPDX-FileCopyrightText: Copyright 2025-2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
 // SPDX-License-Identifier: MIT
 //
-#include <arm_neon.h>
-#include <cassert>
-#include <cstdio>
-#include <cstdlib>
-#include <atomic>
-#include <cfloat>
-#include <cctype>
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
-#include <stdint.h>
-#include <string.h>
-#include <string>
-#include <vector>
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <fstream>
-#include <map>
-#include <iostream>
-#include <climits>
-#include <charconv>
-#include <system_error>
-#if defined(__linux__)
-#include <asm/hwcap.h>
-#include <dirent.h>
-#include <sys/auxv.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#elif defined(__APPLE__)
-#include <sys/sysctl.h>
-#include <sys/types.h>
-#endif
+#अन्तर्भाव <arm_neon.h>
+#अन्तर्भाव <cassert>
+#अन्तर्भाव <cstdio>
+#अन्तर्भाव <cstdlib>
+#अन्तर्भाव <atomic>
+#अन्तर्भाव <cfloat>
+#अन्तर्भाव <cctype>
+#अन्तर्भाव <algorithm>
+#अन्तर्भाव <cmath>
+#अन्तर्भाव <stdexcept>
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <string.h>
+#अन्तर्भाव <string>
+#अन्तर्भाव <vector>
+#अन्तर्भाव <array>
+#अन्तर्भाव <cstddef>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <fstream>
+#अन्तर्भाव <map>
+#अन्तर्भाव <iostream>
+#अन्तर्भाव <climits>
+#अन्तर्भाव <charconv>
+#अन्तर्भाव <system_error>
+#यदि defined(__linux__)
+#अन्तर्भाव <asm/hwcap.h>
+#अन्तर्भाव <dirent.h>
+#अन्तर्भाव <sys/auxv.h>
+#अन्तर्भाव <sys/types.h>
+#अन्तर्भाव <sys/stat.h>
+#अन्तर्भाव <unistd.h>
+#नोचेद्यदि defined(__APPLE__)
+#अन्तर्भाव <sys/sysctl.h>
+#अन्तर्भाव <sys/types.h>
+#यदि_अन्तः
 
-#include "kleidiai.h"
+#अन्तर्भाव "kleidiai.h"
 
-#include "ggml-cpu.h"
-#include "ggml-cpu-impl.h"
-#include "ggml-impl.h"
-#include "ggml-feats.h"
-#include "ggml-backend-impl.h"
-#include "ggml-quants.h"
-#include "ggml-threading.h"
-#include "traits.h"
+#अन्तर्भाव "ggml-cpu.h"
+#अन्तर्भाव "ggml-cpu-impl.h"
+#अन्तर्भाव "ggml-impl.h"
+#अन्तर्भाव "ggml-feats.h"
+#अन्तर्भाव "ggml-backend-impl.h"
+#अन्तर्भाव "ggml-quants.h"
+#अन्तर्भाव "ggml-threading.h"
+#अन्तर्भाव "traits.h"
 
-#include "kernels.h"
+#अन्तर्भाव "kernels.h"
 
-#include "kai/kai_common.h"
+#अन्तर्भाव "kai/kai_common.h"
 
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
+#परिभाषय GGML_COMMON_DECL_CPP
+#अन्तर्भाव "ggml-common.h"
 
-static constexpr int      GGML_KLEIDIAI_MAX_KERNEL_SLOTS = 2;
-static constexpr uint32_t GGML_KLEIDIAI_PACK_MAGIC       = 0x4b4c4149; // "KLAI"
-static constexpr uint16_t GGML_KLEIDIAI_PACK_VERSION     = 1;
-static constexpr size_t   GGML_KLEIDIAI_PACK_ALIGN       = 64;
-static constexpr size_t   GGML_KLEIDIAI_Q4_K_BL          = QK_K / 8;
+स्थिर constexpr पूर्णाङ्क      GGML_KLEIDIAI_MAX_KERNEL_SLOTS = 2;
+स्थिर constexpr uint32_t GGML_KLEIDIAI_PACK_MAGIC       = 0x4b4c4149; // "KLAI"
+स्थिर constexpr uint16_t GGML_KLEIDIAI_PACK_संस्करणम्     = 1;
+स्थिर constexpr size_t   GGML_KLEIDIAI_PACK_ALIGN       = 64;
+स्थिर constexpr size_t   GGML_KLEIDIAI_Q4_K_BL          = QK_K / 8;
 
 static_assert(QK_K == 256, "KleidiAI Q4_K kernels require 256-value super-blocks");
 
-struct ggml_kleidiai_context {
+संरचना ggml_kleidiai_context {
     cpu_feature features;
     ggml_kleidiai_kernels * kernels_q4;
     ggml_kleidiai_kernels * kernels_q4k;
     ggml_kleidiai_kernels * kernels_q8;
     ggml_kleidiai_kernels * kernels_f32;
-    int sme_thread_cap; // <= 0 means "SME disabled/unknown"
-    int thread_hint;    // <= 0 means "no hint"
-    int chunk_multiplier;
-} static ctx = { CPU_FEATURE_NONE, nullptr, nullptr, nullptr, nullptr, 0, -1, 4 };
+    पूर्णाङ्क sme_thread_cap; // <= 0 means "SME disabled/unknown"
+    पूर्णाङ्क thread_hint;    // <= 0 means "no hint"
+    पूर्णाङ्क chunk_multiplier;
+} स्थिर ctx = { CPU_FEATURE_NONE, शून्यसूचकः, शून्यसूचकः, शून्यसूचकः, शून्यसूचकः, 0, -1, 4 };
 
-static inline bool is_sme_family(cpu_feature f) {
-    return (f & (CPU_FEATURE_SME | CPU_FEATURE_SME2)) != CPU_FEATURE_NONE;
+स्थिर अन्तःस्थ तार्किक is_sme_family(cpu_feature f) {
+    प्रत्यागम (f & (CPU_FEATURE_SME | CPU_FEATURE_SME2)) != CPU_FEATURE_NONE;
 }
 
-static const char* cpu_feature_to_string(cpu_feature f) {
-    if (f == CPU_FEATURE_NONE) {
-        return "NONE";
-    } else if ((f & CPU_FEATURE_SME2) == CPU_FEATURE_SME2) {
-        return "SME2";
-    } else if ((f & CPU_FEATURE_SME) == CPU_FEATURE_SME) {
-        return "SME";
-    } else if ((f & CPU_FEATURE_SVE) == CPU_FEATURE_SVE) {
-        return "SVE";
+स्थिर ध्रुव वर्ण* cpu_feature_गन्तव्यम्_string(cpu_feature f) {
+    यदि (f == CPU_FEATURE_NONE) {
+        प्रत्यागम "NONE";
+    } अन्यथा यदि ((f & CPU_FEATURE_SME2) == CPU_FEATURE_SME2) {
+        प्रत्यागम "SME2";
+    } अन्यथा यदि ((f & CPU_FEATURE_SME) == CPU_FEATURE_SME) {
+        प्रत्यागम "SME";
+    } अन्यथा यदि ((f & CPU_FEATURE_SVE) == CPU_FEATURE_SVE) {
+        प्रत्यागम "SVE";
     }
-    else if ((f & CPU_FEATURE_I8MM) == CPU_FEATURE_I8MM) {
-        return "I8MM";
-    } else if ((f & CPU_FEATURE_DOTPROD) == CPU_FEATURE_DOTPROD) {
-        return "DOTPROD";
+    अन्यथा यदि ((f & CPU_FEATURE_I8MM) == CPU_FEATURE_I8MM) {
+        प्रत्यागम "I8MM";
+    } अन्यथा यदि ((f & CPU_FEATURE_DOTPROD) == CPU_FEATURE_DOTPROD) {
+        प्रत्यागम "DOTPROD";
     }
-    else {
-        return "UNKNOWN";
+    अन्यथा {
+        प्रत्यागम "UNKNOWN";
     }
 }
 
-#if defined(__linux__) && defined(__aarch64__)
-static bool parse_cpu_dir_name(const char* name, size_t* cpu) {
-    if (strncmp(name, "cpu", 3) != 0 ||
+#यदि defined(__linux__) && defined(__aarch64__)
+स्थिर तार्किक parse_cpu_dir_name(ध्रुव वर्ण* name, size_t* cpu) {
+    यदि (वाक्ये_तुलय(name, "cpu", 3) != 0 ||
         name[3] < '0' || name[3] > '9') {
-        return false;
+        प्रत्यागम असत्य;
     }
 
-    const char* first = name + 3;
-    const char* last = name + strlen(name);
+    ध्रुव वर्ण* first = name + 3;
+    ध्रुव वर्ण* चरमः = name + वाक्यदैर्घ्यम्(name);
 
     size_t value = 0;
-    const auto [end, ec] = std::from_chars(first, last, value, 10);
+    ध्रुव स्वचालित [end, ec] = std::from_chars(first, चरमः, value, 10);
 
-    if (ec != std::errc{} || end != last) {
-        return false;
+    यदि (ec != std::errc{} || end != चरमः) {
+        प्रत्यागम असत्य;
     }
 
     *cpu = value;
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static std::vector<size_t> detect_cpu_ids() {
+स्थिर std::vector<size_t> detect_cpu_ids() {
     std::vector<size_t> cpus;
 
     DIR * dir = opendir("/sys/devices/system/cpu");
-    if (dir == nullptr) {
-        return cpus;
+    यदि (dir == शून्यसूचकः) {
+        प्रत्यागम cpus;
     }
 
-    while (dirent * entry = readdir(dir)) {
+    यावत् (dirent * प्रविष्टिः = readdir(dir)) {
         size_t cpu = 0;
-        if (parse_cpu_dir_name(entry->d_name, &cpu)) {
+        यदि (parse_cpu_dir_name(प्रविष्टिः->d_name, &cpu)) {
             cpus.push_back(cpu);
         }
     }
@@ -136,186 +136,186 @@ static std::vector<size_t> detect_cpu_ids() {
 
     std::sort(cpus.begin(), cpus.end());
     cpus.erase(std::unique(cpus.begin(), cpus.end()), cpus.end());
-    return cpus;
+    प्रत्यागम cpus;
 }
-#endif
+#यदि_अन्तः
 
-#if defined(__APPLE__) && defined(__aarch64__)
-static bool apple_sme_counted_perf_level(std::string name) {
-    for (std::string::size_type i = 0; i < name.size(); ++i) {
-        name[i] = (char) std::tolower((unsigned char) name[i]);
+#यदि defined(__APPLE__) && defined(__aarch64__)
+स्थिर तार्किक apple_sme_counted_perf_level(std::string name) {
+    प्रति (std::string::size_type i = 0; i < name.size(); ++i) {
+        name[i] = (वर्ण) std::tolower((अचिह्नित वर्ण) name[i]);
     }
 
     // Conservative ceiling: only count perf-level names observed to provide full SME throughput.
     // Future names should be calibrated here before they raise the automatic SME thread cap.
-    return name.find("super") != std::string::npos ||
+    प्रत्यागम name.find("super") != std::string::npos ||
            name.find("performance") != std::string::npos;
 }
-#endif
+#यदि_अन्तः
 
-static void add_smcus_from_smidr(uint64_t smidr, size_t & num_private, std::map<uint32_t, size_t> & shared_counts) {
+स्थिर शून्य सङ्कलय_smcus_from_smidr(uint64_t smidr, size_t & अङ्कः_वैयक्तिकम्, std::map<uint32_t, size_t> & shared_counts) {
     // Arm ARM: SMIDR_EL1. SH==0 is implementation-defined; keep the existing
     // conservative policy and only treat zero affinity as private.
-    const uint32_t sh = (uint32_t)((smidr >> 13) & 0x3);
-    const uint32_t nsmc = (uint32_t)((smidr >> 56) & 0xF);
-    const size_t shared_count = nsmc == 0xF ? 1 : (size_t)nsmc + 1;
-    const uint32_t affinity = (uint32_t)(smidr & 0xFFFu);
-    const uint32_t affinity2 = (uint32_t)((smidr >> 32) & 0xFFFFFu);
-    const uint32_t id = (affinity2 << 12) | affinity;
+    ध्रुव uint32_t sh = (uint32_t)((smidr >> 13) & 0x3);
+    ध्रुव uint32_t nsmc = (uint32_t)((smidr >> 56) & 0xF);
+    ध्रुव size_t shared_गणनम् = nsmc == 0xF ? 1 : (size_t)nsmc + 1;
+    ध्रुव uint32_t affinity = (uint32_t)(smidr & 0xFFFu);
+    ध्रुव uint32_t affinity2 = (uint32_t)((smidr >> 32) & 0xFFFFFu);
+    ध्रुव uint32_t id = (affinity2 << 12) | affinity;
 
-    if (nsmc == 0xF) {
+    यदि (nsmc == 0xF) {
         GGML_LOG_WARN("kleidiai: NSMC detected as 0xF indicating reseved value, setting min safe shared SMCU count to 1");
     }
 
-    switch (sh) {
-        case 2: // private SMCU
-            ++num_private;
-            break;
-        case 3: // shared SMCU
-            if (shared_counts[id] < shared_count) {
-                shared_counts[id] = shared_count;
+    विकल्प (sh) {
+        पक्ष 2: // private SMCU
+            ++अङ्कः_वैयक्तिकम्;
+            भङ्ग;
+        पक्ष 3: // shared SMCU
+            यदि (shared_counts[id] < shared_गणनम्) {
+                shared_counts[id] = shared_गणनम्;
             }
-            break;
-        case 0:
-            if (id == 0) {
-                ++num_private;
-            } else if (shared_counts[id] < shared_count) {
-                shared_counts[id] = shared_count;
+            भङ्ग;
+        पक्ष 0:
+            यदि (id == 0) {
+                ++अङ्कः_वैयक्तिकम्;
+            } अन्यथा यदि (shared_counts[id] < shared_गणनम्) {
+                shared_counts[id] = shared_गणनम्;
             }
-            break;
-        default:
-            break;
+            भङ्ग;
+        स्वभाव:
+            भङ्ग;
     }
 }
 
-static size_t detect_num_smcus() {
-    const auto runtime_feat = ggml_feats_get_arch64_runtime();
-    if (!runtime_feat.has_sme) {
-        return 0;
+स्थिर size_t detect_अङ्कः_smcus() {
+    ध्रुव स्वचालित runtime_feat = ggml_feats_get_arch64_runtime();
+    यदि (!runtime_feat.has_sme) {
+        प्रत्यागम 0;
     }
 
-#if defined(__linux__) && defined(__aarch64__)
+#यदि defined(__linux__) && defined(__aarch64__)
     // Linux/aarch64: Best-effort count of Streaming Mode Compute Units (SMCUs) via SMIDR_EL1 sysfs.
-    size_t num_private = 0;
+    size_t अङ्कः_वैयक्तिकम् = 0;
     std::map<uint32_t, size_t> shared_counts;
 
-    const std::vector<size_t> cpus = detect_cpu_ids();
-    for (const size_t cpu : cpus) {
-        const std::string path =
+    ध्रुव std::vector<size_t> cpus = detect_cpu_ids();
+    प्रति (ध्रुव size_t cpu : cpus) {
+        ध्रुव std::string path =
             "/sys/devices/system/cpu/cpu" + std::to_string(cpu) +
             "/regs/identification/smidr_el1";
 
         std::ifstream file(path);
-        if (!file.is_open()) {
-            continue;
+        यदि (!file.is_open()) {
+            अनुवर्त;
         }
 
         uint64_t smidr = 0;
-        if (!(file >> std::hex >> smidr)) {
-            continue;
+        यदि (!(file >> std::hex >> smidr)) {
+            अनुवर्त;
         }
 
-        add_smcus_from_smidr(smidr, num_private, shared_counts);
+        सङ्कलय_smcus_from_smidr(smidr, अङ्कः_वैयक्तिकम्, shared_counts);
     }
 
-    size_t total = num_private;
-    for (const auto & entry : shared_counts) {
-        total += entry.second;
+    size_t योग = अङ्कः_वैयक्तिकम्;
+    प्रति (ध्रुव स्वचालित & प्रविष्टिः : shared_counts) {
+        योग += प्रविष्टिः.second;
     }
-    return total;
+    प्रत्यागम योग;
 
-#elif defined(__APPLE__) && defined(__aarch64__)
-    int perf_levels = 0;
-    size_t size = sizeof(perf_levels);
-    if (sysctlbyname("hw.nperflevels", &perf_levels, &size, nullptr, 0) != 0 ||
-        size != sizeof(perf_levels) || perf_levels <= 0) {
-        return 0;
+#नोचेद्यदि defined(__APPLE__) && defined(__aarch64__)
+    पूर्णाङ्क perf_स्तराः = 0;
+    size_t size = परिमाण(perf_स्तराः);
+    यदि (sysctlbyname("hw.nperflevels", &perf_स्तराः, &size, शून्यसूचकः, 0) != 0 ||
+        size != परिमाण(perf_स्तराः) || perf_स्तराः <= 0) {
+        प्रत्यागम 0;
     }
 
     size_t units = 0;
-    for (int i = 0; i < perf_levels; ++i) {
-        char key[64] = {};
-        int physical_cpus = 0;
-        int cpus_per_l2 = 0;
+    प्रति (पूर्णाङ्क i = 0; i < perf_स्तराः; ++i) {
+        वर्ण कुञ्चिका[64] = {};
+        पूर्णाङ्क physical_cpus = 0;
+        पूर्णाङ्क cpus_प्रत्येकम्_l2 = 0;
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.physicalcpu", i);
-        size = sizeof(physical_cpus);
-        if (sysctlbyname(key, &physical_cpus, &size, nullptr, 0) != 0 ||
-            size != sizeof(physical_cpus) || physical_cpus <= 0) {
-            continue;
+        snprintf(कुञ्चिका, परिमाण(कुञ्चिका), "hw.perflevel%d.physicalcpu", i);
+        size = परिमाण(physical_cpus);
+        यदि (sysctlbyname(कुञ्चिका, &physical_cpus, &size, शून्यसूचकः, 0) != 0 ||
+            size != परिमाण(physical_cpus) || physical_cpus <= 0) {
+            अनुवर्त;
         }
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.cpusperl2", i);
-        size = sizeof(cpus_per_l2);
-        if (sysctlbyname(key, &cpus_per_l2, &size, nullptr, 0) != 0 ||
-            size != sizeof(cpus_per_l2) || cpus_per_l2 <= 0) {
-            continue;
+        snprintf(कुञ्चिका, परिमाण(कुञ्चिका), "hw.perflevel%d.cpusperl2", i);
+        size = परिमाण(cpus_प्रत्येकम्_l2);
+        यदि (sysctlbyname(कुञ्चिका, &cpus_प्रत्येकम्_l2, &size, शून्यसूचकः, 0) != 0 ||
+            size != परिमाण(cpus_प्रत्येकम्_l2) || cpus_प्रत्येकम्_l2 <= 0) {
+            अनुवर्त;
         }
 
-        snprintf(key, sizeof(key), "hw.perflevel%d.name", i);
+        snprintf(कुञ्चिका, परिमाण(कुञ्चिका), "hw.perflevel%d.name", i);
         size = 0;
-        if (sysctlbyname(key, nullptr, &size, nullptr, 0) != 0 || size == 0) {
-            continue;
+        यदि (sysctlbyname(कुञ्चिका, शून्यसूचकः, &size, शून्यसूचकः, 0) != 0 || size == 0) {
+            अनुवर्त;
         }
 
         std::string name(size, '\0');
-        if (sysctlbyname(key, &name[0], &size, nullptr, 0) != 0) {
-            continue;
+        यदि (sysctlbyname(कुञ्चिका, &name[0], &size, शून्यसूचकः, 0) != 0) {
+            अनुवर्त;
         }
         name.resize(size);
-        while (!name.empty() && name.back() == '\0') {
+        यावत् (!name.रिक्तानि() && name.back() == '\0') {
             name.pop_back();
         }
 
-        if (apple_sme_counted_perf_level(name)) {
-            units += (size_t) ((physical_cpus + cpus_per_l2 - 1) / cpus_per_l2);
+        यदि (apple_sme_counted_perf_level(name)) {
+            units += (size_t) ((physical_cpus + cpus_प्रत्येकम्_l2 - 1) / cpus_प्रत्येकम्_l2);
         }
     }
 
-    return units;
+    प्रत्यागम units;
 
-#elif defined(_WIN32) && (defined(_M_ARM64) || defined(__aarch64__))
+#नोचेद्यदि defined(_WIN32) && (defined(_M_ARM64) || defined(__aarch64__))
     // No verified Windows arm64 SMCU detection path yet. Return unknown and use
     // GGML_KLEIDIAI_SME=N as a diagnostics/debug override for SME thread cap
     // calibration until a detection mechanism is verified on real hardware.
-    return 0;
+    प्रत्यागम 0;
 
-#else
-    return 0;
-#endif
+#अन्यथा
+    प्रत्यागम 0;
+#यदि_अन्तः
 }
 
-static int parse_uint_env(const char *s, const char *name, bool *ok) {
-    if (!s) { *ok = false; return 0; }
-    char *end = nullptr;
-    long v = strtol(s, &end, 10);
-    if (end == s || *end != '\0') {
+स्थिर पूर्णाङ्क parse_uint_env(ध्रुव वर्ण *s, ध्रुव वर्ण *name, तार्किक *ok) {
+    यदि (!s) { *ok = असत्य; प्रत्यागम 0; }
+    वर्ण *end = शून्यसूचकः;
+    दीर्घ v = strtol(s, &end, 10);
+    यदि (end == s || *end != '\0') {
         GGML_LOG_WARN("kleidiai: invalid %s='%s' (expected integer)\n", name, s);
-        *ok = false;
-        return 0;
+        *ok = असत्य;
+        प्रत्यागम 0;
     }
-    if (v < 0 || v > INT_MAX) {
+    यदि (v < 0 || v > अधिकतम_पूर्णाङ्कः) {
         GGML_LOG_WARN("kleidiai: out-of-range %s='%s'\n", name, s);
-        *ok = false;
-        return 0;
+        *ok = असत्य;
+        प्रत्यागम 0;
     }
-    *ok = true;
-    return (int)v;
+    *ok = सत्य;
+    प्रत्यागम (पूर्णाङ्क)v;
 }
 
-static void init_kleidiai_context(void) {
+स्थिर शून्य init_kleidiai_context(शून्य) {
     ggml_critical_section_start();
-    static bool initialized = false;
+    स्थिर तार्किक initialized = असत्य;
 
-    if (!initialized) {
-        initialized = true;
+    यदि (!initialized) {
+        initialized = सत्य;
 
         // Optional diagnostics/debug overrides; production defaults come from runtime detection.
-        const char *env_sme         = getenv("GGML_KLEIDIAI_SME");
-        const char *env_threads     = getenv("GGML_TOTAL_THREADS");
-        const char *env_chunk_mult  = getenv("GGML_KLEIDIAI_CHUNK_MULTIPLIER");
+        ध्रुव वर्ण *env_sme         = getenv("GGML_KLEIDIAI_SME");
+        ध्रुव वर्ण *env_तन्तवः     = getenv("GGML_TOTAL_THREADS");
+        ध्रुव वर्ण *env_chunk_mult  = getenv("GGML_KLEIDIAI_CHUNK_MULTIPLIER");
 
-        const auto runtime_feat = ggml_feats_get_arch64_runtime();
+        ध्रुव स्वचालित runtime_feat = ggml_feats_get_arch64_runtime();
 
         size_t detected_smcus = 0;
 
@@ -326,37 +326,37 @@ static void init_kleidiai_context(void) {
                         (runtime_feat.has_fp16     ? CPU_FEATURE_FP16    : CPU_FEATURE_NONE) |
                         (runtime_feat.sve_cnt == QK8_0 ? CPU_FEATURE_SVE : CPU_FEATURE_NONE);
 
-        if (env_threads) {
-            bool ok = false;
-            int hint = parse_uint_env(env_threads, "GGML_TOTAL_THREADS", &ok);
-            if (ok && hint > 0) {
+        यदि (env_तन्तवः) {
+            तार्किक ok = असत्य;
+            पूर्णाङ्क hint = parse_uint_env(env_तन्तवः, "GGML_TOTAL_THREADS", &ok);
+            यदि (ok && hint > 0) {
                 ctx.thread_hint = hint;
             }
         }
 
-        if (env_chunk_mult) {
-            bool ok = false;
-            int multiplier = parse_uint_env(env_chunk_mult, "GGML_KLEIDIAI_CHUNK_MULTIPLIER", &ok);
-            if (ok && multiplier > 0) {
+        यदि (env_chunk_mult) {
+            तार्किक ok = असत्य;
+            पूर्णाङ्क multiplier = parse_uint_env(env_chunk_mult, "GGML_KLEIDIAI_CHUNK_MULTIPLIER", &ok);
+            यदि (ok && multiplier > 0) {
                 ctx.chunk_multiplier = multiplier;
             }
         }
 
-        int sme_cores = 0;
-        bool sme_env_ok = false;
-        bool sme_env_set = (env_sme != nullptr);
+        पूर्णाङ्क sme_cores = 0;
+        तार्किक sme_env_ok = असत्य;
+        तार्किक sme_env_समुच्चयः = (env_sme != शून्यसूचकः);
 
-        const bool has_supported_sme_family = runtime_feat.has_sme;
-        bool sme_cap_detected = false;
+        ध्रुव तार्किक has_supported_sme_family = runtime_feat.has_sme;
+        तार्किक sme_cap_detected = असत्य;
 
-        if (has_supported_sme_family) {
-            detected_smcus = detect_num_smcus();
+        यदि (has_supported_sme_family) {
+            detected_smcus = detect_अङ्कः_smcus();
             sme_cap_detected = detected_smcus > 0;
             // Some platforms expose SME without exposing a calibrated SMCU count.
             // Use one SME thread as the conservative default; add platform SMCU detection to raise it.
-            sme_cores = sme_cap_detected ? (int)detected_smcus : 1;
+            sme_cores = sme_cap_detected ? (पूर्णाङ्क)detected_smcus : 1;
 
-            if (!sme_env_set && !sme_cap_detected) {
+            यदि (!sme_env_समुच्चयः && !sme_cap_detected) {
                 GGML_LOG_INFO("kleidiai: SME detected; SMCU count unavailable, using conservative SME thread cap=1\n");
             }
         }
@@ -366,28 +366,28 @@ static void init_kleidiai_context(void) {
         //   - unset: use runtime detection.
         //   - 0:     disable SME-family kernels.
         //   - N > 0: use N as the SME thread cap, if an SME-family kernel is selectable.
-        if (sme_env_set) {
-            bool ok = false;
-            int v = parse_uint_env(env_sme, "GGML_KLEIDIAI_SME", &ok);
+        यदि (sme_env_समुच्चयः) {
+            तार्किक ok = असत्य;
+            पूर्णाङ्क v = parse_uint_env(env_sme, "GGML_KLEIDIAI_SME", &ok);
             sme_env_ok = ok;
 
-            if (ok) {
-                if (has_supported_sme_family) {
+            यदि (ok) {
+                यदि (has_supported_sme_family) {
                     sme_cores = v;
-                } else {
-                    if (v > 0) {
+                } अन्यथा {
+                    यदि (v > 0) {
                         GGML_LOG_WARN("kleidiai: GGML_KLEIDIAI_SME=%d but SME is not supported on this CPU; disabling SME-family kernels\n", v);
                     }
                     sme_cores = 0;
                 }
-            } else {
+            } अन्यथा {
                 GGML_LOG_WARN("kleidiai: GGML_KLEIDIAI_SME set but parsing failed; using automatic SME thread cap\n");
             }
         }
 
-        if (sme_cores > 0 && has_supported_sme_family) {
+        यदि (sme_cores > 0 && has_supported_sme_family) {
             ctx.features |= CPU_FEATURE_SME;
-            if (runtime_feat.has_sme2) {
+            यदि (runtime_feat.has_sme2) {
                 ctx.features |= CPU_FEATURE_SME2;
             }
         }
@@ -398,537 +398,537 @@ static void init_kleidiai_context(void) {
         ctx.kernels_q8  = ggml_kleidiai_select_kernels_q8_0(ctx.features);
         ctx.kernels_f32 = ggml_kleidiai_select_kernels_f32(ctx.features);
 
-        if (!ctx.kernels_q4) {
-            GGML_LOG_INFO("kleidiai: no compatible q4 kernels found for CPU features mask %d\n", (int)ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary q4 kernel feature %s\n", cpu_feature_to_string(ctx.kernels_q4->required_cpu));
+        यदि (!ctx.kernels_q4) {
+            GGML_LOG_INFO("kleidiai: no compatible q4 kernels found for CPU features mask %d\n", (पूर्णाङ्क)ctx.features);
+        } अन्यथा {
+            GGML_LOG_INFO("kleidiai: primary q4 kernel feature %s\n", cpu_feature_गन्तव्यम्_string(ctx.kernels_q4->required_cpu));
         }
 
-        if (!ctx.kernels_q8) {
-            GGML_LOG_INFO("kleidiai: no compatible q8 kernels found for CPU features mask %d\n", (int)ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary q8 kernel feature %s\n", cpu_feature_to_string(ctx.kernels_q8->required_cpu));
+        यदि (!ctx.kernels_q8) {
+            GGML_LOG_INFO("kleidiai: no compatible q8 kernels found for CPU features mask %d\n", (पूर्णाङ्क)ctx.features);
+        } अन्यथा {
+            GGML_LOG_INFO("kleidiai: primary q8 kernel feature %s\n", cpu_feature_गन्तव्यम्_string(ctx.kernels_q8->required_cpu));
         }
 
-        if (!ctx.kernels_q4k) {
-            GGML_LOG_INFO("kleidiai: no compatible q4_k kernels found for CPU features mask %d\n", (int) ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary q4_k kernel feature %s\n", cpu_feature_to_string(ctx.kernels_q4k->required_cpu));
+        यदि (!ctx.kernels_q4k) {
+            GGML_LOG_INFO("kleidiai: no compatible q4_k kernels found for CPU features mask %d\n", (पूर्णाङ्क) ctx.features);
+        } अन्यथा {
+            GGML_LOG_INFO("kleidiai: primary q4_k kernel feature %s\n", cpu_feature_गन्तव्यम्_string(ctx.kernels_q4k->required_cpu));
         }
 
-        if (!ctx.kernels_f32) {
-            GGML_LOG_INFO("kleidiai: no compatible f32 kernels found for CPU features mask %d\n", (int)ctx.features);
-        } else {
-            GGML_LOG_INFO("kleidiai: primary f32 kernel feature %s\n", cpu_feature_to_string(ctx.kernels_f32->required_cpu));
+        यदि (!ctx.kernels_f32) {
+            GGML_LOG_INFO("kleidiai: no compatible f32 kernels found for CPU features mask %d\n", (पूर्णाङ्क)ctx.features);
+        } अन्यथा {
+            GGML_LOG_INFO("kleidiai: primary f32 kernel feature %s\n", cpu_feature_गन्तव्यम्_string(ctx.kernels_f32->required_cpu));
         }
 
-        const bool has_selected_sme_family_kernel =
+        ध्रुव तार्किक has_selected_sme_family_kernel =
             (ctx.kernels_q4  && is_sme_family(ctx.kernels_q4->required_cpu)) ||
             (ctx.kernels_q4k && is_sme_family(ctx.kernels_q4k->required_cpu)) ||
             (ctx.kernels_q8  && is_sme_family(ctx.kernels_q8->required_cpu)) ||
             (ctx.kernels_f32 && is_sme_family(ctx.kernels_f32->required_cpu));
         ctx.sme_thread_cap = has_selected_sme_family_kernel ? sme_cores : 0;
 
-        if (has_selected_sme_family_kernel) {
-            if (sme_env_set && sme_env_ok && sme_cores > 0) {
+        यदि (has_selected_sme_family_kernel) {
+            यदि (sme_env_समुच्चयः && sme_env_ok && sme_cores > 0) {
                 GGML_LOG_INFO("kleidiai: SME enabled (GGML_KLEIDIAI_SME=%d debug override)\n", sme_cores);
-            } else if (sme_cap_detected) {
+            } अन्यथा यदि (sme_cap_detected) {
                 GGML_LOG_INFO("kleidiai: SME enabled (runtime-detected SME thread cap=%d)\n", sme_cores);
-            } else {
+            } अन्यथा {
                 GGML_LOG_INFO("kleidiai: SME enabled (runtime SME detected, conservative thread cap=%d)\n", sme_cores);
             }
-        } else {
+        } अन्यथा {
             GGML_LOG_INFO("kleidiai: SME disabled\n");
         }
     }
 
-    ggml_critical_section_end();
+    ggml_critical_section_अन्तः();
 }
 
-static inline int kleidiai_sme_thread_cap() {
-    return ctx.sme_thread_cap;
+स्थिर अन्तःस्थ पूर्णाङ्क kleidiai_sme_thread_cap() {
+    प्रत्यागम ctx.sme_thread_cap;
 }
 
-static inline size_t align_up(size_t value, size_t alignment) {
-    if (alignment == 0) {
-        return value;
+स्थिर अन्तःस्थ size_t align_ऊर्ध्वम्(size_t value, size_t alignment) {
+    यदि (alignment == 0) {
+        प्रत्यागम value;
     }
-    const size_t remainder = value % alignment;
-    return remainder == 0 ? value : value + (alignment - remainder);
+    ध्रुव size_t remainder = value % alignment;
+    प्रत्यागम remainder == 0 ? value : value + (alignment - remainder);
 }
 
-static inline size_t gcd_size(size_t a, size_t b) {
-    while (b != 0) {
-        const size_t t = a % b;
+स्थिर अन्तःस्थ size_t gcd_आकार(size_t a, size_t b) {
+    यावत् (b != 0) {
+        ध्रुव size_t t = a % b;
         a = b;
         b = t;
     }
-    return a;
+    प्रत्यागम a;
 }
 
-static inline bool lcm_size(size_t a, size_t b, size_t & result) {
-    if (a == 0 || b == 0) {
-        result = 0;
-        return false;
+स्थिर अन्तःस्थ तार्किक lcm_आकार(size_t a, size_t b, size_t & परिणाम) {
+    यदि (a == 0 || b == 0) {
+        परिणाम = 0;
+        प्रत्यागम असत्य;
     }
-    const size_t g = gcd_size(a, b);
-    const size_t q = a / g;
-    if (q > SIZE_MAX / b) {
-        return false;
+    ध्रुव size_t g = gcd_आकार(a, b);
+    ध्रुव size_t q = a / g;
+    यदि (q > SIZE_MAX / b) {
+        प्रत्यागम असत्य;
     }
-    result = q * b;
-    return true;
+    परिणाम = q * b;
+    प्रत्यागम सत्य;
 }
 
-static inline size_t ceil_div_size(size_t a, size_t b) {
-    return b == 0 ? 0 : (a + b - 1) / b;
+स्थिर अन्तःस्थ size_t ceil_div_आकार(size_t a, size_t b) {
+    प्रत्यागम b == 0 ? 0 : (a + b - 1) / b;
 }
 
-static inline size_t kleidiai_chunk_cols(size_t n, int nth_total, bool disable_chunking, size_t n_step) {
-    const size_t multiplier = (nth_total == 1 || disable_chunking) ? 1 : std::max<size_t>(1, (size_t) ctx.chunk_multiplier);
-    const size_t divisor = std::max<size_t>(1, (size_t) nth_total * multiplier);
-    const size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, divisor)), n_step);
-    return chunk_cols ? chunk_cols : n_step;
+स्थिर अन्तःस्थ size_t kleidiai_chunk_स्तम्भसङ्ख्या(size_t n, पूर्णाङ्क nth_योग, तार्किक disable_chunking, size_t n_चरणः) {
+    ध्रुव size_t multiplier = (nth_योग == 1 || disable_chunking) ? 1 : std::max<size_t>(1, (size_t) ctx.chunk_multiplier);
+    ध्रुव size_t भाजकः = std::max<size_t>(1, (size_t) nth_योग * multiplier);
+    ध्रुव size_t chunk_स्तम्भसङ्ख्या = align_ऊर्ध्वम्(std::max<size_t>(1, ceil_div_आकार(n, भाजकः)), n_चरणः);
+    प्रत्यागम chunk_स्तम्भसङ्ख्या ? chunk_स्तम्भसङ्ख्या : n_चरणः;
 }
 
-struct kleidiai_block_args {
+संरचना kleidiai_खण्डम्_तर्काः {
     size_t lhs_bl;
     size_t rhs_bl;
     size_t pack_bl;
 };
 
-static inline kleidiai_block_args kleidiai_get_block_args(ggml_type rhs_type) {
-    switch (rhs_type) {
-        case GGML_TYPE_Q4_0:
-            return { QK4_0, QK4_0, QK4_0 };
-        case GGML_TYPE_Q4_K:
-            return { GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL };
-        case GGML_TYPE_Q8_0:
-            return { 0, 0, QK8_0 };
-        default:
-            return { 0, 0, 0 };
+स्थिर अन्तःस्थ kleidiai_खण्डम्_तर्काः kleidiai_get_खण्डम्_तर्काः(ggml_type rhs_type) {
+    विकल्प (rhs_type) {
+        पक्ष GGML_TYPE_Q4_0:
+            प्रत्यागम { QK4_0, QK4_0, QK4_0 };
+        पक्ष GGML_TYPE_Q4_K:
+            प्रत्यागम { GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL, GGML_KLEIDIAI_Q4_K_BL };
+        पक्ष GGML_TYPE_Q8_0:
+            प्रत्यागम { 0, 0, QK8_0 };
+        स्वभाव:
+            प्रत्यागम { 0, 0, 0 };
     }
 }
 
-static inline bool kleidiai_pack_fallback_allowed() {
-    if (ctx.sme_thread_cap <= 0) {
-        return false;
+स्थिर अन्तःस्थ तार्किक kleidiai_pack_fallback_allowed() {
+    यदि (ctx.sme_thread_cap <= 0) {
+        प्रत्यागम असत्य;
     }
-    if (ctx.thread_hint <= 0) {
-        return true;
+    यदि (ctx.thread_hint <= 0) {
+        प्रत्यागम सत्य;
     }
-    return ctx.thread_hint > ctx.sme_thread_cap;
+    प्रत्यागम ctx.thread_hint > ctx.sme_thread_cap;
 }
 
-struct kleidiai_weight_header {
+संरचना kleidiai_weight_शीर्षकम् {
     uint32_t magic;
-    uint16_t version;
-    uint16_t slot_count;
+    uint16_t संस्करणम्_2;
+    uint16_t slot_गणनम्;
     uint64_t offsets[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
     uint64_t sizes[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
 };
 
-static inline kleidiai_weight_header * kleidiai_weight_header_from_ptr(void * data) {
-    return reinterpret_cast<kleidiai_weight_header *>(data);
+स्थिर अन्तःस्थ kleidiai_weight_शीर्षकम् * kleidiai_weight_शीर्षकम्_from_ptr(शून्य * दत्त) {
+    प्रत्यागम reinterpret_cast<kleidiai_weight_शीर्षकम् *>(दत्त);
 }
 
-static inline const kleidiai_weight_header * kleidiai_weight_header_from_ptr(const void * data) {
-    return reinterpret_cast<const kleidiai_weight_header *>(data);
+स्थिर अन्तःस्थ ध्रुव kleidiai_weight_शीर्षकम् * kleidiai_weight_शीर्षकम्_from_ptr(ध्रुव शून्य * दत्त) {
+    प्रत्यागम reinterpret_cast<ध्रुव kleidiai_weight_शीर्षकम् *>(दत्त);
 }
 
-static inline bool kleidiai_is_weight_header_valid(const kleidiai_weight_header * header) {
-    if (!header) {
-        return false;
+स्थिर अन्तःस्थ तार्किक kleidiai_is_weight_शीर्षकम्_valid(ध्रुव kleidiai_weight_शीर्षकम् * शीर्षकम्) {
+    यदि (!शीर्षकम्) {
+        प्रत्यागम असत्य;
     }
-    if (header->magic != GGML_KLEIDIAI_PACK_MAGIC || header->version != GGML_KLEIDIAI_PACK_VERSION) {
-        return false;
+    यदि (शीर्षकम्->magic != GGML_KLEIDIAI_PACK_MAGIC || शीर्षकम्->संस्करणम्_2 != GGML_KLEIDIAI_PACK_संस्करणम्) {
+        प्रत्यागम असत्य;
     }
-    if (header->slot_count == 0 || header->slot_count > GGML_KLEIDIAI_MAX_KERNEL_SLOTS) {
-        return false;
+    यदि (शीर्षकम्->slot_गणनम् == 0 || शीर्षकम्->slot_गणनम् > GGML_KLEIDIAI_MAX_KERNEL_SLOTS) {
+        प्रत्यागम असत्य;
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static inline uint8_t * kleidiai_weight_slot_ptr(kleidiai_weight_header * header, int slot) {
-    if (!kleidiai_is_weight_header_valid(header)) {
-        return nullptr;
+स्थिर अन्तःस्थ uint8_t * kleidiai_weight_slot_ptr(kleidiai_weight_शीर्षकम् * शीर्षकम्, पूर्णाङ्क slot) {
+    यदि (!kleidiai_is_weight_शीर्षकम्_valid(शीर्षकम्)) {
+        प्रत्यागम शून्यसूचकः;
     }
-    if (slot < 0 || slot >= header->slot_count) {
-        return nullptr;
+    यदि (slot < 0 || slot >= शीर्षकम्->slot_गणनम्) {
+        प्रत्यागम शून्यसूचकः;
     }
-    return reinterpret_cast<uint8_t *>(header) + header->offsets[slot];
+    प्रत्यागम reinterpret_cast<uint8_t *>(शीर्षकम्) + शीर्षकम्->offsets[slot];
 }
 
-static inline const uint8_t * kleidiai_weight_slot_ptr(const kleidiai_weight_header * header, int slot) {
-    if (!kleidiai_is_weight_header_valid(header)) {
-        return nullptr;
+स्थिर अन्तःस्थ ध्रुव uint8_t * kleidiai_weight_slot_ptr(ध्रुव kleidiai_weight_शीर्षकम् * शीर्षकम्, पूर्णाङ्क slot) {
+    यदि (!kleidiai_is_weight_शीर्षकम्_valid(शीर्षकम्)) {
+        प्रत्यागम शून्यसूचकः;
     }
-    if (slot < 0 || slot >= header->slot_count) {
-        return nullptr;
+    यदि (slot < 0 || slot >= शीर्षकम्->slot_गणनम्) {
+        प्रत्यागम शून्यसूचकः;
     }
-    return reinterpret_cast<const uint8_t *>(header) + header->offsets[slot];
+    प्रत्यागम reinterpret_cast<ध्रुव uint8_t *>(शीर्षकम्) + शीर्षकम्->offsets[slot];
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q4() {
-    return ctx.kernels_q4;
+स्थिर अन्तःस्थ ggml_kleidiai_kernels * kleidiai_primary_kernel_q4() {
+    प्रत्यागम ctx.kernels_q4;
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q4k() {
-    return ctx.kernels_q4k;
+स्थिर अन्तःस्थ ggml_kleidiai_kernels * kleidiai_primary_kernel_q4k() {
+    प्रत्यागम ctx.kernels_q4k;
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_q8() {
-    return ctx.kernels_q8;
+स्थिर अन्तःस्थ ggml_kleidiai_kernels * kleidiai_primary_kernel_q8() {
+    प्रत्यागम ctx.kernels_q8;
 }
 
-static inline ggml_kleidiai_kernels * kleidiai_primary_kernel_f32() {
-    return ctx.kernels_f32;
+स्थिर अन्तःस्थ ggml_kleidiai_kernels * kleidiai_primary_kernel_f32() {
+    प्रत्यागम ctx.kernels_f32;
 }
 
-template <typename SelectFallback>
-static int kleidiai_collect_kernel_chain_common(
+प्रतिरूपम् <प्रकारनाम SelectFallback>
+स्थिर पूर्णाङ्क kleidiai_collect_kernel_chain_common(
         ggml_kleidiai_kernels * primary,
         cpu_feature features,
-        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out,
+        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & बहिर्गमनम्,
         SelectFallback select_fallback) {
-    int count = 0;
-    if (!primary) {
-        return 0;
+    पूर्णाङ्क count = 0;
+    यदि (!primary) {
+        प्रत्यागम 0;
     }
-    out[count++] = primary;
+    बहिर्गमनम्[count++] = primary;
 
-    if (primary->rhs_info.repack_mode == RHS_REPACK_SINGLE_ONLY) {
-        return count;
+    यदि (primary->rhs_info.repack_बहुलकम् == RHS_REPACK_SINGLE_ONLY) {
+        प्रत्यागम count;
     }
 
-    if (is_sme_family(primary->required_cpu)) {
-        const cpu_feature fallback_mask = static_cast<cpu_feature>(features & ~(CPU_FEATURE_SME | CPU_FEATURE_SME2));
-        if (fallback_mask != CPU_FEATURE_NONE) {
-            ggml_kleidiai_kernels * fallback = select_fallback(fallback_mask);
-            if (fallback && fallback != primary &&
-                fallback->rhs_info.repack_mode != RHS_REPACK_SINGLE_ONLY &&
+    यदि (is_sme_family(primary->required_cpu)) {
+        ध्रुव cpu_feature fallback_आवरणम् = static_cast<cpu_feature>(features & ~(CPU_FEATURE_SME | CPU_FEATURE_SME2));
+        यदि (fallback_आवरणम् != CPU_FEATURE_NONE) {
+            ggml_kleidiai_kernels * fallback = select_fallback(fallback_आवरणम्);
+            यदि (fallback && fallback != primary &&
+                fallback->rhs_info.repack_बहुलकम् != RHS_REPACK_SINGLE_ONLY &&
                 fallback->lhs_type == primary->lhs_type &&
                 fallback->rhs_type == primary->rhs_type &&
                 fallback->op_type  == primary->op_type) {
-                out[count++] = fallback;
+                बहिर्गमनम्[count++] = fallback;
             }
         }
     }
 
-    return count;
+    प्रत्यागम count;
 }
 
-static int kleidiai_collect_kernel_chain(const struct ggml_tensor * op,
-        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+स्थिर पूर्णाङ्क kleidiai_collect_kernel_chain(ध्रुव संरचना ggml_tensor * op,
+        std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & बहिर्गमनम्) {
     ggml_kleidiai_kernels * primary = ggml_kleidiai_select_kernels(ctx.features, op);
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels(mask, op); });
+    प्रत्यागम kleidiai_collect_kernel_chain_common(primary, ctx.features, बहिर्गमनम्,
+        [&](cpu_feature आवरणम्) { प्रत्यागम ggml_kleidiai_select_kernels(आवरणम्, op); });
 }
 
-static int kleidiai_collect_q4_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+स्थिर पूर्णाङ्क kleidiai_collect_q4_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & बहिर्गमनम्) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q4();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q4_0(mask); });
+    प्रत्यागम kleidiai_collect_kernel_chain_common(primary, ctx.features, बहिर्गमनम्,
+        [&](cpu_feature आवरणम्) { प्रत्यागम ggml_kleidiai_select_kernels_q4_0(आवरणम्); });
 }
 
-static int kleidiai_collect_q4k_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+स्थिर पूर्णाङ्क kleidiai_collect_q4k_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & बहिर्गमनम्) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q4k();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q4_k(mask); });
+    प्रत्यागम kleidiai_collect_kernel_chain_common(primary, ctx.features, बहिर्गमनम्,
+        [&](cpu_feature आवरणम्) { प्रत्यागम ggml_kleidiai_select_kernels_q4_k(आवरणम्); });
 }
 
-static int kleidiai_collect_q8_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+स्थिर पूर्णाङ्क kleidiai_collect_q8_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & बहिर्गमनम्) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_q8();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_q8_0(mask); });
+    प्रत्यागम kleidiai_collect_kernel_chain_common(primary, ctx.features, बहिर्गमनम्,
+        [&](cpu_feature आवरणम्) { प्रत्यागम ggml_kleidiai_select_kernels_q8_0(आवरणम्); });
 }
 
-static int kleidiai_collect_f32_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & out) {
+स्थिर पूर्णाङ्क kleidiai_collect_f32_chain(std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> & बहिर्गमनम्) {
     ggml_kleidiai_kernels * primary = kleidiai_primary_kernel_f32();
-    return kleidiai_collect_kernel_chain_common(primary, ctx.features, out,
-        [&](cpu_feature mask) { return ggml_kleidiai_select_kernels_f32(mask); });
+    प्रत्यागम kleidiai_collect_kernel_chain_common(primary, ctx.features, बहिर्गमनम्,
+        [&](cpu_feature आवरणम्) { प्रत्यागम ggml_kleidiai_select_kernels_f32(आवरणम्); });
 }
 
-static inline int64_t ggml_ne(const ggml_tensor * tensor, int dim) {
+स्थिर अन्तःस्थ int64_t ggml_ne(ध्रुव ggml_tensor * tensor, पूर्णाङ्क dim) {
     GGML_ASSERT(dim >= 0 && dim < GGML_MAX_DIMS);
-    return tensor->ne[dim];
+    प्रत्यागम tensor->ne[dim];
 }
 
-namespace ggml::cpu::kleidiai {
+नामाकाश ggml::cpu::kleidiai {
 
-static size_t round_down(size_t x, size_t y) {
-    return y == 0 ? x : x - (x % y);
+स्थिर size_t आवर्तनम्_अधस्तात्(size_t x, size_t y) {
+    प्रत्यागम y == 0 ? x : x - (x % y);
 }
 
-static void transpose_f32kxn_f16nxk(size_t n, size_t k, float * dst, const uint16_t * src, size_t rhs_stride) {
-    size_t src_stride = rhs_stride / sizeof(uint16_t);
+स्थिर शून्य transpose_f32kxn_f16nxk(size_t n, size_t k, भिन्न * dst, ध्रुव uint16_t * src, size_t rhs_stride) {
+    size_t src_stride = rhs_stride / परिमाण(uint16_t);
     size_t dst_stride = n;
 
-    for (size_t k_idx = 0; k_idx < k; ++k_idx) {
-        for (size_t n_idx = 0; n_idx < n; ++n_idx) {
+    प्रति (size_t k_idx = 0; k_idx < k; ++k_idx) {
+        प्रति (size_t n_idx = 0; n_idx < n; ++n_idx) {
             uint16_t v = *(src + k_idx + n_idx * src_stride);
             *(dst + n_idx + k_idx * dst_stride) = kai_cast_f32_f16(v);
         }
     }
 }
 
-class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+वर्ग tensor_traits : सार्वजनिक ggml::cpu::tensor_traits {
+    तार्किक work_आकार(पूर्णाङ्क /* n_threads */, ध्रुव संरचना ggml_tensor * op, size_t & size) override {
+        यदि (op->op != GGML_OP_MUL_MAT) {
+            प्रत्यागम असत्य;
         }
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_count = kleidiai_collect_kernel_chain(op, kernel_chain);
-        if (slot_count == 0) {
-            return false;
+        ध्रुव पूर्णाङ्क slot_गणनम् = kleidiai_collect_kernel_chain(op, kernel_chain);
+        यदि (slot_गणनम् == 0) {
+            प्रत्यागम असत्य;
         }
 
-        const bool is_gemv = op->src[1]->ne[1] == 1;
-        const size_t k = op->src[0]->ne[0];
-        const size_t n = op->src[0]->ne[1];
-        const size_t m = op->src[1]->ne[1];
+        ध्रुव तार्किक is_gemv = op->src[1]->ne[1] == 1;
+        ध्रुव size_t k = op->src[0]->ne[0];
+        ध्रुव size_t n = op->src[0]->ne[1];
+        ध्रुव size_t m = op->src[1]->ne[1];
 
-        if (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
+        यदि (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
             op->src[0]->type == GGML_TYPE_Q8_0 || op->src[0]->type == GGML_TYPE_Q6_K) {
-            const kleidiai_block_args block_args = kleidiai_get_block_args(kernel_chain[0]->rhs_type);
-            const size_t qk = block_args.pack_bl;
+            ध्रुव kleidiai_खण्डम्_तर्काः खण्डम्_तर्काः = kleidiai_get_खण्डम्_तर्काः(kernel_chain[0]->rhs_type);
+            ध्रुव size_t qk = खण्डम्_तर्काः.pack_bl;
 
             size_t cursor = 0;
-            bool any_slot = false;
+            तार्किक any_slot = असत्य;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
+            प्रति (पूर्णाङ्क slot = 0; slot < slot_गणनम्; ++slot) {
                 ggml_kleidiai_kernels * kernels = kernel_chain[slot];
                 lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
 
-                if (!lhs_info || !lhs_info->packed_size_ex || !kernel) {
-                    return false;
+                यदि (!lhs_info || !lhs_info->packed_आकार_ex || !kernel) {
+                    प्रत्यागम असत्य;
                 }
 
-                const size_t mr = kernel->get_mr();
-                const size_t kr = kernel->get_kr();
-                const size_t sr = kernel->get_sr();
+                ध्रुव size_t mr = kernel->get_mr();
+                ध्रुव size_t kr = kernel->get_kr();
+                ध्रुव size_t sr = kernel->get_sr();
 
-                const size_t packed = lhs_info->packed_size_ex(m, k, qk, mr, kr, sr);
+                ध्रुव size_t packed = lhs_info->packed_आकार_ex(m, k, qk, mr, kr, sr);
 
-                cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
                 cursor += packed;
-                any_slot = true;
+                any_slot = सत्य;
             }
 
-            if (!any_slot) {
-                return false;
+            यदि (!any_slot) {
+                प्रत्यागम असत्य;
             }
 
             size = cursor;
-            return true;
+            प्रत्यागम सत्य;
         }
 
-        if (op->src[0]->type == GGML_TYPE_F32) {
+        यदि (op->src[0]->type == GGML_TYPE_F32) {
             ggml_kleidiai_kernels * primary     = kernel_chain[0];
-            kernel_info *           gemv_kernel = primary ? &primary->gemv : nullptr;
-            if (is_gemv && op->src[1]->nb[0] == (int64_t) sizeof(float) && gemv_kernel &&
-                gemv_kernel->get_lhs_offset_ex && gemv_kernel->get_rhs_packed_offset_ex &&
-                gemv_kernel->run_kernel_ex && gemv_kernel->get_dst_offset) {
+            kernel_info *           gemv_kernel = primary ? &primary->gemv : शून्यसूचकः;
+            यदि (is_gemv && op->src[1]->nb[0] == (int64_t) परिमाण(भिन्न) && gemv_kernel &&
+                gemv_kernel->get_lhs_विस्थापनम्_ex && gemv_kernel->get_rhs_packed_विस्थापनम्_ex &&
+                gemv_kernel->सततम्_kernel_ex && gemv_kernel->get_dst_विस्थापनम्) {
                 size = 0;
-                return true;
+                प्रत्यागम सत्य;
             }
 
             size_t cursor = 0;
-            bool any_slot = false;
+            तार्किक any_slot = असत्य;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
+            प्रति (पूर्णाङ्क slot = 0; slot < slot_गणनम्; ++slot) {
                 ggml_kleidiai_kernels * kernels = kernel_chain[slot];
                 lhs_packing_info * lhs_info = &kernels->gemm_lhs_info;
                 kernel_info * kernel        = &kernels->gemm;
 
-                if (!lhs_info || !lhs_info->packed_size_ex || !kernel) {
-                    return false;
+                यदि (!lhs_info || !lhs_info->packed_आकार_ex || !kernel) {
+                    प्रत्यागम असत्य;
                 }
 
-                const size_t mr = kernel->get_mr();
-                const size_t kr = kernel->get_kr();
-                const size_t sr = kernel->get_sr();
+                ध्रुव size_t mr = kernel->get_mr();
+                ध्रुव size_t kr = kernel->get_kr();
+                ध्रुव size_t sr = kernel->get_sr();
 
-                cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-                cursor += lhs_info->packed_size_ex(m, k, 0, mr, kr, sr);
-                any_slot = true;
+                cursor  = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor += lhs_info->packed_आकार_ex(m, k, 0, mr, kr, sr);
+                any_slot = सत्य;
             }
 
-            if (!any_slot) {
-                return false;
+            यदि (!any_slot) {
+                प्रत्यागम असत्य;
             }
 
             size = cursor;
-            return true;
+            प्रत्यागम सत्य;
         }
 
-        if (op->src[0]->type == GGML_TYPE_F16) {
-            const int64_t lhs_batch_size0 = op->src[1]->ne[2];
-            const int64_t rhs_batch_size0 = op->src[0]->ne[2];
+        यदि (op->src[0]->type == GGML_TYPE_F16) {
+            ध्रुव int64_t lhs_batch_size0 = op->src[1]->ne[2];
+            ध्रुव int64_t rhs_batch_size0 = op->src[0]->ne[2];
             GGML_ASSERT(rhs_batch_size0 > 0);
-            const int64_t r = lhs_batch_size0 / rhs_batch_size0;
+            ध्रुव int64_t r = lhs_batch_size0 / rhs_batch_size0;
 
             size_t cursor = 0;
-            bool any_slot = false;
+            तार्किक any_slot = असत्य;
 
-            for (int slot = 0; slot < slot_count; ++slot) {
+            प्रति (पूर्णाङ्क slot = 0; slot < slot_गणनम्; ++slot) {
                 ggml_kleidiai_kernels * kernels = kernel_chain[slot];
                 lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
                 kernel_info * kernel        = is_gemv ? &kernels->gemv : &kernels->gemm;
-                if (!lhs_info || !lhs_info->packed_size_ex || !kernels->rhs_info.packed_size_ex || !kernel) {
-                    return false;
+                यदि (!lhs_info || !lhs_info->packed_आकार_ex || !kernels->rhs_info.packed_आकार_ex || !kernel) {
+                    प्रत्यागम असत्य;
                 }
 
-                const size_t mr = kernel->get_mr();
-                const size_t kr = kernel->get_kr();
-                const size_t sr = kernel->get_sr();
+                ध्रुव size_t mr = kernel->get_mr();
+                ध्रुव size_t kr = kernel->get_kr();
+                ध्रुव size_t sr = kernel->get_sr();
 
-                cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-                cursor += lhs_info->packed_size_ex(m * r, k, 0, mr, kr, sr);
-                any_slot = true;
+                cursor  = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor += lhs_info->packed_आकार_ex(m * r, k, 0, mr, kr, sr);
+                any_slot = सत्य;
             }
 
-            for (int slot = 0; slot < slot_count; ++slot) {
+            प्रति (पूर्णाङ्क slot = 0; slot < slot_गणनम्; ++slot) {
                 ggml_kleidiai_kernels * kernels = kernel_chain[slot];
                 kernel_info * kernel = is_gemv ? &kernels->gemv : &kernels->gemm;
-                if (!kernel || !kernels->rhs_info.packed_size_ex) {
-                    return false;
+                यदि (!kernel || !kernels->rhs_info.packed_आकार_ex) {
+                    प्रत्यागम असत्य;
                 }
-                cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-                cursor += kernels->rhs_info.packed_size_ex(n, k, kernel->get_nr(), kernel->get_kr(), 0);
+                cursor  = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+                cursor += kernels->rhs_info.packed_आकार_ex(n, k, kernel->get_nr(), kernel->get_kr(), 0);
             }
 
-            cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-            cursor += k * n * sizeof(float);
-            cursor  = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-            cursor += n * sizeof(float);
+            cursor  = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            cursor += k * n * परिमाण(भिन्न);
+            cursor  = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            cursor += n * परिमाण(भिन्न);
 
-            if (!any_slot) {
-                return false;
+            यदि (!any_slot) {
+                प्रत्यागम असत्य;
             }
 
             size = cursor;
-            return true;
+            प्रत्यागम सत्य;
         }
 
-        return false;
+        प्रत्यागम असत्य;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * dst) override {
-        if (dst->op == GGML_OP_MUL_MAT) {
-            if (dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q4_K ||
+    तार्किक compute_forward(संरचना ggml_compute_params * params, संरचना ggml_tensor * dst) override {
+        यदि (dst->op == GGML_OP_MUL_MAT) {
+            यदि (dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q4_K ||
                 dst->src[0]->type == GGML_TYPE_Q8_0 || dst->src[0]->type == GGML_TYPE_Q6_K) {
-                return compute_forward_qx(params, dst);
-            } else if (dst->src[0]->type == GGML_TYPE_F32) {
-                return compute_forward_f32(params, dst);
-            } else if (dst->src[0]->type == GGML_TYPE_F16) {
-                return compute_forward_fp16(params, dst);
+                प्रत्यागम compute_forward_qx(params, dst);
+            } अन्यथा यदि (dst->src[0]->type == GGML_TYPE_F32) {
+                प्रत्यागम compute_forward_f32(params, dst);
+            } अन्यथा यदि (dst->src[0]->type == GGML_TYPE_F16) {
+                प्रत्यागम compute_forward_fp16(params, dst);
             }
         }
-        return false;
+        प्रत्यागम असत्य;
     }
 
-    bool compute_forward_f32(ggml_compute_params * params, struct ggml_tensor * dst) {
+    तार्किक compute_forward_f32(ggml_compute_params * params, संरचना ggml_tensor * dst) {
         GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
 
-        const ggml_tensor * src0 = dst->src[0];
-        const ggml_tensor * src1 = dst->src[1];
+        ध्रुव ggml_tensor * src0 = dst->src[0];
+        ध्रुव ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_द्विमान_OP_LOCALS
 
-        if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-            return false;
+        यदि (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+            प्रत्यागम असत्य;
         }
 
         ggml_kleidiai_kernels * kernels = kleidiai_primary_kernel_f32();
-        if (!kernels) {
-            return false;
+        यदि (!kernels) {
+            प्रत्यागम असत्य;
         }
 
-        const size_t k = ne00;
-        const size_t m = ne11;
-        const size_t n = ne01;
-        const bool use_gemv = m == 1 && src1->nb[0] == (int64_t) sizeof(float) &&
-                              kernels->gemv.get_lhs_offset_ex &&
-                              kernels->gemv.get_rhs_packed_offset_ex &&
-                              kernels->gemv.run_kernel_ex &&
-                              kernels->gemv.get_dst_offset;
+        ध्रुव size_t k = ne00;
+        ध्रुव size_t m = ne11;
+        ध्रुव size_t n = ne01;
+        ध्रुव तार्किक use_gemv = m == 1 && src1->nb[0] == (int64_t) परिमाण(भिन्न) &&
+                              kernels->gemv.get_lhs_विस्थापनम्_ex &&
+                              kernels->gemv.get_rhs_packed_विस्थापनम्_ex &&
+                              kernels->gemv.सततम्_kernel_ex &&
+                              kernels->gemv.get_dst_विस्थापनम्;
 
         kernel_info * kernel        = use_gemv ? &kernels->gemv : &kernels->gemm;
         lhs_packing_info * lhs_info = &kernels->gemm_lhs_info;
 
-        if (!kernel || !kernel->get_lhs_offset_ex ||
-            !kernel->get_rhs_packed_offset_ex || !kernel->run_kernel_ex || !kernel->get_dst_offset) {
-            return false;
+        यदि (!kernel || !kernel->get_lhs_विस्थापनम्_ex ||
+            !kernel->get_rhs_packed_विस्थापनम्_ex || !kernel->सततम्_kernel_ex || !kernel->get_dst_विस्थापनम्) {
+            प्रत्यागम असत्य;
         }
 
-        if (!use_gemv && (!lhs_info || !lhs_info->get_offset || !lhs_info->get_packed_offset_ex ||
-                          !lhs_info->packed_size_ex || !lhs_info->pack_func_ex)) {
-            return false;
+        यदि (!use_gemv && (!lhs_info || !lhs_info->get_विस्थापनम् || !lhs_info->get_packed_विस्थापनम्_ex ||
+                          !lhs_info->packed_आकार_ex || !lhs_info->pack_func_ex)) {
+            प्रत्यागम असत्य;
         }
 
-        const kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(src0->data);
-        const bool has_header = kleidiai_is_weight_header_valid(header);
+        ध्रुव kleidiai_weight_शीर्षकम् * शीर्षकम् = kleidiai_weight_शीर्षकम्_from_ptr(src0->दत्त);
+        ध्रुव तार्किक has_शीर्षकम् = kleidiai_is_weight_शीर्षकम्_valid(शीर्षकम्);
 
-        const uint8_t * rhs_base = has_header ? kleidiai_weight_slot_ptr(header, 0)
-                                              : static_cast<const uint8_t *>(src0->data);
-        if (!rhs_base) {
-            return false;
+        ध्रुव uint8_t * rhs_आधारः = has_शीर्षकम् ? kleidiai_weight_slot_ptr(शीर्षकम्, 0)
+                                              : static_cast<ध्रुव uint8_t *>(src0->दत्त);
+        यदि (!rhs_आधारः) {
+            प्रत्यागम असत्य;
         }
 
-        const int nth = params->nth > 0 ? params->nth : 1;
-        const int ith = params->ith;
+        ध्रुव पूर्णाङ्क nth = params->nth > 0 ? params->nth : 1;
+        ध्रुव पूर्णाङ्क ith = params->ith;
 
-        const size_t mr = kernel->get_mr();
-        const size_t kr = kernel->get_kr();
-        const size_t sr = kernel->get_sr();
+        ध्रुव size_t mr = kernel->get_mr();
+        ध्रुव size_t kr = kernel->get_kr();
+        ध्रुव size_t sr = kernel->get_sr();
 
-        const size_t lhs_packed_size = use_gemv ? 0 : lhs_info->packed_size_ex(m, k, 0, mr, kr, sr);
-        if (!use_gemv) {
-            GGML_ASSERT(lhs_packed_size <= params->wsize);
+        ध्रुव size_t lhs_packed_आकार = use_gemv ? 0 : lhs_info->packed_आकार_ex(m, k, 0, mr, kr, sr);
+        यदि (!use_gemv) {
+            GGML_ASSERT(lhs_packed_आकार <= params->wsize);
         }
 
         uint8_t * lhs_packed   = static_cast<uint8_t *>(params->wdata);
-        const size_t dst_stride = dst->nb[1];
-        const size_t n_step = kernel->get_n_step() ? kernel->get_n_step() : 1;
-        const bool disable_chunking = ggml_is_numa();
-        GGML_ASSERT(n <= (size_t) INT_MAX);
+        ध्रुव size_t dst_stride = dst->nb[1];
+        ध्रुव size_t n_चरणः = kernel->get_n_चरणः() ? kernel->get_n_चरणः() : 1;
+        ध्रुव तार्किक disable_chunking = ggml_is_numa();
+        GGML_ASSERT(n <= (size_t) अधिकतम_पूर्णाङ्कः);
 
-        const int64_t batch_size = ne12 * ne13;
-        for (int64_t batch_idx = 0; batch_idx < batch_size; ++batch_idx) {
-            const int64_t i12 = batch_idx % ne12;
-            const int64_t i13 = batch_idx / ne12;
-            const uint8_t * lhs_batch_base = static_cast<const uint8_t *>(src1->data) + i12 * src1->nb[2] + i13 * src1->nb[3];
-            uint8_t * dst_batch_base = static_cast<uint8_t *>(dst->data) + i12 * dst->nb[2] + i13 * dst->nb[3];
+        ध्रुव int64_t batch_आकार = ne12 * ne13;
+        प्रति (int64_t batch_idx = 0; batch_idx < batch_आकार; ++batch_idx) {
+            ध्रुव int64_t i12 = batch_idx % ne12;
+            ध्रुव int64_t i13 = batch_idx / ne12;
+            ध्रुव uint8_t * lhs_batch_आधारः = static_cast<ध्रुव uint8_t *>(src1->दत्त) + i12 * src1->nb[2] + i13 * src1->nb[3];
+            uint8_t * dst_batch_आधारः = static_cast<uint8_t *>(dst->दत्त) + i12 * dst->nb[2] + i13 * dst->nb[3];
 
-            if (!use_gemv) {
-                const int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)mr);
-                int64_t max_threads = mr ? (m_roundup_mr / (int64_t)mr) : nth;
-                max_threads = std::max<int64_t>(1, max_threads);
-                const int64_t use_threads = std::min<int64_t>(nth, max_threads);
+            यदि (!use_gemv) {
+                ध्रुव int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)mr);
+                int64_t max_तन्तवः = mr ? (m_roundup_mr / (int64_t)mr) : nth;
+                max_तन्तवः = std::max<int64_t>(1, max_तन्तवः);
+                ध्रुव int64_t use_तन्तवः = std::min<int64_t>(nth, max_तन्तवः);
 
-                if (ith < use_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), mr);
-                    const int64_t num_m_per_threadN_1 = (int64_t)m - (use_threads - 1) * num_m_per_thread0;
+                यदि (ith < use_तन्तवः) {
+                    ध्रुव int64_t अङ्कः_m_प्रत्येकम्_thread0   = आवर्तनम्_अधस्तात्((size_t)(m_roundup_mr / use_तन्तवः), mr);
+                    ध्रुव int64_t अङ्कः_m_प्रत्येकम्_thread_N_1 = (int64_t)m - (use_तन्तवः - 1) * अङ्कः_m_प्रत्येकम्_thread0;
 
-                    const int64_t m_start = (int64_t)ith * num_m_per_thread0;
-                    const int64_t m_count = (ith == use_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    ध्रुव int64_t m_start = (int64_t)ith * अङ्कः_m_प्रत्येकम्_thread0;
+                    ध्रुव int64_t m_गणनम् = (ith == use_तन्तवः - 1) ? अङ्कः_m_प्रत्येकम्_thread_N_1 : अङ्कः_m_प्रत्येकम्_thread0;
 
-                    const size_t base_packed_off  = lhs_info->get_packed_offset_ex(m_start, k, 0, mr, kr, sr);
-                    const size_t next_block_off   = lhs_info->get_packed_offset_ex(m_start + mr, k, 0, mr, kr, sr);
-                    const size_t row_stride_bytes = mr ? (next_block_off - base_packed_off) / mr : 0;
+                    ध्रुव size_t आधारः_packed_off  = lhs_info->get_packed_विस्थापनम्_ex(m_start, k, 0, mr, kr, sr);
+                    ध्रुव size_t अग्र_खण्डम्_off   = lhs_info->get_packed_विस्थापनम्_ex(m_start + mr, k, 0, mr, kr, sr);
+                    ध्रुव size_t row_stride_अष्टकानि = mr ? (अग्र_खण्डम्_off - आधारः_packed_off) / mr : 0;
 
-                    int64_t remaining = m_count;
+                    int64_t remaining = m_गणनम्;
                     int64_t cur       = m_start;
 
-                    while (remaining > 0) {
-                        const int64_t take = std::min<int64_t>((int64_t)m - cur, remaining);
-                        const size_t src_off = lhs_info->get_offset(cur, src1->nb[1]);
-                        const void * src_ptr = lhs_batch_base + src_off;
-                        const size_t dst_off = base_packed_off + (size_t)(cur - m_start) * row_stride_bytes;
-                        void * dst_ptr       = lhs_packed + dst_off;
+                    यावत् (remaining > 0) {
+                        ध्रुव int64_t take = std::min<int64_t>((int64_t)m - cur, remaining);
+                        ध्रुव size_t src_off = lhs_info->get_विस्थापनम्(cur, src1->nb[1]);
+                        ध्रुव शून्य * src_ptr = lhs_batch_आधारः + src_off;
+                        ध्रुव size_t dst_off = आधारः_packed_off + (size_t)(cur - m_start) * row_stride_अष्टकानि;
+                        शून्य * dst_ptr       = lhs_packed + dst_off;
 
                         lhs_info->pack_func_ex(take, k, 0, mr, kr, sr, 0, src_ptr, src1->nb[1], dst_ptr);
 
@@ -938,144 +938,144 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 }
             }
 
-            if (ith == 0) {
-                ggml_threadpool_chunk_set(params->threadpool, 0);
+            यदि (ith == 0) {
+                ggml_threadpool_chunk_समुच्चयः(params->threadpool, 0);
             }
 
             ggml_barrier(params->threadpool);
 
-            const size_t chunk_cols = kleidiai_chunk_cols(n, nth, disable_chunking, n_step);
-            GGML_ASSERT(chunk_cols <= (size_t) INT_MAX);
+            ध्रुव size_t chunk_स्तम्भसङ्ख्या = kleidiai_chunk_स्तम्भसङ्ख्या(n, nth, disable_chunking, n_चरणः);
+            GGML_ASSERT(chunk_स्तम्भसङ्ख्या <= (size_t) अधिकतम_पूर्णाङ्कः);
 
-            int current_col = ggml_threadpool_chunk_add(params->threadpool, (int) chunk_cols);
-            while ((size_t) current_col < n) {
-                const size_t n_start = (size_t) current_col;
-                const size_t n_to_process = std::min(chunk_cols, n - n_start);
+            पूर्णाङ्क current_col = ggml_threadpool_chunk_सङ्कलय(params->threadpool, (पूर्णाङ्क) chunk_स्तम्भसङ्ख्या);
+            यावत् ((size_t) current_col < n) {
+                ध्रुव size_t n_start = (size_t) current_col;
+                ध्रुव size_t n_गन्तव्यम्_process = std::min(chunk_स्तम्भसङ्ख्या, n - n_start);
 
-                if (n_to_process > 0) {
-                    const size_t lhs_offset = use_gemv ? kernel->get_lhs_offset_ex(0, k, 0)
-                                                       : lhs_info->get_packed_offset_ex(0, k, 0, mr, kr, sr);
-                    const size_t rhs_packed_offset = kernel->get_rhs_packed_offset_ex(n_start, k, 0);
-                    const size_t dst_offset        = kernel->get_dst_offset(0, n_start, dst_stride);
+                यदि (n_गन्तव्यम्_process > 0) {
+                    ध्रुव size_t lhs_विस्थापनम् = use_gemv ? kernel->get_lhs_विस्थापनम्_ex(0, k, 0)
+                                                       : lhs_info->get_packed_विस्थापनम्_ex(0, k, 0, mr, kr, sr);
+                    ध्रुव size_t rhs_packed_विस्थापनम् = kernel->get_rhs_packed_विस्थापनम्_ex(n_start, k, 0);
+                    ध्रुव size_t dst_विस्थापनम्        = kernel->get_dst_विस्थापनम्(0, n_start, dst_stride);
 
-                    const void * lhs_ptr = use_gemv ? lhs_batch_base + lhs_offset
-                                                    : lhs_packed + lhs_offset;
-                    const void * rhs_ptr = rhs_base + rhs_packed_offset;
-                    float * dst_ptr      = reinterpret_cast<float *>(dst_batch_base + dst_offset);
+                    ध्रुव शून्य * lhs_ptr = use_gemv ? lhs_batch_आधारः + lhs_विस्थापनम्
+                                                    : lhs_packed + lhs_विस्थापनम्;
+                    ध्रुव शून्य * rhs_ptr = rhs_आधारः + rhs_packed_विस्थापनम्;
+                    भिन्न * dst_ptr      = reinterpret_cast<भिन्न *>(dst_batch_आधारः + dst_विस्थापनम्);
 
-                    kernel->run_kernel_ex(m, n_to_process, k, use_gemv ? src1->nb[1] : 0,
+                    kernel->सततम्_kernel_ex(m, n_गन्तव्यम्_process, k, use_gemv ? src1->nb[1] : 0,
                                           lhs_ptr,
                                           rhs_ptr,
                                           dst_ptr,
                                           dst_stride,
-                                          sizeof(float),
+                                          परिमाण(भिन्न),
                                           -FLT_MAX,
                                           FLT_MAX);
                 }
 
-                current_col = ggml_threadpool_chunk_add(params->threadpool, (int) chunk_cols);
+                current_col = ggml_threadpool_chunk_सङ्कलय(params->threadpool, (पूर्णाङ्क) chunk_स्तम्भसङ्ख्या);
             }
 
-            if (batch_idx != batch_size - 1) {
+            यदि (batch_idx != batch_आकार - 1) {
                 ggml_barrier(params->threadpool);
             }
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    bool compute_forward_fp16(ggml_compute_params * params, struct ggml_tensor * dst) {
-        const ggml_tensor * src0 = dst->src[0];
-        const ggml_tensor * src1 = dst->src[1];
+    तार्किक compute_forward_fp16(ggml_compute_params * params, संरचना ggml_tensor * dst) {
+        ध्रुव ggml_tensor * src0 = dst->src[0];
+        ध्रुव ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_द्विमान_OP_LOCALS
 
         ggml_kleidiai_kernels *kernels = ggml_kleidiai_select_kernels(ctx.features, dst);
-        if (!kernels) {
-            return false;
+        यदि (!kernels) {
+            प्रत्यागम असत्य;
         }
 
-        const bool is_gemv = src1->ne[1] == 1;
+        ध्रुव तार्किक is_gemv = src1->ne[1] == 1;
         kernel_info * kernel = is_gemv ? &kernels->gemv : &kernels->gemm;
         lhs_packing_info * lhs_info = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
         GGML_ASSERT(kernel);
-        if (!kernels->rhs_info.pack_func_ex ||
-            !kernel->get_lhs_offset_ex || !kernel->get_rhs_packed_offset_ex || !kernel->run_kernel_ex) {
-            return false;
+        यदि (!kernels->rhs_info.pack_func_ex ||
+            !kernel->get_lhs_विस्थापनम्_ex || !kernel->get_rhs_packed_विस्थापनम्_ex || !kernel->सततम्_kernel_ex) {
+            प्रत्यागम असत्य;
         }
 
-        const int nth = params->nth;
-        const int ith = params->ith;
+        ध्रुव पूर्णाङ्क nth = params->nth;
+        ध्रुव पूर्णाङ्क ith = params->ith;
 
-        const int64_t lhs_batch_size0 = ne12;
-        const int64_t rhs_batch_size0 = ne02;
-        const int64_t batch_size      = lhs_batch_size0;
+        ध्रुव int64_t lhs_batch_size0 = ne12;
+        ध्रुव int64_t rhs_batch_size0 = ne02;
+        ध्रुव int64_t batch_आकार      = lhs_batch_size0;
 
         GGML_ASSERT(rhs_batch_size0 > 0);
         GGML_ASSERT(lhs_batch_size0 % rhs_batch_size0 == 0);
-        const int64_t r = lhs_batch_size0 / rhs_batch_size0;
+        ध्रुव int64_t r = lhs_batch_size0 / rhs_batch_size0;
 
-        const int64_t m_group = ne11;
-        const int64_t m       = m_group;
-        const int64_t n       = ne01;
-        const int64_t k       = ne00;
+        ध्रुव int64_t m_गणः = ne11;
+        ध्रुव int64_t m       = m_गणः;
+        ध्रुव int64_t n       = ne01;
+        ध्रुव int64_t k       = ne00;
 
-        const size_t lhs_stride = src1->nb[1];
-        const size_t rhs_stride = src0->nb[1];
-        const size_t dst_stride = dst->nb[1];
+        ध्रुव size_t lhs_stride = src1->nb[1];
+        ध्रुव size_t rhs_stride = src0->nb[1];
+        ध्रुव size_t dst_stride = dst->nb[1];
 
-        const int64_t mr = (int64_t) kernel->get_mr();
-        const int64_t nr = (int64_t) kernel->get_nr();
-        const int64_t kr = (int64_t) kernel->get_kr();
-        const int64_t sr = (int64_t) kernel->get_sr();
+        ध्रुव int64_t mr = (int64_t) kernel->get_mr();
+        ध्रुव int64_t nr = (int64_t) kernel->get_nr();
+        ध्रुव int64_t kr = (int64_t) kernel->get_kr();
+        ध्रुव int64_t sr = (int64_t) kernel->get_sr();
 
-        const size_t lhs_packed_size = lhs_info->packed_size_ex(m, k, 0, mr, kr, sr);
-        const size_t rhs_packed_size = kernels->rhs_info.packed_size_ex(n, k, nr, kr, 0);
-        const size_t kxn_size        = k * n * sizeof(float);
-        const size_t bias_size       = n * sizeof(float);
+        ध्रुव size_t lhs_packed_आकार = lhs_info->packed_आकार_ex(m, k, 0, mr, kr, sr);
+        ध्रुव size_t rhs_packed_आकार = kernels->rhs_info.packed_आकार_ex(n, k, nr, kr, 0);
+        ध्रुव size_t kxn_आकार        = k * n * परिमाण(भिन्न);
+        ध्रुव size_t bias_आकार       = n * परिमाण(भिन्न);
 
-        const size_t wsize_required = lhs_packed_size + rhs_packed_size + kxn_size + bias_size;
+        ध्रुव size_t wsize_required = lhs_packed_आकार + rhs_packed_आकार + kxn_आकार + bias_आकार;
         GGML_ASSERT(wsize_required <= params->wsize);
 
         uint8_t * lhs_packed = static_cast<uint8_t *>(params->wdata);
-        uint8_t * rhs_packed = lhs_packed + lhs_packed_size;
-        uint8_t * rhs_kxn    = rhs_packed + rhs_packed_size;
-        uint8_t * bias       = rhs_kxn + kxn_size;
+        uint8_t * rhs_packed = lhs_packed + lhs_packed_आकार;
+        uint8_t * rhs_kxn    = rhs_packed + rhs_packed_आकार;
+        uint8_t * bias       = rhs_kxn + kxn_आकार;
 
-        for (int64_t batch_idx = 0; batch_idx < batch_size; ++batch_idx) {
-            const int64_t rhs_batch_idx = batch_idx / r;
-            const uint8_t * rhs_batch_base = static_cast<const uint8_t *>(src0->data) + rhs_batch_idx * src0->nb[2];
-            uint8_t * dst_batch_base = static_cast<uint8_t *>(dst->data) + batch_idx * dst->nb[2];
+        प्रति (int64_t batch_idx = 0; batch_idx < batch_आकार; ++batch_idx) {
+            ध्रुव int64_t rhs_batch_idx = batch_idx / r;
+            ध्रुव uint8_t * rhs_batch_आधारः = static_cast<ध्रुव uint8_t *>(src0->दत्त) + rhs_batch_idx * src0->nb[2];
+            uint8_t * dst_batch_आधारः = static_cast<uint8_t *>(dst->दत्त) + batch_idx * dst->nb[2];
 
             // LHS packing (threaded over m, honoring mr alignment and KV groups)
             {
-                const int64_t m_roundup_mr = kai_roundup(m, mr);
-                const int64_t num_threads  = KAI_MIN(m_roundup_mr / mr, nth);
+                ध्रुव int64_t m_roundup_mr = kai_roundup(m, mr);
+                ध्रुव int64_t अङ्कः_तन्तवः  = KAI_MIN(m_roundup_mr / mr, nth);
 
-                if (ith < num_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / num_threads), (size_t)mr);
-                    const int64_t num_m_per_threadN_1 = m - (num_threads - 1) * num_m_per_thread0;
+                यदि (ith < अङ्कः_तन्तवः) {
+                    ध्रुव int64_t अङ्कः_m_प्रत्येकम्_thread0   = आवर्तनम्_अधस्तात्((size_t)(m_roundup_mr / अङ्कः_तन्तवः), (size_t)mr);
+                    ध्रुव int64_t अङ्कः_m_प्रत्येकम्_thread_N_1 = m - (अङ्कः_तन्तवः - 1) * अङ्कः_m_प्रत्येकम्_thread0;
 
-                    const int64_t m_start = ith * num_m_per_thread0;
-                    const int64_t m_count = (ith == num_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    ध्रुव int64_t m_start = ith * अङ्कः_m_प्रत्येकम्_thread0;
+                    ध्रुव int64_t m_गणनम् = (ith == अङ्कः_तन्तवः - 1) ? अङ्कः_m_प्रत्येकम्_thread_N_1 : अङ्कः_m_प्रत्येकम्_thread0;
 
                     // Base packed offset (aligned) and per-row stride in bytes
-                    const size_t base_packed_off  = lhs_info->get_packed_offset_ex(m_start, k, 0, mr, kr, sr);
-                    const size_t next_block_off   = lhs_info->get_packed_offset_ex(m_start + mr, k, 0, mr, kr, sr);
-                    const size_t row_stride_bytes = (next_block_off - base_packed_off) / (size_t)mr;
+                    ध्रुव size_t आधारः_packed_off  = lhs_info->get_packed_विस्थापनम्_ex(m_start, k, 0, mr, kr, sr);
+                    ध्रुव size_t अग्र_खण्डम्_off   = lhs_info->get_packed_विस्थापनम्_ex(m_start + mr, k, 0, mr, kr, sr);
+                    ध्रुव size_t row_stride_अष्टकानि = (अग्र_खण्डम्_off - आधारः_packed_off) / (size_t)mr;
 
-                    int64_t remaining = m_count;
+                    int64_t remaining = m_गणनम्;
                     int64_t cur       = m_start;
 
-                    while (remaining > 0) {
-                        const int64_t row_in_group = cur;
-                        const int64_t avail        = m_group - row_in_group;
-                        const int64_t take         = std::min(avail, remaining);
+                    यावत् (remaining > 0) {
+                        ध्रुव int64_t row_अन्तर्_गणः = cur;
+                        ध्रुव int64_t avail        = m_गणः - row_अन्तर्_गणः;
+                        ध्रुव int64_t take         = std::min(avail, remaining);
 
-                        const uint8_t * lhs_batch_base = static_cast<const uint8_t *>(src1->data) + batch_idx * src1->nb[2];
-                        const void * src_ptr = lhs_batch_base + (size_t)row_in_group * lhs_stride;
-                        const size_t dst_off = base_packed_off + (size_t)(cur - m_start) * row_stride_bytes;
-                        void * dst_ptr       = lhs_packed + dst_off;
+                        ध्रुव uint8_t * lhs_batch_आधारः = static_cast<ध्रुव uint8_t *>(src1->दत्त) + batch_idx * src1->nb[2];
+                        ध्रुव शून्य * src_ptr = lhs_batch_आधारः + (size_t)row_अन्तर्_गणः * lhs_stride;
+                        ध्रुव size_t dst_off = आधारः_packed_off + (size_t)(cur - m_start) * row_stride_अष्टकानि;
+                        शून्य * dst_ptr       = lhs_packed + dst_off;
 
                         lhs_info->pack_func_ex(take, k, 0, mr, kr, sr, 0, src_ptr, lhs_stride, dst_ptr);
 
@@ -1086,90 +1086,90 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             }
 
             // RHS packing (single thread), then synchronize
-            if (ith == 0) {
-                memset(bias, 0, (size_t)n * sizeof(float));
+            यदि (ith == 0) {
+                स्मृतिं_पूरय(bias, 0, (size_t)n * परिमाण(भिन्न));
                 transpose_f32kxn_f16nxk((size_t)n, (size_t)k,
-                                        reinterpret_cast<float *>(rhs_kxn),
-                                        reinterpret_cast<const uint16_t *>(rhs_batch_base),
+                                        reinterpret_cast<भिन्न *>(rhs_kxn),
+                                        reinterpret_cast<ध्रुव uint16_t *>(rhs_batch_आधारः),
                                         rhs_stride);
 
-                kernels->rhs_info.pack_func_ex(1, n, k, nr, kr, sr, 0, n * sizeof(float),
-                             rhs_kxn, bias, nullptr, rhs_packed, 0, nullptr);
+                kernels->rhs_info.pack_func_ex(1, n, k, nr, kr, sr, 0, n * परिमाण(भिन्न),
+                             rhs_kxn, bias, शून्यसूचकः, rhs_packed, 0, शून्यसूचकः);
             }
 
             ggml_barrier(params->threadpool);
 
             // Matmul (threaded over n)
             {
-                const int64_t n_step  = (int64_t) kernel->get_n_step();
-                int64_t num_threads_n = KAI_MIN(n / n_step, nth);
-                if (num_threads_n <= 0) {
-                    num_threads_n = 1;
+                ध्रुव int64_t n_चरणः  = (int64_t) kernel->get_n_चरणः();
+                int64_t अङ्कः_तन्तवः_n = KAI_MIN(n / n_चरणः, nth);
+                यदि (अङ्कः_तन्तवः_n <= 0) {
+                    अङ्कः_तन्तवः_n = 1;
                 }
 
-                if (ith < num_threads_n) {
-                    const int64_t num_n_per_thread0   = round_down((size_t)(n / num_threads_n), (size_t)n_step);
-                    const int64_t num_n_per_threadN_1 = n - (num_threads_n - 1) * num_n_per_thread0;
+                यदि (ith < अङ्कः_तन्तवः_n) {
+                    ध्रुव int64_t अङ्कः_n_प्रत्येकम्_thread0   = आवर्तनम्_अधस्तात्((size_t)(n / अङ्कः_तन्तवः_n), (size_t)n_चरणः);
+                    ध्रुव int64_t अङ्कः_n_प्रत्येकम्_thread_N_1 = n - (अङ्कः_तन्तवः_n - 1) * अङ्कः_n_प्रत्येकम्_thread0;
 
-                    const int64_t n_start      = ith * num_n_per_thread0;
-                    const int64_t n_to_process = (ith == num_threads_n - 1) ? num_n_per_threadN_1 : num_n_per_thread0;
+                    ध्रुव int64_t n_start      = ith * अङ्कः_n_प्रत्येकम्_thread0;
+                    ध्रुव int64_t n_गन्तव्यम्_process = (ith == अङ्कः_तन्तवः_n - 1) ? अङ्कः_n_प्रत्येकम्_thread_N_1 : अङ्कः_n_प्रत्येकम्_thread0;
 
                     // LHS packed base at row 0 (consistent with packing above)
-                    const size_t lhs_packed_offset0 = lhs_info->get_packed_offset_ex(0, k, 0, mr, kr, sr);
-                    const size_t rhs_packed_offset  = kernel->get_rhs_packed_offset_ex(n_start, k, 0);
-                    const size_t dst_offset         = kernel->get_dst_offset((size_t)0, (size_t)n_start, dst_stride);
+                    ध्रुव size_t lhs_packed_offset0 = lhs_info->get_packed_विस्थापनम्_ex(0, k, 0, mr, kr, sr);
+                    ध्रुव size_t rhs_packed_विस्थापनम्  = kernel->get_rhs_packed_विस्थापनम्_ex(n_start, k, 0);
+                    ध्रुव size_t dst_विस्थापनम्         = kernel->get_dst_विस्थापनम्((size_t)0, (size_t)n_start, dst_stride);
 
-                    const void * lhs_ptr = lhs_packed + lhs_packed_offset0;
-                    const void * rhs_ptr = rhs_packed + rhs_packed_offset;
-                    float * dst_ptr      = reinterpret_cast<float *>(dst_batch_base + dst_offset);
+                    ध्रुव शून्य * lhs_ptr = lhs_packed + lhs_packed_offset0;
+                    ध्रुव शून्य * rhs_ptr = rhs_packed + rhs_packed_विस्थापनम्;
+                    भिन्न * dst_ptr      = reinterpret_cast<भिन्न *>(dst_batch_आधारः + dst_विस्थापनम्);
 
-                    kernel->run_kernel_ex(m, n_to_process, k, 0, lhs_ptr, rhs_ptr, dst_ptr, dst_stride, sizeof(float), -FLT_MAX, FLT_MAX);
+                    kernel->सततम्_kernel_ex(m, n_गन्तव्यम्_process, k, 0, lhs_ptr, rhs_ptr, dst_ptr, dst_stride, परिमाण(भिन्न), -FLT_MAX, FLT_MAX);
                 }
             }
 
-            if (batch_idx != batch_size - 1) {
+            यदि (batch_idx != batch_आकार - 1) {
                 ggml_barrier(params->threadpool);
             }
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    bool compute_forward_qx(struct ggml_compute_params * params, struct ggml_tensor * dst) {
+    तार्किक compute_forward_qx(संरचना ggml_compute_params * params, संरचना ggml_tensor * dst) {
         GGML_ASSERT(dst->src[0]->type == GGML_TYPE_Q4_0 || dst->src[0]->type == GGML_TYPE_Q4_K ||
                     dst->src[0]->type == GGML_TYPE_Q8_0 || dst->src[0]->type == GGML_TYPE_Q6_K);
 
-        const ggml_tensor * src0 = dst->src[0];
-        const ggml_tensor * src1 = dst->src[1];
+        ध्रुव ggml_tensor * src0 = dst->src[0];
+        ध्रुव ggml_tensor * src1 = dst->src[1];
 
-        GGML_TENSOR_BINARY_OP_LOCALS
+        GGML_TENSOR_द्विमान_OP_LOCALS
 
-        const kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(src0->data);
-        const bool has_header = kleidiai_is_weight_header_valid(header);
-        const bool is_gemv = src1->ne[1] == 1;
+        ध्रुव kleidiai_weight_शीर्षकम् * शीर्षकम् = kleidiai_weight_शीर्षकम्_from_ptr(src0->दत्त);
+        ध्रुव तार्किक has_शीर्षकम् = kleidiai_is_weight_शीर्षकम्_valid(शीर्षकम्);
+        ध्रुव तार्किक is_gemv = src1->ne[1] == 1;
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_total = kleidiai_collect_kernel_chain(dst, kernel_chain);
+        ध्रुव पूर्णाङ्क slot_योग = kleidiai_collect_kernel_chain(dst, kernel_chain);
 
-        auto weight_for_slot = [&](int slot_index, size_t & size_out) -> const uint8_t * {
-            if (slot_index < 0 || slot_index >= slot_total) {
-                return nullptr;
+        स्वचालित weight_for_slot = [&](पूर्णाङ्क slot_सूचकांक, size_t & आकार_बहिर्गमनम्) -> ध्रुव uint8_t * {
+            यदि (slot_सूचकांक < 0 || slot_सूचकांक >= slot_योग) {
+                प्रत्यागम शून्यसूचकः;
             }
-            if (has_header) {
-                if (slot_index < header->slot_count) {
-                    size_out = static_cast<size_t>(header->sizes[slot_index]);
-                    return kleidiai_weight_slot_ptr(header, slot_index);
+            यदि (has_शीर्षकम्) {
+                यदि (slot_सूचकांक < शीर्षकम्->slot_गणनम्) {
+                    आकार_बहिर्गमनम् = static_cast<size_t>(शीर्षकम्->sizes[slot_सूचकांक]);
+                    प्रत्यागम kleidiai_weight_slot_ptr(शीर्षकम्, slot_सूचकांक);
                 }
-                return nullptr;
+                प्रत्यागम शून्यसूचकः;
             }
-            if (slot_index == 0) {
-                size_out = ggml_nbytes(src0);
-                return static_cast<const uint8_t *>(src0->data);
+            यदि (slot_सूचकांक == 0) {
+                आकार_बहिर्गमनम् = ggml_nbytes(src0);
+                प्रत्यागम static_cast<ध्रुव uint8_t *>(src0->दत्त);
             }
-            return nullptr;
+            प्रत्यागम शून्यसूचकः;
         };
 
-        struct runtime_slot {
-            int slot_index;
+        संरचना runtime_slot {
+            पूर्णाङ्क slot_सूचकांक;
             ggml_kleidiai_kernels * kernels;
             kernel_info * kernel;
             lhs_packing_info * lhs_info;
@@ -1177,40 +1177,40 @@ class tensor_traits : public ggml::cpu::tensor_traits {
             size_t nr;
             size_t kr;
             size_t sr;
-            size_t n_step;
-            size_t lhs_packed_size;
-            size_t lhs_offset;
+            size_t n_चरणः;
+            size_t lhs_packed_आकार;
+            size_t lhs_विस्थापनम्;
             size_t lhs_bl;
             size_t rhs_bl;
             size_t pack_bl;
             size_t lhs_packed_offset0;
-            int assigned_threads;
-            int thread_begin;
-            int thread_end;
-            const uint8_t * rhs_base;
+            पूर्णाङ्क assigned_तन्तवः;
+            पूर्णाङ्क thread_begin;
+            पूर्णाङ्क thread_अन्तः;
+            ध्रुव uint8_t * rhs_आधारः;
         };
 
         std::array<runtime_slot, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> runtime{};
-        int runtime_count = 0;
+        पूर्णाङ्क runtime_गणनम् = 0;
 
-        for (int slot = 0; slot < slot_total && runtime_count < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
+        प्रति (पूर्णाङ्क slot = 0; slot < slot_योग && runtime_गणनम् < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
             ggml_kleidiai_kernels * kernels = kernel_chain[slot];
             kernel_info * kinfo      = is_gemv ? &kernels->gemv : &kernels->gemm;
             lhs_packing_info * linfo = is_gemv ? &kernels->gemv_lhs_info : &kernels->gemm_lhs_info;
-            if (!kinfo || !linfo || !linfo->packed_size_ex || !linfo->pack_func_ex || !linfo->get_offset ||
-                !kinfo->get_rhs_packed_offset_ex || !kinfo->run_kernel_ex || !kinfo->get_dst_offset) {
-                continue;
+            यदि (!kinfo || !linfo || !linfo->packed_आकार_ex || !linfo->pack_func_ex || !linfo->get_विस्थापनम् ||
+                !kinfo->get_rhs_packed_विस्थापनम्_ex || !kinfo->सततम्_kernel_ex || !kinfo->get_dst_विस्थापनम्) {
+                अनुवर्त;
             }
 
-            size_t rhs_size = 0;
-            const uint8_t * rhs_ptr = weight_for_slot(slot, rhs_size);
-            if (!rhs_ptr || rhs_size == 0) {
-                continue;
+            size_t rhs_आकार = 0;
+            ध्रुव uint8_t * rhs_ptr = weight_for_slot(slot, rhs_आकार);
+            यदि (!rhs_ptr || rhs_आकार == 0) {
+                अनुवर्त;
             }
 
-            const kleidiai_block_args block_args = kleidiai_get_block_args(kernels->rhs_type);
+            ध्रुव kleidiai_खण्डम्_तर्काः खण्डम्_तर्काः = kleidiai_get_खण्डम्_तर्काः(kernels->rhs_type);
 
-            runtime[runtime_count] = {
+            runtime[runtime_गणनम्] = {
                 slot,
                 kernels,
                 kinfo,
@@ -1219,234 +1219,234 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 kinfo->get_nr(),
                 kinfo->get_kr(),
                 kinfo->get_sr(),
-                kinfo->get_n_step(),
+                kinfo->get_n_चरणः(),
                 0,
                 0,
-                block_args.lhs_bl,
-                block_args.rhs_bl,
-                block_args.pack_bl,
+                खण्डम्_तर्काः.lhs_bl,
+                खण्डम्_तर्काः.rhs_bl,
+                खण्डम्_तर्काः.pack_bl,
                 0,
                 0,
                 0,
                 0,
                 rhs_ptr
             };
-            ++runtime_count;
+            ++runtime_गणनम्;
         }
 
-        if (runtime_count == 0) {
+        यदि (runtime_गणनम् == 0) {
             GGML_LOG_WARN("kleidiai: no runtime kernel slot available for supported op %s\n", dst->name);
-            return false;
+            प्रत्यागम असत्य;
         }
 
-        const int nth_total = params->nth > 0 ? params->nth : 1;
-        const int ith_total = params->ith;
+        ध्रुव पूर्णाङ्क nth_योग = params->nth > 0 ? params->nth : 1;
+        ध्रुव पूर्णाङ्क ith_योग = params->ith;
 
-        int sme_slot = -1;
-        int non_sme_slot = -1;
-        for (int i = 0; i < runtime_count; ++i) {
-            if (is_sme_family(runtime[i].kernels->required_cpu)) {
+        पूर्णाङ्क sme_slot = -1;
+        पूर्णाङ्क non_sme_slot = -1;
+        प्रति (पूर्णाङ्क i = 0; i < runtime_गणनम्; ++i) {
+            यदि (is_sme_family(runtime[i].kernels->required_cpu)) {
                 sme_slot = i;
-                break;
+                भङ्ग;
             }
         }
 
-        for (int i = 0; i < runtime_count; ++i) {
-            if (!is_sme_family(runtime[i].kernels->required_cpu)) {
+        प्रति (पूर्णाङ्क i = 0; i < runtime_गणनम्; ++i) {
+            यदि (!is_sme_family(runtime[i].kernels->required_cpu)) {
                 non_sme_slot = i;
-                break;
+                भङ्ग;
             }
         }
 
-        const int sme_cap_limit = ctx.sme_thread_cap;
-        const bool use_hybrid = sme_cap_limit > 0 &&
-                                 runtime_count > 1 &&
-                                 nth_total > sme_cap_limit;
+        ध्रुव पूर्णाङ्क sme_cap_सीमा = ctx.sme_thread_cap;
+        ध्रुव तार्किक use_hybrid = sme_cap_सीमा > 0 &&
+                                 runtime_गणनम् > 1 &&
+                                 nth_योग > sme_cap_सीमा;
         // Heuristic: disable hybrid for very small workloads where per-slot overhead dominates.
         // If rows are small or average columns per thread are small, keep single-slot.
-        size_t min_cols_per_thread = 0;
-        if (runtime_count > 0 && nth_total > 0) {
-            min_cols_per_thread = (size_t) std::max<int64_t>(1, (int64_t)ne01 / (int64_t)nth_total);
+        size_t min_स्तम्भसङ्ख्या_प्रत्येकम्_thread = 0;
+        यदि (runtime_गणनम् > 0 && nth_योग > 0) {
+            min_स्तम्भसङ्ख्या_प्रत्येकम्_thread = (size_t) std::max<int64_t>(1, (int64_t)ne01 / (int64_t)nth_योग);
         }
-        const bool too_small_for_hybrid = (min_cols_per_thread < 2) || (ne11 < 128);
+        ध्रुव तार्किक too_small_for_hybrid = (min_स्तम्भसङ्ख्या_प्रत्येकम्_thread < 2) || (ne11 < 128);
 
-        const bool hybrid_enabled = use_hybrid && !too_small_for_hybrid;
+        ध्रुव तार्किक hybrid_enabled = use_hybrid && !too_small_for_hybrid;
 
-        if (!hybrid_enabled) {
-            int chosen_slot = 0;
-            if (too_small_for_hybrid && sme_slot != -1) {
-                chosen_slot = nth_total > sme_cap_limit && non_sme_slot != -1 ? non_sme_slot : sme_slot;
-            } else if (runtime_count > 1 && ctx.sme_thread_cap > 0 && nth_total > ctx.sme_thread_cap) {
+        यदि (!hybrid_enabled) {
+            पूर्णाङ्क chosen_slot = 0;
+            यदि (too_small_for_hybrid && sme_slot != -1) {
+                chosen_slot = nth_योग > sme_cap_सीमा && non_sme_slot != -1 ? non_sme_slot : sme_slot;
+            } अन्यथा यदि (runtime_गणनम् > 1 && ctx.sme_thread_cap > 0 && nth_योग > ctx.sme_thread_cap) {
                 chosen_slot = 1;
             }
-            if (chosen_slot != 0 && chosen_slot < runtime_count) {
+            यदि (chosen_slot != 0 && chosen_slot < runtime_गणनम्) {
                 runtime[0] = runtime[chosen_slot];
-                runtime[0].assigned_threads = 0;
+                runtime[0].assigned_तन्तवः = 0;
                 runtime[0].thread_begin = 0;
-                runtime[0].thread_end = 0;
+                runtime[0].thread_अन्तः = 0;
             }
-            runtime_count = runtime_count > 0 ? 1 : 0;
+            runtime_गणनम् = runtime_गणनम् > 0 ? 1 : 0;
 
             // Recompute SME slot based on the collapsed runtime[0]
             sme_slot = -1;
-            if (runtime_count > 0 &&
+            यदि (runtime_गणनम् > 0 &&
                 is_sme_family(runtime[0].kernels->required_cpu)) {
                 sme_slot = 0;
             }
         }
 
-        const bool sme_single_only = sme_slot != -1 &&
-                                     runtime[sme_slot].kernels->rhs_info.repack_mode == RHS_REPACK_SINGLE_ONLY;
-        int sme_cap = sme_single_only ? nth_total : kleidiai_sme_thread_cap();
-        if (sme_cap < 0) {
-            sme_cap = nth_total;
+        ध्रुव तार्किक sme_single_only = sme_slot != -1 &&
+                                     runtime[sme_slot].kernels->rhs_info.repack_बहुलकम् == RHS_REPACK_SINGLE_ONLY;
+        पूर्णाङ्क sme_cap = sme_single_only ? nth_योग : kleidiai_sme_thread_cap();
+        यदि (sme_cap < 0) {
+            sme_cap = nth_योग;
         }
-        sme_cap = std::min(sme_cap, nth_total);
+        sme_cap = std::min(sme_cap, nth_योग);
 
-        int threads_remaining = nth_total;
-        if (sme_slot != -1) {
-            int sme_threads = std::min(std::max(sme_cap, 0), threads_remaining);
-            runtime[sme_slot].assigned_threads = sme_threads;
-            threads_remaining -= sme_threads;
+        पूर्णाङ्क तन्तवः_remaining = nth_योग;
+        यदि (sme_slot != -1) {
+            पूर्णाङ्क sme_तन्तवः = std::min(std::max(sme_cap, 0), तन्तवः_remaining);
+            runtime[sme_slot].assigned_तन्तवः = sme_तन्तवः;
+            तन्तवः_remaining -= sme_तन्तवः;
         }
 
-        int fallback_indices[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
-        int fallback_count = 0;
+        पूर्णाङ्क fallback_indices[GGML_KLEIDIAI_MAX_KERNEL_SLOTS];
+        पूर्णाङ्क fallback_गणनम् = 0;
         // The current hybrid chain is bounded to SME + one non-SME fallback slot.
         GGML_ASSERT(GGML_KLEIDIAI_MAX_KERNEL_SLOTS == 2);
-        for (int i = 0; i < runtime_count; ++i) {
-            if (i == sme_slot) {
-                continue;
+        प्रति (पूर्णाङ्क i = 0; i < runtime_गणनम्; ++i) {
+            यदि (i == sme_slot) {
+                अनुवर्त;
             }
-            fallback_indices[fallback_count++] = i;
+            fallback_indices[fallback_गणनम्++] = i;
         }
 
-        for (int fi = 0; fi < fallback_count; ++fi) {
-            if (threads_remaining <= 0) {
-                break;
+        प्रति (पूर्णाङ्क fi = 0; fi < fallback_गणनम्; ++fi) {
+            यदि (तन्तवः_remaining <= 0) {
+                भङ्ग;
             }
-            const int slot_index = fallback_indices[fi];
-            const int slots_left = fallback_count - fi;
-            int share = (threads_remaining + slots_left - 1) / slots_left;
-            share     = std::min(share, threads_remaining);
-            runtime[slot_index].assigned_threads = share;
-            threads_remaining -= share;
+            ध्रुव पूर्णाङ्क slot_सूचकांक = fallback_indices[fi];
+            ध्रुव पूर्णाङ्क slots_वामः = fallback_गणनम् - fi;
+            पूर्णाङ्क share = (तन्तवः_remaining + slots_वामः - 1) / slots_वामः;
+            share     = std::min(share, तन्तवः_remaining);
+            runtime[slot_सूचकांक].assigned_तन्तवः = share;
+            तन्तवः_remaining -= share;
         }
 
-        int thread_cursor = 0;
-        for (int i = 0; i < runtime_count; ++i) {
+        पूर्णाङ्क thread_cursor = 0;
+        प्रति (पूर्णाङ्क i = 0; i < runtime_गणनम्; ++i) {
             runtime[i].thread_begin = thread_cursor;
-            thread_cursor += runtime[i].assigned_threads;
-            runtime[i].thread_end = thread_cursor;
+            thread_cursor += runtime[i].assigned_तन्तवः;
+            runtime[i].thread_अन्तः = thread_cursor;
         }
         GGML_ASSERT(thread_cursor > 0);
-        const int active_threads = thread_cursor;
+        ध्रुव पूर्णाङ्क सक्रिय_तन्तवः = thread_cursor;
 
-        int local_slot = -1;
-        int local_ith  = 0;
-        for (int i = 0; i < runtime_count; ++i) {
-            if (ith_total >= runtime[i].thread_begin && ith_total < runtime[i].thread_end) {
+        पूर्णाङ्क local_slot = -1;
+        पूर्णाङ्क local_ith  = 0;
+        प्रति (पूर्णाङ्क i = 0; i < runtime_गणनम्; ++i) {
+            यदि (ith_योग >= runtime[i].thread_begin && ith_योग < runtime[i].thread_अन्तः) {
                 local_slot = i;
-                local_ith  = ith_total - runtime[i].thread_begin;
-                break;
+                local_ith  = ith_योग - runtime[i].thread_begin;
+                भङ्ग;
             }
         }
-        const size_t k = ne00;
-        const size_t m = ne11;
-        const size_t n = ne01;
+        ध्रुव size_t k = ne00;
+        ध्रुव size_t m = ne11;
+        ध्रुव size_t n = ne01;
 
         size_t cursor = 0;
-        for (int i = 0; i < runtime_count; ++i) {
-            runtime[i].lhs_packed_size = runtime[i].lhs_info->packed_size_ex(m, k, runtime[i].pack_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
-            cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-            runtime[i].lhs_offset = cursor;
-            runtime[i].lhs_packed_offset0 = runtime[i].lhs_info->get_packed_offset_ex(0, k, runtime[i].lhs_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
-            cursor += runtime[i].lhs_packed_size;
+        प्रति (पूर्णाङ्क i = 0; i < runtime_गणनम्; ++i) {
+            runtime[i].lhs_packed_आकार = runtime[i].lhs_info->packed_आकार_ex(m, k, runtime[i].pack_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
+            cursor = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            runtime[i].lhs_विस्थापनम् = cursor;
+            runtime[i].lhs_packed_offset0 = runtime[i].lhs_info->get_packed_विस्थापनम्_ex(0, k, runtime[i].lhs_bl, runtime[i].mr, runtime[i].kr, runtime[i].sr);
+            cursor += runtime[i].lhs_packed_आकार;
         }
 
         GGML_ASSERT(cursor <= params->wsize);
         uint8_t * scratch = static_cast<uint8_t *>(params->wdata);
 
-        size_t common_step = 1;
-        for (int i = 0; i < runtime_count; ++i) {
-            if (runtime[i].assigned_threads == 0) {
-                continue;
+        size_t common_चरणः = 1;
+        प्रति (पूर्णाङ्क i = 0; i < runtime_गणनम्; ++i) {
+            यदि (runtime[i].assigned_तन्तवः == 0) {
+                अनुवर्त;
             }
-            size_t next_step = 0;
-            if (!lcm_size(common_step, runtime[i].n_step ? runtime[i].n_step : 1, next_step)) {
-                return false;
+            size_t अग्र_चरणः = 0;
+            यदि (!lcm_आकार(common_चरणः, runtime[i].n_चरणः ? runtime[i].n_चरणः : 1, अग्र_चरणः)) {
+                प्रत्यागम असत्य;
             }
-            common_step = next_step;
+            common_चरणः = अग्र_चरणः;
         }
-        GGML_ASSERT(common_step > 0);
+        GGML_ASSERT(common_चरणः > 0);
 
-        const bool disable_chunking = ggml_is_numa();
-        const size_t chunk_multiplier = std::max(1, ctx.chunk_multiplier);
-        const size_t chunk_divisor = (active_threads == 1 || disable_chunking) ? (size_t) active_threads : (size_t) active_threads * chunk_multiplier;
-        size_t chunk_cols = align_up(std::max<size_t>(1, ceil_div_size(n, chunk_divisor)), common_step);
-        if (chunk_cols == 0) {
-            chunk_cols = common_step;
+        ध्रुव तार्किक disable_chunking = ggml_is_numa();
+        ध्रुव size_t chunk_multiplier = std::max(1, ctx.chunk_multiplier);
+        ध्रुव size_t chunk_भाजकः = (सक्रिय_तन्तवः == 1 || disable_chunking) ? (size_t) सक्रिय_तन्तवः : (size_t) सक्रिय_तन्तवः * chunk_multiplier;
+        size_t chunk_स्तम्भसङ्ख्या = align_ऊर्ध्वम्(std::max<size_t>(1, ceil_div_आकार(n, chunk_भाजकः)), common_चरणः);
+        यदि (chunk_स्तम्भसङ्ख्या == 0) {
+            chunk_स्तम्भसङ्ख्या = common_चरणः;
         }
         // If common_step is larger than n, the loop below runs one valid tail chunk
         // with cols == n.
-        const size_t nchunk_size = std::max<size_t>(1, ceil_div_size(n, chunk_cols));
-        GGML_ASSERT(nchunk_size <= (size_t)INT_MAX);
-        const int nchunk = (int)nchunk_size;
-        const size_t dst_stride = dst->nb[1];
+        ध्रुव size_t nchunk_आकार = std::max<size_t>(1, ceil_div_आकार(n, chunk_स्तम्भसङ्ख्या));
+        GGML_ASSERT(nchunk_आकार <= (size_t)अधिकतम_पूर्णाङ्कः);
+        ध्रुव पूर्णाङ्क nchunk = (पूर्णाङ्क)nchunk_आकार;
+        ध्रुव size_t dst_stride = dst->nb[1];
 
-        auto run_chunk = [&](runtime_slot & slot, size_t global_start, size_t cols, uint8_t * dst_batch_base) {
-            const size_t rhs_packed_offset = slot.kernel->get_rhs_packed_offset_ex(global_start, k, slot.rhs_bl);
-            const size_t dst_offset        = slot.kernel->get_dst_offset(0, global_start, dst_stride);
+        स्वचालित सततम्_chunk = [&](runtime_slot & slot, size_t global_start, size_t स्तम्भसङ्ख्या_2, uint8_t * dst_batch_आधारः) {
+            ध्रुव size_t rhs_packed_विस्थापनम् = slot.kernel->get_rhs_packed_विस्थापनम्_ex(global_start, k, slot.rhs_bl);
+            ध्रुव size_t dst_विस्थापनम्        = slot.kernel->get_dst_विस्थापनम्(0, global_start, dst_stride);
 
-            const uint8_t * lhs_ptr = scratch + slot.lhs_offset + slot.lhs_packed_offset0;
-            const uint8_t * rhs_ptr = slot.rhs_base + rhs_packed_offset;
-            float * dst_ptr         = reinterpret_cast<float *>(dst_batch_base + dst_offset);
+            ध्रुव uint8_t * lhs_ptr = scratch + slot.lhs_विस्थापनम् + slot.lhs_packed_offset0;
+            ध्रुव uint8_t * rhs_ptr = slot.rhs_आधारः + rhs_packed_विस्थापनम्;
+            भिन्न * dst_ptr         = reinterpret_cast<भिन्न *>(dst_batch_आधारः + dst_विस्थापनम्);
 
-            slot.kernel->run_kernel_ex(m, cols, k, slot.rhs_bl,
+            slot.kernel->सततम्_kernel_ex(m, स्तम्भसङ्ख्या_2, k, slot.rhs_bl,
                                        lhs_ptr,
                                        rhs_ptr,
                                        dst_ptr,
                                        dst_stride,
-                                       sizeof(float),
+                                       परिमाण(भिन्न),
                                        -FLT_MAX,
                                        FLT_MAX);
         };
 
-        for (int64_t batch_idx = 0; batch_idx < ne12; ++batch_idx) {
-            const uint8_t * lhs_batch_base = static_cast<const uint8_t *>(src1->data) + batch_idx * src1->nb[2];
-            uint8_t * dst_batch_base = static_cast<uint8_t *>(dst->data) + batch_idx * dst->nb[2];
+        प्रति (int64_t batch_idx = 0; batch_idx < ne12; ++batch_idx) {
+            ध्रुव uint8_t * lhs_batch_आधारः = static_cast<ध्रुव uint8_t *>(src1->दत्त) + batch_idx * src1->nb[2];
+            uint8_t * dst_batch_आधारः = static_cast<uint8_t *>(dst->दत्त) + batch_idx * dst->nb[2];
 
-            if (local_slot != -1) {
+            यदि (local_slot != -1) {
                 runtime_slot & slot = runtime[local_slot];
-                const int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)slot.mr);
-                int64_t max_threads = slot.mr ? (m_roundup_mr / (int64_t)slot.mr) : slot.assigned_threads;
-                max_threads = std::max<int64_t>(1, max_threads);
-                const int64_t use_threads = std::min<int64_t>(slot.assigned_threads, max_threads);
+                ध्रुव int64_t m_roundup_mr = kai_roundup((int64_t)m, (int64_t)slot.mr);
+                int64_t max_तन्तवः = slot.mr ? (m_roundup_mr / (int64_t)slot.mr) : slot.assigned_तन्तवः;
+                max_तन्तवः = std::max<int64_t>(1, max_तन्तवः);
+                ध्रुव int64_t use_तन्तवः = std::min<int64_t>(slot.assigned_तन्तवः, max_तन्तवः);
 
-                if (local_ith < use_threads) {
-                    const int64_t num_m_per_thread0   = round_down((size_t)(m_roundup_mr / use_threads), slot.mr);
-                    const int64_t num_m_per_threadN_1 = (int64_t)m - (use_threads - 1) * num_m_per_thread0;
+                यदि (local_ith < use_तन्तवः) {
+                    ध्रुव int64_t अङ्कः_m_प्रत्येकम्_thread0   = आवर्तनम्_अधस्तात्((size_t)(m_roundup_mr / use_तन्तवः), slot.mr);
+                    ध्रुव int64_t अङ्कः_m_प्रत्येकम्_thread_N_1 = (int64_t)m - (use_तन्तवः - 1) * अङ्कः_m_प्रत्येकम्_thread0;
 
-                    const int64_t m_start = (int64_t)local_ith * num_m_per_thread0;
-                    const int64_t m_count = (local_ith == use_threads - 1) ? num_m_per_threadN_1 : num_m_per_thread0;
+                    ध्रुव int64_t m_start = (int64_t)local_ith * अङ्कः_m_प्रत्येकम्_thread0;
+                    ध्रुव int64_t m_गणनम् = (local_ith == use_तन्तवः - 1) ? अङ्कः_m_प्रत्येकम्_thread_N_1 : अङ्कः_m_प्रत्येकम्_thread0;
 
-                    const size_t base_packed_off  = slot.lhs_info->get_packed_offset_ex(m_start, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
-                    const size_t next_block_off   = slot.lhs_info->get_packed_offset_ex(m_start + slot.mr, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
-                    const size_t row_stride_bytes = slot.mr ? (next_block_off - base_packed_off) / slot.mr : 0;
+                    ध्रुव size_t आधारः_packed_off  = slot.lhs_info->get_packed_विस्थापनम्_ex(m_start, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
+                    ध्रुव size_t अग्र_खण्डम्_off   = slot.lhs_info->get_packed_विस्थापनम्_ex(m_start + slot.mr, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr);
+                    ध्रुव size_t row_stride_अष्टकानि = slot.mr ? (अग्र_खण्डम्_off - आधारः_packed_off) / slot.mr : 0;
 
-                    int64_t remaining = m_count;
+                    int64_t remaining = m_गणनम्;
                     int64_t cur       = m_start;
 
-                    uint8_t * lhs_packed = scratch + slot.lhs_offset;
-                    while (remaining > 0) {
-                        const int64_t row_in_group = cur;
-                        const int64_t avail        = (int64_t)m - row_in_group;
-                        const int64_t take         = std::min(avail, remaining);
+                    uint8_t * lhs_packed = scratch + slot.lhs_विस्थापनम्;
+                    यावत् (remaining > 0) {
+                        ध्रुव int64_t row_अन्तर्_गणः = cur;
+                        ध्रुव int64_t avail        = (int64_t)m - row_अन्तर्_गणः;
+                        ध्रुव int64_t take         = std::min(avail, remaining);
 
-                        const size_t src_off = slot.lhs_info->get_offset(row_in_group, src1->nb[1]);
-                        const void * src_ptr = lhs_batch_base + src_off;
-                        const size_t dst_off = base_packed_off + (size_t)(cur - m_start) * row_stride_bytes;
-                        void * dst_ptr       = lhs_packed + dst_off;
+                        ध्रुव size_t src_off = slot.lhs_info->get_विस्थापनम्(row_अन्तर्_गणः, src1->nb[1]);
+                        ध्रुव शून्य * src_ptr = lhs_batch_आधारः + src_off;
+                        ध्रुव size_t dst_off = आधारः_packed_off + (size_t)(cur - m_start) * row_stride_अष्टकानि;
+                        शून्य * dst_ptr       = lhs_packed + dst_off;
 
                         slot.lhs_info->pack_func_ex(take, k, slot.lhs_bl, slot.mr, slot.kr, slot.sr, 0, src_ptr, src1->nb[1], dst_ptr);
 
@@ -1456,456 +1456,456 @@ class tensor_traits : public ggml::cpu::tensor_traits {
                 }
             }
 
-            if (ith_total == 0) {
-                ggml_threadpool_chunk_set(params->threadpool, active_threads);
+            यदि (ith_योग == 0) {
+                ggml_threadpool_chunk_समुच्चयः(params->threadpool, सक्रिय_तन्तवः);
             }
 
             // Publishes both LHS packing and the initialized dynamic chunk queue.
             ggml_barrier(params->threadpool);
 
-            if (local_slot != -1) {
+            यदि (local_slot != -1) {
                 runtime_slot & slot = runtime[local_slot];
-                int current_chunk = ith_total;
-                while (current_chunk < nchunk) {
-                    const size_t global_start = (size_t)current_chunk * chunk_cols;
-                    if (global_start >= n) {
-                        break;
+                पूर्णाङ्क current_chunk = ith_योग;
+                यावत् (current_chunk < nchunk) {
+                    ध्रुव size_t global_start = (size_t)current_chunk * chunk_स्तम्भसङ्ख्या;
+                    यदि (global_start >= n) {
+                        भङ्ग;
                     }
 
-                    const size_t cols = std::min(chunk_cols, n - global_start);
-                    if (cols > 0) {
+                    ध्रुव size_t स्तम्भसङ्ख्या_2 = std::min(chunk_स्तम्भसङ्ख्या, n - global_start);
+                    यदि (स्तम्भसङ्ख्या_2 > 0) {
                         // KleidiAI GEMM/GEMV kernels accept arbitrary final tail widths;
                         // only non-tail chunks are guaranteed to be n_step-aligned.
-                        run_chunk(slot, global_start, cols, dst_batch_base);
+                        सततम्_chunk(slot, global_start, स्तम्भसङ्ख्या_2, dst_batch_आधारः);
                     }
 
-                    current_chunk = ggml_threadpool_chunk_add(params->threadpool, 1);
+                    current_chunk = ggml_threadpool_chunk_सङ्कलय(params->threadpool, 1);
                 }
             }
 
-            if (batch_idx != ne12 - 1) {
+            यदि (batch_idx != ne12 - 1) {
                 ggml_barrier(params->threadpool);
             }
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
-public:
-    int repack(struct ggml_tensor * tensor, const void * data, size_t data_size) {
+सार्वजनिक:
+    पूर्णाङ्क repack(संरचना ggml_tensor * tensor, ध्रुव शून्य * दत्त, size_t दत्त_आकार) {
         GGML_ASSERT(tensor->type == GGML_TYPE_Q4_0 || tensor->type == GGML_TYPE_Q4_K ||
                     tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K ||
                     tensor->type == GGML_TYPE_F32);
-        const size_t n = tensor->ne[1];
-        const size_t k = tensor->ne[0];
+        ध्रुव size_t n = tensor->ne[1];
+        ध्रुव size_t k = tensor->ne[0];
 
-        kleidiai_weight_header * header = kleidiai_weight_header_from_ptr(tensor->data);
-        if (!header) {
-            return -1;
+        kleidiai_weight_शीर्षकम् * शीर्षकम् = kleidiai_weight_शीर्षकम्_from_ptr(tensor->दत्त);
+        यदि (!शीर्षकम्) {
+            प्रत्यागम -1;
         }
 
-        header->magic      = GGML_KLEIDIAI_PACK_MAGIC;
-        header->version    = GGML_KLEIDIAI_PACK_VERSION;
-        header->slot_count = 0;
+        शीर्षकम्->magic      = GGML_KLEIDIAI_PACK_MAGIC;
+        शीर्षकम्->संस्करणम्_2    = GGML_KLEIDIAI_PACK_संस्करणम्;
+        शीर्षकम्->slot_गणनम् = 0;
 
-        uint8_t * base_ptr = static_cast<uint8_t *>(tensor->data);
-        size_t cursor = sizeof(kleidiai_weight_header);
-        cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+        uint8_t * आधारः_ptr = static_cast<uint8_t *>(tensor->दत्त);
+        size_t cursor = परिमाण(kleidiai_weight_शीर्षकम्);
+        cursor = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const bool want_q4k = tensor->type == GGML_TYPE_Q4_K;
-        const bool want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
-        const bool want_f32 = tensor->type == GGML_TYPE_F32;
-        const int slot_total = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
+        ध्रुव तार्किक want_q4k = tensor->type == GGML_TYPE_Q4_K;
+        ध्रुव तार्किक want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
+        ध्रुव तार्किक want_f32 = tensor->type == GGML_TYPE_F32;
+        ध्रुव पूर्णाङ्क slot_योग = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
                                         : want_q8 ? kleidiai_collect_q8_chain(kernel_chain)
                                         : want_q4k ? kleidiai_collect_q4k_chain(kernel_chain)
                                                    : kleidiai_collect_q4_chain(kernel_chain);
-        const bool allow_fallback = kleidiai_pack_fallback_allowed();
+        ध्रुव तार्किक allow_fallback = kleidiai_pack_fallback_allowed();
 
         std::vector<int8_t> qdata;
-        std::vector<float>  scales;
-        std::vector<float>  bias;
-        std::vector<float> row_f32;
+        std::vector<भिन्न>  scales;
+        std::vector<भिन्न>  bias;
+        std::vector<भिन्न> row_f32;
 
-        if (want_q8 && slot_total > 0) {
+        यदि (want_q8 && slot_योग > 0) {
             qdata.resize(n * k, 0);
             scales.resize(n, 0.0f);
 
-            const size_t row_stride = tensor->nb[1];
-            const size_t k_blocks   = (k + QK8_0 - 1) / QK8_0;
+            ध्रुव size_t row_stride = tensor->nb[1];
+            ध्रुव size_t k_खण्डानि   = (k + QK8_0 - 1) / QK8_0;
 
-            if (tensor->type == GGML_TYPE_Q6_K) {
-                if (k % QK_K != 0 || k % QK8_0 != 0) {
-                    return -1;
+            यदि (tensor->type == GGML_TYPE_Q6_K) {
+                यदि (k % QK_K != 0 || k % QK8_0 != 0) {
+                    प्रत्यागम -1;
                 }
                 row_f32.resize(k);
             }
 
-            for (size_t row = 0; row < n; ++row) {
-                const uint8_t * row_data = static_cast<const uint8_t *>(data) + row * row_stride;
+            प्रति (size_t row = 0; row < n; ++row) {
+                ध्रुव uint8_t * row_दत्त = static_cast<ध्रुव uint8_t *>(दत्त) + row * row_stride;
 
-                if (tensor->type == GGML_TYPE_Q6_K) {
-                    dequantize_row_q6_K(reinterpret_cast<const block_q6_K *>(row_data), row_f32.data(), k);
+                यदि (tensor->type == GGML_TYPE_Q6_K) {
+                    dequantize_row_q6_K(reinterpret_cast<ध्रुव खण्डम्_q6_K *>(row_दत्त), row_f32.दत्त(), k);
                 }
 
-                float max_abs = 0.0f;
-                if (tensor->type == GGML_TYPE_Q6_K) {
-                    for (size_t linear_idx = 0; linear_idx < k; ++linear_idx) {
-                        max_abs = std::max(max_abs, std::fabs(row_f32[linear_idx]));
+                भिन्न max_abs = 0.0f;
+                यदि (tensor->type == GGML_TYPE_Q6_K) {
+                    प्रति (size_t रैखिकम्_idx = 0; रैखिकम्_idx < k; ++रैखिकम्_idx) {
+                        max_abs = std::max(max_abs, std::fabs(row_f32[रैखिकम्_idx]));
                     }
-                } else {
-                    const block_q8_0 * row_blocks = reinterpret_cast<const block_q8_0 *>(row_data);
-                    for (size_t block = 0; block < k_blocks; ++block) {
-                        const block_q8_0 & blk = row_blocks[block];
-                        const float d = GGML_FP16_TO_FP32(blk.d);
-                        for (size_t l = 0; l < QK8_0; ++l) {
-                            const size_t linear_idx = block * QK8_0 + l;
-                            if (linear_idx >= k) {
-                                break;
+                } अन्यथा {
+                    ध्रुव खण्डम्_q8_0 * row_खण्डानि = reinterpret_cast<ध्रुव खण्डम्_q8_0 *>(row_दत्त);
+                    प्रति (size_t खण्डम् = 0; खण्डम् < k_खण्डानि; ++खण्डम्) {
+                        ध्रुव खण्डम्_q8_0 & blk = row_खण्डानि[खण्डम्];
+                        ध्रुव भिन्न d = GGML_FP16_गन्तव्यम्_FP32(blk.d);
+                        प्रति (size_t l = 0; l < QK8_0; ++l) {
+                            ध्रुव size_t रैखिकम्_idx = खण्डम् * QK8_0 + l;
+                            यदि (रैखिकम्_idx >= k) {
+                                भङ्ग;
                             }
-                            const float value = d * static_cast<float>(blk.qs[l]);
+                            ध्रुव भिन्न value = d * static_cast<भिन्न>(blk.qs[l]);
                             max_abs = std::max(max_abs, std::fabs(value));
                         }
                     }
                 }
 
-                float scale = max_abs > 0.0f ? max_abs / 127.0f : 0.0f;
+                भिन्न scale = max_abs > 0.0f ? max_abs / 127.0f : 0.0f;
                 scales[row] = scale;
-                const float inv_scale = scale > 0.0f ? 1.0f / scale : 0.0f;
+                ध्रुव भिन्न inv_scale = scale > 0.0f ? 1.0f / scale : 0.0f;
 
-                if (tensor->type == GGML_TYPE_Q6_K) {
-                    for (size_t linear_idx = 0; linear_idx < k; ++linear_idx) {
-                        int32_t q = scale > 0.0f ? static_cast<int32_t>(std::lround(row_f32[linear_idx] * inv_scale)) : 0;
+                यदि (tensor->type == GGML_TYPE_Q6_K) {
+                    प्रति (size_t रैखिकम्_idx = 0; रैखिकम्_idx < k; ++रैखिकम्_idx) {
+                        int32_t q = scale > 0.0f ? static_cast<int32_t>(std::lround(row_f32[रैखिकम्_idx] * inv_scale)) : 0;
                         q = std::clamp(q, -127, 127);
-                        qdata[row * k + linear_idx] = static_cast<int8_t>(q);
+                        qdata[row * k + रैखिकम्_idx] = static_cast<int8_t>(q);
                     }
-                } else {
-                    const block_q8_0 * row_blocks = reinterpret_cast<const block_q8_0 *>(row_data);
-                    for (size_t block = 0; block < k_blocks; ++block) {
-                        const block_q8_0 & blk = row_blocks[block];
-                        const float d = GGML_FP16_TO_FP32(blk.d);
-                        for (size_t l = 0; l < QK8_0; ++l) {
-                            const size_t linear_idx = block * QK8_0 + l;
-                            if (linear_idx >= k) {
-                                break;
+                } अन्यथा {
+                    ध्रुव खण्डम्_q8_0 * row_खण्डानि = reinterpret_cast<ध्रुव खण्डम्_q8_0 *>(row_दत्त);
+                    प्रति (size_t खण्डम् = 0; खण्डम् < k_खण्डानि; ++खण्डम्) {
+                        ध्रुव खण्डम्_q8_0 & blk = row_खण्डानि[खण्डम्];
+                        ध्रुव भिन्न d = GGML_FP16_गन्तव्यम्_FP32(blk.d);
+                        प्रति (size_t l = 0; l < QK8_0; ++l) {
+                            ध्रुव size_t रैखिकम्_idx = खण्डम् * QK8_0 + l;
+                            यदि (रैखिकम्_idx >= k) {
+                                भङ्ग;
                             }
-                            const float value = d * static_cast<float>(blk.qs[l]);
+                            ध्रुव भिन्न value = d * static_cast<भिन्न>(blk.qs[l]);
                             int32_t q = scale > 0.0f ? static_cast<int32_t>(std::lround(value * inv_scale)) : 0;
                             q = std::clamp(q, -127, 127);
-                            qdata[row * k + linear_idx] = static_cast<int8_t>(q);
+                            qdata[row * k + रैखिकम्_idx] = static_cast<int8_t>(q);
                         }
                     }
                 }
             }
         }
 
-        if (want_f32 && slot_total > 0) {
+        यदि (want_f32 && slot_योग > 0) {
             bias.resize(n, 0.0f);
         }
 
-        for (int slot = 0; slot < slot_total && slot < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
-            if (!allow_fallback && slot > 0) {
-                break;
+        प्रति (पूर्णाङ्क slot = 0; slot < slot_योग && slot < GGML_KLEIDIAI_MAX_KERNEL_SLOTS; ++slot) {
+            यदि (!allow_fallback && slot > 0) {
+                भङ्ग;
             }
             ggml_kleidiai_kernels * kernels = kernel_chain[slot];
             kernel_info * kernel = &kernels->gemm;
             rhs_packing_info * rhs_info = &kernels->rhs_info;
-            if (!rhs_info || !rhs_info->pack_func_ex || !rhs_info->packed_size_ex || !kernel) {
-                continue;
+            यदि (!rhs_info || !rhs_info->pack_func_ex || !rhs_info->packed_आकार_ex || !kernel) {
+                अनुवर्त;
             }
 
-            const size_t nr = kernel->get_nr();
-            const size_t kr = kernel->get_kr();
-            const size_t sr = kernel->get_sr();
-            const ggml_type rhs_type = kernels->rhs_type;
-            if (rhs_type == GGML_TYPE_Q8_0 && (kernels->required_cpu & CPU_FEATURE_SVE)) {
+            ध्रुव size_t nr = kernel->get_nr();
+            ध्रुव size_t kr = kernel->get_kr();
+            ध्रुव size_t sr = kernel->get_sr();
+            ध्रुव ggml_type rhs_type = kernels->rhs_type;
+            यदि (rhs_type == GGML_TYPE_Q8_0 && (kernels->required_cpu & CPU_FEATURE_SVE)) {
                 GGML_ASSERT(nr == kernels->gemv.get_nr());
                 GGML_ASSERT(kr == kernels->gemv.get_kr());
                 GGML_ASSERT(sr == kernels->gemv.get_sr());
             }
-            const size_t block_len = rhs_type == GGML_TYPE_Q8_0 ? QK8_0 :
+            ध्रुव size_t खण्डम्_len = rhs_type == GGML_TYPE_Q8_0 ? QK8_0 :
                                      rhs_type == GGML_TYPE_Q4_0 ? QK4_0 :
                                      rhs_type == GGML_TYPE_Q4_K ? GGML_KLEIDIAI_Q4_K_BL :
                                      rhs_type == GGML_TYPE_F32 ? 0 : SIZE_MAX;
-            if (block_len == SIZE_MAX) {
-                continue;
+            यदि (खण्डम्_len == SIZE_MAX) {
+                अनुवर्त;
             }
 
-            const size_t packed_size = rhs_info->packed_size_ex(n, k, nr, kr, block_len);
-            const size_t aligned_cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+            ध्रुव size_t packed_आकार = rhs_info->packed_आकार_ex(n, k, nr, kr, खण्डम्_len);
+            ध्रुव size_t aligned_cursor = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
 
-            uint8_t * dst_ptr = base_ptr + aligned_cursor;
+            uint8_t * dst_ptr = आधारः_ptr + aligned_cursor;
 
-            if (rhs_type == GGML_TYPE_Q4_0) {
-                struct kai_rhs_pack_qs4cxs1s0_param params;
+            यदि (rhs_type == GGML_TYPE_Q4_0) {
+                संरचना kai_rhs_pack_qs4cxs1s0_param params;
                 params.lhs_zero_point = 1;
                 params.rhs_zero_point = 8;
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, QK4_0, 0,
-                                       static_cast<const uint8_t *>(data), nullptr, nullptr,
+                                       static_cast<ध्रुव uint8_t *>(दत्त), शून्यसूचकः, शून्यसूचकः,
                                        dst_ptr, 0, &params);
-            } else if (rhs_type == GGML_TYPE_Q4_K) {
+            } अन्यथा यदि (rhs_type == GGML_TYPE_Q4_K) {
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, GGML_KLEIDIAI_Q4_K_BL, tensor->nb[1],
-                                       data, nullptr, nullptr, dst_ptr, 0, nullptr);
-            } else if (rhs_type == GGML_TYPE_Q8_0) {
-                struct kai_rhs_pack_qsi8cx_params params;
+                                       दत्त, शून्यसूचकः, शून्यसूचकः, dst_ptr, 0, शून्यसूचकः);
+            } अन्यथा यदि (rhs_type == GGML_TYPE_Q8_0) {
+                संरचना kai_rhs_pack_qsi8cx_params params;
                 params.lhs_zero_point = 1;
                 params.scale_multiplier = 1.0f;
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, 0, 0,
-                                       qdata.data(), nullptr, scales.data(),
+                                       qdata.दत्त(), शून्यसूचकः, scales.दत्त(),
                                        dst_ptr, 0, &params);
-            } else if (rhs_type == GGML_TYPE_F32) {
+            } अन्यथा यदि (rhs_type == GGML_TYPE_F32) {
                 rhs_info->pack_func_ex(1, n, k, nr, kr, sr, 0, tensor->nb[1],
-                                       data, bias.data(), nullptr,
-                                       dst_ptr, 0, nullptr);
-            } else {
-                continue;
+                                       दत्त, bias.दत्त(), शून्यसूचकः,
+                                       dst_ptr, 0, शून्यसूचकः);
+            } अन्यथा {
+                अनुवर्त;
             }
 
-            header->offsets[header->slot_count] = aligned_cursor;
-            header->sizes[header->slot_count]   = packed_size;
-            ++header->slot_count;
+            शीर्षकम्->offsets[शीर्षकम्->slot_गणनम्] = aligned_cursor;
+            शीर्षकम्->sizes[शीर्षकम्->slot_गणनम्]   = packed_आकार;
+            ++शीर्षकम्->slot_गणनम्;
 
-            cursor = aligned_cursor + packed_size;
+            cursor = aligned_cursor + packed_आकार;
         }
 
-        if (header->slot_count == 0) {
-            header->magic   = 0;
-            header->version = 0;
-            memcpy(tensor->data, data, data_size);
+        यदि (शीर्षकम्->slot_गणनम् == 0) {
+            शीर्षकम्->magic   = 0;
+            शीर्षकम्->संस्करणम्_2 = 0;
+            स्मृतिं_प्रतिलिख(tensor->दत्त, दत्त, दत्त_आकार);
         }
 
-        return 0;
+        प्रत्यागम 0;
     }
 };
 
-static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
-    static tensor_traits traits;
-    return &traits;
+स्थिर ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_बफर_t, संरचना ggml_tensor *) {
+    स्थिर tensor_traits traits;
+    प्रत्यागम &traits;
 }
 }  // namespace ggml::cpu::kleidiai
 
-static enum ggml_status ggml_backend_cpu_kleidiai_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    tensor->extra = (void *) ggml::cpu::kleidiai::get_tensor_traits(buffer, tensor);
+स्थिर गणना ggml_स्थितिः ggml_backend_cpu_kleidiai_बफर_init_tensor(ggml_backend_बफर_t बफर, संरचना ggml_tensor * tensor) {
+    tensor->extra = (शून्य *) ggml::cpu::kleidiai::get_tensor_traits(बफर, tensor);
 
-    return GGML_STATUS_SUCCESS;
+    प्रत्यागम GGML_स्थितिः_SUCCESS;
 }
 
-static void ggml_backend_cpu_kleidiai_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                                       const void * data, size_t offset, size_t size) {
-    GGML_ASSERT(offset == 0);
+स्थिर शून्य ggml_backend_cpu_kleidiai_बफर_समुच्चयः_tensor(ggml_backend_बफर_t बफर, संरचना ggml_tensor * tensor,
+                                                       ध्रुव शून्य * दत्त, size_t विस्थापनम्, size_t size) {
+    GGML_ASSERT(विस्थापनम् == 0);
     GGML_ASSERT(size == ggml_nbytes(tensor));
 
-    auto tensor_traits = (ggml::cpu::kleidiai::tensor_traits *) tensor->extra;
-    auto OK            = tensor_traits->repack(tensor, data, size);
+    स्वचालित tensor_traits = (ggml::cpu::kleidiai::tensor_traits *) tensor->extra;
+    स्वचालित OK            = tensor_traits->repack(tensor, दत्त, size);
 
     GGML_ASSERT(OK == 0);
-    GGML_UNUSED(buffer);
+    GGML_अप्रयुक्तम्(बफर);
 }
 
-static const char * ggml_backend_cpu_kleidiai_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(buft);
-    return "CPU_KLEIDIAI";
+स्थिर ध्रुव वर्ण * ggml_backend_cpu_kleidiai_बफर_type_get_name(ggml_backend_बफर_type_t buft) {
+    GGML_अप्रयुक्तम्(buft);
+    प्रत्यागम "CPU_KLEIDIAI";
 }
 
-static ggml_backend_buffer_t ggml_backend_cpu_kleidiai_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+स्थिर ggml_backend_बफर_t ggml_backend_cpu_kleidiai_बफर_type_alloc_बफर(ggml_backend_बफर_type_t buft, size_t size) {
+    ggml_backend_बफर_t बफर = ggml_backend_buft_alloc_बफर(ggml_backend_cpu_बफर_type(), size);
 
-    if (buffer == nullptr) {
-        return nullptr;
+    यदि (बफर == शून्यसूचकः) {
+        प्रत्यागम शून्यसूचकः;
     }
 
-    buffer->buft              = buft;
-    buffer->iface.init_tensor = ggml_backend_cpu_kleidiai_buffer_init_tensor;
-    buffer->iface.set_tensor  = ggml_backend_cpu_kleidiai_buffer_set_tensor;
-    buffer->iface.get_tensor  = nullptr;
-    buffer->iface.cpy_tensor  = nullptr;
-    return buffer;
+    बफर->buft              = buft;
+    बफर->iface.init_tensor = ggml_backend_cpu_kleidiai_बफर_init_tensor;
+    बफर->iface.समुच्चयः_tensor  = ggml_backend_cpu_kleidiai_बफर_समुच्चयः_tensor;
+    बफर->iface.get_tensor  = शून्यसूचकः;
+    बफर->iface.cpy_tensor  = शून्यसूचकः;
+    प्रत्यागम बफर;
 }
 
-static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    GGML_UNUSED(buft);
-    return TENSOR_ALIGNMENT;
+स्थिर size_t ggml_backend_cpu_kleidiai_बफर_type_get_alignment(ggml_backend_बफर_type_t buft) {
+    GGML_अप्रयुक्तम्(buft);
+    प्रत्यागम TENSOR_ALIGNMENT;
 }
 
-static size_t ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const struct ggml_tensor * tensor) {
-    GGML_UNUSED(buft);
+स्थिर size_t ggml_backend_cpu_kleidiai_बफर_type_get_alloc_आकार(ggml_backend_बफर_type_t buft, ध्रुव संरचना ggml_tensor * tensor) {
+    GGML_अप्रयुक्तम्(buft);
 
-    if (tensor->type != GGML_TYPE_Q4_0 && tensor->type != GGML_TYPE_Q4_K &&
+    यदि (tensor->type != GGML_TYPE_Q4_0 && tensor->type != GGML_TYPE_Q4_K &&
         tensor->type != GGML_TYPE_Q8_0 && tensor->type != GGML_TYPE_Q6_K &&
         tensor->type != GGML_TYPE_F32) {
-        return ggml_nbytes(tensor);
+        प्रत्यागम ggml_nbytes(tensor);
     }
 
-    const size_t n = tensor->ne[1];
-    const size_t k = tensor->ne[0];
+    ध्रुव size_t n = tensor->ne[1];
+    ध्रुव size_t k = tensor->ne[0];
 
-    size_t cursor = sizeof(kleidiai_weight_header);
-    cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+    size_t cursor = परिमाण(kleidiai_weight_शीर्षकम्);
+    cursor = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
 
     std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-    const bool want_q4k = tensor->type == GGML_TYPE_Q4_K;
-    const bool want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
-    const bool want_f32 = tensor->type == GGML_TYPE_F32;
-    const int slot_total = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
+    ध्रुव तार्किक want_q4k = tensor->type == GGML_TYPE_Q4_K;
+    ध्रुव तार्किक want_q8 = tensor->type == GGML_TYPE_Q8_0 || tensor->type == GGML_TYPE_Q6_K;
+    ध्रुव तार्किक want_f32 = tensor->type == GGML_TYPE_F32;
+    ध्रुव पूर्णाङ्क slot_योग = want_f32 ? kleidiai_collect_f32_chain(kernel_chain)
                                     : want_q8 ? kleidiai_collect_q8_chain(kernel_chain)
                                     : want_q4k ? kleidiai_collect_q4k_chain(kernel_chain)
                                                : kleidiai_collect_q4_chain(kernel_chain);
-    const bool allow_fallback = kleidiai_pack_fallback_allowed();
+    ध्रुव तार्किक allow_fallback = kleidiai_pack_fallback_allowed();
 
-    size_t slot_count = 0;
-    for (int slot = 0; slot < slot_total; ++slot) {
-        if (!allow_fallback && slot > 0) {
-            break;
+    size_t slot_गणनम् = 0;
+    प्रति (पूर्णाङ्क slot = 0; slot < slot_योग; ++slot) {
+        यदि (!allow_fallback && slot > 0) {
+            भङ्ग;
         }
         ggml_kleidiai_kernels * kernels = kernel_chain[slot];
-        if (!kernels) {
-            continue;
+        यदि (!kernels) {
+            अनुवर्त;
         }
         kernel_info * kernel = &kernels->gemm;
         rhs_packing_info * rhs_info = &kernels->rhs_info;
-        if (!kernel || !rhs_info || !rhs_info->packed_size_ex) {
-            continue;
+        यदि (!kernel || !rhs_info || !rhs_info->packed_आकार_ex) {
+            अनुवर्त;
         }
 
-        const ggml_type rhs_type = kernels->rhs_type;
-        const size_t block_len = rhs_type == GGML_TYPE_Q4_0 ? QK4_0 :
+        ध्रुव ggml_type rhs_type = kernels->rhs_type;
+        ध्रुव size_t खण्डम्_len = rhs_type == GGML_TYPE_Q4_0 ? QK4_0 :
                                  rhs_type == GGML_TYPE_Q4_K ? GGML_KLEIDIAI_Q4_K_BL :
                                  rhs_type == GGML_TYPE_Q8_0 ? QK8_0 :
                                  rhs_type == GGML_TYPE_F32 ? 0 : SIZE_MAX;
-        if (block_len == SIZE_MAX) {
-            continue;
+        यदि (खण्डम्_len == SIZE_MAX) {
+            अनुवर्त;
         }
 
-        cursor = align_up(cursor, GGML_KLEIDIAI_PACK_ALIGN);
-        cursor += rhs_info->packed_size_ex(n, k, kernel->get_nr(), kernel->get_kr(), block_len);
-        ++slot_count;
+        cursor = align_ऊर्ध्वम्(cursor, GGML_KLEIDIAI_PACK_ALIGN);
+        cursor += rhs_info->packed_आकार_ex(n, k, kernel->get_nr(), kernel->get_kr(), खण्डम्_len);
+        ++slot_गणनम्;
     }
 
-    if (slot_count == 0) {
-        return ggml_nbytes(tensor);
+    यदि (slot_गणनम् == 0) {
+        प्रत्यागम ggml_nbytes(tensor);
     }
 
-    return std::max(cursor, ggml_nbytes(tensor));
+    प्रत्यागम std::max(cursor, ggml_nbytes(tensor));
 }
 
-namespace ggml::cpu::kleidiai {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
+नामाकाश ggml::cpu::kleidiai {
+वर्ग extra_बफर_type : ggml::cpu::extra_बफर_type {
+    तार्किक supports_op(ggml_backend_dev_t, ध्रुव संरचना ggml_tensor * op) override {
         // GET_ROWS needs the original weights in a native buffer.
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+        यदि (op->op != GGML_OP_MUL_MAT) {
+            प्रत्यागम असत्य;
         }
 
         std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-        const int slot_total = kleidiai_collect_kernel_chain(op, kernel_chain);
-        const bool src0_is_kleidiai =
-            op->src[0]->buffer &&
+        ध्रुव पूर्णाङ्क slot_योग = kleidiai_collect_kernel_chain(op, kernel_chain);
+        ध्रुव तार्किक src0_is_kleidiai =
+            op->src[0]->बफर &&
             (ggml_n_dims(op->src[0]) == 2) &&
-            op->src[0]->buffer->buft->context == this &&
-            slot_total > 0;
+            op->src[0]->बफर->buft->context == एतत् &&
+            slot_योग > 0;
 
-        if ((op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
+        यदि ((op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q4_K ||
              op->src[0]->type == GGML_TYPE_Q8_0 || op->src[0]->type == GGML_TYPE_Q6_K ||
              op->src[0]->type == GGML_TYPE_F32) &&
             src0_is_kleidiai) {
-            if (op->src[0]->type == GGML_TYPE_Q4_0 && ctx.kernels_q4 == nullptr) {
-                return false;
+            यदि (op->src[0]->type == GGML_TYPE_Q4_0 && ctx.kernels_q4 == शून्यसूचकः) {
+                प्रत्यागम असत्य;
             }
-            if (op->src[0]->type == GGML_TYPE_Q8_0 && ctx.kernels_q8 == nullptr) {
-                return false;
+            यदि (op->src[0]->type == GGML_TYPE_Q8_0 && ctx.kernels_q8 == शून्यसूचकः) {
+                प्रत्यागम असत्य;
             }
-            if (op->src[0]->type == GGML_TYPE_Q6_K && ctx.kernels_q8 == nullptr) {
-                return false;
+            यदि (op->src[0]->type == GGML_TYPE_Q6_K && ctx.kernels_q8 == शून्यसूचकः) {
+                प्रत्यागम असत्य;
             }
-            if (op->src[0]->type == GGML_TYPE_Q4_K && ctx.kernels_q4k == nullptr) {
-                return false;
+            यदि (op->src[0]->type == GGML_TYPE_Q4_K && ctx.kernels_q4k == शून्यसूचकः) {
+                प्रत्यागम असत्य;
             }
-            if (op->src[0]->type == GGML_TYPE_F32 && ctx.kernels_f32 == nullptr) {
-                return false;
+            यदि (op->src[0]->type == GGML_TYPE_F32 && ctx.kernels_f32 == शून्यसूचकः) {
+                प्रत्यागम असत्य;
             }
-            if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+            यदि (op->src[1]->बफर && !ggml_backend_buft_is_host(op->src[1]->बफर->buft)) {
+                प्रत्यागम असत्य;
             }
 
-            if (op->src[0]->type == GGML_TYPE_Q4_K) {
-                if (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
-                    return false;
+            यदि (op->src[0]->type == GGML_TYPE_Q4_K) {
+                यदि (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
+                    प्रत्यागम असत्य;
                 }
-                return ggml_ne(op->src[1], 2) == 1 && ggml_ne(op->src[1], 3) == 1 &&
-                       op->src[1]->nb[0] == sizeof(float) &&
-                       (op->src[1]->ne[1] == 1 || op->src[1]->nb[1] == op->src[1]->ne[0] * sizeof(float));
+                प्रत्यागम ggml_ne(op->src[1], 2) == 1 && ggml_ne(op->src[1], 3) == 1 &&
+                       op->src[1]->nb[0] == परिमाण(भिन्न) &&
+                       (op->src[1]->ne[1] == 1 || op->src[1]->nb[1] == op->src[1]->ne[0] * परिमाण(भिन्न));
             }
 
-            if (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q8_0 ||
+            यदि (op->src[0]->type == GGML_TYPE_Q4_0 || op->src[0]->type == GGML_TYPE_Q8_0 ||
                 op->src[0]->type == GGML_TYPE_Q6_K) {
-                if (op->src[1]->type == GGML_TYPE_F32 &&
+                यदि (op->src[1]->type == GGML_TYPE_F32 &&
                     ggml_ne(op->src[1], 3) == 1) {
-                    return true;
+                    प्रत्यागम सत्य;
                 }
-                return false;
+                प्रत्यागम असत्य;
             }
 
-            if (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
-                return false;
+            यदि (op->op != GGML_OP_MUL_MAT || op->src[1]->type != GGML_TYPE_F32 || op->type != GGML_TYPE_F32) {
+                प्रत्यागम असत्य;
             }
 
-            return true;
+            प्रत्यागम सत्य;
         }
 
-        return false;
+        प्रत्यागम असत्य;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
-            if (op->src[0]->buffer && op->src[0]->buffer->buft->context == this) {
-                return (ggml::cpu::tensor_traits *) op->src[0]->extra;
-            } else {
+    ggml::cpu::tensor_traits * get_tensor_traits(ध्रुव संरचना ggml_tensor * op) override {
+        यदि (op->op == GGML_OP_MUL_MAT) {
+            यदि (op->src[0]->बफर && op->src[0]->बफर->buft->context == एतत्) {
+                प्रत्यागम (ggml::cpu::tensor_traits *) op->src[0]->extra;
+            } अन्यथा {
                 // KleidiAI only has kernels for Q4_0, Q4_K, Q8_0 and Q6_K. For a quantized weight of any
                 // other type (K-quants, IQ) it declines the op and returns nullptr below, so
                 // KleidiAI does not accelerate it. Another CPU backend may still take the op,
                 // and this can run during graph planning, so the message says what KleidiAI
                 // did rather than what ends up executing. Warn once per process.
-                if (ggml_is_quantized(op->src[0]->type) &&
+                यदि (ggml_is_quantized(op->src[0]->type) &&
                     op->src[0]->type != GGML_TYPE_Q4_0 && op->src[0]->type != GGML_TYPE_Q4_K &&
                     op->src[0]->type != GGML_TYPE_Q8_0 && op->src[0]->type != GGML_TYPE_Q6_K) {
-                    static std::atomic<bool> warned(false);
-                    if (!warned.exchange(true)) {
+                    स्थिर std::atomic<तार्किक> warned(असत्य);
+                    यदि (!warned.exchange(सत्य)) {
                         GGML_LOG_WARN("kleidiai: no kernel for tensor type %s, not accelerated by KleidiAI "
                                       "(kernels available for Q4_0, Q4_K, Q8_0 and Q6_K)\n",
                                       ggml_type_name(op->src[0]->type));
                     }
                 }
-                if (op->src[0]->type != GGML_TYPE_F16) {
-                    return nullptr;
+                यदि (op->src[0]->type != GGML_TYPE_F16) {
+                    प्रत्यागम शून्यसूचकः;
                 }
                 std::array<ggml_kleidiai_kernels *, GGML_KLEIDIAI_MAX_KERNEL_SLOTS> kernel_chain;
-                const int slot_total = kleidiai_collect_kernel_chain(op, kernel_chain);
-                if (slot_total > 0 && op->src[1]->ne[1] > 1) {
-                    if ((op->src[0]->nb[1] * op->src[0]->ne[1] != op->src[0]->nb[2]) ||
+                ध्रुव पूर्णाङ्क slot_योग = kleidiai_collect_kernel_chain(op, kernel_chain);
+                यदि (slot_योग > 0 && op->src[1]->ne[1] > 1) {
+                    यदि ((op->src[0]->nb[1] * op->src[0]->ne[1] != op->src[0]->nb[2]) ||
                         (op->src[1]->nb[1] * op->src[1]->ne[1] != op->src[1]->nb[2])) {
-                        return nullptr;
+                        प्रत्यागम शून्यसूचकः;
                     }
-                    return ggml::cpu::kleidiai::get_tensor_traits(NULL, NULL);
+                    प्रत्यागम ggml::cpu::kleidiai::get_tensor_traits(रिक्त, रिक्त);
                 }
             }
         }
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     }
 };
 }  // namespace ggml::cpu::kleidiai
 
-ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void) {
-    static ggml::cpu::kleidiai::extra_buffer_type ctx;
-    static struct ggml_backend_buffer_type ggml_backend_cpu_buffer_type_kleidiai = {
+ggml_backend_बफर_type_t ggml_backend_cpu_kleidiai_बफर_type(शून्य) {
+    स्थिर ggml::cpu::kleidiai::extra_बफर_type ctx;
+    स्थिर संरचना ggml_backend_बफर_type ggml_backend_cpu_बफर_type_kleidiai = {
         /* .iface    = */ {
-                           /* .get_name             = */ ggml_backend_cpu_kleidiai_buffer_type_get_name,
-                           /* .alloc_buffer         = */ ggml_backend_cpu_kleidiai_buffer_type_alloc_buffer,
-                           /* .alloc_buffer_n       = */ nullptr,
-                           /* .get_alignment        = */ ggml_backend_cpu_kleidiai_buffer_type_get_alignment,
-                           /* .get_max_size         = */ nullptr,  // defaults to SIZE_MAX
-                           /* .get_alloc_size       = */ ggml_backend_cpu_kleidiai_buffer_type_get_alloc_size,
-                           /* .get_alloc_size_n     = */ NULL,
-                           /* .is_host              = */ nullptr,
+                           /* .get_name             = */ ggml_backend_cpu_kleidiai_बफर_type_get_name,
+                           /* .alloc_buffer         = */ ggml_backend_cpu_kleidiai_बफर_type_alloc_बफर,
+                           /* .alloc_buffer_n       = */ शून्यसूचकः,
+                           /* .get_alignment        = */ ggml_backend_cpu_kleidiai_बफर_type_get_alignment,
+                           /* .get_max_size         = */ शून्यसूचकः,  // defaults to SIZE_MAX
+                           /* .get_alloc_size       = */ ggml_backend_cpu_kleidiai_बफर_type_get_alloc_आकार,
+                           /* .get_alloc_size_n     = */ रिक्त,
+                           /* .is_host              = */ शून्यसूचकः,
                            },
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
         /* .context = */ &ctx,
@@ -1913,5 +1913,5 @@ ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void) {
 
     init_kleidiai_context();
 
-    return &ggml_backend_cpu_buffer_type_kleidiai;
+    प्रत्यागम &ggml_backend_cpu_बफर_type_kleidiai;
 }

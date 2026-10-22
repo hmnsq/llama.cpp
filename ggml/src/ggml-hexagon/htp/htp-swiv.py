@@ -1,71 +1,71 @@
 #!/usr/bin/env python3
 
-import argparse
-import logging
-import os
-import shutil
-import struct
-import sys
-import tempfile
-import zlib
+आनयन argparse
+आनयन logging
+आनयन os
+आनयन shutil
+आनयन struct
+आनयन sys
+आनयन tempfile
+आनयन zlib
 
 ELF_MAGIC = b'\x7fELF'
-ELF_CLASS_INDEX = 4
+ELF_CLASS_सूचकांक = 4
 ELFCLASS32 = 1
 ELFCLASS64 = 2
-ELF_VERSION_INDEX = 6
+ELF_संस्करणम्_सूचकांक = 6
 EV_CURRENT = 1
-MAX_PHDR_COUNT = 100
+MAX_PHDR_गणनम् = 100
 
-LOAD_TYPE = 0x1
+आरोपय_TYPE = 0x1
 
 SHT_NOBITS = 8
 
 SWIV_MAGIC = b'SWIV'
-SWIV_SEG_SIZE_MIN = 16
+SWIV_SEG_आकार_MIN = 16
 # SHT_LOUSER plus ASCII "SWIV".
 SWIV_SECTION_TYPE = 0xD3574956
 
 logger = logging.getLogger("htp-swiv")
 
 
-class Elf_Ehdr_common:
+वर्ग Elf_Ehdr_common:
     s = struct.Struct('16sHHI')
 
-    def __init__(self, data):
-        unpacked_data = (Elf_Ehdr_common.s).unpack(data)
-        self.e_ident = unpacked_data[0]
-        self.e_type = unpacked_data[1]
-        self.e_machine = unpacked_data[2]
-        self.e_version = unpacked_data[3]
+    परिभाषा __init__(self, दत्त):
+        unpacked_दत्त = (Elf_Ehdr_common.s).unpack(दत्त)
+        self.e_ident = unpacked_दत्त[0]
+        self.e_type = unpacked_दत्त[1]
+        self.e_machine = unpacked_दत्त[2]
+        self.e_संस्करणम् = unpacked_दत्त[3]
 
 
-class Elf32_Ehdr:
+वर्ग Elf32_Ehdr:
     s = struct.Struct('16sHHIIIIIHHHHHH')
 
-    def __init__(self, data):
-        unpacked_data = (Elf32_Ehdr.s).unpack(data)
-        self.e_ident = unpacked_data[0]
-        self.e_type = unpacked_data[1]
-        self.e_machine = unpacked_data[2]
-        self.e_version = unpacked_data[3]
-        self.e_entry = unpacked_data[4]
-        self.e_phoff = unpacked_data[5]
-        self.e_shoff = unpacked_data[6]
-        self.e_flags = unpacked_data[7]
-        self.e_ehsize = unpacked_data[8]
-        self.e_phentsize = unpacked_data[9]
-        self.e_phnum = unpacked_data[10]
-        self.e_shentsize = unpacked_data[11]
-        self.e_shnum = unpacked_data[12]
-        self.e_shstrndx = unpacked_data[13]
+    परिभाषा __init__(self, दत्त):
+        unpacked_दत्त = (Elf32_Ehdr.s).unpack(दत्त)
+        self.e_ident = unpacked_दत्त[0]
+        self.e_type = unpacked_दत्त[1]
+        self.e_machine = unpacked_दत्त[2]
+        self.e_संस्करणम् = unpacked_दत्त[3]
+        self.e_प्रविष्टिः = unpacked_दत्त[4]
+        self.e_phoff = unpacked_दत्त[5]
+        self.e_shoff = unpacked_दत्त[6]
+        self.e_flags = unpacked_दत्त[7]
+        self.e_ehsize = unpacked_दत्त[8]
+        self.e_phentsize = unpacked_दत्त[9]
+        self.e_phnum = unpacked_दत्त[10]
+        self.e_shentsize = unpacked_दत्त[11]
+        self.e_shnum = unpacked_दत्त[12]
+        self.e_shstrndx = unpacked_दत्त[13]
 
-    def get_packed_data(self):
-        values = [self.e_ident,
+    परिभाषा get_packed_दत्त(self):
+        मानानि = [self.e_ident,
                   self.e_type,
                   self.e_machine,
-                  self.e_version,
-                  self.e_entry,
+                  self.e_संस्करणम्,
+                  self.e_प्रविष्टिः,
                   self.e_phoff,
                   self.e_shoff,
                   self.e_flags,
@@ -77,26 +77,26 @@ class Elf32_Ehdr:
                   self.e_shstrndx
                   ]
 
-        return (Elf32_Ehdr.s).pack(*values)
+        प्रत्यागम (Elf32_Ehdr.s).pack(*मानानि)
 
 
-class Elf32_Phdr:
+वर्ग Elf32_Phdr:
     s = struct.Struct('I' * 8)
 
-    def __init__(self, data):
-        unpacked_data = (Elf32_Phdr.s).unpack(data)
-        self.p_type = unpacked_data[0]
-        self.p_offset = unpacked_data[1]
-        self.p_vaddr = unpacked_data[2]
-        self.p_paddr = unpacked_data[3]
-        self.p_filesz = unpacked_data[4]
-        self.p_memsz = unpacked_data[5]
-        self.p_flags = unpacked_data[6]
-        self.p_align = unpacked_data[7]
+    परिभाषा __init__(self, दत्त):
+        unpacked_दत्त = (Elf32_Phdr.s).unpack(दत्त)
+        self.p_type = unpacked_दत्त[0]
+        self.p_विस्थापनम् = unpacked_दत्त[1]
+        self.p_vaddr = unpacked_दत्त[2]
+        self.p_paddr = unpacked_दत्त[3]
+        self.p_filesz = unpacked_दत्त[4]
+        self.p_memsz = unpacked_दत्त[5]
+        self.p_flags = unpacked_दत्त[6]
+        self.p_align = unpacked_दत्त[7]
 
-    def get_packed_data(self):
-        values = [self.p_type,
-                  self.p_offset,
+    परिभाषा get_packed_दत्त(self):
+        मानानि = [self.p_type,
+                  self.p_विस्थापनम्,
                   self.p_vaddr,
                   self.p_paddr,
                   self.p_filesz,
@@ -105,67 +105,67 @@ class Elf32_Phdr:
                   self.p_align
                   ]
 
-        return (Elf32_Phdr.s).pack(*values)
+        प्रत्यागम (Elf32_Phdr.s).pack(*मानानि)
 
 
-class Elf32_Shdr:
+वर्ग Elf32_Shdr:
     s = struct.Struct('I' * 10)
 
-    def __init__(self, data):
-        unpacked_data = (Elf32_Shdr.s).unpack(data)
-        self.sh_name = unpacked_data[0]
-        self.sh_type = unpacked_data[1]
-        self.sh_flags = unpacked_data[2]
-        self.sh_addr = unpacked_data[3]
-        self.sh_offset = unpacked_data[4]
-        self.sh_size = unpacked_data[5]
-        self.sh_link = unpacked_data[6]
-        self.sh_info = unpacked_data[7]
-        self.sh_addralign = unpacked_data[8]
-        self.sh_entsize = unpacked_data[9]
+    परिभाषा __init__(self, दत्त):
+        unpacked_दत्त = (Elf32_Shdr.s).unpack(दत्त)
+        self.sh_name = unpacked_दत्त[0]
+        self.sh_type = unpacked_दत्त[1]
+        self.sh_flags = unpacked_दत्त[2]
+        self.sh_addr = unpacked_दत्त[3]
+        self.sh_विस्थापनम् = unpacked_दत्त[4]
+        self.sh_आकार = unpacked_दत्त[5]
+        self.sh_link = unpacked_दत्त[6]
+        self.sh_info = unpacked_दत्त[7]
+        self.sh_addralign = unpacked_दत्त[8]
+        self.sh_entsize = unpacked_दत्त[9]
         self.sh_name_str = ""
 
-    def get_packed_data(self):
-        values = [self.sh_name,
+    परिभाषा get_packed_दत्त(self):
+        मानानि = [self.sh_name,
                   self.sh_type,
                   self.sh_flags,
                   self.sh_addr,
-                  self.sh_offset,
-                  self.sh_size,
+                  self.sh_विस्थापनम्,
+                  self.sh_आकार,
                   self.sh_link,
                   self.sh_info,
                   self.sh_addralign,
                   self.sh_entsize]
 
-        return (Elf32_Shdr.s).pack(*values)
+        प्रत्यागम (Elf32_Shdr.s).pack(*मानानि)
 
 
-class Elf64_Ehdr:
+वर्ग Elf64_Ehdr:
     s = struct.Struct('16sHHIQQQIHHHHHH')
 
-    def __init__(self, data):
-        unpacked_data = (Elf64_Ehdr.s).unpack(data)
-        self.e_ident = unpacked_data[0]
-        self.e_type = unpacked_data[1]
-        self.e_machine = unpacked_data[2]
-        self.e_version = unpacked_data[3]
-        self.e_entry = unpacked_data[4]
-        self.e_phoff = unpacked_data[5]
-        self.e_shoff = unpacked_data[6]
-        self.e_flags = unpacked_data[7]
-        self.e_ehsize = unpacked_data[8]
-        self.e_phentsize = unpacked_data[9]
-        self.e_phnum = unpacked_data[10]
-        self.e_shentsize = unpacked_data[11]
-        self.e_shnum = unpacked_data[12]
-        self.e_shstrndx = unpacked_data[13]
+    परिभाषा __init__(self, दत्त):
+        unpacked_दत्त = (Elf64_Ehdr.s).unpack(दत्त)
+        self.e_ident = unpacked_दत्त[0]
+        self.e_type = unpacked_दत्त[1]
+        self.e_machine = unpacked_दत्त[2]
+        self.e_संस्करणम् = unpacked_दत्त[3]
+        self.e_प्रविष्टिः = unpacked_दत्त[4]
+        self.e_phoff = unpacked_दत्त[5]
+        self.e_shoff = unpacked_दत्त[6]
+        self.e_flags = unpacked_दत्त[7]
+        self.e_ehsize = unpacked_दत्त[8]
+        self.e_phentsize = unpacked_दत्त[9]
+        self.e_phnum = unpacked_दत्त[10]
+        self.e_shentsize = unpacked_दत्त[11]
+        self.e_shnum = unpacked_दत्त[12]
+        self.e_shstrndx = unpacked_दत्त[13]
 
-    def get_packed_data(self):
-        values = [self.e_ident,
+    परिभाषा get_packed_दत्त(self):
+        मानानि = [self.e_ident,
                   self.e_type,
                   self.e_machine,
-                  self.e_version,
-                  self.e_entry,
+                  self.e_संस्करणम्,
+                  self.e_प्रविष्टिः,
                   self.e_phoff,
                   self.e_shoff,
                   self.e_flags,
@@ -177,27 +177,27 @@ class Elf64_Ehdr:
                   self.e_shstrndx
                   ]
 
-        return (Elf64_Ehdr.s).pack(*values)
+        प्रत्यागम (Elf64_Ehdr.s).pack(*मानानि)
 
 
-class Elf64_Phdr:
+वर्ग Elf64_Phdr:
     s = struct.Struct('IIQQQQQQ')
 
-    def __init__(self, data):
-        unpacked_data = (Elf64_Phdr.s).unpack(data)
-        self.p_type = unpacked_data[0]
-        self.p_flags = unpacked_data[1]
-        self.p_offset = unpacked_data[2]
-        self.p_vaddr = unpacked_data[3]
-        self.p_paddr = unpacked_data[4]
-        self.p_filesz = unpacked_data[5]
-        self.p_memsz = unpacked_data[6]
-        self.p_align = unpacked_data[7]
+    परिभाषा __init__(self, दत्त):
+        unpacked_दत्त = (Elf64_Phdr.s).unpack(दत्त)
+        self.p_type = unpacked_दत्त[0]
+        self.p_flags = unpacked_दत्त[1]
+        self.p_विस्थापनम् = unpacked_दत्त[2]
+        self.p_vaddr = unpacked_दत्त[3]
+        self.p_paddr = unpacked_दत्त[4]
+        self.p_filesz = unpacked_दत्त[5]
+        self.p_memsz = unpacked_दत्त[6]
+        self.p_align = unpacked_दत्त[7]
 
-    def get_packed_data(self):
-        values = [self.p_type,
+    परिभाषा get_packed_दत्त(self):
+        मानानि = [self.p_type,
                   self.p_flags,
-                  self.p_offset,
+                  self.p_विस्थापनम्,
                   self.p_vaddr,
                   self.p_paddr,
                   self.p_filesz,
@@ -205,308 +205,308 @@ class Elf64_Phdr:
                   self.p_align
                   ]
 
-        return (Elf64_Phdr.s).pack(*values)
+        प्रत्यागम (Elf64_Phdr.s).pack(*मानानि)
 
 
-class Elf64_Shdr:
+वर्ग Elf64_Shdr:
     s = struct.Struct('IIQQQQIIQQ')
 
-    def __init__(self, data):
-        unpacked_data = (Elf64_Shdr.s).unpack(data)
-        self.sh_name = unpacked_data[0]
-        self.sh_type = unpacked_data[1]
-        self.sh_flags = unpacked_data[2]
-        self.sh_addr = unpacked_data[3]
-        self.sh_offset = unpacked_data[4]
-        self.sh_size = unpacked_data[5]
-        self.sh_link = unpacked_data[6]
-        self.sh_info = unpacked_data[7]
-        self.sh_addralign = unpacked_data[8]
-        self.sh_entsize = unpacked_data[9]
+    परिभाषा __init__(self, दत्त):
+        unpacked_दत्त = (Elf64_Shdr.s).unpack(दत्त)
+        self.sh_name = unpacked_दत्त[0]
+        self.sh_type = unpacked_दत्त[1]
+        self.sh_flags = unpacked_दत्त[2]
+        self.sh_addr = unpacked_दत्त[3]
+        self.sh_विस्थापनम् = unpacked_दत्त[4]
+        self.sh_आकार = unpacked_दत्त[5]
+        self.sh_link = unpacked_दत्त[6]
+        self.sh_info = unpacked_दत्त[7]
+        self.sh_addralign = unpacked_दत्त[8]
+        self.sh_entsize = unpacked_दत्त[9]
         self.sh_name_str = ""
 
-    def get_packed_data(self):
-        values = [self.sh_name,
+    परिभाषा get_packed_दत्त(self):
+        मानानि = [self.sh_name,
                   self.sh_type,
                   self.sh_flags,
                   self.sh_addr,
-                  self.sh_offset,
-                  self.sh_size,
+                  self.sh_विस्थापनम्,
+                  self.sh_आकार,
                   self.sh_link,
                   self.sh_info,
                   self.sh_addralign,
                   self.sh_entsize]
 
-        return (Elf64_Shdr.s).pack(*values)
+        प्रत्यागम (Elf64_Shdr.s).pack(*मानानि)
 
 
-class SWIV_Seg:
+वर्ग SWIV_Seg:
     s = struct.Struct('4sIQ')
 
-    def __init__(self):
+    परिभाषा __init__(self):
         self.magic = SWIV_MAGIC
         self.crc = 0
         self.padding = 0
 
-    def get_packed_data(self):
-        values = [self.magic,
+    परिभाषा get_packed_दत्त(self):
+        मानानि = [self.magic,
                   self.crc,
                   self.padding
                   ]
 
-        return (SWIV_Seg.s).pack(*values)
+        प्रत्यागम (SWIV_Seg.s).pack(*मानानि)
 
 
-def is_elf64(elf_header):
-    return elf_header.e_ident[ELF_CLASS_INDEX] == ELFCLASS64
+परिभाषा is_elf64(elf_शीर्षकम्):
+    प्रत्यागम elf_शीर्षकम्.e_ident[ELF_CLASS_सूचकांक] == ELFCLASS64
 
 
-def verify_elf_header(elf_header):
-    ident = elf_header.e_ident
-    return (ident.startswith(ELF_MAGIC)
-            and ident[ELF_CLASS_INDEX] in (ELFCLASS32, ELFCLASS64)
-            and ident[ELF_VERSION_INDEX] == EV_CURRENT)
+परिभाषा verify_elf_शीर्षकम्(elf_शीर्षकम्):
+    ident = elf_शीर्षकम्.e_ident
+    प्रत्यागम (ident.startswith(ELF_MAGIC)
+            च ident[ELF_CLASS_सूचकांक] अन्तः (ELFCLASS32, ELFCLASS64)
+            च ident[ELF_संस्करणम्_सूचकांक] == EV_CURRENT)
 
 
-def file_copy_offset(in_fp, in_off, out_fp, out_off, num_bytes):
-    in_fp.seek(in_off)
-    read_in = in_fp.read(num_bytes)
-    out_fp.seek(out_off)
-    out_fp.write(read_in)
+परिभाषा file_copy_विस्थापनम्(अन्तर्_fp, अन्तर्_off, बहिर्गमनम्_fp, बहिर्गमनम्_off, अङ्कः_अष्टकानि):
+    अन्तर्_fp.seek(अन्तर्_off)
+    read_अन्तर् = अन्तर्_fp.पठ(अङ्कः_अष्टकानि)
+    बहिर्गमनम्_fp.seek(बहिर्गमनम्_off)
+    बहिर्गमनम्_fp.लिख(read_अन्तर्)
 
-    return num_bytes
-
-
-def preprocess_elf_file(elf_file_name):
-    with open(elf_file_name, 'rb') as elf_fp:
-        elf_header = Elf_Ehdr_common(elf_fp.read(Elf_Ehdr_common.s.size))
-
-        if verify_elf_header(elf_header) is False:
-            raise RuntimeError("Input ELF verification failed : " + elf_file_name)
-
-        elf_fp.seek(0)
-
-        if is_elf64(elf_header):
-            elf_header = Elf64_Ehdr(elf_fp.read(Elf64_Ehdr.s.size))
-        else:
-            elf_header = Elf32_Ehdr(elf_fp.read(Elf32_Ehdr.s.size))
-
-        phdr_table = []
-
-        phdr_size = elf_header.e_phentsize
-
-        file_offset = elf_header.e_phoff
-        elf_fp.seek(file_offset)
-
-        for _ in range(elf_header.e_phnum):
-            if is_elf64(elf_header):
-                phdr_table.append(Elf64_Phdr(elf_fp.read(phdr_size)))
-            else:
-                phdr_table.append(Elf32_Phdr(elf_fp.read(phdr_size)))
-
-    return [elf_header, phdr_table]
+    प्रत्यागम अङ्कः_अष्टकानि
 
 
-def process_section_header(elf_file_name):
-    with open(elf_file_name, 'rb') as elf_fp:
-        elf_header = Elf_Ehdr_common(elf_fp.read(Elf_Ehdr_common.s.size))
+परिभाषा preprocess_elf_file(elf_file_name):
+    सह open(elf_file_name, 'rb') इव elf_fp:
+        elf_शीर्षकम् = Elf_Ehdr_common(elf_fp.पठ(Elf_Ehdr_common.s.आकार))
 
-        if verify_elf_header(elf_header) is False:
-            raise RuntimeError("Input ELF verification failed : " + elf_file_name)
+        यदि verify_elf_शीर्षकम्(elf_शीर्षकम्) अस्ति असत्य:
+            उत्थापय RuntimeError("Input ELF verification failed : " + elf_file_name)
 
         elf_fp.seek(0)
 
-        if is_elf64(elf_header):
-            elf_header = Elf64_Ehdr(elf_fp.read(Elf64_Ehdr.s.size))
-        else:
-            elf_header = Elf32_Ehdr(elf_fp.read(Elf32_Ehdr.s.size))
+        यदि is_elf64(elf_शीर्षकम्):
+            elf_शीर्षकम् = Elf64_Ehdr(elf_fp.पठ(Elf64_Ehdr.s.आकार))
+        अन्यथा:
+            elf_शीर्षकम् = Elf32_Ehdr(elf_fp.पठ(Elf32_Ehdr.s.आकार))
 
-        shdr_table = []
+        phdr_सारणी = []
 
-        shdr_size = elf_header.e_shentsize
-        elf_fp.seek(elf_header.e_shoff)
+        phdr_आकार = elf_शीर्षकम्.e_phentsize
 
-        for _ in range(elf_header.e_shnum):
-            if is_elf64(elf_header):
-                shdr_table.append(Elf64_Shdr(elf_fp.read(shdr_size)))
-            else:
-                shdr_table.append(Elf32_Shdr(elf_fp.read(shdr_size)))
+        file_विस्थापनम् = elf_शीर्षकम्.e_phoff
+        elf_fp.seek(file_विस्थापनम्)
 
-    return shdr_table
+        प्रति _ अन्तः परिसरः(elf_शीर्षकम्.e_phnum):
+            यदि is_elf64(elf_शीर्षकम्):
+                phdr_सारणी.append(Elf64_Phdr(elf_fp.पठ(phdr_आकार)))
+            अन्यथा:
+                phdr_सारणी.append(Elf32_Phdr(elf_fp.पठ(phdr_आकार)))
 
-
-def crc32_update_file(elf_fp, offset, size, crc):
-    elf_fp.seek(offset)
-    remaining = size
-    while remaining > 0:
-        chunk = elf_fp.read(min(1024 * 1024, remaining))
-        if not chunk:
-            raise RuntimeError("Unexpected EOF while calculating CRC")
-        crc = zlib.crc32(chunk, crc)
-        remaining -= len(chunk)
-    return crc
+    प्रत्यागम [elf_शीर्षकम्, phdr_सारणी]
 
 
-def crc32_update_zeros(size, crc):
-    zero_chunk = b'\x00' * min(1024 * 1024, size)
-    remaining = size
-    while remaining > 0:
-        chunk = zero_chunk[:min(len(zero_chunk), remaining)]
-        crc = zlib.crc32(chunk, crc)
-        remaining -= len(chunk)
-    return crc
+परिभाषा process_section_शीर्षकम्(elf_file_name):
+    सह open(elf_file_name, 'rb') इव elf_fp:
+        elf_शीर्षकम् = Elf_Ehdr_common(elf_fp.पठ(Elf_Ehdr_common.s.आकार))
+
+        यदि verify_elf_शीर्षकम्(elf_शीर्षकम्) अस्ति असत्य:
+            उत्थापय RuntimeError("Input ELF verification failed : " + elf_file_name)
+
+        elf_fp.seek(0)
+
+        यदि is_elf64(elf_शीर्षकम्):
+            elf_शीर्षकम् = Elf64_Ehdr(elf_fp.पठ(Elf64_Ehdr.s.आकार))
+        अन्यथा:
+            elf_शीर्षकम् = Elf32_Ehdr(elf_fp.पठ(Elf32_Ehdr.s.आकार))
+
+        shdr_सारणी = []
+
+        shdr_आकार = elf_शीर्षकम्.e_shentsize
+        elf_fp.seek(elf_शीर्षकम्.e_shoff)
+
+        प्रति _ अन्तः परिसरः(elf_शीर्षकम्.e_shnum):
+            यदि is_elf64(elf_शीर्षकम्):
+                shdr_सारणी.append(Elf64_Shdr(elf_fp.पठ(shdr_आकार)))
+            अन्यथा:
+                shdr_सारणी.append(Elf32_Shdr(elf_fp.पठ(shdr_आकार)))
+
+    प्रत्यागम shdr_सारणी
 
 
-def crc32_calculate(elf_fp, phdr_table):
+परिभाषा चक्रीयपरीक्षा_32_update_file(elf_fp, विस्थापनम्, आकार, crc):
+    elf_fp.seek(विस्थापनम्)
+    remaining = आकार
+    यावत् remaining > 0:
+        chunk = elf_fp.पठ(min(1024 * 1024, remaining))
+        यदि न chunk:
+            उत्थापय RuntimeError("Unexpected EOF while calculating CRC")
+        crc = zlib.चक्रीयपरीक्षा_32(chunk, crc)
+        remaining -= दीर्घता(chunk)
+    प्रत्यागम crc
+
+
+परिभाषा चक्रीयपरीक्षा_32_update_zeros(आकार, crc):
+    zero_chunk = b'\x00' * min(1024 * 1024, आकार)
+    remaining = आकार
+    यावत् remaining > 0:
+        chunk = zero_chunk[:min(दीर्घता(zero_chunk), remaining)]
+        crc = zlib.चक्रीयपरीक्षा_32(chunk, crc)
+        remaining -= दीर्घता(chunk)
+    प्रत्यागम crc
+
+
+परिभाषा चक्रीयपरीक्षा_32_calculate(elf_fp, phdr_सारणी):
     crc = 0
 
     # SWIV validates loadable segment contents, including BSS as zeros.
-    for curr_phdr in phdr_table:
-        if curr_phdr.p_type != LOAD_TYPE:
-            continue
+    प्रति curr_phdr अन्तः phdr_सारणी:
+        यदि curr_phdr.p_type != आरोपय_TYPE:
+            अनुवर्त
 
-        crc = crc32_update_file(elf_fp, curr_phdr.p_offset, curr_phdr.p_filesz, crc)
+        crc = चक्रीयपरीक्षा_32_update_file(elf_fp, curr_phdr.p_विस्थापनम्, curr_phdr.p_filesz, crc)
 
-        zero_size = curr_phdr.p_memsz - curr_phdr.p_filesz
-        if zero_size > 0:
-            crc = crc32_update_zeros(zero_size, crc)
+        zero_आकार = curr_phdr.p_memsz - curr_phdr.p_filesz
+        यदि zero_आकार > 0:
+            crc = चक्रीयपरीक्षा_32_update_zeros(zero_आकार, crc)
 
     crc &= 0xffffffff
     logger.info("calculated CRC: %#x", crc)
 
-    return crc
+    प्रत्यागम crc
 
 
-def verify_swiv_seg(elf_in_fp, offset):
+परिभाषा verify_swiv_seg(elf_अन्तर्_fp, विस्थापनम्):
 
-    elf_in_fp.seek(offset)
+    elf_अन्तर्_fp.seek(विस्थापनम्)
     swiv_seg = SWIV_Seg()
-    unpacked_data = (SWIV_Seg.s).unpack(elf_in_fp.read(SWIV_SEG_SIZE_MIN))
-    swiv_seg.magic = unpacked_data[0]
+    unpacked_दत्त = (SWIV_Seg.s).unpack(elf_अन्तर्_fp.पठ(SWIV_SEG_आकार_MIN))
+    swiv_seg.magic = unpacked_दत्त[0]
 
-    return swiv_seg.magic == SWIV_MAGIC
-
-
-def same_output_file(input_elf, output_elf):
-    try:
-        return os.path.exists(output_elf) and os.path.samefile(input_elf, output_elf)
-    except FileNotFoundError:
-        return False
+    प्रत्यागम swiv_seg.magic == SWIV_MAGIC
 
 
-def make_output_target(input_elf, output_elf):
-    if not same_output_file(input_elf, output_elf):
-        return output_elf, None
+परिभाषा same_output_file(निवेशः_elf, output_elf):
+    यत्न:
+        प्रत्यागम os.मार्गः.exists(output_elf) च os.मार्गः.samefile(निवेशः_elf, output_elf)
+    अपवाद File_Not_प्राप्तम्_Error:
+        प्रत्यागम असत्य
 
-    output_dir = os.path.dirname(os.path.abspath(output_elf))
-    output_base = os.path.basename(output_elf)
-    fd, temp_output = tempfile.mkstemp(prefix=output_base + ".", suffix=".tmp", dir=output_dir)
+
+परिभाषा make_output_target(निवेशः_elf, output_elf):
+    यदि न same_output_file(निवेशः_elf, output_elf):
+        प्रत्यागम output_elf, किमपि_न
+
+    output_dir = os.मार्गः.dirname(os.मार्गः.abspath(output_elf))
+    output_आधारः = os.मार्गः.basename(output_elf)
+    fd, अस्थायी_output = tempfile.mkstemp(उपसर्गः=output_आधारः + ".", suffix=".tmp", dir=output_dir)
     os.close(fd)
-    shutil.copymode(input_elf, temp_output)
-    return temp_output, temp_output
+    shutil.copymode(निवेशः_elf, अस्थायी_output)
+    प्रत्यागम अस्थायी_output, अस्थायी_output
 
 
-def swiv_generate(input_elf, output_elf):
-    output_target, temp_output = make_output_target(input_elf, output_elf)
+परिभाषा swiv_generate(निवेशः_elf, output_elf):
+    output_target, अस्थायी_output = make_output_target(निवेशः_elf, output_elf)
 
-    try:
-        with open(input_elf, "rb") as elf_in_fp, open(output_target, "wb+") as elf_out_fp:
-            [elf_header, phdr_table] = preprocess_elf_file(input_elf)
+    यत्न:
+        सह open(निवेशः_elf, "rb") इव elf_अन्तर्_fp, open(output_target, "wb+") इव elf_बहिर्गमनम्_fp:
+            [elf_शीर्षकम्, phdr_सारणी] = preprocess_elf_file(निवेशः_elf)
 
-            num_phdrs = elf_header.e_phnum
-            num_shdrs = elf_header.e_shnum
-            phdr_size = elf_header.e_phentsize
+            अङ्कः_phdrs = elf_शीर्षकम्.e_phnum
+            अङ्कः_shdrs = elf_शीर्षकम्.e_shnum
+            phdr_आकार = elf_शीर्षकम्.e_phentsize
 
-            if num_phdrs == 0 or num_phdrs > MAX_PHDR_COUNT:
-                raise RuntimeError("Input ELF has invalid number of program headers.")
+            यदि अङ्कः_phdrs == 0 वा अङ्कः_phdrs > MAX_PHDR_गणनम्:
+                उत्थापय RuntimeError("Input ELF has invalid number of program headers.")
 
-            if elf_header.e_shoff == 0 or num_shdrs == 0:
-                raise RuntimeError("Input ELF does not contain a section header table.")
+            यदि elf_शीर्षकम्.e_shoff == 0 वा अङ्कः_shdrs == 0:
+                उत्थापय RuntimeError("Input ELF does not contain a section header table.")
 
-            shdr_table_input = process_section_header(input_elf)
-            shdr_table_output = process_section_header(input_elf)
+            shdr_सारणी_निवेशः = process_section_शीर्षकम्(निवेशः_elf)
+            shdr_सारणी_output = process_section_शीर्षकम्(निवेशः_elf)
 
-            last_phdr = phdr_table[num_phdrs - 1]
-            if last_phdr.p_memsz == SWIV_SEG_SIZE_MIN and verify_swiv_seg(elf_in_fp, last_phdr.p_offset):
-                raise RuntimeError("A SWIV segment is detected in the input ELF.")
+            चरमः_phdr = phdr_सारणी[अङ्कः_phdrs - 1]
+            यदि चरमः_phdr.p_memsz == SWIV_SEG_आकार_MIN च verify_swiv_seg(elf_अन्तर्_fp, चरमः_phdr.p_विस्थापनम्):
+                उत्थापय RuntimeError("A SWIV segment is detected in the input ELF.")
 
-            last_shdr = shdr_table_input[elf_header.e_shnum - 1]
-            if last_shdr.sh_size == SWIV_SEG_SIZE_MIN and verify_swiv_seg(elf_in_fp, last_shdr.sh_offset):
-                raise RuntimeError("A SWIV section is detected in the input ELF.")
+            चरमः_shdr = shdr_सारणी_निवेशः[elf_शीर्षकम्.e_shnum - 1]
+            यदि चरमः_shdr.sh_आकार == SWIV_SEG_आकार_MIN च verify_swiv_seg(elf_अन्तर्_fp, चरमः_shdr.sh_विस्थापनम्):
+                उत्थापय RuntimeError("A SWIV section is detected in the input ELF.")
 
-            if is_elf64(elf_header):
-                swiv_shdr = Elf64_Shdr(b'\0' * Elf64_Shdr.s.size)
-            else:
-                swiv_shdr = Elf32_Shdr(b'\0' * Elf32_Shdr.s.size)
+            यदि is_elf64(elf_शीर्षकम्):
+                swiv_shdr = Elf64_Shdr(b'\0' * Elf64_Shdr.s.आकार)
+            अन्यथा:
+                swiv_shdr = Elf32_Shdr(b'\0' * Elf32_Shdr.s.आकार)
 
             swiv_shdr.sh_name = 0
             swiv_shdr.sh_type = SWIV_SECTION_TYPE
             swiv_shdr.sh_flags = 0
             swiv_shdr.sh_addr = 0
-            swiv_shdr.sh_size = SWIV_SEG_SIZE_MIN
-            swiv_shdr.sh_offset = elf_header.e_shoff + (elf_header.e_shnum + 1) * elf_header.e_shentsize
-            shdr_table_output.append(swiv_shdr)
-            elf_header.e_shnum += 1
+            swiv_shdr.sh_आकार = SWIV_SEG_आकार_MIN
+            swiv_shdr.sh_विस्थापनम् = elf_शीर्षकम्.e_shoff + (elf_शीर्षकम्.e_shnum + 1) * elf_शीर्षकम्.e_shentsize
+            shdr_सारणी_output.append(swiv_shdr)
+            elf_शीर्षकम्.e_shnum += 1
 
-            if elf_header.e_phoff != 0:
-                for phdr in phdr_table:
-                    file_copy_offset(elf_in_fp, phdr.p_offset, elf_out_fp, phdr.p_offset, phdr.p_filesz)
+            यदि elf_शीर्षकम्.e_phoff != 0:
+                प्रति phdr अन्तः phdr_सारणी:
+                    file_copy_विस्थापनम्(elf_अन्तर्_fp, phdr.p_विस्थापनम्, elf_बहिर्गमनम्_fp, phdr.p_विस्थापनम्, phdr.p_filesz)
 
-            elf_out_fp.seek(0)
-            elf_out_fp.write(elf_header.get_packed_data())
+            elf_बहिर्गमनम्_fp.seek(0)
+            elf_बहिर्गमनम्_fp.लिख(elf_शीर्षकम्.get_packed_दत्त())
 
-            phdr_start = elf_header.e_phoff
-            for phdr in phdr_table:
-                elf_out_fp.seek(phdr_start)
-                elf_out_fp.write(phdr.get_packed_data())
-                phdr_start += phdr_size
+            phdr_start = elf_शीर्षकम्.e_phoff
+            प्रति phdr अन्तः phdr_सारणी:
+                elf_बहिर्गमनम्_fp.seek(phdr_start)
+                elf_बहिर्गमनम्_fp.लिख(phdr.get_packed_दत्त())
+                phdr_start += phdr_आकार
 
-            for shdr in shdr_table_input[:num_shdrs]:
-                if shdr.sh_type == SHT_NOBITS or shdr.sh_size == 0:
-                    continue
-                file_copy_offset(elf_in_fp, shdr.sh_offset, elf_out_fp, shdr.sh_offset, shdr.sh_size)
+            प्रति shdr अन्तः shdr_सारणी_निवेशः[:अङ्कः_shdrs]:
+                यदि shdr.sh_type == SHT_NOBITS वा shdr.sh_आकार == 0:
+                    अनुवर्त
+                file_copy_विस्थापनम्(elf_अन्तर्_fp, shdr.sh_विस्थापनम्, elf_बहिर्गमनम्_fp, shdr.sh_विस्थापनम्, shdr.sh_आकार)
 
-            shdr_start = elf_header.e_shoff
-            for shdr in shdr_table_output:
-                elf_out_fp.seek(shdr_start)
-                elf_out_fp.write(shdr.get_packed_data())
-                shdr_start += elf_header.e_shentsize
+            shdr_start = elf_शीर्षकम्.e_shoff
+            प्रति shdr अन्तः shdr_सारणी_output:
+                elf_बहिर्गमनम्_fp.seek(shdr_start)
+                elf_बहिर्गमनम्_fp.लिख(shdr.get_packed_दत्त())
+                shdr_start += elf_शीर्षकम्.e_shentsize
 
-            elf_out_fp.flush()
+            elf_बहिर्गमनम्_fp.flush()
 
             swiv_seg = SWIV_Seg()
-            swiv_seg.crc = crc32_calculate(elf_out_fp, phdr_table)
-            elf_out_fp.seek(swiv_shdr.sh_offset)
-            elf_out_fp.write(swiv_seg.get_packed_data())
+            swiv_seg.crc = चक्रीयपरीक्षा_32_calculate(elf_बहिर्गमनम्_fp, phdr_सारणी)
+            elf_बहिर्गमनम्_fp.seek(swiv_shdr.sh_विस्थापनम्)
+            elf_बहिर्गमनम्_fp.लिख(swiv_seg.get_packed_दत्त())
 
-        if temp_output is not None:
-            os.replace(temp_output, output_elf)
-            temp_output = None
+        यदि अस्थायी_output अस्ति न किमपि_न:
+            os.replace(अस्थायी_output, output_elf)
+            अस्थायी_output = किमपि_न
 
-        return 0
-    finally:
-        if temp_output is not None and os.path.exists(temp_output):
-            os.unlink(temp_output)
+        प्रत्यागम 0
+    अन्ततः:
+        यदि अस्थायी_output अस्ति न किमपि_न च os.मार्गः.exists(अस्थायी_output):
+            os.unlink(अस्थायी_output)
 
 
-def main(argv):
-    parser = argparse.ArgumentParser(description="Add a Software Image Validation (SWIV) section to an HTP ELF file.")
-    parser.add_argument("-i", "--input", dest="input_file", metavar="INPUT", required=True)
-    parser.add_argument("-o", "--output", dest="output_file", metavar="OUTPUT", required=True)
-    parser.add_argument("-v", "--verbose", action="store_true", help="show calculated CRC")
-    args = parser.parse_args(argv)
+परिभाषा मुख्यम्(argv):
+    parser = argparse.तर्कः_Parser(description="Add a Software Image Validation (SWIV) section to an HTP ELF file.")
+    parser.सङ्कलय_तर्कः("-i", "--input", dest="input_file", metavar="INPUT", required=सत्य)
+    parser.सङ्कलय_तर्कः("-o", "--output", dest="output_file", metavar="OUTPUT", required=सत्य)
+    parser.सङ्कलय_तर्कः("-v", "--verbose", action="store_true", help="show calculated CRC")
+    तर्काः_2 = parser.parse_तर्काः(argv)
 
     logging.basicConfig(
-        level=logging.INFO if args.verbose else logging.WARNING,
+        level=logging.INFO यदि तर्काः_2.verbose अन्यथा logging.WARNING,
         format="%(message)s",
     )
 
-    try:
-        return swiv_generate(args.input_file, args.output_file)
-    except RuntimeError as exc:
+    यत्न:
+        प्रत्यागम swiv_generate(तर्काः_2.निवेशः_file, तर्काः_2.output_file)
+    अपवाद RuntimeError इव exc:
         logger.error("ERROR: %s", exc)
-        return 2
+        प्रत्यागम 2
 
 
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+यदि __name__ == "__main__":
+    sys.exit(मुख्यम्(sys.argv[1:]))

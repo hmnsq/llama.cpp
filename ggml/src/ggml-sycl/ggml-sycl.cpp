@@ -10,315 +10,315 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include <algorithm>
-#include <array>
-#include <assert.h>
-#include <atomic>
-#include <cctype>
-#include <cinttypes>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <float.h>
-#include <limits>
-#include <optional>
-#include <stdint.h>
-#include <stdio.h>
-#include <vector>
-#include <cmath>
-#include <iostream>
-#include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <regex>
+#अन्तर्भाव <algorithm>
+#अन्तर्भाव <array>
+#अन्तर्भाव <assert.h>
+#अन्तर्भाव <atomic>
+#अन्तर्भाव <cctype>
+#अन्तर्भाव <cinttypes>
+#अन्तर्भाव <cstddef>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <cstdlib>
+#अन्तर्भाव <float.h>
+#अन्तर्भाव <limits>
+#अन्तर्भाव <optional>
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <stdio.h>
+#अन्तर्भाव <vector>
+#अन्तर्भाव <cmath>
+#अन्तर्भाव <iostream>
+#अन्तर्भाव <fstream>
+#अन्तर्भाव <stdio.h>
+#अन्तर्भाव <stdlib.h>
+#अन्तर्भाव <regex>
 
-#include <sycl/sycl.hpp>
-#include <sycl/backend.hpp>
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-#include <level_zero/ze_api.h>
-#include <level_zero/zes_api.h>
-#endif
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
+#अन्तर्भाव <sycl/sycl.hpp>
+#अन्तर्भाव <sycl/backend.hpp>
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#अन्तर्भाव <level_zero/ze_api.h>
+#अन्तर्भाव <level_zero/zes_api.h>
+#यदि_अन्तः
+#यदि defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_स्मृतिः_ALLOC
 #    include <sycl/ext/oneapi/experimental/async_alloc/async_alloc.hpp>
-#endif
-#if SYCL_EXT_ONEAPI_VIRTUAL_MEM
+#यदि_अन्तः
+#यदि SYCL_EXT_ONEAPI_VIRTUAL_MEM
 #    include <sycl/ext/oneapi/virtual_mem/physical_mem.hpp>
 #    include <sycl/ext/oneapi/virtual_mem/virtual_mem.hpp>
 #    define GGML_SYCL_SUPPORT_VMM
-#endif
-#include <sycl/half_type.hpp>
+#यदि_अन्तः
+#अन्तर्भाव <sycl/half_type.hpp>
 
-#include "ggml.h"
-#include "ggml-sycl.h"
-#include "ggml-impl.h"
-#include "ggml-backend-impl.h"
+#अन्तर्भाव "ggml.h"
+#अन्तर्भाव "ggml-sycl.h"
+#अन्तर्भाव "ggml-impl.h"
+#अन्तर्भाव "ggml-backend-impl.h"
 
-#include "ggml-sycl/add-id.hpp"
-#include "ggml-sycl/backend.hpp"
-#include "ggml-sycl/common.hpp"
-#include "ggml-sycl/element_wise.hpp"
-#include "ggml-sycl/fwht.hpp"
-#include "ggml-sycl/fused-gemm.hpp"
-#include "ggml-sycl/gemm.hpp"
-#include "ggml-sycl/getrows.hpp"
-#include "ggml-sycl/mem.hpp"
-#include "ggml-sycl/norm.hpp"
-#include "ggml-sycl/presets.hpp"
-#include "ggml-sycl/quantize.hpp"
-#include "ggml-sycl/repeat_back.hpp"
-#include "ggml-sycl/set_rows.hpp"
-#include "ggml-sycl/set.hpp"
-#include "ggml-sycl/dsv4-hc.hpp"
-#include "ggml-sycl/lightning-indexer.hpp"
-#include "ggml-sycl/conv2d.hpp"
-#include "ggml-sycl/conv2d-dw.hpp"
-#include "ggml-sycl/conv2d-transpose.hpp"
-#include "ggml-sycl/ssm_conv.hpp"
-#include "ggml-sycl/sycl_hw.hpp"
-#include "ggml-sycl/ssm_scan.hpp"
-#include "ggml-sycl/fill.hpp"
-#include "ggml-sycl/cumsum.hpp"
-#include "ggml-sycl/diag.hpp"
-#include "ggml-sycl/opt-step.hpp"
-#include "ggml-sycl/solve_tri.hpp"
-#include "ggml-sycl/gated_delta_net.hpp"
-#include "ggml-sycl/pool.hpp"
-#include "ggml-sycl/cross_entropy_loss.hpp"
+#अन्तर्भाव "ggml-sycl/add-id.hpp"
+#अन्तर्भाव "ggml-sycl/backend.hpp"
+#अन्तर्भाव "ggml-sycl/common.hpp"
+#अन्तर्भाव "ggml-sycl/element_wise.hpp"
+#अन्तर्भाव "ggml-sycl/fwht.hpp"
+#अन्तर्भाव "ggml-sycl/fused-gemm.hpp"
+#अन्तर्भाव "ggml-sycl/gemm.hpp"
+#अन्तर्भाव "ggml-sycl/getrows.hpp"
+#अन्तर्भाव "ggml-sycl/mem.hpp"
+#अन्तर्भाव "ggml-sycl/norm.hpp"
+#अन्तर्भाव "ggml-sycl/presets.hpp"
+#अन्तर्भाव "ggml-sycl/quantize.hpp"
+#अन्तर्भाव "ggml-sycl/repeat_back.hpp"
+#अन्तर्भाव "ggml-sycl/set_rows.hpp"
+#अन्तर्भाव "ggml-sycl/set.hpp"
+#अन्तर्भाव "ggml-sycl/dsv4-hc.hpp"
+#अन्तर्भाव "ggml-sycl/lightning-indexer.hpp"
+#अन्तर्भाव "ggml-sycl/conv2d.hpp"
+#अन्तर्भाव "ggml-sycl/conv2d-dw.hpp"
+#अन्तर्भाव "ggml-sycl/conv2d-transpose.hpp"
+#अन्तर्भाव "ggml-sycl/ssm_conv.hpp"
+#अन्तर्भाव "ggml-sycl/sycl_hw.hpp"
+#अन्तर्भाव "ggml-sycl/ssm_scan.hpp"
+#अन्तर्भाव "ggml-sycl/fill.hpp"
+#अन्तर्भाव "ggml-sycl/cumsum.hpp"
+#अन्तर्भाव "ggml-sycl/diag.hpp"
+#अन्तर्भाव "ggml-sycl/opt-step.hpp"
+#अन्तर्भाव "ggml-sycl/solve_tri.hpp"
+#अन्तर्भाव "ggml-sycl/gated_delta_net.hpp"
+#अन्तर्भाव "ggml-sycl/pool.hpp"
+#अन्तर्भाव "ggml-sycl/cross_entropy_loss.hpp"
 
-#define MEM_SIZE_2M	0x00200000
-#define MEM_SIZE_1G	0x40000000
+#परिभाषय MEM_आकार_2_M	0x00200000
+#परिभाषय MEM_आकार_1_G	0x40000000
 
-static bool g_sycl_loaded = false;
-int g_ggml_sycl_debug = 0;
-int g_ggml_sycl_dev_debug = 0;
-int g_ggml_sycl_enable_optimize = 1;
-int g_ggml_sycl_enable_graph = 0;
-int g_ggml_sycl_enable_dnn = 1;
-int g_ggml_sycl_fa_onednn = 1;
-int g_ggml_sycl_fa_onednn_max_kv = 0;
-int g_ggml_sycl_enable_mkl_fa = 1;
-int g_ggml_sycl_memtrace = 0;
-int g_ggml_sycl_memtrace_step = 64;
-int g_ggml_sycl_enable_vmm = 1;
-int g_ggml_sycl_enable_fusion = 1;
-int g_ggml_sycl_enable_esimd = 1;
-int g_ggml_sycl_mmvq_wide = 1;
-int g_ggml_sycl_prioritize_dmmv = 0;
-int g_ggml_sycl_xmx_gather_types = GGML_SYCL_XMX_GATHER_TYPES_DEFAULT;
-int g_ggml_sycl_xmx_gather_shapes = GGML_SYCL_XMX_GATHER_SHAPES_DEFAULT;
-int g_ggml_sycl_dynamic_precision = GGML_SYCL_DYNAMIC_PRECISION_DEFAULT;
-int g_ggml_sycl_dynamic_required_precision = GGML_SYCL_DYNAMIC_PRECISION_F32;
-static const char * ggml_sycl_dynamic_precision_names[] = { "F16", "BF16", "TF32", "F32" };
+स्थिर तार्किक g_sycl_loaded = असत्य;
+पूर्णाङ्क g_ggml_sycl_debug = 0;
+पूर्णाङ्क g_ggml_sycl_dev_debug = 0;
+पूर्णाङ्क g_ggml_sycl_enable_optimize = 1;
+पूर्णाङ्क g_ggml_sycl_enable_graph = 0;
+पूर्णाङ्क g_ggml_sycl_enable_dnn = 1;
+पूर्णाङ्क g_ggml_sycl_fa_onednn = 1;
+पूर्णाङ्क g_ggml_sycl_fa_onednn_max_kv = 0;
+पूर्णाङ्क g_ggml_sycl_enable_mkl_fa = 1;
+पूर्णाङ्क g_ggml_sycl_memtrace = 0;
+पूर्णाङ्क g_ggml_sycl_memtrace_चरणः = 64;
+पूर्णाङ्क g_ggml_sycl_enable_vmm = 1;
+पूर्णाङ्क g_ggml_sycl_enable_fusion = 1;
+पूर्णाङ्क g_ggml_sycl_enable_esimd = 1;
+पूर्णाङ्क g_ggml_sycl_mmvq_wide = 1;
+पूर्णाङ्क g_ggml_sycl_prioritize_dmmv = 0;
+पूर्णाङ्क g_ggml_sycl_xmx_gather_types = GGML_SYCL_XMX_GATHER_TYPES_DEFAULT;
+पूर्णाङ्क g_ggml_sycl_xmx_gather_shapes = GGML_SYCL_XMX_GATHER_SHAPES_DEFAULT;
+पूर्णाङ्क g_ggml_sycl_dynamic_precision = GGML_SYCL_DYNAMIC_PRECISION_DEFAULT;
+पूर्णाङ्क g_ggml_sycl_dynamic_required_precision = GGML_SYCL_DYNAMIC_PRECISION_F32;
+स्थिर ध्रुव वर्ण * ggml_sycl_dynamic_precision_नामानि[] = { "F16", "BF16", "TF32", "F32" };
 
 // value of a GGML_SYCL_DYNAMIC_PRECISION-style variable; def if unset or invalid
-static int ggml_sycl_get_env_precision(const char * name, int def) {
-    const char * env = getenv(name);
-    if (!env) {
-        return def;
+स्थिर पूर्णाङ्क ggml_sycl_get_env_precision(ध्रुव वर्ण * name, पूर्णाङ्क def) {
+    ध्रुव वर्ण * env = getenv(name);
+    यदि (!env) {
+        प्रत्यागम def;
     }
     std::string mode(env);
-    for (char & c : mode) {
-        c = (char) std::toupper((unsigned char) c);
+    प्रति (वर्ण & c : mode) {
+        c = (वर्ण) std::महाक्षरम्((अचिह्नित वर्ण) c);
     }
-    for (int i = GGML_SYCL_DYNAMIC_PRECISION_F16; i <= GGML_SYCL_DYNAMIC_PRECISION_F32; i++) {
-        if (mode == ggml_sycl_dynamic_precision_names[i]) {
-            return i;
+    प्रति (पूर्णाङ्क i = GGML_SYCL_DYNAMIC_PRECISION_F16; i <= GGML_SYCL_DYNAMIC_PRECISION_F32; i++) {
+        यदि (mode == ggml_sycl_dynamic_precision_नामानि[i]) {
+            प्रत्यागम i;
         }
     }
-    GGML_LOG_WARN("%s: unknown %s=%s, using %s\n", __func__, name, env, ggml_sycl_dynamic_precision_names[def]);
-    return def;
+    GGML_LOG_WARN("%s: unknown %s=%s, using %s\n", __func__, name, env, ggml_sycl_dynamic_precision_नामानि[def]);
+    प्रत्यागम def;
 }
-int g_ggml_sycl_use_async_mem_op = 0;
-int g_ggml_sycl_use_async_mem_op_requested = 1;
-int g_ggml_sycl_use_level_zero_api = 0;
-int g_ggml_sycl_enable_flash_attention = 1;
-int g_ggml_sycl_dev2dev_memcpy = DEV2DEV_MEMCPY_SYCL;
-int g_ggml_sycl_usm_system = 0;
-int g_ggml_sycl_enable_host_pinned_mem = 1;
-int g_ggml_sycl_host_pinned_mem_2g = 0;
-int g_ggml_sycl_upload_staging_slots = 4;
-int g_ggml_sycl_get_mem_api = MEMORY_API_TYPE_LEVEL_ZERO;
-int g_ggml_sycl_enable_sparse_fa = 0;
-int g_ggml_sycl_debug_sparse_fa = 0;
-int g_ggml_sycl_sparse_fa_margin = 256;
+पूर्णाङ्क g_ggml_sycl_use_async_mem_op = 0;
+पूर्णाङ्क g_ggml_sycl_use_async_mem_op_requested = 1;
+पूर्णाङ्क g_ggml_sycl_use_level_zero_api = 0;
+पूर्णाङ्क g_ggml_sycl_enable_flash_attention = 1;
+पूर्णाङ्क g_ggml_sycl_dev2dev_memcpy = DEV2DEV_MEMCPY_SYCL;
+पूर्णाङ्क g_ggml_sycl_usm_system = 0;
+पूर्णाङ्क g_ggml_sycl_enable_host_pinned_mem = 1;
+पूर्णाङ्क g_ggml_sycl_host_pinned_mem_2g = 0;
+पूर्णाङ्क g_ggml_sycl_upload_staging_slots = 4;
+पूर्णाङ्क g_ggml_sycl_get_mem_api = स्मृतिः_API_TYPE_LEVEL_ZERO;
+पूर्णाङ्क g_ggml_sycl_enable_sparse_fa = 0;
+पूर्णाङ्क g_ggml_sycl_debug_sparse_fa = 0;
+पूर्णाङ्क g_ggml_sycl_sparse_fa_margin = 256;
 
-#if GGML_SYCL_DNNL
+#यदि GGML_SYCL_DNNL
 // ask oneDNN which matmul it picks for a small f16 problem
-static bool ggml_sycl_dnnl_detect_optimized_gemm(int device) {
-    using dt = dnnl::memory::data_type;
+स्थिर तार्किक ggml_sycl_dnnl_detect_optimized_gemm(पूर्णाङ्क device) {
+    उपयुज्य dt = dnnl::स्मृतिः::दत्त_type;
 
-    try {
-        const dnnl::memory::dims dims    = { 1, 64, 64 };
-        const dnnl::memory::dims strides = { 64 * 64, 64, 1 };
+    यत्न {
+        ध्रुव dnnl::स्मृतिः::dims dims    = { 1, 64, 64 };
+        ध्रुव dnnl::स्मृतिः::dims strides = { 64 * 64, 64, 1 };
 
         dnnl::primitive_attr attr;
-        attr.set_scratchpad_mode(dnnl::scratchpad_mode::user);
+        attr.समुच्चयः_scratchpad_बहुलकम्(dnnl::scratchpad_बहुलकम्::user);
 
-        const auto & q   = dpct::dev_mgr::instance().get_device(device).default_queue();
-        const auto   eng = dnnl::sycl_interop::make_engine(q.get_device(), q.get_context());
-        const auto   pd  = dnnl::matmul::primitive_desc(eng,
-                                                        dnnl::memory::desc(dims, dt::f16, strides),
-                                                        dnnl::memory::desc(dims, dt::f16, strides),
-                                                        dnnl::memory::desc(dims, dt::f32, strides), attr);
+        ध्रुव स्वचालित & q   = dpct::dev_mgr::instance().get_device(device).default_queue();
+        ध्रुव स्वचालित   eng = dnnl::sycl_interop::make_engine(q.get_device(), q.get_context());
+        ध्रुव स्वचालित   pd  = dnnl::matmul::primitive_desc(eng,
+                                                        dnnl::स्मृतिः::desc(dims, dt::f16, strides),
+                                                        dnnl::स्मृतिः::desc(dims, dt::f16, strides),
+                                                        dnnl::स्मृतिः::desc(dims, dt::f32, strides), attr);
 
-        const std::string impl = pd.impl_info_str();
-        if (impl.find("ref") == std::string::npos) {
-            return true;
+        ध्रुव std::string impl = pd.impl_info_str();
+        यदि (impl.find("ref") == std::string::npos) {
+            प्रत्यागम सत्य;
         }
 
         GGML_LOG_WARN("%s: oneDNN has no optimized matmul for device %d (picks %s), using SYCL kernels\n",
                       __func__, device, impl.c_str());
-    } catch (const std::exception & e) {
+    } गृहाण (ध्रुव std::exception & e) {
         GGML_LOG_WARN("%s: oneDNN matmul probe failed on device %d (%s), using SYCL kernels\n",
                       __func__, device, e.what());
     }
 
-    return false;
+    प्रत्यागम असत्य;
 }
-#endif
+#यदि_अन्तः
 
-static ggml_sycl_device_info ggml_sycl_init() {
+स्थिर ggml_sycl_device_info ggml_sycl_init() {
     GGML_SYCL_DEBUG("[SYCL] call ggml_sycl_init\n");
     ggml_sycl_device_info info = {};
 
     // Do not hard crash when there exists no SYCL devices.
     // We want to allow the user to use non-SYCL tools when SYCL is compiled (such as llama-quantize)
-    try {
-        info.device_count = dpct::dev_mgr::instance().device_count();
-    } catch (sycl::exception const &exc) {
+    यत्न {
+        info.device_गणनम् = dpct::dev_mgr::instance().device_गणनम्();
+    } गृहाण (sycl::exception ध्रुव &exc) {
         GGML_LOG_INFO("%s: no SYCL device available: %s\n", __func__, exc.what());
-        info.device_count = 0;
+        info.device_गणनम् = 0;
     }
-    if (info.device_count == 0) {
+    यदि (info.device_गणनम् == 0) {
         GGML_LOG_ERROR("%s: failed to initialize: %s\n", GGML_SYCL_NAME, __func__);
-        return info;
+        प्रत्यागम info;
     }
 
-    GGML_ASSERT(info.device_count <= GGML_SYCL_MAX_DEVICES);
+    GGML_ASSERT(info.device_गणनम् <= GGML_SYCL_MAX_DEVICES);
 
-    int64_t total_vram = 0;
+    int64_t योग_vram = 0;
 /* This is a bit misleading;  reserved for later */
 // #if defined(SYCL_USE_XMX)
 //     GGML_LOG_INFO("%s: SYCL_USE_XMX: yes\n", __func__);
 // #else
 //     GGML_LOG_INFO("%s: SYCL_USE_XMX: no\n", __func__);
 // #endif
-    for (int i = 0; i < info.device_count; ++i) {
+    प्रति (पूर्णाङ्क i = 0; i < info.device_गणनम्; ++i) {
         dpct::device_info prop;
-        auto & device = dpct::dev_mgr::instance().get_device(i);
+        स्वचालित & device = dpct::dev_mgr::instance().get_device(i);
 
         SYCL_CHECK(CHECK_TRY_ERROR(dpct::get_device_info(
             prop, device)));
 
-#if !defined(GGML_SYCL_SUPPORT_VMM)
+#यदि !defined(GGML_SYCL_SUPPORT_VMM)
         info.devices[i].vmm = 0;
-#else
+#अन्यथा
         info.devices[i].vmm = device.has(sycl::aspect::ext_oneapi_virtual_mem);
-        if (info.devices[i].vmm) {
+        यदि (info.devices[i].vmm) {
             // NB: SYCL's get_mem_granularity always returns the _minimum_ granularity,
             // but the L0 API requires a larger page size for allocs above 2 MiB and
             // rejects non-multiples with UR_RESULT_ERROR_INVALID_VALUE [sic].
             // Here we clamp it to 2 MiB for simplicity, but other devices may require
             // calling zeVirtualMemQueryPageSize or yet unexposed public API.
-            const size_t physical_page = 2ull << 20; // 2 MiB
+            ध्रुव size_t physical_page = 2ull << 20; // 2 MiB
             info.devices[i].vmm_granularity = std::max<size_t>(
                 sycl::ext::oneapi::experimental::get_mem_granularity(
                     device, sycl::context(device)),
                 physical_page);
         }
-#endif
+#यदि_अन्तः
 
-        info.default_tensor_split[i] = total_vram;
-        total_vram += prop.get_global_mem_size();
+        info.default_tensor_विभज[i] = योग_vram;
+        योग_vram += prop.get_global_mem_आकार();
 
         info.devices[i].cc =
-            100 * prop.get_major_version() + 10 * prop.get_minor_version();
+            100 * prop.get_major_संस्करणम्() + 10 * prop.get_minor_संस्करणम्();
         info.devices[i].nsm = prop.get_max_compute_units() / 16; //16: Number of Xe Cores
         info.devices[i].opt_feature.reorder = device.ext_oneapi_architecture_is(syclex::arch_category::intel_gpu);
-#if GGML_SYCL_DNNL
+#यदि GGML_SYCL_DNNL
         info.devices[i].opt_feature.onednn_optimized_gemm = ggml_sycl_dnnl_detect_optimized_gemm(i);
-#endif
-        info.devices[i].smpbo = prop.get_local_mem_size();
-        info.devices[i].warp_size = WARP_SIZE;
+#यदि_अन्तः
+        info.devices[i].smpbo = prop.get_local_mem_आकार();
+        info.devices[i].warp_आकार = WARP_आकार;
         info.devices[i].usm_system_support = device.has(sycl::aspect::usm_system_allocations);
 
-        info.max_work_group_sizes[i] = prop.get_max_work_group_size();
-        info.devices[i].max_wg_per_cu = info.max_work_group_sizes[i] / prop.get_max_compute_units();
+        info.max_work_गणः_sizes[i] = prop.get_max_work_गणः_आकार();
+        info.devices[i].max_wg_प्रत्येकम्_cu = info.max_work_गणः_sizes[i] / prop.get_max_compute_units();
         info.devices[i].hw_info = get_device_hw_info(&device);
 
         // Only check GPU devices; CPU devices use OpenCL and would otherwise
         // disable Level Zero for the GPUs on systems without ONEAPI_DEVICE_SELECTOR set.
-        if (device.is_gpu() && device.default_queue().get_backend() != sycl::backend::ext_oneapi_level_zero) {
+        यदि (device.is_gpu() && device.default_queue().get_backend() != sycl::backend::ext_oneapi_level_zero) {
             GGML_LOG_WARN("SYCL GPU device %d does not use Level Zero backend, disabling Level Zero memory API\n", i);
-            info.ext_oneapi_level_zero = false;
+            info.ext_oneapi_level_zero = असत्य;
         }
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-        if (info.ext_oneapi_level_zero && device.is_gpu() && device.default_queue().get_backend() == sycl::backend::ext_oneapi_level_zero) {
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+        यदि (info.ext_oneapi_level_zero && device.is_gpu() && device.default_queue().get_backend() == sycl::backend::ext_oneapi_level_zero) {
             ze_device_handle_t ze_dev = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(device.default_queue().get_device());
             ze_device_properties_t props = {};
             props.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
-            ze_result_t r = zeDeviceGetProperties(ze_dev, &props);
-            if (r == ZE_RESULT_SUCCESS) {
-                info.devices[i].l0_device_type_valid = true;
+            ze_परिणाम_t r = zeDeviceGetProperties(ze_dev, &props);
+            यदि (r == ZE_परिणाम_SUCCESS) {
+                info.devices[i].l0_device_type_valid = सत्य;
                 info.devices[i].l0_discrete_gpu = !(props.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
             }
         }
-#endif
+#यदि_अन्तः
     }
 
-    for (int id = 0; id < info.device_count; ++id) {
-        info.default_tensor_split[id] /= total_vram;
+    प्रति (पूर्णाङ्क id = 0; id < info.device_गणनम्; ++id) {
+        info.default_tensor_विभज[id] /= योग_vram;
     }
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
     //update g_ggml_sycl_use_level_zero_api according to the device support
     g_ggml_sycl_use_level_zero_api =
         info.ext_oneapi_level_zero && g_ggml_sycl_use_level_zero_api;
-#endif
+#यदि_अन्तः
 
-    return info;
+    प्रत्यागम info;
 }
 
-const ggml_sycl_device_info & ggml_sycl_info() {
-    static ggml_sycl_device_info info = ggml_sycl_init();
-    return info;
+ध्रुव ggml_sycl_device_info & ggml_sycl_info() {
+    स्थिर ggml_sycl_device_info info = ggml_sycl_init();
+    प्रत्यागम info;
 }
 
-static void print_device_detail(int id, sycl::device &device, std::string device_type) {
+स्थिर शून्य print_device_detail(पूर्णाङ्क id, sycl::device &device, std::string device_type) {
 
     dpct::device_info prop;
     SYCL_CHECK(CHECK_TRY_ERROR(
         dpct::get_device_info(prop, device)));
 
-    std::string version;
-    version += std::to_string(prop.get_major_version());
-    version += ".";
-    version += std::to_string(prop.get_minor_version());
+    std::string संस्करणम्_2;
+    संस्करणम्_2 += std::to_string(prop.get_major_संस्करणम्());
+    संस्करणम्_2 += ".";
+    संस्करणम्_2 += std::to_string(prop.get_minor_संस्करणम्());
 
     device_type = std::regex_replace(device_type, std::regex("ext_oneapi_"), "");
     std::string name = std::string(prop.get_name());
     name = std::regex_replace(name, std::regex("\\(R\\)"), "");
     name = std::regex_replace(name, std::regex("\\(TM\\)"), "");
 
-    auto global_mem_size = prop.get_global_mem_size()/1000000;
+    स्वचालित global_mem_आकार = prop.get_global_mem_आकार()/1000000;
     GGML_LOG_INFO("|%2d|%19s|%39s|%7s|%7d|%8d|%5d|%6luM|%21s|\n", id, device_type.c_str(),
-            name.c_str(), version.c_str(), prop.get_max_compute_units(),
-            prop.get_max_work_group_size(), prop.get_max_sub_group_size(),
-            global_mem_size, device.get_info<sycl::info::device::driver_version>().c_str());
+            name.c_str(), संस्करणम्_2.c_str(), prop.get_max_compute_units(),
+            prop.get_max_work_गणः_आकार(), prop.get_max_sub_गणः_आकार(),
+            global_mem_आकार, device.get_info<sycl::info::device::driver_संस्करणम्>().c_str());
 }
 
-static void print_device_opt_feature(int device_count) {
+स्थिर शून्य print_device_opt_feature(पूर्णाङ्क device_गणनम्) {
     GGML_LOG_INFO("SYCL Optimization Feature:\n");
     GGML_LOG_INFO(
         "|ID|        Device Type|Reorder|\n");
     GGML_LOG_INFO(
         "|--|-------------------|-------|\n");
     std::map<std::string, size_t> DeviceNums;
-    for (int id = 0; id < device_count; ++id) {
+    प्रति (पूर्णाङ्क id = 0; id < device_गणनम्; ++id) {
       sycl::device device = dpct::dev_mgr::instance().get_device(id);
       std::string backend_type = get_device_backend_and_type(device);
-      int type_id = DeviceNums[backend_type]++;
+      पूर्णाङ्क type_id = DeviceNums[backend_type]++;
       std::stringstream device_type;
       device_type << "[" << backend_type << ":" << std::to_string(type_id)
                   << "]";
@@ -329,11 +329,11 @@ static void print_device_opt_feature(int device_count) {
     }
 
 }
-void ggml_backend_sycl_print_sycl_devices() {
+शून्य ggml_backend_sycl_print_sycl_devices() {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_print_sycl_devices\n");
-    int device_count = dpct::dev_mgr::instance().device_count();
+    पूर्णाङ्क device_गणनम् = dpct::dev_mgr::instance().device_गणनम्();
     std::map<std::string, size_t> DeviceNums;
-    GGML_LOG_INFO("Found %d SYCL devices:\n", device_count);
+    GGML_LOG_INFO("Found %d SYCL devices:\n", device_गणनम्);
 
     GGML_LOG_INFO(
         "|  |                   |                                       |      "
@@ -348,28 +348,28 @@ void ggml_backend_sycl_print_sycl_devices() {
         "|--|-------------------|---------------------------------------|------"
         "-|-------|--------|-----|-------|---------------------|\n");
 
-    for (int id = 0; id < device_count; ++id) {
+    प्रति (पूर्णाङ्क id = 0; id < device_गणनम्; ++id) {
       sycl::device device = dpct::dev_mgr::instance().get_device(id);
       std::string backend_type = get_device_backend_and_type(device);
-      int type_id = DeviceNums[backend_type]++;
+      पूर्णाङ्क type_id = DeviceNums[backend_type]++;
       std::stringstream device_type;
       device_type << "[" << backend_type << ":" << std::to_string(type_id)
                   << "]";
       print_device_detail(id, device, device_type.str());
     }
 
-    print_device_opt_feature(device_count);
+    print_device_opt_feature(device_गणनम्);
 }
 
-static const char* dev2dev_int2str(int dev2dev) {
-    if (dev2dev == DEV2DEV_MEMCPY_SYCL) {
-        return "SYCL API";
-    } else if (dev2dev == DEV2DEV_MEMCPY_L0) {
-        return "Level Zero API";
-    } else if (dev2dev == DEV2DEV_MEMCPY_FORWARD) {
-        return "Host Forward";
-    } else {
-        return "Unknown";
+स्थिर ध्रुव वर्ण* dev2dev_int2str(पूर्णाङ्क dev2dev) {
+    यदि (dev2dev == DEV2DEV_MEMCPY_SYCL) {
+        प्रत्यागम "SYCL API";
+    } अन्यथा यदि (dev2dev == DEV2DEV_MEMCPY_L0) {
+        प्रत्यागम "Level Zero API";
+    } अन्यथा यदि (dev2dev == DEV2DEV_MEMCPY_FORWARD) {
+        प्रत्यागम "Host Forward";
+    } अन्यथा {
+        प्रत्यागम "Unknown";
     }
 }
 
@@ -378,36 +378,36 @@ static const char* dev2dev_int2str(int dev2dev) {
 * It's the first internal function to be called by them in SYCL backend.
 * This function is used to do initialize work for the SYCL backend and set the global variables.
 */
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-static ze_result_t init_zes() {
-    ze_result_t res = zesInit(0);
-    if (res != ZE_RESULT_SUCCESS) {
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+स्थिर ze_परिणाम_t init_zes() {
+    ze_परिणाम_t res = zesInit(0);
+    यदि (res != ZE_परिणाम_SUCCESS) {
         GGML_SYCL_DEBUG("Warning: [%s] zesInit failed with code %d. Sysman free-memory query be unavailable.\n",
-                            __func__, (int) res);
+                            __func__, (पूर्णाङ्क) res);
     }
-    return res;
+    प्रत्यागम res;
 }
 
-static ze_result_t get_zes_init_res() {
-    static ze_result_t zes_init_res = init_zes();
-    GGML_SYCL_DEBUG("[SYCL] call %s: zesInit result: %d\n", __func__, (int) zes_init_res);
-    return zes_init_res;
+स्थिर ze_परिणाम_t get_zes_init_res() {
+    स्थिर ze_परिणाम_t zes_init_res = init_zes();
+    GGML_SYCL_DEBUG("[SYCL] call %s: zesInit result: %d\n", __func__, (पूर्णाङ्क) zes_init_res);
+    प्रत्यागम zes_init_res;
 }
-#endif
+#यदि_अन्तः
 
-static void initialize_sycl_begining() {
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+स्थिर शून्य initialize_sycl_begining() {
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
     //must be called in initialization stage, before any other Level Zero API calls
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
     get_zes_init_res();
-#endif
+#यदि_अन्तः
 }
 
-static void ggml_check_sycl() try {
+स्थिर शून्य ggml_check_sycl() यत्न {
     GGML_SYCL_DEBUG("[SYCL] ggml_check_sycl()\n");
-    static bool initialized = false;
+    स्थिर तार्किक initialized = असत्य;
 
-    if (!initialized) {
+    यदि (!initialized) {
         initialize_sycl_begining();
 
         g_ggml_sycl_debug = ggml_sycl_get_env("GGML_SYCL_DEBUG", 0);
@@ -419,7 +419,7 @@ static void ggml_check_sycl() try {
         g_ggml_sycl_fa_onednn_max_kv = ggml_sycl_get_env("GGML_SYCL_FA_ONEDNN_MAX_KV", 0);
         g_ggml_sycl_enable_mkl_fa = ggml_sycl_get_env("GGML_SYCL_ENABLE_MKL_FA", 1);
         g_ggml_sycl_memtrace = ggml_sycl_get_env("GGML_SYCL_MEMTRACE", 0);
-        g_ggml_sycl_memtrace_step = ggml_sycl_get_env("GGML_SYCL_MEMTRACE_STEP", 64);
+        g_ggml_sycl_memtrace_चरणः = ggml_sycl_get_env("GGML_SYCL_MEMTRACE_STEP", 64);
         g_ggml_sycl_enable_vmm = ggml_sycl_get_env("GGML_SYCL_ENABLE_VMM", 1);
         g_ggml_sycl_enable_fusion = ggml_sycl_get_env("GGML_SYCL_ENABLE_FUSION", 1);
         g_ggml_sycl_enable_esimd = ggml_sycl_get_env("GGML_SYCL_ENABLE_ESIMD", 1);
@@ -432,23 +432,23 @@ static void ggml_check_sycl() try {
         g_ggml_sycl_dynamic_required_precision =
             ggml_sycl_get_env_precision("GGML_SYCL_DYNAMIC_REQUIRED_PRECISION", GGML_SYCL_DYNAMIC_PRECISION_F32);
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
         g_ggml_sycl_use_level_zero_api = ggml_sycl_get_env("GGML_SYCL_USE_LEVEL_ZERO_API", 1);
-#else
+#अन्यथा
         g_ggml_sycl_use_level_zero_api = 0;
-#endif
+#यदि_अन्तः
         g_ggml_sycl_dev2dev_memcpy = ggml_sycl_get_env("GGML_SYCL_DEV2DEV_MEMCPY", DEV2DEV_MEMCPY_SYCL);
-        g_ggml_sycl_get_mem_api = ggml_sycl_get_env("GGML_SYCL_GET_MEM_API", MEMORY_API_TYPE_LEVEL_ZERO);
-        if (g_ggml_sycl_use_level_zero_api == 0) {
+        g_ggml_sycl_get_mem_api = ggml_sycl_get_env("GGML_SYCL_GET_MEM_API", स्मृतिः_API_TYPE_LEVEL_ZERO);
+        यदि (g_ggml_sycl_use_level_zero_api == 0) {
             g_ggml_sycl_dev2dev_memcpy = DEV2DEV_MEMCPY_SYCL;
-            g_ggml_sycl_get_mem_api = MEMORY_API_TYPE_SYCL;
+            g_ggml_sycl_get_mem_api = स्मृतिः_API_TYPE_SYCL;
         }
 
-#ifdef SYCL_FLASH_ATTN
+#यदि_परिभाषितम् SYCL_FLASH_ATTN
         g_ggml_sycl_enable_flash_attention = ggml_sycl_get_env("GGML_SYCL_ENABLE_FLASH_ATTN", 1);
-#else
+#अन्यथा
         g_ggml_sycl_enable_flash_attention = 0;
-#endif
+#यदि_अन्तः
 
         g_ggml_sycl_usm_system = ggml_sycl_get_env("GGML_SYCL_USM_SYSTEM", 0);
         g_ggml_sycl_enable_host_pinned_mem =
@@ -465,113 +465,113 @@ static void ggml_check_sycl() try {
         GGML_SYCL_DEBUG("[SYCL] call ggml_check_sycl\n");
 
         GGML_LOG_INFO("Build with Macros:\n");
-#if defined(GGML_SYCL_DNNL)
+#यदि defined(GGML_SYCL_DNNL)
         GGML_LOG_INFO("  GGML_SYCL_DNNL: yes\n");
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_DNNL: no\n");
-#endif
+#यदि_अन्तः
 
-#if defined(GGML_SYCL_F16)
+#यदि defined(GGML_SYCL_F16)
         GGML_LOG_INFO("  GGML_SYCL_F16: yes\n");
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_F16: no\n");
-#endif
+#यदि_अन्तः
 
-#if defined(GGML_SYCL_FORCE_MMQ)
+#यदि defined(GGML_SYCL_FORCE_MMQ)
         GGML_LOG_INFO("  GGML_SYCL_FORCE_MMQ: yes\n");
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_FORCE_MMQ: no\n");
-#endif
+#यदि_अन्तः
 
-#if defined(GGML_SYCL_GRAPH)
+#यदि defined(GGML_SYCL_GRAPH)
         GGML_LOG_INFO("  GGML_SYCL_GRAPH: yes\n");
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_GRAPH: no\n");
-#endif
+#यदि_अन्तः
 
-#if defined(GGML_SYCL_SUPPORT_LEVEL_ZERO_API)
+#यदि defined(GGML_SYCL_SUPPORT_LEVEL_ZERO_API)
         GGML_LOG_INFO("  GGML_SYCL_SUPPORT_LEVEL_ZERO_API: yes\n");
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_SUPPORT_LEVEL_ZERO_API: no\n");
-#endif
-#if defined(GGML_SYCL_SUPPORT_VMM)
+#यदि_अन्तः
+#यदि defined(GGML_SYCL_SUPPORT_VMM)
         GGML_LOG_INFO("  GGML_SYCL_SUPPORT_VMM: yes\n");
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_SUPPORT_VMM: no\n");
-#endif
+#यदि_अन्तः
 
         //Print the running environment variables for SYCL backend
         GGML_LOG_INFO("Running with Environment Variables:\n");
         GGML_LOG_INFO("  GGML_SYCL_DEBUG: %d\n", g_ggml_sycl_debug);
         GGML_LOG_INFO("  GGML_SYCL_DEV_DEBUG: %d\n", g_ggml_sycl_dev_debug);
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
         GGML_LOG_INFO("  GGML_SYCL_DEV2DEV_MEMCPY: %d (%s)\n", g_ggml_sycl_dev2dev_memcpy, dev2dev_int2str(g_ggml_sycl_dev2dev_memcpy));
         GGML_LOG_INFO("  GGML_SYCL_GET_MEM_API: %d (%s)\n", g_ggml_sycl_get_mem_api, mem_api_int2str(g_ggml_sycl_get_mem_api));
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_DEV2DEV_MEMCPY: %d (%s), enable to SYCL API since missing GGML_SYCL_SUPPORT_LEVEL_ZERO_API\n",
                       g_ggml_sycl_dev2dev_memcpy, dev2dev_int2str(g_ggml_sycl_dev2dev_memcpy));
         GGML_LOG_INFO("  GGML_SYCL_GET_MEM_API: %d (%s), enable to SYCL API since missing GGML_SYCL_SUPPORT_LEVEL_ZERO_API\n",
                       g_ggml_sycl_get_mem_api, mem_api_int2str(g_ggml_sycl_get_mem_api));
-#endif
+#यदि_अन्तः
 
-#if defined(GGML_SYCL_DNNL)
+#यदि defined(GGML_SYCL_DNNL)
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_DNN: %d\n", g_ggml_sycl_enable_dnn);
         GGML_LOG_INFO("  GGML_SYCL_FA_ONEDNN: %d\n", g_ggml_sycl_fa_onednn);
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_DNN: DNN disabled by compile flag\n");
         GGML_LOG_INFO("  GGML_SYCL_FA_ONEDNN: %d\n", g_ggml_sycl_fa_onednn);
-#endif
+#यदि_अन्तः
         GGML_LOG_INFO("  GGML_SYCL_FA_ONEDNN_MAX_KV: %d\n", g_ggml_sycl_fa_onednn_max_kv);
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_MKL_FA: %d\n", g_ggml_sycl_enable_mkl_fa);
         GGML_LOG_INFO("  GGML_SYCL_MEMTRACE: %d\n", g_ggml_sycl_memtrace);
-        GGML_LOG_INFO("  GGML_SYCL_MEMTRACE_STEP: %d\n", g_ggml_sycl_memtrace_step);
-#ifdef SYCL_FLASH_ATTN
+        GGML_LOG_INFO("  GGML_SYCL_MEMTRACE_STEP: %d\n", g_ggml_sycl_memtrace_चरणः);
+#यदि_परिभाषितम् SYCL_FLASH_ATTN
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_FLASH_ATTN: %d\n", g_ggml_sycl_enable_flash_attention);
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_FLASH_ATTN: %d disabled by compile flag\n",
             g_ggml_sycl_enable_flash_attention);
-#endif
+#यदि_अन्तः
 
-#ifdef GGML_SYCL_GRAPH
+#यदि_परिभाषितम् GGML_SYCL_GRAPH
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_GRAPH: %d\n", g_ggml_sycl_enable_graph);
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_GRAPH: graph disabled by compile flag\n");
-#endif
+#यदि_अन्तः
 
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_OPT: %d\n", g_ggml_sycl_enable_optimize);
         GGML_LOG_INFO("  GGML_SYCL_XMX_GATHER_TYPES: %d\n", g_ggml_sycl_xmx_gather_types);
         GGML_LOG_INFO("  GGML_SYCL_XMX_GATHER_SHAPES: %d\n", g_ggml_sycl_xmx_gather_shapes);
         GGML_LOG_INFO("  GGML_SYCL_DYNAMIC_PRECISION: %s\n",
-                      ggml_sycl_dynamic_precision_names[g_ggml_sycl_dynamic_precision]);
+                      ggml_sycl_dynamic_precision_नामानि[g_ggml_sycl_dynamic_precision]);
         GGML_LOG_INFO("  GGML_SYCL_DYNAMIC_REQUIRED_PRECISION: %s\n",
-                      ggml_sycl_dynamic_precision_names[g_ggml_sycl_dynamic_required_precision]);
+                      ggml_sycl_dynamic_precision_नामानि[g_ggml_sycl_dynamic_required_precision]);
 
-#if defined(GGML_SYCL_SUPPORT_VMM)
+#यदि defined(GGML_SYCL_SUPPORT_VMM)
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_VMM: %d\n", g_ggml_sycl_enable_vmm);
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_VMM: virtual memory extension is not available\n");
-#endif
+#यदि_अन्तः
 
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_FUSION: %d\n", g_ggml_sycl_enable_fusion);
         GGML_LOG_INFO("  GGML_SYCL_UPLOAD_STAGING_SLOTS: %d\n", g_ggml_sycl_upload_staging_slots);
 
-#if defined(__INTEL_LLVM_COMPILER)
+#यदि defined(__INTEL_LLVM_COMPILER)
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_ESIMD: %d\n", g_ggml_sycl_enable_esimd);
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_ESIMD: %d disabled by compile flag\n", g_ggml_sycl_enable_esimd);
-#endif
+#यदि_अन्तः
         GGML_LOG_INFO("  GGML_SYCL_MMVQ_WIDE: %d\n", g_ggml_sycl_mmvq_wide);
         GGML_LOG_INFO("  GGML_SYCL_PRIORITIZE_DMMV: %d\n", g_ggml_sycl_prioritize_dmmv);
 
         g_ggml_sycl_use_async_mem_op_requested = ggml_sycl_get_env("GGML_SYCL_USE_ASYNC_MEM_OP", 1);
         GGML_LOG_INFO("  GGML_SYCL_USE_ASYNC_MEM_OP: %d\n", g_ggml_sycl_use_async_mem_op_requested);
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
         GGML_LOG_INFO("  GGML_SYCL_USE_LEVEL_ZERO_API: %d\n", g_ggml_sycl_use_level_zero_api);
-#else
+#अन्यथा
         GGML_LOG_INFO("  GGML_SYCL_USE_LEVEL_ZERO_API: Disable Level Zero API usage by compile flag\n");
-#endif
+#यदि_अन्तः
 
         GGML_LOG_INFO("  GGML_SYCL_USM_SYSTEM: %d\n", g_ggml_sycl_usm_system);
         GGML_LOG_INFO("  GGML_SYCL_ENABLE_HOST_PINNED_MEM: %d\n", g_ggml_sycl_enable_host_pinned_mem);
@@ -591,380 +591,380 @@ static void ggml_check_sycl() try {
         // Async USM allocation/free is also useful outside the graph path: it avoids the host waits in the reorder
         // staging path while preserving queue ordering semantics. Graph support still depends on the extension being
         // available, but it no longer needs to control the non-graph fast path.
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
+#यदि defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_स्मृतिः_ALLOC
         g_ggml_sycl_use_async_mem_op = g_ggml_sycl_use_async_mem_op_requested || g_ggml_sycl_enable_graph;
-        if (g_ggml_sycl_use_async_mem_op) {
-            for (unsigned int i = 0; i < dpct::dev_mgr::instance().device_count(); ++i) {
-                if (!dpct::dev_mgr::instance().get_device(i).has(sycl::aspect::ext_oneapi_async_memory_alloc)) {
+        यदि (g_ggml_sycl_use_async_mem_op) {
+            प्रति (अचिह्नित पूर्णाङ्क i = 0; i < dpct::dev_mgr::instance().device_गणनम्(); ++i) {
+                यदि (!dpct::dev_mgr::instance().get_device(i).has(sycl::aspect::ext_oneapi_async_स्मृतिः_alloc)) {
                     g_ggml_sycl_use_async_mem_op = 0;
-                    break;
+                    भङ्ग;
                 }
             }
         }
-#endif
-        if (CHECK_TRY_ERROR(g_all_sycl_device_count =
-                            dpct::dev_mgr::instance().device_count()) != 0) {
-            initialized = true;
-            g_sycl_loaded = false;
-            return;
+#यदि_अन्तः
+        यदि (CHECK_TRY_ERROR(g_all_sycl_device_गणनम् =
+                            dpct::dev_mgr::instance().device_गणनम्()) != 0) {
+            initialized = सत्य;
+            g_sycl_loaded = असत्य;
+            प्रत्यागम;
         }
-        GGML_ASSERT(g_all_sycl_device_count <= GGML_SYCL_MAX_DEVICES);
+        GGML_ASSERT(g_all_sycl_device_गणनम् <= GGML_SYCL_MAX_DEVICES);
 
-        initialized = true;
-        g_sycl_loaded = true;
+        initialized = सत्य;
+        g_sycl_loaded = सत्य;
         ggml_backend_sycl_print_sycl_devices();
     }
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
 /*
 device_index: device index from 0 to n (continue numbers).
     It is used for device select/set in SYCL backend internal data structure.
 */
-inline void check_allow_gpu_index(const int device_index) {
-  if (device_index >= ggml_sycl_info().device_count) {
-    char error_buf[256];
+अन्तःस्थ शून्य check_allow_gpu_सूचकांक(ध्रुव पूर्णाङ्क device_सूचकांक) {
+  यदि (device_सूचकांक >= ggml_sycl_info().device_गणनम्) {
+    वर्ण error_buf[256];
     snprintf(
         error_buf,
-        sizeof(error_buf),
+        परिमाण(error_buf),
         "%s error: device_index:%d is out of range: [0-%d]",
         __func__,
-        device_index,
-        ggml_sycl_info().device_count - 1);
+        device_सूचकांक,
+        ggml_sycl_info().device_गणनम् - 1);
     GGML_LOG_ERROR("%s\n", error_buf);
-    assert(false);
+    प्रतिज्ञा(असत्य);
   }
 }
 
-GGML_API void ggml_backend_sycl_get_gpu_list(int *id_list, int max_len) try {
+GGML_API शून्य ggml_backend_sycl_get_gpu_list(पूर्णाङ्क *id_list, पूर्णाङ्क max_len) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_get_gpu_list\n");
-    for(int i=0;i<max_len;i++) id_list[i] = -1;
+    प्रति(पूर्णाङ्क i=0;i<max_len;i++) id_list[i] = -1;
 
-    for (int i=0;i< ggml_sycl_info().device_count;i++){
-        if (i>=max_len) break;
+    प्रति (पूर्णाङ्क i=0;i< ggml_sycl_info().device_गणनम्;i++){
+        यदि (i>=max_len) भङ्ग;
         id_list[i] = i;
     }
-    return;
+    प्रत्यागम;
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-inline void free_aligned_mem_host(void * memblock) {
-#ifdef _WIN32
+अन्तःस्थ शून्य free_aligned_mem_host(शून्य * memblock) {
+#यदि_परिभाषितम् _WIN32
     _aligned_free(memblock);
-#else
-    free(memblock);
-#endif
+#अन्यथा
+    मुक्त(memblock);
+#यदि_अन्तः
 }
 
 // sycl buffer
 
-struct ggml_backend_sycl_buffer_context {
+संरचना ggml_backend_sycl_बफर_context {
     // pinned staging for uploads; the host fills one slot while the previous one transfers
-    static constexpr size_t staging_slot_size = 8*1024*1024;
+    स्थिर constexpr size_t staging_slot_आकार = 8*1024*1024;
 
-    struct host_staging {
-        void * data = nullptr;
+    संरचना host_staging {
+        शून्य * दत्त = शून्यसूचकः;
         std::vector<sycl::event> events;
-        std::vector<bool> submitted;
-        int next = 0;
+        std::vector<तार्किक> submitted;
+        पूर्णाङ्क अग्र = 0;
     };
 
-    int device;
-    void * dev_ptr = nullptr;
+    पूर्णाङ्क device;
+    शून्य * dev_ptr = शून्यसूचकः;
     queue_ptr stream;
     std::string name;
     optimize_feature opt_feature;
     std::vector<ggml_tensor_extra_gpu *> tensor_extras;
     host_staging staging;
-    bool is_usm_system;
+    तार्किक is_usm_system;
 
-    ggml_backend_sycl_buffer_context(int device, void * dev_ptr, queue_ptr stream, bool is_usm_system) :
+    ggml_backend_sycl_बफर_context(पूर्णाङ्क device, शून्य * dev_ptr, queue_ptr stream, तार्किक is_usm_system) :
         device(device), dev_ptr(dev_ptr), stream(stream), is_usm_system(is_usm_system) {
-            check_allow_gpu_index(device);
+            check_allow_gpu_सूचकांक(device);
             name = (GGML_SYCL_NAME + std::to_string(device));
             opt_feature = ggml_sycl_info().devices[device].opt_feature;
         }
 
     // waits for every queued upload, then releases the pinned block
-    void drop_host_staging() {
-        for (size_t i = 0; i < staging.submitted.size(); ++i) {
-            if (staging.submitted[i]) {
+    शून्य drop_host_staging() {
+        प्रति (size_t i = 0; i < staging.submitted.size(); ++i) {
+            यदि (staging.submitted[i]) {
                 staging.events[i].wait_and_throw();
-                staging.submitted[i] = false;
+                staging.submitted[i] = असत्य;
             }
         }
-        if (staging.data != nullptr) {
-            sycl::free(staging.data, *stream);
-            staging.data = nullptr;
+        यदि (staging.दत्त != शून्यसूचकः) {
+            sycl::मुक्त(staging.दत्त, *stream);
+            staging.दत्त = शून्यसूचकः;
         }
     }
 
-    ~ggml_backend_sycl_buffer_context() {
+    ~ggml_backend_sycl_बफर_context() {
         drop_host_staging();
-        if (dev_ptr != nullptr) {
-            ggml_sycl_set_device(device);
-            if (is_usm_system)
+        यदि (dev_ptr != शून्यसूचकः) {
+            ggml_sycl_समुच्चयः_device(device);
+            यदि (is_usm_system)
                 free_aligned_mem_host(dev_ptr);
-            else
+            अन्यथा
                 SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(dev_ptr, *stream)));
         }
 
         //release extra used by tensors
-        for (ggml_tensor_extra_gpu * extra : tensor_extras) {
+        प्रति (ggml_tensor_extra_gpu * extra : tensor_extras) {
             release_extra_gpu(extra);
         }
 
     }
 };
 
-static const char * ggml_backend_sycl_buffer_type_get_name(ggml_backend_buffer_type_t buft);
+स्थिर ध्रुव वर्ण * ggml_backend_sycl_बफर_type_get_name(ggml_backend_बफर_type_t buft);
 
-static bool ggml_backend_buffer_is_sycl(ggml_backend_buffer_t buffer) {
-    return buffer->buft->iface.get_name == ggml_backend_sycl_buffer_type_get_name;
+स्थिर तार्किक ggml_backend_बफर_is_sycl(ggml_backend_बफर_t बफर) {
+    प्रत्यागम बफर->buft->iface.get_name == ggml_backend_sycl_बफर_type_get_name;
 }
 
-static void
-ggml_backend_sycl_buffer_free_buffer(ggml_backend_buffer_t buffer) try {
-    ggml_backend_sycl_buffer_context * ctx = ( ggml_backend_sycl_buffer_context *)buffer->context;
-    ggml_sycl_set_device(ctx->device);
+स्थिर शून्य
+ggml_backend_sycl_बफर_free_बफर(ggml_backend_बफर_t बफर) यत्न {
+    ggml_backend_sycl_बफर_context * ctx = ( ggml_backend_sycl_बफर_context *)बफर->context;
+    ggml_sycl_समुच्चयः_device(ctx->device);
 
-    delete ctx;
+    विलोपय ctx;
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void * ggml_backend_sycl_buffer_get_base(ggml_backend_buffer_t buffer) {
-    ggml_backend_sycl_buffer_context * ctx = ( ggml_backend_sycl_buffer_context *)buffer->context;
-    return ctx->dev_ptr;
+स्थिर शून्य * ggml_backend_sycl_बफर_get_आधारः(ggml_backend_बफर_t बफर) {
+    ggml_backend_sycl_बफर_context * ctx = ( ggml_backend_sycl_बफर_context *)बफर->context;
+    प्रत्यागम ctx->dev_ptr;
 }
 
-static enum ggml_status
-ggml_backend_sycl_buffer_init_tensor(ggml_backend_buffer_t buffer,
-                                     ggml_tensor *tensor) try {
+स्थिर गणना ggml_स्थितिः
+ggml_backend_sycl_बफर_init_tensor(ggml_backend_बफर_t बफर,
+                                     ggml_tensor *tensor) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor, "\n").c_str());
-    ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *)buffer->context;
+    ggml_backend_sycl_बफर_context * ctx = (ggml_backend_sycl_बफर_context *)बफर->context;
 
-    if (tensor->view_src != NULL) {
-        assert(tensor->view_src->buffer->buft == buffer->buft);
-        return GGML_STATUS_SUCCESS;
+    यदि (tensor->view_src != रिक्त) {
+        प्रतिज्ञा(tensor->view_src->बफर->buft == बफर->buft);
+        प्रत्यागम GGML_स्थितिः_SUCCESS;
     }
 
-    if (g_ggml_sycl_enable_optimize) {
+    यदि (g_ggml_sycl_enable_optimize) {
         // set reorder extra buffer based on supported type
-        switch (tensor->type) {
-            case GGML_TYPE_Q4_0:
-            case GGML_TYPE_Q8_0:
-            case GGML_TYPE_Q2_K:
-            case GGML_TYPE_Q3_K:
-            case GGML_TYPE_Q4_K:
-            case GGML_TYPE_Q5_K:
-            case GGML_TYPE_Q6_K:
-            case GGML_TYPE_IQ3_XXS:
-            case GGML_TYPE_IQ3_S:
-            case GGML_TYPE_MXFP4:{
-                ggml_tensor_extra_gpu * extra = new ggml_tensor_extra_gpu{};
+        विकल्प (tensor->type) {
+            पक्ष GGML_TYPE_Q4_0:
+            पक्ष GGML_TYPE_Q8_0:
+            पक्ष GGML_TYPE_Q2_K:
+            पक्ष GGML_TYPE_Q3_K:
+            पक्ष GGML_TYPE_Q4_K:
+            पक्ष GGML_TYPE_Q5_K:
+            पक्ष GGML_TYPE_Q6_K:
+            पक्ष GGML_TYPE_IQ3_XXS:
+            पक्ष GGML_TYPE_IQ3_S:
+            पक्ष GGML_TYPE_MXFP4:{
+                ggml_tensor_extra_gpu * extra = नूतन ggml_tensor_extra_gpu{};
                 tensor->extra                 = extra;
                 ctx->tensor_extras.push_back(extra);
-                break;
+                भङ्ग;
             }
-            default:
-                break;
+            स्वभाव:
+                भङ्ग;
         }
     }
 
-    if (ggml_is_quantized(tensor->type)) {
+    यदि (ggml_is_quantized(tensor->type)) {
         // initialize padding to 0 to avoid possible NaN values
-        size_t original_size = ggml_nbytes(tensor);
-        size_t padded_size = ggml_backend_buft_get_alloc_size(buffer->buft, tensor);
+        size_t original_आकार = ggml_nbytes(tensor);
+        size_t padded_आकार = ggml_backend_buft_get_alloc_आकार(बफर->buft, tensor);
 
-        if (padded_size > original_size && tensor->view_src == nullptr) {
-            SYCL_CHECK(CHECK_TRY_ERROR(ctx->stream->memset(
-                (char *)tensor->data + original_size, 0,
-                padded_size - original_size).wait()));
+        यदि (padded_आकार > original_आकार && tensor->view_src == शून्यसूचकः) {
+            SYCL_CHECK(CHECK_TRY_ERROR(ctx->stream->स्मृतिं_पूरय(
+                (वर्ण *)tensor->दत्त + original_आकार, 0,
+                padded_आकार - original_आकार).प्रतीक्षस्व()));
         }
     }
-    return GGML_STATUS_SUCCESS;
+    प्रत्यागम GGML_स्थितिः_SUCCESS;
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void ggml_backend_sycl_buffer_set_tensor(ggml_backend_buffer_t buffer,
+स्थिर शून्य ggml_backend_sycl_बफर_समुच्चयः_tensor(ggml_backend_बफर_t बफर,
                                                 ggml_tensor *tensor,
-                                                const void *data, size_t offset,
-                                                size_t size) try {
+                                                ध्रुव शून्य *दत्त, size_t विस्थापनम्,
+                                                size_t size) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
-    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
-    ggml_backend_sycl_buffer_context * ctx = ( ggml_backend_sycl_buffer_context *)buffer->context;
-    ggml_sycl_set_device(ctx->device);
+    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, विस्थापनम्);
+    ggml_backend_sycl_बफर_context * ctx = ( ggml_backend_sycl_बफर_context *)बफर->context;
+    ggml_sycl_समुच्चयः_device(ctx->device);
 
     // copy through pinned memory so the device never reads mmap()ed pages directly
     // chunks pipeline on the in-order compute queue, so no drain per tensor is needed
-    const int n_slots = g_ggml_sycl_upload_staging_slots;
-    if (n_slots > 0 && ctx->staging.data == nullptr) {
-        ctx->staging.data = sycl::malloc_host(n_slots * ctx->staging_slot_size, *ctx->stream);
-        if (ctx->staging.data != nullptr) {
+    ध्रुव पूर्णाङ्क n_slots = g_ggml_sycl_upload_staging_slots;
+    यदि (n_slots > 0 && ctx->staging.दत्त == शून्यसूचकः) {
+        ctx->staging.दत्त = sycl::malloc_host(n_slots * ctx->staging_slot_आकार, *ctx->stream);
+        यदि (ctx->staging.दत्त != शून्यसूचकः) {
             ctx->staging.events.resize(n_slots);
-            ctx->staging.submitted.assign(n_slots, false);
+            ctx->staging.submitted.नियोजय(n_slots, असत्य);
         }
     }
-    if (ctx->staging.data != nullptr) {
+    यदि (ctx->staging.दत्त != शून्यसूचकः) {
         queue_ptr    stream    = ctx->stream;
-        char *       dst       = (char *) tensor->data + offset;
-        const char * src       = (const char *) data;
+        वर्ण *       dst       = (वर्ण *) tensor->दत्त + विस्थापनम्;
+        ध्रुव वर्ण * src       = (ध्रुव वर्ण *) दत्त;
         size_t       remaining = size;
-        while (remaining > 0) {
-            const size_t chunk = std::min(remaining, ctx->staging_slot_size);
-            const int    slot  = ctx->staging.next;
-            ctx->staging.next = (ctx->staging.next + 1) % (int) ctx->staging.submitted.size();
-            if (ctx->staging.submitted[slot]) {
+        यावत् (remaining > 0) {
+            ध्रुव size_t chunk = std::min(remaining, ctx->staging_slot_आकार);
+            ध्रुव पूर्णाङ्क    slot  = ctx->staging.अग्र;
+            ctx->staging.अग्र = (ctx->staging.अग्र + 1) % (पूर्णाङ्क) ctx->staging.submitted.size();
+            यदि (ctx->staging.submitted[slot]) {
                 ctx->staging.events[slot].wait_and_throw();
             }
-            void * stage = (char *) ctx->staging.data + slot * ctx->staging_slot_size;
-            memcpy(stage, src, chunk);
-            ctx->staging.events[slot] = stream->memcpy(dst, stage, chunk);
-            ctx->staging.submitted[slot] = true;
+            शून्य * stage = (वर्ण *) ctx->staging.दत्त + slot * ctx->staging_slot_आकार;
+            स्मृतिं_प्रतिलिख(stage, src, chunk);
+            ctx->staging.events[slot] = stream->स्मृतिं_प्रतिलिख(dst, stage, chunk);
+            ctx->staging.submitted[slot] = सत्य;
             src       += chunk;
             dst       += chunk;
             remaining -= chunk;
         }
-        return;
+        प्रत्यागम;
     }
 
-    auto stream = &(dpct::dev_mgr::instance().get_device(ctx->device).default_queue());
+    स्वचालित stream = &(dpct::dev_mgr::instance().get_device(ctx->device).default_queue());
     SYCL_CHECK(CHECK_TRY_ERROR(dpct::dev_mgr::instance().get_device(ctx->device).queues_wait_and_throw()));
-#ifndef _WIN32
+#यदि_अपरिभाषितम् _WIN32
     // Note: Use host buffer to save the data from mmap(), then copy to device. It's workaround for mmap() issue on PVC GPU.
     // This function will be called during load model from disk. Use memory buffer replace dynamic won't save more time and brings potential memory leak risk here.
-    char * host_buf = (char *) malloc(size);
-    memcpy(host_buf, data, size);
-    SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy((char *) tensor->data + offset, host_buf, size).wait()));
-    free(host_buf);
-#else
-    SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy((char *) tensor->data + offset, data, size).wait()));
-#endif
+    वर्ण * host_buf = (वर्ण *) स्मृतिं_देहि(size);
+    स्मृतिं_प्रतिलिख(host_buf, दत्त, size);
+    SYCL_CHECK(CHECK_TRY_ERROR((*stream).स्मृतिं_प्रतिलिख((वर्ण *) tensor->दत्त + विस्थापनम्, host_buf, size).प्रतीक्षस्व()));
+    मुक्त(host_buf);
+#अन्यथा
+    SYCL_CHECK(CHECK_TRY_ERROR((*stream).स्मृतिं_प्रतिलिख((वर्ण *) tensor->दत्त + विस्थापनम्, दत्त, size).प्रतीक्षस्व()));
+#यदि_अन्तः
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void ggml_backend_sycl_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                                const ggml_tensor *tensor,
-                                                void *data, size_t offset,
-                                                size_t size) try {
+स्थिर शून्य ggml_backend_sycl_बफर_get_tensor(ggml_backend_बफर_t बफर,
+                                                ध्रुव ggml_tensor *tensor,
+                                                शून्य *दत्त, size_t विस्थापनम्,
+                                                size_t size) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
-    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
-    ggml_backend_sycl_buffer_context * ctx = ( ggml_backend_sycl_buffer_context *)buffer->context;
+    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, विस्थापनम्);
+    ggml_backend_sycl_बफर_context * ctx = ( ggml_backend_sycl_बफर_context *)बफर->context;
 
-    ggml_sycl_set_device(ctx->device);
-    auto stream = dpct::dev_mgr::instance().get_device(ctx->device).default_queue();
+    ggml_sycl_समुच्चयः_device(ctx->device);
+    स्वचालित stream = dpct::dev_mgr::instance().get_device(ctx->device).default_queue();
 
     SYCL_CHECK(CHECK_TRY_ERROR(
-        stream.memcpy(data, (const char *)tensor->data + offset, size)
-            .wait()));
+        stream.स्मृतिं_प्रतिलिख(दत्त, (ध्रुव वर्ण *)tensor->दत्त + विस्थापनम्, size)
+            .प्रतीक्षस्व()));
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-static bool ggml_sycl_is_l0_discrete_gpu(int device) {
-    return ggml_sycl_info().devices[device].l0_discrete_gpu;
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+स्थिर तार्किक ggml_sycl_is_l0_discrete_gpu(पूर्णाङ्क device) {
+    प्रत्यागम ggml_sycl_info().devices[device].l0_discrete_gpu;
 }
-#endif
+#यदि_अन्तः
 
-static void memcpy_host_forward(sycl::queue &q_dst, sycl::queue &q_src, void *ptr_dst,
-                         const void *ptr_src, size_t size) {
-    char *host_buf = (char *)malloc(size);
-    if (host_buf == nullptr) {
+स्थिर शून्य memcpy_host_forward(sycl::queue &q_dst, sycl::queue &q_src, शून्य *ptr_dst,
+                         ध्रुव शून्य *ptr_src, size_t size) {
+    वर्ण *host_buf = (वर्ण *)स्मृतिं_देहि(size);
+    यदि (host_buf == शून्यसूचकः) {
         GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory for host staging\n", __func__, size);
         GGML_ABORT("fatal error");
     }
-    q_src.memcpy(host_buf, (const char *)ptr_src, size).wait();
-    q_dst.memcpy((char *)ptr_dst, host_buf, size).wait();
-    free(host_buf);
+    q_src.स्मृतिं_प्रतिलिख(host_buf, (ध्रुव वर्ण *)ptr_src, size).प्रतीक्षस्व();
+    q_dst.स्मृतिं_प्रतिलिख((वर्ण *)ptr_dst, host_buf, size).प्रतीक्षस्व();
+    मुक्त(host_buf);
 }
 
-static void dev2dev_memcpy(int device_dst, sycl::queue &q_dst, int device_src, sycl::queue &q_src, void *ptr_dst,
-                    const void *ptr_src, size_t size) {
+स्थिर शून्य dev2dev_memcpy(पूर्णाङ्क device_dst, sycl::queue &q_dst, पूर्णाङ्क device_src, sycl::queue &q_src, शून्य *ptr_dst,
+                    ध्रुव शून्य *ptr_src, size_t size) {
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-    if (g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_L0) {
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+    यदि (g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_L0) {
         // Use Level Zero direct copy for dGPU-to-dGPU transfers.
-        const bool l0_copy_supported =
+        ध्रुव तार्किक l0_copy_supported =
             ggml_sycl_is_l0_discrete_gpu(device_dst) && ggml_sycl_is_l0_discrete_gpu(device_src);
-        if (g_ggml_sycl_use_level_zero_api && l0_copy_supported) {
-            auto ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q_dst.get_context());
-            auto ze_dev = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q_dst.get_device());
-            ze_command_queue_desc_t cq_desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, nullptr, 0, 0,
-                                            0, ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
+        यदि (g_ggml_sycl_use_level_zero_api && l0_copy_supported) {
+            स्वचालित ze_ctx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q_dst.get_context());
+            स्वचालित ze_dev = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(q_dst.get_device());
+            ze_command_queue_desc_t cq_desc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, शून्यसूचकः, 0, 0,
+                                            0, ZE_COMMAND_QUEUE_बहुलकम्_SYNCHRONOUS, ZE_COMMAND_QUEUE_प्राथमिकता_प्रसामान्यम्};
             ze_command_list_handle_t cl;
-            ze_result_t r = zeCommandListCreateImmediate(ze_ctx, ze_dev, &cq_desc, &cl);
-            if (r == ZE_RESULT_SUCCESS) {
+            ze_परिणाम_t r = ze_Command_List_Create_तात्कालिकम्(ze_ctx, ze_dev, &cq_desc, &cl);
+            यदि (r == ZE_परिणाम_SUCCESS) {
                 GGML_SYCL_DEBUG("[SYCL] dev2dev memcpy by L0\n");
-                r = zeCommandListAppendMemoryCopy(cl, ptr_dst, ptr_src, size, nullptr, 0, nullptr);
+                r = ze_Command_List_Append_स्मृतिः_Copy(cl, ptr_dst, ptr_src, size, शून्यसूचकः, 0, शून्यसूचकः);
                 zeCommandListDestroy(cl);
-                if (r == ZE_RESULT_SUCCESS) {
-                    return;
+                यदि (r == ZE_परिणाम_SUCCESS) {
+                    प्रत्यागम;
                 }
             }
         }
     }
-#endif
+#यदि_अन्तः
 
-    if (g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_SYCL) {
-        if (q_dst.get_device().ext_oneapi_can_access_peer(q_src.get_device(),
+    यदि (g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_SYCL) {
+        यदि (q_dst.get_device().ext_oneapi_can_access_peer(q_src.get_device(),
                                                           sycl::ext::oneapi::peer_access::access_supported)) {
             GGML_SYCL_DEBUG("[SYCL] dev2dev memcpy by SYCL\n");
             q_dst.get_device().ext_oneapi_enable_peer_access(q_src.get_device());
-            SYCL_CHECK(CHECK_TRY_ERROR(q_dst.memcpy(ptr_dst, ptr_src, size).wait()));
-            return;
+            SYCL_CHECK(CHECK_TRY_ERROR(q_dst.स्मृतिं_प्रतिलिख(ptr_dst, ptr_src, size).प्रतीक्षस्व()));
+            प्रत्यागम;
         }
     }
 
     // Host-staged copy
-    if(g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_FORWARD) {
+    यदि(g_ggml_sycl_dev2dev_memcpy == DEV2DEV_MEMCPY_FORWARD) {
         GGML_SYCL_DEBUG("[SYCL] dev2dev memcpy by host forward for setting GGML_SYCL_DEV2DEV_MEMCPY=2\n");
-    } else {
+    } अन्यथा {
         GGML_SYCL_DEBUG("[SYCL] dev2dev memcpy by host forward for SYCL/L0 fallback\n");
     }
     memcpy_host_forward(q_dst, q_src, ptr_dst, ptr_src, size);
 }
 
-static bool
-ggml_backend_sycl_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
-                                    const ggml_tensor *src,
-                                    ggml_tensor *dst) try {
-    bool is_cpy_supported = ggml_backend_buffer_is_sycl(src->buffer);
+स्थिर तार्किक
+ggml_backend_sycl_बफर_cpy_tensor(ggml_backend_बफर_t बफर,
+                                    ध्रुव ggml_tensor *src,
+                                    ggml_tensor *dst) यत्न {
+    तार्किक is_cpy_supported = ggml_backend_बफर_is_sycl(src->बफर);
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": dst", dst).c_str());
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(" src", src).c_str());
     GGML_SYCL_DEBUG(" is_cpy_supported=%d\n", is_cpy_supported);
-    if (is_cpy_supported) {
-        ggml_backend_sycl_buffer_context * src_ctx = (ggml_backend_sycl_buffer_context *)src->buffer->context;
-        ggml_backend_sycl_buffer_context * dst_ctx = (ggml_backend_sycl_buffer_context *)dst->buffer->context;
+    यदि (is_cpy_supported) {
+        ggml_backend_sycl_बफर_context * src_ctx = (ggml_backend_sycl_बफर_context *)src->बफर->context;
+        ggml_backend_sycl_बफर_context * dst_ctx = (ggml_backend_sycl_बफर_context *)dst->बफर->context;
 
-        ggml_sycl_set_device(src_ctx->device);
+        ggml_sycl_समुच्चयः_device(src_ctx->device);
         /*
         DPCT1009:198: SYCL uses exceptions to report errors and does not use the
         error codes. The original code was commented out and a warning string
@@ -972,7 +972,7 @@ ggml_backend_sycl_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
         */
         SYCL_CHECK(CHECK_TRY_ERROR(
             dpct::dev_mgr::instance().get_device(src_ctx->device).queues_wait_and_throw()));
-        ggml_sycl_set_device(dst_ctx->device);
+        ggml_sycl_समुच्चयः_device(dst_ctx->device);
         /*
         DPCT1009:199: SYCL uses exceptions to report errors and does not use the
         error codes. The original code was commented out and a warning string
@@ -986,17 +986,17 @@ ggml_backend_sycl_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
         was inserted. You need to rewrite this code.
         */
 
-        queue_ptr stream_dst = dst_ctx->stream;
-        queue_ptr stream_src = src_ctx->stream;
+        queue_ptr प्रवाहः_dst = dst_ctx->stream;
+        queue_ptr प्रवाहः_src = src_ctx->stream;
         size_t size = ggml_nbytes(src);
 
         //todo. it's dirty solutino to walkaroud known issue:device2device cross GPUs.
-        dev2dev_memcpy(dst_ctx->device, *stream_dst, src_ctx->device, *stream_src, dst->data, src->data, size);
+        dev2dev_memcpy(dst_ctx->device, *प्रवाहः_dst, src_ctx->device, *प्रवाहः_src, dst->दत्त, src->दत्त, size);
 
 //todo, it's known issue：error in device2device cross GPUs. reused when the issue is fixed. DON"T remove
-#if 0
-        SYCL_CHECK(CHECK_TRY_ERROR((*stream).memcpy(
-            (char *)dst->data, (const char *)src->data, size).wait()));
+#यदि 0
+        SYCL_CHECK(CHECK_TRY_ERROR((*stream).स्मृतिं_प्रतिलिख(
+            (वर्ण *)dst->दत्त, (ध्रुव वर्ण *)src->दत्त, size).प्रतीक्षस्व()));
 
         /*
         DPCT1009:201: SYCL uses exceptions to report errors and does not use the
@@ -1005,134 +1005,134 @@ ggml_backend_sycl_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
         */
         SYCL_CHECK(CHECK_TRY_ERROR(
             dpct::dev_mgr::instance().get_device(dst_ctx->device).queues_wait_and_throw()));
-#endif
-        return true;
+#यदि_अन्तः
+        प्रत्यागम सत्य;
     }
-    return false;
-    GGML_UNUSED(buffer);
-} catch (const sycl::exception & exc) {
-    std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
-    std::exit(1);
+    प्रत्यागम असत्य;
+    GGML_अप्रयुक्तम्(बफर);
+} गृहाण (ध्रुव sycl::exception & exc) {
+    std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+    std::निर्गच्छ(1);
 }
 
-static void ggml_backend_sycl_buffer_clear(ggml_backend_buffer_t buffer,
-                                           uint8_t value) try {
-    GGML_SYCL_DEBUG("[SYCL] call %s: size=%zu\n", __func__, buffer->size);
-    ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *) buffer->context;
+स्थिर शून्य ggml_backend_sycl_बफर_clear(ggml_backend_बफर_t बफर,
+                                           uint8_t value) यत्न {
+    GGML_SYCL_DEBUG("[SYCL] call %s: size=%zu\n", __func__, बफर->size);
+    ggml_backend_sycl_बफर_context * ctx = (ggml_backend_sycl_बफर_context *) बफर->context;
 
-    ggml_sycl_set_device(ctx->device);
+    ggml_sycl_समुच्चयः_device(ctx->device);
     queue_ptr stream = ctx->stream;
     SYCL_CHECK(
         CHECK_TRY_ERROR(dpct::get_current_device().queues_wait_and_throw()));
 
     constexpr size_t MAX_CHUNK = 2ULL << 30;  // 2 GiB
-    for (size_t off = 0; off < buffer->size; off += MAX_CHUNK) {
-        size_t chunk = std::min(buffer->size - off, MAX_CHUNK);
+    प्रति (size_t off = 0; off < बफर->size; off += MAX_CHUNK) {
+        size_t chunk = std::min(बफर->size - off, MAX_CHUNK);
         SYCL_CHECK(CHECK_TRY_ERROR(
             (*stream)
-                .memset(static_cast<char*>(ctx->dev_ptr) + off, value, chunk)
-                .wait()
+                .स्मृतिं_पूरय(static_cast<वर्ण*>(ctx->dev_ptr) + off, value, chunk)
+                .प्रतीक्षस्व()
         ));
     }
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void ggml_backend_sycl_buffer_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value,
-                                                   size_t offset, size_t size) {
+स्थिर शून्य ggml_backend_sycl_बफर_memset_tensor(ggml_backend_बफर_t बफर, ggml_tensor * tensor, uint8_t value,
+                                                   size_t विस्थापनम्, size_t size) {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
-    GGML_SYCL_DEBUG(" size=%zu offset=%zu value=%u\n", size, offset, value);
-    ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *) buffer->context;
-    SYCL_CHECK(ggml_sycl_set_device(ctx->device));
-    auto stream = &(dpct::dev_mgr::instance().get_device(ctx->device).default_queue());
-    if (size == 0) {
-        return;  // Nothing to do
+    GGML_SYCL_DEBUG(" size=%zu offset=%zu value=%u\n", size, विस्थापनम्, value);
+    ggml_backend_sycl_बफर_context * ctx = (ggml_backend_sycl_बफर_context *) बफर->context;
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx->device));
+    स्वचालित stream = &(dpct::dev_mgr::instance().get_device(ctx->device).default_queue());
+    यदि (size == 0) {
+        प्रत्यागम;  // Nothing to do
     }
-    if (tensor->data == nullptr) {
+    यदि (tensor->दत्त == शून्यसूचकः) {
         GGML_ABORT("Error: Tensor data pointer is null.\n");
     }
-    void * target_ptr = static_cast<char *>(tensor->data) + offset;
-    SYCL_CHECK(CHECK_TRY_ERROR((*stream).memset(target_ptr, value, size)));
-    SYCL_CHECK(CHECK_TRY_ERROR((*stream).wait()));
+    शून्य * target_ptr = static_cast<वर्ण *>(tensor->दत्त) + विस्थापनम्;
+    SYCL_CHECK(CHECK_TRY_ERROR((*stream).स्मृतिं_पूरय(target_ptr, value, size)));
+    SYCL_CHECK(CHECK_TRY_ERROR((*stream).प्रतीक्षस्व()));
 }
 
-static void ggml_backend_sycl_buffer_reset(ggml_backend_buffer_t buffer) {
+स्थिर शून्य ggml_backend_sycl_बफर_reset(ggml_backend_बफर_t बफर) {
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
-    if (buffer == nullptr) {
-        return;
+    यदि (बफर == शून्यसूचकः) {
+        प्रत्यागम;
     }
 
-    ggml_backend_sycl_buffer_context * ctx = (ggml_backend_sycl_buffer_context *) buffer->context;
+    ggml_backend_sycl_बफर_context * ctx = (ggml_backend_sycl_बफर_context *) बफर->context;
 
-    if (ctx != nullptr) {
-        for (ggml_tensor_extra_gpu * extra : ctx->tensor_extras) {
+    यदि (ctx != शून्यसूचकः) {
+        प्रति (ggml_tensor_extra_gpu * extra : ctx->tensor_extras) {
             release_extra_gpu(extra);
         }
         ctx->tensor_extras.clear();  // reset the tensor_extras vector
     }
 }
 
-static const ggml_backend_buffer_i ggml_backend_sycl_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_sycl_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_sycl_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_sycl_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_sycl_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_sycl_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_sycl_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_sycl_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_sycl_buffer_clear,
-    /* .reset           = */ ggml_backend_sycl_buffer_reset,
+स्थिर ध्रुव ggml_backend_बफर_i ggml_backend_sycl_बफर_interface = {
+    /* .free_buffer     = */ ggml_backend_sycl_बफर_free_बफर,
+    /* .get_base        = */ ggml_backend_sycl_बफर_get_आधारः,
+    /* .init_tensor     = */ ggml_backend_sycl_बफर_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_sycl_बफर_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_sycl_बफर_समुच्चयः_tensor,
+    /* .get_tensor      = */ ggml_backend_sycl_बफर_get_tensor,
+    /* .set_tensor_2d   = */ रिक्त,
+    /* .get_tensor_2d   = */ रिक्त,
+    /* .cpy_tensor      = */ ggml_backend_sycl_बफर_cpy_tensor,
+    /* .clear           = */ ggml_backend_sycl_बफर_clear,
+    /* .reset           = */ ggml_backend_sycl_बफर_reset,
 };
 
 // sycl buffer type
-struct ggml_backend_sycl_buffer_type_context {
-    int device;
+संरचना ggml_backend_sycl_बफर_type_context {
+    पूर्णाङ्क device;
     std::string name;
 
     // each buffer type has its own stream
-    queue_ptr stream = nullptr;
+    queue_ptr stream = शून्यसूचकः;
 };
 
-static const char * ggml_backend_sycl_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    ggml_backend_sycl_buffer_type_context * ctx = (ggml_backend_sycl_buffer_type_context *)buft->context;
+स्थिर ध्रुव वर्ण * ggml_backend_sycl_बफर_type_get_name(ggml_backend_बफर_type_t buft) {
+    ggml_backend_sycl_बफर_type_context * ctx = (ggml_backend_sycl_बफर_type_context *)buft->context;
 
-    return ctx->name.c_str();
+    प्रत्यागम ctx->name.c_str();
 }
 
-static bool check_usm_system(int device, size_t size) {
-    bool use_usm_system = g_ggml_sycl_usm_system && size >= ((size_t)4 * MEM_SIZE_1G);
+स्थिर तार्किक check_usm_system(पूर्णाङ्क device, size_t size) {
+    तार्किक use_usm_system = g_ggml_sycl_usm_system && size >= ((size_t)4 * MEM_आकार_1_G);
 
-    if (use_usm_system && !ggml_sycl_info().devices[device].usm_system_support) {
+    यदि (use_usm_system && !ggml_sycl_info().devices[device].usm_system_support) {
         GGML_LOG_INFO("Device does not support USM system allocations\n");
-        use_usm_system = false;
+        use_usm_system = असत्य;
     }
 
-    return use_usm_system;
+    प्रत्यागम use_usm_system;
 }
 
-inline void * aligned_malloc_host(size_t alignment, size_t size) {
-#ifdef _WIN32
-    return _aligned_malloc(size, alignment);
-#else
-    return aligned_alloc(alignment, size);
-#endif
+अन्तःस्थ शून्य * aligned_malloc_host(size_t alignment, size_t size) {
+#यदि_परिभाषितम् _WIN32
+    प्रत्यागम _aligned_malloc(size, alignment);
+#अन्यथा
+    प्रत्यागम aligned_alloc(alignment, size);
+#यदि_अन्तः
 }
 
-static ggml_backend_buffer_t
-ggml_backend_sycl_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
-                                           size_t size) try {
+स्थिर ggml_backend_बफर_t
+ggml_backend_sycl_बफर_type_alloc_बफर(ggml_backend_बफर_type_t buft,
+                                           size_t size) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s: size=%zu\n", __func__, size);
     ggml_check_sycl();
 
-    ggml_backend_sycl_buffer_type_context * buft_ctx = (ggml_backend_sycl_buffer_type_context *)buft->context;
-    ggml_sycl_set_device(buft_ctx->device);
-    const queue_ptr stream = buft_ctx->stream;
+    ggml_backend_sycl_बफर_type_context * buft_ctx = (ggml_backend_sycl_बफर_type_context *)buft->context;
+    ggml_sycl_समुच्चयः_device(buft_ctx->device);
+    ध्रुव queue_ptr stream = buft_ctx->stream;
     size = std::max(size, (size_t)1); // syclMalloc returns null for size 0
     /*
     Alignment below ensures best performance. While in theory it could lead to
@@ -1140,301 +1140,301 @@ ggml_backend_sycl_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
     allocated and even less exceed the minimum size accepted here for USM system
     allocations.
      */
-    size_t alignment = MEM_SIZE_2M;
-    size_t aligned_size = ((size + alignment - 1) / alignment) * alignment;
-    bool use_usm_system = check_usm_system(buft_ctx->device, aligned_size);
+    size_t alignment = MEM_आकार_2_M;
+    size_t aligned_आकार = ((size + alignment - 1) / alignment) * alignment;
+    तार्किक use_usm_system = check_usm_system(buft_ctx->device, aligned_आकार);
 
-    void * dev_ptr;
-    if (use_usm_system) {
+    शून्य * dev_ptr;
+    यदि (use_usm_system) {
         GGML_SYCL_DEBUG("[SYCL] allocating %zu Bytes with USM system\n", size);
-        dev_ptr = (void *)aligned_malloc_host(alignment, aligned_size);
-        if (!dev_ptr) {
+        dev_ptr = (शून्य *)aligned_malloc_host(alignment, aligned_आकार);
+        यदि (!dev_ptr) {
             GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on host\n", __func__, size);
-            return nullptr;
+            प्रत्यागम शून्यसूचकः;
         }
-    } else {
-        SYCL_CHECK(CHECK_TRY_ERROR(dev_ptr = (void *)ggml_sycl_malloc_device(size, *stream, GGML_SYCL_MEM_BUFFER)));
-        if (!dev_ptr) {
+    } अन्यथा {
+        SYCL_CHECK(CHECK_TRY_ERROR(dev_ptr = (शून्य *)ggml_sycl_malloc_device(size, *stream, GGML_SYCL_MEM_बफर)));
+        यदि (!dev_ptr) {
           GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on device\n", __func__, size);
-          return nullptr;
+          प्रत्यागम शून्यसूचकः;
         }
     }
-    ggml_backend_sycl_buffer_context * ctx = new  ggml_backend_sycl_buffer_context(buft_ctx->device, dev_ptr, buft_ctx->stream, use_usm_system);
-    return ggml_backend_buffer_init(buft, ggml_backend_sycl_buffer_interface, ctx, size);
+    ggml_backend_sycl_बफर_context * ctx = नूतन  ggml_backend_sycl_बफर_context(buft_ctx->device, dev_ptr, buft_ctx->stream, use_usm_system);
+    प्रत्यागम ggml_backend_बफर_init(buft, ggml_backend_sycl_बफर_interface, ctx, size);
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static size_t ggml_backend_sycl_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return SYCL_BUFFER_ALIGNMENT;
-    GGML_UNUSED(buft);
+स्थिर size_t ggml_backend_sycl_बफर_type_get_alignment(ggml_backend_बफर_type_t buft) {
+    प्रत्यागम SYCL_बफर_ALIGNMENT;
+    GGML_अप्रयुक्तम्(buft);
 }
 
-static bool is_bmg_g31_arch(int device) {
-    return ggml_sycl_info().devices[device].hw_info.arch == gpu_arch::intel_gpu_bmg_g31;
+स्थिर तार्किक is_bmg_g31_arch(पूर्णाङ्क device) {
+    प्रत्यागम ggml_sycl_info().devices[device].hw_info.arch == gpu_arch::intel_gpu_bmg_g31;
 }
 
-static size_t ggml_backend_sycl_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
-    ggml_backend_sycl_buffer_type_context * ctx = (ggml_backend_sycl_buffer_type_context *)buft->context;
-    int device = ctx->device;
+स्थिर size_t ggml_backend_sycl_बफर_type_get_max_आकार(ggml_backend_बफर_type_t buft) {
+    ggml_backend_sycl_बफर_type_context * ctx = (ggml_backend_sycl_बफर_type_context *)buft->context;
+    पूर्णाङ्क device = ctx->device;
     // use the buft device, the current device may differ on multi-GPU systems
-    size_t max_alloc_size = dpct::get_device(device).get_max_mem_alloc_size();
-    if (g_ggml_sycl_host_pinned_mem_2g) {
-        return std::min(max_alloc_size, (size_t) 2LL*1024*1024*1024);
-    } else {
-        if(is_bmg_g31_arch(device)) {
+    size_t max_alloc_आकार = dpct::get_device(device).get_max_mem_alloc_आकार();
+    यदि (g_ggml_sycl_host_pinned_mem_2g) {
+        प्रत्यागम std::min(max_alloc_आकार, (size_t) 2LL*1024*1024*1024);
+    } अन्यथा {
+        यदि(is_bmg_g31_arch(device)) {
             //Todo, it's workaround for BMG-G31, which has a known issue with large allocations.
             //The max alloc size is reduced to 60% of the reported max alloc size.
             //remove it after https://github.com/intel/compute-runtime/issues/998 is fixed.
-            max_alloc_size = max_alloc_size*0.6;
+            max_alloc_आकार = max_alloc_आकार*0.6;
         }
-        return max_alloc_size;
+        प्रत्यागम max_alloc_आकार;
 
     }
-    GGML_UNUSED(buft);
+    GGML_अप्रयुक्तम्(buft);
 }
 
-static size_t ggml_backend_sycl_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
+स्थिर size_t ggml_backend_sycl_बफर_type_get_alloc_आकार(ggml_backend_बफर_type_t buft, ध्रुव ggml_tensor * tensor) {
     // Reserve the additional scratch so it's visible to the graph allocator
     size_t size = tensor->op == GGML_OP_FLASH_ATTN_EXT
-        ? ggml_sycl_flash_attn_ext_get_alloc_size(tensor)
+        ? ggml_sycl_flash_attn_ext_get_alloc_आकार(tensor)
         : ggml_nbytes(tensor);
     int64_t ne0 = tensor->ne[0];
 
-    if (ggml_is_quantized(tensor->type)) {
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
-            size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
+    यदि (ggml_is_quantized(tensor->type)) {
+        यदि (ne0 % MATRIX_ROW_PADDING != 0) {
+            size += ggml_row_आकार(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
     }
 
-    return size;
+    प्रत्यागम size;
 
-    GGML_UNUSED(buft);
+    GGML_अप्रयुक्तम्(buft);
 }
 
-static const ggml_backend_buffer_type_i ggml_backend_sycl_buffer_type_interface = {
-    /* .get_name            = */ ggml_backend_sycl_buffer_type_get_name,
-    /* .alloc_buffer        = */ ggml_backend_sycl_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_sycl_buffer_type_get_alignment,
-    /* .get_max_size        = */ ggml_backend_sycl_buffer_type_get_max_size,
-    /* .get_alloc_size      = */ ggml_backend_sycl_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ NULL,
+स्थिर ध्रुव ggml_backend_बफर_type_i ggml_backend_sycl_बफर_type_interface = {
+    /* .get_name            = */ ggml_backend_sycl_बफर_type_get_name,
+    /* .alloc_buffer        = */ ggml_backend_sycl_बफर_type_alloc_बफर,
+    /* .alloc_buffer_n      = */ रिक्त,
+    /* .get_alignment       = */ ggml_backend_sycl_बफर_type_get_alignment,
+    /* .get_max_size        = */ ggml_backend_sycl_बफर_type_get_max_आकार,
+    /* .get_alloc_size      = */ ggml_backend_sycl_बफर_type_get_alloc_आकार,
+    /* .get_alloc_size_n    = */ रिक्त,
+    /* .is_host             = */ रिक्त,
 };
 
-ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(int device) {
-    static std::mutex mutex;
-    std::lock_guard<std::mutex> lock(mutex);
+ggml_backend_बफर_type_t ggml_backend_sycl_बफर_type(पूर्णाङ्क device) {
+    स्थिर std::mutex mutex;
+    std::lock_guard<std::mutex> तालकम्(mutex);
 
 
-    auto dev_count = ggml_backend_sycl_get_device_count();
+    स्वचालित dev_गणनम् = ggml_backend_sycl_get_device_गणनम्();
 
-    if (device>=dev_count or device<0) {
+    यदि (device>=dev_गणनम् or device<0) {
         GGML_LOG_ERROR("ggml_backend_sycl_buffer_type error: device_index:%d is out of range [0, %d], miss to call ggml_backend_sycl_set_single_device()\n",
-            device, dev_count-1);
-        GGML_ASSERT(device<dev_count);
+            device, dev_गणनम्-1);
+        GGML_ASSERT(device<dev_गणनम्);
     }
-    static struct ggml_backend_buffer_type ggml_backend_sycl_buffer_types[GGML_SYCL_MAX_DEVICES];
+    स्थिर संरचना ggml_backend_बफर_type ggml_backend_sycl_बफर_types[GGML_SYCL_MAX_DEVICES];
 
-    static bool ggml_backend_sycl_buffer_type_initialized = false;
+    स्थिर तार्किक ggml_backend_sycl_बफर_type_initialized = असत्य;
 
-    if (!ggml_backend_sycl_buffer_type_initialized) {
-        for (int i = 0; i < dev_count; i++) {
-            auto & device_i = dpct::dev_mgr::instance().get_device(i);
+    यदि (!ggml_backend_sycl_बफर_type_initialized) {
+        प्रति (पूर्णाङ्क i = 0; i < dev_गणनम्; i++) {
+            स्वचालित & device_i = dpct::dev_mgr::instance().get_device(i);
             queue_ptr stream = &(device_i.default_queue());
-            ggml_backend_sycl_buffer_types[i] = {
-                /* .iface    = */ ggml_backend_sycl_buffer_type_interface,
+            ggml_backend_sycl_बफर_types[i] = {
+                /* .iface    = */ ggml_backend_sycl_बफर_type_interface,
                 /* .device   = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), i),
-                /* .context  = */ new ggml_backend_sycl_buffer_type_context{i, GGML_SYCL_NAME + std::to_string(i), stream},
+                /* .context  = */ नूतन ggml_backend_sycl_बफर_type_context{i, GGML_SYCL_NAME + std::to_string(i), stream},
             };
         }
-        ggml_backend_sycl_buffer_type_initialized = true;
+        ggml_backend_sycl_बफर_type_initialized = सत्य;
     }
-    return &ggml_backend_sycl_buffer_types[device];
+    प्रत्यागम &ggml_backend_sycl_बफर_types[device];
 }
 
-static ggml_backend_buffer_type_t ggml_backend_sycl_buffer_type(ggml_backend_sycl_context * ctx) {
+स्थिर ggml_backend_बफर_type_t ggml_backend_sycl_बफर_type(ggml_backend_sycl_context * ctx) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_buffer_type\n");
 
-    int device = ctx->device;
-    if (device>=ggml_sycl_info().device_count or device<0) {
+    पूर्णाङ्क device = ctx->device;
+    यदि (device>=ggml_sycl_info().device_गणनम् or device<0) {
         GGML_LOG_ERROR("ggml_backend_sycl_buffer_type error: device_index:%d is out of range [0, %d], miss to call ggml_backend_sycl_set_single_device()\n",
-            device, ggml_sycl_info().device_count-1);
-        GGML_ASSERT(device<ggml_sycl_info().device_count);
+            device, ggml_sycl_info().device_गणनम्-1);
+        GGML_ASSERT(device<ggml_sycl_info().device_गणनम्);
     }
-    static struct ggml_backend_buffer_type ggml_backend_sycl_buffer_types[GGML_SYCL_MAX_DEVICES];
+    स्थिर संरचना ggml_backend_बफर_type ggml_backend_sycl_बफर_types[GGML_SYCL_MAX_DEVICES];
 
-    static bool ggml_backend_sycl_buffer_type_initialized = false;
+    स्थिर तार्किक ggml_backend_sycl_बफर_type_initialized = असत्य;
 
-    if (!ggml_backend_sycl_buffer_type_initialized) {
-        for (int i = 0; i < ggml_sycl_info().device_count; i++) {
-            ggml_backend_sycl_buffer_types[i] = {
-                /* .iface    = */ ggml_backend_sycl_buffer_type_interface,
-                /* .device   = */ nullptr,
-                /* .context  = */ new ggml_backend_sycl_buffer_type_context{i, GGML_SYCL_NAME + std::to_string(i), ctx->stream(i, 0)},
+    यदि (!ggml_backend_sycl_बफर_type_initialized) {
+        प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; i++) {
+            ggml_backend_sycl_बफर_types[i] = {
+                /* .iface    = */ ggml_backend_sycl_बफर_type_interface,
+                /* .device   = */ शून्यसूचकः,
+                /* .context  = */ नूतन ggml_backend_sycl_बफर_type_context{i, GGML_SYCL_NAME + std::to_string(i), ctx->stream(i, 0)},
             };
         }
-        ggml_backend_sycl_buffer_type_initialized = true;
+        ggml_backend_sycl_बफर_type_initialized = सत्य;
     }
-    return &ggml_backend_sycl_buffer_types[device];
+    प्रत्यागम &ggml_backend_sycl_बफर_types[device];
 }
 
 // sycl split buffer
 
-static int64_t get_row_rounding(ggml_type type, const std::array<float, GGML_SYCL_MAX_DEVICES> & tensor_split) {
-    int64_t min_compute_capability = INT_MAX;
+स्थिर int64_t get_row_rounding(ggml_type type, ध्रुव std::array<भिन्न, GGML_SYCL_MAX_DEVICES> & tensor_विभज) {
+    int64_t min_compute_capability = अधिकतम_पूर्णाङ्कः;
     int64_t max_compute_capability = INT_MIN;
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        if (tensor_split[i] < (i + 1 < ggml_sycl_info().device_count ? tensor_split[i + 1] : 1.0f)) {
-            if (min_compute_capability > ggml_sycl_info().devices[i].cc) {
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+        यदि (tensor_विभज[i] < (i + 1 < ggml_sycl_info().device_गणनम् ? tensor_विभज[i + 1] : 1.0f)) {
+            यदि (min_compute_capability > ggml_sycl_info().devices[i].cc) {
                 min_compute_capability = ggml_sycl_info().devices[i].cc;
             }
-            if (max_compute_capability < ggml_sycl_info().devices[i].cc) {
+            यदि (max_compute_capability < ggml_sycl_info().devices[i].cc) {
                 max_compute_capability = ggml_sycl_info().devices[i].cc;
             }
         }
     }
 
-    switch(type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-            return max_compute_capability >= VER_GEN9 ? 128 : 64;
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-            return 64;
-        case GGML_TYPE_F16:
-        case GGML_TYPE_F32:
-            return 1;
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_IQ2_XXS:
-        case GGML_TYPE_IQ2_XS:
-        case GGML_TYPE_IQ2_S:
-        case GGML_TYPE_IQ1_S:
-        case GGML_TYPE_IQ1_M:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ4_XS:
-        case GGML_TYPE_IQ4_NL:
-            return max_compute_capability >= VER_GEN9 ? 128 : 64;
-        case GGML_TYPE_IQ3_S:
-            return max_compute_capability >= VER_GEN9 ? 128 : 64;
-        case GGML_TYPE_Q6_K:
-            return 64;
-        default:
+    विकल्प(type) {
+        पक्ष GGML_TYPE_Q1_0:
+        पक्ष GGML_TYPE_Q4_0:
+        पक्ष GGML_TYPE_Q4_1:
+            प्रत्यागम max_compute_capability >= VER_GEN9 ? 128 : 64;
+        पक्ष GGML_TYPE_Q5_0:
+        पक्ष GGML_TYPE_Q5_1:
+        पक्ष GGML_TYPE_Q8_0:
+            प्रत्यागम 64;
+        पक्ष GGML_TYPE_F16:
+        पक्ष GGML_TYPE_F32:
+            प्रत्यागम 1;
+        पक्ष GGML_TYPE_Q2_K:
+        पक्ष GGML_TYPE_Q3_K:
+        पक्ष GGML_TYPE_Q4_K:
+        पक्ष GGML_TYPE_Q5_K:
+        पक्ष GGML_TYPE_IQ2_XXS:
+        पक्ष GGML_TYPE_IQ2_XS:
+        पक्ष GGML_TYPE_IQ2_S:
+        पक्ष GGML_TYPE_IQ1_S:
+        पक्ष GGML_TYPE_IQ1_M:
+        पक्ष GGML_TYPE_IQ3_XXS:
+        पक्ष GGML_TYPE_IQ4_XS:
+        पक्ष GGML_TYPE_IQ4_NL:
+            प्रत्यागम max_compute_capability >= VER_GEN9 ? 128 : 64;
+        पक्ष GGML_TYPE_IQ3_S:
+            प्रत्यागम max_compute_capability >= VER_GEN9 ? 128 : 64;
+        पक्ष GGML_TYPE_Q6_K:
+            प्रत्यागम 64;
+        स्वभाव:
             GGML_ABORT("fatal error");
     }
 }
 
-static void get_row_split(int64_t * row_low, int64_t * row_high, const ggml_tensor * tensor, const std::array<float, GGML_SYCL_MAX_DEVICES> & tensor_split, int id) {
-    const int64_t nrows = ggml_nrows(tensor);
-    const int64_t rounding = get_row_rounding(tensor->type, tensor_split);
+स्थिर शून्य get_row_विभज(int64_t * row_नीचः, int64_t * row_उच्चः, ध्रुव ggml_tensor * tensor, ध्रुव std::array<भिन्न, GGML_SYCL_MAX_DEVICES> & tensor_विभज, पूर्णाङ्क id) {
+    ध्रुव int64_t nrows = ggml_nrows(tensor);
+    ध्रुव int64_t rounding = get_row_rounding(tensor->type, tensor_विभज);
 
-    *row_low = id == 0 ? 0 : nrows*tensor_split[id];
-    *row_low -= *row_low % rounding;
-    if (id == ggml_sycl_info().device_count - 1) {
-        *row_high = nrows;
-    } else {
-        *row_high = nrows*tensor_split[id + 1];
-        *row_high -= *row_high % rounding;
+    *row_नीचः = id == 0 ? 0 : nrows*tensor_विभज[id];
+    *row_नीचः -= *row_नीचः % rounding;
+    यदि (id == ggml_sycl_info().device_गणनम् - 1) {
+        *row_उच्चः = nrows;
+    } अन्यथा {
+        *row_उच्चः = nrows*tensor_विभज[id + 1];
+        *row_उच्चः -= *row_उच्चः % rounding;
     }
 }
 
-static size_t ggml_nbytes_split(const struct ggml_tensor * tensor, int nrows_split) {
+स्थिर size_t ggml_nbytes_विभज(ध्रुव संरचना ggml_tensor * tensor, पूर्णाङ्क nrows_विभज) {
     static_assert(GGML_MAX_DIMS == 4, "GGML_MAX_DIMS is not 4 - update this function");
 
-    return nrows_split*ggml_row_size(tensor->type, tensor->ne[0]);
+    प्रत्यागम nrows_विभज*ggml_row_आकार(tensor->type, tensor->ne[0]);
 }
 
-struct ggml_backend_sycl_split_buffer_type_context {
-    std::array<float, GGML_SYCL_MAX_DEVICES> tensor_split;
+संरचना ggml_backend_sycl_विभज_बफर_type_context {
+    std::array<भिन्न, GGML_SYCL_MAX_DEVICES> tensor_विभज;
 };
 
-struct ggml_backend_sycl_split_buffer_context {
-    ~ggml_backend_sycl_split_buffer_context() try {
-        for (ggml_tensor_extra_gpu * extra : tensor_extras) {
+संरचना ggml_backend_sycl_विभज_बफर_context {
+    ~ggml_backend_sycl_विभज_बफर_context() यत्न {
+        प्रति (ggml_tensor_extra_gpu * extra : tensor_extras) {
             release_extra_gpu(extra, streams);
         }
     }
-    catch (sycl::exception const &exc) {
+    गृहाण (sycl::exception ध्रुव &exc) {
       std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-                << ", line:" << __LINE__ << std::endl;
-      std::exit(1);
+                << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+      std::निर्गच्छ(1);
     }
 
     std::vector<ggml_tensor_extra_gpu *> tensor_extras;
     std::vector<queue_ptr> streams;
 };
 
-static void ggml_backend_sycl_split_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    ggml_backend_sycl_split_buffer_context * ctx = (ggml_backend_sycl_split_buffer_context *)buffer->context;
-    delete ctx;
+स्थिर शून्य ggml_backend_sycl_विभज_बफर_free_बफर(ggml_backend_बफर_t बफर) {
+    ggml_backend_sycl_विभज_बफर_context * ctx = (ggml_backend_sycl_विभज_बफर_context *)बफर->context;
+    विलोपय ctx;
 }
 
-static void * ggml_backend_sycl_split_buffer_get_base(ggml_backend_buffer_t buffer) {
+स्थिर शून्य * ggml_backend_sycl_विभज_बफर_get_आधारः(ggml_backend_बफर_t बफर) {
     // the pointers are stored in the tensor extras, this is just a dummy address and never dereferenced
-    return (void *)0x1000;
+    प्रत्यागम (शून्य *)0x1000;
 
-    GGML_UNUSED(buffer);
+    GGML_अप्रयुक्तम्(बफर);
 }
 
-static enum ggml_status
-ggml_backend_sycl_split_buffer_init_tensor(ggml_backend_buffer_t buffer,
-                                           ggml_tensor *tensor) try {
+स्थिर गणना ggml_स्थितिः
+ggml_backend_sycl_विभज_बफर_init_tensor(ggml_backend_बफर_t बफर,
+                                           ggml_tensor *tensor) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor, "\n").c_str());
-    GGML_ASSERT(tensor->view_src == nullptr); // views of split tensors are not supported
+    GGML_ASSERT(tensor->view_src == शून्यसूचकः); // views of split tensors are not supported
 
-    ggml_backend_sycl_split_buffer_context * ctx = (ggml_backend_sycl_split_buffer_context *)buffer->context;
-    ggml_backend_sycl_split_buffer_type_context * buft_ctx = (ggml_backend_sycl_split_buffer_type_context *)buffer->buft->context;
+    ggml_backend_sycl_विभज_बफर_context * ctx = (ggml_backend_sycl_विभज_बफर_context *)बफर->context;
+    ggml_backend_sycl_विभज_बफर_type_context * buft_ctx = (ggml_backend_sycl_विभज_बफर_type_context *)बफर->buft->context;
 
-    const int64_t ne0 = tensor->ne[0];
+    ध्रुव int64_t ne0 = tensor->ne[0];
 
-    ggml_tensor_extra_gpu * extra = new ggml_tensor_extra_gpu{};
+    ggml_tensor_extra_gpu * extra = नूतन ggml_tensor_extra_gpu{};
 
     ctx->tensor_extras.push_back(extra);
     // consumers index the queues by device id, so size the vector once with one queue per device
-    if (ctx->streams.empty()) {
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    यदि (ctx->streams.रिक्तानि()) {
+        प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
             ctx->streams.push_back(&(dpct::get_device(i).default_queue()));
         }
     }
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        int64_t row_low, row_high;
-        get_row_split(&row_low, &row_high, tensor, buft_ctx->tensor_split, i);
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+        int64_t row_नीचः, row_उच्चः;
+        get_row_विभज(&row_नीचः, &row_उच्चः, tensor, buft_ctx->tensor_विभज, i);
 
-        int64_t nrows_split = row_high - row_low;
-        if (nrows_split == 0) {
-            continue;
+        int64_t nrows_विभज = row_उच्चः - row_नीचः;
+        यदि (nrows_विभज == 0) {
+            अनुवर्त;
         }
 
-        size_t size = ggml_nbytes_split(tensor, nrows_split);
-        const size_t original_size = size;
+        size_t size = ggml_nbytes_विभज(tensor, nrows_विभज);
+        ध्रुव size_t original_आकार = size;
 
         // pad last row to a multiple of 512 elements to avoid out-of-bounds memory accesses
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
-            size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
+        यदि (ne0 % MATRIX_ROW_PADDING != 0) {
+            size += ggml_row_आकार(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
 
-        ggml_sycl_set_device(i);
-        const queue_ptr stream = ctx->streams[i];
-        char * buf;
-        SYCL_CHECK(CHECK_TRY_ERROR(buf = (char *)ggml_sycl_malloc_device(size, *stream, GGML_SYCL_MEM_BUFFER)));
-        if (!buf) {
-            char err_buf[1024];
+        ggml_sycl_समुच्चयः_device(i);
+        ध्रुव queue_ptr stream = ctx->streams[i];
+        वर्ण * buf;
+        SYCL_CHECK(CHECK_TRY_ERROR(buf = (वर्ण *)ggml_sycl_malloc_device(size, *stream, GGML_SYCL_MEM_बफर)));
+        यदि (!buf) {
+            वर्ण err_buf[1024];
             snprintf(err_buf, 1023, "%s: can't allocate %zu Bytes of memory on device\n", __func__, size);
-            throw std::runtime_error(err_buf);
+            क्षिप std::runtime_error(err_buf);
         }
         // set padding to 0 to avoid possible NaN values
-        if (size > original_size) {
+        यदि (size > original_आकार) {
             /*
             DPCT1009:209: SYCL uses exceptions to report errors and does not use
             the error codes. The original code was commented out and a warning
@@ -1442,555 +1442,555 @@ ggml_backend_sycl_split_buffer_init_tensor(ggml_backend_buffer_t buffer,
             */
             SYCL_CHECK(CHECK_TRY_ERROR(
                 (*stream)
-                    .memset(buf + original_size, 0, size - original_size)
-                    .wait()));
+                    .स्मृतिं_पूरय(buf + original_आकार, 0, size - original_आकार)
+                    .प्रतीक्षस्व()));
         }
 
-        extra->data_device[i] = buf;
+        extra->दत्त_device[i] = buf;
 
-        for (int64_t is = 0; is < GGML_SYCL_MAX_STREAMS; ++is) {
+        प्रति (int64_t is = 0; is < GGML_SYCL_MAX_STREAMS; ++is) {
             /*
             DPCT1009:210: SYCL uses exceptions to report errors and does not use
             the error codes. The original code was commented out and a warning
             string was inserted. You need to rewrite this code.
             */
             SYCL_CHECK(
-                CHECK_TRY_ERROR(extra->events[i][is] = new sycl::event()));
+                CHECK_TRY_ERROR(extra->events[i][is] = नूतन sycl::event()));
         }
     }
     tensor->extra = extra;
-    return GGML_STATUS_SUCCESS;
+    प्रत्यागम GGML_स्थितिः_SUCCESS;
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void
-ggml_backend_sycl_split_buffer_set_tensor(ggml_backend_buffer_t buffer,
-                                          ggml_tensor *tensor, const void *data,
-                                          size_t offset, size_t size) try {
+स्थिर शून्य
+ggml_backend_sycl_विभज_बफर_समुच्चयः_tensor(ggml_backend_बफर_t बफर,
+                                          ggml_tensor *tensor, ध्रुव शून्य *दत्त,
+                                          size_t विस्थापनम्, size_t size) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
-    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
+    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, विस्थापनम्);
     // split tensors must always be set in their entirety at once
-    GGML_ASSERT(offset == 0);
+    GGML_ASSERT(विस्थापनम् == 0);
     GGML_ASSERT(size == ggml_nbytes(tensor));
 
-    ggml_backend_sycl_split_buffer_context * ctx = (ggml_backend_sycl_split_buffer_context *)buffer->context;
-    ggml_backend_sycl_split_buffer_type_context * buft_ctx = (ggml_backend_sycl_split_buffer_type_context *)buffer->buft->context;
+    ggml_backend_sycl_विभज_बफर_context * ctx = (ggml_backend_sycl_विभज_बफर_context *)बफर->context;
+    ggml_backend_sycl_विभज_बफर_type_context * buft_ctx = (ggml_backend_sycl_विभज_बफर_type_context *)बफर->buft->context;
 
-    const int64_t ne0 = tensor->ne[0];
-    const size_t nb1 = tensor->nb[1];
+    ध्रुव int64_t ne0 = tensor->ne[0];
+    ध्रुव size_t nb1 = tensor->nb[1];
     ggml_tensor_extra_gpu * extra = (ggml_tensor_extra_gpu *)tensor->extra;
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        int64_t row_low, row_high;
-        get_row_split(&row_low, &row_high, tensor, buft_ctx->tensor_split, i);
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+        int64_t row_नीचः, row_उच्चः;
+        get_row_विभज(&row_नीचः, &row_उच्चः, tensor, buft_ctx->tensor_विभज, i);
 
-        int64_t nrows_split = row_high - row_low;
-        if (nrows_split == 0) {
-            continue;
+        int64_t nrows_विभज = row_उच्चः - row_नीचः;
+        यदि (nrows_विभज == 0) {
+            अनुवर्त;
         }
 
-        const size_t offset_split = row_low*nb1;
-        size_t size = ggml_nbytes_split(tensor, nrows_split);
-        const size_t original_size = size;
+        ध्रुव size_t विस्थापनम्_विभज = row_नीचः*nb1;
+        size_t size = ggml_nbytes_विभज(tensor, nrows_विभज);
+        ध्रुव size_t original_आकार = size;
 
         // pad last row to a multiple of 512 elements to avoid out-of-bounds memory accesses
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
-            size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
+        यदि (ne0 % MATRIX_ROW_PADDING != 0) {
+            size += ggml_row_आकार(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
 
-        const char * buf_host = (const char *)data + offset_split;
+        ध्रुव वर्ण * buf_host = (ध्रुव वर्ण *)दत्त + विस्थापनम्_विभज;
         /*
         DPCT1009:211: SYCL uses exceptions to report errors and does not use the
         error codes. The original code was commented out and a warning string
         was inserted. You need to rewrite this code.
         */
-        ggml_sycl_set_device(i);
-        const queue_ptr stream = ctx->streams[i];
+        ggml_sycl_समुच्चयः_device(i);
+        ध्रुव queue_ptr stream = ctx->streams[i];
         SYCL_CHECK(CHECK_TRY_ERROR(
             (*stream)
-                .memcpy(extra->data_device[i], buf_host, original_size)
-                .wait()));
+                .स्मृतिं_प्रतिलिख(extra->दत्त_device[i], buf_host, original_आकार)
+                .प्रतीक्षस्व()));
     }
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void
-ggml_backend_sycl_split_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                          const ggml_tensor *tensor, void *data,
-                                          size_t offset, size_t size) try {
+स्थिर शून्य
+ggml_backend_sycl_विभज_बफर_get_tensor(ggml_backend_बफर_t बफर,
+                                          ध्रुव ggml_tensor *tensor, शून्य *दत्त,
+                                          size_t विस्थापनम्, size_t size) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
-    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
+    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, विस्थापनम्);
     // split tensors must always be set in their entirety at once
-    GGML_ASSERT(offset == 0);
+    GGML_ASSERT(विस्थापनम् == 0);
     GGML_ASSERT(size == ggml_nbytes(tensor));
 
-    ggml_backend_sycl_split_buffer_context * ctx = (ggml_backend_sycl_split_buffer_context *)buffer->context;
-    ggml_backend_sycl_split_buffer_type_context * buft_ctx = (ggml_backend_sycl_split_buffer_type_context *)buffer->buft->context;
+    ggml_backend_sycl_विभज_बफर_context * ctx = (ggml_backend_sycl_विभज_बफर_context *)बफर->context;
+    ggml_backend_sycl_विभज_बफर_type_context * buft_ctx = (ggml_backend_sycl_विभज_बफर_type_context *)बफर->buft->context;
 
-    const int64_t ne0 = tensor->ne[0];
-    const size_t nb1 = tensor->nb[1];
+    ध्रुव int64_t ne0 = tensor->ne[0];
+    ध्रुव size_t nb1 = tensor->nb[1];
     ggml_tensor_extra_gpu * extra = (ggml_tensor_extra_gpu *)tensor->extra;
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        int64_t row_low, row_high;
-        get_row_split(&row_low, &row_high, tensor, buft_ctx->tensor_split, i);
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+        int64_t row_नीचः, row_उच्चः;
+        get_row_विभज(&row_नीचः, &row_उच्चः, tensor, buft_ctx->tensor_विभज, i);
 
-        int64_t nrows_split = row_high - row_low;
-        if (nrows_split == 0) {
-            continue;
+        int64_t nrows_विभज = row_उच्चः - row_नीचः;
+        यदि (nrows_विभज == 0) {
+            अनुवर्त;
         }
 
-        const size_t offset_split = row_low*nb1;
-        size_t size = ggml_nbytes_split(tensor, nrows_split);
-        const size_t original_size = size;
+        ध्रुव size_t विस्थापनम्_विभज = row_नीचः*nb1;
+        size_t size = ggml_nbytes_विभज(tensor, nrows_विभज);
+        ध्रुव size_t original_आकार = size;
 
         // pad last row to a multiple of 512 elements to avoid out-of-bounds memory accesses
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
-            size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
+        यदि (ne0 % MATRIX_ROW_PADDING != 0) {
+            size += ggml_row_आकार(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
 
-        char * buf_host = (char *)data + offset_split;
+        वर्ण * buf_host = (वर्ण *)दत्त + विस्थापनम्_विभज;
         /*
         DPCT1009:212: SYCL uses exceptions to report errors and does not use the
         error codes. The original code was commented out and a warning string
         was inserted. You need to rewrite this code.
         */
-        ggml_sycl_set_device(i);
-        const queue_ptr stream = ctx->streams[i];
+        ggml_sycl_समुच्चयः_device(i);
+        ध्रुव queue_ptr stream = ctx->streams[i];
         SYCL_CHECK(CHECK_TRY_ERROR(
             (*stream)
-                .memcpy(buf_host, extra->data_device[i], original_size)
-                .wait()));
+                .स्मृतिं_प्रतिलिख(buf_host, extra->दत्त_device[i], original_आकार)
+                .प्रतीक्षस्व()));
     }
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void ggml_backend_sycl_split_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    GGML_UNUSED(buffer);
-    GGML_UNUSED(value);
+स्थिर शून्य ggml_backend_sycl_विभज_बफर_clear(ggml_backend_बफर_t बफर, uint8_t value) {
+    GGML_अप्रयुक्तम्(बफर);
+    GGML_अप्रयुक्तम्(value);
 }
 
-static struct ggml_backend_buffer_i ggml_backend_sycl_split_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_sycl_split_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_sycl_split_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_sycl_split_buffer_init_tensor,
-    /* .memset_tensor   = */ NULL,
-    /* .set_tensor      = */ ggml_backend_sycl_split_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_sycl_split_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ NULL,
-    /* .clear           = */ ggml_backend_sycl_split_buffer_clear,
-    /* .reset           = */ NULL,
+स्थिर संरचना ggml_backend_बफर_i ggml_backend_sycl_विभज_बफर_interface = {
+    /* .free_buffer     = */ ggml_backend_sycl_विभज_बफर_free_बफर,
+    /* .get_base        = */ ggml_backend_sycl_विभज_बफर_get_आधारः,
+    /* .init_tensor     = */ ggml_backend_sycl_विभज_बफर_init_tensor,
+    /* .memset_tensor   = */ रिक्त,
+    /* .set_tensor      = */ ggml_backend_sycl_विभज_बफर_समुच्चयः_tensor,
+    /* .get_tensor      = */ ggml_backend_sycl_विभज_बफर_get_tensor,
+    /* .set_tensor_2d   = */ रिक्त,
+    /* .get_tensor_2d   = */ रिक्त,
+    /* .cpy_tensor      = */ रिक्त,
+    /* .clear           = */ ggml_backend_sycl_विभज_बफर_clear,
+    /* .reset           = */ रिक्त,
 };
 
 // sycl split buffer type
 
-static const char * ggml_backend_sycl_split_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return GGML_SYCL_NAME "_Split";
+स्थिर ध्रुव वर्ण * ggml_backend_sycl_विभज_बफर_type_get_name(ggml_backend_बफर_type_t buft) {
+    प्रत्यागम GGML_SYCL_NAME "_Split";
 
-    GGML_UNUSED(buft);
+    GGML_अप्रयुक्तम्(buft);
 }
 
-static bool ggml_backend_buffer_is_sycl_split(ggml_backend_buffer_t buffer) {
-   return buffer->buft->iface.get_name == ggml_backend_sycl_split_buffer_type_get_name;
+स्थिर तार्किक ggml_backend_बफर_is_sycl_विभज(ggml_backend_बफर_t बफर) {
+   प्रत्यागम बफर->buft->iface.get_name == ggml_backend_sycl_विभज_बफर_type_get_name;
 }
 
-static ggml_backend_buffer_t ggml_backend_sycl_split_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
+स्थिर ggml_backend_बफर_t ggml_backend_sycl_विभज_बफर_type_alloc_बफर(ggml_backend_बफर_type_t buft, size_t size) {
     // since we don't know the exact split after rounding, we cannot allocate the device buffers at this point
     // instead, we allocate them for each tensor separately in init_tensor
     // however, the size still represents the maximum cumulative size of all the device buffers after the tensors are allocated,
     // as returned by get_alloc_size. this limit is enforced during tensor allocation by ggml-alloc, so it must be correct.
-    ggml_backend_sycl_split_buffer_context * ctx = new ggml_backend_sycl_split_buffer_context();
+    ggml_backend_sycl_विभज_बफर_context * ctx = नूतन ggml_backend_sycl_विभज_बफर_context();
 
-    return ggml_backend_buffer_init(buft, ggml_backend_sycl_split_buffer_interface, ctx, size);
+    प्रत्यागम ggml_backend_बफर_init(buft, ggml_backend_sycl_विभज_बफर_interface, ctx, size);
 }
 
-static size_t ggml_backend_sycl_split_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return SYCL_BUFFER_ALIGNMENT;
-    GGML_UNUSED(buft);
+स्थिर size_t ggml_backend_sycl_विभज_बफर_type_get_alignment(ggml_backend_बफर_type_t buft) {
+    प्रत्यागम SYCL_बफर_ALIGNMENT;
+    GGML_अप्रयुक्तम्(buft);
 }
 
-static size_t ggml_backend_sycl_split_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    ggml_backend_sycl_split_buffer_type_context * ctx = (ggml_backend_sycl_split_buffer_type_context *)buft->context;
+स्थिर size_t ggml_backend_sycl_विभज_बफर_type_get_alloc_आकार(ggml_backend_बफर_type_t buft, ध्रुव ggml_tensor * tensor) {
+    ggml_backend_sycl_विभज_बफर_type_context * ctx = (ggml_backend_sycl_विभज_बफर_type_context *)buft->context;
 
-    size_t total_size = 0;
+    size_t योग_आकार = 0;
 
-    const int64_t ne0 = tensor->ne[0];
+    ध्रुव int64_t ne0 = tensor->ne[0];
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        int64_t row_low, row_high;
-        get_row_split(&row_low, &row_high, tensor, ctx->tensor_split, i);
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+        int64_t row_नीचः, row_उच्चः;
+        get_row_विभज(&row_नीचः, &row_उच्चः, tensor, ctx->tensor_विभज, i);
 
-        int64_t nrows_split = row_high - row_low;
-        if (nrows_split == 0) {
-            continue;
+        int64_t nrows_विभज = row_उच्चः - row_नीचः;
+        यदि (nrows_विभज == 0) {
+            अनुवर्त;
         }
 
-        total_size += ggml_nbytes_split(tensor, nrows_split);
+        योग_आकार += ggml_nbytes_विभज(tensor, nrows_विभज);
 
         // pad last row to a multiple of 512 elements to avoid out-of-bounds memory accesses
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
-            total_size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
+        यदि (ne0 % MATRIX_ROW_PADDING != 0) {
+            योग_आकार += ggml_row_आकार(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
     }
 
-    return total_size;
+    प्रत्यागम योग_आकार;
 }
 
-static bool ggml_backend_sycl_split_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+स्थिर तार्किक ggml_backend_sycl_विभज_बफर_type_is_host(ggml_backend_बफर_type_t buft) {
+    प्रत्यागम असत्य;
 
-    GGML_UNUSED(buft);
+    GGML_अप्रयुक्तम्(buft);
 }
 
-static ggml_backend_buffer_type_i ggml_backend_sycl_split_buffer_type_interface = {
-    /* .get_name            = */ ggml_backend_sycl_split_buffer_type_get_name,
-    /* .alloc_buffer        = */ ggml_backend_sycl_split_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_sycl_split_buffer_type_get_alignment,
-    /* .get_max_size        = */ NULL, // defaults to SIZE_MAX
-    /* .get_alloc_size      = */ ggml_backend_sycl_split_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ ggml_backend_sycl_split_buffer_type_is_host,
+स्थिर ggml_backend_बफर_type_i ggml_backend_sycl_विभज_बफर_type_interface = {
+    /* .get_name            = */ ggml_backend_sycl_विभज_बफर_type_get_name,
+    /* .alloc_buffer        = */ ggml_backend_sycl_विभज_बफर_type_alloc_बफर,
+    /* .alloc_buffer_n      = */ रिक्त,
+    /* .get_alignment       = */ ggml_backend_sycl_विभज_बफर_type_get_alignment,
+    /* .get_max_size        = */ रिक्त, // defaults to SIZE_MAX
+    /* .get_alloc_size      = */ ggml_backend_sycl_विभज_बफर_type_get_alloc_आकार,
+    /* .get_alloc_size_n    = */ रिक्त,
+    /* .is_host             = */ ggml_backend_sycl_विभज_बफर_type_is_host,
 };
 
-ggml_backend_buffer_type_t ggml_backend_sycl_split_buffer_type(int main_device, const float * tensor_split) {
+ggml_backend_बफर_type_t ggml_backend_sycl_विभज_बफर_type(पूर्णाङ्क main_device, ध्रुव भिन्न * tensor_विभज) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_split_buffer_type\n");
 
-    GGML_UNUSED(main_device);
+    GGML_अप्रयुक्तम्(main_device);
 
-    static std::mutex mutex;
-    std::lock_guard<std::mutex> lock(mutex);
+    स्थिर std::mutex mutex;
+    std::lock_guard<std::mutex> तालकम्(mutex);
 
     ggml_check_sycl();
     // FIXME: this is not thread safe
-    static std::map<std::array<float, GGML_SYCL_MAX_DEVICES>, struct ggml_backend_buffer_type> buft_map;
+    स्थिर std::map<std::array<भिन्न, GGML_SYCL_MAX_DEVICES>, संरचना ggml_backend_बफर_type> buft_map;
 
-    std::array<float, GGML_SYCL_MAX_DEVICES> tensor_split_arr = {};
+    std::array<भिन्न, GGML_SYCL_MAX_DEVICES> tensor_विभज_arr = {};
 
-    bool all_zero = tensor_split == nullptr || std::all_of(tensor_split, tensor_split + GGML_SYCL_MAX_DEVICES, [](float x) { return x == 0.0f; });
-    if (all_zero) {
-        tensor_split_arr = ggml_sycl_info().default_tensor_split;
-    } else {
-        float split_sum = 0.0f;
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-            tensor_split_arr[i] = split_sum;
-            split_sum += tensor_split[i];
+    तार्किक all_zero = tensor_विभज == शून्यसूचकः || std::all_of(tensor_विभज, tensor_विभज + GGML_SYCL_MAX_DEVICES, [](भिन्न x) { प्रत्यागम x == 0.0f; });
+    यदि (all_zero) {
+        tensor_विभज_arr = ggml_sycl_info().default_tensor_विभज;
+    } अन्यथा {
+        भिन्न विभज_योग = 0.0f;
+        प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+            tensor_विभज_arr[i] = विभज_योग;
+            विभज_योग += tensor_विभज[i];
         }
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-            tensor_split_arr[i] /= split_sum;
+        प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+            tensor_विभज_arr[i] /= विभज_योग;
         }
     }
 
-    auto it = buft_map.find(tensor_split_arr);
-    if (it != buft_map.end()) {
-        return &it->second;
+    स्वचालित it = buft_map.find(tensor_विभज_arr);
+    यदि (it != buft_map.end()) {
+        प्रत्यागम &it->second;
     }
 
-    struct ggml_backend_buffer_type buft {
-        /* .iface   = */ ggml_backend_sycl_split_buffer_type_interface,
+    संरचना ggml_backend_बफर_type buft {
+        /* .iface   = */ ggml_backend_sycl_विभज_बफर_type_interface,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), 0),
-        /* .context = */ new ggml_backend_sycl_split_buffer_type_context{tensor_split_arr},
+        /* .context = */ नूतन ggml_backend_sycl_विभज_बफर_type_context{tensor_विभज_arr},
     };
 
-    auto result = buft_map.emplace(tensor_split_arr, buft);
-    return &result.first->second;
+    स्वचालित परिणाम = buft_map.emplace(tensor_विभज_arr, buft);
+    प्रत्यागम &परिणाम.first->second;
 }
 
 // host buffer type
 
-struct ggml_backend_sycl_device_context {
-    int device;
+संरचना ggml_backend_sycl_device_context {
+    पूर्णाङ्क device;
     std::string name;
     std::string description;
-    int op_offload_min_batch_size;
+    पूर्णाङ्क op_offload_min_batch_आकार;
 };
 
-static const char * ggml_backend_sycl_host_buffer_type_name(ggml_backend_buffer_type_t buft) {
-    return GGML_SYCL_NAME "_Host";
+स्थिर ध्रुव वर्ण * ggml_backend_sycl_host_बफर_type_name(ggml_backend_बफर_type_t buft) {
+    प्रत्यागम GGML_SYCL_NAME "_Host";
 
-    GGML_UNUSED(buft);
+    GGML_अप्रयुक्तम्(buft);
 }
 
-static int ggml_backend_sycl_host_buffer_type_device(ggml_backend_buffer_type_t buft) {
-    return static_cast<const ggml_backend_sycl_device_context *>(buft->device->context)->device;
+स्थिर पूर्णाङ्क ggml_backend_sycl_host_बफर_type_device(ggml_backend_बफर_type_t buft) {
+    प्रत्यागम static_cast<ध्रुव ggml_backend_sycl_device_context *>(buft->device->context)->device;
 }
 
 //host pinned memory
-static void * ggml_backend_sycl_host_malloc(int device, size_t size) {
+स्थिर शून्य * ggml_backend_sycl_host_malloc(पूर्णाङ्क device, size_t size) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_host_malloc of size %.2f MiB on device %d\n", size / 1024.0 / 1024.0, device);
-    void * ptr = nullptr;
-    try {
+    शून्य * ptr = शून्यसूचकः;
+    यत्न {
         ggml_check_sycl();
         // USM host memory is page-locked and device-accessible by construction
-        auto & q = dpct::dev_mgr::instance().get_device(device).default_queue();
+        स्वचालित & q = dpct::dev_mgr::instance().get_device(device).default_queue();
         ptr = sycl::malloc_host(size, q, sycl::property_list{});
-    } catch (...) {
-        ptr = nullptr;
+    } गृहाण (...) {
+        ptr = शून्यसूचकः;
     }
-    if (ptr == nullptr) {
+    यदि (ptr == शून्यसूचकः) {
         GGML_LOG_WARN("%s: failed to allocate %.2f MiB of pinned memory\n", __func__,
                 size / 1024.0 / 1024.0);
     }
 
-    return ptr;
+    प्रत्यागम ptr;
 }
 
-static void ggml_backend_sycl_host_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    if (buffer->context == nullptr) {
-        return;
+स्थिर शून्य ggml_backend_sycl_host_बफर_free_बफर(ggml_backend_बफर_t बफर) {
+    यदि (बफर->context == शून्यसूचकः) {
+        प्रत्यागम;
     }
-    if (g_ggml_sycl_enable_host_pinned_mem) {
-        const int device = ggml_backend_sycl_host_buffer_type_device(buffer->buft);
-        auto & q = dpct::dev_mgr::instance().get_device(device).default_queue();
-        SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(buffer->context, q)));
-    } else {
-        free_aligned_mem_host((void *) buffer->context);
+    यदि (g_ggml_sycl_enable_host_pinned_mem) {
+        ध्रुव पूर्णाङ्क device = ggml_backend_sycl_host_बफर_type_device(बफर->buft);
+        स्वचालित & q = dpct::dev_mgr::instance().get_device(device).default_queue();
+        SYCL_CHECK(CHECK_TRY_ERROR(sycl::मुक्त(बफर->context, q)));
+    } अन्यथा {
+        free_aligned_mem_host((शून्य *) बफर->context);
     }
 }
 
-static ggml_backend_buffer_t ggml_backend_sycl_host_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    void * ptr = g_ggml_sycl_enable_host_pinned_mem ?
-                     ggml_backend_sycl_host_malloc(ggml_backend_sycl_host_buffer_type_device(buft), size) :
+स्थिर ggml_backend_बफर_t ggml_backend_sycl_host_बफर_type_alloc_बफर(ggml_backend_बफर_type_t buft, size_t size) {
+    शून्य * ptr = g_ggml_sycl_enable_host_pinned_mem ?
+                     ggml_backend_sycl_host_malloc(ggml_backend_sycl_host_बफर_type_device(buft), size) :
                      aligned_malloc_host(TENSOR_ALIGNMENT, size);
-    if (ptr == nullptr) {
+    यदि (ptr == शून्यसूचकः) {
         // fallback to cpu buffer
-        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+        प्रत्यागम ggml_backend_buft_alloc_बफर(ggml_backend_cpu_बफर_type(), size);
     }
 
     // FIXME: this is a hack to avoid having to implement a new buffer type
-    ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(ptr, size);
-    buffer->buft = buft;
-    buffer->iface.free_buffer = ggml_backend_sycl_host_buffer_free_buffer;
+    ggml_backend_बफर_t बफर = ggml_backend_cpu_बफर_from_ptr(ptr, size);
+    बफर->buft = buft;
+    बफर->iface.free_बफर = ggml_backend_sycl_host_बफर_free_बफर;
 
-    return buffer;
+    प्रत्यागम बफर;
 }
 
-static size_t ggml_backend_sycl_host_buffer_type_get_max_size(ggml_backend_buffer_type_t buft) {
+स्थिर size_t ggml_backend_sycl_host_बफर_type_get_max_आकार(ggml_backend_बफर_type_t buft) {
 
-    if (g_ggml_sycl_enable_host_pinned_mem) {
-        const int device = ggml_backend_sycl_host_buffer_type_device(buft);
-        size_t max_alloc_size = dpct::dev_mgr::instance().get_device(device).get_max_mem_alloc_size();
-        if (g_ggml_sycl_host_pinned_mem_2g) {
-            return std::min(max_alloc_size, (size_t) 2LL*1024*1024*1024);
-        } else {
-            return max_alloc_size;
+    यदि (g_ggml_sycl_enable_host_pinned_mem) {
+        ध्रुव पूर्णाङ्क device = ggml_backend_sycl_host_बफर_type_device(buft);
+        size_t max_alloc_आकार = dpct::dev_mgr::instance().get_device(device).get_max_mem_alloc_आकार();
+        यदि (g_ggml_sycl_host_pinned_mem_2g) {
+            प्रत्यागम std::min(max_alloc_आकार, (size_t) 2LL*1024*1024*1024);
+        } अन्यथा {
+            प्रत्यागम max_alloc_आकार;
         }
-    } else {
-        return SIZE_MAX;
+    } अन्यथा {
+        प्रत्यागम SIZE_MAX;
     }
 }
 
-static ggml_backend_buffer_type_t ggml_backend_sycl_host_buffer_type_for_device(int device) {
+स्थिर ggml_backend_बफर_type_t ggml_backend_sycl_host_बफर_type_for_device(पूर्णाङ्क device) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_host_buffer_type_for_device on device %d\n", device);
 
     // the vector is never resized after this, so the returned pointers stay valid
-    static std::vector<ggml_backend_buffer_type> buffer_types_host = [] {
-        std::vector<ggml_backend_buffer_type> bufts(ggml_backend_sycl_get_device_count());
-        for (size_t i = 0; i < bufts.size(); i++) {
+    स्थिर std::vector<ggml_backend_बफर_type> बफर_types_host = [] {
+        std::vector<ggml_backend_बफर_type> bufts(ggml_backend_sycl_get_device_गणनम्());
+        प्रति (size_t i = 0; i < bufts.size(); i++) {
             bufts[i] = {
                 /* .iface    = */ {
-                    /* .get_name            = */ ggml_backend_sycl_host_buffer_type_name,
-                    /* .alloc_buffer        = */ ggml_backend_sycl_host_buffer_type_alloc_buffer,
-                    /* .alloc_buffer_n      = */ NULL,
-                    /* .get_alignment       = */ ggml_backend_cpu_buffer_type()->iface.get_alignment,
-                    /* .get_max_size        = */ ggml_backend_sycl_host_buffer_type_get_max_size,
-                    /* .get_alloc_size      = */ ggml_backend_cpu_buffer_type()->iface.get_alloc_size,
-                    /* .get_alloc_size_n    = */ NULL,
-                    /* .is_host             = */ ggml_backend_cpu_buffer_type()->iface.is_host,
+                    /* .get_name            = */ ggml_backend_sycl_host_बफर_type_name,
+                    /* .alloc_buffer        = */ ggml_backend_sycl_host_बफर_type_alloc_बफर,
+                    /* .alloc_buffer_n      = */ रिक्त,
+                    /* .get_alignment       = */ ggml_backend_cpu_बफर_type()->iface.get_alignment,
+                    /* .get_max_size        = */ ggml_backend_sycl_host_बफर_type_get_max_आकार,
+                    /* .get_alloc_size      = */ ggml_backend_cpu_बफर_type()->iface.get_alloc_आकार,
+                    /* .get_alloc_size_n    = */ रिक्त,
+                    /* .is_host             = */ ggml_backend_cpu_बफर_type()->iface.is_host,
                 },
                 /* .device   = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), i),
-                /* .context  = */ nullptr,
+                /* .context  = */ शून्यसूचकः,
             };
         }
-        return bufts;
+        प्रत्यागम bufts;
     }();
 
-    GGML_ASSERT(device >= 0 && device < (int) buffer_types_host.size());
+    GGML_ASSERT(device >= 0 && device < (पूर्णाङ्क) बफर_types_host.size());
 
-    return &buffer_types_host[device];
+    प्रत्यागम &बफर_types_host[device];
 }
 
 // TODO: this function is unused and is a temporary hack to avoid breaking changes
-ggml_backend_buffer_type_t ggml_backend_sycl_host_buffer_type() {
-    return ggml_backend_sycl_host_buffer_type_for_device(0);
+ggml_backend_बफर_type_t ggml_backend_sycl_host_बफर_type() {
+    प्रत्यागम ggml_backend_sycl_host_बफर_type_for_device(0);
 }
 
 // buffer pool for sycl (legacy)
-struct ggml_sycl_pool_leg : public ggml_sycl_pool {
-    static const int MAX_SYCL_BUFFERS = 256;
+संरचना ggml_sycl_pool_leg : सार्वजनिक ggml_sycl_pool {
+    स्थिर ध्रुव पूर्णाङ्क MAX_SYCL_BUFFERS = 256;
 
-    int device;
+    पूर्णाङ्क device;
     queue_ptr qptr;
-    struct ggml_sycl_buffer {
-        void * ptr = nullptr;
+    संरचना ggml_sycl_बफर {
+        शून्य * ptr = शून्यसूचकः;
         size_t size = 0;
     };
 
-    ggml_sycl_buffer buffer_pool[MAX_SYCL_BUFFERS] = {};
-    size_t pool_size = 0;
+    ggml_sycl_बफर बफर_pool[MAX_SYCL_BUFFERS] = {};
+    size_t pool_आकार = 0;
 
-    explicit ggml_sycl_pool_leg(queue_ptr qptr_, int device_) : device(device_), qptr(qptr_) {}
+    स्पष्ट ggml_sycl_pool_leg(queue_ptr qptr_, पूर्णाङ्क device_) : device(device_), qptr(qptr_) {}
 
     ~ggml_sycl_pool_leg() {
-#ifdef DEBUG_SYCL_POOL
-        int    n_cached    = 0;
-        size_t bytes_cached = 0;
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
-            if (buffer_pool[i].ptr != nullptr) {
+#यदि_परिभाषितम् DEBUG_SYCL_POOL
+        पूर्णाङ्क    n_cached    = 0;
+        size_t अष्टकानि_cached = 0;
+        प्रति (पूर्णाङ्क i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+            यदि (बफर_pool[i].ptr != शून्यसूचकः) {
                 ++n_cached;
-                bytes_cached += buffer_pool[i].size;
+                अष्टकानि_cached += बफर_pool[i].size;
             }
         }
         GGML_LOG_INFO("%s: %d buffers, cached = %.2f MiB\n", __func__,
-                      n_cached, bytes_cached / 1024.0 / 1024.0);
-        const auto slots = format_slots_in_alloc_order();
-        if (!slots.empty()) {
+                      n_cached, अष्टकानि_cached / 1024.0 / 1024.0);
+        ध्रुव स्वचालित slots = format_slots_अन्तर्_alloc_क्रमः();
+        यदि (!slots.रिक्तानि()) {
             GGML_LOG_INFO("%s: slots MiB: %s\n", __func__, slots.c_str());
         }
-#endif
+#यदि_अन्तः
 
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
-            ggml_sycl_buffer & b = buffer_pool[i];
-            if (b.ptr != nullptr) {
+        प्रति (पूर्णाङ्क i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+            ggml_sycl_बफर & b = बफर_pool[i];
+            यदि (b.ptr != शून्यसूचकः) {
                 SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(b.ptr, *qptr)));
-                pool_size -= b.size;
+                pool_आकार -= b.size;
             }
         }
-        GGML_ASSERT(pool_size == 0);
+        GGML_ASSERT(pool_आकार == 0);
     }
 
-#ifdef DEBUG_SYCL_POOL
-    std::string format_slots_in_alloc_order() const {
-        std::string line;
-        char buf[32];
-        bool first = true;
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
-            if (buffer_pool[i].ptr == nullptr) {
-                continue;
+#यदि_परिभाषितम् DEBUG_SYCL_POOL
+    std::string format_slots_अन्तर्_alloc_क्रमः() ध्रुव {
+        std::string पङ्क्तिः;
+        वर्ण buf[32];
+        तार्किक first = सत्य;
+        प्रति (पूर्णाङ्क i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+            यदि (बफर_pool[i].ptr == शून्यसूचकः) {
+                अनुवर्त;
             }
-            if (!first) {
-                line += '/';
+            यदि (!first) {
+                पङ्क्तिः += '/';
             }
-            first = false;
-            snprintf(buf, sizeof(buf), "%.2f", buffer_pool[i].size / 1024.0 / 1024.0);
-            line += buf;
+            first = असत्य;
+            snprintf(buf, परिमाण(buf), "%.2f", बफर_pool[i].size / 1024.0 / 1024.0);
+            पङ्क्तिः += buf;
         }
-        return line;
+        प्रत्यागम पङ्क्तिः;
     }
-#endif
+#यदि_अन्तः
 
-    void * alloc(size_t size, size_t * actual_size) override {
-#ifdef DEBUG_sycl_MALLOC
-        int nnz = 0;
+    शून्य * alloc(size_t size, size_t * actual_आकार) override {
+#यदि_परिभाषितम् DEBUG_sycl_MALLOC
+        पूर्णाङ्क nnz = 0;
         size_t max_size = 0;
-#endif
+#यदि_अन्तः
         size_t best_diff = 1ull << 36;
-        int ibest = -1;
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
-            ggml_sycl_buffer& b = buffer_pool[i];
-            if (b.ptr != nullptr) {
-#ifdef DEBUG_sycl_MALLOC
+        पूर्णाङ्क ibest = -1;
+        प्रति (पूर्णाङ्क i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+            ggml_sycl_बफर& b = बफर_pool[i];
+            यदि (b.ptr != शून्यसूचकः) {
+#यदि_परिभाषितम् DEBUG_sycl_MALLOC
                 ++nnz;
-                if (b.size > max_size) max_size = b.size;
-#endif
-                if (b.size >= size) {
+                यदि (b.size > max_size) max_size = b.size;
+#यदि_अन्तः
+                यदि (b.size >= size) {
                     size_t diff = b.size - size;
-                    if (diff < best_diff) {
+                    यदि (diff < best_diff) {
                         best_diff = diff;
                         ibest = i;
-                        if (!best_diff) {
-                            void * ptr = b.ptr;
-                            *actual_size = b.size;
-                            b.ptr = nullptr;
+                        यदि (!best_diff) {
+                            शून्य * ptr = b.ptr;
+                            *actual_आकार = b.size;
+                            b.ptr = शून्यसूचकः;
                             b.size = 0;
-                            return ptr;
+                            प्रत्यागम ptr;
                         }
                     }
                 }
             }
         }
-        if (ibest >= 0) {
-            ggml_sycl_buffer& b = buffer_pool[ibest];
-            void * ptr = b.ptr;
-            *actual_size = b.size;
-            b.ptr = nullptr;
+        यदि (ibest >= 0) {
+            ggml_sycl_बफर& b = बफर_pool[ibest];
+            शून्य * ptr = b.ptr;
+            *actual_आकार = b.size;
+            b.ptr = शून्यसूचकः;
             b.size = 0;
-            return ptr;
+            प्रत्यागम ptr;
         }
-        void * ptr;
-        size_t look_ahead_size = (size_t) (1.05 * size);
+        शून्य * ptr;
+        size_t look_ahead_आकार = (size_t) (1.05 * size);
 
-        SYCL_CHECK(CHECK_TRY_ERROR(ptr = (void *)ggml_sycl_malloc_device(look_ahead_size, *qptr, GGML_SYCL_MEM_POOL_LEG)));
-        if (!ptr) {
-            GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on device/GPU\n", __func__, look_ahead_size);
-            return nullptr;
+        SYCL_CHECK(CHECK_TRY_ERROR(ptr = (शून्य *)ggml_sycl_malloc_device(look_ahead_आकार, *qptr, GGML_SYCL_MEM_POOL_LEG)));
+        यदि (!ptr) {
+            GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on device/GPU\n", __func__, look_ahead_आकार);
+            प्रत्यागम शून्यसूचकः;
         }
 
-        *actual_size = look_ahead_size;
-        pool_size += look_ahead_size;
+        *actual_आकार = look_ahead_आकार;
+        pool_आकार += look_ahead_आकार;
 
-#ifdef DEBUG_SYCL_MALLOC
+#यदि_परिभाषितम् DEBUG_SYCL_MALLOC
         GGML_LOG_DEBUG("%s[%d]: %d buffers, max_size = %u MB, pool_size = %u MB, requested %u MB\n", __func__, id, nnz,
-                (uint32_t)(max_size/1024/1024), (uint32_t)(g_sycl_pool_size[id]/1024/1024), (uint32_t)(size/1024/1024));
-#endif
+                (uint32_t)(max_size/1024/1024), (uint32_t)(g_sycl_pool_आकार[id]/1024/1024), (uint32_t)(size/1024/1024));
+#यदि_अन्तः
 
         // GGML_SYCL_DEBUG("ggml_sycl_pool_malloc_leg look_ahead_size=%zu, return %p\n", look_ahead_size, ptr);
-        return ptr;
+        प्रत्यागम ptr;
     }
 
-    void free(void * ptr, size_t size) override {
-        for (int i = 0; i < MAX_SYCL_BUFFERS; ++i) {
-            ggml_sycl_buffer& b = buffer_pool[i];
-            if (b.ptr == nullptr) {
+    शून्य मुक्त(शून्य * ptr, size_t size) override {
+        प्रति (पूर्णाङ्क i = 0; i < MAX_SYCL_BUFFERS; ++i) {
+            ggml_sycl_बफर& b = बफर_pool[i];
+            यदि (b.ptr == शून्यसूचकः) {
                 b.ptr = ptr;
                 b.size = size;
-                return;
+                प्रत्यागम;
             }
         }
         GGML_LOG_WARN("WARNING: sycl buffer pool full, increase MAX_sycl_BUFFERS\n");
         SYCL_CHECK(CHECK_TRY_ERROR(ggml_sycl_free_device(ptr, *qptr)));
-        pool_size -= size;
+        pool_आकार -= size;
     }
 };
 
 // pool with virtual memory management
-#if defined(GGML_SYCL_SUPPORT_VMM)
-struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
-    static const size_t SYCL_POOL_VMM_MAX_SIZE = 1ull << 35; // 32 GB
+#यदि defined(GGML_SYCL_SUPPORT_VMM)
+संरचना ggml_sycl_pool_vmm : सार्वजनिक ggml_sycl_pool {
+    स्थिर ध्रुव size_t SYCL_POOL_VMM_MAX_आकार = 1ull << 35; // 32 GB
 
-    int           device;
+    पूर्णाङ्क           device;
     sycl::context ctx;
     sycl::device  dev;
 
     uintptr_t pool_addr = 0;
-    size_t    pool_used = 0;
-    size_t    pool_size = 0;
+    size_t    pool_प्रयुक्तम् = 0;
+    size_t    pool_आकार = 0;
     size_t    granularity;
 
     // physical_mem owns the commits (unlike cuMemMap)
-    struct mapping {
+    संरचना mapping {
         sycl::ext::oneapi::experimental::physical_mem phys;
-        void * map_ptr;
+        शून्य * map_ptr;
     };
     std::vector<mapping> mappings;
 
-    explicit ggml_sycl_pool_vmm(queue_ptr qptr_, int device_) :
+    स्पष्ट ggml_sycl_pool_vmm(queue_ptr qptr_, पूर्णाङ्क device_) :
         device(device_),
         ctx(qptr_->get_context()),
         dev(qptr_->get_device()),
@@ -1998,56 +1998,56 @@ struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
     }
 
     ~ggml_sycl_pool_vmm() {
-        if (pool_addr == 0) {
-            return;
+        यदि (pool_addr == 0) {
+            प्रत्यागम;
         }
 
         // Per spec, unmap must (a) match the exact (ptr, size) of an earlier
         // physical_mem::map() call and (b) precede destruction of the
         // physical_mem objects (their dtors won't unmap).
-        for (auto & m : mappings) {
+        प्रति (स्वचालित & m : mappings) {
             SYCL_CHECK(CHECK_TRY_ERROR(sycl::ext::oneapi::experimental::unmap(
                 m.map_ptr, m.phys.size(), ctx)));
         }
         SYCL_CHECK(CHECK_TRY_ERROR(sycl::ext::oneapi::experimental::free_virtual_mem(
-            pool_addr, SYCL_POOL_VMM_MAX_SIZE, ctx)));
+            pool_addr, SYCL_POOL_VMM_MAX_आकार, ctx)));
     }
 
-    void * alloc(size_t size, size_t * actual_size) override {
+    शून्य * alloc(size_t size, size_t * actual_आकार) override {
         // round up the allocation size to the alignment to ensure that all allocations are aligned for all data types
-        size = GGML_PAD(size, SYCL_BUFFER_ALIGNMENT);
+        size = GGML_PAD(size, SYCL_बफर_ALIGNMENT);
 
-        size_t avail = pool_size - pool_used;
+        size_t avail = pool_आकार - pool_प्रयुक्तम्;
 
-        if (size > avail) {
+        यदि (size > avail) {
             // round up to the next multiple of the granularity
-            size_t reserve_size = GGML_PAD(size - avail, granularity);
+            size_t reserve_आकार = GGML_PAD(size - avail, granularity);
 
-            GGML_ASSERT(pool_size + reserve_size <= SYCL_POOL_VMM_MAX_SIZE);
+            GGML_ASSERT(pool_आकार + reserve_आकार <= SYCL_POOL_VMM_MAX_आकार);
 
-            if (ggml_sycl_memtrace_enabled()) {
-                GGML_LOG_INFO(GGML_SYCL_MEMTRACE_TAG " pool_vmm[%d] committing %5zu MiB (pool %5zu -> %5zu MiB)\n",
-                              device, reserve_size / (1024 * 1024), pool_size / (1024 * 1024),
-                              (pool_size + reserve_size) / (1024 * 1024));
+            यदि (ggml_sycl_memtrace_enabled()) {
+                GGML_LOG_INFO(GGML_SYCL_MEMTRACE_चिह्नकम् " pool_vmm[%d] committing %5zu MiB (pool %5zu -> %5zu MiB)\n",
+                              device, reserve_आकार / (1024 * 1024), pool_आकार / (1024 * 1024),
+                              (pool_आकार + reserve_आकार) / (1024 * 1024));
                 ggml_sycl_memtrace_report("before pool_vmm commit");
             }
 
             // allocate more physical memory
             std::optional<sycl::ext::oneapi::experimental::physical_mem> phys;
-            SYCL_CHECK(CHECK_TRY_ERROR(phys.emplace(dev, ctx, reserve_size)));
+            SYCL_CHECK(CHECK_TRY_ERROR(phys.emplace(dev, ctx, reserve_आकार)));
 
             // reserve virtual address space (if not already reserved)
-            if (pool_addr == 0) {
+            यदि (pool_addr == 0) {
                 SYCL_CHECK(CHECK_TRY_ERROR(
                     pool_addr = sycl::ext::oneapi::experimental::reserve_virtual_mem(
-                        SYCL_POOL_VMM_MAX_SIZE, ctx)));
+                        SYCL_POOL_VMM_MAX_आकार, ctx)));
             }
 
             // map at the end of the pool
-            void * map_ptr = nullptr;
+            शून्य * map_ptr = शून्यसूचकः;
             SYCL_CHECK(CHECK_TRY_ERROR(
-                map_ptr = phys->map(pool_addr + pool_size, reserve_size,
-                                    sycl::ext::oneapi::experimental::address_access_mode::read_write)));
+                map_ptr = phys->map(pool_addr + pool_आकार, reserve_आकार,
+                                    sycl::ext::oneapi::experimental::स्थानाङ्कः_access_बहुलकम्::read_write)));
 
             // stash these so we could unmap this exact range in dtor
             mappings.push_back({
@@ -2056,336 +2056,336 @@ struct ggml_sycl_pool_vmm : public ggml_sycl_pool {
             });
 
             // add to the pool
-            pool_size += reserve_size;
-            ggml_sycl_memtrace_add(GGML_SYCL_MEM_POOL_VMM, map_ptr, reserve_size);
+            pool_आकार += reserve_आकार;
+            ggml_sycl_memtrace_सङ्कलय(GGML_SYCL_MEM_POOL_VMM, map_ptr, reserve_आकार);
 
-#ifdef DEBUG_SYCL_MALLOC
+#यदि_परिभाषितम् DEBUG_SYCL_MALLOC
             GGML_LOG_INFO("sycl pool[%d]: size increased to %llu MB (reserved %llu MB)\n",
-                          device, (unsigned long long) (pool_size/1024/1024),
-                          (unsigned long long) (reserve_size/1024/1024));
-#endif
+                          device, (अचिह्नित दीर्घ दीर्घ) (pool_आकार/1024/1024),
+                          (अचिह्नित दीर्घ दीर्घ) (reserve_आकार/1024/1024));
+#यदि_अन्तः
         }
 
         GGML_ASSERT(pool_addr != 0);
 
-        void * ptr = reinterpret_cast<void *>(pool_addr + pool_used);
-        *actual_size = size;
-        pool_used += size;
+        शून्य * ptr = reinterpret_cast<शून्य *>(pool_addr + pool_प्रयुक्तम्);
+        *actual_आकार = size;
+        pool_प्रयुक्तम् += size;
 
-#ifdef DEBUG_SYCL_MALLOC
-        GGML_LOG_INFO("sycl pool[%d]: allocated %llu bytes at %p\n", device, (unsigned long long) size, ptr);
-#endif
+#यदि_परिभाषितम् DEBUG_SYCL_MALLOC
+        GGML_LOG_INFO("sycl pool[%d]: allocated %llu bytes at %p\n", device, (अचिह्नित दीर्घ दीर्घ) size, ptr);
+#यदि_अन्तः
 
-        return ptr;
+        प्रत्यागम ptr;
     }
 
-    void free(void * ptr, size_t size) override {
-#ifdef DEBUG_SYCL_MALLOC
-        GGML_LOG_INFO("sycl pool[%d]: freed %llu bytes at %p\n", device, (unsigned long long) size, ptr);
-#endif
+    शून्य मुक्त(शून्य * ptr, size_t size) override {
+#यदि_परिभाषितम् DEBUG_SYCL_MALLOC
+        GGML_LOG_INFO("sycl pool[%d]: freed %llu bytes at %p\n", device, (अचिह्नित दीर्घ दीर्घ) size, ptr);
+#यदि_अन्तः
 
-        pool_used -= size;
+        pool_प्रयुक्तम् -= size;
 
         // all deallocations must be in reverse order of the allocations
-        GGML_ASSERT(ptr == reinterpret_cast<void *>(pool_addr + pool_used));
+        GGML_ASSERT(ptr == reinterpret_cast<शून्य *>(pool_addr + pool_प्रयुक्तम्));
     }
 };
-#endif // defined(GGML_SYCL_SUPPORT_VMM)
+#यदि_अन्तः // defined(GGML_SYCL_SUPPORT_VMM)
 
-struct ggml_sycl_pool_host : public ggml_sycl_pool {
+संरचना ggml_sycl_pool_host : सार्वजनिक ggml_sycl_pool {
     queue_ptr qptr;
-    int       device;
+    पूर्णाङ्क       device;
 
-    struct ggml_sycl_buffer {
-        void * ptr  = nullptr;
+    संरचना ggml_sycl_बफर {
+        शून्य * ptr  = शून्यसूचकः;
         size_t size = 0;
     };
 
     // Set arbitrarly to 64
-    static constexpr int          MAX_POOL_SIZE{ 64 };
-    std::vector<ggml_sycl_buffer> buffer_pool = std::vector<ggml_sycl_buffer>(MAX_POOL_SIZE);
-    size_t                        pool_size   = 0;
-    int                           counter     = 0;
+    स्थिर constexpr पूर्णाङ्क          MAX_POOL_आकार{ 64 };
+    std::vector<ggml_sycl_बफर> बफर_pool = std::vector<ggml_sycl_बफर>(MAX_POOL_आकार);
+    size_t                        pool_आकार   = 0;
+    पूर्णाङ्क                           गणक     = 0;
 
-    explicit ggml_sycl_pool_host(queue_ptr qptr_, int device_) : qptr(qptr_), device(device_) {}
+    स्पष्ट ggml_sycl_pool_host(queue_ptr qptr_, पूर्णाङ्क device_) : qptr(qptr_), device(device_) {}
 
     ~ggml_sycl_pool_host() {
-        for (int i = 0; i < MAX_POOL_SIZE; ++i) {
-            ggml_sycl_buffer & b = buffer_pool[i];
-            if (b.ptr != nullptr) {
-                SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(b.ptr, *qptr)));
-                b.ptr = nullptr;
-                pool_size -= b.size;
+        प्रति (पूर्णाङ्क i = 0; i < MAX_POOL_आकार; ++i) {
+            ggml_sycl_बफर & b = बफर_pool[i];
+            यदि (b.ptr != शून्यसूचकः) {
+                SYCL_CHECK(CHECK_TRY_ERROR(sycl::मुक्त(b.ptr, *qptr)));
+                b.ptr = शून्यसूचकः;
+                pool_आकार -= b.size;
                 b.size = 0;
             }
         }
     }
 
-    void * alloc(size_t size, size_t * actual_size) override {
-        if (counter == MAX_POOL_SIZE) {
+    शून्य * alloc(size_t size, size_t * actual_आकार) override {
+        यदि (गणक == MAX_POOL_आकार) {
             // the pool wrapped around, no slot is reserved for this allocation
-            void * ptr = nullptr;
-            SYCL_CHECK(CHECK_TRY_ERROR(ptr = (void *) sycl::malloc_host(size, *qptr)));
-            if (!ptr) {
+            शून्य * ptr = शून्यसूचकः;
+            SYCL_CHECK(CHECK_TRY_ERROR(ptr = (शून्य *) sycl::malloc_host(size, *qptr)));
+            यदि (!ptr) {
                 GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on host\n", __func__, size);
-                return nullptr;
+                प्रत्यागम शून्यसूचकः;
             }
-            pool_size    += size;
-            *actual_size = size;
-            counter      = 0;
-            return ptr;
+            pool_आकार    += size;
+            *actual_आकार = size;
+            गणक      = 0;
+            प्रत्यागम ptr;
         }
-        ggml_sycl_buffer & b = buffer_pool[counter];
-        ++counter;
+        ggml_sycl_बफर & b = बफर_pool[गणक];
+        ++गणक;
 
-        if (b.ptr != nullptr) {
-            if (b.size >= size) {
+        यदि (b.ptr != शून्यसूचकः) {
+            यदि (b.size >= size) {
                 // hand out the cached buffer, free() puts it back into the pool
-                void * ptr = b.ptr;
-                *actual_size = b.size;
-                b.ptr = nullptr;
+                शून्य * ptr = b.ptr;
+                *actual_आकार = b.size;
+                b.ptr = शून्यसूचकः;
                 b.size = 0;
-                return ptr;
+                प्रत्यागम ptr;
             }
             // the cached buffer is too small, replace it
-            SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(b.ptr, *qptr)));
-            pool_size -= b.size;
-            b.ptr = nullptr;
+            SYCL_CHECK(CHECK_TRY_ERROR(sycl::मुक्त(b.ptr, *qptr)));
+            pool_आकार -= b.size;
+            b.ptr = शून्यसूचकः;
             b.size = 0;
         }
 
-        void * ptr;
-        SYCL_CHECK(CHECK_TRY_ERROR(ptr = (void *) sycl::malloc_host(size, *qptr)));
-        if (!ptr) {
+        शून्य * ptr;
+        SYCL_CHECK(CHECK_TRY_ERROR(ptr = (शून्य *) sycl::malloc_host(size, *qptr)));
+        यदि (!ptr) {
             GGML_LOG_ERROR("%s: can't allocate %zu Bytes of memory on host\n", __func__, size);
-            return nullptr;
+            प्रत्यागम शून्यसूचकः;
         }
-        pool_size    += size;
-        *actual_size = size;
-        return ptr;
+        pool_आकार    += size;
+        *actual_आकार = size;
+        प्रत्यागम ptr;
     }
 
-    void free(void * ptr, size_t size) override {
+    शून्य मुक्त(शून्य * ptr, size_t size) override {
         // if the pool is not completed add the pointer to it in place of the first nullptr found.
         // Otherwise free the buffer, all slots are cached.
-        for (int i = 0; i < MAX_POOL_SIZE; ++i) {
-            ggml_sycl_buffer & b = buffer_pool[i];
-            if (b.ptr == nullptr) {
+        प्रति (पूर्णाङ्क i = 0; i < MAX_POOL_आकार; ++i) {
+            ggml_sycl_बफर & b = बफर_pool[i];
+            यदि (b.ptr == शून्यसूचकः) {
                 b.ptr  = ptr;
                 b.size = size;
-                return;
+                प्रत्यागम;
             }
         }
-        SYCL_CHECK(CHECK_TRY_ERROR(sycl::free(ptr, *qptr)));
-        pool_size -= size;
+        SYCL_CHECK(CHECK_TRY_ERROR(sycl::मुक्त(ptr, *qptr)));
+        pool_आकार -= size;
     }
 };
 
-std::unique_ptr<ggml_sycl_pool> ggml_backend_sycl_context::new_pool_for_host(queue_ptr qptr, int device) {
+std::unique_ptr<ggml_sycl_pool> ggml_backend_sycl_context::new_pool_for_host(queue_ptr qptr, पूर्णाङ्क device) {
     // return pool for the host to speed up memory management
-    return std::unique_ptr<ggml_sycl_pool>(new ggml_sycl_pool_host(qptr, device));
+    प्रत्यागम std::unique_ptr<ggml_sycl_pool>(नूतन ggml_sycl_pool_host(qptr, device));
 }
 
-std::unique_ptr<ggml_sycl_pool> ggml_backend_sycl_context::new_pool_for_device(queue_ptr qptr, int device) {
-#if defined(GGML_SYCL_SUPPORT_VMM)
-    if (g_ggml_sycl_enable_vmm && ggml_sycl_info().devices[device].vmm) {
-        return std::unique_ptr<ggml_sycl_pool>(new ggml_sycl_pool_vmm(qptr, device));
+std::unique_ptr<ggml_sycl_pool> ggml_backend_sycl_context::new_pool_for_device(queue_ptr qptr, पूर्णाङ्क device) {
+#यदि defined(GGML_SYCL_SUPPORT_VMM)
+    यदि (g_ggml_sycl_enable_vmm && ggml_sycl_info().devices[device].vmm) {
+        प्रत्यागम std::unique_ptr<ggml_sycl_pool>(नूतन ggml_sycl_pool_vmm(qptr, device));
     }
-#endif // defined(GGML_SYCL_SUPPORT_VMM)
-    return std::unique_ptr<ggml_sycl_pool>(new ggml_sycl_pool_leg(qptr, device));
+#यदि_अन्तः // defined(GGML_SYCL_SUPPORT_VMM)
+    प्रत्यागम std::unique_ptr<ggml_sycl_pool>(नूतन ggml_sycl_pool_leg(qptr, device));
 }
 
 /// kernels
-typedef void (*ggml_sycl_op_mul_mat_t)(
+प्रकारनिर्देश शून्य (*ggml_sycl_op_mul_mat_t)(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor *src0, const ggml_tensor *src1, ggml_tensor *dst,
-    const char *src0_dd_i, const float *src1_ddf_i, const char *src1_ddq_i,
-    float *dst_dd_i, const int64_t row_low, const int64_t row_high,
-    const int64_t src1_ncols, const int64_t src1_padded_row_size,
-    const queue_ptr &stream);
+    ध्रुव ggml_tensor *src0, ध्रुव ggml_tensor *src1, ggml_tensor *dst,
+    ध्रुव वर्ण *src0_dd_i, ध्रुव भिन्न *src1_ddf_i, ध्रुव वर्ण *src1_ddq_i,
+    भिन्न *dst_dd_i, ध्रुव int64_t row_नीचः, ध्रुव int64_t row_उच्चः,
+    ध्रुव int64_t src1_ncols, ध्रुव int64_t src1_padded_row_आकार,
+    ध्रुव queue_ptr &stream);
 
 
 
-static void mul_mat_p021_f16_f32(
-    const void * __restrict__ vx, const float * __restrict__ y, float * __restrict__ dst,
-    const int ncols_x, const int nrows_x, const int nchannels_x, const int nchannels_y,
-    const sycl::nd_item<3> &item_ct1) {
+स्थिर शून्य mul_mat_p021_f16_f32(
+    ध्रुव शून्य * __restrict__ vx, ध्रुव भिन्न * __restrict__ y, भिन्न * __restrict__ dst,
+    ध्रुव पूर्णाङ्क ncols_x, ध्रुव पूर्णाङ्क nrows_x, ध्रुव पूर्णाङ्क nchannels_x, ध्रुव पूर्णाङ्क nchannels_y,
+    ध्रुव sycl::nd_item<3> &item_ct1) {
 
-    const sycl::half *x = (const sycl::half *)vx;
+    ध्रुव sycl::half *x = (ध्रुव sycl::half *)vx;
 
-    const int row_x = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ध्रुव पूर्णाङ्क row_x = item_ct1.get_local_range(1) * item_ct1.get_गणः(1) +
                       item_ct1.get_local_id(1);
-    const int channel = item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    ध्रुव पूर्णाङ्क channel = item_ct1.get_local_range(0) * item_ct1.get_गणः(0) +
                         item_ct1.get_local_id(0);
-    const int channel_x = channel / (nchannels_y / nchannels_x);
+    ध्रुव पूर्णाङ्क channel_x = channel / (nchannels_y / nchannels_x);
 
-    const int nrows_y = ncols_x;
-    const int nrows_dst = nrows_x;
-    const int row_dst = row_x;
+    ध्रुव पूर्णाङ्क nrows_y = ncols_x;
+    ध्रुव पूर्णाङ्क nrows_dst = nrows_x;
+    ध्रुव पूर्णाङ्क row_dst = row_x;
 
-    float tmp = 0.0f;
+    भिन्न tmp = 0.0f;
 
-    for (int col_x0 = 0; col_x0 < ncols_x;
+    प्रति (पूर्णाङ्क col_x0 = 0; col_x0 < ncols_x;
          col_x0 += item_ct1.get_local_range(2)) {
-        const int col_x = col_x0 + item_ct1.get_local_id(2);
+        ध्रुव पूर्णाङ्क col_x = col_x0 + item_ct1.get_local_id(2);
 
-        if (col_x >= ncols_x) {
-            break;
+        यदि (col_x >= ncols_x) {
+            भङ्ग;
         }
 
         // x is transposed and permuted
-        const int ix = row_x*nchannels_x*ncols_x + channel_x*ncols_x + col_x;
-        const float xi =
+        ध्रुव पूर्णाङ्क ix = row_x*nchannels_x*ncols_x + channel_x*ncols_x + col_x;
+        ध्रुव भिन्न xi =
             sycl::vec<sycl::half, 1>(x[ix])
-                .convert<float, sycl::rounding_mode::automatic>()[0];
+                .convert<भिन्न, sycl::rounding_बहुलकम्::automatic>()[0];
 
-        const int row_y = col_x;
+        ध्रुव पूर्णाङ्क row_y = col_x;
 
 
         // y is not transposed but permuted
-        const int iy = channel*nrows_y + row_y;
+        ध्रुव पूर्णाङ्क iy = channel*nrows_y + row_y;
 
         tmp += xi * y[iy];
     }
 
     // dst is not transposed and not permuted
-    const int idst = channel*nrows_dst + row_dst;
+    ध्रुव पूर्णाङ्क idst = channel*nrows_dst + row_dst;
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#निर्देशः unroll
+    प्रति (पूर्णाङ्क आवरणम् = WARP_आकार / 2; आवरणम् > 0; आवरणम् >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::permute_sub_गणः_by_xor(item_ct1.get_sub_गणः(), tmp, आवरणम्);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
+    यदि (item_ct1.get_local_id(2) == 0) {
         dst[idst] = tmp;
     }
 }
 
-static void mul_mat_vec_nc_f16_f32( // nc == non-contiguous
-    const void * __restrict__ vx, const float * __restrict__ y, float * __restrict__ dst, const int ncols_x, const int nrows_x,
-    const int row_stride_x, const int channel_stride_x,const int channel_stride_y, const int channel_x_divisor,
-    const sycl::nd_item<3> &item_ct1) {
+स्थिर शून्य mul_mat_vec_nc_f16_f32( // nc == non-contiguous
+    ध्रुव शून्य * __restrict__ vx, ध्रुव भिन्न * __restrict__ y, भिन्न * __restrict__ dst, ध्रुव पूर्णाङ्क ncols_x, ध्रुव पूर्णाङ्क nrows_x,
+    ध्रुव पूर्णाङ्क row_stride_x, ध्रुव पूर्णाङ्क channel_stride_x,ध्रुव पूर्णाङ्क channel_stride_y, ध्रुव पूर्णाङ्क channel_x_भाजकः,
+    ध्रुव sycl::nd_item<3> &item_ct1) {
 
-    const sycl::half *x = (const sycl::half *)vx;
+    ध्रुव sycl::half *x = (ध्रुव sycl::half *)vx;
 
-    const int row_x = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ध्रुव पूर्णाङ्क row_x = item_ct1.get_local_range(1) * item_ct1.get_गणः(1) +
                       item_ct1.get_local_id(1);
-    const int channel = item_ct1.get_local_range(0) * item_ct1.get_group(0) +
+    ध्रुव पूर्णाङ्क channel = item_ct1.get_local_range(0) * item_ct1.get_गणः(0) +
                         item_ct1.get_local_id(0);
-    const int channel_x = channel / channel_x_divisor;
+    ध्रुव पूर्णाङ्क channel_x = channel / channel_x_भाजकः;
 
-    const int nrows_dst = nrows_x;
-    const int row_dst   = row_x;
+    ध्रुव पूर्णाङ्क nrows_dst = nrows_x;
+    ध्रुव पूर्णाङ्क row_dst   = row_x;
 
-    const int idst = channel*nrows_dst + row_dst;
+    ध्रुव पूर्णाङ्क idst = channel*nrows_dst + row_dst;
 
-    float tmp = 0.0f;
+    भिन्न tmp = 0.0f;
 
-    for (int col_x0 = 0; col_x0 < ncols_x;
+    प्रति (पूर्णाङ्क col_x0 = 0; col_x0 < ncols_x;
          col_x0 += item_ct1.get_local_range(2)) {
-        const int col_x = col_x0 + item_ct1.get_local_id(2);
+        ध्रुव पूर्णाङ्क col_x = col_x0 + item_ct1.get_local_id(2);
 
-        if (col_x >= ncols_x) {
-            break;
+        यदि (col_x >= ncols_x) {
+            भङ्ग;
         }
 
-        const int row_y = col_x;
+        ध्रुव पूर्णाङ्क row_y = col_x;
 
-        const int ix = channel_x*channel_stride_x + row_x*row_stride_x + col_x;
-        const int iy = channel * channel_stride_y + row_y;
+        ध्रुव पूर्णाङ्क ix = channel_x*channel_stride_x + row_x*row_stride_x + col_x;
+        ध्रुव पूर्णाङ्क iy = channel * channel_stride_y + row_y;
 
-        const float xi =
+        ध्रुव भिन्न xi =
             sycl::vec<sycl::half, 1>(x[ix])
-                .convert<float, sycl::rounding_mode::automatic>()[0];
+                .convert<भिन्न, sycl::rounding_बहुलकम्::automatic>()[0];
 
         tmp += xi * y[iy];
     }
 
     // sum up partial sums and write back result
-#pragma unroll
-    for (int mask = WARP_SIZE / 2; mask > 0; mask >>= 1) {
+#निर्देशः unroll
+    प्रति (पूर्णाङ्क आवरणम् = WARP_आकार / 2; आवरणम् > 0; आवरणम् >>= 1) {
         tmp +=
-            dpct::permute_sub_group_by_xor(item_ct1.get_sub_group(), tmp, mask);
+            dpct::permute_sub_गणः_by_xor(item_ct1.get_sub_गणः(), tmp, आवरणम्);
     }
 
-    if (item_ct1.get_local_id(2) == 0) {
+    यदि (item_ct1.get_local_id(2) == 0) {
         dst[idst] = tmp;
     }
 }
 
-static void k_sum_rows_f32(const float * x, float * dst, const int ncols,
-                           const sycl::nd_item<3> &item_ct1) {
-    const int row = item_ct1.get_group(1);
-    const int col = item_ct1.get_local_id(2);
+स्थिर शून्य k_योग_पङ्क्तिकाः_f32(ध्रुव भिन्न * x, भिन्न * dst, ध्रुव पूर्णाङ्क ncols,
+                           ध्रुव sycl::nd_item<3> &item_ct1) {
+    ध्रुव पूर्णाङ्क row = item_ct1.get_गणः(1);
+    ध्रुव पूर्णाङ्क col = item_ct1.get_local_id(2);
 
-    float sum = 0.0f;
-    for (int i = col; i < ncols; i += item_ct1.get_local_range(2)) {
-        sum += x[row * ncols + i];
+    भिन्न योग_2 = 0.0f;
+    प्रति (पूर्णाङ्क i = col; i < ncols; i += item_ct1.get_local_range(2)) {
+        योग_2 += x[row * ncols + i];
     }
 
-    sum = warp_reduce_sum(sum, item_ct1);
+    योग_2 = warp_reduce_योग(योग_2, item_ct1);
 
-    if (col == 0) {
-        dst[row] = sum;
+    यदि (col == 0) {
+        dst[row] = योग_2;
     }
 }
 
 
-template<typename T>
-static inline void ggml_sycl_swap(T & a, T & b) {
+प्रतिरूपम्<प्रकारनाम T>
+स्थिर अन्तःस्थ शून्य ggml_sycl_swap(T & a, T & b) {
     T tmp = a;
     a = b;
     b = tmp;
 }
 
-template <ggml_sort_order order>
-__dpct_inline__ static void
-k_argsort_f32_i32(const float *x, int *dst, const int ncols, int ncols_pad,
-                  const int tasks_per_thread, const sycl::nd_item<3> &item_ct1,
+प्रतिरूपम् <ggml_क्रमय_क्रमः क्रमः>
+__dpct_inline__ स्थिर शून्य
+k_argsort_f32_i32(ध्रुव भिन्न *x, पूर्णाङ्क *dst, ध्रुव पूर्णाङ्क ncols, पूर्णाङ्क ncols_pad,
+                  ध्रुव पूर्णाङ्क tasks_प्रत्येकम्_thread, ध्रुव sycl::nd_item<3> &item_ct1,
                   uint8_t *dpct_local) {
     // bitonic sort
-    int col_index =  item_ct1.get_local_id(2);
-    int row = item_ct1.get_group(1);
+    पूर्णाङ्क col_सूचकांक =  item_ct1.get_local_id(2);
+    पूर्णाङ्क row = item_ct1.get_गणः(1);
 
-    for (int i = 0; i < tasks_per_thread; i++) {
-        int col = col_index * tasks_per_thread + i;
-        if (col >= ncols_pad) {
-            return;
+    प्रति (पूर्णाङ्क i = 0; i < tasks_प्रत्येकम्_thread; i++) {
+        पूर्णाङ्क col = col_सूचकांक * tasks_प्रत्येकम्_thread + i;
+        यदि (col >= ncols_pad) {
+            प्रत्यागम;
         }
     }
 
-    const float * x_row = x + row * ncols;
-    auto dst_row = (int *)dpct_local;
+    ध्रुव भिन्न * x_row = x + row * ncols;
+    स्वचालित dst_row = (पूर्णाङ्क *)dpct_local;
 
     // initialize indices
-    for (int i=0;i<tasks_per_thread;i++){
-        int col = col_index*tasks_per_thread+i;
+    प्रति (पूर्णाङ्क i=0;i<tasks_प्रत्येकम्_thread;i++){
+        पूर्णाङ्क col = col_सूचकांक*tasks_प्रत्येकम्_thread+i;
         dst_row[col] = col;
     }
 
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    for (int k = 2; k <= ncols_pad; k *= 2) {
-        for (int j = k / 2; j > 0; j /= 2) {
-            for (int i = 0; i < tasks_per_thread; i++) {
-                int col = col_index * tasks_per_thread + i;
-                int ixj = col ^ j;
-                if (ixj > col) {
-                    if ((col & k) == 0) {
-                        if (dst_row[col] >= ncols ||
+    प्रति (पूर्णाङ्क k = 2; k <= ncols_pad; k *= 2) {
+        प्रति (पूर्णाङ्क j = k / 2; j > 0; j /= 2) {
+            प्रति (पूर्णाङ्क i = 0; i < tasks_प्रत्येकम्_thread; i++) {
+                पूर्णाङ्क col = col_सूचकांक * tasks_प्रत्येकम्_thread + i;
+                पूर्णाङ्क ixj = col ^ j;
+                यदि (ixj > col) {
+                    यदि ((col & k) == 0) {
+                        यदि (dst_row[col] >= ncols ||
                             (dst_row[ixj] < ncols &&
-                             (order == GGML_SORT_ORDER_ASC
+                             (क्रमः == GGML_क्रमय_क्रमः_ASC
                                   ? x_row[dst_row[col]] > x_row[dst_row[ixj]]
                                   : x_row[dst_row[col]] <
                                         x_row[dst_row[ixj]]))) {
                             ggml_sycl_swap(dst_row[col], dst_row[ixj]);
                         }
-                    } else {
-                        if (dst_row[ixj] >= ncols ||
+                    } अन्यथा {
+                        यदि (dst_row[ixj] >= ncols ||
                             (dst_row[col] < ncols &&
-                             (order == GGML_SORT_ORDER_ASC
+                             (क्रमः == GGML_क्रमय_क्रमः_ASC
                                   ? x_row[dst_row[col]] < x_row[dst_row[ixj]]
                                   : x_row[dst_row[col]] >
                                         x_row[dst_row[ixj]]))) {
@@ -2399,80 +2399,80 @@ k_argsort_f32_i32(const float *x, int *dst, const int ncols, int ncols_pad,
     }
 
     // copy the result to dst without the padding
-    for (int i = 0; i < tasks_per_thread; i++) {
-        int col = col_index * tasks_per_thread + i;
-        if (col < ncols) {
+    प्रति (पूर्णाङ्क i = 0; i < tasks_प्रत्येकम्_thread; i++) {
+        पूर्णाङ्क col = col_सूचकांक * tasks_प्रत्येकम्_thread + i;
+        यदि (col < ncols) {
             dst[row * ncols + col] = dst_row[col];
         }
     }
 }
 
-static void diag_mask_inf_f32(const float * x, float * dst, const int ncols, const int rows_per_channel, const int n_past,
-                              const sycl::nd_item<3> &item_ct1) {
-    const int col = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+स्थिर शून्य diag_आवरणम्_inf_f32(ध्रुव भिन्न * x, भिन्न * dst, ध्रुव पूर्णाङ्क ncols, ध्रुव पूर्णाङ्क पङ्क्तिकाः_प्रत्येकम्_channel, ध्रुव पूर्णाङ्क n_past,
+                              ध्रुव sycl::nd_item<3> &item_ct1) {
+    ध्रुव पूर्णाङ्क col = item_ct1.get_local_range(1) * item_ct1.get_गणः(1) +
                     item_ct1.get_local_id(1);
-    const int row = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+    ध्रुव पूर्णाङ्क row = item_ct1.get_local_range(2) * item_ct1.get_गणः(2) +
                     item_ct1.get_local_id(2);
 
-    if (col >= ncols) {
-        return;
+    यदि (col >= ncols) {
+        प्रत्यागम;
     }
 
-    const int i = row*ncols + col;
+    ध्रुव पूर्णाङ्क i = row*ncols + col;
     //dst[i] = col > (n_past + row % rows_per_channel) ? -INFINITY : x[i];
     //dst[i] = x[i] - (col > n_past + row % rows_per_channel) * INT_MAX; // equivalent within rounding error but slightly faster on GPU
-    dst[i] = x[i] - (col > n_past + row % rows_per_channel) * FLT_MAX;
+    dst[i] = x[i] - (col > n_past + row % पङ्क्तिकाः_प्रत्येकम्_channel) * FLT_MAX;
 }
 
-static void scale_f32(const float * x, float * dst, const float scale, const float bias, const int k,
-                      const sycl::nd_item<3> &item_ct1) {
-    const int i = item_ct1.get_local_range(2) * item_ct1.get_group(2) +
+स्थिर शून्य scale_f32(ध्रुव भिन्न * x, भिन्न * dst, ध्रुव भिन्न scale, ध्रुव भिन्न bias, ध्रुव पूर्णाङ्क k,
+                      ध्रुव sycl::nd_item<3> &item_ct1) {
+    ध्रुव पूर्णाङ्क i = item_ct1.get_local_range(2) * item_ct1.get_गणः(2) +
                   item_ct1.get_local_id(2);
 
-    if (i >= k) {
-        return;
+    यदि (i >= k) {
+        प्रत्यागम;
     }
 
     dst[i] = scale * x[i] + bias;
 }
 
 
-static void ggml_mul_mat_p021_f16_f32_sycl(const void *vx, const float *y,
-                                           float *dst, const int ncols_x,
-                                           const int nrows_x,
-                                           const int nchannels_x,
-                                           const int nchannels_y,
+स्थिर शून्य ggml_mul_mat_p021_f16_f32_sycl(ध्रुव शून्य *vx, ध्रुव भिन्न *y,
+                                           भिन्न *dst, ध्रुव पूर्णाङ्क ncols_x,
+                                           ध्रुव पूर्णाङ्क nrows_x,
+                                           ध्रुव पूर्णाङ्क nchannels_x,
+                                           ध्रुव पूर्णाङ्क nchannels_y,
                                            queue_ptr stream) {
 
-    const sycl::range<3> block_nums(nchannels_y, nrows_x, 1);
-    const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+    ध्रुव sycl::range<3> खण्डम्_nums(nchannels_y, nrows_x, 1);
+    ध्रुव sycl::range<3> खण्डम्_dims(1, 1, WARP_आकार);
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
 
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+            sycl::nd_range<3>(खण्डम्_nums * खण्डम्_dims, खण्डम्_dims),
+            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
                 mul_mat_p021_f16_f32(vx, y, dst, ncols_x, nrows_x, nchannels_x,
                                      nchannels_y, item_ct1);
             });
     }
 }
 
-static void ggml_mul_mat_vec_nc_f16_f32_sycl(
-    const void *vx, const float *y, float *dst, const int ncols_x,
-    const int nrows_x, const int row_stride_x, const int nchannels_x,
-    const int nchannels_y, const int channel_stride_x, const int channel_stride_y, queue_ptr stream) {
+स्थिर शून्य ggml_mul_mat_vec_nc_f16_f32_sycl(
+    ध्रुव शून्य *vx, ध्रुव भिन्न *y, भिन्न *dst, ध्रुव पूर्णाङ्क ncols_x,
+    ध्रुव पूर्णाङ्क nrows_x, ध्रुव पूर्णाङ्क row_stride_x, ध्रुव पूर्णाङ्क nchannels_x,
+    ध्रुव पूर्णाङ्क nchannels_y, ध्रुव पूर्णाङ्क channel_stride_x, ध्रुव पूर्णाङ्क channel_stride_y, queue_ptr stream) {
 
-    const sycl::range<3> block_nums(nchannels_y, nrows_x, 1);
-    const sycl::range<3> block_dims(1, 1, WARP_SIZE);
+    ध्रुव sycl::range<3> खण्डम्_nums(nchannels_y, nrows_x, 1);
+    ध्रुव sycl::range<3> खण्डम्_dims(1, 1, WARP_आकार);
     {
         dpct::has_capability_or_fail(stream->get_device(),
                                      {sycl::aspect::fp16});
 
         stream->parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+            sycl::nd_range<3>(खण्डम्_nums * खण्डम्_dims, खण्डम्_dims),
+            [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
                 mul_mat_vec_nc_f16_f32(vx, y, dst, ncols_x, nrows_x,
                                        row_stride_x, channel_stride_x, channel_stride_y,
                                        nchannels_y / nchannels_x, item_ct1);
@@ -2482,224 +2482,224 @@ static void ggml_mul_mat_vec_nc_f16_f32_sycl(
 
 
 
-static void scale_f32_sycl(const float *x, float *dst, const float scale, const float bias,
-                           const int k, queue_ptr stream) {
-    const int num_blocks = (k + SYCL_SCALE_BLOCK_SIZE - 1) / SYCL_SCALE_BLOCK_SIZE;
+स्थिर शून्य scale_f32_sycl(ध्रुव भिन्न *x, भिन्न *dst, ध्रुव भिन्न scale, ध्रुव भिन्न bias,
+                           ध्रुव पूर्णाङ्क k, queue_ptr stream) {
+    ध्रुव पूर्णाङ्क अङ्कः_खण्डानि = (k + SYCL_SCALE_खण्डम्_आकार - 1) / SYCL_SCALE_खण्डम्_आकार;
     stream->parallel_for(
-        sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) *
-                              sycl::range<3>(1, 1, SYCL_SCALE_BLOCK_SIZE),
-                          sycl::range<3>(1, 1, SYCL_SCALE_BLOCK_SIZE)),
+        sycl::nd_range<3>(sycl::range<3>(1, 1, अङ्कः_खण्डानि) *
+                              sycl::range<3>(1, 1, SYCL_SCALE_खण्डम्_आकार),
+                          sycl::range<3>(1, 1, SYCL_SCALE_खण्डम्_आकार)),
         [=](sycl::nd_item<3> item_ct1) {
             scale_f32(x, dst, scale, bias, k, item_ct1);
         });
 }
 
 
-static void sum_rows_f32_sycl(const float *x, float *dst, const int ncols,
-                              const int nrows, queue_ptr stream) {
-    const sycl::range<3> block_dims(1, 1, WARP_SIZE);
-    const sycl::range<3> block_nums(1, nrows, 1);
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
+स्थिर शून्य योग_पङ्क्तिकाः_f32_sycl(ध्रुव भिन्न *x, भिन्न *dst, ध्रुव पूर्णाङ्क ncols,
+                              ध्रुव पूर्णाङ्क nrows, queue_ptr stream) {
+    ध्रुव sycl::range<3> खण्डम्_dims(1, 1, WARP_आकार);
+    ध्रुव sycl::range<3> खण्डम्_nums(1, nrows, 1);
+    stream->parallel_for(sycl::nd_range<3>(खण्डम्_nums * खण्डम्_dims, खण्डम्_dims),
                          [=](sycl::nd_item<3> item_ct1)
-                             [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                                 k_sum_rows_f32(x, dst, ncols, item_ct1);
+                             [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
+                                 k_योग_पङ्क्तिकाः_f32(x, dst, ncols, item_ct1);
                              });
 }
 
-static int next_power_of_2(int x) {
-    int n = 1;
-    while (n < x) {
+स्थिर पूर्णाङ्क अग्र_power_सम्बन्धि_2(पूर्णाङ्क x) {
+    पूर्णाङ्क n = 1;
+    यावत् (n < x) {
         n *= 2;
     }
-    return n;
+    प्रत्यागम n;
 }
 
-static void init_argsort_indices_padded(
-        int * idx,
-        const int nrows,
-        const int ncols_pad,
-        const sycl::nd_item<1> & item_ct1) {
-    const size_t gid = item_ct1.get_local_range(0) * item_ct1.get_group(0) + item_ct1.get_local_id(0);
-    const size_t total = (size_t) nrows * (size_t) ncols_pad;
+स्थिर शून्य init_argsort_indices_padded(
+        पूर्णाङ्क * idx,
+        ध्रुव पूर्णाङ्क nrows,
+        ध्रुव पूर्णाङ्क ncols_pad,
+        ध्रुव sycl::nd_item<1> & item_ct1) {
+    ध्रुव size_t gid = item_ct1.get_local_range(0) * item_ct1.get_गणः(0) + item_ct1.get_local_id(0);
+    ध्रुव size_t योग = (size_t) nrows * (size_t) ncols_pad;
 
-    if (gid >= total) {
-        return;
+    यदि (gid >= योग) {
+        प्रत्यागम;
     }
 
-    idx[gid] = (int) (gid % (size_t) ncols_pad);
+    idx[gid] = (पूर्णाङ्क) (gid % (size_t) ncols_pad);
 }
 
-template <ggml_sort_order order>
-static void argsort_f32_i32_global_pass(const float *            x,
-                                        int *                    idx,
-                                        const int                ncols,
-                                        const int                nrows,
-                                        const int                ncols_pad,
-                                        const int                j,
-                                        const int                k,
-                                        const sycl::nd_item<1> & item_ct1) {
-    const size_t gid   = item_ct1.get_local_range(0) * item_ct1.get_group(0) + item_ct1.get_local_id(0);
-    const size_t total = (size_t) nrows * (size_t) ncols_pad;
+प्रतिरूपम् <ggml_क्रमय_क्रमः क्रमः>
+स्थिर शून्य argsort_f32_i32_global_pass(ध्रुव भिन्न *            x,
+                                        पूर्णाङ्क *                    idx,
+                                        ध्रुव पूर्णाङ्क                ncols,
+                                        ध्रुव पूर्णाङ्क                nrows,
+                                        ध्रुव पूर्णाङ्क                ncols_pad,
+                                        ध्रुव पूर्णाङ्क                j,
+                                        ध्रुव पूर्णाङ्क                k,
+                                        ध्रुव sycl::nd_item<1> & item_ct1) {
+    ध्रुव size_t gid   = item_ct1.get_local_range(0) * item_ct1.get_गणः(0) + item_ct1.get_local_id(0);
+    ध्रुव size_t योग = (size_t) nrows * (size_t) ncols_pad;
 
-    if (gid >= total) {
-        return;
+    यदि (gid >= योग) {
+        प्रत्यागम;
     }
 
-    const int row = (int) (gid / (size_t) ncols_pad);
-    const int col = (int) (gid % (size_t) ncols_pad);
-    const int ixj = col ^ j;
+    ध्रुव पूर्णाङ्क row = (पूर्णाङ्क) (gid / (size_t) ncols_pad);
+    ध्रुव पूर्णाङ्क col = (पूर्णाङ्क) (gid % (size_t) ncols_pad);
+    ध्रुव पूर्णाङ्क ixj = col ^ j;
 
-    if (ixj <= col || ixj >= ncols_pad) {
-        return;
+    यदि (ixj <= col || ixj >= ncols_pad) {
+        प्रत्यागम;
     }
 
-    const size_t base  = (size_t) row * (size_t) ncols_pad;
-    const size_t pos_a = base + (size_t) col;
-    const size_t pos_b = base + (size_t) ixj;
+    ध्रुव size_t आधारः  = (size_t) row * (size_t) ncols_pad;
+    ध्रुव size_t pos_a = आधारः + (size_t) col;
+    ध्रुव size_t pos_b = आधारः + (size_t) ixj;
 
-    const int a = idx[pos_a];
-    const int b = idx[pos_b];
+    ध्रुव पूर्णाङ्क a = idx[pos_a];
+    ध्रुव पूर्णाङ्क b = idx[pos_b];
 
-    bool do_swap = false;
+    तार्किक do_swap = असत्य;
 
-    if ((col & k) == 0) {
-        if (a >= ncols ||
+    यदि ((col & k) == 0) {
+        यदि (a >= ncols ||
             (b < ncols &&
-             (order == GGML_SORT_ORDER_ASC ?
+             (क्रमः == GGML_क्रमय_क्रमः_ASC ?
                   x[(size_t) row * (size_t) ncols + (size_t) a] > x[(size_t) row * (size_t) ncols + (size_t) b] :
                   x[(size_t) row * (size_t) ncols + (size_t) a] < x[(size_t) row * (size_t) ncols + (size_t) b]))) {
-            do_swap = true;
+            do_swap = सत्य;
         }
-    } else {
-        if (b >= ncols ||
+    } अन्यथा {
+        यदि (b >= ncols ||
             (a < ncols &&
-             (order == GGML_SORT_ORDER_ASC ?
+             (क्रमः == GGML_क्रमय_क्रमः_ASC ?
                   x[(size_t) row * (size_t) ncols + (size_t) a] < x[(size_t) row * (size_t) ncols + (size_t) b] :
                   x[(size_t) row * (size_t) ncols + (size_t) a] > x[(size_t) row * (size_t) ncols + (size_t) b]))) {
-            do_swap = true;
+            do_swap = सत्य;
         }
     }
 
-    if (do_swap) {
+    यदि (do_swap) {
         idx[pos_a] = b;
         idx[pos_b] = a;
     }
 }
 
-static void copy_argsort_indices_unpadded(const int *              idx_padded,
-                                          int *                    dst,
-                                          const int                nrows,
-                                          const int                ncols,
-                                          const int                ncols_pad,
-                                          const sycl::nd_item<1> & item_ct1) {
-    const size_t gid   = item_ct1.get_local_range(0) * item_ct1.get_group(0) + item_ct1.get_local_id(0);
-    const size_t total = (size_t) nrows * (size_t) ncols;
+स्थिर शून्य copy_argsort_indices_unpadded(ध्रुव पूर्णाङ्क *              idx_padded,
+                                          पूर्णाङ्क *                    dst,
+                                          ध्रुव पूर्णाङ्क                nrows,
+                                          ध्रुव पूर्णाङ्क                ncols,
+                                          ध्रुव पूर्णाङ्क                ncols_pad,
+                                          ध्रुव sycl::nd_item<1> & item_ct1) {
+    ध्रुव size_t gid   = item_ct1.get_local_range(0) * item_ct1.get_गणः(0) + item_ct1.get_local_id(0);
+    ध्रुव size_t योग = (size_t) nrows * (size_t) ncols;
 
-    if (gid >= total) {
-        return;
+    यदि (gid >= योग) {
+        प्रत्यागम;
     }
 
-    const int row = (int) (gid / (size_t) ncols);
-    const int col = (int) (gid % (size_t) ncols);
+    ध्रुव पूर्णाङ्क row = (पूर्णाङ्क) (gid / (size_t) ncols);
+    ध्रुव पूर्णाङ्क col = (पूर्णाङ्क) (gid % (size_t) ncols);
 
     dst[(size_t) row * (size_t) ncols + (size_t) col] = idx_padded[(size_t) row * (size_t) ncols_pad + (size_t) col];
 }
 
-static void argsort_f32_i32_sycl(const float *x, int *dst, const int ncols,
-                                 const int nrows, ggml_sort_order order,
-                                 queue_ptr stream, int device, ggml_sycl_pool & pool) {
+स्थिर शून्य argsort_f32_i32_sycl(ध्रुव भिन्न *x, पूर्णाङ्क *dst, ध्रुव पूर्णाङ्क ncols,
+                                 ध्रुव पूर्णाङ्क nrows, ggml_क्रमय_क्रमः क्रमः,
+                                 queue_ptr stream, पूर्णाङ्क device, ggml_sycl_pool & pool) {
     // bitonic sort requires ncols to be power of 2
-    const int ncols_pad = next_power_of_2(ncols);
-    const size_t shared_mem = (size_t) ncols_pad * sizeof(int);
-    const size_t smpbo = ggml_sycl_info().devices[device].smpbo;
+    ध्रुव पूर्णाङ्क ncols_pad = अग्र_power_सम्बन्धि_2(ncols);
+    ध्रुव size_t shared_mem = (size_t) ncols_pad * परिमाण(पूर्णाङ्क);
+    ध्रुव size_t smpbo = ggml_sycl_info().devices[device].smpbo;
 
-    if (shared_mem > smpbo) {
-        ggml_sycl_pool_alloc<int> idx_padded_alloc(pool, (size_t) nrows * (size_t) ncols_pad);
-        int *                     idx_padded = idx_padded_alloc.get();
+    यदि (shared_mem > smpbo) {
+        ggml_sycl_pool_alloc<पूर्णाङ्क> idx_padded_alloc(pool, (size_t) nrows * (size_t) ncols_pad);
+        पूर्णाङ्क *                     idx_padded = idx_padded_alloc.get();
 
-        constexpr size_t block_size     = 256;
-        const size_t     total_padded   = (size_t) nrows * (size_t) ncols_pad;
-        const size_t     nblocks_padded = (total_padded + block_size - 1) / block_size;
+        constexpr size_t खण्डम्_आकार_3     = 256;
+        ध्रुव size_t     योग_padded   = (size_t) nrows * (size_t) ncols_pad;
+        ध्रुव size_t     nblocks_padded = (योग_padded + खण्डम्_आकार_3 - 1) / खण्डम्_आकार_3;
 
         stream->parallel_for(
-            sycl::nd_range<1>(sycl::range<1>(nblocks_padded * block_size), sycl::range<1>(block_size)),
+            sycl::nd_range<1>(sycl::range<1>(nblocks_padded * खण्डम्_आकार_3), sycl::range<1>(खण्डम्_आकार_3)),
             [=](sycl::nd_item<1> item_ct1) { init_argsort_indices_padded(idx_padded, nrows, ncols_pad, item_ct1); });
 
-        for (int k = 2; k <= ncols_pad; k *= 2) {
-            for (int j = k / 2; j > 0; j /= 2) {
-                if (order == GGML_SORT_ORDER_ASC) {
+        प्रति (पूर्णाङ्क k = 2; k <= ncols_pad; k *= 2) {
+            प्रति (पूर्णाङ्क j = k / 2; j > 0; j /= 2) {
+                यदि (क्रमः == GGML_क्रमय_क्रमः_ASC) {
                     stream->parallel_for(
-                        sycl::nd_range<1>(sycl::range<1>(nblocks_padded * block_size), sycl::range<1>(block_size)),
+                        sycl::nd_range<1>(sycl::range<1>(nblocks_padded * खण्डम्_आकार_3), sycl::range<1>(खण्डम्_आकार_3)),
                         [=](sycl::nd_item<1> item_ct1) {
-                            argsort_f32_i32_global_pass<GGML_SORT_ORDER_ASC>(x, idx_padded, ncols, nrows, ncols_pad, j,
+                            argsort_f32_i32_global_pass<GGML_क्रमय_क्रमः_ASC>(x, idx_padded, ncols, nrows, ncols_pad, j,
                                                                              k, item_ct1);
                         });
-                } else if (order == GGML_SORT_ORDER_DESC) {
+                } अन्यथा यदि (क्रमः == GGML_क्रमय_क्रमः_DESC) {
                     stream->parallel_for(
-                        sycl::nd_range<1>(sycl::range<1>(nblocks_padded * block_size), sycl::range<1>(block_size)),
+                        sycl::nd_range<1>(sycl::range<1>(nblocks_padded * खण्डम्_आकार_3), sycl::range<1>(खण्डम्_आकार_3)),
                         [=](sycl::nd_item<1> item_ct1) {
-                            argsort_f32_i32_global_pass<GGML_SORT_ORDER_DESC>(x, idx_padded, ncols, nrows, ncols_pad, j,
+                            argsort_f32_i32_global_pass<GGML_क्रमय_क्रमः_DESC>(x, idx_padded, ncols, nrows, ncols_pad, j,
                                                                               k, item_ct1);
                         });
-                } else {
+                } अन्यथा {
                     GGML_ABORT("invalid sort order");
                 }
             }
         }
 
-        const size_t total   = (size_t) nrows * (size_t) ncols;
-        const size_t nblocks = (total + block_size - 1) / block_size;
-        stream->parallel_for(sycl::nd_range<1>(sycl::range<1>(nblocks * block_size), sycl::range<1>(block_size)),
+        ध्रुव size_t योग   = (size_t) nrows * (size_t) ncols;
+        ध्रुव size_t nblocks = (योग + खण्डम्_आकार_3 - 1) / खण्डम्_आकार_3;
+        stream->parallel_for(sycl::nd_range<1>(sycl::range<1>(nblocks * खण्डम्_आकार_3), sycl::range<1>(खण्डम्_आकार_3)),
                              [=](sycl::nd_item<1> item_ct1) {
                                  copy_argsort_indices_unpadded(idx_padded, dst, nrows, ncols, ncols_pad, item_ct1);
                              });
 
-        return;
+        प्रत्यागम;
     }
 
-    int nth = 1;
-    int max_block_size = ggml_sycl_info().max_work_group_sizes[device];
-    while (nth < ncols_pad && nth < max_block_size)
+    पूर्णाङ्क nth = 1;
+    पूर्णाङ्क max_खण्डम्_आकार = ggml_sycl_info().max_work_गणः_sizes[device];
+    यावत् (nth < ncols_pad && nth < max_खण्डम्_आकार)
         nth *= 2;
-    if (nth > max_block_size)
-        nth = max_block_size;
+    यदि (nth > max_खण्डम्_आकार)
+        nth = max_खण्डम्_आकार;
 
-    const int tasks_per_thread = ncols_pad / nth;
+    ध्रुव पूर्णाङ्क tasks_प्रत्येकम्_thread = ncols_pad / nth;
 
-    const sycl::range<3> block_dims(1, 1, nth);
-    const sycl::range<3> block_nums(1, nrows, 1);
+    ध्रुव sycl::range<3> खण्डम्_dims(1, 1, nth);
+    ध्रुव sycl::range<3> खण्डम्_nums(1, nrows, 1);
 
-    if (order == GGML_SORT_ORDER_ASC) {
+    यदि (क्रमः == GGML_क्रमय_क्रमः_ASC) {
         stream->submit([&](sycl::handler &cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
                 sycl::range<1>(shared_mem), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
+                sycl::nd_range<3>(खण्डम्_nums * खण्डम्_dims, खण्डम्_dims),
                 [=](sycl::nd_item<3> item_ct1) {
-                    k_argsort_f32_i32<GGML_SORT_ORDER_ASC>(
-                        x, dst, ncols, ncols_pad, tasks_per_thread, item_ct1,
+                    k_argsort_f32_i32<GGML_क्रमय_क्रमः_ASC>(
+                        x, dst, ncols, ncols_pad, tasks_प्रत्येकम्_thread, item_ct1,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
                             .get());
                 });
         });
-    } else if (order == GGML_SORT_ORDER_DESC) {
+    } अन्यथा यदि (क्रमः == GGML_क्रमय_क्रमः_DESC) {
         stream->submit([&](sycl::handler &cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
                 sycl::range<1>(shared_mem), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
+                sycl::nd_range<3>(खण्डम्_nums * खण्डम्_dims, खण्डम्_dims),
                 [=](sycl::nd_item<3> item_ct1) {
-                    k_argsort_f32_i32<GGML_SORT_ORDER_DESC>(
-                        x, dst, ncols, ncols_pad, tasks_per_thread, item_ct1,
+                    k_argsort_f32_i32<GGML_क्रमय_क्रमः_DESC>(
+                        x, dst, ncols, ncols_pad, tasks_प्रत्येकम्_thread, item_ct1,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
                             .get());
                 });
         });
-    } else {
+    } अन्यथा {
         GGML_ABORT("fatal error");
     }
 }
@@ -2711,21 +2711,21 @@ static void argsort_f32_i32_sycl(const float *x, int *dst, const int ncols,
 //                      original column index through.
 // out_vals != nullptr: also emit the k winning values, for a later merge pass.
 // swap01:              emit in the output order the single-pass path uses.
-static void top_k_scan_merge_f32(
-    const float *   src_vals,
-    const int32_t * src_map,
-    const int       begin,
-    const int       end,
-    const int       k,
-    const int       block_size,
-    float *         shared_vals,
-    int *           shared_idx,
-    float *         out_vals,
-    int32_t *       out_idx,
-    const bool      swap01,
-    const sycl::nd_item<1> & item_ct1
+स्थिर शून्य शिखरम्_k_अवलोकनम्_merge_f32(
+    ध्रुव भिन्न *   src_vals,
+    ध्रुव int32_t * src_map,
+    ध्रुव पूर्णाङ्क       begin,
+    ध्रुव पूर्णाङ्क       end,
+    ध्रुव पूर्णाङ्क       k,
+    ध्रुव पूर्णाङ्क       खण्डम्_आकार_3,
+    भिन्न *         shared_vals,
+    पूर्णाङ्क *           shared_idx,
+    भिन्न *         बहिर्गमनम्_vals,
+    int32_t *       बहिर्गमनम्_idx,
+    ध्रुव तार्किक      swap01,
+    ध्रुव sycl::nd_item<1> & item_ct1
 ) {
-    const int tid = item_ct1.get_local_id(0);
+    ध्रुव पूर्णाङ्क tid = item_ct1.get_local_id(0);
 
     // The running top-k lives in SLM (shared local memory) rather than a private array:
     // an array indexed by a runtime position cannot be register-allocated, so a private
@@ -2735,78 +2735,78 @@ static void top_k_scan_merge_f32(
     // Lane-strided (lv[i * block_size]) rather than lane-blocked (lv[i]) so a given i is
     // contiguous across lanes; a k-strided layout would put every lane of a shift step in
     // the same SLM bank.
-    float * lv = shared_vals + tid;
-    int * li = shared_idx + tid;
+    भिन्न * lv = shared_vals + tid;
+    पूर्णाङ्क * li = shared_idx + tid;
 
-    for (int i = 0; i < k; i++) {
-        lv[i * block_size] = -FLT_MAX;
-        li[i * block_size] = -1;
+    प्रति (पूर्णाङ्क i = 0; i < k; i++) {
+        lv[i * खण्डम्_आकार_3] = -FLT_MAX;
+        li[i * खण्डम्_आकार_3] = -1;
     }
 
     // The k-th best, cached in a register. The reject test is taken for the large
     // majority of elements scanned, and in that case touches no memory.
-    float kth = -FLT_MAX;
+    भिन्न kth = -FLT_MAX;
 
-    for (int col = begin + tid; col < end; col += block_size) {
-        float val = src_vals[col];
+    प्रति (पूर्णाङ्क col = begin + tid; col < end; col += खण्डम्_आकार_3) {
+        भिन्न val = src_vals[col];
 
-        if (val > kth) {
-            int pos = k - 1;
-            while (pos > 0 && val > lv[(pos - 1) * block_size]) {
+        यदि (val > kth) {
+            पूर्णाङ्क pos = k - 1;
+            यावत् (pos > 0 && val > lv[(pos - 1) * खण्डम्_आकार_3]) {
                 pos--;
             }
 
-            for (int i = k - 1; i > pos; i--) {
-                lv[i * block_size] = lv[(i - 1) * block_size];
-                li[i * block_size] = li[(i - 1) * block_size];
+            प्रति (पूर्णाङ्क i = k - 1; i > pos; i--) {
+                lv[i * खण्डम्_आकार_3] = lv[(i - 1) * खण्डम्_आकार_3];
+                li[i * खण्डम्_आकार_3] = li[(i - 1) * खण्डम्_आकार_3];
             }
-            lv[pos * block_size] = val;
-            li[pos * block_size] = src_map ? src_map[col] : col;
+            lv[pos * खण्डम्_आकार_3] = val;
+            li[pos * खण्डम्_आकार_3] = src_map ? src_map[col] : col;
 
-            kth = lv[(k - 1) * block_size];
+            kth = lv[(k - 1) * खण्डम्_आकार_3];
         }
     }
 
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    if (tid != 0) {
-        return;
+    यदि (tid != 0) {
+        प्रत्यागम;
     }
 
     // Same treatment for the merge accumulator, past the per-lane region.
-    float * fv = shared_vals + (size_t) k * block_size;
-    int * fi = shared_idx + (size_t) k * block_size;
+    भिन्न * fv = shared_vals + (size_t) k * खण्डम्_आकार_3;
+    पूर्णाङ्क * fi = shared_idx + (size_t) k * खण्डम्_आकार_3;
 
-    for (int i = 0; i < k; i++) {
+    प्रति (पूर्णाङ्क i = 0; i < k; i++) {
         fv[i] = -FLT_MAX;
         fi[i] = -1;
     }
 
-    float fkth = -FLT_MAX;
+    भिन्न fkth = -FLT_MAX;
 
     // Candidates are visited in the same (t, i) order as before, so tie-breaking is
     // unchanged.
-    for (int t = 0; t < block_size; t++) {
-        for (int i = 0; i < k; i++) {
-            float val = shared_vals[i * block_size + t];
+    प्रति (पूर्णाङ्क t = 0; t < खण्डम्_आकार_3; t++) {
+        प्रति (पूर्णाङ्क i = 0; i < k; i++) {
+            भिन्न val = shared_vals[i * खण्डम्_आकार_3 + t];
 
-            if (val <= fkth) {
+            यदि (val <= fkth) {
                 // Lane t's list is sorted descending, so once one of its entries loses
                 // to the k-th best, every later entry loses too. fkth only rises, so
                 // that stays true for the rest of the merge. This turns the merge from
                 // block_size*k steps into roughly block_size plus the candidates
                 // accepted.
-                break;
+                भङ्ग;
             }
 
-            int idx = shared_idx[i * block_size + t];
+            पूर्णाङ्क idx = shared_idx[i * खण्डम्_आकार_3 + t];
 
-            int pos = k - 1;
-            while (pos > 0 && val > fv[pos - 1]) {
+            पूर्णाङ्क pos = k - 1;
+            यावत् (pos > 0 && val > fv[pos - 1]) {
                 pos--;
             }
 
-            for (int j = k - 1; j > pos; j--) {
+            प्रति (पूर्णाङ्क j = k - 1; j > pos; j--) {
                 fv[j] = fv[j - 1];
                 fi[j] = fi[j - 1];
             }
@@ -2817,31 +2817,31 @@ static void top_k_scan_merge_f32(
         }
     }
 
-    if (out_vals) {
-        for (int i = 0; i < k; i++) {
-            out_vals[i] = fv[i];
+    यदि (बहिर्गमनम्_vals) {
+        प्रति (पूर्णाङ्क i = 0; i < k; i++) {
+            बहिर्गमनम्_vals[i] = fv[i];
         }
     }
 
-    for (int i = 0; i < k; i++) {
-        out_idx[i] = fi[i];
+    प्रति (पूर्णाङ्क i = 0; i < k; i++) {
+        बहिर्गमनम्_idx[i] = fi[i];
     }
 
-    if (swap01 && k > 1) {
-        int32_t temp = out_idx[0];
-        out_idx[0] = out_idx[1];
-        out_idx[1] = temp;
+    यदि (swap01 && k > 1) {
+        int32_t अस्थायी = बहिर्गमनम्_idx[0];
+        बहिर्गमनम्_idx[0] = बहिर्गमनम्_idx[1];
+        बहिर्गमनम्_idx[1] = अस्थायी;
     }
 }
 
-static void top_k_f32_sycl(
+स्थिर शून्य शिखरम्_k_f32_sycl(
     ggml_backend_sycl_context & ctx,
-    const float * src,
+    ध्रुव भिन्न * src,
     int32_t * dst_indices,
-    const int64_t ncols,
-    const int64_t nrows,
-    const int k,
-    dpct::queue_ptr main_stream
+    ध्रुव int64_t ncols,
+    ध्रुव int64_t nrows,
+    ध्रुव पूर्णाङ्क k,
+    dpct::queue_ptr main_प्रवाहः
 ) {
     // A row is scanned by exactly one work-group, so a vocabulary-sized row leaves the
     // rest of the device idle. What the scan is short of is memory requests in flight,
@@ -2853,140 +2853,140 @@ static void top_k_f32_sycl(
     // (split_block + 1) * k * 8 bytes of SLM per group, so at the k <= 32 ceiling 128
     // lanes need about 33 KB, which leaves a single resident group per Xe-core. Revisit
     // if the supported k ever grows.
-    constexpr int split_block = 128;
-    constexpr int max_splits  = 128;
-    constexpr int min_cols    = 8192;
+    constexpr पूर्णाङ्क विभज_खण्डम् = 128;
+    constexpr पूर्णाङ्क max_splits  = 128;
+    constexpr पूर्णाङ्क min_स्तम्भसङ्ख्या    = 8192;
 
-    int nsplit = 1;
-    if (ncols >= min_cols) {
+    पूर्णाङ्क nsplit = 1;
+    यदि (ncols >= min_स्तम्भसङ्ख्या) {
         // A partition is then always >= split_block = 128 columns, hence always more than
         // the k <= 32 ceiling, so no pass is ever padded with -FLT_MAX sentinels.
-        const int64_t want = ncols / split_block;
-        nsplit = (int) (want > max_splits ? max_splits : want);
+        ध्रुव int64_t want = ncols / विभज_खण्डम्;
+        nsplit = (पूर्णाङ्क) (want > max_splits ? max_splits : want);
     }
 
-    if (nsplit > 1) {
-        const int nchunk = (int) ((ncols + nsplit - 1) / nsplit);
-        const size_t ncand = (size_t) nrows * nsplit * k;
+    यदि (nsplit > 1) {
+        ध्रुव पूर्णाङ्क nchunk = (पूर्णाङ्क) ((ncols + nsplit - 1) / nsplit);
+        ध्रुव size_t ncand = (size_t) nrows * nsplit * k;
 
-        ggml_sycl_pool_alloc<float>   part_vals(ctx.pool(), ncand);
+        ggml_sycl_pool_alloc<भिन्न>   part_vals(ctx.pool(), ncand);
         ggml_sycl_pool_alloc<int32_t> part_idx(ctx.pool(), ncand);
 
-        float *   pv = part_vals.get();
+        भिन्न *   pv = part_vals.get();
         int32_t * pi = part_idx.get();
 
-        const sycl::range<1> block_dims(split_block);
+        ध्रुव sycl::range<1> खण्डम्_dims(विभज_खण्डम्);
 
-        main_stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<float, 1> shared_vals(sycl::range<1>((split_block + 1) * k), cgh);
-            sycl::local_accessor<int, 1> shared_idx(sycl::range<1>((split_block + 1) * k), cgh);
+        main_प्रवाहः->submit([&](sycl::handler &cgh) {
+            sycl::local_accessor<भिन्न, 1> shared_vals(sycl::range<1>((विभज_खण्डम् + 1) * k), cgh);
+            sycl::local_accessor<पूर्णाङ्क, 1> shared_idx(sycl::range<1>((विभज_खण्डम् + 1) * k), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(nrows * nsplit) * block_dims, block_dims),
+                sycl::nd_range<1>(sycl::range<1>(nrows * nsplit) * खण्डम्_dims, खण्डम्_dims),
                 [=](sycl::nd_item<1> item_ct1) {
-                    const int grp = item_ct1.get_group(0);
-                    const int row = grp / nsplit;
-                    const int part = grp % nsplit;
+                    ध्रुव पूर्णाङ्क grp = item_ct1.get_गणः(0);
+                    ध्रुव पूर्णाङ्क row = grp / nsplit;
+                    ध्रुव पूर्णाङ्क part = grp % nsplit;
 
-                    const int begin = part * nchunk;
-                    int end = begin + nchunk;
-                    if (end > (int) ncols) {
-                        end = (int) ncols;
+                    ध्रुव पूर्णाङ्क begin = part * nchunk;
+                    पूर्णाङ्क end = begin + nchunk;
+                    यदि (end > (पूर्णाङ्क) ncols) {
+                        end = (पूर्णाङ्क) ncols;
                     }
 
-                    top_k_scan_merge_f32(
-                        src + (int64_t) row * ncols, nullptr, begin, end, k, split_block,
+                    शिखरम्_k_अवलोकनम्_merge_f32(
+                        src + (int64_t) row * ncols, शून्यसूचकः, begin, end, k, विभज_खण्डम्,
                         shared_vals.get_multi_ptr<sycl::access::decorated::no>().get(),
                         shared_idx.get_multi_ptr<sycl::access::decorated::no>().get(),
-                        pv + (size_t) grp * k, pi + (size_t) grp * k, false, item_ct1);
+                        pv + (size_t) grp * k, pi + (size_t) grp * k, असत्य, item_ct1);
                 });
         });
 
-        main_stream->submit([&](sycl::handler &cgh) {
-            sycl::local_accessor<float, 1> shared_vals(sycl::range<1>((split_block + 1) * k), cgh);
-            sycl::local_accessor<int, 1> shared_idx(sycl::range<1>((split_block + 1) * k), cgh);
+        main_प्रवाहः->submit([&](sycl::handler &cgh) {
+            sycl::local_accessor<भिन्न, 1> shared_vals(sycl::range<1>((विभज_खण्डम् + 1) * k), cgh);
+            sycl::local_accessor<पूर्णाङ्क, 1> shared_idx(sycl::range<1>((विभज_खण्डम् + 1) * k), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(nrows) * block_dims, block_dims),
+                sycl::nd_range<1>(sycl::range<1>(nrows) * खण्डम्_dims, खण्डम्_dims),
                 [=](sycl::nd_item<1> item_ct1) {
-                    const int row = item_ct1.get_group(0);
-                    const size_t off = (size_t) row * nsplit * k;
+                    ध्रुव पूर्णाङ्क row = item_ct1.get_गणः(0);
+                    ध्रुव size_t off = (size_t) row * nsplit * k;
 
-                    top_k_scan_merge_f32(
-                        pv + off, pi + off, 0, nsplit * k, k, split_block,
+                    शिखरम्_k_अवलोकनम्_merge_f32(
+                        pv + off, pi + off, 0, nsplit * k, k, विभज_खण्डम्,
                         shared_vals.get_multi_ptr<sycl::access::decorated::no>().get(),
                         shared_idx.get_multi_ptr<sycl::access::decorated::no>().get(),
-                        nullptr, dst_indices + (int64_t) row * k, true, item_ct1);
+                        शून्यसूचकः, dst_indices + (int64_t) row * k, सत्य, item_ct1);
                 });
         });
 
-        return;
+        प्रत्यागम;
     }
 
-    const int block_size = 128;
+    ध्रुव पूर्णाङ्क खण्डम्_आकार_3 = 128;
 
-    const sycl::range<1> block_dims(block_size);
-    const sycl::range<1> grid_dims(nrows);
+    ध्रुव sycl::range<1> खण्डम्_dims(खण्डम्_आकार_3);
+    ध्रुव sycl::range<1> grid_dims(nrows);
 
-    main_stream->submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<float, 1> shared_vals(sycl::range<1>((block_size + 1) * k), cgh);
-        sycl::local_accessor<int, 1> shared_idx(sycl::range<1>((block_size + 1) * k), cgh);
+    main_प्रवाहः->submit([&](sycl::handler &cgh) {
+        sycl::local_accessor<भिन्न, 1> shared_vals(sycl::range<1>((खण्डम्_आकार_3 + 1) * k), cgh);
+        sycl::local_accessor<पूर्णाङ्क, 1> shared_idx(sycl::range<1>((खण्डम्_आकार_3 + 1) * k), cgh);
 
         cgh.parallel_for(
-            sycl::nd_range<1>(grid_dims * block_dims, block_dims),
+            sycl::nd_range<1>(grid_dims * खण्डम्_dims, खण्डम्_dims),
             [=](sycl::nd_item<1> item_ct1) {
-                const int row = item_ct1.get_group(0);
+                ध्रुव पूर्णाङ्क row = item_ct1.get_गणः(0);
 
-                if (row >= nrows) return;
+                यदि (row >= nrows) प्रत्यागम;
 
-                top_k_scan_merge_f32(
-                    src + (int64_t) row * ncols, nullptr, 0, (int) ncols, k, block_size,
+                शिखरम्_k_अवलोकनम्_merge_f32(
+                    src + (int64_t) row * ncols, शून्यसूचकः, 0, (पूर्णाङ्क) ncols, k, खण्डम्_आकार_3,
                     shared_vals.get_multi_ptr<sycl::access::decorated::no>().get(),
                     shared_idx.get_multi_ptr<sycl::access::decorated::no>().get(),
-                    nullptr, dst_indices + (int64_t) row * k, true, item_ct1);
+                    शून्यसूचकः, dst_indices + (int64_t) row * k, सत्य, item_ct1);
             });
     });
 }
 
-static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
-                               const int nrows, queue_ptr stream) {
-    const sycl::range<3> block_dims(1, 1, SYCL_ARGMAX_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, nrows, 1);
-    const size_t shared_mem = 256 * sizeof(float);
+स्थिर शून्य argmax_f32_i32_sycl(ध्रुव भिन्न *x, पूर्णाङ्क *dst, ध्रुव पूर्णाङ्क ncols,
+                               ध्रुव पूर्णाङ्क nrows, queue_ptr stream) {
+    ध्रुव sycl::range<3> खण्डम्_dims(1, 1, SYCL_ARGMAX_खण्डम्_आकार);
+    ध्रुव sycl::range<3> खण्डम्_nums(1, nrows, 1);
+    ध्रुव size_t shared_mem = 256 * परिमाण(भिन्न);
 
     stream->submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<float, 1> shared_data(
-            sycl::range<1>(shared_mem/sizeof(float)), cgh);
-        sycl::local_accessor<int, 1> shared_indices(
-            sycl::range<1>(shared_mem/sizeof(float)), cgh);
+        sycl::local_accessor<भिन्न, 1> shared_दत्त(
+            sycl::range<1>(shared_mem/परिमाण(भिन्न)), cgh);
+        sycl::local_accessor<पूर्णाङ्क, 1> shared_indices(
+            sycl::range<1>(shared_mem/परिमाण(भिन्न)), cgh);
 
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
+            sycl::nd_range<3>(खण्डम्_nums * खण्डम्_dims, खण्डम्_dims),
             [=](sycl::nd_item<3> item_ct1) {
-                const int tid = item_ct1.get_local_id(2);
-                const int row = item_ct1.get_global_id(1);
+                ध्रुव पूर्णाङ्क tid = item_ct1.get_local_id(2);
+                ध्रुव पूर्णाङ्क row = item_ct1.get_global_id(1);
 
-                float max_val = -INFINITY;
-                int max_idx = -1;
+                भिन्न max_val = -INFINITY;
+                पूर्णाङ्क max_idx = -1;
 
-                for (int col = tid; col < ncols; col += 256) {
-                    float val = x[row * ncols + col];
-                    if (val > max_val) {
+                प्रति (पूर्णाङ्क col = tid; col < ncols; col += 256) {
+                    भिन्न val = x[row * ncols + col];
+                    यदि (val > max_val) {
                         max_val = val;
                         max_idx = col;
                     }
                 }
 
-                shared_data[tid] = max_val;
+                shared_दत्त[tid] = max_val;
                 shared_indices[tid] = max_idx;
                 item_ct1.barrier(sycl::access::fence_space::local_space);
 
-                for (int stride = 256/2; stride > 0; stride >>= 1) {
-                    if (tid < stride) {
-                        float val1 = shared_data[tid];
-                        float val2 = shared_data[tid + stride];
-                        if (val2 > val1) {
-                            shared_data[tid] = val2;
+                प्रति (पूर्णाङ्क stride = 256/2; stride > 0; stride >>= 1) {
+                    यदि (tid < stride) {
+                        भिन्न val1 = shared_दत्त[tid];
+                        भिन्न val2 = shared_दत्त[tid + stride];
+                        यदि (val2 > val1) {
+                            shared_दत्त[tid] = val2;
                             shared_indices[tid] = shared_indices[tid + stride];
                         }
                     }
@@ -2994,89 +2994,89 @@ static void argmax_f32_i32_sycl(const float *x, int *dst, const int ncols,
                 }
 
 
-                if (tid == 0) {
+                यदि (tid == 0) {
                     dst[row] = shared_indices[0];
                 }
             });
     });
 }
-static void diag_mask_inf_f32_sycl(const float *x, float *dst,
-                                   const int ncols_x, const int nrows_x,
-                                   const int rows_per_channel, const int n_past,
+स्थिर शून्य diag_आवरणम्_inf_f32_sycl(ध्रुव भिन्न *x, भिन्न *dst,
+                                   ध्रुव पूर्णाङ्क ncols_x, ध्रुव पूर्णाङ्क nrows_x,
+                                   ध्रुव पूर्णाङ्क पङ्क्तिकाः_प्रत्येकम्_channel, ध्रुव पूर्णाङ्क n_past,
                                    queue_ptr stream) {
-    const sycl::range<3> block_dims(1, SYCL_DIAG_MASK_INF_BLOCK_SIZE, 1);
-    const int block_num_x = (ncols_x + SYCL_DIAG_MASK_INF_BLOCK_SIZE - 1) / SYCL_DIAG_MASK_INF_BLOCK_SIZE;
-    const sycl::range<3> block_nums(1, block_num_x, nrows_x);
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
+    ध्रुव sycl::range<3> खण्डम्_dims(1, SYCL_DIAG_आवरणम्_INF_खण्डम्_आकार, 1);
+    ध्रुव पूर्णाङ्क खण्डम्_अङ्कः_x = (ncols_x + SYCL_DIAG_आवरणम्_INF_खण्डम्_आकार - 1) / SYCL_DIAG_आवरणम्_INF_खण्डम्_आकार;
+    ध्रुव sycl::range<3> खण्डम्_nums(1, खण्डम्_अङ्कः_x, nrows_x);
+    stream->parallel_for(sycl::nd_range<3>(खण्डम्_nums * खण्डम्_dims, खण्डम्_dims),
                          [=](sycl::nd_item<3> item_ct1) {
-                             diag_mask_inf_f32(x, dst, ncols_x,
-                                               rows_per_channel, n_past,
+                             diag_आवरणम्_inf_f32(x, dst, ncols_x,
+                                               पङ्क्तिकाः_प्रत्येकम्_channel, n_past,
                                                item_ct1);
                          });
 }
 
-static dpct::err0 ggml_sycl_cpy_tensor_2d(void *dst,
-                                          const struct ggml_tensor *src,
+स्थिर dpct::err0 ggml_sycl_cpy_tensor_2d(शून्य *dst,
+                                          ध्रुव संरचना ggml_tensor *src,
                                           int64_t i3, int64_t i2,
-                                          int64_t i1_low, int64_t i1_high,
-                                          queue_ptr stream) try {
+                                          int64_t i1_नीचः, int64_t i1_उच्चः,
+                                          queue_ptr stream) यत्न {
 
-    dpct::memcpy_direction kind;
-    char * src_ptr;
-    if (ggml_backend_buffer_is_host(src->buffer)) {
-        kind = dpct::host_to_device;
+    dpct::memcpy_direction विधा;
+    वर्ण * src_ptr;
+    यदि (ggml_backend_बफर_is_host(src->बफर)) {
+        विधा = dpct::host_गन्तव्यम्_device;
         //GGML_SYCL_DEBUG("%s: Host buffer type src tensor\n", __func__);
-        src_ptr = (char *) src->data;
+        src_ptr = (वर्ण *) src->दत्त;
         // GGML_SYCL_DEBUG("ggml_sycl_cpy_tensor_2d  GGML_BACKEND_TYPE_CPU src_ptr %p\n", src_ptr);
-    } else if (ggml_backend_buffer_is_sycl(src->buffer)) {
+    } अन्यथा यदि (ggml_backend_बफर_is_sycl(src->बफर)) {
         // If buffer is a SYCL buffer
         //GGML_SYCL_DEBUG("%s: SYCL buffer type src tensor\n", __func__);
-        kind    = dpct::device_to_device;
-        src_ptr = (char *) src->data;
-    } else if (ggml_backend_buffer_is_sycl_split(src->buffer)) {
+        विधा    = dpct::device_गन्तव्यम्_device;
+        src_ptr = (वर्ण *) src->दत्त;
+    } अन्यथा यदि (ggml_backend_बफर_is_sycl_विभज(src->बफर)) {
         /*
         If buffer is a SYCL split buffer
         */
         //GGML_SYCL_DEBUG("%s: Split buffer type src tensor\n", __func__);
-        GGML_ASSERT(i1_low == 0 && i1_high == src->ne[1]);
-        kind = dpct::device_to_device;
+        GGML_ASSERT(i1_नीचः == 0 && i1_उच्चः == src->ne[1]);
+        विधा = dpct::device_गन्तव्यम्_device;
         ggml_tensor_extra_gpu * extra = (ggml_tensor_extra_gpu *) src->extra;
-        int id;
+        पूर्णाङ्क id;
         SYCL_CHECK(CHECK_TRY_ERROR(
             id = get_current_device_id()));
         // GGML_SYCL_DEBUG("current device index %d\n", id);
-        src_ptr = (char *) extra->data_device[id];
-    } else {
+        src_ptr = (वर्ण *) extra->दत्त_device[id];
+    } अन्यथा {
         // GGML_SYCL_DEBUG("GGML_ABORT("fatal error")\n");
         GGML_ABORT("fatal error");
     }
-    char * dst_ptr = (char *) dst;
+    वर्ण * dst_ptr = (वर्ण *) dst;
 
     GGML_TENSOR_LOCALS_1(int64_t, ne, src, ne);
     GGML_TENSOR_LOCALS(int64_t, nb, src, nb);
-    const enum ggml_type type = src->type;
-    const int64_t ts = ggml_type_size(type);
-    const int64_t bs = ggml_blck_size(type);
-    int64_t i1_diff = i1_high - i1_low;
+    ध्रुव गणना ggml_type type = src->type;
+    ध्रुव int64_t ts = ggml_type_आकार(type);
+    ध्रुव int64_t bs = ggml_blck_आकार(type);
+    int64_t i1_diff = i1_उच्चः - i1_नीचः;
 
-    const char * x = src_ptr + i1_low*nb1 + i2*nb2 + i3*nb3;
-    if (nb0 == ts && nb1 == ts*ne0/bs) {
+    ध्रुव वर्ण * x = src_ptr + i1_नीचः*nb1 + i2*nb2 + i3*nb3;
+    यदि (nb0 == ts && nb1 == ts*ne0/bs) {
         // GGML_SYCL_DEBUG("stream->memcpy: dst_ptr=%p, x=%p, size=%lu\n", dst_ptr, x, i1_diff * nb1);
         // return CHECK_TRY_ERROR(stream->memcpy(dst_ptr, x, i1_diff * nb1));
-        return CHECK_TRY_ERROR(dpct::async_dpct_memcpy(dst_ptr, x, i1_diff * nb1,
-                                    kind, *stream));
+        प्रत्यागम CHECK_TRY_ERROR(dpct::async_dpct_memcpy(dst_ptr, x, i1_diff * nb1,
+                                    विधा, *stream));
 
-    } else if (nb0 == ts) {
-        return CHECK_TRY_ERROR(
+    } अन्यथा यदि (nb0 == ts) {
+        प्रत्यागम CHECK_TRY_ERROR(
             dpct::async_dpct_memcpy(dst_ptr, ts * ne0 / bs, x, nb1,
-                                    ts * ne0 / bs, i1_diff, kind, *stream));
-    } else {
-        for (int64_t i1 = 0; i1 < i1_diff; i1++) {
-            const void * rx = (const void *) ((const char *) x + i1*nb1);
-            void * rd = (void *) (dst_ptr + i1*ts*ne0/bs);
+                                    ts * ne0 / bs, i1_diff, विधा, *stream));
+    } अन्यथा {
+        प्रति (int64_t i1 = 0; i1 < i1_diff; i1++) {
+            ध्रुव शून्य * rx = (ध्रुव शून्य *) ((ध्रुव वर्ण *) x + i1*nb1);
+            शून्य * rd = (शून्य *) (dst_ptr + i1*ts*ne0/bs);
             // pretend the row is a matrix with cols=1
             dpct::err0 r = CHECK_TRY_ERROR(dpct::async_dpct_memcpy(
-                rd, ts / bs, rx, nb0, ts / bs, ne0, kind, *stream));
+                rd, ts / bs, rx, nb0, ts / bs, ne0, विधा, *stream));
             /*
             DPCT1001:85: The statement could not be removed.
             */
@@ -3084,243 +3084,243 @@ static dpct::err0 ggml_sycl_cpy_tensor_2d(void *dst,
             DPCT1000:86: Error handling if-stmt was detected but could not be
             rewritten.
             */
-            if (r != 0) return r;
+            यदि (r != 0) प्रत्यागम r;
         }
-        return 0;
+        प्रत्यागम 0;
     }
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-inline void ggml_sycl_op_mul_mat_sycl(
+अन्तःस्थ शून्य ggml_sycl_op_mul_mat_sycl(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor *src0, const ggml_tensor *src1, ggml_tensor *dst,
-    const char *src0_dd_i, const float *src1_ddf_i, const char *src1_ddq_i,
-    float *dst_dd_i, const int64_t row_low, const int64_t row_high,
-    const int64_t src1_ncols, const int64_t src1_padded_row_size,
-    const queue_ptr &stream) try {
+    ध्रुव ggml_tensor *src0, ध्रुव ggml_tensor *src1, ggml_tensor *dst,
+    ध्रुव वर्ण *src0_dd_i, ध्रुव भिन्न *src1_ddf_i, ध्रुव वर्ण *src1_ddq_i,
+    भिन्न *dst_dd_i, ध्रुव int64_t row_नीचः, ध्रुव int64_t row_उच्चः,
+    ध्रुव int64_t src1_ncols, ध्रुव int64_t src1_padded_row_आकार,
+    ध्रुव queue_ptr &stream) यत्न {
 
-    GGML_ASSERT(src0_dd_i  != nullptr);
-    GGML_ASSERT(src1_ddf_i != nullptr);
-    GGML_ASSERT(dst_dd_i   != nullptr);
+    GGML_ASSERT(src0_dd_i  != शून्यसूचकः);
+    GGML_ASSERT(src1_ddf_i != शून्यसूचकः);
+    GGML_ASSERT(dst_dd_i   != शून्यसूचकः);
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne10 = src1->ne[0];
+    ध्रुव int64_t ne00 = src0->ne[0];
+    ध्रुव int64_t ne10 = src1->ne[0];
     GGML_ASSERT(ne00 == ne10);
 
-    const int64_t row_diff = row_high - row_low;
+    ध्रुव int64_t row_diff = row_उच्चः - row_नीचः;
 
-    int id;
+    पूर्णाङ्क id;
     SYCL_CHECK(
         CHECK_TRY_ERROR(id = get_current_device_id()));
 
-    const int64_t ne0 = dst->ne[0]; // used by MKL only
+    ध्रुव int64_t ne0 = dst->ne[0]; // used by MKL only
     // the main device has a larger memory buffer to hold the results from all GPUs
     // ldc == nrows of the matrix that cuBLAS writes into
-    int ldc = id == ctx.device ? ne0 : row_diff; // used by MKL only
+    पूर्णाङ्क ldc = id == ctx.device ? ne0 : row_diff; // used by MKL only
 
-#ifdef GGML_SYCL_F16
-    bool use_fp16 = true;  // TODO(Yu) SYCL capability check
-#else
-    bool use_fp16 = false;
-#endif
+#यदि_परिभाषितम् GGML_SYCL_F16
+    तार्किक use_fp16 = सत्य;  // TODO(Yu) SYCL capability check
+#अन्यथा
+    तार्किक use_fp16 = असत्य;
+#यदि_अन्तः
 
-#if GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
+#यदि GGML_SYCL_DNNL && defined(GGML_SYCL_HAS_BF16)
     // Fast path for bf16 src0
-    if (src0->type == GGML_TYPE_BF16 && g_ggml_sycl_enable_dnn &&
+    यदि (src0->type == GGML_TYPE_BF16 && g_ggml_sycl_enable_dnn &&
         ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device()) && ggml_is_contiguous(src0) &&
         row_diff == src0->ne[1]) {
-        using bf16_t = sycl::ext::oneapi::bfloat16;
+        उपयुज्य bf16_t = sycl::ext::oneapi::bfloat16;
         ggml_sycl_pool_alloc<bf16_t> src1_as_bf16(ctx.pool(), src1_ncols*ne10);
-        if (src1->type != GGML_TYPE_BF16) {
-            const to_bf16_sycl_t to_bf16_sycl = ggml_get_to_bf16_sycl(src1->type, dst);
-            GGML_ASSERT(to_bf16_sycl != nullptr);
-            to_bf16_sycl(src1_ddf_i, src1_as_bf16.get(), src1_ncols*ne10, stream);
-        } else {
-            stream->memcpy(src1_as_bf16.get(), src1_ddf_i, src1_ncols*ne10*sizeof(bf16_t));
+        यदि (src1->type != GGML_TYPE_BF16) {
+            ध्रुव गन्तव्यम्_bf16_sycl_t गन्तव्यम्_bf16_sycl = ggml_get_गन्तव्यम्_bf16_sycl(src1->type, dst);
+            GGML_ASSERT(गन्तव्यम्_bf16_sycl != शून्यसूचकः);
+            गन्तव्यम्_bf16_sycl(src1_ddf_i, src1_as_bf16.get(), src1_ncols*ne10, stream);
+        } अन्यथा {
+            stream->स्मृतिं_प्रतिलिख(src1_as_bf16.get(), src1_ddf_i, src1_ncols*ne10*परिमाण(bf16_t));
         }
         DnnlGemmWrapper::row_gemm(ctx, row_diff, src1_ncols, ne10,
-                                  src0_dd_i, DnnlGemmWrapper::to_dt<bf16_t>(),
-                                  src1_as_bf16.get(), DnnlGemmWrapper::to_dt<bf16_t>(),
-                                  dst_dd_i, DnnlGemmWrapper::to_dt<float>(), stream);
-        GGML_UNUSED(dst);
-        GGML_UNUSED(src1_ddq_i);
-        GGML_UNUSED(src1_padded_row_size);
-        return;
+                                  src0_dd_i, DnnlGemmWrapper::गन्तव्यम्_dt<bf16_t>(),
+                                  src1_as_bf16.get(), DnnlGemmWrapper::गन्तव्यम्_dt<bf16_t>(),
+                                  dst_dd_i, DnnlGemmWrapper::गन्तव्यम्_dt<भिन्न>(), stream);
+        GGML_अप्रयुक्तम्(dst);
+        GGML_अप्रयुक्तम्(src1_ddq_i);
+        GGML_अप्रयुक्तम्(src1_padded_row_आकार);
+        प्रत्यागम;
     }
-#endif
+#यदि_अन्तः
 
     // dequantize inside the GEMM instead of writing the f16 weights out and reading them back; src1
     // goes in its own type, so there is no separate conversion pass. The A stage
     // decodes the weight bytes in place, so an installed persistent reorder must be
     // visible to it: pass the flag through; types without an SoA A-stage decline
     // inside and this falls through to the reorder-aware conversion route below.
-    bool src0_reordered = false;
-    if (const auto * src0_extra = static_cast<const ggml_tensor_extra_gpu *>(src0->extra)) {
+    तार्किक src0_reordered = असत्य;
+    यदि (ध्रुव स्वचालित * src0_extra = static_cast<ध्रुव ggml_tensor_extra_gpu *>(src0->extra)) {
         src0_reordered = src0_extra->optimized_feature.reorder;
     }
-    if (ggml_is_quantized(src0->type) && ggml_is_contiguous(src0) && row_diff == src0->ne[1] &&
+    यदि (ggml_is_quantized(src0->type) && ggml_is_contiguous(src0) && row_diff == src0->ne[1] &&
         ggml_sycl_fused_dequant_gemm(src0->type, src0_reordered, src0_dd_i, src1_ddf_i, src1->type, ggml_sycl_src1_prec(dst), dst_dd_i,
                                      row_diff, src1_ncols, ne10, ldc, ctx.pool(), stream)) {
-        return;
+        प्रत्यागम;
     }
 
     // the f16 route converts src1 to f16 [TAG_GGML_PREC]
     use_fp16 = use_fp16 && ggml_sycl_src1_f16_ok(dst);
-    if ((src0->type == GGML_TYPE_F16 || ggml_is_quantized(src0->type)) && use_fp16 && ggml_is_contiguous(src0) &&
+    यदि ((src0->type == GGML_TYPE_F16 || ggml_is_quantized(src0->type)) && use_fp16 && ggml_is_contiguous(src0) &&
         row_diff == src0->ne[1] && dst->op_params[0] == GGML_PREC_DEFAULT) {
         ggml_sycl_pool_alloc<sycl::half> src1_as_f16(ctx.pool());
-        if (src1->type != GGML_TYPE_F16) {
+        यदि (src1->type != GGML_TYPE_F16) {
             scope_op_debug_print scope_dbg_print(__func__, "/to_fp16_sycl", dst, /*num_src=*/2,
                                                  " : converting src1 to fp16");
-            const to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src1->type, dst);
-            GGML_ASSERT(to_fp16_sycl != nullptr);
+            ध्रुव गन्तव्यम्_fp16_sycl_t गन्तव्यम्_fp16_sycl = ggml_get_गन्तव्यम्_fp16_sycl(src1->type, dst);
+            GGML_ASSERT(गन्तव्यम्_fp16_sycl != शून्यसूचकः);
             size_t ne = src1_ncols*ne10;
             src1_as_f16.alloc(ne);
-            to_fp16_sycl(src1_ddf_i, src1_as_f16.get(), ne, stream);
+            गन्तव्यम्_fp16_sycl(src1_ddf_i, src1_as_f16.get(), ne, stream);
         }
-        const sycl::half *src1_ptr = src1->type == GGML_TYPE_F16
-                ? (const sycl::half *)src1_ddf_i
+        ध्रुव sycl::half *src1_ptr = src1->type == GGML_TYPE_F16
+                ? (ध्रुव sycl::half *)src1_ddf_i
                 : src1_as_f16.get();
 
         ggml_sycl_pool_alloc<sycl::half> src0_as_f16(ctx.pool());
-        if (src0->type != GGML_TYPE_F16) {
+        यदि (src0->type != GGML_TYPE_F16) {
             scope_op_debug_print scope_dbg_print(__func__, "/to_fp16_sycl", dst, /*num_src=*/2,
                                                  " : converting src0 to fp16");
-            const to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src0->type, dst);
-            GGML_ASSERT(to_fp16_sycl != nullptr);
+            ध्रुव गन्तव्यम्_fp16_sycl_t गन्तव्यम्_fp16_sycl = ggml_get_गन्तव्यम्_fp16_sycl(src0->type, dst);
+            GGML_ASSERT(गन्तव्यम्_fp16_sycl != शून्यसूचकः);
             size_t ne = row_diff*ne00;
             src0_as_f16.alloc(ne);
-            to_fp16_sycl(src0_dd_i, src0_as_f16.get(), ne, stream);
+            गन्तव्यम्_fp16_sycl(src0_dd_i, src0_as_f16.get(), ne, stream);
         }
-        const sycl::half *src0_ptr = src0->type == GGML_TYPE_F16
-                                         ? (const sycl::half *)src0_dd_i
+        ध्रुव sycl::half *src0_ptr = src0->type == GGML_TYPE_F16
+                                         ? (ध्रुव sycl::half *)src0_dd_i
                                          : src0_as_f16.get();
 
-#if GGML_SYCL_DNNL
-        if (g_ggml_sycl_enable_dnn && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
+#यदि GGML_SYCL_DNNL
+        यदि (g_ggml_sycl_enable_dnn && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
                 DnnlGemmWrapper::row_gemm(ctx,row_diff, src1_ncols , ne10, src0_ptr,
-                                     DnnlGemmWrapper::to_dt<sycl::half>(), src1_ptr, DnnlGemmWrapper::to_dt<sycl::half>(),
-                                      dst_dd_i, DnnlGemmWrapper::to_dt<float>(), stream);
+                                     DnnlGemmWrapper::गन्तव्यम्_dt<sycl::half>(), src1_ptr, DnnlGemmWrapper::गन्तव्यम्_dt<sycl::half>(),
+                                      dst_dd_i, DnnlGemmWrapper::गन्तव्यम्_dt<भिन्न>(), stream);
         }
-        else
-#endif
+        अन्यथा
+#यदि_अन्तः
         {
-            const float alpha = 1.0f;
-            const float beta  = 0.0f;
+            ध्रुव भिन्न alpha = 1.0f;
+            ध्रुव भिन्न beta  = 0.0f;
             SYCL_CHECK(CHECK_TRY_ERROR(dpct::gemm(
                 *stream, oneapi::mkl::transpose::trans,
                 oneapi::mkl::transpose::nontrans, row_diff, src1_ncols, ne10,
-                &alpha, src0_ptr, dpct::library_data_t::real_half, ne00,
-                src1_ptr, dpct::library_data_t::real_half, ne10, &beta,
-                dst_dd_i, dpct::library_data_t::real_float, ldc,
-                dpct::library_data_t::real_float)));
+                &alpha, src0_ptr, dpct::library_दत्त_t::real_half, ne00,
+                src1_ptr, dpct::library_दत्त_t::real_half, ne10, &beta,
+                dst_dd_i, dpct::library_दत्त_t::real_float, ldc,
+                dpct::library_दत्त_t::real_float)));
         }
-    } else {
-        ggml_sycl_pool_alloc<float> src0_ddq_as_f32(ctx.pool());
-        ggml_sycl_pool_alloc<float> src1_ddq_as_f32(ctx.pool());
-        if (src0->type != GGML_TYPE_F32) {
+    } अन्यथा {
+        ggml_sycl_pool_alloc<भिन्न> src0_ddq_as_f32(ctx.pool());
+        ggml_sycl_pool_alloc<भिन्न> src1_ddq_as_f32(ctx.pool());
+        यदि (src0->type != GGML_TYPE_F32) {
             scope_op_debug_print scope_dbg_print(__func__, "/to_fp32_sycl", dst, /*num_src=*/2,
                                                  " : converting src0 to fp32");
-            const to_fp32_sycl_t to_fp32_sycl = ggml_get_to_fp32_sycl(src0->type, dst);
-            GGML_ASSERT(to_fp32_sycl != nullptr);
+            ध्रुव गन्तव्यम्_fp32_sycl_t गन्तव्यम्_fp32_sycl = ggml_get_गन्तव्यम्_fp32_sycl(src0->type, dst);
+            GGML_ASSERT(गन्तव्यम्_fp32_sycl != शून्यसूचकः);
             src0_ddq_as_f32.alloc(row_diff*ne00);
-            to_fp32_sycl(src0_dd_i, src0_ddq_as_f32.get(), row_diff*ne00, stream);
+            गन्तव्यम्_fp32_sycl(src0_dd_i, src0_ddq_as_f32.get(), row_diff*ne00, stream);
         }
-        if (src1->type != GGML_TYPE_F32) {
+        यदि (src1->type != GGML_TYPE_F32) {
             scope_op_debug_print scope_dbg_print(__func__, "/to_fp32_sycl", dst, /*num_src=*/2,
                                                  " : converting src1 to fp32");
-            const to_fp32_sycl_t to_fp32_sycl = ggml_get_to_fp32_sycl(src1->type, dst);
-            GGML_ASSERT(to_fp32_sycl != nullptr);
+            ध्रुव गन्तव्यम्_fp32_sycl_t गन्तव्यम्_fp32_sycl = ggml_get_गन्तव्यम्_fp32_sycl(src1->type, dst);
+            GGML_ASSERT(गन्तव्यम्_fp32_sycl != शून्यसूचकः);
             src1_ddq_as_f32.alloc(src1_ncols*ne10);
-            to_fp32_sycl(src1_ddf_i, src1_ddq_as_f32.get(), src1_ncols*ne10, stream);
+            गन्तव्यम्_fp32_sycl(src1_ddf_i, src1_ddq_as_f32.get(), src1_ncols*ne10, stream);
         }
-        const float * src0_ddf_i = src0->type == GGML_TYPE_F32 ? (const float *) src0_dd_i : src0_ddq_as_f32.get();
-        const float * src1_ddf1_i = src1->type == GGML_TYPE_F32 ? (const float *) src1_ddf_i : src1_ddq_as_f32.get();
+        ध्रुव भिन्न * src0_ddf_i = src0->type == GGML_TYPE_F32 ? (ध्रुव भिन्न *) src0_dd_i : src0_ddq_as_f32.get();
+        ध्रुव भिन्न * src1_ddf1_i = src1->type == GGML_TYPE_F32 ? (ध्रुव भिन्न *) src1_ddf_i : src1_ddq_as_f32.get();
 
         {
-#if GGML_SYCL_DNNL
-            const int64_t gemm_flops = (int64_t)row_diff * src1_ncols * ne10;
-            const bool use_mkl_direct = gemm_flops < 256 * 256 * 256;
-            if (g_ggml_sycl_enable_dnn && !use_mkl_direct && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
+#यदि GGML_SYCL_DNNL
+            ध्रुव int64_t gemm_flops = (int64_t)row_diff * src1_ncols * ne10;
+            ध्रुव तार्किक use_mkl_प्रत्यक्षम् = gemm_flops < 256 * 256 * 256;
+            यदि (g_ggml_sycl_enable_dnn && !use_mkl_प्रत्यक्षम् && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
                 DnnlGemmWrapper::row_gemm(ctx, row_diff, src1_ncols, ne10, src0_ddf_i,
-                                          DnnlGemmWrapper::to_dt<float>(), src1_ddf1_i, DnnlGemmWrapper::to_dt<float>(),
-                                          dst_dd_i, DnnlGemmWrapper::to_dt<float>(), stream);
+                                          DnnlGemmWrapper::गन्तव्यम्_dt<भिन्न>(), src1_ddf1_i, DnnlGemmWrapper::गन्तव्यम्_dt<भिन्न>(),
+                                          dst_dd_i, DnnlGemmWrapper::गन्तव्यम्_dt<भिन्न>(), stream);
             }
-            else
-#endif
+            अन्यथा
+#यदि_अन्तः
             {
-                const float alpha = 1.0f;
-                const float beta  = 0.0f;
+                ध्रुव भिन्न alpha = 1.0f;
+                ध्रुव भिन्न beta  = 0.0f;
                 SYCL_CHECK(CHECK_TRY_ERROR(oneapi::mkl::blas::column_major::gemm(
                     *stream, oneapi::mkl::transpose::trans, oneapi::mkl::transpose::nontrans, row_diff,
-                    src1_ncols, ne10, dpct::get_value(&alpha, *stream), src0_ddf_i, ne00, src1_ddf1_i, ne10,
-                    dpct::get_value(&beta, *stream), dst_dd_i, ldc)));
+                    src1_ncols, ne10, dpct::get_मानम्(&alpha, *stream), src0_ddf_i, ne00, src1_ddf1_i, ne10,
+                    dpct::get_मानम्(&beta, *stream), dst_dd_i, ldc)));
             }
         }
     }
-    GGML_UNUSED(dst);
-    GGML_UNUSED(src1_ddq_i);
-    GGML_UNUSED(src1_padded_row_size);
+    GGML_अप्रयुक्तम्(dst);
+    GGML_अप्रयुक्तम्(src1_ddq_i);
+    GGML_अप्रयुक्तम्(src1_padded_row_आकार);
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-inline void ggml_sycl_op_sum(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+अन्तःस्थ शून्य ggml_sycl_op_योग(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    dpct::queue_ptr main_प्रवाहः = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
+    ध्रुव भिन्न * src0_dd = static_cast<ध्रुव भिन्न *>(dst->src[0]->दत्त);
+    भिन्न *       dst_dd  = static_cast<भिन्न *>(dst->दत्त);
 
-    const int64_t ne = ggml_nelements(dst->src[0]);
+    ध्रुव int64_t ne = ggml_nelements(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ne <= INT32_MAX);
 
-    sum_rows_f32_sycl(src0_dd, dst_dd, ne, 1, main_stream);
+    योग_पङ्क्तिकाः_f32_sycl(src0_dd, dst_dd, ne, 1, main_प्रवाहः);
 }
 
-inline void ggml_sycl_op_sum_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+अन्तःस्थ शून्य ggml_sycl_op_योग_पङ्क्तिकाः(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    dpct::queue_ptr main_प्रवाहः = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
+    ध्रुव भिन्न * src0_dd = static_cast<ध्रुव भिन्न *>(dst->src[0]->दत्त);
+    भिन्न *       dst_dd  = static_cast<भिन्न *>(dst->दत्त);
 
-    const int64_t ncols = dst->src[0]->ne[0];
-    const int64_t nrows = ggml_nrows(dst->src[0]);
+    ध्रुव int64_t ncols = dst->src[0]->ne[0];
+    ध्रुव int64_t nrows = ggml_nrows(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ncols * nrows <= INT32_MAX);
 
-    sum_rows_f32_sycl(src0_dd, dst_dd, ncols, nrows, main_stream);
+    योग_पङ्क्तिकाः_f32_sycl(src0_dd, dst_dd, ncols, nrows, main_प्रवाहः);
 }
 
-inline void ggml_sycl_op_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+अन्तःस्थ शून्य ggml_sycl_op_माध्यम्(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::queue_ptr main_प्रवाहः = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ध्रुव भिन्न * src0_dd = static_cast<ध्रुव भिन्न *>(dst->src[0]->दत्त);
+    भिन्न *       dst_dd  = static_cast<भिन्न *>(dst->दत्त);
 
-    const int64_t ncols = dst->src[0]->ne[0];
-    const int64_t nrows = ggml_nrows(dst->src[0]);
+    ध्रुव int64_t ncols = dst->src[0]->ne[0];
+    ध्रुव int64_t nrows = ggml_nrows(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ncols * nrows <= INT32_MAX);
 
-    sum_rows_f32_sycl(src0_dd, dst_dd, ncols, nrows, main_stream);
+    योग_पङ्क्तिकाः_f32_sycl(src0_dd, dst_dd, ncols, nrows, main_प्रवाहः);
 
-    main_stream->parallel_for(
+    main_प्रवाहः->parallel_for(
         sycl::range<1>(nrows),
         [=](sycl::id<1> row) {
             dst_dd[row] /= ncols;
@@ -3329,122 +3329,122 @@ inline void ggml_sycl_op_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 }
 
 
-inline void ggml_sycl_op_argsort(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+अन्तःस्थ शून्य ggml_sycl_op_argsort(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_I32);
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    int32_t *       dst_dd  = static_cast<int32_t *>(dst->data);
+    dpct::queue_ptr main_प्रवाहः = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
+    ध्रुव भिन्न * src0_dd = static_cast<ध्रुव भिन्न *>(dst->src[0]->दत्त);
+    int32_t *       dst_dd  = static_cast<int32_t *>(dst->दत्त);
 
 
-    const int64_t ncols = dst->src[0]->ne[0];
-    const int64_t nrows = ggml_nrows(dst->src[0]);
+    ध्रुव int64_t ncols = dst->src[0]->ne[0];
+    ध्रुव int64_t nrows = ggml_nrows(dst->src[0]);
 
-    enum ggml_sort_order order = (enum ggml_sort_order) dst->op_params[0];
+    गणना ggml_क्रमय_क्रमः क्रमः = (गणना ggml_क्रमय_क्रमः) dst->op_params[0];
 
-    argsort_f32_i32_sycl(src0_dd, (int *)dst_dd, ncols, nrows, order,
-                         main_stream, ctx.device, ctx.pool());
+    argsort_f32_i32_sycl(src0_dd, (पूर्णाङ्क *)dst_dd, ncols, nrows, क्रमः,
+                         main_प्रवाहः, ctx.device, ctx.pool());
 }
 
-static void ggml_sycl_op_top_k(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+स्थिर शून्य ggml_sycl_op_शिखरम्_k(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ध्रुव ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(src0);
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_I32);
     GGML_ASSERT(ggml_is_contiguous(src0));
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::queue_ptr main_प्रवाहः = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(src0->data);
-    int32_t * dst_dd = static_cast<int32_t *>(dst->data);
+    ध्रुव भिन्न * src0_dd = static_cast<ध्रुव भिन्न *>(src0->दत्त);
+    int32_t * dst_dd = static_cast<int32_t *>(dst->दत्त);
 
-    const int k = dst->ne[0];
-    const int64_t ncols = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    ध्रुव पूर्णाङ्क k = dst->ne[0];
+    ध्रुव int64_t ncols = src0->ne[0];
+    ध्रुव int64_t nrows = ggml_nrows(src0);
 
     GGML_ASSERT(k > 0);
     GGML_ASSERT(k <= ncols);
 
-    if (k <= SYCL_TOP_K_SCAN_MERGE_MAX_K) {
-        top_k_f32_sycl(ctx, src0_dd, dst_dd, ncols, nrows, k, main_stream);
-    } else {
-        ggml_sycl_top_k_radix(ctx, src0_dd, dst_dd, ncols, nrows, k, main_stream);
+    यदि (k <= SYCL_शिखरम्_K_अवलोकनम्_MERGE_MAX_K) {
+        शिखरम्_k_f32_sycl(ctx, src0_dd, dst_dd, ncols, nrows, k, main_प्रवाहः);
+    } अन्यथा {
+        ggml_sycl_शिखरम्_k_radix(ctx, src0_dd, dst_dd, ncols, nrows, k, main_प्रवाहः);
     }
 }
 
-inline void ggml_sycl_op_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+अन्तःस्थ शून्य ggml_sycl_op_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_I32);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    int32_t *       dst_dd  = static_cast<int32_t *>(dst->data);
+    dpct::queue_ptr main_प्रवाहः = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
+    ध्रुव भिन्न * src0_dd = static_cast<ध्रुव भिन्न *>(dst->src[0]->दत्त);
+    int32_t *       dst_dd  = static_cast<int32_t *>(dst->दत्त);
 
-    const int64_t ncols = dst->src[0]->ne[0];
-    const int64_t nrows = ggml_nrows(dst->src[0]);
+    ध्रुव int64_t ncols = dst->src[0]->ne[0];
+    ध्रुव int64_t nrows = ggml_nrows(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ncols * nrows <= INT32_MAX);
 
-    argmax_f32_i32_sycl(src0_dd, dst_dd, ncols, nrows, main_stream);
+    argmax_f32_i32_sycl(src0_dd, dst_dd, ncols, nrows, main_प्रवाहः);
 }
 
-inline void ggml_sycl_op_diag_mask_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+अन्तःस्थ शून्य ggml_sycl_op_diag_आवरणम्_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    dpct::queue_ptr main_प्रवाहः = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
+    ध्रुव भिन्न * src0_dd = static_cast<ध्रुव भिन्न *>(dst->src[0]->दत्त);
+    भिन्न *       dst_dd  = static_cast<भिन्न *>(dst->दत्त);
 
-    const int64_t ne00 = dst->src[0]->ne[0];
-    const int64_t ne01 = dst->src[0]->ne[1];
-    const int nrows0 = ggml_nrows(dst->src[0]);
+    ध्रुव int64_t ne00 = dst->src[0]->ne[0];
+    ध्रुव int64_t ne01 = dst->src[0]->ne[1];
+    ध्रुव पूर्णाङ्क nrows0 = ggml_nrows(dst->src[0]);
     // the kernel indexes in 32-bit
     GGML_ASSERT(ne00 * nrows0 <= INT32_MAX);
 
-    const int n_past = ((int32_t *) dst->op_params)[0];
+    ध्रुव पूर्णाङ्क n_past = ((int32_t *) dst->op_params)[0];
 
-    diag_mask_inf_f32_sycl(src0_dd, dst_dd, ne00, nrows0, ne01, n_past, main_stream);
+    diag_आवरणम्_inf_f32_sycl(src0_dd, dst_dd, ne00, nrows0, ne01, n_past, main_प्रवाहः);
 }
 
-static void tri_f32_sycl(
-    const float * src,
-    float * dst,
-    const int64_t ne0,
-    const int64_t ne1,
-    const int64_t ne2,
-    const int64_t ne3,
-    const ggml_tri_type ttype,
-    dpct::queue_ptr main_stream
+स्थिर शून्य tri_f32_sycl(
+    ध्रुव भिन्न * src,
+    भिन्न * dst,
+    ध्रुव int64_t ne0,
+    ध्रुव int64_t ne1,
+    ध्रुव int64_t ne2,
+    ध्रुव int64_t ne3,
+    ध्रुव ggml_tri_type ttype,
+    dpct::queue_ptr main_प्रवाहः
 ) {
-    const size_t total = (size_t) ne0 * (size_t) ne1 * (size_t) ne2 * (size_t) ne3;
+    ध्रुव size_t योग = (size_t) ne0 * (size_t) ne1 * (size_t) ne2 * (size_t) ne3;
 
-    main_stream->parallel_for(sycl::range<1>(total), [=](sycl::id<1> tid) {
-        const int64_t idx = (int64_t) tid[0];
+    main_प्रवाहः->parallel_for(sycl::range<1>(योग), [=](sycl::id<1> tid) {
+        ध्रुव int64_t idx = (int64_t) tid[0];
 
-        const int64_t i0 = idx % ne0;
-        const int64_t t1 = idx / ne0;
-        const int64_t i1 = t1 % ne1;
+        ध्रुव int64_t i0 = idx % ne0;
+        ध्रुव int64_t t1 = idx / ne0;
+        ध्रुव int64_t i1 = t1 % ne1;
 
-        bool keep = false;
-        switch (ttype) {
-            case GGML_TRI_TYPE_LOWER:      keep = (i0 <  i1); break;
-            case GGML_TRI_TYPE_LOWER_DIAG: keep = (i0 <= i1); break;
-            case GGML_TRI_TYPE_UPPER:      keep = (i0 >  i1); break;
-            case GGML_TRI_TYPE_UPPER_DIAG: keep = (i0 >= i1); break;
-            default: keep = false; break;
+        तार्किक keep = असत्य;
+        विकल्प (ttype) {
+            पक्ष GGML_TRI_TYPE_अधस्तनम्:      keep = (i0 <  i1); भङ्ग;
+            पक्ष GGML_TRI_TYPE_अधस्तनम्_DIAG: keep = (i0 <= i1); भङ्ग;
+            पक्ष GGML_TRI_TYPE_ऊर्ध्वस्थम्:      keep = (i0 >  i1); भङ्ग;
+            पक्ष GGML_TRI_TYPE_ऊर्ध्वस्थम्_DIAG: keep = (i0 >= i1); भङ्ग;
+            स्वभाव: keep = असत्य; भङ्ग;
         }
 
         dst[idx] = keep ? src[idx] : 0.0f;
     });
 }
 
-static void ggml_sycl_op_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+स्थिर शून्य ggml_sycl_op_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ध्रुव ggml_tensor * src0 = dst->src[0];
     GGML_ASSERT(src0);
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
@@ -3453,40 +3453,40 @@ static void ggml_sycl_op_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst)
     GGML_ASSERT(ggml_is_contiguous(dst));
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::queue_ptr main_प्रवाहः = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
 
-    const float * src0_dd = static_cast<const float *>(src0->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ध्रुव भिन्न * src0_dd = static_cast<ध्रुव भिन्न *>(src0->दत्त);
+    भिन्न *       dst_dd  = static_cast<भिन्न *>(dst->दत्त);
 
-    const ggml_tri_type ttype = (ggml_tri_type) ggml_get_op_params_i32(dst, 0);
+    ध्रुव ggml_tri_type ttype = (ggml_tri_type) ggml_get_op_params_i32(dst, 0);
 
-    const int64_t ne0 = src0->ne[0];
-    const int64_t ne1 = src0->ne[1];
-    const int64_t ne2 = src0->ne[2];
-    const int64_t ne3 = src0->ne[3];
+    ध्रुव int64_t ne0 = src0->ne[0];
+    ध्रुव int64_t ne1 = src0->ne[1];
+    ध्रुव int64_t ne2 = src0->ne[2];
+    ध्रुव int64_t ne3 = src0->ne[3];
 
-    tri_f32_sycl(src0_dd, dst_dd, ne0, ne1, ne2, ne3, ttype, main_stream);
+    tri_f32_sycl(src0_dd, dst_dd, ne0, ne1, ne2, ne3, ttype, main_प्रवाहः);
 }
 
 
-inline void ggml_sycl_op_scale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+अन्तःस्थ शून्य ggml_sycl_op_scale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    dpct::queue_ptr main_प्रवाहः = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
+    ध्रुव भिन्न * src0_dd = static_cast<ध्रुव भिन्न *>(dst->src[0]->दत्त);
+    भिन्न *       dst_dd  = static_cast<भिन्न *>(dst->दत्त);
 
-    float scale;
-    float bias;
-    memcpy(&scale, (float *) dst->op_params + 0, sizeof(float));
-    memcpy(&bias,  (float *) dst->op_params + 1, sizeof(float));
+    भिन्न scale;
+    भिन्न bias;
+    स्मृतिं_प्रतिलिख(&scale, (भिन्न *) dst->op_params + 0, परिमाण(भिन्न));
+    स्मृतिं_प्रतिलिख(&bias,  (भिन्न *) dst->op_params + 1, परिमाण(भिन्न));
 
     // the kernel indexes in 32-bit
     GGML_ASSERT(ggml_nelements(dst->src[0]) <= INT32_MAX);
 
-    scale_f32_sycl(src0_dd, dst_dd, scale, bias, ggml_nelements(dst->src[0]), main_stream);
+    scale_f32_sycl(src0_dd, dst_dd, scale, bias, ggml_nelements(dst->src[0]), main_प्रवाहः);
     /*
     DPCT1010:87: SYCL uses exceptions to report errors and does not use the
     error codes. The call was replaced with 0. You need to rewrite this code.
@@ -3494,29 +3494,29 @@ inline void ggml_sycl_op_scale(ggml_backend_sycl_context & ctx, ggml_tensor * ds
     SYCL_CHECK(0);
 }
 
-static void ggml_sycl_set_peer_access(const int n_tokens, [[maybe_unused]] int main_device) {
-    static bool peer_access_enabled = false;
+स्थिर शून्य ggml_sycl_समुच्चयः_peer_access(ध्रुव पूर्णाङ्क n_tokens, [[maybe_unused]] पूर्णाङ्क main_device) {
+    स्थिर तार्किक peer_access_enabled = असत्य;
 
-    const bool enable_peer_access = n_tokens <= GGML_SYCL_PEER_MAX_BATCH_SIZE;
+    ध्रुव तार्किक enable_peer_access = n_tokens <= GGML_SYCL_PEER_MAX_BATCH_आकार;
 
-    if (peer_access_enabled == enable_peer_access) {
-        return;
+    यदि (peer_access_enabled == enable_peer_access) {
+        प्रत्यागम;
     }
 
-#ifdef NDEBUG
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        SYCL_CHECK(ggml_sycl_set_device(i));
+#यदि_परिभाषितम् NDEBUG
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+        SYCL_CHECK(ggml_sycl_समुच्चयः_device(i));
     }
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        SYCL_CHECK(ggml_sycl_set_device(i));
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+        SYCL_CHECK(ggml_sycl_समुच्चयः_device(i));
 
-        for (int id_other = 0; id_other < ggml_sycl_info().device_count; ++id_other) {
-            if (i == id_other) {
-                continue;
+        प्रति (पूर्णाङ्क id_other = 0; id_other < ggml_sycl_info().device_गणनम्; ++id_other) {
+            यदि (i == id_other) {
+                अनुवर्त;
             }
-            if (i != main_device && id_other != main_device) {
-                continue;
+            यदि (i != main_device && id_other != main_device) {
+                अनुवर्त;
             }
 
             // int can_access_peer;
@@ -3530,290 +3530,290 @@ static void ggml_sycl_set_peer_access(const int n_tokens, [[maybe_unused]] int m
             // }
         }
     }
-#endif // NDEBUG
+#यदि_अन्तः // NDEBUG
 
     peer_access_enabled = enable_peer_access;
 }
 
-template <template <int> typename quantize_f>
-static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
-                                 const ggml_tensor *src1, ggml_tensor *dst,
-                                 ggml_sycl_op_mul_mat_t op) try {
+प्रतिरूपम् <प्रतिरूपम् <पूर्णाङ्क> प्रकारनाम quantize_f>
+स्थिर शून्य ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, ध्रुव ggml_tensor *src0,
+                                 ध्रुव ggml_tensor *src1, ggml_tensor *dst,
+                                 ggml_sycl_op_mul_mat_t op) यत्न {
 
     GGML_TENSOR_LOCALS(int64_t, ne0, src0, ne);
 
     GGML_TENSOR_LOCALS(int64_t, ne1, src1, ne);
-    const int64_t nrows1 = ggml_nrows(src1);
+    ध्रुव int64_t nrows1 = ggml_nrows(src1);
 
     GGML_ASSERT(ne03 == ne13);
 
-    const int64_t ne0 = dst->ne[0];
-    const int64_t ne1 = dst->ne[1];
+    ध्रुव int64_t ne0 = dst->ne[0];
+    ध्रुव int64_t ne1 = dst->ne[1];
 
-    const int nb2 = dst->nb[2];
-    const int nb3 = dst->nb[3];
+    ध्रुव पूर्णाङ्क nb2 = dst->nb[2];
+    ध्रुव पूर्णाङ्क nb3 = dst->nb[3];
 
-    GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(dst->buffer));
-    GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src1->buffer));
+    GGML_ASSERT(!ggml_backend_बफर_is_sycl_विभज(dst->बफर));
+    GGML_ASSERT(!ggml_backend_बफर_is_sycl_विभज(src1->बफर));
 
     GGML_ASSERT(ne12 >= ne02 && ne12 % ne02 == 0);
 
-    const int64_t i02_divisor = ne12 / ne02;
+    ध्रुव int64_t i02_भाजकः = ne12 / ne02;
 
-    const size_t src0_ts = ggml_type_size(src0->type);
-    const size_t src0_bs = ggml_blck_size(src0->type);
-    const size_t q8_1_ts = sizeof(block_q8_1);
-    const size_t q8_1_bs = QK8_1;
+    ध्रुव size_t src0_ts = ggml_type_आकार(src0->type);
+    ध्रुव size_t src0_bs = ggml_blck_आकार(src0->type);
+    ध्रुव size_t q8_1_ts = परिमाण(खण्डम्_q8_1);
+    ध्रुव size_t q8_1_bs = QK8_1;
 
     ggml_tensor_extra_gpu * src0_extra = (ggml_tensor_extra_gpu *) src0->extra;
 
-    const bool src0_is_contiguous = ggml_is_contiguous(src0);
-    const bool src1_is_contiguous = ggml_is_contiguous(src1);
+    ध्रुव तार्किक src0_is_contiguous = ggml_is_contiguous(src0);
+    ध्रुव तार्किक src1_is_contiguous = ggml_is_contiguous(src1);
 
-    int64_t src1_padded_col_size = GGML_PAD(ne10, MATRIX_ROW_PADDING);
+    int64_t src1_padded_col_आकार = GGML_PAD(ne10, MATRIX_ROW_PADDING);
 
-    const bool split = ggml_backend_buffer_is_sycl_split(src0->buffer);
-    GGML_ASSERT(!(split && ne02 > 1));
-    GGML_ASSERT(!(split && ne03 > 1));
-    GGML_ASSERT(!(split && ne02 < ne12));
+    ध्रुव तार्किक विभज = ggml_backend_बफर_is_sycl_विभज(src0->बफर);
+    GGML_ASSERT(!(विभज && ne02 > 1));
+    GGML_ASSERT(!(विभज && ne03 > 1));
+    GGML_ASSERT(!(विभज && ne02 < ne12));
 
-    std::array<float, GGML_SYCL_MAX_DEVICES> tensor_split;
-    if (split) {
+    std::array<भिन्न, GGML_SYCL_MAX_DEVICES> tensor_विभज;
+    यदि (विभज) {
         // TODO: check that src0->buffer->buft is a split buffer type, replace GGML_BACKEND_TYPE_GPU_SPLIT check
         // GGML_ASSERT(src0->buffer != nullptr && src0->buffer->buft == ...);
-        ggml_backend_sycl_split_buffer_type_context * buft_ctx = (ggml_backend_sycl_split_buffer_type_context *) src0->buffer->buft->context;
-        tensor_split = buft_ctx->tensor_split;
+        ggml_backend_sycl_विभज_बफर_type_context * buft_ctx = (ggml_backend_sycl_विभज_बफर_type_context *) src0->बफर->buft->context;
+        tensor_विभज = buft_ctx->tensor_विभज;
     }
 
-    struct dev_data {
-        ggml_sycl_pool_alloc<char> src0_dd_alloc;
-        ggml_sycl_pool_alloc<float> src1_ddf_alloc;
-        ggml_sycl_pool_alloc<char> src1_ddq_alloc;
-        ggml_sycl_pool_alloc<float> dst_dd_alloc;
+    संरचना dev_दत्त {
+        ggml_sycl_pool_alloc<वर्ण> src0_dd_alloc;
+        ggml_sycl_pool_alloc<भिन्न> src1_ddf_alloc;
+        ggml_sycl_pool_alloc<वर्ण> src1_ddq_alloc;
+        ggml_sycl_pool_alloc<भिन्न> dst_dd_alloc;
 
-        char *src0_dd = nullptr;
-        float *src1_ddf = nullptr; // float
-        char *src1_ddq = nullptr;  // q8_1
-        float *dst_dd = nullptr;
+        वर्ण *src0_dd = शून्यसूचकः;
+        भिन्न *src1_ddf = शून्यसूचकः; // float
+        वर्ण *src1_ddq = शून्यसूचकः;  // q8_1
+        भिन्न *dst_dd = शून्यसूचकः;
 
-        int64_t row_low;
-        int64_t row_high;
+        int64_t row_नीचः;
+        int64_t row_उच्चः;
     };
 
-    dev_data dev[GGML_SYCL_MAX_DEVICES];
+    dev_दत्त dev[GGML_SYCL_MAX_DEVICES];
 
-    int used_devices = 0;
-    queue_ptr main_stream = ctx.stream();
+    पूर्णाङ्क प्रयुक्तम्_devices = 0;
+    queue_ptr main_प्रवाहः = ctx.stream();
 
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
         // by default, use all rows
-        dev[i].row_low  = 0;
-        dev[i].row_high = ne01;
+        dev[i].row_नीचः  = 0;
+        dev[i].row_उच्चः = ne01;
 
         // for multi GPU, get the row boundaries from tensor split
         // and round to mul_mat_q tile sizes
-        if (split) {
-            const int64_t rounding = get_row_rounding(src0->type, tensor_split);
+        यदि (विभज) {
+            ध्रुव int64_t rounding = get_row_rounding(src0->type, tensor_विभज);
 
-            if (i != 0) {
-                dev[i].row_low  = ne01*tensor_split[i];
-                if (dev[i].row_low < ne01) {
-                    dev[i].row_low -= dev[i].row_low % rounding;
+            यदि (i != 0) {
+                dev[i].row_नीचः  = ne01*tensor_विभज[i];
+                यदि (dev[i].row_नीचः < ne01) {
+                    dev[i].row_नीचः -= dev[i].row_नीचः % rounding;
                 }
             }
 
-            if (i != ggml_sycl_info().device_count - 1) {
-                dev[i].row_high  = ne01*tensor_split[i + 1];
-                if (dev[i].row_high < ne01) {
-                    dev[i].row_high -= dev[i].row_high % rounding;
+            यदि (i != ggml_sycl_info().device_गणनम् - 1) {
+                dev[i].row_उच्चः  = ne01*tensor_विभज[i + 1];
+                यदि (dev[i].row_उच्चः < ne01) {
+                    dev[i].row_उच्चः -= dev[i].row_उच्चः % rounding;
                 }
             }
         }
     }
 
-    constexpr bool quantize_enabled = !std::is_same_v<quantize_f<QK8_1 / WARP_SIZE>,
-                                                      no_quantize_q8_1<QK8_1 / WARP_SIZE>>;
-    for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-        if ((!split && i != ctx.device) || dev[i].row_low == dev[i].row_high) {
-            continue;
+    constexpr तार्किक quantize_enabled = !std::is_same_v<quantize_f<QK8_1 / WARP_आकार>,
+                                                      no_quantize_q8_1<QK8_1 / WARP_आकार>>;
+    प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+        यदि ((!विभज && i != ctx.device) || dev[i].row_नीचः == dev[i].row_उच्चः) {
+            अनुवर्त;
         }
 
-        used_devices++;
+        प्रयुक्तम्_devices++;
 
-        const bool src1_on_device = i == ctx.device;
-        const bool  dst_on_device = i == ctx.device;
+        ध्रुव तार्किक src1_on_device = i == ctx.device;
+        ध्रुव तार्किक  dst_on_device = i == ctx.device;
 
-        ggml_sycl_set_device(i);
+        ggml_sycl_समुच्चयः_device(i);
         queue_ptr stream = ctx.stream(i, 0);
 
-        if (src0_is_contiguous) {
+        यदि (src0_is_contiguous) {
             // a split tensor keeps its rows in the per-device slices of the tensor extra
-            dev[i].src0_dd = split ? (char *) src0_extra->data_device[i] : (char *) src0->data;
-        } else {
+            dev[i].src0_dd = विभज ? (वर्ण *) src0_extra->दत्त_device[i] : (वर्ण *) src0->दत्त;
+        } अन्यथा {
             dev[i].src0_dd = dev[i].src0_dd_alloc.alloc(ctx.pool(i), ggml_nbytes(src0));
         }
 
-        if (src1_on_device && src1_is_contiguous) {
-            dev[i].src1_ddf = (float *) src1->data;
-        } else {
+        यदि (src1_on_device && src1_is_contiguous) {
+            dev[i].src1_ddf = (भिन्न *) src1->दत्त;
+        } अन्यथा {
             dev[i].src1_ddf = dev[i].src1_ddf_alloc.alloc(ctx.pool(i), ggml_nelements(src1));
         }
 
-        if constexpr(quantize_enabled) {
-            dev[i].src1_ddq = dev[i].src1_ddq_alloc.alloc(ctx.pool(i), nrows1*src1_padded_col_size*q8_1_ts/q8_1_bs);
+        यदि constexpr(quantize_enabled) {
+            dev[i].src1_ddq = dev[i].src1_ddq_alloc.alloc(ctx.pool(i), nrows1*src1_padded_col_आकार*q8_1_ts/q8_1_bs);
 
-            if (src1_on_device && src1_is_contiguous) {
+            यदि (src1_on_device && src1_is_contiguous) {
                 scope_op_debug_print scope_dbg_print(__func__, "/quantize_row_q8_1_sycl", dst,
                                                      /*num_src=*/2, " : converting src1 to Q8_1");
-                try {
-                    quantize_row_q8_1_sycl<quantize_f>(dev[i].src1_ddf, dev[i].src1_ddq, ne10, nrows1, src1_padded_col_size, stream);
-                } catch (sycl::exception const &exc) {
+                यत्न {
+                    quantize_row_q8_1_sycl<quantize_f>(dev[i].src1_ddf, dev[i].src1_ddq, ne10, nrows1, src1_padded_col_आकार, stream);
+                } गृहाण (sycl::exception ध्रुव &exc) {
                     std::cerr << "Quantize_row_q8_1_sycl error" << exc.what() << "Exception caught at file:" << __FILE__
-                              << ", line:" << __LINE__ << std::endl;
-                    std::exit(1);
+                              << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+                    std::निर्गच्छ(1);
                 }
             }
         }
 
-        if (dst_on_device) {
-            dev[i].dst_dd = (float *) dst->data;
-        } else {
-            const size_t size_dst_ddf = split ? (dev[i].row_high - dev[i].row_low)*ne1 : ggml_nelements(dst);
-            dev[i].dst_dd = dev[i].dst_dd_alloc.alloc(ctx.pool(i), size_dst_ddf);
+        यदि (dst_on_device) {
+            dev[i].dst_dd = (भिन्न *) dst->दत्त;
+        } अन्यथा {
+            ध्रुव size_t आकार_dst_ddf = विभज ? (dev[i].row_उच्चः - dev[i].row_नीचः)*ne1 : ggml_nelements(dst);
+            dev[i].dst_dd = dev[i].dst_dd_alloc.alloc(ctx.pool(i), आकार_dst_ddf);
         }
     }
 
     // if multiple devices are used they need to wait for the main device
     // here an event is recorded that signals that the main device has finished calculating the input data
-    if (split && used_devices > 1) {
-        ggml_sycl_set_device(ctx.device);
+    यदि (विभज && प्रयुक्तम्_devices > 1) {
+        ggml_sycl_समुच्चयः_device(ctx.device);
         SYCL_CHECK(CHECK_TRY_ERROR(
             *src0_extra->events[ctx.device][0] =
                 ctx.stream()->ext_oneapi_submit_barrier()));
     }
 
-    const int64_t src1_col_stride = split && used_devices > 1 ? MUL_MAT_SRC1_COL_STRIDE : ne11;
-    for (int64_t src1_col_0 = 0; src1_col_0 < ne11; src1_col_0 += src1_col_stride) {
-        const int64_t is = split ? (src1_col_0/src1_col_stride) % GGML_SYCL_MAX_STREAMS : 0;
-        const int64_t src1_ncols = src1_col_0 + src1_col_stride > ne11 ? ne11 - src1_col_0 : src1_col_stride;
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-            if ((!split && i != ctx.device) || dev[i].row_low == dev[i].row_high) {
-                continue;
+    ध्रुव int64_t src1_col_stride = विभज && प्रयुक्तम्_devices > 1 ? MUL_MAT_SRC1_COL_STRIDE : ne11;
+    प्रति (int64_t src1_col_0 = 0; src1_col_0 < ne11; src1_col_0 += src1_col_stride) {
+        ध्रुव int64_t is = विभज ? (src1_col_0/src1_col_stride) % GGML_SYCL_MAX_STREAMS : 0;
+        ध्रुव int64_t src1_ncols = src1_col_0 + src1_col_stride > ne11 ? ne11 - src1_col_0 : src1_col_stride;
+        प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+            यदि ((!विभज && i != ctx.device) || dev[i].row_नीचः == dev[i].row_उच्चः) {
+                अनुवर्त;
             }
 
-            const bool src1_on_device = i == ctx.device;
-            const bool  dst_on_device = i == ctx.device;
-            const int64_t row_diff = dev[i].row_high - dev[i].row_low;
+            ध्रुव तार्किक src1_on_device = i == ctx.device;
+            ध्रुव तार्किक  dst_on_device = i == ctx.device;
+            ध्रुव int64_t row_diff = dev[i].row_उच्चः - dev[i].row_नीचः;
 
-            ggml_sycl_set_device(i);
+            ggml_sycl_समुच्चयः_device(i);
             queue_ptr stream = ctx.stream(i, is);
 
             // wait for main GPU data if necessary
-            if (split && (i != ctx.device || is != 0)) {
+            यदि (विभज && (i != ctx.device || is != 0)) {
                 SYCL_CHECK(CHECK_TRY_ERROR(stream->ext_oneapi_submit_barrier(
                     {*src0_extra->events[ctx.device][0]})));
             }
 
-            for (int64_t i0 = 0; i0 < ne13*ne12; ++i0) {
-                const int64_t i03 = i0 / ne12;
-                const int64_t i02 = i0 % ne12;
+            प्रति (int64_t i0 = 0; i0 < ne13*ne12; ++i0) {
+                ध्रुव int64_t i03 = i0 / ne12;
+                ध्रुव int64_t i02 = i0 % ne12;
 
-                const size_t src1_ddq_i_offset = (i0*ne11 + src1_col_0) * src1_padded_col_size*q8_1_ts/q8_1_bs;
+                ध्रुव size_t src1_ddq_i_विस्थापनम् = (i0*ne11 + src1_col_0) * src1_padded_col_आकार*q8_1_ts/q8_1_bs;
 
                 // for split tensors the data begins at i0 == i0_offset_low
-                char  *  src0_dd_i =  dev[i].src0_dd + (i0/i02_divisor) * (ne01*ne00*src0_ts)/src0_bs;
-                float * src1_ddf_i = (float *) ((char *) dev[i].src1_ddf +
-                    (i0*ne11 + src1_col_0) * ne10 * ggml_type_size(src1->type));
-                char  * src1_ddq_i = dev[i].src1_ddq +  src1_ddq_i_offset;
-                float *   dst_dd_i =   dev[i].dst_dd + (i0*ne1  + src1_col_0) * (dst_on_device ? ne0 : row_diff);
+                वर्ण  *  src0_dd_i =  dev[i].src0_dd + (i0/i02_भाजकः) * (ne01*ne00*src0_ts)/src0_bs;
+                भिन्न * src1_ddf_i = (भिन्न *) ((वर्ण *) dev[i].src1_ddf +
+                    (i0*ne11 + src1_col_0) * ne10 * ggml_type_आकार(src1->type));
+                वर्ण  * src1_ddq_i = dev[i].src1_ddq +  src1_ddq_i_विस्थापनम्;
+                भिन्न *   dst_dd_i =   dev[i].dst_dd + (i0*ne1  + src1_col_0) * (dst_on_device ? ne0 : row_diff);
 
                 // the main device memory buffer can be on VRAM scratch, with space for all partial results
                 // in that case an offset on dst_ddf_i is needed
-                if (i == ctx.device) {
-                    dst_dd_i += dev[i].row_low; // offset is 0 if no tensor split
+                यदि (i == ctx.device) {
+                    dst_dd_i += dev[i].row_नीचः; // offset is 0 if no tensor split
                 }
 
                 // copy src0, src1 to device if necessary
-                if (src1_is_contiguous) {
-                    if (i != ctx.device) {
-                        if constexpr (quantize_enabled) {
-                            char * src1_ddq_i_source = dev[ctx.device].src1_ddq + src1_ddq_i_offset;
+                यदि (src1_is_contiguous) {
+                    यदि (i != ctx.device) {
+                        यदि constexpr (quantize_enabled) {
+                            वर्ण * src1_ddq_i_source = dev[ctx.device].src1_ddq + src1_ddq_i_विस्थापनम्;
                             SYCL_CHECK(
                                 CHECK_TRY_ERROR(stream
-                                                    ->memcpy(src1_ddq_i, src1_ddq_i_source,
-                                                             src1_ncols * src1_padded_col_size * q8_1_ts / q8_1_bs)
-                                                    .wait()));
-                        } else {
+                                                    ->स्मृतिं_प्रतिलिख(src1_ddq_i, src1_ddq_i_source,
+                                                             src1_ncols * src1_padded_col_आकार * q8_1_ts / q8_1_bs)
+                                                    .प्रतीक्षस्व()));
+                        } अन्यथा {
                             // src1 is not split, on the main device it lives at dev[ctx.device].src1_ddf
-                            const char * src1_ddf_i_source = (const char *) dev[ctx.device].src1_ddf +
-                                (i0 * ne11 + src1_col_0) * ne10 * ggml_type_size(src1->type);
+                            ध्रुव वर्ण * src1_ddf_i_source = (ध्रुव वर्ण *) dev[ctx.device].src1_ddf +
+                                (i0 * ne11 + src1_col_0) * ne10 * ggml_type_आकार(src1->type);
 
                             SYCL_CHECK(
-                                CHECK_TRY_ERROR(dev2dev_memcpy(i, *stream, ctx.device, *main_stream, src1_ddf_i, src1_ddf_i_source,
-                                                               src1_ncols * ne10 * ggml_type_size(src1->type))));
+                                CHECK_TRY_ERROR(dev2dev_memcpy(i, *stream, ctx.device, *main_प्रवाहः, src1_ddf_i, src1_ddf_i_source,
+                                                               src1_ncols * ne10 * ggml_type_आकार(src1->type))));
                         }
                     }
-                } else {
-                    if (src1_on_device) {
+                } अन्यथा {
+                    यदि (src1_on_device) {
                         SYCL_CHECK(ggml_sycl_cpy_tensor_2d(src1_ddf_i, src1, i03, i02, src1_col_0,
                                                            src1_col_0 + src1_ncols, stream));
-                    } else {
+                    } अन्यथा {
                         GGML_ABORT("src1 is non-contiguous and not on device");
                     }
 
-                    if constexpr (quantize_enabled) {
+                    यदि constexpr (quantize_enabled) {
                         scope_op_debug_print scope_dbg_print(__func__, "/quantize_row_q8_1_sycl", dst,
                                                              /*num_src=*/2, " : converting src1 to Q8_1");
-                        try {
+                        यत्न {
                             quantize_row_q8_1_sycl<quantize_q8_1>(src1_ddf_i, src1_ddq_i, ne10, src1_ncols,
-                                                                  src1_padded_col_size, stream);
-                        } catch (const sycl::exception & exc) {
+                                                                  src1_padded_col_आकार, stream);
+                        } गृहाण (ध्रुव sycl::exception & exc) {
                             std::cerr << "Quantize_row_q8_1_sycl error" << exc.what()
-                                      << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
-                            std::exit(1);
+                                      << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+                            std::निर्गच्छ(1);
                         }
                     }
                 }
 
-                if (src1_col_0 == 0 && !src0_is_contiguous && i02 % i02_divisor == 0) {
-                    SYCL_CHECK(ggml_sycl_cpy_tensor_2d(src0_dd_i, src0, i03, i02/i02_divisor, dev[i].row_low, dev[i].row_high, stream));
+                यदि (src1_col_0 == 0 && !src0_is_contiguous && i02 % i02_भाजकः == 0) {
+                    SYCL_CHECK(ggml_sycl_cpy_tensor_2d(src0_dd_i, src0, i03, i02/i02_भाजकः, dev[i].row_नीचः, dev[i].row_उच्चः, stream));
                 }
-                if (src1->type == GGML_TYPE_F16) {
-                    src1_padded_col_size = (i0 * ne11 + src1_col_0) * ne10;
+                यदि (src1->type == GGML_TYPE_F16) {
+                    src1_padded_col_आकार = (i0 * ne11 + src1_col_0) * ne10;
                 }
                 // do the computation
                 SYCL_CHECK(CHECK_TRY_ERROR(op(ctx, src0, src1, dst, src0_dd_i, src1_ddf_i, src1_ddq_i, dst_dd_i,
-                    dev[i].row_low, dev[i].row_high, src1_ncols, src1_padded_col_size, stream)));
+                    dev[i].row_नीचः, dev[i].row_उच्चः, src1_ncols, src1_padded_col_आकार, stream)));
 
                 // copy dst to host or other device if necessary
-                if (!dst_on_device) {
-                    void * dst_off_device = dst->data;
-                    if (split) {
+                यदि (!dst_on_device) {
+                    शून्य * dst_off_device = dst->दत्त;
+                    यदि (विभज) {
                         // src0 = weight matrix is saved as a transposed matrix for better memory layout.
                         // dst is NOT transposed.
                         // The outputs of matrix matrix multiplications can therefore NOT simply be concatenated for >1 GPU.
                         // Instead they need to be copied to the correct slice in ne0 = dst row index.
                         // If dst is a vector with ne0 == 1 then you don't have to do this but it still produces correct results.
-                        float * dhf_dst_i = (float *) ((char *) dst_off_device + i02*nb2 + i03*nb3);
-                        GGML_ASSERT(dst->nb[1] == ne0*sizeof(float));
-                        dhf_dst_i += src1_col_0*ne0 + dev[i].row_low;
+                        भिन्न * dhf_dst_i = (भिन्न *) ((वर्ण *) dst_off_device + i02*nb2 + i03*nb3);
+                        GGML_ASSERT(dst->nb[1] == ne0*परिमाण(भिन्न));
+                        dhf_dst_i += src1_col_0*ne0 + dev[i].row_नीचः;
 
                         SYCL_CHECK(CHECK_TRY_ERROR(dpct::async_dpct_memcpy(
-                            dhf_dst_i, ne0 * sizeof(float), dst_dd_i,
-                            row_diff * sizeof(float), row_diff * sizeof(float),
-                            src1_ncols, dpct::device_to_device, *stream)));
-                    } else {
-                        float * dhf_dst_i = (float *) ((char *) dst_off_device + i02*nb2 + i03*nb3);
-                        GGML_ASSERT(dst->nb[1] == ne0*sizeof(float));
+                            dhf_dst_i, ne0 * परिमाण(भिन्न), dst_dd_i,
+                            row_diff * परिमाण(भिन्न), row_diff * परिमाण(भिन्न),
+                            src1_ncols, dpct::device_गन्तव्यम्_device, *stream)));
+                    } अन्यथा {
+                        भिन्न * dhf_dst_i = (भिन्न *) ((वर्ण *) dst_off_device + i02*nb2 + i03*nb3);
+                        GGML_ASSERT(dst->nb[1] == ne0*परिमाण(भिन्न));
                         dhf_dst_i += src1_col_0*ne0;
                         SYCL_CHECK(CHECK_TRY_ERROR(
-                            stream->memcpy(dhf_dst_i, dst_dd_i,
-                                           src1_ncols * ne0 * sizeof(float)).wait()));
+                            stream->स्मृतिं_प्रतिलिख(dhf_dst_i, dst_dd_i,
+                                           src1_ncols * ne0 * परिमाण(भिन्न)).प्रतीक्षस्व()));
                     }
                 }
 
                 // add event for the main device to wait on until other device is done
-                if (split && (i != ctx.device || is != 0)) {
+                यदि (विभज && (i != ctx.device || is != 0)) {
                     SYCL_CHECK(CHECK_TRY_ERROR(
                         *src0_extra->events[i][is] =
                             stream->ext_oneapi_submit_barrier()));
@@ -3823,16 +3823,16 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
     }
 
     // main device waits for all other devices to be finished
-    if (split && ggml_sycl_info().device_count > 1) {
+    यदि (विभज && ggml_sycl_info().device_गणनम् > 1) {
         int64_t is_max = (ne11 + MUL_MAT_SRC1_COL_STRIDE - 1) / MUL_MAT_SRC1_COL_STRIDE;
         is_max = is_max <= GGML_SYCL_MAX_STREAMS ? is_max : GGML_SYCL_MAX_STREAMS;
 
-        ggml_sycl_set_device(ctx.device);
-        for (int i = 0; i < ggml_sycl_info().device_count; ++i) {
-            if (dev[i].row_low == dev[i].row_high) {
-                continue;
+        ggml_sycl_समुच्चयः_device(ctx.device);
+        प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; ++i) {
+            यदि (dev[i].row_नीचः == dev[i].row_उच्चः) {
+                अनुवर्त;
             }
-            for (int64_t is = 0; is < is_max; ++is) {
+            प्रति (int64_t is = 0; is < is_max; ++is) {
                 SYCL_CHECK(CHECK_TRY_ERROR(
                     ctx.stream()->ext_oneapi_submit_barrier(
                         {*src0_extra->events[i][is]})));
@@ -3840,245 +3840,245 @@ static void ggml_sycl_op_mul_mat(ggml_backend_sycl_context & ctx, const ggml_ten
         }
     }
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void ggml_sycl_repeat_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_repeat_पृष्ठभागः(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
-    ggml_sycl_op_repeat_back(ctx, dst);
+    ggml_sycl_op_repeat_पृष्ठभागः(ctx, dst);
 }
 
-static void ggml_sycl_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_get_पङ्क्तिकाः(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    ggml_sycl_op_get_rows(ctx, dst);
+    ggml_sycl_op_get_पङ्क्तिकाः(ctx, dst);
 }
 
-static void ggml_sycl_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_get_पङ्क्तिकाः_पृष्ठभागः(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    ggml_sycl_op_get_rows_back(ctx, dst);
+    ggml_sycl_op_get_पङ्क्तिकाः_पृष्ठभागः(ctx, dst);
 }
 
-static void ggml_sycl_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_norm(ctx, dst);
 }
 
-static void ggml_sycl_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_rms_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_rms_norm(ctx, dst);
 }
 
-static void ggml_sycl_rms_norm_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_rms_norm_पृष्ठभागः(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    ggml_sycl_op_rms_norm_back(ctx, dst);
+    ggml_sycl_op_rms_norm_पृष्ठभागः(ctx, dst);
 }
 
-static void ggml_sycl_l2_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_l2_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_l2_norm(ctx, dst);
 }
 
-static void ggml_sycl_group_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_गणः_norm(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
-    ggml_sycl_op_group_norm(ctx, dst);
+    ggml_sycl_op_गणः_norm(ctx, dst);
 }
 
-static void ggml_sycl_mul_mat_vec_p021(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
-                                       const ggml_tensor *src1,
-                                       ggml_tensor *dst) try {
+स्थिर शून्य ggml_sycl_mul_mat_vec_p021(ggml_backend_sycl_context & ctx, ध्रुव ggml_tensor *src0,
+                                       ध्रुव ggml_tensor *src1,
+                                       ggml_tensor *dst) यत्न {
     GGML_ASSERT(ggml_is_permuted(src0) && ggml_is_permuted(src1));
-    GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer));
+    GGML_ASSERT(!ggml_backend_बफर_is_sycl_विभज(src0->बफर));
     GGML_ASSERT(src0->nb[0] <= src0->nb[1] && src0->nb[2] <= src0->nb[3]); // 0213 permutation
     GGML_ASSERT(src1->nb[0] <= src1->nb[1] && src1->nb[2] <= src1->nb[3]); // 0213 permutation
     GGML_ASSERT(src0->type == GGML_TYPE_F16);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
+    ध्रुव int64_t ne00 = src0->ne[0];
+    ध्रुव int64_t ne01 = src0->ne[1];
+    ध्रुव int64_t ne02 = src0->ne[2];
 
-    const int64_t ne12 = src1->ne[2];
+    ध्रुव int64_t ne12 = src1->ne[2];
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    queue_ptr main_stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
+    queue_ptr main_प्रवाहः = ctx.stream();
 
-    void  * src0_ddq = src0->data;
-    float * src1_ddf = (float *) src1->data;
-    float * dst_ddf  = (float *) dst->data;
+    शून्य  * src0_ddq = src0->दत्त;
+    भिन्न * src1_ddf = (भिन्न *) src1->दत्त;
+    भिन्न * dst_ddf  = (भिन्न *) dst->दत्त;
 
-    ggml_mul_mat_p021_f16_f32_sycl(src0_ddq, src1_ddf, dst_ddf, ne00, ne01, ne02, ne12, main_stream);
+    ggml_mul_mat_p021_f16_f32_sycl(src0_ddq, src1_ddf, dst_ddf, ne00, ne01, ne02, ne12, main_प्रवाहः);
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void ggml_sycl_mul_mat_vec_nc(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
-                                     const ggml_tensor *src1,
-                                     ggml_tensor *dst) try {
+स्थिर शून्य ggml_sycl_mul_mat_vec_nc(ggml_backend_sycl_context & ctx, ध्रुव ggml_tensor *src0,
+                                     ध्रुव ggml_tensor *src1,
+                                     ggml_tensor *dst) यत्न {
     GGML_ASSERT(!ggml_is_transposed(src0));
     GGML_ASSERT(!ggml_is_transposed(src1));
     GGML_ASSERT(!ggml_is_permuted(src0));
-    GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer));
+    GGML_ASSERT(!ggml_backend_बफर_is_sycl_विभज(src0->बफर));
     GGML_ASSERT(src0->type == GGML_TYPE_F16);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->ne[1] == 1);
     GGML_ASSERT(src1->ne[3] == 1);
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
+    ध्रुव int64_t ne00 = src0->ne[0];
+    ध्रुव int64_t ne01 = src0->ne[1];
+    ध्रुव int64_t ne02 = src0->ne[2];
 
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
+    ध्रुव int64_t nb01 = src0->nb[1];
+    ध्रुव int64_t nb02 = src0->nb[2];
 
-    const int64_t ne12 = src1->ne[2];
-    const int64_t nb11 = src1->nb[1];
+    ध्रुव int64_t ne12 = src1->ne[2];
+    ध्रुव int64_t nb11 = src1->nb[1];
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    queue_ptr main_stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
+    queue_ptr main_प्रवाहः = ctx.stream();
 
-    void  * src0_ddq = src0->data;
-    float * src1_ddf = (float *) src1->data;
-    float * dst_ddf  = (float *) dst->data;
+    शून्य  * src0_ddq = src0->दत्त;
+    भिन्न * src1_ddf = (भिन्न *) src1->दत्त;
+    भिन्न * dst_ddf  = (भिन्न *) dst->दत्त;
 
-    const int64_t row_stride_x = nb01 / sizeof(sycl::half);
-    const int64_t channel_stride_x = nb02 / sizeof(sycl::half);
-    const int64_t channel_stride_y = nb11 / sizeof(float);
+    ध्रुव int64_t row_stride_x = nb01 / परिमाण(sycl::half);
+    ध्रुव int64_t channel_stride_x = nb02 / परिमाण(sycl::half);
+    ध्रुव int64_t channel_stride_y = nb11 / परिमाण(भिन्न);
 
-    ggml_mul_mat_vec_nc_f16_f32_sycl(src0_ddq, src1_ddf, dst_ddf, ne00, ne01, row_stride_x, ne02, ne12, channel_stride_x,channel_stride_y, main_stream);
+    ggml_mul_mat_vec_nc_f16_f32_sycl(src0_ddq, src1_ddf, dst_ddf, ne00, ne01, row_stride_x, ne02, ne12, channel_stride_x,channel_stride_y, main_प्रवाहः);
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void k_compute_batched_ptrs(const sycl::half * src0_as_f16, const sycl::half * src1_as_f16, void * dst,
-                                   const void ** ptrs_src, void ** ptrs_dst, int64_t ne12, int64_t ne13, int64_t ne23,
+स्थिर शून्य k_compute_batched_ptrs(ध्रुव sycl::half * src0_as_f16, ध्रुव sycl::half * src1_as_f16, शून्य * dst,
+                                   ध्रुव शून्य ** ptrs_src, शून्य ** ptrs_dst, int64_t ne12, int64_t ne13, int64_t ne23,
                                    size_t nb02, size_t nb03, size_t nb12, size_t nb13, size_t nbd2, size_t nbd3,
-                                   int64_t r2, int64_t r3, const sycl::nd_item<3> & item_ct1) {
-    const int64_t i13 = item_ct1.get_group(2) * item_ct1.get_local_range(2) + item_ct1.get_local_id(2);
-    const int64_t i12 = item_ct1.get_group(1) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
+                                   int64_t r2, int64_t r3, ध्रुव sycl::nd_item<3> & item_ct1) {
+    ध्रुव int64_t i13 = item_ct1.get_गणः(2) * item_ct1.get_local_range(2) + item_ct1.get_local_id(2);
+    ध्रुव int64_t i12 = item_ct1.get_गणः(1) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
 
-    if (i13 >= ne13 || i12 >= ne12) {
-        return;
+    यदि (i13 >= ne13 || i12 >= ne12) {
+        प्रत्यागम;
     }
 
-    const int64_t i03 = i13 / r3;
-    const int64_t i02 = i12 / r2;
+    ध्रुव int64_t i03 = i13 / r3;
+    ध्रुव int64_t i02 = i12 / r2;
 
-    const uint8_t * src0_bytes = reinterpret_cast<const uint8_t *>(src0_as_f16);
-    const uint8_t * src1_bytes = reinterpret_cast<const uint8_t *>(src1_as_f16);
-    uint8_t *       dst_bytes  = static_cast<uint8_t *>(dst);
+    ध्रुव uint8_t * src0_अष्टकानि = reinterpret_cast<ध्रुव uint8_t *>(src0_as_f16);
+    ध्रुव uint8_t * src1_अष्टकानि = reinterpret_cast<ध्रुव uint8_t *>(src1_as_f16);
+    uint8_t *       dst_अष्टकानि  = static_cast<uint8_t *>(dst);
 
-    ptrs_src[0 * ne23 + i12 + i13 * ne12] = src0_bytes + i02 * nb02 + i03 * nb03;
-    ptrs_src[1 * ne23 + i12 + i13 * ne12] = src1_bytes + i12 * nb12 + i13 * nb13;
-    ptrs_dst[0 * ne23 + i12 + i13 * ne12] = dst_bytes + i12 * nbd2 + i13 * nbd3;
+    ptrs_src[0 * ne23 + i12 + i13 * ne12] = src0_अष्टकानि + i02 * nb02 + i03 * nb03;
+    ptrs_src[1 * ne23 + i12 + i13 * ne12] = src1_अष्टकानि + i12 * nb12 + i13 * nb13;
+    ptrs_dst[0 * ne23 + i12 + i13 * ne12] = dst_अष्टकानि + i12 * nbd2 + i13 * nbd3;
 }
 
-static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
-                                           const ggml_tensor * src1, ggml_tensor * dst) try {
+स्थिर शून्य ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, ध्रुव ggml_tensor * src0,
+                                           ध्रुव ggml_tensor * src1, ggml_tensor * dst) यत्न {
     GGML_ASSERT(!ggml_is_transposed(src0));
     GGML_ASSERT(!ggml_is_transposed(src1));
-    GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer));
+    GGML_ASSERT(!ggml_backend_बफर_is_sycl_विभज(src0->बफर));
     GGML_ASSERT(src0->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_द्विमान_OP_LOCALS
 
     // TODO: see https://github.com/ggml-org/llama.cpp/pull/13155
     // Batched mul_mat requires a rewrite to support both oneDNN and non-contiguous dst
     GGML_ASSERT(ggml_is_contiguous(dst));
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
     queue_ptr queue = ctx.stream();
 
     dpct::has_capability_or_fail(queue->get_device(), { sycl::aspect::fp16 });
 
-    const sycl::half * src0_f16 = static_cast<const sycl::half *>(src0->data);
-    float *            dst_ddf  = static_cast<float *>(dst->data);
+    ध्रुव sycl::half * src0_f16 = static_cast<ध्रुव sycl::half *>(src0->दत्त);
+    भिन्न *            dst_ddf  = static_cast<भिन्न *>(dst->दत्त);
 
-    const sycl::half * src1_f16       = static_cast<const sycl::half *>(src1->data);
-#if GGML_SYCL_DNNL
-    const size_t       type_size_src0 = ggml_type_size(src0->type);
-#endif
-    const size_t       type_size_src1 = ggml_type_size(src1->type);
+    ध्रुव sycl::half * src1_f16       = static_cast<ध्रुव sycl::half *>(src1->दत्त);
+#यदि GGML_SYCL_DNNL
+    ध्रुव size_t       type_आकार_src0 = ggml_type_आकार(src0->type);
+#यदि_अन्तः
+    ध्रुव size_t       type_आकार_src1 = ggml_type_आकार(src1->type);
 
-    bool is_src0_cont_2 = ggml_is_contiguous_2(src0);
-    bool is_src1_cont_2 = ggml_is_contiguous_2(src1);
+    तार्किक is_src0_cont_2 = ggml_is_contiguous_2(src0);
+    तार्किक is_src1_cont_2 = ggml_is_contiguous_2(src1);
 
     // SRC1 strides
-    int64_t                          s11 = nb11 / type_size_src1;
-    int64_t                          s12 = nb12 / type_size_src1;
-    int64_t                          s13 = nb13 / type_size_src1;
+    int64_t                          s11 = nb11 / type_आकार_src1;
+    int64_t                          s12 = nb12 / type_आकार_src1;
+    int64_t                          s13 = nb13 / type_आकार_src1;
     ggml_sycl_pool_alloc<sycl::half> src1_f16_alloc(ctx.pool());
 
     // convert src1 to fp16
-    if (src1->type != GGML_TYPE_F16) {
+    यदि (src1->type != GGML_TYPE_F16) {
         scope_op_debug_print    scope_dbg_print(__func__, "/to_fp16_nc_sycl", dst, /*num_src=*/2,
                                                 " : converting src1 to fp16");
 
-#if GGML_SYCL_DNNL
+#यदि GGML_SYCL_DNNL
         // iterate tensor dims and find the slowest moving dim and stride
-        int last_dim=0;
-        int last_str=0;
+        पूर्णाङ्क चरमः_dim=0;
+        पूर्णाङ्क चरमः_str=0;
         size_t largest_str=0;
-        for(int i = 0; i< 4; i++){
+        प्रति(पूर्णाङ्क i = 0; i< 4; i++){
             // last stride is always the largest
-            if(src1->nb[i] == largest_str){
-                if(src1->ne[last_dim] == 1){
-                    last_str = i;
-                    last_dim = i;
+            यदि(src1->nb[i] == largest_str){
+                यदि(src1->ne[चरमः_dim] == 1){
+                    चरमः_str = i;
+                    चरमः_dim = i;
                 }
             }
-            if(src1->nb[i] > largest_str){
+            यदि(src1->nb[i] > largest_str){
                 largest_str = src1->nb[i];
-                last_str = i;
-                last_dim = i;
+                चरमः_str = i;
+                चरमः_dim = i;
             }
 
         }
         // oneDNN handles strided data and does not need overhead of ggml_get_to_fp16_nc_sycl
-        const int64_t ne_src1 = src1->nb[last_str] * src1->ne[last_dim] / type_size_src1;
+        ध्रुव int64_t ne_src1 = src1->nb[चरमः_str] * src1->ne[चरमः_dim] / type_आकार_src1;
         src1_f16_alloc.alloc(ne_src1);
-        const to_fp16_sycl_t to_fp16_sycl = ggml_get_to_fp16_sycl(src1->type, dst);
-        GGML_ASSERT(to_fp16_sycl != nullptr);
-        to_fp16_sycl(src1_f16, src1_f16_alloc.get(), ne_src1, queue);
-# else
-        const int64_t ne_src1 = ggml_nelements(src1);
+        ध्रुव गन्तव्यम्_fp16_sycl_t गन्तव्यम्_fp16_sycl = ggml_get_गन्तव्यम्_fp16_sycl(src1->type, dst);
+        GGML_ASSERT(गन्तव्यम्_fp16_sycl != शून्यसूचकः);
+        गन्तव्यम्_fp16_sycl(src1_f16, src1_f16_alloc.get(), ne_src1, queue);
+# अन्यथा
+        ध्रुव int64_t ne_src1 = ggml_nelements(src1);
         src1_f16_alloc.alloc(ne_src1);
-        const to_fp16_nc_sycl_t to_fp16_nc_sycl = ggml_get_to_fp16_nc_sycl(src1->type);
-        GGML_ASSERT(to_fp16_nc_sycl != nullptr);
-        to_fp16_nc_sycl(src1_f16, src1_f16_alloc.get(), ne10, ne11, ne12, ne13, s11, s12, s13, queue);
-#endif
+        ध्रुव गन्तव्यम्_fp16_nc_sycl_t गन्तव्यम्_fp16_nc_sycl = ggml_get_गन्तव्यम्_fp16_nc_sycl(src1->type);
+        GGML_ASSERT(गन्तव्यम्_fp16_nc_sycl != शून्यसूचकः);
+        गन्तव्यम्_fp16_nc_sycl(src1_f16, src1_f16_alloc.get(), ne10, ne11, ne12, ne13, s11, s12, s13, queue);
+#यदि_अन्तः
 
         src1_f16 = src1_f16_alloc.get();
         s11      = ne10;
         s12      = ne11 * s11;
         s13      = ne12 * s12;
 
-        is_src1_cont_2 = true;
+        is_src1_cont_2 = सत्य;
     }
 
     ggml_sycl_pool_alloc<sycl::half> dst_f16(ctx.pool());
 
-    dpct::library_data_t mkl_compute_type = dpct::library_data_t::real_float;
-    dpct::library_data_t mkl_data_type    = dpct::library_data_t::real_float;
+    dpct::library_दत्त_t mkl_compute_type = dpct::library_दत्त_t::real_float;
+    dpct::library_दत्त_t mkl_दत्त_type    = dpct::library_दत्त_t::real_float;
 
     // dst strides
     size_t nbd2 = dst->nb[2];
     size_t nbd3 = dst->nb[3];
 
-    const float alpha_f32 = 1.0f;
-    const float beta_f32  = 0.0f;
+    ध्रुव भिन्न alpha_f32 = 1.0f;
+    ध्रुव भिन्न beta_f32  = 0.0f;
 
-    const void * alpha = &alpha_f32;
-    const void * beta  = &beta_f32;
+    ध्रुव शून्य * alpha = &alpha_f32;
+    ध्रुव शून्य * beta  = &beta_f32;
 
     GGML_ASSERT(ne12 % ne02 == 0);
     GGML_ASSERT(ne13 % ne03 == 0);
@@ -4086,135 +4086,135 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
     GGML_ASSERT(ne10 == ne00);
 
     // broadcast factors
-    const int64_t r2 = ne12 / ne02;
-    const int64_t r3 = ne13 / ne03;
+    ध्रुव int64_t r2 = ne12 / ne02;
+    ध्रुव int64_t r3 = ne13 / ne03;
 
-#if GGML_SYCL_DNNL
-    if (g_ggml_sycl_enable_dnn && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
-            int64_t str_a0 = nb00 / type_size_src0;
-            int64_t str_a1 = nb01 / type_size_src0;
-            int64_t str_a2 = nb02 / type_size_src0;
+#यदि GGML_SYCL_DNNL
+    यदि (g_ggml_sycl_enable_dnn && ggml_sycl_dnnl_has_optimized_gemm(ggml_sycl_get_device())) {
+            int64_t str_a0 = nb00 / type_आकार_src0;
+            int64_t str_a1 = nb01 / type_आकार_src0;
+            int64_t str_a2 = nb02 / type_आकार_src0;
 
-            int64_t str_b0 = nb10 / type_size_src1;
-            int64_t str_b1 = nb11 / type_size_src1;
-            int64_t str_b2 = nb12 / type_size_src1;
+            int64_t str_b0 = nb10 / type_आकार_src1;
+            int64_t str_b1 = nb11 / type_आकार_src1;
+            int64_t str_b2 = nb12 / type_आकार_src1;
 
-            auto launch_gemm_for_batches = [&ctx, queue](const sycl::half *src0,
-                                                const sycl::half *src1, float *dst,
+            स्वचालित launch_gemm_for_batches = [&ctx, queue](ध्रुव sycl::half *src0,
+                                                ध्रुव sycl::half *src1, भिन्न *dst,
                                                 int64_t a0, int64_t a1, int64_t batcha,
                                                 int64_t /*b0*/, int64_t b1, int64_t batchb,
                                                 int64_t sa0, int64_t sa1, int64_t sa2,
                                                 int64_t sb0, int64_t sb1, int64_t sb2,
                                                 int64_t sd2) {
-                bool supported_broadcast = batchb == batcha ? true
-                        : batchb == 1 || batcha == 1        ? true
-                                                            : false;
-                if (supported_broadcast) {
+                तार्किक supported_प्रसारणम् = batchb == batcha ? सत्य
+                        : batchb == 1 || batcha == 1        ? सत्य
+                                                            : असत्य;
+                यदि (supported_प्रसारणम्) {
                     DnnlGemmWrapper::gemm(ctx, a1, b1, a0, src0,
-                            DnnlGemmWrapper::to_dt<sycl::half>(), sa0, sa1, sa2, src1,
-                            DnnlGemmWrapper::to_dt<sycl::half>(), sb0, sb1, sb2, dst,
-                            DnnlGemmWrapper::to_dt<float>(), queue, batcha, batchb);
-                } else {
+                            DnnlGemmWrapper::गन्तव्यम्_dt<sycl::half>(), sa0, sa1, sa2, src1,
+                            DnnlGemmWrapper::गन्तव्यम्_dt<sycl::half>(), sb0, sb1, sb2, dst,
+                            DnnlGemmWrapper::गन्तव्यम्_dt<भिन्न>(), queue, batcha, batchb);
+                } अन्यथा {
                     // iterate over batches from smaller set of matrices (matrix 0)
                     int64_t batches0 = batcha;
                     int64_t batches1 = batchb;
 
-                    if (batches0 > batches1) {
-                        int64_t num_mul_mats = batches1;
-                        int64_t sub_batch = batches0 / num_mul_mats;
+                    यदि (batches0 > batches1) {
+                        int64_t अङ्कः_mul_mats = batches1;
+                        int64_t sub_batch = batches0 / अङ्कः_mul_mats;
                         // src0 is batched and bigger, shift and multiply with src1
-                        for (int64_t i0 = 0; i0 < num_mul_mats; i0++) {
-                            const sycl::half *src0_shifted = src0 + (sa2 * i0 * sub_batch);
-                            const sycl::half *src1_shifted = src1 + (sb2 * i0);
-                            float *dst_shifted = dst + (sd2 * i0 * sub_batch);
+                        प्रति (int64_t i0 = 0; i0 < अङ्कः_mul_mats; i0++) {
+                            ध्रुव sycl::half *src0_shifted = src0 + (sa2 * i0 * sub_batch);
+                            ध्रुव sycl::half *src1_shifted = src1 + (sb2 * i0);
+                            भिन्न *dst_shifted = dst + (sd2 * i0 * sub_batch);
                             DnnlGemmWrapper::gemm(ctx, a1, b1, a0, src0_shifted,
-                                    DnnlGemmWrapper::to_dt<sycl::half>(), sa0, sa1, sa2,
-                                    src1_shifted, DnnlGemmWrapper::to_dt<sycl::half>(), sb0,
-                                    sb1, sb2, dst_shifted, DnnlGemmWrapper::to_dt<float>(),
+                                    DnnlGemmWrapper::गन्तव्यम्_dt<sycl::half>(), sa0, sa1, sa2,
+                                    src1_shifted, DnnlGemmWrapper::गन्तव्यम्_dt<sycl::half>(), sb0,
+                                    sb1, sb2, dst_shifted, DnnlGemmWrapper::गन्तव्यम्_dt<भिन्न>(),
                                     queue, sub_batch, 1);
                         }
-                    } else {
-                        int64_t num_mul_mats = batches0;
-                        int64_t sub_batch = batches1 / num_mul_mats;
+                    } अन्यथा {
+                        int64_t अङ्कः_mul_mats = batches0;
+                        int64_t sub_batch = batches1 / अङ्कः_mul_mats;
                         // src1 is batched and bigger, shift and multiply with src0
-                        for (int64_t i1 = 0; i1 < num_mul_mats; i1++) {
-                            const sycl::half *src0_shifted = src0 + (sa2 * i1);
-                            const sycl::half *src1_shifted = src1 + (sb2 * i1 * sub_batch);
-                            float *dst_shifted = dst + (sd2 * i1 * sub_batch);
+                        प्रति (int64_t i1 = 0; i1 < अङ्कः_mul_mats; i1++) {
+                            ध्रुव sycl::half *src0_shifted = src0 + (sa2 * i1);
+                            ध्रुव sycl::half *src1_shifted = src1 + (sb2 * i1 * sub_batch);
+                            भिन्न *dst_shifted = dst + (sd2 * i1 * sub_batch);
                             DnnlGemmWrapper::gemm(ctx, a1, b1, a0, src0_shifted,
-                                    DnnlGemmWrapper::to_dt<sycl::half>(), sa0, sa1, sa2,
-                                    src1_shifted, DnnlGemmWrapper::to_dt<sycl::half>(), sb0,
-                                    sb1, sb2, dst_shifted, DnnlGemmWrapper::to_dt<float>(),
+                                    DnnlGemmWrapper::गन्तव्यम्_dt<sycl::half>(), sa0, sa1, sa2,
+                                    src1_shifted, DnnlGemmWrapper::गन्तव्यम्_dt<sycl::half>(), sb0,
+                                    sb1, sb2, dst_shifted, DnnlGemmWrapper::गन्तव्यम्_dt<भिन्न>(),
                                     queue, 1, sub_batch);
                         }
                     }
                 }
             };
 
-            const bool cont_batches_dim2_a = nb02 * ne02 == nb03;
-            const bool cont_batches_dim2_b = nb12 * ne12 == nb13;
-            const bool cont_batches_dim3_a = ne02 == 1 && nb02 * ne01 == nb03;
-            const bool cont_batches_dim3_b = ne12 == 1 && nb12 * ne11 == nb13;
-            if (cont_batches_dim2_a && cont_batches_dim2_b) {
+            ध्रुव तार्किक cont_batches_dim2_a = nb02 * ne02 == nb03;
+            ध्रुव तार्किक cont_batches_dim2_b = nb12 * ne12 == nb13;
+            ध्रुव तार्किक cont_batches_dim3_a = ne02 == 1 && nb02 * ne01 == nb03;
+            ध्रुव तार्किक cont_batches_dim3_b = ne12 == 1 && nb12 * ne11 == nb13;
+            यदि (cont_batches_dim2_a && cont_batches_dim2_b) {
                 // A batch is considered contiguous if the dimension 2 is not strided
                 int64_t batches0 = ne02 * ne03;
                 int64_t batches1 = ne12 * ne13;
                 launch_gemm_for_batches(src0_f16, src1_f16, dst_ddf, ne00, ne01, batches0,
                         ne10, ne11, batches1, str_a0, str_a1, str_a2, str_b0, str_b1,
-                        str_b2, nb2 / sizeof(float));
-            } else if (cont_batches_dim3_a && cont_batches_dim3_b) {
+                        str_b2, nb2 / परिमाण(भिन्न));
+            } अन्यथा यदि (cont_batches_dim3_a && cont_batches_dim3_b) {
                 // This case is similar to the one above with the difference that only the batch in dimension 3 is used and the dimension 2 is of size 1.
                 int64_t batches0 = ne02 * ne03;
                 int64_t batches1 = ne12 * ne13;
-                int64_t str_a3 = nb03 / type_size_src0;
-                int64_t str_b3 = nb13 / type_size_src1;
+                int64_t str_a3 = nb03 / type_आकार_src0;
+                int64_t str_b3 = nb13 / type_आकार_src1;
                 launch_gemm_for_batches(src0_f16, src1_f16, dst_ddf, ne00, ne01, batches0,
                         ne10, ne11, batches1, str_a0, str_a1, str_a3, str_b0, str_b1,
-                        str_b3, nb2 / sizeof(float));
-            } else {
-                for (int64_t b_a = 0; b_a < ne03; b_a++) {
-                    const sycl::half *src0_f16_shifted
-                            = src0_f16 + (nb03 * b_a / type_size_src0);
-                    const sycl::half *src1_f16_shifted
-                            = src1_f16 + (nb13 * b_a / type_size_src1);
-                    float *dst_shifted = dst_ddf + (nb3 * b_a / sizeof(float));
+                        str_b3, nb2 / परिमाण(भिन्न));
+            } अन्यथा {
+                प्रति (int64_t b_a = 0; b_a < ne03; b_a++) {
+                    ध्रुव sycl::half *src0_f16_shifted
+                            = src0_f16 + (nb03 * b_a / type_आकार_src0);
+                    ध्रुव sycl::half *src1_f16_shifted
+                            = src1_f16 + (nb13 * b_a / type_आकार_src1);
+                    भिन्न *dst_shifted = dst_ddf + (nb3 * b_a / परिमाण(भिन्न));
                     int64_t batches0 = ne02;
                     int64_t batches1 = ne12;
                     launch_gemm_for_batches(src0_f16_shifted, src1_f16_shifted, dst_shifted,
                             ne00, ne01, batches0, ne10, ne11, batches1, str_a0, str_a1,
-                            str_a2, str_b0, str_b1, str_b2, nb2 / sizeof(float));
+                            str_a2, str_b0, str_b1, str_b2, nb2 / परिमाण(भिन्न));
                 }
             }
 
     }
-    else
-#endif
+    अन्यथा
+#यदि_अन्तः
     {
-        if (r2 == 1 && r3 == 1 && is_src0_cont_2 && is_src1_cont_2) {
+        यदि (r2 == 1 && r3 == 1 && is_src0_cont_2 && is_src1_cont_2) {
             // with a [0, 2, 1, 3] perm. and ne02==1 the matrix strides need to be determined from dim 3:
-            const int64_t sma = ne02 == 1 ? nb03/nb00 : nb02/nb00;
-            const int64_t smb = ne12 == 1 ? s13       : s12;
+            ध्रुव int64_t sma = ne02 == 1 ? nb03/nb00 : nb02/nb00;
+            ध्रुव int64_t smb = ne12 == 1 ? s13       : s12;
 
             // there is no broadcast and src0, src1 are contiguous across dims 2, 3
             SYCL_CHECK(CHECK_TRY_ERROR(dpct::gemm_batch(*queue, oneapi::mkl::transpose::trans,
                                                         oneapi::mkl::transpose::nontrans, ne01, ne11, ne10, alpha,
-                                                        src0_f16, dpct::library_data_t::real_half, nb01 / nb00, sma,
-                                                        src1_f16, dpct::library_data_t::real_half, s11, smb, beta, dst_ddf,
-                                                        mkl_data_type, ne0, ne1 * ne0, ne12 * ne13, mkl_compute_type)));
-        } else {
-            const int ne23 = ne12 * ne13;
+                                                        src0_f16, dpct::library_दत्त_t::real_half, nb01 / nb00, sma,
+                                                        src1_f16, dpct::library_दत्त_t::real_half, s11, smb, beta, dst_ddf,
+                                                        mkl_दत्त_type, ne0, ne1 * ne0, ne12 * ne13, mkl_compute_type)));
+        } अन्यथा {
+            ध्रुव पूर्णाङ्क ne23 = ne12 * ne13;
 
-            ggml_sycl_pool_alloc<const void *>         ptrs_src(ctx.pool(), 2 * ne23);
-            ggml_sycl_pool_alloc<void *>               ptrs_dst(ctx.pool(), 1 * ne23);
-            ggml_sycl_pool_alloc<matrix_info_t<float>> matrix_info(ctx.host_pool(), 1);
+            ggml_sycl_pool_alloc<ध्रुव शून्य *>         ptrs_src(ctx.pool(), 2 * ne23);
+            ggml_sycl_pool_alloc<शून्य *>               ptrs_dst(ctx.pool(), 1 * ne23);
+            ggml_sycl_pool_alloc<matrix_info_t<भिन्न>> matrix_info(ctx.host_pool(), 1);
 
-            sycl::range<3> block_dims(1, ne12, ne13);
+            sycl::range<3> खण्डम्_dims(1, ne12, ne13);
             queue->submit([&](sycl::handler & cgh) {
-                const void ** ptrs_src_get = ptrs_src.get();
-                void **       ptrs_dst_get = ptrs_dst.get();
-                size_t        nb12_scaled  = src1->type == GGML_TYPE_F16 ? nb12 : s12 * sizeof(sycl::half);
-                size_t        nb13_scaled  = src1->type == GGML_TYPE_F16 ? nb13 : s13 * sizeof(sycl::half);
-                cgh.parallel_for(sycl::nd_range<3>(block_dims, block_dims), [=](sycl::nd_item<3> item_ct1) {
+                ध्रुव शून्य ** ptrs_src_get = ptrs_src.get();
+                शून्य **       ptrs_dst_get = ptrs_dst.get();
+                size_t        nb12_scaled  = src1->type == GGML_TYPE_F16 ? nb12 : s12 * परिमाण(sycl::half);
+                size_t        nb13_scaled  = src1->type == GGML_TYPE_F16 ? nb13 : s13 * परिमाण(sycl::half);
+                cgh.parallel_for(sycl::nd_range<3>(खण्डम्_dims, खण्डम्_dims), [=](sycl::nd_item<3> item_ct1) {
                     k_compute_batched_ptrs(src0_f16, src1_f16, dst_ddf, ptrs_src_get, ptrs_dst_get, ne12, ne13, ne23, nb02,
                                            nb03, nb12_scaled, nb13_scaled, nbd2, nbd3, r2, r3, item_ct1);
                 });
@@ -4222,147 +4222,147 @@ static void ggml_sycl_mul_mat_batched_sycl(ggml_backend_sycl_context & ctx, cons
 
             SYCL_CHECK(CHECK_TRY_ERROR(dpct::gemm_batch(
                 *queue, oneapi::mkl::transpose::trans, oneapi::mkl::transpose::nontrans, ne01, ne11, ne10, alpha,
-                (const void **) (ptrs_src.get() + 0 * ne23), dpct::library_data_t::real_half, nb01 / nb00,
-                (const void **) (ptrs_src.get() + 1 * ne23), dpct::library_data_t::real_half, s11, beta,
-                (void **) (ptrs_dst.get() + 0 * ne23), mkl_data_type, ne0, ne23, mkl_compute_type, matrix_info.get())));
+                (ध्रुव शून्य **) (ptrs_src.get() + 0 * ne23), dpct::library_दत्त_t::real_half, nb01 / nb00,
+                (ध्रुव शून्य **) (ptrs_src.get() + 1 * ne23), dpct::library_दत्त_t::real_half, s11, beta,
+                (शून्य **) (ptrs_dst.get() + 0 * ne23), mkl_दत्त_type, ne0, ne23, mkl_compute_type, matrix_info.get())));
         }
     }
-} catch (const sycl::exception & exc) {
-    std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
-    std::exit(1);
+} गृहाण (ध्रुव sycl::exception & exc) {
+    std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+    std::निर्गच्छ(1);
 }
 
-enum class mul_mat_algo {
+गणना वर्ग mul_mat_algo {
     DMMV         = 0,
     MMVQ         = 1,
     MUL_MAT_SYCL = 2,
 };
 
-inline bool ggml_sycl_supports_mmq(enum ggml_type type) {
+अन्तःस्थ तार्किक ggml_sycl_supports_mmq(गणना ggml_type type) {
     // TODO: accuracy issues in MMQ
-    GGML_UNUSED(type);
-    return false;
+    GGML_अप्रयुक्तम्(type);
+    प्रत्यागम असत्य;
 }
 
-inline bool ggml_sycl_supports_reorder_mul_mat_sycl(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q8_0:
-            return true;
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-            return !g_ggml_sycl_prioritize_dmmv;
-        default:
-            return false;
+अन्तःस्थ तार्किक ggml_sycl_supports_reorder_mul_mat_sycl(गणना ggml_type type) {
+    विकल्प (type) {
+        पक्ष GGML_TYPE_Q1_0:
+        पक्ष GGML_TYPE_Q4_0:
+        पक्ष GGML_TYPE_Q8_0:
+            प्रत्यागम सत्य;
+        पक्ष GGML_TYPE_Q2_K:
+        पक्ष GGML_TYPE_Q3_K:
+        पक्ष GGML_TYPE_Q4_K:
+        पक्ष GGML_TYPE_Q5_K:
+        पक्ष GGML_TYPE_Q6_K:
+            प्रत्यागम !g_ggml_sycl_prioritize_dmmv;
+        स्वभाव:
+            प्रत्यागम असत्य;
     }
 }
 
-inline bool ggml_sycl_supports_reorder_dmmv(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-            return true;
-        default:
-            return false;
+अन्तःस्थ तार्किक ggml_sycl_supports_reorder_dmmv(गणना ggml_type type) {
+    विकल्प (type) {
+        पक्ष GGML_TYPE_Q1_0:
+        पक्ष GGML_TYPE_Q4_0:
+        पक्ष GGML_TYPE_Q8_0:
+        पक्ष GGML_TYPE_Q2_K:
+        पक्ष GGML_TYPE_Q3_K:
+        पक्ष GGML_TYPE_Q4_K:
+        पक्ष GGML_TYPE_Q5_K:
+        पक्ष GGML_TYPE_Q6_K:
+            प्रत्यागम सत्य;
+        स्वभाव:
+            प्रत्यागम असत्य;
     }
 }
 
-inline bool ggml_sycl_supports_reorder_mmvq(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_IQ3_XXS:
-        case GGML_TYPE_IQ3_S:
-            return true;
-        default:
-            return false;
+अन्तःस्थ तार्किक ggml_sycl_supports_reorder_mmvq(गणना ggml_type type) {
+    विकल्प (type) {
+        पक्ष GGML_TYPE_Q1_0:
+        पक्ष GGML_TYPE_Q4_0:
+        पक्ष GGML_TYPE_Q8_0:
+        पक्ष GGML_TYPE_Q2_K:
+        पक्ष GGML_TYPE_Q3_K:
+        पक्ष GGML_TYPE_Q4_K:
+        पक्ष GGML_TYPE_Q5_K:
+        पक्ष GGML_TYPE_Q6_K:
+        पक्ष GGML_TYPE_IQ3_XXS:
+        पक्ष GGML_TYPE_IQ3_S:
+            प्रत्यागम सत्य;
+        स्वभाव:
+            प्रत्यागम असत्य;
     }
 }
 
-static bool ggml_sycl_supports_reorder_esimd(enum ggml_type type) {
-#ifdef GGML_SYCL_DMMV_HAS_ESIMD
-    switch (type) {
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_Q8_0:
-            return true;
-        default:
-            return false;
+स्थिर तार्किक ggml_sycl_supports_reorder_esimd(गणना ggml_type type) {
+#यदि_परिभाषितम् GGML_SYCL_DMMV_HAS_ESIMD
+    विकल्प (type) {
+        पक्ष GGML_TYPE_Q2_K:
+        पक्ष GGML_TYPE_Q3_K:
+        पक्ष GGML_TYPE_Q4_K:
+        पक्ष GGML_TYPE_Q5_K:
+        पक्ष GGML_TYPE_Q6_K:
+        पक्ष GGML_TYPE_Q8_0:
+            प्रत्यागम सत्य;
+        स्वभाव:
+            प्रत्यागम असत्य;
     }
-#else
-    GGML_UNUSED(type);
-    return false;
-#endif
+#अन्यथा
+    GGML_अप्रयुक्तम्(type);
+    प्रत्यागम असत्य;
+#यदि_अन्तः
 }
 
-static bool ggml_sycl_supports_dmmv(enum ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q1_0:
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q4_1:
-        case GGML_TYPE_Q5_0:
-        case GGML_TYPE_Q5_1:
-        case GGML_TYPE_Q8_0:
-        case GGML_TYPE_Q2_K:
-        case GGML_TYPE_Q3_K:
-        case GGML_TYPE_Q4_K:
-        case GGML_TYPE_Q5_K:
-        case GGML_TYPE_Q6_K:
-        case GGML_TYPE_F16:
-        case GGML_TYPE_BF16:
-            return true;
-        default:
-            return false;
+स्थिर तार्किक ggml_sycl_supports_dmmv(गणना ggml_type type) {
+    विकल्प (type) {
+        पक्ष GGML_TYPE_Q1_0:
+        पक्ष GGML_TYPE_Q4_0:
+        पक्ष GGML_TYPE_Q4_1:
+        पक्ष GGML_TYPE_Q5_0:
+        पक्ष GGML_TYPE_Q5_1:
+        पक्ष GGML_TYPE_Q8_0:
+        पक्ष GGML_TYPE_Q2_K:
+        पक्ष GGML_TYPE_Q3_K:
+        पक्ष GGML_TYPE_Q4_K:
+        पक्ष GGML_TYPE_Q5_K:
+        पक्ष GGML_TYPE_Q6_K:
+        पक्ष GGML_TYPE_F16:
+        पक्ष GGML_TYPE_BF16:
+            प्रत्यागम सत्य;
+        स्वभाव:
+            प्रत्यागम असत्य;
     }
 }
 
 // Helper functions to unify device memory allocation for both async and sync paths
-static inline void * sycl_ext_malloc_device(dpct::queue_ptr stream, size_t size) {
-    bool use_async = g_ggml_sycl_use_async_mem_op;
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
-    if (use_async) {
-        void * ptr = syclex::async_malloc(*stream, sycl::usm::alloc::device, size);
-        ggml_sycl_memtrace_add(GGML_SYCL_MEM_ASYNC, ptr, size);
-        return ptr;
+स्थिर अन्तःस्थ शून्य * sycl_ext_malloc_device(dpct::queue_ptr stream, size_t size) {
+    तार्किक use_async = g_ggml_sycl_use_async_mem_op;
+#यदि defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_स्मृतिः_ALLOC
+    यदि (use_async) {
+        शून्य * ptr = syclex::async_malloc(*stream, sycl::usm::alloc::device, size);
+        ggml_sycl_memtrace_सङ्कलय(GGML_SYCL_MEM_ASYNC, ptr, size);
+        प्रत्यागम ptr;
     }
-#else
+#अन्यथा
     // If async allocation extension is not available, use_async should always be false.
     GGML_ASSERT(!use_async);
-#endif
-    return ggml_sycl_malloc_device(size, *stream);
+#यदि_अन्तः
+    प्रत्यागम ggml_sycl_malloc_device(size, *stream);
 }
 
-static inline void sycl_ext_free(dpct::queue_ptr stream, void * ptr) {
-    bool use_async = g_ggml_sycl_use_async_mem_op;
-#if defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_MEMORY_ALLOC
-    if (use_async) {
+स्थिर अन्तःस्थ शून्य sycl_ext_free(dpct::queue_ptr stream, शून्य * ptr) {
+    तार्किक use_async = g_ggml_sycl_use_async_mem_op;
+#यदि defined(GGML_SYCL_GRAPH) && SYCL_EXT_ONEAPI_ASYNC_स्मृतिः_ALLOC
+    यदि (use_async) {
         ggml_sycl_memtrace_del(ptr);
         syclex::async_free(*stream, ptr);
-        return;
+        प्रत्यागम;
     }
-#else
+#अन्यथा
     // If async allocation extension is not available, use_async should always be false.
     GGML_ASSERT(!use_async);
-#endif
+#यदि_अन्तः
     ggml_sycl_free_device(ptr, *stream);
 }
 
@@ -4370,727 +4370,727 @@ static inline void sycl_ext_free(dpct::queue_ptr stream, void * ptr) {
 // When device allocation fails and GGML_SYCL_HOST_MEM_FALLBACK is enabled,
 // falls back to host memory so the reorder kernel can still run (over PCIe).
 // Device access to host memory requires Linux kernel 6.8+ (Ubuntu 26.04+).
-struct sycl_reorder_temp_buffer {
-    void *          ptr  = nullptr;
+संरचना sycl_reorder_अस्थायी_बफर {
+    शून्य *          ptr  = शून्यसूचकः;
     dpct::queue_ptr stream;
 
-    sycl_reorder_temp_buffer(dpct::queue_ptr stream, size_t size) : stream(stream) {
+    sycl_reorder_अस्थायी_बफर(dpct::queue_ptr stream, size_t size) : stream(stream) {
         ptr = sycl_ext_malloc_device(stream, size);
-#ifdef GGML_SYCL_HOST_MEM_FALLBACK
-        if (!ptr) {
+#यदि_परिभाषितम् GGML_SYCL_HOST_MEM_FALLBACK
+        यदि (!ptr) {
             ptr = sycl::malloc_host(size, *stream);
-            if (ptr) {
-                host_fallback = true;
+            यदि (ptr) {
+                host_fallback = सत्य;
                 GGML_LOG_WARN("%s: device alloc of %zu bytes failed, using host memory fallback\n", __func__, size);
             }
         }
-#endif
+#यदि_अन्तः
     }
 
-    ~sycl_reorder_temp_buffer() {
-        if (!ptr) {
-            return;
+    ~sycl_reorder_अस्थायी_बफर() {
+        यदि (!ptr) {
+            प्रत्यागम;
         }
-        if (host_fallback) {
-            sycl::free(ptr, *stream);
-        } else {
+        यदि (host_fallback) {
+            sycl::मुक्त(ptr, *stream);
+        } अन्यथा {
             sycl_ext_free(stream, ptr);
         }
     }
 
-    explicit operator bool() const { return ptr != nullptr; }
+    स्पष्ट संक्रियकः तार्किक() ध्रुव { प्रत्यागम ptr != शून्यसूचकः; }
 
-    sycl_reorder_temp_buffer(const sycl_reorder_temp_buffer &)            = delete;
-    sycl_reorder_temp_buffer & operator=(const sycl_reorder_temp_buffer &) = delete;
+    sycl_reorder_अस्थायी_बफर(ध्रुव sycl_reorder_अस्थायी_बफर &)            = विलोपय;
+    sycl_reorder_अस्थायी_बफर & संक्रियकः=(ध्रुव sycl_reorder_अस्थायी_बफर &) = विलोपय;
 
-private:
-    bool host_fallback = false;
+गुप्त:
+    तार्किक host_fallback = असत्य;
 };
 
-static bool reorder_qw_q4_0(uint8_t * data_device, const int ncols, const int nrows, size_t size, size_t offset,
+स्थिर तार्किक reorder_qw_q4_0(uint8_t * दत्त_device, ध्रुव पूर्णाङ्क ncols, ध्रुव पूर्णाङ्क nrows, size_t size, size_t विस्थापनम्,
                             dpct::queue_ptr stream) {
-    sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    sycl_reorder_अस्थायी_बफर tmp(stream, size);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, size)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    GGML_ASSERT((size % sizeof(block_q4_0) == 0));
-    GGML_ASSERT((offset % sizeof(block_q4_0) == 0));
-    int offset_blks = offset / sizeof(block_q4_0);
-    auto qs_ptr      = data_device + offset_blks * QK4_0 / 2;
-    auto d_ptr = (sycl::half*)(qs_ptr + ncols * nrows / 2) + offset_blks;
+    GGML_ASSERT((size % परिमाण(खण्डम्_q4_0) == 0));
+    GGML_ASSERT((विस्थापनम् % परिमाण(खण्डम्_q4_0) == 0));
+    पूर्णाङ्क विस्थापनम्_blks = विस्थापनम् / परिमाण(खण्डम्_q4_0);
+    स्वचालित qs_ptr      = दत्त_device + विस्थापनम्_blks * QK4_0 / 2;
+    स्वचालित d_ptr = (sycl::half*)(qs_ptr + ncols * nrows / 2) + विस्थापनम्_blks;
 
-    auto reorder_event = stream->parallel_for(
-        size / sizeof(block_q4_0),
-            [=](auto i) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            const block_q4_0* x = (const block_q4_0*)tmp_buf;
-            const int ib = i;
+    स्वचालित reorder_event = stream->parallel_for(
+        size / परिमाण(खण्डम्_q4_0),
+            [=](स्वचालित i) [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
+            ध्रुव खण्डम्_q4_0* x = (ध्रुव खण्डम्_q4_0*)tmp_buf;
+            ध्रुव पूर्णाङ्क ib = i;
 
-            for (int j = 0; j < QK4_0/2; j ++)
+            प्रति (पूर्णाङ्क j = 0; j < QK4_0/2; j ++)
             {
                 *(qs_ptr + ib * QK4_0 / 2 + j) = x[ib].qs[j];
             }
             *(d_ptr + ib) = x[ib].d;
         });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static bool reorder_qw_q8_0(uint8_t * data_device, const int ncols, const int nrows, size_t size, size_t offset,
+स्थिर तार्किक reorder_qw_q8_0(uint8_t * दत्त_device, ध्रुव पूर्णाङ्क ncols, ध्रुव पूर्णाङ्क nrows, size_t size, size_t विस्थापनम्,
                             dpct::queue_ptr stream) {
-    sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    sycl_reorder_अस्थायी_बफर tmp(stream, size);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, size)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    GGML_ASSERT((size % sizeof(block_q8_0) == 0));
-    GGML_ASSERT((offset % sizeof(block_q8_0) == 0));
-    int offset_blks = offset / sizeof(block_q8_0);
-    auto qs_ptr = data_device + offset_blks * QK8_0;
-    auto d_ptr = (sycl::half*)(qs_ptr + ncols * nrows) + offset_blks;
+    GGML_ASSERT((size % परिमाण(खण्डम्_q8_0) == 0));
+    GGML_ASSERT((विस्थापनम् % परिमाण(खण्डम्_q8_0) == 0));
+    पूर्णाङ्क विस्थापनम्_blks = विस्थापनम् / परिमाण(खण्डम्_q8_0);
+    स्वचालित qs_ptr = दत्त_device + विस्थापनम्_blks * QK8_0;
+    स्वचालित d_ptr = (sycl::half*)(qs_ptr + ncols * nrows) + विस्थापनम्_blks;
 
-    auto reorder_event = stream->parallel_for(
-        size / sizeof(block_q8_0),
-            [=](auto i) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            const block_q8_0* x = (const block_q8_0*)tmp_buf;
-            const int ib = i;
+    स्वचालित reorder_event = stream->parallel_for(
+        size / परिमाण(खण्डम्_q8_0),
+            [=](स्वचालित i) [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
+            ध्रुव खण्डम्_q8_0* x = (ध्रुव खण्डम्_q8_0*)tmp_buf;
+            ध्रुव पूर्णाङ्क ib = i;
 
-            for (int j = 0; j < QK8_0; j++)
+            प्रति (पूर्णाङ्क j = 0; j < QK8_0; j++)
             {
                 *((int8_t*)qs_ptr + ib * QK8_0 + j) = x[ib].qs[j];
             }
             *(d_ptr + ib) = x[ib].d;
         });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
 // Reorder each Q8_0 expert slice into a self-contained [qs][d] SoA layout.
-static bool reorder_qw_q8_0_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_q8_0) == 0);
-    const int    blocks_per_expert = (int) (expert_bytes / sizeof(block_q8_0));
-    const size_t total_bytes       = expert_bytes * (size_t) n_expert;
+स्थिर तार्किक reorder_qw_q8_0_moe(uint8_t * दत्त_device, size_t expert_अष्टकानि, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_अष्टकानि % परिमाण(खण्डम्_q8_0) == 0);
+    ध्रुव पूर्णाङ्क    खण्डानि_प्रत्येकम्_expert = (पूर्णाङ्क) (expert_अष्टकानि / परिमाण(खण्डम्_q8_0));
+    ध्रुव size_t योग_अष्टकानि       = expert_अष्टकानि * (size_t) n_expert;
 
-    sycl_reorder_temp_buffer tmp(stream, total_bytes);
-    if (!tmp) {
-        GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, total_bytes);
-        return false;
+    sycl_reorder_अस्थायी_बफर tmp(stream, योग_अष्टकानि);
+    यदि (!tmp) {
+        GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, योग_अष्टकानि);
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, total_bytes)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, योग_अष्टकानि)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    const int total_blocks = blocks_per_expert * (int) n_expert;
-    auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-        const int          gb   = gb_;
-        const int          e    = gb / blocks_per_expert;
-        const int          ib   = gb % blocks_per_expert;
-        const block_q8_0 * x    = (const block_q8_0 *) (tmp_buf + (size_t) e * expert_bytes);
-        uint8_t *          base = data_device + (size_t) e * expert_bytes;
+    ध्रुव पूर्णाङ्क योग_खण्डानि = खण्डानि_प्रत्येकम्_expert * (पूर्णाङ्क) n_expert;
+    स्वचालित reorder_event = stream->parallel_for(योग_खण्डानि, [=](स्वचालित gb_) {
+        ध्रुव पूर्णाङ्क          gb   = gb_;
+        ध्रुव पूर्णाङ्क          e    = gb / खण्डानि_प्रत्येकम्_expert;
+        ध्रुव पूर्णाङ्क          ib   = gb % खण्डानि_प्रत्येकम्_expert;
+        ध्रुव खण्डम्_q8_0 * x    = (ध्रुव खण्डम्_q8_0 *) (tmp_buf + (size_t) e * expert_अष्टकानि);
+        uint8_t *          आधारः = दत्त_device + (size_t) e * expert_अष्टकानि;
 
-        auto * qs_ptr = base;
-        auto * d_ptr  = (sycl::half *) (qs_ptr + (size_t) blocks_per_expert * QK8_0);
+        स्वचालित * qs_ptr = आधारः;
+        स्वचालित * d_ptr  = (sycl::half *) (qs_ptr + (size_t) खण्डानि_प्रत्येकम्_expert * QK8_0);
 
-        for (int j = 0; j < QK8_0; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK8_0; ++j) {
             *((int8_t *) qs_ptr + ib * QK8_0 + j) = x[ib].qs[j];
         }
         d_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static bool reorder_qw_q4_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q4_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q4_K) == 0);
+स्थिर तार्किक reorder_qw_q4_k(uint8_t * दत्त_device, size_t size, size_t विस्थापनम्, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % परिमाण(खण्डम्_q4_K) == 0);
+    GGML_ASSERT(विस्थापनम् % परिमाण(खण्डम्_q4_K) == 0);
 
-    const int nblocks = size / sizeof(block_q4_K);
+    ध्रुव पूर्णाङ्क nblocks = size / परिमाण(खण्डम्_q4_K);
 
-    sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    sycl_reorder_अस्थायी_बफर tmp(stream, size);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, size)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    auto * qs_ptr     = data_device;
-    auto * scales_ptr = qs_ptr + QK_K / 2 * nblocks;
-    auto * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_SIZE * nblocks);
+    स्वचालित * qs_ptr     = दत्त_device;
+    स्वचालित * scales_ptr = qs_ptr + QK_K / 2 * nblocks;
+    स्वचालित * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_आकार * nblocks);
 
-    auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q4_K * x  = (const block_q4_K *) tmp_buf;
-        const int          ib = i;
+    स्वचालित reorder_event = stream->parallel_for(nblocks, [=](स्वचालित i) {
+        ध्रुव खण्डम्_q4_K * x  = (ध्रुव खण्डम्_q4_K *) tmp_buf;
+        ध्रुव पूर्णाङ्क          ib = i;
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 2; ++j) {
             qs_ptr[ib * (QK_K / 2) + j] = x[ib].qs[j];
         }
 
-        for (int j = 0; j < K_SCALE_SIZE; ++j) {
-            scales_ptr[ib * K_SCALE_SIZE + j] = x[ib].scales[j];
+        प्रति (पूर्णाङ्क j = 0; j < K_SCALE_आकार; ++j) {
+            scales_ptr[ib * K_SCALE_आकार + j] = x[ib].scales[j];
         }
 
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
 // Reorder each expert slice into a self-contained SoA layout.
-static bool reorder_qw_q4_k_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_q4_K) == 0);
-    const int    blocks_per_expert = (int) (expert_bytes / sizeof(block_q4_K));
-    const size_t total_bytes       = expert_bytes * (size_t) n_expert;
+स्थिर तार्किक reorder_qw_q4_k_moe(uint8_t * दत्त_device, size_t expert_अष्टकानि, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_अष्टकानि % परिमाण(खण्डम्_q4_K) == 0);
+    ध्रुव पूर्णाङ्क    खण्डानि_प्रत्येकम्_expert = (पूर्णाङ्क) (expert_अष्टकानि / परिमाण(खण्डम्_q4_K));
+    ध्रुव size_t योग_अष्टकानि       = expert_अष्टकानि * (size_t) n_expert;
 
-    sycl_reorder_temp_buffer tmp(stream, total_bytes);
-    if (!tmp) {
-        GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, total_bytes);
-        return false;
+    sycl_reorder_अस्थायी_बफर tmp(stream, योग_अष्टकानि);
+    यदि (!tmp) {
+        GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, योग_अष्टकानि);
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, total_bytes)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, योग_अष्टकानि)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    const int total_blocks = blocks_per_expert * (int) n_expert;
-    auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-        const int          gb   = gb_;
-        const int          e    = gb / blocks_per_expert;
-        const int          ib   = gb % blocks_per_expert;
-        const block_q4_K * x    = (const block_q4_K *) (tmp_buf + (size_t) e * expert_bytes);
-        uint8_t *          base = data_device + (size_t) e * expert_bytes;
+    ध्रुव पूर्णाङ्क योग_खण्डानि = खण्डानि_प्रत्येकम्_expert * (पूर्णाङ्क) n_expert;
+    स्वचालित reorder_event = stream->parallel_for(योग_खण्डानि, [=](स्वचालित gb_) {
+        ध्रुव पूर्णाङ्क          gb   = gb_;
+        ध्रुव पूर्णाङ्क          e    = gb / खण्डानि_प्रत्येकम्_expert;
+        ध्रुव पूर्णाङ्क          ib   = gb % खण्डानि_प्रत्येकम्_expert;
+        ध्रुव खण्डम्_q4_K * x    = (ध्रुव खण्डम्_q4_K *) (tmp_buf + (size_t) e * expert_अष्टकानि);
+        uint8_t *          आधारः = दत्त_device + (size_t) e * expert_अष्टकानि;
 
-        auto * qs_ptr     = base;
-        auto * scales_ptr = qs_ptr + QK_K / 2 * blocks_per_expert;
-        auto * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_SIZE * blocks_per_expert);
+        स्वचालित * qs_ptr     = आधारः;
+        स्वचालित * scales_ptr = qs_ptr + QK_K / 2 * खण्डानि_प्रत्येकम्_expert;
+        स्वचालित * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_आकार * खण्डानि_प्रत्येकम्_expert);
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 2; ++j) {
             qs_ptr[ib * (QK_K / 2) + j] = x[ib].qs[j];
         }
-        for (int j = 0; j < K_SCALE_SIZE; ++j) {
-            scales_ptr[ib * K_SCALE_SIZE + j] = x[ib].scales[j];
+        प्रति (पूर्णाङ्क j = 0; j < K_SCALE_आकार; ++j) {
+            scales_ptr[ib * K_SCALE_आकार + j] = x[ib].scales[j];
         }
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
 // Reorder each Q5_K expert slice into [qs][qh][scales][dm].
-static bool reorder_qw_q5_k_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_q5_K) == 0);
-    const int    blocks_per_expert = (int) (expert_bytes / sizeof(block_q5_K));
-    const size_t total_bytes       = expert_bytes * (size_t) n_expert;
+स्थिर तार्किक reorder_qw_q5_k_moe(uint8_t * दत्त_device, size_t expert_अष्टकानि, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_अष्टकानि % परिमाण(खण्डम्_q5_K) == 0);
+    ध्रुव पूर्णाङ्क    खण्डानि_प्रत्येकम्_expert = (पूर्णाङ्क) (expert_अष्टकानि / परिमाण(खण्डम्_q5_K));
+    ध्रुव size_t योग_अष्टकानि       = expert_अष्टकानि * (size_t) n_expert;
 
-    sycl_reorder_temp_buffer tmp(stream, total_bytes);
-    if (!tmp) {
-        GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, total_bytes);
-        return false;
+    sycl_reorder_अस्थायी_बफर tmp(stream, योग_अष्टकानि);
+    यदि (!tmp) {
+        GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, योग_अष्टकानि);
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, total_bytes)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, योग_अष्टकानि)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    const int total_blocks = blocks_per_expert * (int) n_expert;
-    auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-        const int          gb   = gb_;
-        const int          e    = gb / blocks_per_expert;
-        const int          ib   = gb % blocks_per_expert;
-        const block_q5_K * x    = (const block_q5_K *) (tmp_buf + (size_t) e * expert_bytes);
-        uint8_t *          base = data_device + (size_t) e * expert_bytes;
+    ध्रुव पूर्णाङ्क योग_खण्डानि = खण्डानि_प्रत्येकम्_expert * (पूर्णाङ्क) n_expert;
+    स्वचालित reorder_event = stream->parallel_for(योग_खण्डानि, [=](स्वचालित gb_) {
+        ध्रुव पूर्णाङ्क          gb   = gb_;
+        ध्रुव पूर्णाङ्क          e    = gb / खण्डानि_प्रत्येकम्_expert;
+        ध्रुव पूर्णाङ्क          ib   = gb % खण्डानि_प्रत्येकम्_expert;
+        ध्रुव खण्डम्_q5_K * x    = (ध्रुव खण्डम्_q5_K *) (tmp_buf + (size_t) e * expert_अष्टकानि);
+        uint8_t *          आधारः = दत्त_device + (size_t) e * expert_अष्टकानि;
 
-        auto * qs_ptr     = base;
-        auto * qh_ptr     = qs_ptr + (QK_K / 2) * blocks_per_expert;
-        auto * scales_ptr = qh_ptr + (QK_K / 8) * blocks_per_expert;
-        auto * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_SIZE * blocks_per_expert);
+        स्वचालित * qs_ptr     = आधारः;
+        स्वचालित * qh_ptr     = qs_ptr + (QK_K / 2) * खण्डानि_प्रत्येकम्_expert;
+        स्वचालित * scales_ptr = qh_ptr + (QK_K / 8) * खण्डानि_प्रत्येकम्_expert;
+        स्वचालित * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_आकार * खण्डानि_प्रत्येकम्_expert);
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 2; ++j) {
             qs_ptr[ib * (QK_K / 2) + j] = x[ib].qs[j];
         }
-        for (int j = 0; j < QK_K / 8; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 8; ++j) {
             qh_ptr[ib * (QK_K / 8) + j] = x[ib].qh[j];
         }
-        for (int j = 0; j < K_SCALE_SIZE; ++j) {
-            scales_ptr[ib * K_SCALE_SIZE + j] = x[ib].scales[j];
+        प्रति (पूर्णाङ्क j = 0; j < K_SCALE_आकार; ++j) {
+            scales_ptr[ib * K_SCALE_आकार + j] = x[ib].scales[j];
         }
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
 // Reorder each Q6_K expert slice into [ql][qh][scales][d].
-static bool reorder_qw_q6_k_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_q6_K) == 0);
-    const int    blocks_per_expert = (int) (expert_bytes / sizeof(block_q6_K));
-    const size_t total_bytes       = expert_bytes * (size_t) n_expert;
+स्थिर तार्किक reorder_qw_q6_k_moe(uint8_t * दत्त_device, size_t expert_अष्टकानि, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_अष्टकानि % परिमाण(खण्डम्_q6_K) == 0);
+    ध्रुव पूर्णाङ्क    खण्डानि_प्रत्येकम्_expert = (पूर्णाङ्क) (expert_अष्टकानि / परिमाण(खण्डम्_q6_K));
+    ध्रुव size_t योग_अष्टकानि       = expert_अष्टकानि * (size_t) n_expert;
 
-    sycl_reorder_temp_buffer tmp(stream, total_bytes);
-    if (!tmp) {
-        GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, total_bytes);
-        return false;
+    sycl_reorder_अस्थायी_बफर tmp(stream, योग_अष्टकानि);
+    यदि (!tmp) {
+        GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, योग_अष्टकानि);
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, total_bytes)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, योग_अष्टकानि)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    const int total_blocks = blocks_per_expert * (int) n_expert;
-    auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-        const int          gb   = gb_;
-        const int          e    = gb / blocks_per_expert;
-        const int          ib   = gb % blocks_per_expert;
-        const block_q6_K * x    = (const block_q6_K *) (tmp_buf + (size_t) e * expert_bytes);
-        uint8_t *          base = data_device + (size_t) e * expert_bytes;
+    ध्रुव पूर्णाङ्क योग_खण्डानि = खण्डानि_प्रत्येकम्_expert * (पूर्णाङ्क) n_expert;
+    स्वचालित reorder_event = stream->parallel_for(योग_खण्डानि, [=](स्वचालित gb_) {
+        ध्रुव पूर्णाङ्क          gb   = gb_;
+        ध्रुव पूर्णाङ्क          e    = gb / खण्डानि_प्रत्येकम्_expert;
+        ध्रुव पूर्णाङ्क          ib   = gb % खण्डानि_प्रत्येकम्_expert;
+        ध्रुव खण्डम्_q6_K * x    = (ध्रुव खण्डम्_q6_K *) (tmp_buf + (size_t) e * expert_अष्टकानि);
+        uint8_t *          आधारः = दत्त_device + (size_t) e * expert_अष्टकानि;
 
-        auto * ql_ptr     = base;
-        auto * qh_ptr     = ql_ptr + (QK_K / 2) * blocks_per_expert;
-        auto * scales_ptr = qh_ptr + (QK_K / 4) * blocks_per_expert;
-        auto * d_ptr      = (sycl::half *) (scales_ptr + (QK_K / 16) * blocks_per_expert);
+        स्वचालित * ql_ptr     = आधारः;
+        स्वचालित * qh_ptr     = ql_ptr + (QK_K / 2) * खण्डानि_प्रत्येकम्_expert;
+        स्वचालित * scales_ptr = qh_ptr + (QK_K / 4) * खण्डानि_प्रत्येकम्_expert;
+        स्वचालित * d_ptr      = (sycl::half *) (scales_ptr + (QK_K / 16) * खण्डानि_प्रत्येकम्_expert);
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 2; ++j) {
             ql_ptr[ib * (QK_K / 2) + j] = x[ib].ql[j];
         }
-        for (int j = 0; j < QK_K / 4; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 4; ++j) {
             qh_ptr[ib * (QK_K / 4) + j] = x[ib].qh[j];
         }
-        for (int j = 0; j < QK_K / 16; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 16; ++j) {
             scales_ptr[ib * (QK_K / 16) + j] = x[ib].scales[j];
         }
         d_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
 // Reorder each MXFP4 expert slice into [qs][e]: 16-byte nibble blocks, then one E8M0 byte per block.
 // Experts are self-contained, so the tensor is reordered a few experts at a time through a small
 // temporary: a whole-tensor temporary (hundreds of MB) can exceed the VRAM left on a nearly full card,
 // and on Windows the driver then pages device memory out to host RAM instead of failing.
-static bool reorder_qw_mxfp4_moe(uint8_t * data_device, size_t expert_bytes, int64_t n_expert, dpct::queue_ptr stream) {
-    GGML_ASSERT(expert_bytes % sizeof(block_mxfp4) == 0);
-    const int     blocks_per_expert = (int) (expert_bytes / sizeof(block_mxfp4));
-    const size_t  max_chunk_bytes   = 32u << 20;
-    const int64_t chunk_experts     = std::max<int64_t>(1, std::min<int64_t>(n_expert, (int64_t) (max_chunk_bytes / expert_bytes)));
+स्थिर तार्किक reorder_qw_mxfp4_moe(uint8_t * दत्त_device, size_t expert_अष्टकानि, int64_t n_expert, dpct::queue_ptr stream) {
+    GGML_ASSERT(expert_अष्टकानि % परिमाण(खण्डम्_mxfp4) == 0);
+    ध्रुव पूर्णाङ्क     खण्डानि_प्रत्येकम्_expert = (पूर्णाङ्क) (expert_अष्टकानि / परिमाण(खण्डम्_mxfp4));
+    ध्रुव size_t  max_chunk_अष्टकानि   = 32u << 20;
+    ध्रुव int64_t chunk_experts     = std::max<int64_t>(1, std::min<int64_t>(n_expert, (int64_t) (max_chunk_अष्टकानि / expert_अष्टकानि)));
 
-    sycl_reorder_temp_buffer tmp(stream, (size_t) chunk_experts * expert_bytes);
-    if (!tmp) {
+    sycl_reorder_अस्थायी_बफर tmp(stream, (size_t) chunk_experts * expert_अष्टकानि);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__,
-                      (size_t) chunk_experts * expert_bytes);
-        return false;
+                      (size_t) chunk_experts * expert_अष्टकानि);
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     // the queue is in-order: each chunk's copy into tmp_buf waits for the previous chunk's kernel
-    for (int64_t e0 = 0; e0 < n_expert; e0 += chunk_experts) {
-        const int64_t n_chunk = std::min(chunk_experts, n_expert - e0);
-        uint8_t *     chunk   = data_device + (size_t) e0 * expert_bytes;
+    प्रति (int64_t e0 = 0; e0 < n_expert; e0 += chunk_experts) {
+        ध्रुव int64_t n_chunk = std::min(chunk_experts, n_expert - e0);
+        uint8_t *     chunk   = दत्त_device + (size_t) e0 * expert_अष्टकानि;
 
         sycl::event copy_event;
-        SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, chunk, (size_t) n_chunk * expert_bytes)));
-        if (!g_ggml_sycl_use_async_mem_op) {
-            copy_event.wait();
+        SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, chunk, (size_t) n_chunk * expert_अष्टकानि)));
+        यदि (!g_ggml_sycl_use_async_mem_op) {
+            copy_event.प्रतीक्षस्व();
         }
 
-        const int total_blocks = blocks_per_expert * (int) n_chunk;
-        auto reorder_event = stream->parallel_for(total_blocks, [=](auto gb_) {
-            const int           gb   = gb_;
-            const int           e    = gb / blocks_per_expert;
-            const int           ib   = gb % blocks_per_expert;
-            const block_mxfp4 * x    = (const block_mxfp4 *) (tmp_buf + (size_t) e * expert_bytes);
-            uint8_t *           base = chunk + (size_t) e * expert_bytes;
+        ध्रुव पूर्णाङ्क योग_खण्डानि = खण्डानि_प्रत्येकम्_expert * (पूर्णाङ्क) n_chunk;
+        स्वचालित reorder_event = stream->parallel_for(योग_खण्डानि, [=](स्वचालित gb_) {
+            ध्रुव पूर्णाङ्क           gb   = gb_;
+            ध्रुव पूर्णाङ्क           e    = gb / खण्डानि_प्रत्येकम्_expert;
+            ध्रुव पूर्णाङ्क           ib   = gb % खण्डानि_प्रत्येकम्_expert;
+            ध्रुव खण्डम्_mxfp4 * x    = (ध्रुव खण्डम्_mxfp4 *) (tmp_buf + (size_t) e * expert_अष्टकानि);
+            uint8_t *           आधारः = chunk + (size_t) e * expert_अष्टकानि;
 
-            uint8_t * qs_ptr = base;
-            uint8_t * e_ptr  = qs_ptr + (QK_MXFP4 / 2) * (size_t) blocks_per_expert;
+            uint8_t * qs_ptr = आधारः;
+            uint8_t * e_ptr  = qs_ptr + (QK_MXFP4 / 2) * (size_t) खण्डानि_प्रत्येकम्_expert;
 
-            for (int j = 0; j < QK_MXFP4 / 2; ++j) {
+            प्रति (पूर्णाङ्क j = 0; j < QK_MXFP4 / 2; ++j) {
                 qs_ptr[(size_t) ib * (QK_MXFP4 / 2) + j] = x[ib].qs[j];
             }
             e_ptr[ib] = x[ib].e;
         });
-        if (!g_ggml_sycl_use_async_mem_op) {
+        यदि (!g_ggml_sycl_use_async_mem_op) {
             reorder_event.wait_and_throw();
         }
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static bool reorder_qw_q2_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q2_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q2_K) == 0);
+स्थिर तार्किक reorder_qw_q2_k(uint8_t * दत्त_device, size_t size, size_t विस्थापनम्, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % परिमाण(खण्डम्_q2_K) == 0);
+    GGML_ASSERT(विस्थापनम् % परिमाण(खण्डम्_q2_K) == 0);
 
-    const int nblocks = size / sizeof(block_q2_K);
+    ध्रुव पूर्णाङ्क nblocks = size / परिमाण(खण्डम्_q2_K);
 
-    sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    sycl_reorder_अस्थायी_बफर tmp(stream, size);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, size)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    auto *        qs_ptr     = data_device;
-    auto *        scales_ptr = qs_ptr + (QK_K / 4) * nblocks;
+    स्वचालित *        qs_ptr     = दत्त_device;
+    स्वचालित *        scales_ptr = qs_ptr + (QK_K / 4) * nblocks;
     sycl::half2 * dm_ptr     = (sycl::half2 *) (scales_ptr + (QK_K / 16) * nblocks);
 
-    auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q2_K * x  = (const block_q2_K *) tmp_buf;
-        const int          ib = i;
+    स्वचालित reorder_event = stream->parallel_for(nblocks, [=](स्वचालित i) {
+        ध्रुव खण्डम्_q2_K * x  = (ध्रुव खण्डम्_q2_K *) tmp_buf;
+        ध्रुव पूर्णाङ्क          ib = i;
 
-        for (int j = 0; j < QK_K / 4; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 4; ++j) {
             qs_ptr[ib * (QK_K / 4) + j] = x[ib].qs[j];
         }
 
-        for (int j = 0; j < QK_K / 16; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 16; ++j) {
             scales_ptr[ib * (QK_K / 16) + j] = x[ib].scales[j];
         }
 
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static bool reorder_qw_q3_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q3_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q3_K) == 0);
+स्थिर तार्किक reorder_qw_q3_k(uint8_t * दत्त_device, size_t size, size_t विस्थापनम्, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % परिमाण(खण्डम्_q3_K) == 0);
+    GGML_ASSERT(विस्थापनम् % परिमाण(खण्डम्_q3_K) == 0);
 
-    const int nblocks = size / sizeof(block_q3_K);
+    ध्रुव पूर्णाङ्क nblocks = size / परिमाण(खण्डम्_q3_K);
 
-    sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    sycl_reorder_अस्थायी_बफर tmp(stream, size);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, size)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    auto *       qs_ptr     = data_device;
-    auto *       hmask_ptr  = qs_ptr + (QK_K / 4) * nblocks;
-    auto *       scales_ptr = hmask_ptr + (QK_K / 8) * nblocks;
+    स्वचालित *       qs_ptr     = दत्त_device;
+    स्वचालित *       hmask_ptr  = qs_ptr + (QK_K / 4) * nblocks;
+    स्वचालित *       scales_ptr = hmask_ptr + (QK_K / 8) * nblocks;
     sycl::half * d_ptr      = (sycl::half *) (scales_ptr + 12 * nblocks);
 
-    auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q3_K * x  = (const block_q3_K *) tmp_buf;
-        const int          ib = i;
+    स्वचालित reorder_event = stream->parallel_for(nblocks, [=](स्वचालित i) {
+        ध्रुव खण्डम्_q3_K * x  = (ध्रुव खण्डम्_q3_K *) tmp_buf;
+        ध्रुव पूर्णाङ्क          ib = i;
 
-        for (int j = 0; j < QK_K / 4; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 4; ++j) {
             qs_ptr[ib * (QK_K / 4) + j] = x[ib].qs[j];
         }
 
-        for (int j = 0; j < QK_K / 8; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 8; ++j) {
             hmask_ptr[ib * (QK_K / 8) + j] = x[ib].hmask[j];
         }
 
-        for (int j = 0; j < 12; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < 12; ++j) {
             scales_ptr[ib * 12 + j] = x[ib].scales[j];
         }
 
         d_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static bool reorder_qw_q5_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q5_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q5_K) == 0);
+स्थिर तार्किक reorder_qw_q5_k(uint8_t * दत्त_device, size_t size, size_t विस्थापनम्, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % परिमाण(खण्डम्_q5_K) == 0);
+    GGML_ASSERT(विस्थापनम् % परिमाण(खण्डम्_q5_K) == 0);
 
-    const int nblocks = size / sizeof(block_q5_K);
+    ध्रुव पूर्णाङ्क nblocks = size / परिमाण(खण्डम्_q5_K);
 
-    sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    sycl_reorder_अस्थायी_बफर tmp(stream, size);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, size)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    auto * qs_ptr     = data_device;
-    auto * qh_ptr     = qs_ptr + (QK_K / 2) * nblocks;
-    auto * scales_ptr = qh_ptr + (QK_K / 8) * nblocks;
-    auto * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_SIZE * nblocks);
+    स्वचालित * qs_ptr     = दत्त_device;
+    स्वचालित * qh_ptr     = qs_ptr + (QK_K / 2) * nblocks;
+    स्वचालित * scales_ptr = qh_ptr + (QK_K / 8) * nblocks;
+    स्वचालित * dm_ptr     = (sycl::half2 *) (scales_ptr + K_SCALE_आकार * nblocks);
 
-    auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q5_K * x  = (const block_q5_K *) tmp_buf;
-        const int          ib = i;
+    स्वचालित reorder_event = stream->parallel_for(nblocks, [=](स्वचालित i) {
+        ध्रुव खण्डम्_q5_K * x  = (ध्रुव खण्डम्_q5_K *) tmp_buf;
+        ध्रुव पूर्णाङ्क          ib = i;
 
-        for (int j = 0; j < QK_K / 2; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 2; ++j) {
             qs_ptr[ib * (QK_K / 2) + j] = x[ib].qs[j];
         }
 
-        for (int j = 0; j < QK_K / 8; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 8; ++j) {
             qh_ptr[ib * (QK_K / 8) + j] = x[ib].qh[j];
         }
 
-        for (int j = 0; j < K_SCALE_SIZE; ++j) {
-            scales_ptr[ib * K_SCALE_SIZE + j] = x[ib].scales[j];
+        प्रति (पूर्णाङ्क j = 0; j < K_SCALE_आकार; ++j) {
+            scales_ptr[ib * K_SCALE_आकार + j] = x[ib].scales[j];
         }
 
         dm_ptr[ib] = x[ib].dm;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static bool reorder_qw_q6_k(uint8_t * data_device, size_t size, size_t offset, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_q6_K) == 0);
-    GGML_ASSERT(offset % sizeof(block_q6_K) == 0);
+स्थिर तार्किक reorder_qw_q6_k(uint8_t * दत्त_device, size_t size, size_t विस्थापनम्, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % परिमाण(खण्डम्_q6_K) == 0);
+    GGML_ASSERT(विस्थापनम् % परिमाण(खण्डम्_q6_K) == 0);
 
-    const int nblocks = size / sizeof(block_q6_K);
+    ध्रुव पूर्णाङ्क nblocks = size / परिमाण(खण्डम्_q6_K);
 
-    sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    sycl_reorder_अस्थायी_बफर tmp(stream, size);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, size)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    auto *       ql_ptr     = data_device;
-    auto *       qh_ptr     = ql_ptr + (QK_K / 2) * nblocks;
-    auto *       scales_ptr = qh_ptr + (QK_K / 4) * nblocks;
+    स्वचालित *       ql_ptr     = दत्त_device;
+    स्वचालित *       qh_ptr     = ql_ptr + (QK_K / 2) * nblocks;
+    स्वचालित *       scales_ptr = qh_ptr + (QK_K / 4) * nblocks;
     sycl::half * dm_ptr     = (sycl::half *) (scales_ptr + (QK_K / 16) * nblocks);
 
-    auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_q6_K * x  = (const block_q6_K *) tmp_buf;
-        const int          ib = i;
+    स्वचालित reorder_event = stream->parallel_for(nblocks, [=](स्वचालित i) {
+        ध्रुव खण्डम्_q6_K * x  = (ध्रुव खण्डम्_q6_K *) tmp_buf;
+        ध्रुव पूर्णाङ्क          ib = i;
 
-        const uint8_t * ql              = x[ib].ql;
-        const uint8_t * qh              = x[ib].qh;
-        uint8_t *       base_ql_ptr     = ql_ptr + (QK_K / 2) * ib;
-        uint8_t *       base_qh_ptr     = qh_ptr + (QK_K / 4) * ib;
-        uint8_t *       base_scales_ptr = scales_ptr + (QK_K / 16) * ib;
+        ध्रुव uint8_t * ql              = x[ib].ql;
+        ध्रुव uint8_t * qh              = x[ib].qh;
+        uint8_t *       आधारः_ql_ptr     = ql_ptr + (QK_K / 2) * ib;
+        uint8_t *       आधारः_qh_ptr     = qh_ptr + (QK_K / 4) * ib;
+        uint8_t *       आधारः_scales_ptr = scales_ptr + (QK_K / 16) * ib;
 
-        for (int j = 0; j < QK_K / 2; ++j) {
-            base_ql_ptr[j] = ql[j];
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 2; ++j) {
+            आधारः_ql_ptr[j] = ql[j];
         }
-        for (int j = 0; j < QK_K / 4; ++j) {
-            base_qh_ptr[j] = qh[j];
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 4; ++j) {
+            आधारः_qh_ptr[j] = qh[j];
         }
 
-        for (int j = 0; j < QK_K / 16; ++j) {
-            base_scales_ptr[j] = x[ib].scales[j];
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 16; ++j) {
+            आधारः_scales_ptr[j] = x[ib].scales[j];
         }
 
         dm_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static bool reorder_qw_iq3_s(uint8_t * data_device, size_t size, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_iq3_s) == 0);
+स्थिर तार्किक reorder_qw_iq3_s(uint8_t * दत्त_device, size_t size, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % परिमाण(खण्डम्_iq3_s) == 0);
 
-    const int nblocks = size / sizeof(block_iq3_s);
-    sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    ध्रुव पूर्णाङ्क nblocks = size / परिमाण(खण्डम्_iq3_s);
+    sycl_reorder_अस्थायी_बफर tmp(stream, size);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, size)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    auto * qs_ptr       = data_device;
-    auto * qh_ptr       = qs_ptr + (QK_K / 4) * nblocks;
-    auto * signs_ptr    = qh_ptr + (QK_K / 32) * nblocks;
-    auto * metadata_ptr = signs_ptr + (QK_K / 8) * nblocks;
+    स्वचालित * qs_ptr       = दत्त_device;
+    स्वचालित * qh_ptr       = qs_ptr + (QK_K / 4) * nblocks;
+    स्वचालित * signs_ptr    = qh_ptr + (QK_K / 32) * nblocks;
+    स्वचालित * metadata_ptr = signs_ptr + (QK_K / 8) * nblocks;
 
-    auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_iq3_s * x = (const block_iq3_s *) tmp_buf;
-        const int ib = i;
+    स्वचालित reorder_event = stream->parallel_for(nblocks, [=](स्वचालित i) {
+        ध्रुव खण्डम्_iq3_s * x = (ध्रुव खण्डम्_iq3_s *) tmp_buf;
+        ध्रुव पूर्णाङ्क ib = i;
 
-        for (int j = 0; j < QK_K / 4; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 4; ++j) {
             qs_ptr[ib * (QK_K / 4) + j] = x[ib].qs[j];
         }
-        for (int j = 0; j < QK_K / 32; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 32; ++j) {
             qh_ptr[ib * (QK_K / 32) + j] = x[ib].qh[j];
         }
-        for (int j = 0; j < QK_K / 8; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < QK_K / 8; ++j) {
             signs_ptr[ib * (QK_K / 8) + j] = x[ib].signs[j];
         }
 
-        uint8_t * metadata = metadata_ptr + ib * (sizeof(ggml_half) + IQ3S_N_SCALE);
+        uint8_t * metadata = metadata_ptr + ib * (परिमाण(ggml_half) + IQ3S_N_SCALE);
         *reinterpret_cast<ggml_half *>(metadata) = x[ib].d;
-        for (int j = 0; j < IQ3S_N_SCALE; ++j) {
-            metadata[sizeof(ggml_half) + j] = x[ib].scales[j];
+        प्रति (पूर्णाङ्क j = 0; j < IQ3S_N_SCALE; ++j) {
+            metadata[परिमाण(ggml_half) + j] = x[ib].scales[j];
         }
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static bool reorder_qw_iq3_xxs(uint8_t * data_device, size_t size, dpct::queue_ptr stream) {
-    GGML_ASSERT(size % sizeof(block_iq3_xxs) == 0);
+स्थिर तार्किक reorder_qw_iq3_xxs(uint8_t * दत्त_device, size_t size, dpct::queue_ptr stream) {
+    GGML_ASSERT(size % परिमाण(खण्डम्_iq3_xxs) == 0);
 
-    const int nblocks = size / sizeof(block_iq3_xxs);
-    sycl_reorder_temp_buffer tmp(stream, size);
-    if (!tmp) {
+    ध्रुव पूर्णाङ्क nblocks = size / परिमाण(खण्डम्_iq3_xxs);
+    sycl_reorder_अस्थायी_बफर tmp(stream, size);
+    यदि (!tmp) {
         GGML_LOG_WARN("%s: failed to allocate %zu bytes for reorder temp buffer, skipping reorder\n", __func__, size);
-        return false;
+        प्रत्यागम असत्य;
     }
     uint8_t * tmp_buf = static_cast<uint8_t *>(tmp.ptr);
 
     sycl::event copy_event;
-    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->memcpy(tmp_buf, data_device, size)));
-    if (!g_ggml_sycl_use_async_mem_op) {
-        copy_event.wait();
+    SYCL_CHECK(CHECK_TRY_ERROR(copy_event = stream->स्मृतिं_प्रतिलिख(tmp_buf, दत्त_device, size)));
+    यदि (!g_ggml_sycl_use_async_mem_op) {
+        copy_event.प्रतीक्षस्व();
     }
 
-    auto * qs_ptr = data_device;
-    auto * d_ptr  = reinterpret_cast<ggml_half *>(qs_ptr + (3 * QK_K / 8) * nblocks);
+    स्वचालित * qs_ptr = दत्त_device;
+    स्वचालित * d_ptr  = reinterpret_cast<ggml_half *>(qs_ptr + (3 * QK_K / 8) * nblocks);
 
-    auto reorder_event = stream->parallel_for(nblocks, [=](auto i) {
-        const block_iq3_xxs * x = (const block_iq3_xxs *) tmp_buf;
-        const int ib = i;
+    स्वचालित reorder_event = stream->parallel_for(nblocks, [=](स्वचालित i) {
+        ध्रुव खण्डम्_iq3_xxs * x = (ध्रुव खण्डम्_iq3_xxs *) tmp_buf;
+        ध्रुव पूर्णाङ्क ib = i;
 
-        for (int j = 0; j < 3 * QK_K / 8; ++j) {
+        प्रति (पूर्णाङ्क j = 0; j < 3 * QK_K / 8; ++j) {
             qs_ptr[ib * (3 * QK_K / 8) + j] = x[ib].qs[j];
         }
         d_ptr[ib] = x[ib].d;
     });
-    if (!g_ggml_sycl_use_async_mem_op) {
+    यदि (!g_ggml_sycl_use_async_mem_op) {
         reorder_event.wait_and_throw();
     }
-    return true;
+    प्रत्यागम सत्य;
 }
 
-static bool reorder_qw(const ggml_tensor * src0, dpct::queue_ptr stream) {
-    uint8_t * data_device = (uint8_t *) src0->data;
+स्थिर तार्किक reorder_qw(ध्रुव ggml_tensor * src0, dpct::queue_ptr stream) {
+    uint8_t * दत्त_device = (uint8_t *) src0->दत्त;
     size_t ncols = src0->ne[0];
     size_t nrows = src0->ne[1];
     size_t size = ggml_nbytes(src0);
 
     // MoE expert weights are addressed per expert via nb[2], so each slice must
     // remain self-contained after reorder.
-    if (src0->ne[2] > 1) {
+    यदि (src0->ne[2] > 1) {
         GGML_ASSERT((size_t) size == (size_t) src0->ne[2] * src0->nb[2]);
-        switch (src0->type) {
-            case GGML_TYPE_Q8_0:
-                return reorder_qw_q8_0_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            case GGML_TYPE_Q4_K:
-                return reorder_qw_q4_k_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            case GGML_TYPE_Q5_K:
-                return reorder_qw_q5_k_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            case GGML_TYPE_Q6_K:
-                return reorder_qw_q6_k_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            case GGML_TYPE_MXFP4:
-                return reorder_qw_mxfp4_moe(data_device, src0->nb[2], src0->ne[2], stream);
-            default:
-                return false;
+        विकल्प (src0->type) {
+            पक्ष GGML_TYPE_Q8_0:
+                प्रत्यागम reorder_qw_q8_0_moe(दत्त_device, src0->nb[2], src0->ne[2], stream);
+            पक्ष GGML_TYPE_Q4_K:
+                प्रत्यागम reorder_qw_q4_k_moe(दत्त_device, src0->nb[2], src0->ne[2], stream);
+            पक्ष GGML_TYPE_Q5_K:
+                प्रत्यागम reorder_qw_q5_k_moe(दत्त_device, src0->nb[2], src0->ne[2], stream);
+            पक्ष GGML_TYPE_Q6_K:
+                प्रत्यागम reorder_qw_q6_k_moe(दत्त_device, src0->nb[2], src0->ne[2], stream);
+            पक्ष GGML_TYPE_MXFP4:
+                प्रत्यागम reorder_qw_mxfp4_moe(दत्त_device, src0->nb[2], src0->ne[2], stream);
+            स्वभाव:
+                प्रत्यागम असत्य;
         }
     }
 
-    switch (src0->type) {
-        case GGML_TYPE_Q4_0:
-            return reorder_qw_q4_0(data_device, ncols, nrows, size, 0, stream);
-        case GGML_TYPE_Q8_0:
-            return reorder_qw_q8_0(data_device, ncols, nrows, size, 0, stream);
-        case GGML_TYPE_Q2_K:
-            return reorder_qw_q2_k(data_device, size, 0, stream);
-        case GGML_TYPE_Q3_K:
-            return reorder_qw_q3_k(data_device, size, 0, stream);
-        case GGML_TYPE_Q4_K:
-            return reorder_qw_q4_k(data_device, size, 0, stream);
-        case GGML_TYPE_Q5_K:
-            return reorder_qw_q5_k(data_device, size, 0, stream);
-        case GGML_TYPE_Q6_K:
-            return reorder_qw_q6_k(data_device, size, 0, stream);
-        case GGML_TYPE_IQ3_XXS:
-            return reorder_qw_iq3_xxs(data_device, size, stream);
-        case GGML_TYPE_IQ3_S:
-            return reorder_qw_iq3_s(data_device, size, stream);
-        default:
-            return false;
+    विकल्प (src0->type) {
+        पक्ष GGML_TYPE_Q4_0:
+            प्रत्यागम reorder_qw_q4_0(दत्त_device, ncols, nrows, size, 0, stream);
+        पक्ष GGML_TYPE_Q8_0:
+            प्रत्यागम reorder_qw_q8_0(दत्त_device, ncols, nrows, size, 0, stream);
+        पक्ष GGML_TYPE_Q2_K:
+            प्रत्यागम reorder_qw_q2_k(दत्त_device, size, 0, stream);
+        पक्ष GGML_TYPE_Q3_K:
+            प्रत्यागम reorder_qw_q3_k(दत्त_device, size, 0, stream);
+        पक्ष GGML_TYPE_Q4_K:
+            प्रत्यागम reorder_qw_q4_k(दत्त_device, size, 0, stream);
+        पक्ष GGML_TYPE_Q5_K:
+            प्रत्यागम reorder_qw_q5_k(दत्त_device, size, 0, stream);
+        पक्ष GGML_TYPE_Q6_K:
+            प्रत्यागम reorder_qw_q6_k(दत्त_device, size, 0, stream);
+        पक्ष GGML_TYPE_IQ3_XXS:
+            प्रत्यागम reorder_qw_iq3_xxs(दत्त_device, size, stream);
+        पक्ष GGML_TYPE_IQ3_S:
+            प्रत्यागम reorder_qw_iq3_s(दत्त_device, size, stream);
+        स्वभाव:
+            प्रत्यागम असत्य;
     }
 }
 
-static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_tensor * dst) {
-    return g_ggml_sycl_enable_optimize && //allow optimize, controlled by $GGML_SYCL_ENABLE_OPT
+स्थिर तार्किक should_reorder_tensor(ggml_backend_sycl_context& ctx, ध्रुव ggml_tensor * dst) {
+    प्रत्यागम g_ggml_sycl_enable_optimize && //allow optimize, controlled by $GGML_SYCL_ENABLE_OPT
            ctx.opt_feature.reorder &&      //allow this device due to good perf, skip the devices with bad perf.
            dst->op == GGML_OP_MUL_MAT &&   //limit to some supported cases of Q4_0, to do for more cases.
            // ne[1] <= 8 so multi-column decode (spec / MTP verify) also bootstraps the reorder;
@@ -5098,79 +5098,79 @@ static bool should_reorder_tensor(ggml_backend_sycl_context& ctx, const ggml_ten
            dst->src[1]->ne[1] <= 8 && dst->src[1]->ne[2]==1 && dst->src[1]->ne[3]==1;
 }
 
-static void opt_for_reorder(ggml_backend_sycl_context * ctx, const ggml_tensor * src0, const ggml_tensor * /* src1 */,
+स्थिर शून्य opt_for_reorder(ggml_backend_sycl_context * ctx, ध्रुव ggml_tensor * src0, ध्रुव ggml_tensor * /* src1 */,
                             ggml_tensor * dst, mul_mat_algo mm_algorithm) {
-    if (!should_reorder_tensor(*ctx, dst)) {
-        return;
+    यदि (!should_reorder_tensor(*ctx, dst)) {
+        प्रत्यागम;
     }
 
     ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
-    if (!extra || extra->optimized_feature.reorder) {
-        return;  // Skip permutations and already reordered tensors
+    यदि (!extra || extra->optimized_feature.reorder) {
+        प्रत्यागम;  // Skip permutations and already reordered tensors
     }
 
-    switch (mm_algorithm) {
-        case mul_mat_algo::DMMV:
-            if (!ggml_sycl_supports_reorder_dmmv(src0->type)) {
-                return;
+    विकल्प (mm_algorithm) {
+        पक्ष mul_mat_algo::DMMV:
+            यदि (!ggml_sycl_supports_reorder_dmmv(src0->type)) {
+                प्रत्यागम;
             }
-            break;
-        case mul_mat_algo::MMVQ:
-            if (!ggml_sycl_supports_reorder_mmvq(src0->type)) {
-                return;
+            भङ्ग;
+        पक्ष mul_mat_algo::MMVQ:
+            यदि (!ggml_sycl_supports_reorder_mmvq(src0->type)) {
+                प्रत्यागम;
             }
-            break;
-        case mul_mat_algo::MUL_MAT_SYCL:
-            if (!ggml_sycl_supports_reorder_mul_mat_sycl(src0->type)) {
-                return;
+            भङ्ग;
+        पक्ष mul_mat_algo::MUL_MAT_SYCL:
+            यदि (!ggml_sycl_supports_reorder_mul_mat_sycl(src0->type)) {
+                प्रत्यागम;
             }
-            break;
+            भङ्ग;
     }
 
-    if (reorder_qw(src0, ctx->stream())) {
-        extra->optimized_feature.reorder = true;  // Used to decode/dequan in next steps and avoid re-reordering
+    यदि (reorder_qw(src0, ctx->stream())) {
+        extra->optimized_feature.reorder = सत्य;  // Used to decode/dequan in next steps and avoid re-reordering
     }
 }
 
 // Lazily reorder supported MoE expert weights once their fused path is used.
-static void opt_for_reorder_id(ggml_backend_sycl_context * ctx, const ggml_tensor * src0) {
-    if (!g_ggml_sycl_enable_optimize || !ctx->opt_feature.reorder) {
-        return;
+स्थिर शून्य opt_for_reorder_id(ggml_backend_sycl_context * ctx, ध्रुव ggml_tensor * src0) {
+    यदि (!g_ggml_sycl_enable_optimize || !ctx->opt_feature.reorder) {
+        प्रत्यागम;
     }
-    if (src0->type != GGML_TYPE_Q8_0 && src0->type != GGML_TYPE_Q4_K &&
+    यदि (src0->type != GGML_TYPE_Q8_0 && src0->type != GGML_TYPE_Q4_K &&
         src0->type != GGML_TYPE_Q5_K && src0->type != GGML_TYPE_Q6_K && src0->type != GGML_TYPE_MXFP4) {
-        return;
+        प्रत्यागम;
     }
     // The MXFP4 reorder kernels use 8-byte vector loads, so every expert slice must stay aligned.
-    if (src0->type == GGML_TYPE_MXFP4 && (src0->nb[2] % 16 != 0 || (uintptr_t) src0->data % 16 != 0)) {
-        return;
+    यदि (src0->type == GGML_TYPE_MXFP4 && (src0->nb[2] % 16 != 0 || (uintptr_t) src0->दत्त % 16 != 0)) {
+        प्रत्यागम;
     }
     ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
-    if (!extra || extra->optimized_feature.reorder) {
-        return;
+    यदि (!extra || extra->optimized_feature.reorder) {
+        प्रत्यागम;
     }
-    if (reorder_qw(src0, ctx->stream())) {
-        extra->optimized_feature.reorder = true;
+    यदि (reorder_qw(src0, ctx->stream())) {
+        extra->optimized_feature.reorder = सत्य;
     }
 }
 
 
-static bool can_use_dequantize_mul_mat_vec(const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
+स्थिर तार्किक can_use_dequantize_mul_mat_vec(ध्रुव ggml_tensor * src0, ध्रुव ggml_tensor * src1, ggml_tensor * dst) {
     // The F16/BF16 qk=1 kernel iterates with stride 2*DMMV_X, requiring ne[0] to be
     // a multiple of 2*DMMV_X. Quantized types use block-structured kernels that only
     // need ne[0] % DMMV_X == 0.
-    const int64_t dmmv_x_required = (src0->type == GGML_TYPE_BF16 || src0->type == GGML_TYPE_F16) ?
+    ध्रुव int64_t dmmv_x_required = (src0->type == GGML_TYPE_BF16 || src0->type == GGML_TYPE_F16) ?
                                     2*GGML_SYCL_DMMV_X : GGML_SYCL_DMMV_X;
-    return ggml_sycl_supports_dmmv(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
+    प्रत्यागम ggml_sycl_supports_dmmv(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
            src0->ne[0] % dmmv_x_required == 0 && src1->ne[1] == 1;
 }
 
-static bool can_use_mul_mat_vec_q(const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
-    return ggml_is_quantized(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
-           src1->ne[1] <= MMVQ_MAX_BATCH_SIZE;
+स्थिर तार्किक can_use_mul_mat_vec_q(ध्रुव ggml_tensor * src0, ध्रुव ggml_tensor * src1, ggml_tensor * dst) {
+    प्रत्यागम ggml_is_quantized(src0->type) && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32 &&
+           src1->ne[1] <= MMVQ_MAX_BATCH_आकार;
 }
 
-static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor * src0, const ggml_tensor * src1, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, ध्रुव ggml_tensor * src0, ध्रुव ggml_tensor * src1, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
     // Handle HADAMARAD hint given from further up the pipeline and pass it to the correct
@@ -5179,51 +5179,51 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
     // The op check is not redundant: this backend also routes MUL_MAT_ID through here with a
     // stack copy of dst, which carries MUL_MAT_ID's own op_params. ggml_mul_mat_set_hint()
     // asserts GGML_OP_MUL_MAT for the same reason.
-    if (dst->op == GGML_OP_MUL_MAT && ggml_get_op_params_i32(dst, 1) == GGML_HINT_SRC0_IS_HADAMARD &&
+    यदि (dst->op == GGML_OP_MUL_MAT && ggml_get_op_params_i32(dst, 1) == GGML_HINT_SRC0_IS_HADAMARD &&
         ggml_sycl_op_fwht(ctx, src1, dst)) {
-        return;
+        प्रत्यागम;
     }
 
-    const bool split = ggml_backend_buffer_is_sycl_split(src0->buffer);
-    int64_t min_compute_capability = INT_MAX;
+    ध्रुव तार्किक विभज = ggml_backend_बफर_is_sycl_विभज(src0->बफर);
+    int64_t min_compute_capability = अधिकतम_पूर्णाङ्कः;
 
-    if (split) {
-        ggml_backend_sycl_split_buffer_type_context * buft_ctx =
-            (ggml_backend_sycl_split_buffer_type_context *) src0->buffer->buft->context;
-        auto & tensor_split = buft_ctx->tensor_split;
-        for (int id = 0; id < ggml_sycl_info().device_count; ++id) {
+    यदि (विभज) {
+        ggml_backend_sycl_विभज_बफर_type_context * buft_ctx =
+            (ggml_backend_sycl_विभज_बफर_type_context *) src0->बफर->buft->context;
+        स्वचालित & tensor_विभज = buft_ctx->tensor_विभज;
+        प्रति (पूर्णाङ्क id = 0; id < ggml_sycl_info().device_गणनम्; ++id) {
             // skip devices that are not going to do any work:
-            if (tensor_split[id] >= (id + 1 < ggml_sycl_info().device_count ? tensor_split[id + 1] : 1.0f)) {
-                continue;
+            यदि (tensor_विभज[id] >= (id + 1 < ggml_sycl_info().device_गणनम् ? tensor_विभज[id + 1] : 1.0f)) {
+                अनुवर्त;
             }
 
-            if (min_compute_capability > ggml_sycl_info().devices[id].cc) {
+            यदि (min_compute_capability > ggml_sycl_info().devices[id].cc) {
                 min_compute_capability = ggml_sycl_info().devices[id].cc;
             }
         }
-    } else {
+    } अन्यथा {
         min_compute_capability = ggml_sycl_info().devices[ctx.device].cc;
     }
 
     // check data types and tensor shapes for custom matrix multiplication kernels:
-    bool use_dequantize_mul_mat_vec = can_use_dequantize_mul_mat_vec(src0, src1, dst);
-#ifdef GGML_SYCL_F16
+    तार्किक use_dequantize_mul_mat_vec = can_use_dequantize_mul_mat_vec(src0, src1, dst);
+#यदि_परिभाषितम् GGML_SYCL_F16
     // dmmv may convert src1 to f16 in this build [TAG_GGML_PREC]
     use_dequantize_mul_mat_vec = use_dequantize_mul_mat_vec && ggml_sycl_src1_f16_ok(dst);
-#endif
+#यदि_अन्तः
 
-    bool use_mul_mat_vec_q = can_use_mul_mat_vec_q(src0, src1, dst);
+    तार्किक use_mul_mat_vec_q = can_use_mul_mat_vec_q(src0, src1, dst);
 
-    bool use_mul_mat_q =  ggml_sycl_supports_mmq(src0->type)
+    तार्किक use_mul_mat_q =  ggml_sycl_supports_mmq(src0->type)
         && src1->type == GGML_TYPE_F32 && dst->type == GGML_TYPE_F32;
 
 
     // mmvq and mmq need the __dp4a instruction which is available for gen12+
     // Workaround in https://github.com/ggml-org/llama.cpp/commit/95f84d5ce8b449a9b16009434aca800df504a02e
     use_mul_mat_q = use_mul_mat_q && (src0->type != GGML_TYPE_IQ2_XXS);
-#ifdef SYCL_USE_XMX
-    use_mul_mat_q = use_mul_mat_q && (src1->ne[1] <= MMQ_MAX_BATCH_SIZE);
-#endif // SYCL_USE_XMX
+#यदि_परिभाषितम् SYCL_USE_XMX
+    use_mul_mat_q = use_mul_mat_q && (src1->ne[1] <= MMQ_MAX_BATCH_आकार);
+#यदि_अन्तः // SYCL_USE_XMX
 
     // When reorder is enabled, both ESIMD, MMVQ and DMMV kernels may be used. For
     // best performance use ESIMD when supported, followed by MMVQ, and finally DMMV.
@@ -5231,11 +5231,11 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
     // multi-token call (ne[1] in 2..8) will take the MMVQ path and it would read the
     // reordered bytes as if they were still the unreordered layout.
 
-    if (!g_ggml_sycl_prioritize_dmmv && ((should_reorder_tensor(ctx, dst) &&
+    यदि (!g_ggml_sycl_prioritize_dmmv && ((should_reorder_tensor(ctx, dst) &&
                                           ggml_sycl_supports_reorder_mmvq(src0->type)))) {
-        bool use = g_ggml_sycl_enable_esimd && ggml_sycl_supports_reorder_esimd(src0->type);
+        तार्किक use = g_ggml_sycl_enable_esimd && ggml_sycl_supports_reorder_esimd(src0->type);
         // Arc770 get benefit with Q4_0 by skipping MMVQ path
-        if (!(ggml_sycl_info().devices[ctx.device].hw_info.arch ==
+        यदि (!(ggml_sycl_info().devices[ctx.device].hw_info.arch ==
                     gpu_arch::intel_gpu_acm_g10 &&
                 src0->type == GGML_TYPE_Q4_0)) {
             use = use || !use_mul_mat_vec_q;
@@ -5243,36 +5243,36 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
         use_dequantize_mul_mat_vec = use_dequantize_mul_mat_vec && use;
     }
 
-    if (!split && src0->type == GGML_TYPE_F16 && ggml_is_permuted(src0) && ggml_is_permuted(src1) && src1->ne[1] == 1) {
+    यदि (!विभज && src0->type == GGML_TYPE_F16 && ggml_is_permuted(src0) && ggml_is_permuted(src1) && src1->ne[1] == 1) {
         // TODO: Refactor and cleanup of mul mat dispatching.
-        if (src0->ne[3] == 1 && src1->ne[3] == 1) {
+        यदि (src0->ne[3] == 1 && src1->ne[3] == 1) {
             // KQ single-batch
             // mmv p021 was specific for these dimensions
             ggml_sycl_mul_mat_vec_p021(ctx, src0, src1, dst);
-        } else {
+        } अन्यथा {
             // The kernel from the if path is faster for that specific case, but does not support all mul mats.
             ggml_sycl_mul_mat_batched_sycl(ctx, src0, src1, dst);
         }
-    } else if (!split && src0->type == GGML_TYPE_F16 && !ggml_is_contiguous(src0) && !ggml_is_transposed(src1) && src1->ne[1] == 1 && src1->ne[3] == 1) {
+    } अन्यथा यदि (!विभज && src0->type == GGML_TYPE_F16 && !ggml_is_contiguous(src0) && !ggml_is_transposed(src1) && src1->ne[1] == 1 && src1->ne[3] == 1) {
         // KQV single-batch
         ggml_sycl_mul_mat_vec_nc(ctx, src0, src1, dst);
-    } else if (!split && src0->type == GGML_TYPE_F16 && !ggml_is_transposed(src0) && !ggml_is_transposed(src1) && src1->ne[2] * src1->ne[3] > 1) {
+    } अन्यथा यदि (!विभज && src0->type == GGML_TYPE_F16 && !ggml_is_transposed(src0) && !ggml_is_transposed(src1) && src1->ne[2] * src1->ne[3] > 1) {
         // KQ + KQV multi-batch
         ggml_sycl_mul_mat_batched_sycl(ctx, src0, src1, dst);
-    } else if (use_dequantize_mul_mat_vec) {
+    } अन्यथा यदि (use_dequantize_mul_mat_vec) {
         opt_for_reorder(&ctx, src0, src1, dst, mul_mat_algo::DMMV);
         ggml_sycl_op_mul_mat<no_quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_dequantize_mul_mat_vec);
-    } else if (use_mul_mat_vec_q) {
+    } अन्यथा यदि (use_mul_mat_vec_q) {
         opt_for_reorder(&ctx, src0, src1, dst, mul_mat_algo::MMVQ);
         ggml_tensor_extra_gpu * extra = static_cast<ggml_tensor_extra_gpu *>(src0->extra);
-        if (extra && extra->optimized_feature.reorder) {
+        यदि (extra && extra->optimized_feature.reorder) {
             ggml_sycl_op_mul_mat<quantize_and_reorder_q8_1_soa>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_vec_q);
-        } else {
+        } अन्यथा {
             ggml_sycl_op_mul_mat<quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_vec_q);
         }
-    } else if (use_mul_mat_q) {
+    } अन्यथा यदि (use_mul_mat_q) {
         ggml_sycl_op_mul_mat<quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_q);
-    } else {
+    } अन्यथा {
         ggml_sycl_op_mul_mat<no_quantize_q8_1>(ctx, src0, src1, dst, ggml_sycl_op_mul_mat_sycl);
     }
 }
@@ -5281,333 +5281,333 @@ static void ggml_sycl_mul_mat(ggml_backend_sycl_context & ctx, const ggml_tensor
 // for quant pairs the reorder kernel does not cover (mixed gate/up types, e.g. UD-Q4_K_XL's
 // iq4_xs gate + q5_K up). Two launches replace five: one shared q8_1 quantization and one
 // dual-GEMV+GLU.
-static bool ggml_sycl_mul_mat_glu_mmvq_plain(ggml_backend_sycl_context & ctx, ggml_tensor * glu,
-                                             ggml_tensor * gate, ggml_tensor * up, const ggml_tensor * wu,
-                                             const ggml_tensor * wg, const ggml_tensor * act) {
+स्थिर तार्किक ggml_sycl_mul_mat_glu_mmvq_plain(ggml_backend_sycl_context & ctx, ggml_tensor * glu,
+                                             ggml_tensor * gate, ggml_tensor * ऊर्ध्वम्, ध्रुव ggml_tensor * wu,
+                                             ध्रुव ggml_tensor * wg, ध्रुव ggml_tensor * act) {
     // weights already migrated to the reorder layout would be misread by the plain kernel
-    const auto * extra_u = static_cast<const ggml_tensor_extra_gpu *>(wu->extra);
-    const auto * extra_g = static_cast<const ggml_tensor_extra_gpu *>(wg->extra);
-    if ((extra_u && extra_u->optimized_feature.reorder) || (extra_g && extra_g->optimized_feature.reorder)) {
-        return false;
+    ध्रुव स्वचालित * extra_u = static_cast<ध्रुव ggml_tensor_extra_gpu *>(wu->extra);
+    ध्रुव स्वचालित * extra_g = static_cast<ध्रुव ggml_tensor_extra_gpu *>(wg->extra);
+    यदि ((extra_u && extra_u->optimized_feature.reorder) || (extra_g && extra_g->optimized_feature.reorder)) {
+        प्रत्यागम असत्य;
     }
 
     // the plain kernel only covers q5_K / iq4_xs pairs: bail before quantizing the activation
-    const auto plain_type = [](ggml_type t) { return t == GGML_TYPE_Q5_K || t == GGML_TYPE_IQ4_XS; };
-    if (!plain_type(wu->type) || !plain_type(wg->type)) {
-        return false;
+    ध्रुव स्वचालित plain_type = [](ggml_type t) { प्रत्यागम t == GGML_TYPE_Q5_K || t == GGML_TYPE_IQ4_XS; };
+    यदि (!plain_type(wu->type) || !plain_type(wg->type)) {
+        प्रत्यागम असत्य;
     }
 
     // log the up mat-mul: glu's own srcs are the two intermediates the fusion never materialises
-    scope_op_debug_print scope_dbg_print(__func__, up, /*num_src=*/2, " : fused with gate + GLU (plain layout)");
+    scope_op_debug_print scope_dbg_print(__func__, ऊर्ध्वम्, /*num_src=*/2, " : fused with gate + GLU (plain layout)");
 
-    const int64_t ne00 = wu->ne[0];
-    const int64_t ne11 = act->ne[1];
+    ध्रुव int64_t ne00 = wu->ne[0];
+    ध्रुव int64_t ne11 = act->ne[1];
 
-    const queue_ptr stream = ctx.stream();
-    const int src1_padded_cols = GGML_PAD((int) ne00, MATRIX_ROW_PADDING);
+    ध्रुव queue_ptr stream = ctx.stream();
+    ध्रुव पूर्णाङ्क src1_padded_स्तम्भसङ्ख्या = GGML_PAD((पूर्णाङ्क) ne00, MATRIX_ROW_PADDING);
 
-    ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
-        (size_t) ne11 * src1_padded_cols * sizeof(block_q8_1) / QK8_1);
-    char * src1_ddq = src1_q8_alloc.get();
+    ggml_sycl_pool_alloc<वर्ण> src1_q8_alloc(ctx.pool(),
+        (size_t) ne11 * src1_padded_स्तम्भसङ्ख्या * परिमाण(खण्डम्_q8_1) / QK8_1);
+    वर्ण * src1_ddq = src1_q8_alloc.get();
 
-    quantize_row_q8_1_sycl<quantize_q8_1>((const float *) act->data, src1_ddq, (int) ne00, (int) ne11,
-                                          src1_padded_cols, stream);
+    quantize_row_q8_1_sycl<quantize_q8_1>((ध्रुव भिन्न *) act->दत्त, src1_ddq, (पूर्णाङ्क) ne00, (पूर्णाङ्क) ne11,
+                                          src1_padded_स्तम्भसङ्ख्या, stream);
 
-    return ggml_sycl_mul_mat_vec_q_glu_plain(wg->type, wu->type, ggml_get_glu_op(glu), wg->data, wu->data,
-                                             src1_ddq, (float *) glu->data, (int) ne00, (int) wu->ne[1],
-                                             (int) ne11,
-                                             /*stride_col_y=*/src1_padded_cols / QK8_1,
-                                             /*stride_col_dst=*/(int) glu->ne[0], stream);
-    GGML_UNUSED(gate);
+    प्रत्यागम ggml_sycl_mul_mat_vec_q_glu_plain(wg->type, wu->type, ggml_get_glu_op(glu), wg->दत्त, wu->दत्त,
+                                             src1_ddq, (भिन्न *) glu->दत्त, (पूर्णाङ्क) ne00, (पूर्णाङ्क) wu->ne[1],
+                                             (पूर्णाङ्क) ne11,
+                                             /*stride_col_y=*/src1_padded_स्तम्भसङ्ख्या / QK8_1,
+                                             /*stride_col_dst=*/(पूर्णाङ्क) glu->ne[0], stream);
+    GGML_अप्रयुक्तम्(gate);
 }
 
-#ifdef GGML_SYCL_DMMV_HAS_ESIMD
+#यदि_परिभाषितम् GGML_SYCL_DMMV_HAS_ESIMD
 // {mul_mat(gate), mul_mat(up), GLU} on the reorder layout via the ESIMD DMMV kernel, for
 // same-type K-quant or Q8_0 pairs and a single activation column. It reads the F32 activation
 // directly, so one launch replaces three and no q8_1 quantization is needed.
-static bool ggml_sycl_mul_mat_glu_dmmv_esimd(ggml_backend_sycl_context & ctx, ggml_tensor * glu,
-                                             ggml_tensor * gate, ggml_tensor * up, const ggml_tensor * wu,
-                                             const ggml_tensor * wg, const ggml_tensor * act) {
+स्थिर तार्किक ggml_sycl_mul_mat_glu_dmmv_esimd(ggml_backend_sycl_context & ctx, ggml_tensor * glu,
+                                             ggml_tensor * gate, ggml_tensor * ऊर्ध्वम्, ध्रुव ggml_tensor * wu,
+                                             ध्रुव ggml_tensor * wg, ध्रुव ggml_tensor * act) {
     // the kernel reads the activation while writing the output; glu may reuse the dead activation's memory
-    const char * act_begin = (const char *) act->data;
-    const char * glu_begin = (const char *) glu->data;
-    if (act_begin < glu_begin + ggml_nbytes(glu) && glu_begin < act_begin + ggml_nbytes(act)) {
-        return false;
+    ध्रुव वर्ण * act_begin = (ध्रुव वर्ण *) act->दत्त;
+    ध्रुव वर्ण * glu_begin = (ध्रुव वर्ण *) glu->दत्त;
+    यदि (act_begin < glu_begin + ggml_nbytes(glu) && glu_begin < act_begin + ggml_nbytes(act)) {
+        प्रत्यागम असत्य;
     }
 
     // install the reorder (SoA) layout the kernel needs, as the unfused DMMV path would
-    opt_for_reorder(&ctx, wu, act, up, mul_mat_algo::DMMV);
+    opt_for_reorder(&ctx, wu, act, ऊर्ध्वम्, mul_mat_algo::DMMV);
     opt_for_reorder(&ctx, wg, act, gate, mul_mat_algo::DMMV);
 
-    const auto * extra_u = static_cast<const ggml_tensor_extra_gpu *>(wu->extra);
-    const auto * extra_g = static_cast<const ggml_tensor_extra_gpu *>(wg->extra);
-    if (!extra_u || !extra_g || !extra_u->optimized_feature.reorder || !extra_g->optimized_feature.reorder) {
-        return false;
+    ध्रुव स्वचालित * extra_u = static_cast<ध्रुव ggml_tensor_extra_gpu *>(wu->extra);
+    ध्रुव स्वचालित * extra_g = static_cast<ध्रुव ggml_tensor_extra_gpu *>(wg->extra);
+    यदि (!extra_u || !extra_g || !extra_u->optimized_feature.reorder || !extra_g->optimized_feature.reorder) {
+        प्रत्यागम असत्य;
     }
 
     // log the up mat-mul: glu's own srcs are the two intermediates the fusion never materialises
-    scope_op_debug_print scope_dbg_print(__func__, up, /*num_src=*/2, " : fused with gate + GLU (ESIMD)");
+    scope_op_debug_print scope_dbg_print(__func__, ऊर्ध्वम्, /*num_src=*/2, " : fused with gate + GLU (ESIMD)");
 
-    return ggml_sycl_dequantize_mul_mat_vec_glu_reorder_esimd(wu->type, ggml_get_glu_op(glu), wu->data, wg->data,
-                                                              (const float *) act->data, (float *) glu->data,
-                                                              (int) wu->ne[0], (int) wu->ne[1], ctx.stream());
+    प्रत्यागम ggml_sycl_dequantize_mul_mat_vec_glu_reorder_esimd(wu->type, ggml_get_glu_op(glu), wu->दत्त, wg->दत्त,
+                                                              (ध्रुव भिन्न *) act->दत्त, (भिन्न *) glu->दत्त,
+                                                              (पूर्णाङ्क) wu->ne[0], (पूर्णाङ्क) wu->ne[1], ctx.stream());
 }
-#endif
+#यदि_अन्तः
 
 // Fused dense-FFN mat-vec for the {mul_mat(gate), mul_mat(up), GLU} subgraph at node_idx.
 // Returns false if it declined, in which case the caller runs the three nodes normally.
-static bool ggml_sycl_mul_mat_glu_fused(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int node_idx) {
-    if (!ggml_sycl_can_fuse(cgraph, node_idx, { GGML_OP_MUL_MAT, GGML_OP_MUL_MAT, GGML_OP_GLU }, {})) {
-        return false;
+स्थिर तार्किक ggml_sycl_mul_mat_glu_fused(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, पूर्णाङ्क ग्रन्थिः_idx) {
+    यदि (!ggml_sycl_can_fuse(cgraph, ग्रन्थिः_idx, { GGML_OP_MUL_MAT, GGML_OP_MUL_MAT, GGML_OP_GLU }, {})) {
+        प्रत्यागम असत्य;
     }
 
-    ggml_tensor *       glu  = cgraph->nodes[node_idx + 2];
+    ggml_tensor *       glu  = cgraph->nodes[ग्रन्थिः_idx + 2];
     ggml_tensor *       gate = glu->src[0];
-    ggml_tensor *       up   = glu->src[1];
-    const ggml_tensor * wu   = up->src[0];
-    const ggml_tensor * wg   = gate->src[0];
-    const ggml_tensor * act  = up->src[1];
+    ggml_tensor *       ऊर्ध्वम्   = glu->src[1];
+    ध्रुव ggml_tensor * wu   = ऊर्ध्वम्->src[0];
+    ध्रुव ggml_tensor * wg   = gate->src[0];
+    ध्रुव ggml_tensor * act  = ऊर्ध्वम्->src[1];
 
     // this writes glu->data directly rather than the per-device row slices that
     // ggml_sycl_op_mul_mat() stitches back together, so it cannot serve split weights
-    if (ggml_backend_buffer_is_sycl_split(wu->buffer) || ggml_backend_buffer_is_sycl_split(wg->buffer)) {
-        return false;
+    यदि (ggml_backend_बफर_is_sycl_विभज(wu->बफर) || ggml_backend_बफर_is_sycl_विभज(wg->बफर)) {
+        प्रत्यागम असत्य;
     }
 
-#ifdef GGML_SYCL_DMMV_HAS_ESIMD
+#यदि_परिभाषितम् GGML_SYCL_DMMV_HAS_ESIMD
     // single-column same-type K-quant or Q8_0 pairs take the ESIMD kernel, as the unfused mul-mats
     // would via DMMV; if the reorder layout could not be installed, fall through to mmvq
-    if (g_ggml_sycl_enable_esimd && wu->type == wg->type && act->ne[1] == 1 &&
+    यदि (g_ggml_sycl_enable_esimd && wu->type == wg->type && act->ne[1] == 1 &&
         ggml_sycl_supports_reorder_esimd(wu->type) &&
-        ggml_sycl_mul_mat_glu_dmmv_esimd(ctx, glu, gate, up, wu, wg, act)) {
-        return true;
+        ggml_sycl_mul_mat_glu_dmmv_esimd(ctx, glu, gate, ऊर्ध्वम्, wu, wg, act)) {
+        प्रत्यागम सत्य;
     }
-#endif
+#यदि_अन्तः
 
     // with DMMV prioritised the unfused path would not have gone through mmvq at all
-    if (g_ggml_sycl_prioritize_dmmv) {
-        return false;
+    यदि (g_ggml_sycl_prioritize_dmmv) {
+        प्रत्यागम असत्य;
     }
 
     // quant pairs the reorder kernel does not serve (mixed gate/up types, q5_K off BMG) take the
     // standard-layout fused path instead; same-type q4_K / q5_K keep the reorder path below
-    const bool reorder_pair = wg->type == wu->type &&
+    ध्रुव तार्किक reorder_pair = wg->type == wu->type &&
         (wu->type == GGML_TYPE_Q4_K || (wu->type == GGML_TYPE_Q5_K && ggml_sycl_q5_k_mmvq_reuse(ctx.device)));
-    if (!reorder_pair) {
-        return ggml_sycl_mul_mat_glu_mmvq_plain(ctx, glu, gate, up, wu, wg, act);
+    यदि (!reorder_pair) {
+        प्रत्यागम ggml_sycl_mul_mat_glu_mmvq_plain(ctx, glu, gate, ऊर्ध्वम्, wu, wg, act);
     }
 
     // past 5 columns the two unfused q5_K GEMVs are faster than the fused kernel
-    if (wu->type == GGML_TYPE_Q5_K && act->ne[1] > 5) {
-        return false;
+    यदि (wu->type == GGML_TYPE_Q5_K && act->ne[1] > 5) {
+        प्रत्यागम असत्य;
     }
 
     // install the reorder (SoA) layout the fused kernel needs, as the unfused mmvq path would;
     // a no-op once done. after the bail checks so a declined op does not pay for it.
-    opt_for_reorder(&ctx, wu, act, up, mul_mat_algo::MMVQ);
+    opt_for_reorder(&ctx, wu, act, ऊर्ध्वम्, mul_mat_algo::MMVQ);
     opt_for_reorder(&ctx, wg, act, gate, mul_mat_algo::MMVQ);
 
-    const auto * extra_u = static_cast<const ggml_tensor_extra_gpu *>(wu->extra);
-    const auto * extra_g = static_cast<const ggml_tensor_extra_gpu *>(wg->extra);
-    if (!extra_u || !extra_g || !extra_u->optimized_feature.reorder || !extra_g->optimized_feature.reorder) {
-        return false;
+    ध्रुव स्वचालित * extra_u = static_cast<ध्रुव ggml_tensor_extra_gpu *>(wu->extra);
+    ध्रुव स्वचालित * extra_g = static_cast<ध्रुव ggml_tensor_extra_gpu *>(wg->extra);
+    यदि (!extra_u || !extra_g || !extra_u->optimized_feature.reorder || !extra_g->optimized_feature.reorder) {
+        प्रत्यागम असत्य;
     }
 
     // log the up mat-mul: glu's own srcs are the two intermediates the fusion never materialises
-    scope_op_debug_print scope_dbg_print(__func__, up, /*num_src=*/2, " : fused with gate + GLU");
+    scope_op_debug_print scope_dbg_print(__func__, ऊर्ध्वम्, /*num_src=*/2, " : fused with gate + GLU");
 
-    const int64_t ne00 = wu->ne[0];
-    const int64_t ne11 = act->ne[1];
+    ध्रुव int64_t ne00 = wu->ne[0];
+    ध्रुव int64_t ne11 = act->ne[1];
 
-    const queue_ptr stream           = ctx.stream();
-    const int       src1_padded_cols = GGML_PAD((int) ne00, MATRIX_ROW_PADDING);
+    ध्रुव queue_ptr stream           = ctx.stream();
+    ध्रुव पूर्णाङ्क       src1_padded_स्तम्भसङ्ख्या = GGML_PAD((पूर्णाङ्क) ne00, MATRIX_ROW_PADDING);
 
     // one activation, quantized once and fully consumed into src1_ddq before the GEMV on this
     // in-order queue, so glu->data aliasing the dead activation needs no memory-range check
-    ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
-                                             (size_t) ne11 * src1_padded_cols * sizeof(block_q8_1) / QK8_1);
-    char *                     src1_ddq = src1_q8_alloc.get();
+    ggml_sycl_pool_alloc<वर्ण> src1_q8_alloc(ctx.pool(),
+                                             (size_t) ne11 * src1_padded_स्तम्भसङ्ख्या * परिमाण(खण्डम्_q8_1) / QK8_1);
+    वर्ण *                     src1_ddq = src1_q8_alloc.get();
 
-    quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>((const float *) act->data, src1_ddq, (int) ne00, (int) ne11,
-                                                          src1_padded_cols, stream);
+    quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>((ध्रुव भिन्न *) act->दत्त, src1_ddq, (पूर्णाङ्क) ne00, (पूर्णाङ्क) ne11,
+                                                          src1_padded_स्तम्भसङ्ख्या, stream);
 
-    return ggml_sycl_mul_mat_vec_q_glu_reorder(wu->type, ggml_get_glu_op(glu), wu->data, wg->data, src1_ddq,
-                                               (float *) glu->data, (int) ne00, (int) wu->ne[1], (int) ne11,
-                                               /*stride_col_y_bytes=*/src1_padded_cols * (int) sizeof(block_q8_1) /
+    प्रत्यागम ggml_sycl_mul_mat_vec_q_glu_reorder(wu->type, ggml_get_glu_op(glu), wu->दत्त, wg->दत्त, src1_ddq,
+                                               (भिन्न *) glu->दत्त, (पूर्णाङ्क) ne00, (पूर्णाङ्क) wu->ne[1], (पूर्णाङ्क) ne11,
+                                               /*stride_col_y_bytes=*/src1_padded_स्तम्भसङ्ख्या * (पूर्णाङ्क) परिमाण(खण्डम्_q8_1) /
                                                    QK8_1,
-                                               /*stride_col_dst=*/(int) glu->ne[0], stream);
+                                               /*stride_col_dst=*/(पूर्णाङ्क) glu->ne[0], stream);
 }
 
 // Batch the run of consecutive L2_NORM siblings starting at node_idx into one launch.
 // Returns the number of extra graph nodes consumed, or 0 if the run is shorter than two
 // (the caller then runs the norm through the per-tensor kernel).
-static int ggml_sycl_l2_norm_batch_fused(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, int node_idx) {
-    const ggml_tensor * node = cgraph->nodes[node_idx];
-    if (ggml_sycl_info().device_count != 1 || node->type != GGML_TYPE_F32 ||
-        node->src[0]->type != GGML_TYPE_F32 || node->src[0]->ne[0] >= 1024) {
-        return 0;
+स्थिर पूर्णाङ्क ggml_sycl_l2_norm_batch_fused(ggml_backend_sycl_context & ctx, ggml_cgraph * cgraph, पूर्णाङ्क ग्रन्थिः_idx) {
+    ध्रुव ggml_tensor * ग्रन्थिः = cgraph->nodes[ग्रन्थिः_idx];
+    यदि (ggml_sycl_info().device_गणनम् != 1 || ग्रन्थिः->type != GGML_TYPE_F32 ||
+        ग्रन्थिः->src[0]->type != GGML_TYPE_F32 || ग्रन्थिः->src[0]->ne[0] >= 1024) {
+        प्रत्यागम 0;
     }
 
     ggml_tensor * batch[GGML_SYCL_L2_BATCH_MAX];
-    int           count = 0;
-    int           last  = node_idx;
-    float         eps0;
-    memcpy(&eps0, node->op_params, sizeof(float));
+    पूर्णाङ्क           count = 0;
+    पूर्णाङ्क           चरमः  = ग्रन्थिः_idx;
+    भिन्न         eps0;
+    स्मृतिं_प्रतिलिख(&eps0, ग्रन्थिः->op_params, परिमाण(भिन्न));
 
     // Conservative aliasing test: the batched norms run concurrently in one kernel,
     // so none may read what another writes, and none may write where another writes.
-    auto overlaps = [](const ggml_tensor * a, const ggml_tensor * b) {
-        const char * ab = (const char *) a->data;
-        const char * bb = (const char *) b->data;
-        return ab < bb + ggml_nbytes(b) && bb < ab + ggml_nbytes(a);
+    स्वचालित overlaps = [](ध्रुव ggml_tensor * a, ध्रुव ggml_tensor * b) {
+        ध्रुव वर्ण * ab = (ध्रुव वर्ण *) a->दत्त;
+        ध्रुव वर्ण * bb = (ध्रुव वर्ण *) b->दत्त;
+        प्रत्यागम ab < bb + ggml_nbytes(b) && bb < ab + ggml_nbytes(a);
     };
 
-    for (int j = node_idx; j < cgraph->n_nodes && count < GGML_SYCL_L2_BATCH_MAX; ++j) {
+    प्रति (पूर्णाङ्क j = ग्रन्थिः_idx; j < cgraph->n_nodes && count < GGML_SYCL_L2_BATCH_MAX; ++j) {
         ggml_tensor * nj = cgraph->nodes[j];
-        if (ggml_is_empty(nj) || nj->op == GGML_OP_RESHAPE || nj->op == GGML_OP_TRANSPOSE ||
+        यदि (ggml_is_रिक्तानि(nj) || nj->op == GGML_OP_RESHAPE || nj->op == GGML_OP_TRANSPOSE ||
             nj->op == GGML_OP_VIEW || nj->op == GGML_OP_PERMUTE || nj->op == GGML_OP_NONE ||
             (nj->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;  // not a launch; cannot break a run of adjacent norms
+            अनुवर्त;  // not a launch; cannot break a run of adjacent norms
         }
-        if (nj->op != GGML_OP_L2_NORM || nj->type != GGML_TYPE_F32 ||
-            nj->src[0]->type != GGML_TYPE_F32 || !ggml_are_same_shape(nj, node) ||
-            !ggml_are_same_shape(nj->src[0], node->src[0])) {
-            break;  // any other launch ends the run
+        यदि (nj->op != GGML_OP_L2_NORM || nj->type != GGML_TYPE_F32 ||
+            nj->src[0]->type != GGML_TYPE_F32 || !ggml_are_same_shape(nj, ग्रन्थिः) ||
+            !ggml_are_same_shape(nj->src[0], ग्रन्थिः->src[0])) {
+            भङ्ग;  // any other launch ends the run
         }
-        bool same_nb = true;
-        for (int d = 0; d < GGML_MAX_DIMS; ++d) {
-            if (nj->nb[d] != node->nb[d] || nj->src[0]->nb[d] != node->src[0]->nb[d]) {
-                same_nb = false;
-                break;
+        तार्किक same_nb = सत्य;
+        प्रति (पूर्णाङ्क d = 0; d < GGML_MAX_DIMS; ++d) {
+            यदि (nj->nb[d] != ग्रन्थिः->nb[d] || nj->src[0]->nb[d] != ग्रन्थिः->src[0]->nb[d]) {
+                same_nb = असत्य;
+                भङ्ग;
             }
         }
-        if (!same_nb) {
-            break;  // one nb[] stride set is shared by the whole batch
+        यदि (!same_nb) {
+            भङ्ग;  // one nb[] stride set is shared by the whole batch
         }
-        float epsj;
-        memcpy(&epsj, nj->op_params, sizeof(float));
-        if (epsj != eps0) {
-            break;  // eps mismatch ends the run
+        भिन्न epsj;
+        स्मृतिं_प्रतिलिख(&epsj, nj->op_params, परिमाण(भिन्न));
+        यदि (epsj != eps0) {
+            भङ्ग;  // eps mismatch ends the run
         }
-        bool indep = true;
-        for (int k = 0; k < count; ++k) {
-            if (overlaps(nj->src[0], batch[k]) || overlaps(nj, batch[k])) {
-                indep = false;
-                break;
+        तार्किक indep = सत्य;
+        प्रति (पूर्णाङ्क k = 0; k < count; ++k) {
+            यदि (overlaps(nj->src[0], batch[k]) || overlaps(nj, batch[k])) {
+                indep = असत्य;
+                भङ्ग;
             }
         }
-        if (!indep) {
-            break;  // an overlapping tensor would race inside one launch
+        यदि (!indep) {
+            भङ्ग;  // an overlapping tensor would race inside one launch
         }
         batch[count++] = nj;
-        last           = j;
+        चरमः           = j;
     }
-    if (count < 2) {
-        return 0;  // a lone norm falls through to the per-tensor kernel
+    यदि (count < 2) {
+        प्रत्यागम 0;  // a lone norm falls through to the per-tensor kernel
     }
     ggml_sycl_l2_norm_batch(ctx, batch, count);
-    return last - node_idx;
+    प्रत्यागम चरमः - ग्रन्थिः_idx;
 }
 
 
-__dpct_inline__ static void k_copy_src1_to_contiguous(
-    const char *__restrict__ src1_original, char *__restrict__ src1_contiguous,
-    const mmid_row_mapping *__restrict__ row_mapping,
+__dpct_inline__ स्थिर शून्य k_copy_src1_गन्तव्यम्_contiguous(
+    ध्रुव वर्ण *__restrict__ src1_original, वर्ण *__restrict__ src1_contiguous,
+    ध्रुव mmid_row_mapping *__restrict__ row_mapping,
     int64_t ne11, int64_t ne10, size_t nb11, size_t nb12,
-    const sycl::nd_item<3> &item_ct1) {
-    const int32_t src1_row = item_ct1.get_group(2);
+    ध्रुव sycl::nd_item<3> &item_ct1) {
+    ध्रुव int32_t src1_row = item_ct1.get_गणः(2);
 
-    const int32_t iid1 = row_mapping[src1_row].i2;
-    const int32_t id   = row_mapping[src1_row].i1;
+    ध्रुव int32_t iid1 = row_mapping[src1_row].i2;
+    ध्रुव int32_t id   = row_mapping[src1_row].i1;
 
-    const int64_t i11 = id % ne11;
-    const int64_t i12 = iid1;
+    ध्रुव int64_t i11 = id % ne11;
+    ध्रुव int64_t i12 = iid1;
 
-    const float * src1_row_original = (const float *)(src1_original + i11*nb11 + i12*nb12);
-    float * src1_row_contiguous = (float *)(src1_contiguous + src1_row*nb11);
+    ध्रुव भिन्न * src1_row_original = (ध्रुव भिन्न *)(src1_original + i11*nb11 + i12*nb12);
+    भिन्न * src1_row_contiguous = (भिन्न *)(src1_contiguous + src1_row*nb11);
 
-#pragma unroll
-    for (int i = item_ct1.get_local_id(2); i < ne10;
+#निर्देशः unroll
+    प्रति (पूर्णाङ्क i = item_ct1.get_local_id(2); i < ne10;
          i += item_ct1.get_local_range(2)) {
         src1_row_contiguous[i] = src1_row_original[i];
     }
 }
 
-__dpct_inline__ static void k_copy_dst_from_contiguous(
-    char *__restrict__ dst_original, const char *__restrict__ dst_contiguous,
-    const mmid_row_mapping *__restrict__ row_mapping, int64_t ne0, size_t nb1,
-    size_t nb2, const sycl::nd_item<3> &item_ct1) {
-    int32_t i = item_ct1.get_group(2);
+__dpct_inline__ स्थिर शून्य k_copy_dst_from_contiguous(
+    वर्ण *__restrict__ dst_original, ध्रुव वर्ण *__restrict__ dst_contiguous,
+    ध्रुव mmid_row_mapping *__restrict__ row_mapping, int64_t ne0, size_t nb1,
+    size_t nb2, ध्रुव sycl::nd_item<3> &item_ct1) {
+    int32_t i = item_ct1.get_गणः(2);
 
-    const int32_t i1 = row_mapping[i].i1;
-    const int32_t i2 = row_mapping[i].i2;
+    ध्रुव int32_t i1 = row_mapping[i].i1;
+    ध्रुव int32_t i2 = row_mapping[i].i2;
 
-    const float * dst_row_contiguous = (const float *)(dst_contiguous + i*nb1);
-    float * dst_row_original = (float *)(dst_original + i1*nb1 + i2*nb2);
+    ध्रुव भिन्न * dst_row_contiguous = (ध्रुव भिन्न *)(dst_contiguous + i*nb1);
+    भिन्न * dst_row_original = (भिन्न *)(dst_original + i1*nb1 + i2*nb2);
 
-#pragma unroll
-    for (int j = item_ct1.get_local_id(2); j < ne0;
+#निर्देशः unroll
+    प्रति (पूर्णाङ्क j = item_ct1.get_local_id(2); j < ne0;
          j += item_ct1.get_local_range(2)) {
         dst_row_original[j] = dst_row_contiguous[j];
     }
 }
 
 // Fused MoE TG fast path. Returns false to fall back to the per-expert loop below.
-static bool ggml_sycl_mul_mat_id_mmvq_fused(
-    ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
-    const ggml_tensor * src1, const ggml_tensor * ids, ggml_tensor * dst)
+स्थिर तार्किक ggml_sycl_mul_mat_id_mmvq_fused(
+    ggml_backend_sycl_context & ctx, ध्रुव ggml_tensor * src0,
+    ध्रुव ggml_tensor * src1, ध्रुव ggml_tensor * ids, ggml_tensor * dst)
 {
-    const int64_t ne10 = src1->ne[0];
-    const int64_t ne11 = src1->ne[1];
-    const int64_t ne12 = src1->ne[2];
-    if (ne12 != 1) return false;
-    if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) return false;
-    if (ne10 != src0->ne[0] || ne10 % QK8_1 != 0) return false;
-    if (!ggml_is_contiguous(src1)) return false;
+    ध्रुव int64_t ne10 = src1->ne[0];
+    ध्रुव int64_t ne11 = src1->ne[1];
+    ध्रुव int64_t ne12 = src1->ne[2];
+    यदि (ne12 != 1) प्रत्यागम असत्य;
+    यदि (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) प्रत्यागम असत्य;
+    यदि (ne10 != src0->ne[0] || ne10 % QK8_1 != 0) प्रत्यागम असत्य;
+    यदि (!ggml_is_contiguous(src1)) प्रत्यागम असत्य;
 
-    const int64_t n_ids_per_group = ids->ne[0];
-    if (ids->ne[1] != 1) return false;
-    if (ne11 != 1 && ne11 != n_ids_per_group) return false;
+    ध्रुव int64_t n_ids_प्रत्येकम्_गणः = ids->ne[0];
+    यदि (ids->ne[1] != 1) प्रत्यागम असत्य;
+    यदि (ne11 != 1 && ne11 != n_ids_प्रत्येकम्_गणः) प्रत्यागम असत्य;
 
-    const queue_ptr stream           = ctx.stream();
-    const int       src1_padded_cols = GGML_PAD((int) ne10, MATRIX_ROW_PADDING);
-    const int       n_experts_used   = (int) n_ids_per_group;
-    const int       nrows            = (int) src0->ne[1];
+    ध्रुव queue_ptr stream           = ctx.stream();
+    ध्रुव पूर्णाङ्क       src1_padded_स्तम्भसङ्ख्या = GGML_PAD((पूर्णाङ्क) ne10, MATRIX_ROW_PADDING);
+    ध्रुव पूर्णाङ्क       n_experts_प्रयुक्तम्   = (पूर्णाङ्क) n_ids_प्रत्येकम्_गणः;
+    ध्रुव पूर्णाङ्क       nrows            = (पूर्णाङ्क) src0->ne[1];
 
     // Lazily reorder supported expert weights into a per-expert SoA layout, then run the reorder
     // GEMV. Placed after the bail checks so a non-dispatchable op does not pay the reorder cost.
     opt_for_reorder_id(&ctx, src0);
-    const ggml_tensor_extra_gpu * src0_extra =
-        static_cast<const ggml_tensor_extra_gpu *>(src0->extra);
-    const bool use_reorder = src0_extra && src0_extra->optimized_feature.reorder;
+    ध्रुव ggml_tensor_extra_gpu * src0_extra =
+        static_cast<ध्रुव ggml_tensor_extra_gpu *>(src0->extra);
+    ध्रुव तार्किक use_reorder = src0_extra && src0_extra->optimized_feature.reorder;
 
-    ggml_sycl_pool_alloc<char> src1_q8_alloc(ctx.pool(),
-        (size_t) ne11 * src1_padded_cols * sizeof(block_q8_1) / QK8_1);
-    char * src1_ddq = src1_q8_alloc.get();
-    if (use_reorder) {
+    ggml_sycl_pool_alloc<वर्ण> src1_q8_alloc(ctx.pool(),
+        (size_t) ne11 * src1_padded_स्तम्भसङ्ख्या * परिमाण(खण्डम्_q8_1) / QK8_1);
+    वर्ण * src1_ddq = src1_q8_alloc.get();
+    यदि (use_reorder) {
         quantize_row_q8_1_sycl<quantize_and_reorder_q8_1_soa>(
-            (const float *) src1->data, src1_ddq, (int) ne10, (int) ne11,
-            src1_padded_cols, stream);
-    } else {
+            (ध्रुव भिन्न *) src1->दत्त, src1_ddq, (पूर्णाङ्क) ne10, (पूर्णाङ्क) ne11,
+            src1_padded_स्तम्भसङ्ख्या, stream);
+    } अन्यथा {
         quantize_row_q8_1_sycl<quantize_q8_1>(
-            (const float *) src1->data, src1_ddq, (int) ne10, (int) ne11,
-            src1_padded_cols, stream);
+            (ध्रुव भिन्न *) src1->दत्त, src1_ddq, (पूर्णाङ्क) ne10, (पूर्णाङ्क) ne11,
+            src1_padded_स्तम्भसङ्ख्या, stream);
     }
 
-    const size_t bytes_per_qrow = (size_t) src1_padded_cols * sizeof(block_q8_1) / QK8_1;
-    const size_t src1_row_stride = (ne11 == 1) ? 0 : bytes_per_qrow;
+    ध्रुव size_t अष्टकानि_प्रत्येकम्_qrow = (size_t) src1_padded_स्तम्भसङ्ख्या * परिमाण(खण्डम्_q8_1) / QK8_1;
+    ध्रुव size_t src1_row_stride = (ne11 == 1) ? 0 : अष्टकानि_प्रत्येकम्_qrow;
 
-    if (use_reorder) {
-        return ggml_sycl_mul_mat_vec_q_id_reorder(
-            src0->type, src0->data, src1_ddq, (const int32_t *) ids->data,
-            (float *) dst->data, (int) ne10, nrows, n_experts_used,
+    यदि (use_reorder) {
+        प्रत्यागम ggml_sycl_mul_mat_vec_q_id_reorder(
+            src0->type, src0->दत्त, src1_ddq, (ध्रुव int32_t *) ids->दत्त,
+            (भिन्न *) dst->दत्त, (पूर्णाङ्क) ne10, nrows, n_experts_प्रयुक्तम्,
             /*expert_weight_stride=*/ src0->nb[2],
             /*dst_row_stride=*/ dst->nb[1],
             src1_row_stride, stream);
     }
-    return ggml_sycl_mul_mat_vec_q_id(
-        src0->type, src0->data, src1_ddq, (const int32_t *) ids->data,
-        (float *) dst->data, (int) ne10, nrows, n_experts_used,
+    प्रत्यागम ggml_sycl_mul_mat_vec_q_id(
+        src0->type, src0->दत्त, src1_ddq, (ध्रुव int32_t *) ids->दत्त,
+        (भिन्न *) dst->दत्त, (पूर्णाङ्क) ne10, nrows, n_experts_प्रयुक्तम्,
         /*expert_weight_stride=*/ src0->nb[2],
         /*dst_row_stride=*/ dst->nb[1],
         src1_row_stride, stream);
@@ -5615,38 +5615,38 @@ static bool ggml_sycl_mul_mat_id_mmvq_fused(
 
 // counting sort of the routed rows by expert id (row_id_i, as chosen by the router):
 // builds a projection of a memory layout where each expert's slice is contiguous
-static void mmid_counting_sort_rows(
-        const ggml_tensor * ids, const char * ids_host,
-        int64_t n_ids, int64_t n_as, int64_t n_routed_rows,
+स्थिर शून्य mmid_counting_क्रमय_पङ्क्तिकाः(
+        ध्रुव ggml_tensor * ids, ध्रुव वर्ण * ids_host,
+        int64_t n_ids, int64_t n_as, int64_t n_routed_पङ्क्तिकाः,
         std::vector<int64_t> & expert_counts,
         std::vector<int64_t> & expert_row_offsets,
         std::vector<mmid_row_mapping> & routed_row_src) {
 
     // frequencies: how many routed rows each expert "owns"
-    expert_counts.assign(n_as, 0);
-    for (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
-        for (int64_t id = 0; id < n_ids; id++) {
-            const int32_t row_id_i = *(const int32_t *) (ids_host + iid1*ids->nb[1] + id*ids->nb[0]);
+    expert_counts.नियोजय(n_as, 0);
+    प्रति (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
+        प्रति (int64_t id = 0; id < n_ids; id++) {
+            ध्रुव int32_t row_id_i = *(ध्रुव int32_t *) (ids_host + iid1*ids->nb[1] + id*ids->nb[0]);
             GGML_ASSERT(row_id_i >= 0 && row_id_i < n_as);
             expert_counts[row_id_i]++;
         }
     }
 
     // where each expert's slice starts (row indices) and the previous ends
-    expert_row_offsets.assign(n_as + 1, 0);
-    for (int64_t i02 = 0; i02 < n_as; i02++) {
+    expert_row_offsets.नियोजय(n_as + 1, 0);
+    प्रति (int64_t i02 = 0; i02 < n_as; i02++) {
         expert_row_offsets[i02 + 1] = expert_row_offsets[i02] + expert_counts[i02];
     }
 
-    std::vector<int64_t> expert_row_next = expert_row_offsets;
-    routed_row_src.resize(n_routed_rows);
-    for (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
-        for (int64_t id = 0; id < n_ids; id++) {
-            const int32_t row_id_i = *(const int32_t *) (ids_host + iid1*ids->nb[1] + id*ids->nb[0]);
+    std::vector<int64_t> expert_row_अग्र = expert_row_offsets;
+    routed_row_src.resize(n_routed_पङ्क्तिकाः);
+    प्रति (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
+        प्रति (int64_t id = 0; id < n_ids; id++) {
+            ध्रुव int32_t row_id_i = *(ध्रुव int32_t *) (ids_host + iid1*ids->nb[1] + id*ids->nb[0]);
             GGML_ASSERT(row_id_i >= 0 && row_id_i < n_as);
 
             // find and validate the next free row for a given expert (row_id_i)
-            const int64_t routed_row = expert_row_next[row_id_i]++;
+            ध्रुव int64_t routed_row = expert_row_अग्र[row_id_i]++;
             GGML_ASSERT(routed_row >= expert_row_offsets[row_id_i]);
             GGML_ASSERT(routed_row < expert_row_offsets[row_id_i + 1]);
             routed_row_src[routed_row] = {(int32_t) id, (int32_t) iid1};
@@ -5654,50 +5654,50 @@ static void mmid_counting_sort_rows(
     }
 }
 
-static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
-                                 ggml_tensor *dst) try {
+स्थिर शून्य ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
+                                 ggml_tensor *dst) यत्न {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
-    const ggml_tensor *src0 = dst->src[0];
-    const ggml_tensor *src1 = dst->src[1];
-    GGML_ASSERT(!ggml_backend_buffer_is_sycl_split(src0->buffer) && "mul_mat_id does not support split buffers");
+    ध्रुव ggml_tensor *src0 = dst->src[0];
+    ध्रुव ggml_tensor *src1 = dst->src[1];
+    GGML_ASSERT(!ggml_backend_बफर_is_sycl_विभज(src0->बफर) && "mul_mat_id does not support split buffers");
 
-    const ggml_tensor *ids = dst->src[2];
-    GGML_TENSOR_BINARY_OP_LOCALS
+    ध्रुव ggml_tensor *ids = dst->src[2];
+    GGML_TENSOR_द्विमान_OP_LOCALS
 
-    const queue_ptr stream = ctx.stream();
+    ध्रुव queue_ptr stream = ctx.stream();
 
-    const int64_t n_as = ne02;
-    const int64_t n_ids = ids->ne[0];
+    ध्रुव int64_t n_as = ne02;
+    ध्रुव int64_t n_ids = ids->ne[0];
 
-    if (ne12 == 1) {
-        if (ggml_sycl_mul_mat_id_mmvq_fused(ctx, src0, src1, ids, dst)) {
-            return;
+    यदि (ne12 == 1) {
+        यदि (ggml_sycl_mul_mat_id_mmvq_fused(ctx, src0, src1, ids, dst)) {
+            प्रत्यागम;
         }
     }
 
     // The per-expert loop below reads the experts in whatever layout they have: reorder MXFP4 here as well, so prompt processing does not depend on a single-token decode having run first.
-    if (src0->type == GGML_TYPE_MXFP4) {
+    यदि (src0->type == GGML_TYPE_MXFP4) {
         opt_for_reorder_id(&ctx, src0);
     }
 
-    std::vector<char> ids_host(ggml_nbytes(ids));
-    const char * ids_dev = (const char *) ids->data;
+    std::vector<वर्ण> ids_host(ggml_nbytes(ids));
+    ध्रुव वर्ण * ids_dev = (ध्रुव वर्ण *) ids->दत्त;
 
     SYCL_CHECK(CHECK_TRY_ERROR(
-        stream->memcpy(ids_host.data(), ids_dev, ggml_nbytes(ids))));
+        stream->स्मृतिं_प्रतिलिख(ids_host.दत्त(), ids_dev, ggml_nbytes(ids))));
 
     // also ensures ctx.mmid_row_mapping_host and ctx.mmid_tile_schedule_host are drained before we
     // refill them: the grouped GEMM enqueues an async copy out of the tile schedule, so removing
     // this wait would let the next node overwrite a buffer the device is still reading
-    SYCL_CHECK(CHECK_TRY_ERROR(stream->wait()));
+    SYCL_CHECK(CHECK_TRY_ERROR(stream->प्रतीक्षस्व()));
 
     ggml_tensor src0_row = *src0;
     ggml_tensor src1_row = *src1;
     ggml_tensor dst_row = *dst;
 
-    char *src0_original = (char *)src0->data;
-    char *src1_original = (char *)src1->data;
-    char *dst_original = (char *)dst->data;
+    वर्ण *src0_original = (वर्ण *)src0->दत्त;
+    वर्ण *src1_original = (वर्ण *)src1->दत्त;
+    वर्ण *dst_original = (वर्ण *)dst->दत्त;
 
     src0_row.ne[2] = 1;
     src0_row.ne[3] = 1;
@@ -5714,32 +5714,32 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
     dst_row.ne[3] = 1;
     dst_row.nb[2] = nb1;
     dst_row.nb[3] = nb1;
-    if (ne12 == 1) {
-        for (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
-            for (int64_t id = 0; id < n_ids; id++) {
-                const int32_t i02 = *(const int32_t *) (ids_host.data() + iid1*ids->nb[1] + id*ids->nb[0]);
+    यदि (ne12 == 1) {
+        प्रति (int64_t iid1 = 0; iid1 < ids->ne[1]; iid1++) {
+            प्रति (int64_t id = 0; id < n_ids; id++) {
+                ध्रुव int32_t i02 = *(ध्रुव int32_t *) (ids_host.दत्त() + iid1*ids->nb[1] + id*ids->nb[0]);
                 GGML_ASSERT(i02 >= 0 && i02 < n_as);
 
-                const int64_t i11 = id % ne11;
-                const int64_t i12 = iid1;
+                ध्रुव int64_t i11 = id % ne11;
+                ध्रुव int64_t i12 = iid1;
 
-                const int64_t i1 = id;
-                const int64_t i2 = i12;
+                ध्रुव int64_t i1 = id;
+                ध्रुव int64_t i2 = i12;
 
-            src0_row.data = src0_original + i02*nb02;
-            src1_row.data = src1_original + i11*nb11 + i12*nb12;
-            dst_row.data = dst_original + i1*nb1 + i2*nb2;
+            src0_row.दत्त = src0_original + i02*nb02;
+            src1_row.दत्त = src1_original + i11*nb11 + i12*nb12;
+            dst_row.दत्त = dst_original + i1*nb1 + i2*nb2;
 
             ggml_sycl_mul_mat(ctx, &src0_row, &src1_row, &dst_row);
             }
         }
-    } else {
-        const int64_t n_routed_rows = ids->ne[1] * n_ids;
-        ggml_sycl_pool_alloc<char> src1_contiguous(ctx.pool(), sizeof(float)*n_routed_rows*ne10);
-        ggml_sycl_pool_alloc<char>  dst_contiguous(ctx.pool(), sizeof(float)*n_routed_rows*ne0);
+    } अन्यथा {
+        ध्रुव int64_t n_routed_पङ्क्तिकाः = ids->ne[1] * n_ids;
+        ggml_sycl_pool_alloc<वर्ण> src1_contiguous(ctx.pool(), परिमाण(भिन्न)*n_routed_पङ्क्तिकाः*ne10);
+        ggml_sycl_pool_alloc<वर्ण>  dst_contiguous(ctx.pool(), परिमाण(भिन्न)*n_routed_पङ्क्तिकाः*ne0);
 
-        src1_row.data = src1_contiguous.get();
-        dst_row.data  =  dst_contiguous.get();
+        src1_row.दत्त = src1_contiguous.get();
+        dst_row.दत्त  =  dst_contiguous.get();
 
         // how many "owned" routed rows to pass to each expert
         std::vector<int64_t> expert_row_counts;
@@ -5748,29 +5748,29 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
         // the sources (slot/token pairs) of contiguous rows to guide k_copy_src1_to_contiguous
         std::vector<mmid_row_mapping> & routed_row_src = ctx.mmid_row_mapping_host;
 
-        mmid_counting_sort_rows(ids, ids_host.data(), n_ids, n_as, n_routed_rows,
+        mmid_counting_क्रमय_पङ्क्तिकाः(ids, ids_host.दत्त(), n_ids, n_as, n_routed_पङ्क्तिकाः,
                                 expert_row_counts, expert_row_offsets, routed_row_src);
 
-        ggml_sycl_pool_alloc<mmid_row_mapping> dev_row_mapping(ctx.pool(), n_routed_rows);
+        ggml_sycl_pool_alloc<mmid_row_mapping> dev_row_mapping(ctx.pool(), n_routed_पङ्क्तिकाः);
         SYCL_CHECK(CHECK_TRY_ERROR(
-                stream->memcpy(dev_row_mapping.get(), routed_row_src.data(), n_routed_rows*sizeof(mmid_row_mapping))));
+                stream->स्मृतिं_प्रतिलिख(dev_row_mapping.get(), routed_row_src.दत्त(), n_routed_पङ्क्तिकाः*परिमाण(mmid_row_mapping))));
 
-        const unsigned int max_work_group_size = ggml_sycl_info().max_work_group_sizes[ctx.device];
-        assert(max_work_group_size % (WARP_SIZE * WARP_SIZE) == 0);
+        ध्रुव अचिह्नित पूर्णाङ्क max_work_गणः_आकार = ggml_sycl_info().max_work_गणः_sizes[ctx.device];
+        प्रतिज्ञा(max_work_गणः_आकार % (WARP_आकार * WARP_आकार) == 0);
 
         {
-            sycl::range<3> block_dims(1, 1, std::min((unsigned int)ne10, max_work_group_size));
-            sycl::range<3> grid_dims(1, 1, n_routed_rows);
+            sycl::range<3> खण्डम्_dims(1, 1, std::min((अचिह्नित पूर्णाङ्क)ne10, max_work_गणः_आकार));
+            sycl::range<3> grid_dims(1, 1, n_routed_पङ्क्तिकाः);
             stream->submit([&](sycl::handler &cgh) {
-                char *__restrict src1_contiguous_get =
+                वर्ण *__restrict src1_contiguous_get =
                     src1_contiguous.get();
                 mmid_row_mapping *__restrict dev_row_mapping_get =
                     dev_row_mapping.get();
 
                 cgh.parallel_for(
-                    sycl::nd_range<3>(grid_dims * block_dims, block_dims),
+                    sycl::nd_range<3>(grid_dims * खण्डम्_dims, खण्डम्_dims),
                     [=](sycl::nd_item<3> item_ct1) {
-                        k_copy_src1_to_contiguous(
+                        k_copy_src1_गन्तव्यम्_contiguous(
                             src1_original, src1_contiguous_get,
                             dev_row_mapping_get,
                             ne11, ne10, nb11, nb12,
@@ -5779,64 +5779,64 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
             });
         }
 
-        bool grouped = false;
-        if (ggml_is_contiguous(src0) && src1->type == GGML_TYPE_F32 &&
-            dst->type == GGML_TYPE_F32 && nb11 == sizeof(float)*ne10 && nb1 == sizeof(float)*ne0) {
+        तार्किक grouped = असत्य;
+        यदि (ggml_is_contiguous(src0) && src1->type == GGML_TYPE_F32 &&
+            dst->type == GGML_TYPE_F32 && nb11 == परिमाण(भिन्न)*ne10 && nb1 == परिमाण(भिन्न)*ne0) {
             // the grouped GEMM reads the reorder (SoA) layout faster, and the first decode step installs it
             // anyway: install it here already, so prefill does not depend on whether a decode ran before
-            if (g_ggml_sycl_dynamic_precision != GGML_SYCL_DYNAMIC_PRECISION_F32 &&
+            यदि (g_ggml_sycl_dynamic_precision != GGML_SYCL_DYNAMIC_PRECISION_F32 &&
                 ggml_sycl_xmx_gather_type_enabled(src0->type)) {
                 opt_for_reorder_id(&ctx, src0);
             }
-            const bool src0_reordered =
-                src0->extra && ((const ggml_tensor_extra_gpu *) src0->extra)->optimized_feature.reorder;
+            ध्रुव तार्किक src0_reordered =
+                src0->extra && ((ध्रुव ggml_tensor_extra_gpu *) src0->extra)->optimized_feature.reorder;
             grouped = ggml_sycl_grouped_dequant_gemm(src0->type, src0_reordered, src0_original, nb02,
-                                                     (const float *) src1_contiguous.get(), ggml_sycl_src1_prec(dst),
-                                                     (float *) dst_contiguous.get(),
-                                                     expert_row_offsets.data(), n_as, ne01, ne10, n_routed_rows,
-                                                     ctx.mmid_tile_schedule_host, ctx.pool(), stream);
+                                                     (ध्रुव भिन्न *) src1_contiguous.get(), ggml_sycl_src1_prec(dst),
+                                                     (भिन्न *) dst_contiguous.get(),
+                                                     expert_row_offsets.दत्त(), n_as, ne01, ne10, n_routed_पङ्क्तिकाः,
+                                                     ctx.mmid_tile_कालसारणी_host, ctx.pool(), stream);
         }
 
-        for (int64_t i02 = 0; i02 < n_as && !grouped; i02++) {
-            const int64_t num_src1_rows = expert_row_counts[i02];
+        प्रति (int64_t i02 = 0; i02 < n_as && !grouped; i02++) {
+            ध्रुव int64_t अङ्कः_src1_पङ्क्तिकाः = expert_row_counts[i02];
 
-            if (num_src1_rows == 0) {
-                continue;
+            यदि (अङ्कः_src1_पङ्क्तिकाः == 0) {
+                अनुवर्त;
             }
 
-            const int64_t expert_row_offset = expert_row_offsets[i02];
+            ध्रुव int64_t expert_row_विस्थापनम् = expert_row_offsets[i02];
 
-            src0_row.data = src0_original + i02*nb02;
+            src0_row.दत्त = src0_original + i02*nb02;
 
-            GGML_ASSERT(nb11 == sizeof(float)*ne10);
-            GGML_ASSERT(nb1 == sizeof(float)*ne0);
-            src1_row.data = src1_contiguous.get() + expert_row_offset*nb11;
-            src1_row.ne[1] = num_src1_rows;
+            GGML_ASSERT(nb11 == परिमाण(भिन्न)*ne10);
+            GGML_ASSERT(nb1 == परिमाण(भिन्न)*ne0);
+            src1_row.दत्त = src1_contiguous.get() + expert_row_विस्थापनम्*nb11;
+            src1_row.ne[1] = अङ्कः_src1_पङ्क्तिकाः;
 
             src1_row.nb[1] = nb11;
-            src1_row.nb[2] = num_src1_rows*nb11;
-            src1_row.nb[3] = num_src1_rows*nb11;
+            src1_row.nb[2] = अङ्कः_src1_पङ्क्तिकाः*nb11;
+            src1_row.nb[3] = अङ्कः_src1_पङ्क्तिकाः*nb11;
 
-            dst_row.data = dst_contiguous.get() + expert_row_offset*nb1;
-            dst_row.ne[1] = num_src1_rows;
+            dst_row.दत्त = dst_contiguous.get() + expert_row_विस्थापनम्*nb1;
+            dst_row.ne[1] = अङ्कः_src1_पङ्क्तिकाः;
             dst_row.nb[1] = nb1;
-            dst_row.nb[2] = num_src1_rows*nb1;
-            dst_row.nb[3] = num_src1_rows*nb1;
+            dst_row.nb[2] = अङ्कः_src1_पङ्क्तिकाः*nb1;
+            dst_row.nb[3] = अङ्कः_src1_पङ्क्तिकाः*nb1;
 
             ggml_sycl_mul_mat(ctx, &src0_row, &src1_row, &dst_row);
         }
 
         {
-            sycl::range<3> block_dims(1, 1, std::min((unsigned int)ne0, max_work_group_size));
-            sycl::range<3> grid_dims(1, 1, n_routed_rows);
+            sycl::range<3> खण्डम्_dims(1, 1, std::min((अचिह्नित पूर्णाङ्क)ne0, max_work_गणः_आकार));
+            sycl::range<3> grid_dims(1, 1, n_routed_पङ्क्तिकाः);
             stream->submit([&](sycl::handler &cgh) {
-                const char *__restrict dst_contiguous_get =
+                ध्रुव वर्ण *__restrict dst_contiguous_get =
                     dst_contiguous.get();
-                const mmid_row_mapping *__restrict dev_row_mapping_get =
+                ध्रुव mmid_row_mapping *__restrict dev_row_mapping_get =
                     dev_row_mapping.get();
 
                 cgh.parallel_for(
-                    sycl::nd_range<3>(grid_dims * block_dims, block_dims),
+                    sycl::nd_range<3>(grid_dims * खण्डम्_dims, खण्डम्_dims),
                     [=](sycl::nd_item<3> item_ct1) {
                         k_copy_dst_from_contiguous(dst_original,
                                                    dst_contiguous_get,
@@ -5847,91 +5847,91 @@ static void ggml_sycl_mul_mat_id(ggml_backend_sycl_context & ctx,
         }
     }
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void ggml_sycl_scale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_scale(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_scale(ctx, dst);
 }
 
-static void ggml_sycl_diag_mask_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_diag_आवरणम्_inf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
-    ggml_sycl_op_diag_mask_inf(ctx, dst);
+    ggml_sycl_op_diag_आवरणम्_inf(ctx, dst);
 }
 
-static void ggml_sycl_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_pool2d(ctx, dst);
 }
 
-static void ggml_sycl_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_pool1d(ctx, dst);
 }
 
-static void ggml_sycl_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_im2col(ctx, dst);
 }
 
-static void ggml_sycl_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_im2col_3d(ctx, dst);
 }
 
-static void ggml_sycl_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_col2im_1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_col2im_1d(ctx, dst);
 }
 
-static void ggml_sycl_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_conv_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_conv_3d(ctx, dst);
 }
 
-static void ggml_sycl_sum(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_योग(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
-    ggml_sycl_op_sum(ctx, dst);
+    ggml_sycl_op_योग(ctx, dst);
 }
 
-static void ggml_sycl_sum_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_योग_पङ्क्तिकाः(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
-    ggml_sycl_op_sum_rows(ctx, dst);
+    ggml_sycl_op_योग_पङ्क्तिकाः(ctx, dst);
 }
 
-static void ggml_sycl_mean(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_माध्यम्(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
-    ggml_sycl_op_mean(ctx, dst);
+    ggml_sycl_op_माध्यम्(ctx, dst);
 }
 
-static void ggml_sycl_argsort(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_argsort(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_argsort(ctx, dst);
 }
 
-static void ggml_sycl_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+स्थिर शून्य ggml_sycl_argmax(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     GGML_ASSERT(ggml_is_contiguous(dst->src[0]));
     ggml_sycl_op_argmax(ctx, dst);
 }
 
 
-static void ggml_sycl_set_main_device(const int main_device) try {
-    if (dpct::get_current_device_id() == static_cast<unsigned int> (main_device)) {
-        return;
+स्थिर शून्य ggml_sycl_समुच्चयः_main_device(ध्रुव पूर्णाङ्क main_device) यत्न {
+    यदि (dpct::get_current_device_id() == static_cast<अचिह्नित पूर्णाङ्क> (main_device)) {
+        प्रत्यागम;
     }
-    check_allow_gpu_index(main_device);
+    check_allow_gpu_सूचकांक(main_device);
     dpct::select_device(main_device);
 
-    if (g_ggml_sycl_debug) {
+    यदि (g_ggml_sycl_debug) {
         dpct::device_info prop;
         SYCL_CHECK(CHECK_TRY_ERROR(dpct::get_device_info(
             prop, dpct::dev_mgr::instance().get_device(main_device))));
@@ -5939,535 +5939,535 @@ static void ggml_sycl_set_main_device(const int main_device) try {
                 main_device, prop.get_name());
     }
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static bool ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, struct ggml_tensor * dst) try {
+स्थिर तार्किक ggml_sycl_compute_forward(ggml_backend_sycl_context & ctx, संरचना ggml_tensor * dst) यत्न {
     GGML_SYCL_DEBUG("[SYCL] ggml_sycl_compute_forward: dst=%s, op=%s\n", dst->name, ggml_op_name(dst->op));
-    if (!g_sycl_loaded) return false;
+    यदि (!g_sycl_loaded) प्रत्यागम असत्य;
 
-    if (dst->src[0] != nullptr && ggml_backend_buffer_is_sycl_split(dst->src[0]->buffer)) {
-        ggml_sycl_set_peer_access(dst->src[1]->ne[1], ctx.device);
+    यदि (dst->src[0] != शून्यसूचकः && ggml_backend_बफर_is_sycl_विभज(dst->src[0]->बफर)) {
+        ggml_sycl_समुच्चयः_peer_access(dst->src[1]->ne[1], ctx.device);
     }
 
-    switch (dst->op) {
-        case GGML_OP_ARGMAX:
+    विकल्प (dst->op) {
+        पक्ष GGML_OP_ARGMAX:
             ggml_sycl_argmax(ctx, dst);
-            break;
-        case GGML_OP_CONV_2D:
+            भङ्ग;
+        पक्ष GGML_OP_CONV_2D:
             ggml_sycl_op_conv2d(ctx, dst);
-            break;
-        case GGML_OP_CONV_2D_DW:
+            भङ्ग;
+        पक्ष GGML_OP_CONV_2D_DW:
             ggml_sycl_op_conv2d_dw(ctx, dst);
-            break;
-        case GGML_OP_CONV_3D:
+            भङ्ग;
+        पक्ष GGML_OP_CONV_3D:
             ggml_sycl_conv_3d(ctx, dst);
-            break;
-        case GGML_OP_CONV_TRANSPOSE_1D:
+            भङ्ग;
+        पक्ष GGML_OP_CONV_TRANSPOSE_1D:
             ggml_sycl_op_conv_transpose_1d(ctx, dst);
-            break;
-        case GGML_OP_CONV_TRANSPOSE_2D:
+            भङ्ग;
+        पक्ष GGML_OP_CONV_TRANSPOSE_2D:
             ggml_sycl_op_conv2d_transpose(ctx, dst);
-            break;
-        case GGML_OP_REPEAT:
+            भङ्ग;
+        पक्ष GGML_OP_REPEAT:
             ggml_sycl_repeat(ctx, dst);
-            break;
-        case GGML_OP_REPEAT_BACK:
-            ggml_sycl_repeat_back(ctx, dst);
-            break;
-        case GGML_OP_GET_ROWS:
-            ggml_sycl_get_rows(ctx, dst);
-            break;
-        case GGML_OP_GET_ROWS_BACK:
-            ggml_sycl_get_rows_back(ctx, dst);
-            break;
-        case GGML_OP_SET:
-            ggml_sycl_op_set(ctx, dst);
-            break;
-        case GGML_OP_SET_ROWS:
-            ggml_sycl_op_set_rows(ctx, dst);
-            break;
-        case GGML_OP_DSV4_HC_PRE:
+            भङ्ग;
+        पक्ष GGML_OP_REPEAT_पृष्ठभागः:
+            ggml_sycl_repeat_पृष्ठभागः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_GET_पङ्क्तिकाः:
+            ggml_sycl_get_पङ्क्तिकाः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_GET_पङ्क्तिकाः_पृष्ठभागः:
+            ggml_sycl_get_पङ्क्तिकाः_पृष्ठभागः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_समुच्चयः:
+            ggml_sycl_op_समुच्चयः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_समुच्चयः_पङ्क्तिकाः:
+            ggml_sycl_op_समुच्चयः_पङ्क्तिकाः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_DSV4_HC_PRE:
             ggml_sycl_op_dsv4_hc_pre(ctx, dst);
-            break;
-        case GGML_OP_DSV4_HC_COMB:
+            भङ्ग;
+        पक्ष GGML_OP_DSV4_HC_COMB:
             ggml_sycl_op_dsv4_hc_comb(ctx, dst);
-            break;
-        case GGML_OP_DSV4_HC_POST:
+            भङ्ग;
+        पक्ष GGML_OP_DSV4_HC_POST:
             ggml_sycl_op_dsv4_hc_post(ctx, dst);
-            break;
-        case GGML_OP_LIGHTNING_INDEXER:
+            भङ्ग;
+        पक्ष GGML_OP_LIGHTNING_INDEXER:
             ggml_sycl_op_lightning_indexer(ctx, dst);
-            break;
-        case GGML_OP_DUP:
+            भङ्ग;
+        पक्ष GGML_OP_DUP:
             ggml_sycl_dup(ctx, dst);
-            break;
-        case GGML_OP_ADD:
-        case GGML_OP_ADD1: // TODO: more efficient implementation
-            ggml_sycl_add(ctx, dst);
-            break;
-        case GGML_OP_ADD_ID:
-            ggml_sycl_add_id(ctx, dst);
-            break;
-        case GGML_OP_SUB:
+            भङ्ग;
+        पक्ष GGML_OP_सङ्कलय:
+        पक्ष GGML_OP_ADD1: // TODO: more efficient implementation
+            ggml_sycl_सङ्कलय(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_सङ्कलय_ID:
+            ggml_sycl_सङ्कलय_id(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_SUB:
             ggml_sycl_sub(ctx, dst);
-            break;
-        case GGML_OP_COUNT_EQUAL:
-            ggml_sycl_count_equal(ctx, dst);
-            break;
-        case GGML_OP_ACC:
+            भङ्ग;
+        पक्ष GGML_OP_गणनम्_EQUAL:
+            ggml_sycl_गणनम्_equal(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_ACC:
             ggml_sycl_acc(ctx, dst);
-            break;
-        case GGML_OP_MUL:
+            भङ्ग;
+        पक्ष GGML_OP_MUL:
             ggml_sycl_mul(ctx, dst);
-            break;
-        case GGML_OP_LOG:
+            भङ्ग;
+        पक्ष GGML_OP_LOG:
             ggml_sycl_log(ctx, dst);
-            break;
-        case GGML_OP_DIV:
+            भङ्ग;
+        पक्ष GGML_OP_DIV:
             ggml_sycl_div(ctx, dst);
-            break;
-        case GGML_OP_UNARY:
-            switch (ggml_get_unary_op(dst)) {
-                case GGML_UNARY_OP_NEG:
+            भङ्ग;
+        पक्ष GGML_OP_UNARY:
+            विकल्प (ggml_get_unary_op(dst)) {
+                पक्ष GGML_UNARY_OP_NEG:
                     ggml_sycl_neg(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_STEP:
-                    ggml_sycl_step(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_GELU:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_चरणः:
+                    ggml_sycl_चरणः(ctx, dst);
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_GELU:
                     ggml_sycl_gelu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SILU:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_SILU:
                     ggml_sycl_silu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_GELU_QUICK:
-                    ggml_sycl_gelu_quick(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_GELU_ERF:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_GELU_शीघ्र:
+                    ggml_sycl_gelu_शीघ्र(ctx, dst);
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_GELU_ERF:
                     ggml_sycl_gelu_erf(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_TANH:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_TANH:
                     ggml_sycl_tanh(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_RELU:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_RELU:
                     ggml_sycl_relu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SIGMOID:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_SIGMOID:
                     ggml_sycl_sigmoid(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_HARDSIGMOID:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_HARDSIGMOID:
                     ggml_sycl_hardsigmoid(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_HARDSWISH:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_HARDSWISH:
                     ggml_sycl_hardswish(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_EXP:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_EXP:
                     ggml_sycl_exp(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_EXPM1:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_EXPM1:
                     ggml_sycl_expm1(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SOFTPLUS:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_SOFTPLUS:
                     ggml_sycl_softplus(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SGN:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_SGN:
                     ggml_sycl_sgn(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_ABS:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_ABS:
                     ggml_sycl_abs(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_ELU:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_ELU:
                     ggml_sycl_elu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_XIELU:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_XIELU:
                     ggml_sycl_xielu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_FLOOR:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_FLOOR:
                     ggml_sycl_floor(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_CEIL:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_CEIL:
                     ggml_sycl_ceil(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_ROUND:
-                    ggml_sycl_round(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_TRUNC:
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_आवर्तनम्:
+                    ggml_sycl_आवर्तनम्(ctx, dst);
+                    भङ्ग;
+                पक्ष GGML_UNARY_OP_TRUNC:
                     ggml_sycl_trunc(ctx, dst);
-                    break;
-                default:
-                    return false;
+                    भङ्ग;
+                स्वभाव:
+                    प्रत्यागम असत्य;
             }
-            break;
-        case GGML_OP_GLU:
-            switch (ggml_get_glu_op(dst)) {
-                case GGML_GLU_OP_REGLU:
+            भङ्ग;
+        पक्ष GGML_OP_GLU:
+            विकल्प (ggml_get_glu_op(dst)) {
+                पक्ष GGML_GLU_OP_REGLU:
                     ggml_sycl_reglu(ctx, dst);
-                    break;
-                case GGML_GLU_OP_GEGLU:
+                    भङ्ग;
+                पक्ष GGML_GLU_OP_GEGLU:
                     ggml_sycl_geglu(ctx, dst);
-                    break;
-                case GGML_GLU_OP_SWIGLU:
+                    भङ्ग;
+                पक्ष GGML_GLU_OP_SWIGLU:
                     ggml_sycl_swiglu(ctx, dst);
-                    break;
-                case GGML_GLU_OP_SWIGLU_OAI:
+                    भङ्ग;
+                पक्ष GGML_GLU_OP_SWIGLU_OAI:
                     ggml_sycl_swiglu_oai(ctx, dst);
-                    break;
-                case GGML_GLU_OP_SWIGLU_CLAMP:
+                    भङ्ग;
+                पक्ष GGML_GLU_OP_SWIGLU_CLAMP:
                     ggml_sycl_swiglu_clamp(ctx, dst);
-                    break;
-                case GGML_GLU_OP_GEGLU_ERF:
+                    भङ्ग;
+                पक्ष GGML_GLU_OP_GEGLU_ERF:
                     ggml_sycl_geglu_erf(ctx, dst);
-                    break;
-                case GGML_GLU_OP_GEGLU_QUICK:
-                    ggml_sycl_geglu_quick(ctx, dst);
-                    break;
-                default:
-                    return false;
+                    भङ्ग;
+                पक्ष GGML_GLU_OP_GEGLU_शीघ्र:
+                    ggml_sycl_geglu_शीघ्र(ctx, dst);
+                    भङ्ग;
+                स्वभाव:
+                    प्रत्यागम असत्य;
             }
-            break;
-        case GGML_OP_NORM:
+            भङ्ग;
+        पक्ष GGML_OP_NORM:
             ggml_sycl_norm(ctx, dst);
-            break;
-        case GGML_OP_GROUP_NORM:
-            ggml_sycl_group_norm(ctx, dst);
-            break;
-        case GGML_OP_CONCAT:
+            भङ्ग;
+        पक्ष GGML_OP_गणः_NORM:
+            ggml_sycl_गणः_norm(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_CONCAT:
             ggml_sycl_op_concat(ctx, dst);
-            break;
-        case GGML_OP_PAD_REFLECT_1D:
+            भङ्ग;
+        पक्ष GGML_OP_PAD_REFLECT_1D:
             ggml_sycl_op_pad_reflect_1d(ctx,dst);
-            break;
-        case GGML_OP_UPSCALE:
+            भङ्ग;
+        पक्ष GGML_OP_UPSCALE:
             ggml_sycl_upscale(ctx, dst);
-            break;
-        case GGML_OP_PAD:
+            भङ्ग;
+        पक्ष GGML_OP_PAD:
             ggml_sycl_pad(ctx, dst);
-            break;
-        case GGML_OP_LEAKY_RELU:
+            भङ्ग;
+        पक्ष GGML_OP_LEAKY_RELU:
             ggml_sycl_leaky_relu(ctx, dst);
-            break;
-        case GGML_OP_RMS_NORM_BACK:
-            ggml_sycl_rms_norm_back(ctx, dst);
-            break;
-        case GGML_OP_RMS_NORM:
+            भङ्ग;
+        पक्ष GGML_OP_RMS_NORM_पृष्ठभागः:
+            ggml_sycl_rms_norm_पृष्ठभागः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_RMS_NORM:
             ggml_sycl_rms_norm(ctx, dst);
-            break;
-        case GGML_OP_L2_NORM:
+            भङ्ग;
+        पक्ष GGML_OP_L2_NORM:
             ggml_sycl_l2_norm(ctx, dst);
-            break;
-        case GGML_OP_MUL_MAT:
-            if (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
-                return false;
+            भङ्ग;
+        पक्ष GGML_OP_MUL_MAT:
+            यदि (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
+                प्रत्यागम असत्य;
             }
             /* ggml_sycl_mul_mat_id is dependent on ggml_sycl_mul_mat */
             ggml_sycl_mul_mat(ctx, dst->src[0], dst->src[1], dst);
-            break;
-        case GGML_OP_MUL_MAT_ID:
-            if (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
-                return false;
+            भङ्ग;
+        पक्ष GGML_OP_MUL_MAT_ID:
+            यदि (dst->src[0]->ne[3] != dst->src[1]->ne[3]) {
+                प्रत्यागम असत्य;
             }
             ggml_sycl_mul_mat_id(ctx, dst);
-            break;
-        case GGML_OP_OUT_PROD:
-            ggml_sycl_op_out_prod(ctx, dst);
-            break;
-        case GGML_OP_SCALE:
+            भङ्ग;
+        पक्ष GGML_OP_बहिर्गमनम्_PROD:
+            ggml_sycl_op_बहिर्गमनम्_prod(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_SCALE:
             ggml_sycl_scale(ctx, dst);
-            break;
-        case GGML_OP_SQR:
+            भङ्ग;
+        पक्ष GGML_OP_SQR:
             ggml_sycl_sqr(ctx, dst);
-            break;
-        case GGML_OP_SQRT:
+            भङ्ग;
+        पक्ष GGML_OP_SQRT:
             ggml_sycl_sqrt(ctx, dst);
-            break;
-        case GGML_OP_SIN:
+            भङ्ग;
+        पक्ष GGML_OP_SIN:
             ggml_sycl_sin(ctx, dst);
-            break;
-        case GGML_OP_COS:
+            भङ्ग;
+        पक्ष GGML_OP_COS:
             ggml_sycl_cos(ctx, dst);
-            break;
-        case GGML_OP_CLAMP:
+            भङ्ग;
+        पक्ष GGML_OP_CLAMP:
             ggml_sycl_clamp(ctx, dst);
-            break;
-        case GGML_OP_CPY:
+            भङ्ग;
+        पक्ष GGML_OP_CPY:
             ggml_sycl_cpy(ctx, dst->src[0], dst->src[1]);
-            break;
-        case GGML_OP_CONT:
+            भङ्ग;
+        पक्ष GGML_OP_CONT:
             ggml_sycl_dup(ctx, dst);
-            break;
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
+            भङ्ग;
+        पक्ष GGML_OP_NONE:
+        पक्ष GGML_OP_RESHAPE:
+        पक्ष GGML_OP_VIEW:
+        पक्ष GGML_OP_PERMUTE:
+        पक्ष GGML_OP_TRANSPOSE:
             GGML_SYCL_DEBUG("%s: Tensor NO-OP\n", __func__);
-            break;
-        case GGML_OP_TRI:
+            भङ्ग;
+        पक्ष GGML_OP_TRI:
             ggml_sycl_op_tri(ctx, dst);
-            break;
-        case GGML_OP_DIAG_MASK_INF:
-            ggml_sycl_diag_mask_inf(ctx, dst);
-            break;
-        case GGML_OP_SOFT_MAX:
+            भङ्ग;
+        पक्ष GGML_OP_DIAG_आवरणम्_INF:
+            ggml_sycl_diag_आवरणम्_inf(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_SOFT_MAX:
             ggml_sycl_op_soft_max(ctx, dst);
-            break;
-        case GGML_OP_SOFT_MAX_BACK:
-            ggml_sycl_op_soft_max_back(ctx, dst);
-            break;
-        case GGML_OP_CROSS_ENTROPY_LOSS:
+            भङ्ग;
+        पक्ष GGML_OP_SOFT_MAX_पृष्ठभागः:
+            ggml_sycl_op_soft_max_पृष्ठभागः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_CROSS_ENTROPY_LOSS:
             ggml_sycl_cross_entropy_loss(ctx, dst);
-            break;
-        case GGML_OP_CROSS_ENTROPY_LOSS_BACK:
-            ggml_sycl_cross_entropy_loss_back(ctx, dst);
-            break;
-        case GGML_OP_ROPE:
+            भङ्ग;
+        पक्ष GGML_OP_CROSS_ENTROPY_LOSS_पृष्ठभागः:
+            ggml_sycl_cross_entropy_loss_पृष्ठभागः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_ROPE:
             ggml_sycl_rope(ctx, dst);
-            break;
-        case GGML_OP_ROPE_BACK:
-            ggml_sycl_rope_back(ctx, dst);
-            break;
-        case GGML_OP_IM2COL:
+            भङ्ग;
+        पक्ष GGML_OP_ROPE_पृष्ठभागः:
+            ggml_sycl_rope_पृष्ठभागः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_IM2COL:
             ggml_sycl_im2col(ctx, dst);
-            break;
-        case GGML_OP_IM2COL_3D:
+            भङ्ग;
+        पक्ष GGML_OP_IM2COL_3D:
             ggml_sycl_im2col_3d(ctx, dst);
-            break;
-        case GGML_OP_COL2IM_1D:
+            भङ्ग;
+        पक्ष GGML_OP_COL2IM_1D:
             ggml_sycl_col2im_1d(ctx, dst);
-            break;
-        case GGML_OP_POOL_2D:
+            भङ्ग;
+        पक्ष GGML_OP_POOL_2D:
             ggml_sycl_pool2d(ctx, dst);
-            break;
-        case GGML_OP_POOL_1D:
+            भङ्ग;
+        पक्ष GGML_OP_POOL_1D:
             ggml_sycl_pool1d(ctx, dst);
-            break;
-        case GGML_OP_SUM:
-            ggml_sycl_sum(ctx, dst);
-            break;
-        case GGML_OP_SUM_ROWS:
-            ggml_sycl_sum_rows(ctx, dst);
-            break;
-        case GGML_OP_MEAN:
-            ggml_sycl_mean(ctx, dst);
-            break;
-        case GGML_OP_ARGSORT:
+            भङ्ग;
+        पक्ष GGML_OP_योग:
+            ggml_sycl_योग(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_योग_पङ्क्तिकाः:
+            ggml_sycl_योग_पङ्क्तिकाः(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_माध्यम्:
+            ggml_sycl_माध्यम्(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_ARGSORT:
             ggml_sycl_argsort(ctx, dst);
-            break;
-        case GGML_OP_TOP_K:
-            ggml_sycl_op_top_k(ctx, dst);
-            break;
-        case GGML_OP_TIMESTEP_EMBEDDING:
+            भङ्ग;
+        पक्ष GGML_OP_शिखरम्_K:
+            ggml_sycl_op_शिखरम्_k(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_TIMESTEP_EMBEDDING:
             ggml_sycl_op_timestep_embedding(ctx, dst);
-            break;
-        case GGML_OP_RWKV_WKV6:
+            भङ्ग;
+        पक्ष GGML_OP_RWKV_WKV6:
             ggml_sycl_op_rwkv_wkv6(ctx, dst);
-            break;
-        case GGML_OP_RWKV_WKV7:
+            भङ्ग;
+        पक्ष GGML_OP_RWKV_WKV7:
             ggml_sycl_op_rwkv_wkv7(ctx, dst);
-            break;
-        case GGML_OP_GATED_LINEAR_ATTN:
-            ggml_sycl_op_gated_linear_attn(ctx, dst);
-            break;
-        case GGML_OP_GATED_DELTA_NET:
+            भङ्ग;
+        पक्ष GGML_OP_GATED_रैखिकम्_ATTN:
+            ggml_sycl_op_gated_रैखिकम्_attn(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_GATED_DELTA_NET:
             ggml_sycl_gated_delta_net(ctx, dst);
-            break;
-        case GGML_OP_OPT_STEP_ADAMW:
-            ggml_sycl_opt_step_adamw(ctx, dst);
-            break;
-        case GGML_OP_OPT_STEP_SGD:
-            ggml_sycl_opt_step_sgd(ctx, dst);
-            break;
-        case GGML_OP_SSM_CONV:
+            भङ्ग;
+        पक्ष GGML_OP_OPT_चरणः_ADAMW:
+            ggml_sycl_opt_चरणः_adamw(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_OPT_चरणः_SGD:
+            ggml_sycl_opt_चरणः_sgd(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_SSM_CONV:
             ggml_sycl_ssm_conv(ctx, dst);
-            break;
-        case GGML_OP_SSM_SCAN:
-            ggml_sycl_ssm_scan(ctx, dst);
-            break;
-        case GGML_OP_FILL:
+            भङ्ग;
+        पक्ष GGML_OP_SSM_अवलोकनम्:
+            ggml_sycl_ssm_अवलोकनम्(ctx, dst);
+            भङ्ग;
+        पक्ष GGML_OP_FILL:
             ggml_sycl_fill(ctx, dst);
-            break;
-        case GGML_OP_CUMSUM:
+            भङ्ग;
+        पक्ष GGML_OP_CUMSUM:
             ggml_sycl_cumsum(ctx, dst);
-            break;
-        case GGML_OP_DIAG:
+            भङ्ग;
+        पक्ष GGML_OP_DIAG:
             ggml_sycl_diag(ctx, dst);
-            break;
-        case GGML_OP_SOLVE_TRI:
+            भङ्ग;
+        पक्ष GGML_OP_SOLVE_TRI:
             ggml_sycl_solve_tri(ctx, dst);
-            break;
-        case GGML_OP_ROLL:
+            भङ्ग;
+        पक्ष GGML_OP_ROLL:
             ggml_sycl_roll(ctx, dst);
-            break;
-        case GGML_OP_ARANGE:
+            भङ्ग;
+        पक्ष GGML_OP_ARANGE:
             ggml_sycl_arange(ctx, dst);
-            break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            भङ्ग;
+        पक्ष GGML_OP_FLASH_ATTN_EXT:
             ggml_sycl_flash_attn_ext(ctx, dst);
-            break;
-        default:
-            return false;
+            भङ्ग;
+        स्वभाव:
+            प्रत्यागम असत्य;
     }
 
-    return true;
-} catch (sycl::exception & e) {
-    std::cerr << e.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
-    std::cerr << "Error OP "<<ggml_op_name(dst->op)<< std::endl;
-    std::exit(1);
+    प्रत्यागम सत्य;
+} गृहाण (sycl::exception & e) {
+    std::cerr << e.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+    std::cerr << "Error OP "<<ggml_op_name(dst->op)<< std::पङ्क्त्यन्तः;
+    std::निर्गच्छ(1);
 }
 
-GGML_API void ggml_backend_sycl_get_device_description(int device, char *description,
-                                      size_t description_size) try {
+GGML_API शून्य ggml_backend_sycl_get_device_description(पूर्णाङ्क device, वर्ण *description,
+                                      size_t description_आकार) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_get_device_description\n");
     dpct::device_info prop;
     SYCL_CHECK(CHECK_TRY_ERROR(dpct::get_device_info(
         prop, dpct::dev_mgr::instance().get_device(device))));
-    snprintf(description, description_size, "%s", prop.get_name());
+    snprintf(description, description_आकार, "%s", prop.get_name());
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static bool sycl_get_mem_info(int device, size_t * free, size_t * total) {
+स्थिर तार्किक sycl_get_mem_info(पूर्णाङ्क device, size_t * मुक्त, size_t * योग) {
     GGML_SYCL_DEBUG("[SYCL] [%s] g_ggml_sycl_get_mem_api=%d\n",
         __func__, g_ggml_sycl_get_mem_api);
 
-    MemoryAPIType mem_api_type = MemoryAPIType::MEMORY_API_TYPE_SYCL;
+    स्मृतिः_APIType mem_api_type = स्मृतिः_APIType::स्मृतिः_API_TYPE_SYCL;
 
-#ifdef GGML_SYCL_SUPPORT_LEVEL_ZERO_API
-    mem_api_type = get_zes_init_res() == ZE_RESULT_SUCCESS ?
-        (MemoryAPIType) g_ggml_sycl_get_mem_api : MemoryAPIType::MEMORY_API_TYPE_SYCL;
-#else
-    mem_api_type = MemoryAPIType::MEMORY_API_TYPE_SYCL;
-#endif
-    bool res = get_memory_size(dpct::dev_mgr::instance().get_device(device),
-        *free, *total, mem_api_type);
-    GGML_SYCL_DEBUG("[SYCL] [%s] total = %zu free = %zu\n", __func__, *total, *free);
-    return res;
+#यदि_परिभाषितम् GGML_SYCL_SUPPORT_LEVEL_ZERO_API
+    mem_api_type = get_zes_init_res() == ZE_परिणाम_SUCCESS ?
+        (स्मृतिः_APIType) g_ggml_sycl_get_mem_api : स्मृतिः_APIType::स्मृतिः_API_TYPE_SYCL;
+#अन्यथा
+    mem_api_type = स्मृतिः_APIType::स्मृतिः_API_TYPE_SYCL;
+#यदि_अन्तः
+    तार्किक res = get_स्मृतिः_आकार(dpct::dev_mgr::instance().get_device(device),
+        *मुक्त, *योग, mem_api_type);
+    GGML_SYCL_DEBUG("[SYCL] [%s] total = %zu free = %zu\n", __func__, *योग, *मुक्त);
+    प्रत्यागम res;
 }
 
-void ggml_backend_sycl_get_device_memory(int device, size_t * free, size_t * total) try {
+शून्य ggml_backend_sycl_get_device_स्मृतिः(पूर्णाङ्क device, size_t * मुक्त, size_t * योग) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_get_device_memory\n");
-    if (!sycl_get_mem_info(device, free, total)) {
+    यदि (!sycl_get_mem_info(device, मुक्त, योग)) {
         GGML_ABORT("[%s] failed to get device memory size", __func__);
     }
-    ggml_sycl_memtrace_report_device("device memory query", device, *free, *total);
-} catch (const sycl::exception & exc) {
-    std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::endl;
-    std::exit(1);
+    ggml_sycl_memtrace_report_device("device memory query", device, *मुक्त, *योग);
+} गृहाण (ध्रुव sycl::exception & exc) {
+    std::cerr << exc.what() << "Exception caught at file:" << __FILE__ << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+    std::निर्गच्छ(1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 // backend
 
-static const char * ggml_backend_sycl_get_name(ggml_backend_t backend) {
+स्थिर ध्रुव वर्ण * ggml_backend_sycl_get_name(ggml_backend_t backend) {
 
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
 
-    return sycl_ctx->name.c_str();
+    प्रत्यागम sycl_ctx->name.c_str();
 }
 
-static void ggml_backend_sycl_free(ggml_backend_t backend) {
+स्थिर शून्य ggml_backend_sycl_free(ggml_backend_t backend) {
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
 
-    delete sycl_ctx;
-    delete backend;
+    विलोपय sycl_ctx;
+    विलोपय backend;
 }
 
-static void ggml_backend_sycl_set_tensor_async(ggml_backend_t backend,
+स्थिर शून्य ggml_backend_sycl_समुच्चयः_tensor_async(ggml_backend_t backend,
                                                ggml_tensor *tensor,
-                                               const void *data, size_t offset,
-                                               size_t size) try {
+                                               ध्रुव शून्य *दत्त, size_t विस्थापनम्,
+                                               size_t size) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
-    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
+    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, विस्थापनम्);
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
-    ggml_backend_buffer_t buf = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
+    ggml_backend_बफर_t buf = tensor->view_src ? tensor->view_src->बफर : tensor->बफर;
 
-    GGML_ASSERT(buf->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device) && "unsupported buffer type");
-    const queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
+    GGML_ASSERT(buf->buft == ggml_backend_sycl_बफर_type(sycl_ctx->device) && "unsupported buffer type");
+    ध्रुव queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
     SYCL_CHECK(CHECK_TRY_ERROR(
-        (stream)->memcpy((char *)tensor->data + offset, data, size)));
+        (stream)->स्मृतिं_प्रतिलिख((वर्ण *)tensor->दत्त + विस्थापनम्, दत्त, size)));
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void ggml_backend_sycl_get_tensor_async(ggml_backend_t backend,
-                                               const ggml_tensor *tensor,
-                                               void *data, size_t offset,
-                                               size_t size) try {
+स्थिर शून्य ggml_backend_sycl_get_tensor_async(ggml_backend_t backend,
+                                               ध्रुव ggml_tensor *tensor,
+                                               शून्य *दत्त, size_t विस्थापनम्,
+                                               size_t size) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": tensor", tensor).c_str());
-    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, offset);
+    GGML_SYCL_DEBUG(" size=%zu offset=%zu\n", size, विस्थापनम्);
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
-    ggml_backend_buffer_t buf = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
+    ggml_backend_बफर_t buf = tensor->view_src ? tensor->view_src->बफर : tensor->बफर;
 
-    GGML_ASSERT(buf->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device) && "unsupported buffer type");
-    const queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
-    SYCL_CHECK(CHECK_TRY_ERROR((stream)->memcpy(
-        data, (const char *)tensor->data + offset, size)));
+    GGML_ASSERT(buf->buft == ggml_backend_sycl_बफर_type(sycl_ctx->device) && "unsupported buffer type");
+    ध्रुव queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
+    SYCL_CHECK(CHECK_TRY_ERROR((stream)->स्मृतिं_प्रतिलिख(
+        दत्त, (ध्रुव वर्ण *)tensor->दत्त + विस्थापनम्, size)));
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static bool ggml_backend_sycl_cpy_tensor_async(ggml_backend_t backend,
-                                               const ggml_tensor *src,
-                                               ggml_tensor *dst) try {
+स्थिर तार्किक ggml_backend_sycl_cpy_tensor_async(ggml_backend_t backend,
+                                               ध्रुव ggml_tensor *src,
+                                               ggml_tensor *dst) यत्न {
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
-    bool is_cpy_supported                = dst->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device) &&
-                            ggml_backend_buffer_is_sycl(src->buffer);
+    तार्किक is_cpy_supported                = dst->बफर->buft == ggml_backend_sycl_बफर_type(sycl_ctx->device) &&
+                            ggml_backend_बफर_is_sycl(src->बफर);
     GGML_SYCL_DEBUG("[SYCL] call %s", __func__);
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(": dst", dst).c_str());
     GGML_SYCL_DEBUG("%s", debug_get_tensor_str(" src", src).c_str());
     GGML_SYCL_DEBUG(" is_cpy_supported=%d\n", is_cpy_supported);
-    if (is_cpy_supported) {
+    यदि (is_cpy_supported) {
         /*
         DPCT1009:215: SYCL uses exceptions to report errors and does not use the
         error codes. The original code was commented out and a warning string
         was inserted. You need to rewrite this code.
         */
-        const queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
-        SYCL_CHECK(CHECK_TRY_ERROR((stream)->memcpy(
-            dst->data, src->data, ggml_nbytes(dst))));
-        return true;
+        ध्रुव queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
+        SYCL_CHECK(CHECK_TRY_ERROR((stream)->स्मृतिं_प्रतिलिख(
+            dst->दत्त, src->दत्त, ggml_nbytes(dst))));
+        प्रत्यागम सत्य;
     }
 
-    return false;
+    प्रत्यागम असत्य;
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static void ggml_backend_sycl_synchronize(ggml_backend_t backend) try {
+स्थिर शून्य ggml_backend_sycl_synchronize(ggml_backend_t backend) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
     ggml_backend_sycl_context * sycl_ctx = (ggml_backend_sycl_context *)backend->context;
-    const queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
-    SYCL_CHECK(CHECK_TRY_ERROR((stream)->wait()));
+    ध्रुव queue_ptr stream = sycl_ctx->stream(sycl_ctx->device, 0);
+    SYCL_CHECK(CHECK_TRY_ERROR((stream)->प्रतीक्षस्व()));
 
-    GGML_UNUSED(backend);
+    GGML_अप्रयुक्तम्(backend);
 }
-catch (sycl::exception const &exc) {
+गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static bool ggml_sycl_is_view_or_noop(const ggml_tensor * t) {
-    return ggml_is_empty(t) || t->op == GGML_OP_RESHAPE || t->op == GGML_OP_TRANSPOSE ||
+स्थिर तार्किक ggml_sycl_is_view_or_noop(ध्रुव ggml_tensor * t) {
+    प्रत्यागम ggml_is_रिक्तानि(t) || t->op == GGML_OP_RESHAPE || t->op == GGML_OP_TRANSPOSE ||
            t->op == GGML_OP_VIEW || t->op == GGML_OP_PERMUTE || t->op == GGML_OP_NONE;
 }
 
@@ -6475,600 +6475,600 @@ static bool ggml_sycl_is_view_or_noop(const ggml_tensor * t) {
 // (slot i -> rollback group i, slot 0 newest), so the kernel can write them and skip the cpy.
 // returns the number of following nodes to skip (0 = no fusion)
 // ported from ggml_cuda_try_gdn_cache_fusion - pure graph inspection, backend-agnostic
-static int ggml_sycl_try_gdn_cache_fusion(const ggml_cgraph * cgraph, int node_idx,
+स्थिर पूर्णाङ्क ggml_sycl_try_gdn_cache_fusion(ध्रुव ggml_cgraph * cgraph, पूर्णाङ्क ग्रन्थिः_idx,
                                           ggml_sycl_gated_delta_net_fused_cache & fused_state_cpy) {
-    if (!g_ggml_sycl_enable_fusion) {
-        return 0;
+    यदि (!g_ggml_sycl_enable_fusion) {
+        प्रत्यागम 0;
     }
 
-    const ggml_tensor * gdn = cgraph->nodes[node_idx];
+    ध्रुव ggml_tensor * gdn = cgraph->nodes[ग्रन्थिः_idx];
     // the kernel skips the snapshot tail, so the gdn output must not be a graph output, and the cpy
     // found below is taken to be its only reader, as it is in every graph that builds this op
-    if (gdn->op != GGML_OP_GATED_DELTA_NET || gdn->type != GGML_TYPE_F32 ||
+    यदि (gdn->op != GGML_OP_GATED_DELTA_NET || gdn->type != GGML_TYPE_F32 ||
         (gdn->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-        return 0;
+        प्रत्यागम 0;
     }
 
-    const ggml_tensor * src_v     = gdn->src[2];
-    const int64_t       S_v       = src_v->ne[0];
-    const int64_t       H         = src_v->ne[1];
-    const int64_t       n_tokens  = src_v->ne[2];
-    const int64_t       n_seqs    = src_v->ne[3];
-    const int64_t       D         = S_v * S_v * H;
-    const int64_t       K         = ggml_get_op_params_i32(gdn, 0); // snapshot slot count
-    const int64_t       n_written = std::min<int64_t>(n_tokens, K); // newest n_written slots are written
+    ध्रुव ggml_tensor * src_v     = gdn->src[2];
+    ध्रुव int64_t       S_v       = src_v->ne[0];
+    ध्रुव int64_t       H         = src_v->ne[1];
+    ध्रुव int64_t       n_tokens  = src_v->ne[2];
+    ध्रुव int64_t       n_seqs    = src_v->ne[3];
+    ध्रुव int64_t       D         = S_v * S_v * H;
+    ध्रुव int64_t       K         = ggml_get_op_params_i32(gdn, 0); // snapshot slot count
+    ध्रुव int64_t       n_written = std::min<int64_t>(n_tokens, K); // newest n_written slots are written
 
     // snapshot tail starts right after the attention scores
-    const size_t tail_off = ggml_row_size(GGML_TYPE_F32, S_v * H * n_tokens * n_seqs);
+    ध्रुव size_t पुच्छ_off = ggml_row_आकार(GGML_TYPE_F32, S_v * H * n_tokens * n_seqs);
 
     // the cpy must be the first node the compute loop below runs, so nothing can read the cache first.
     // skip exactly what that loop skips: views, no-ops, and nodes the graph does not compute.
-    const ggml_tensor * cpy  = nullptr;
-    int                 skip = 0;
-    for (int j = node_idx + 1; j < cgraph->n_nodes && cpy == nullptr; ++j) {
-        const ggml_tensor * n = cgraph->nodes[j];
-        if (ggml_sycl_is_view_or_noop(n) || (n->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;
+    ध्रुव ggml_tensor * cpy  = शून्यसूचकः;
+    पूर्णाङ्क                 skip = 0;
+    प्रति (पूर्णाङ्क j = ग्रन्थिः_idx + 1; j < cgraph->n_nodes && cpy == शून्यसूचकः; ++j) {
+        ध्रुव ggml_tensor * n = cgraph->nodes[j];
+        यदि (ggml_sycl_is_view_or_noop(n) || (n->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            अनुवर्त;
         }
-        if (n->op != GGML_OP_CPY || (n->flags & GGML_TENSOR_FLAG_OUTPUT)) {
-            return 0;
+        यदि (n->op != GGML_OP_CPY || (n->flags & GGML_TENSOR_FLAG_OUTPUT)) {
+            प्रत्यागम 0;
         }
         cpy  = n;
-        skip = j - node_idx;
+        skip = j - ग्रन्थिः_idx;
     }
-    if (cpy == nullptr) {
-        return 0;
+    यदि (cpy == शून्यसूचकः) {
+        प्रत्यागम 0;
     }
 
-    const ggml_tensor * src = cpy->src[0]; // view of the gdn snapshot tail
-    const ggml_tensor * dst = cpy->src[1]; // cache view the kernel writes to
+    ध्रुव ggml_tensor * src = cpy->src[0]; // view of the gdn snapshot tail
+    ध्रुव ggml_tensor * dst = cpy->src[1]; // cache view the kernel writes to
 
     // src must be this gdn's snapshot tail (contiguous, at the tail offset)
-    if (src->op != GGML_OP_VIEW || src->view_src != gdn || src->view_offs != tail_off ||
+    यदि (src->op != GGML_OP_VIEW || src->view_src != gdn || src->view_offs != पुच्छ_off ||
         !ggml_is_contiguous(src)) {
-        return 0;
+        प्रत्यागम 0;
     }
 
     // dst is the [D, n_seqs, n_written] cache view, with the per-seq stride D that the kernel assumes.
     // ggml_cpy pins src to the same element count, so src needs no shape check of its own.
-    const std::array<int64_t, GGML_MAX_DIMS> expected_ne = { D, n_seqs, n_written, 1 };
-    if (dst->op != GGML_OP_VIEW || dst->type != GGML_TYPE_F32 || dst->data == nullptr ||
+    ध्रुव std::array<int64_t, GGML_MAX_DIMS> expected_ne = { D, n_seqs, n_written, 1 };
+    यदि (dst->op != GGML_OP_VIEW || dst->type != GGML_TYPE_F32 || dst->दत्त == शून्यसूचकः ||
         !std::equal(expected_ne.begin(), expected_ne.end(), dst->ne) ||
-        dst->nb[0] != ggml_type_size(GGML_TYPE_F32) ||
-        dst->nb[1] != (size_t) ggml_row_size(GGML_TYPE_F32, D)) {
-        return 0;
+        dst->nb[0] != ggml_type_आकार(GGML_TYPE_F32) ||
+        dst->nb[1] != (size_t) ggml_row_आकार(GGML_TYPE_F32, D)) {
+        प्रत्यागम 0;
     }
 
-    fused_state_cpy.data        = (float *) dst->data; // rollback group 0 (newest)
-    fused_state_cpy.slot_stride = K > 1 ? (int64_t) (dst->nb[2] / sizeof(float)) : 0;
-    return skip;
+    fused_state_cpy.दत्त        = (भिन्न *) dst->दत्त; // rollback group 0 (newest)
+    fused_state_cpy.slot_stride = K > 1 ? (int64_t) (dst->nb[2] / परिमाण(भिन्न)) : 0;
+    प्रत्यागम skip;
 }
 
-static void ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
-    ggml_sycl_set_main_device(sycl_ctx->device);
+स्थिर शून्य ggml_backend_sycl_graph_compute_impl(ggml_backend_sycl_context * sycl_ctx, ggml_cgraph * cgraph) {
+    ggml_sycl_समुच्चयः_main_device(sycl_ctx->device);
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        ggml_tensor * node = cgraph->nodes[i];
-        if (ggml_sycl_is_view_or_noop(node)) {
-            continue;
+    प्रति (पूर्णाङ्क i = 0; i < cgraph->n_nodes; i++) {
+        ggml_tensor * ग्रन्थिः = cgraph->nodes[i];
+        यदि (ggml_sycl_is_view_or_noop(ग्रन्थिः)) {
+            अनुवर्त;
         }
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            continue;
+        यदि ((ग्रन्थिः->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            अनुवर्त;
         }
 
-        const int nodes_to_skip = ggml_sycl_fuse(*sycl_ctx, cgraph, i);
-        if (nodes_to_skip != 0) {
-            i += nodes_to_skip;
-            continue;
+        ध्रुव पूर्णाङ्क nodes_गन्तव्यम्_skip = ggml_sycl_fuse(*sycl_ctx, cgraph, i);
+        यदि (nodes_गन्तव्यम्_skip != 0) {
+            i += nodes_गन्तव्यम्_skip;
+            अनुवर्त;
         }
-#ifndef NDEBUG
-        assert(node->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device));
-        for (int j = 0; j < GGML_MAX_SRC; j++) {
-            if (node->src[j] != nullptr) {
-                assert(node->src[j]->buffer->buft == ggml_backend_sycl_buffer_type(sycl_ctx->device));
+#यदि_अपरिभाषितम् NDEBUG
+        प्रतिज्ञा(ग्रन्थिः->बफर->buft == ggml_backend_sycl_बफर_type(sycl_ctx->device));
+        प्रति (पूर्णाङ्क j = 0; j < GGML_MAX_SRC; j++) {
+            यदि (ग्रन्थिः->src[j] != शून्यसूचकः) {
+                प्रतिज्ञा(ग्रन्थिः->src[j]->बफर->buft == ggml_backend_sycl_बफर_type(sycl_ctx->device));
             }
         }
-#endif
+#यदि_अन्तः
         // gated_delta_net -> cpy: scatter recurrent-state snapshots into the cache
-        if (node->op == GGML_OP_GATED_DELTA_NET) {
+        यदि (ग्रन्थिः->op == GGML_OP_GATED_DELTA_NET) {
             ggml_sycl_gated_delta_net_fused_cache fused_state_cpy;
-            const int gdn_nodes_to_skip = ggml_sycl_try_gdn_cache_fusion(cgraph, i, fused_state_cpy);
-            if (gdn_nodes_to_skip > 0) {
-                ggml_sycl_op_gated_delta_net_fused_cache(*sycl_ctx, node, fused_state_cpy);
-                i += gdn_nodes_to_skip;
-                continue;
+            ध्रुव पूर्णाङ्क gdn_nodes_गन्तव्यम्_skip = ggml_sycl_try_gdn_cache_fusion(cgraph, i, fused_state_cpy);
+            यदि (gdn_nodes_गन्तव्यम्_skip > 0) {
+                ggml_sycl_op_gated_delta_net_fused_cache(*sycl_ctx, ग्रन्थिः, fused_state_cpy);
+                i += gdn_nodes_गन्तव्यम्_skip;
+                अनुवर्त;
             }
         }
-        if (node->op == GGML_OP_RMS_NORM &&
-            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_ADD }, {})) {
-            ggml_sycl_op_rms_norm_fused_add(*sycl_ctx, node, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
+        यदि (ग्रन्थिः->op == GGML_OP_RMS_NORM &&
+            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL, GGML_OP_सङ्कलय }, {})) {
+            ggml_sycl_op_rms_norm_fused_सङ्कलय(*sycl_ctx, ग्रन्थिः, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
             i += 2;
-            continue;
+            अनुवर्त;
         }
-        if (node->op == GGML_OP_RMS_NORM &&
+        यदि (ग्रन्थिः->op == GGML_OP_RMS_NORM &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_MUL }, {})) {
-            ggml_sycl_op_rms_norm_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
+            ggml_sycl_op_rms_norm_fused(*sycl_ctx, ग्रन्थिः, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            अनुवर्त;
         }
         // qwen35 GDN l2 norms are emitted as rms_norm + scalar scale (models.h
         // build_gdn_l2_norm), which the rms_norm+mul fusion above cannot match
-        if (node->op == GGML_OP_RMS_NORM &&
+        यदि (ग्रन्थिः->op == GGML_OP_RMS_NORM &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_RMS_NORM, GGML_OP_SCALE }, {})) {
-            ggml_sycl_op_rms_norm_scale_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
+            ggml_sycl_op_rms_norm_scale_fused(*sycl_ctx, ग्रन्थिः, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            अनुवर्त;
         }
-        if (node->op == GGML_OP_ADD &&
-            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_ADD, GGML_OP_ADD }, {})) {
-            ggml_sycl_op_add_add_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
+        यदि (ग्रन्थिः->op == GGML_OP_सङ्कलय &&
+            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_सङ्कलय, GGML_OP_सङ्कलय }, {})) {
+            ggml_sycl_op_सङ्कलय_सङ्कलय_fused(*sycl_ctx, ग्रन्थिः, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            अनुवर्त;
         }
-        if (node->op == GGML_OP_UNARY &&
-            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_UNARY, GGML_OP_MUL }, { ggml_get_unary_op(node) })) {
-            ggml_sycl_op_unary_mul_fused(*sycl_ctx, node, cgraph->nodes[i + 1]);
+        यदि (ग्रन्थिः->op == GGML_OP_UNARY &&
+            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_UNARY, GGML_OP_MUL }, { ggml_get_unary_op(ग्रन्थिः) })) {
+            ggml_sycl_op_unary_mul_fused(*sycl_ctx, ग्रन्थिः, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            अनुवर्त;
         }
         // ADD(bias) + UNARY + MUL(scale) with both broadcast over dim 0, the form the branch
         // above cannot take; ggml_get_unary_op() asserts, so check the op first.
-        if (node->op == GGML_OP_ADD && i + 2 < cgraph->n_nodes &&
+        यदि (ग्रन्थिः->op == GGML_OP_सङ्कलय && i + 2 < cgraph->n_nodes &&
             cgraph->nodes[i + 1]->op == GGML_OP_UNARY &&
-            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_ADD, GGML_OP_UNARY, GGML_OP_MUL },
+            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_सङ्कलय, GGML_OP_UNARY, GGML_OP_MUL },
                                { ggml_get_unary_op(cgraph->nodes[i + 1]) })) {
-            ggml_sycl_op_add_unary_mul_fused(*sycl_ctx, node, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
+            ggml_sycl_op_सङ्कलय_unary_mul_fused(*sycl_ctx, ग्रन्थिः, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
             i += 2;
-            continue;
+            अनुवर्त;
         }
 
         // Batch consecutive independent same-shape F32 L2_NORM siblings (the GDN q/k
         // norms) into one launch; sources are strided views of the fused qkv buffer, so
         // the scan skips the interleaved view nodes instead of breaking on them.
-        if (node->op == GGML_OP_L2_NORM) {
-            const int l2_batch_skip = ggml_sycl_l2_norm_batch_fused(*sycl_ctx, cgraph, i);
-            if (l2_batch_skip > 0) {
+        यदि (ग्रन्थिः->op == GGML_OP_L2_NORM) {
+            ध्रुव पूर्णाङ्क l2_batch_skip = ggml_sycl_l2_norm_batch_fused(*sycl_ctx, cgraph, i);
+            यदि (l2_batch_skip > 0) {
                 i += l2_batch_skip;
-                continue;
+                अनुवर्त;
             }
         }
 
-        if (node->op == GGML_OP_SSM_CONV &&
-            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_SSM_CONV, GGML_OP_ADD, GGML_OP_UNARY }, { GGML_UNARY_OP_SILU })) {
-            ggml_sycl_ssm_conv_fused(*sycl_ctx, node, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
+        यदि (ग्रन्थिः->op == GGML_OP_SSM_CONV &&
+            ggml_sycl_can_fuse(cgraph, i, { GGML_OP_SSM_CONV, GGML_OP_सङ्कलय, GGML_OP_UNARY }, { GGML_UNARY_OP_SILU })) {
+            ggml_sycl_ssm_conv_fused(*sycl_ctx, ग्रन्थिः, cgraph->nodes[i + 1], cgraph->nodes[i + 2]);
             i += 2;
-            continue;
+            अनुवर्त;
         }
 
-        if (node->op == GGML_OP_SSM_CONV &&
+        यदि (ग्रन्थिः->op == GGML_OP_SSM_CONV &&
             ggml_sycl_can_fuse(cgraph, i, { GGML_OP_SSM_CONV, GGML_OP_UNARY }, { GGML_UNARY_OP_SILU })) {
-            ggml_sycl_ssm_conv_fused(*sycl_ctx, node, nullptr, cgraph->nodes[i + 1]);
+            ggml_sycl_ssm_conv_fused(*sycl_ctx, ग्रन्थिः, शून्यसूचकः, cgraph->nodes[i + 1]);
             i++;
-            continue;
+            अनुवर्त;
         }
 
-        if (node->op == GGML_OP_MUL_MAT && ggml_sycl_mul_mat_glu_fused(*sycl_ctx, cgraph, i)) {
+        यदि (ग्रन्थिः->op == GGML_OP_MUL_MAT && ggml_sycl_mul_mat_glu_fused(*sycl_ctx, cgraph, i)) {
             i += 2;
-            continue;
+            अनुवर्त;
         }
 
-        bool ok = ggml_sycl_compute_forward(*sycl_ctx, node);
-        if (!ok) {
-            GGML_LOG_ERROR("%s: error: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
+        तार्किक ok = ggml_sycl_compute_forward(*sycl_ctx, ग्रन्थिः);
+        यदि (!ok) {
+            GGML_LOG_ERROR("%s: error: op not supported %s (%s)\n", __func__, ग्रन्थिः->name, ggml_op_name(ग्रन्थिः->op));
         }
         GGML_ASSERT(ok);
     }
 }
 
-#ifdef GGML_SYCL_GRAPH
-static bool check_graph_compatibility(ggml_cgraph * cgraph) {
-    if (ggml_sycl_info().device_count > 1) {
+#यदि_परिभाषितम् GGML_SYCL_GRAPH
+स्थिर तार्किक check_graph_compatibility(ggml_cgraph * cgraph) {
+    यदि (ggml_sycl_info().device_गणनम् > 1) {
         // A sycl_ex::command_graph object can only be created for a single device
         GGML_LOG_INFO("%s: disabling SYCL graphs due to multiple devices\n", __func__);
-        return false;
+        प्रत्यागम असत्य;
     }
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        const ggml_op node_op = cgraph->nodes[i]->op;
-        switch (node_op) {
-            default:
-                break;
-            case GGML_OP_CONCAT:
+    प्रति (पूर्णाङ्क i = 0; i < cgraph->n_nodes; i++) {
+        ध्रुव ggml_op ग्रन्थिः_op = cgraph->nodes[i]->op;
+        विकल्प (ग्रन्थिः_op) {
+            स्वभाव:
+                भङ्ग;
+            पक्ष GGML_OP_CONCAT:
                 // ggml_sycl_op_concat() does a blocking host wait after memcpy operations,
                 // but wait() can't be called on the events returned by a queue recording
                 // to a graph.
                 [[fallthrough]];
-            case GGML_OP_MUL_MAT_ID:
+            पक्ष GGML_OP_MUL_MAT_ID:
                 // ggml_sycl_mul_mat_id() does a blocking host wait on the sycl queue after
                 // submitting a memcpy operation, but wait() can't be called on a queue that
                 // is recording to a graph.
                 GGML_LOG_INFO("%s: disabling SYCL graphs due to unsupported node type %s\n", __func__,
-                              ggml_op_name(node_op));
-                return false;
-            case GGML_OP_MUL_MAT:
+                              ggml_op_name(ग्रन्थिः_op));
+                प्रत्यागम असत्य;
+            पक्ष GGML_OP_MUL_MAT:
                 // We cannot use graphs with ggml_sycl_mul_mat() when SYCL async memory allocation extensions are not available,
                 // as SYCL malloc / free and host wait calls are not supported when recording to a graph which are all present
                 // in reordering.
-                if (!g_ggml_sycl_use_async_mem_op) {
+                यदि (!g_ggml_sycl_use_async_mem_op) {
                     GGML_LOG_INFO(
                         "%s: disabling SYCL graphs due to unsupported node type when using a compiler without the "
                         "oneAPI async memory allocation extension "
                         "%s\n",
-                        __func__, ggml_op_name(node_op));
-                    return false;
+                        __func__, ggml_op_name(ग्रन्थिः_op));
+                    प्रत्यागम असत्य;
                 }
         }
     }
-    return true;
+    प्रत्यागम सत्य;
 }
-#endif
+#यदि_अन्तः
 
-static ggml_status ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
-    auto * sycl_ctx = static_cast<ggml_backend_sycl_context *>(backend->context);
+स्थिर ggml_स्थितिः ggml_backend_sycl_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+    स्वचालित * sycl_ctx = static_cast<ggml_backend_sycl_context *>(backend->context);
 
-#ifdef GGML_SYCL_GRAPH
-    bool use_sycl_graph = false;
-    if (g_ggml_sycl_enable_graph) {
+#यदि_परिभाषितम् GGML_SYCL_GRAPH
+    तार्किक use_sycl_graph = असत्य;
+    यदि (g_ggml_sycl_enable_graph) {
         use_sycl_graph = check_graph_compatibility(cgraph);
     }
-    if (use_sycl_graph) {
-        const bool graph_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_limited_graph);
-        if (!graph_support) {
+    यदि (use_sycl_graph) {
+        ध्रुव तार्किक graph_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_limited_graph);
+        यदि (!graph_support) {
             GGML_SYCL_DEBUG("[SYCL-GRAPH] can not use graphs on device:%d\n", sycl_ctx->device);
             ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
-            return GGML_STATUS_SUCCESS;
+            प्रत्यागम GGML_स्थितिः_SUCCESS;
         }
 
-        sycl_ex::command_graph model_sycl_graph(*(sycl_ctx->stream()), {sycl_ex::property::graph::assume_buffer_outlives_graph{}});
+        sycl_ex::command_graph model_sycl_graph(*(sycl_ctx->stream()), {sycl_ex::property::graph::assume_बफर_outlives_graph{}});
 
         model_sycl_graph.begin_recording(*(sycl_ctx->stream()));
         ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
-        model_sycl_graph.end_recording();
+        model_sycl_graph.अन्तः_recording();
 
-        const bool graph_update_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_graph);
-        if (!sycl_ctx->exec_graph || !graph_update_support) {
-            auto exec_graph = graph_update_support ? model_sycl_graph.finalize(sycl_ex::property::graph::updatable{}) :
+        ध्रुव तार्किक graph_update_support = dpct::get_device(sycl_ctx->device).has(sycl::aspect::ext_oneapi_graph);
+        यदि (!sycl_ctx->exec_graph || !graph_update_support) {
+            स्वचालित exec_graph = graph_update_support ? model_sycl_graph.finalize(sycl_ex::property::graph::updatable{}) :
                                                      model_sycl_graph.finalize();
             sycl_ctx->exec_graph = std::make_unique<
                 sycl_ex::command_graph<sycl_ex::graph_state::executable>>(exec_graph);
-        } else {
-            try {
+        } अन्यथा {
+            यत्न {
                 sycl_ctx->exec_graph->update(model_sycl_graph);
                 GGML_SYCL_DEBUG("[SYCL-GRAPH] update success\n");
-            } catch (sycl::exception const & e) {
+            } गृहाण (sycl::exception ध्रुव & e) {
                 GGML_SYCL_DEBUG("[SYCL-GRAPH] Exception when updating graph, %s\n", e.what());
-                auto exec_graph = model_sycl_graph.finalize({sycl_ex::property::graph::updatable{}});
+                स्वचालित exec_graph = model_sycl_graph.finalize({sycl_ex::property::graph::updatable{}});
                 sycl_ctx->exec_graph = std::make_unique<
                     sycl_ex::command_graph<sycl_ex::graph_state::executable>>(exec_graph);
             }
         }
 
         sycl_ctx->stream()->ext_oneapi_graph(*(sycl_ctx->exec_graph));
-    } else
-#endif
+    } अन्यथा
+#यदि_अन्तः
     {
         ggml_backend_sycl_graph_compute_impl(sycl_ctx, cgraph);
     }
-    return GGML_STATUS_SUCCESS;
+    प्रत्यागम GGML_स्थितिः_SUCCESS;
 }
 
-static void ggml_backend_sycl_event_record(ggml_backend_t backend, ggml_backend_event_t event)
-try
+स्थिर शून्य ggml_backend_sycl_event_लेखः(ggml_backend_t backend, ggml_backend_event_t event)
+यत्न
 {
     ggml_backend_sycl_context *sycl_ctx =
         (ggml_backend_sycl_context *)backend->context;
 
     sycl::event *sycl_event = static_cast<sycl::event *>(event->context);
 
-    const queue_ptr &stream = sycl_ctx->stream(sycl_ctx->device, 0);
+    ध्रुव queue_ptr &stream = sycl_ctx->stream(sycl_ctx->device, 0);
     // Record the current state of the queue
     SYCL_CHECK(CHECK_TRY_ERROR(*sycl_event = stream->ext_oneapi_submit_barrier()));
 }
-catch (sycl::exception const &exc)
+गृहाण (sycl::exception ध्रुव &exc)
 {
     std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-              << ", line:" << __LINE__ << std::endl;
-    std::exit(1);
+              << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+    std::निर्गच्छ(1);
 }
 
-static void ggml_backend_sycl_event_wait(ggml_backend_t backend, ggml_backend_event_t event) try {
+स्थिर शून्य ggml_backend_sycl_event_wait(ggml_backend_t backend, ggml_backend_event_t event) यत्न {
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
     sycl::event* sycl_event = static_cast<sycl::event*>(event->context);
 
-    if (ggml_backend_is_sycl(backend)) {
-        SYCL_CHECK(CHECK_TRY_ERROR(sycl_event->wait()));
-    } else
+    यदि (ggml_backend_is_sycl(backend)) {
+        SYCL_CHECK(CHECK_TRY_ERROR(sycl_event->प्रतीक्षस्व()));
+    } अन्यथा
         GGML_ABORT("fatal error");
-} catch (sycl::exception const& exc) {
+} गृहाण (sycl::exception ध्रुव& exc) {
     std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-              << ", line:" << __LINE__ << std::endl;
-    std::exit(1);
+              << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+    std::निर्गच्छ(1);
 }
 
-static ggml_backend_i ggml_backend_sycl_interface = {
+स्थिर ggml_backend_i ggml_backend_sycl_interface = {
     /* .get_name                = */ ggml_backend_sycl_get_name,
     /* .free                    = */ ggml_backend_sycl_free,
-    /* .set_tensor_async        = */ ggml_backend_sycl_set_tensor_async,
+    /* .set_tensor_async        = */ ggml_backend_sycl_समुच्चयः_tensor_async,
     /* .get_tensor_async        = */ ggml_backend_sycl_get_tensor_async,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
-    /* .cpy_tensor_async        = */ NULL, // ggml_backend_sycl_cpy_tensor_async,
+    /* .set_tensor_2d_async     = */ रिक्त,
+    /* .get_tensor_2d_async     = */ रिक्त,
+    /* .cpy_tensor_async        = */ रिक्त, // ggml_backend_sycl_cpy_tensor_async,
                                            // // TODO: update for the new
                                            // interface
     /* .synchronize             = */ ggml_backend_sycl_synchronize,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
+    /* .graph_plan_create       = */ रिक्त,
+    /* .graph_plan_free         = */ रिक्त,
+    /* .graph_plan_update       = */ रिक्त,
+    /* .graph_plan_compute      = */ रिक्त,
     /* .graph_compute           = */ ggml_backend_sycl_graph_compute,
-    /* .event_record            = */ ggml_backend_sycl_event_record,
+    /* .event_record            = */ ggml_backend_sycl_event_लेखः,
     /* .event_wait              = */ ggml_backend_sycl_event_wait,
-    /* .graph_optimize          = */ NULL,
+    /* .graph_optimize          = */ रिक्त,
 };
 
-static ggml_guid_t ggml_backend_sycl_guid() {
-    static ggml_guid guid = { 0x58, 0x05, 0x13, 0x8f, 0xcd, 0x3a, 0x61, 0x9d, 0xe7, 0xcd, 0x98, 0xa9, 0x03, 0xfd, 0x7c, 0x53 };
-    return &guid;
+स्थिर ggml_guid_t ggml_backend_sycl_guid() {
+    स्थिर ggml_guid guid = { 0x58, 0x05, 0x13, 0x8f, 0xcd, 0x3a, 0x61, 0x9d, 0xe7, 0xcd, 0x98, 0xa9, 0x03, 0xfd, 0x7c, 0x53 };
+    प्रत्यागम &guid;
 }
 
-bool ggml_backend_is_sycl(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_sycl_guid());
+तार्किक ggml_backend_is_sycl(ggml_backend_t backend) {
+    प्रत्यागम backend != रिक्त && ggml_guid_matches(backend->guid, ggml_backend_sycl_guid());
 }
 
-int ggml_backend_sycl_get_device_count(void) {
-    return ggml_sycl_info().device_count;
+पूर्णाङ्क ggml_backend_sycl_get_device_गणनम्(शून्य) {
+    प्रत्यागम ggml_sycl_info().device_गणनम्;
 }
 
 
 // backend device
 
-static const char * ggml_backend_sycl_device_get_name(ggml_backend_dev_t dev) {
+स्थिर ध्रुव वर्ण * ggml_backend_sycl_device_get_name(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ctx->name.c_str();
+    प्रत्यागम ctx->name.c_str();
 }
 
-static const char * ggml_backend_sycl_device_get_description(ggml_backend_dev_t dev) {
+स्थिर ध्रुव वर्ण * ggml_backend_sycl_device_get_description(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ctx->description.c_str();
+    प्रत्यागम ctx->description.c_str();
 }
 
-static void ggml_backend_sycl_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+स्थिर शून्य ggml_backend_sycl_device_get_स्मृतिः(ggml_backend_dev_t dev, size_t * मुक्त, size_t * योग) {
     GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *) dev->context;
-    if (!sycl_get_mem_info(ctx->device, free, total)) {
+    यदि (!sycl_get_mem_info(ctx->device, मुक्त, योग)) {
         GGML_ABORT("[%s] failed to get device memory size", __func__);
     }
-    GGML_SYCL_DEBUG("[SYCL] call %s total %zu free %zu\n", __func__, *total, *free);
-    ggml_sycl_memtrace_report_device("device memory query (dev)", ctx->device, *free, *total);
+    GGML_SYCL_DEBUG("[SYCL] call %s total %zu free %zu\n", __func__, *योग, *मुक्त);
+    ggml_sycl_memtrace_report_device("device memory query (dev)", ctx->device, *मुक्त, *योग);
 }
 
-static enum ggml_backend_dev_type ggml_backend_sycl_device_get_type(ggml_backend_dev_t dev) {
+स्थिर गणना ggml_backend_dev_type ggml_backend_sycl_device_get_type(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    const sycl_device_info & info = ggml_sycl_info().devices[ctx->device];
-    if (info.l0_device_type_valid && !info.l0_discrete_gpu) {
-        return GGML_BACKEND_DEVICE_TYPE_IGPU;
+    ध्रुव sycl_device_info & info = ggml_sycl_info().devices[ctx->device];
+    यदि (info.l0_device_type_valid && !info.l0_discrete_gpu) {
+        प्रत्यागम GGML_BACKEND_DEVICE_TYPE_IGPU;
     }
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    प्रत्यागम GGML_BACKEND_DEVICE_TYPE_GPU;
 }
 
-static void ggml_backend_sycl_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
+स्थिर शून्य ggml_backend_sycl_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
     props->name        = ggml_backend_sycl_device_get_name(dev);
     props->description = ggml_backend_sycl_device_get_description(dev);
     props->type        = ggml_backend_sycl_device_get_type(dev);
-    ggml_backend_sycl_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_sycl_device_get_स्मृतिः(dev, &props->स्मृतिः_free, &props->स्मृतिः_योग);
 
-    bool host_buffer = getenv("GGML_SYCL_NO_PINNED") == nullptr;
-#ifdef GGML_SYCL_NO_PEER_COPY
-    bool events = false;
-#else
-    bool events = true;
-#endif
+    तार्किक host_बफर = getenv("GGML_SYCL_NO_PINNED") == शून्यसूचकः;
+#यदि_परिभाषितम् GGML_SYCL_NO_PEER_COPY
+    तार्किक events = असत्य;
+#अन्यथा
+    तार्किक events = सत्य;
+#यदि_अन्तः
 
     props->caps = {
-        /* .async                 = */ true,
-        /* .host_buffer           = */ host_buffer,
-        /* .buffer_from_host_ptr  = */ false,
+        /* .async                 = */ सत्य,
+        /* .host_buffer           = */ host_बफर,
+        /* .buffer_from_host_ptr  = */ असत्य,
         /* .events                = */ events,
-        /* .mmap_support          = */ true,
+        /* .mmap_support          = */ सत्य,
     };
 }
 
-static ggml_backend_t ggml_backend_sycl_device_init(ggml_backend_dev_t dev, const char * params) {
-    GGML_UNUSED(params);
+स्थिर ggml_backend_t ggml_backend_sycl_device_init(ggml_backend_dev_t dev, ध्रुव वर्ण * params) {
+    GGML_अप्रयुक्तम्(params);
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ggml_backend_sycl_init(ctx->device);
+    प्रत्यागम ggml_backend_sycl_init(ctx->device);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_sycl_device_get_buffer_type(ggml_backend_dev_t dev) {
+स्थिर ggml_backend_बफर_type_t ggml_backend_sycl_device_get_बफर_type(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return ggml_backend_sycl_buffer_type(ctx->device);
+    प्रत्यागम ggml_backend_sycl_बफर_type(ctx->device);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_sycl_device_get_host_buffer_type(ggml_backend_dev_t dev) {
+स्थिर ggml_backend_बफर_type_t ggml_backend_sycl_device_get_host_बफर_type(ggml_backend_dev_t dev) {
     ggml_backend_sycl_device_context * ctx = (ggml_backend_sycl_device_context *) dev->context;
-    return ggml_backend_sycl_host_buffer_type_for_device(ctx->device);
+    प्रत्यागम ggml_backend_sycl_host_बफर_type_for_device(ctx->device);
 }
 
-static ggml_backend_buffer_t ggml_backend_sycl_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    GGML_UNUSED(dev);
-    GGML_UNUSED(ptr);
-    GGML_UNUSED(size);
-    GGML_UNUSED(max_tensor_size);
-    return nullptr;
+स्थिर ggml_backend_बफर_t ggml_backend_sycl_device_बफर_from_host_ptr(ggml_backend_dev_t dev, शून्य * ptr, size_t size, size_t max_tensor_आकार) {
+    GGML_अप्रयुक्तम्(dev);
+    GGML_अप्रयुक्तम्(ptr);
+    GGML_अप्रयुक्तम्(size);
+    GGML_अप्रयुक्तम्(max_tensor_आकार);
+    प्रत्यागम शून्यसूचकः;
 }
 
-static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+स्थिर तार्किक do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, ध्रुव ggml_tensor * op) {
     ggml_backend_sycl_device_context *sycl_ctx =
         (ggml_backend_sycl_device_context *)dev->context;
-    int device = sycl_ctx->device;
-    switch (op->op) {
-        case GGML_OP_CONV_TRANSPOSE_1D:
+    पूर्णाङ्क device = sycl_ctx->device;
+    विकल्प (op->op) {
+        पक्ष GGML_OP_CONV_TRANSPOSE_1D:
             {
                 ggml_type src0_type = op->src[0]->type;
                 ggml_type src1_type = op->src[1]->type;
-                if (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F32) {
-                    return true;
+                यदि (src0_type == GGML_TYPE_F32 && src1_type == GGML_TYPE_F32) {
+                    प्रत्यागम सत्य;
                 }
-                return false;
+                प्रत्यागम असत्य;
             }
-        case GGML_OP_CONV_2D:
+        पक्ष GGML_OP_CONV_2D:
             // WHCN: contiguous [KW,KH,IC,OC] kernel and [W,H,C,N] input
             // CWHN: channel-fastest input (C fastest) and kernel with OC fastest
-            return (ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1])) ||
-                   (op->src[1]->nb[2] == ggml_type_size(op->src[1]->type) &&
-                    op->src[0]->nb[3] == ggml_type_size(op->src[0]->type));
-        case GGML_OP_CONV_2D_DW:
-        case GGML_OP_CONV_TRANSPOSE_2D:
-            return true;
-        case GGML_OP_UNARY:
-            switch (ggml_get_unary_op(op)) {
-                case GGML_UNARY_OP_SGN:
-                case GGML_UNARY_OP_ABS:
-                case GGML_UNARY_OP_NEG:
-                case GGML_UNARY_OP_STEP:
-                case GGML_UNARY_OP_RELU:
-                case GGML_UNARY_OP_HARDSIGMOID:
-                case GGML_UNARY_OP_TANH:
-                case GGML_UNARY_OP_GELU:
-                case GGML_UNARY_OP_SILU:
-                case GGML_UNARY_OP_SIGMOID:
-                case GGML_UNARY_OP_HARDSWISH:
-                case GGML_UNARY_OP_GELU_QUICK:
-                case GGML_UNARY_OP_GELU_ERF:
-                case GGML_UNARY_OP_EXP:
-                case GGML_UNARY_OP_EXPM1:
-                case GGML_UNARY_OP_SOFTPLUS:
-                case GGML_UNARY_OP_ELU:
-                case GGML_UNARY_OP_XIELU:
-                case GGML_UNARY_OP_CEIL:
-                    return true;
-                case GGML_UNARY_OP_FLOOR:
-                case GGML_UNARY_OP_ROUND:
-                case GGML_UNARY_OP_TRUNC:
-                    return true;
-                default:
-                    return false;
+            प्रत्यागम (ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1])) ||
+                   (op->src[1]->nb[2] == ggml_type_आकार(op->src[1]->type) &&
+                    op->src[0]->nb[3] == ggml_type_आकार(op->src[0]->type));
+        पक्ष GGML_OP_CONV_2D_DW:
+        पक्ष GGML_OP_CONV_TRANSPOSE_2D:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_UNARY:
+            विकल्प (ggml_get_unary_op(op)) {
+                पक्ष GGML_UNARY_OP_SGN:
+                पक्ष GGML_UNARY_OP_ABS:
+                पक्ष GGML_UNARY_OP_NEG:
+                पक्ष GGML_UNARY_OP_चरणः:
+                पक्ष GGML_UNARY_OP_RELU:
+                पक्ष GGML_UNARY_OP_HARDSIGMOID:
+                पक्ष GGML_UNARY_OP_TANH:
+                पक्ष GGML_UNARY_OP_GELU:
+                पक्ष GGML_UNARY_OP_SILU:
+                पक्ष GGML_UNARY_OP_SIGMOID:
+                पक्ष GGML_UNARY_OP_HARDSWISH:
+                पक्ष GGML_UNARY_OP_GELU_शीघ्र:
+                पक्ष GGML_UNARY_OP_GELU_ERF:
+                पक्ष GGML_UNARY_OP_EXP:
+                पक्ष GGML_UNARY_OP_EXPM1:
+                पक्ष GGML_UNARY_OP_SOFTPLUS:
+                पक्ष GGML_UNARY_OP_ELU:
+                पक्ष GGML_UNARY_OP_XIELU:
+                पक्ष GGML_UNARY_OP_CEIL:
+                    प्रत्यागम सत्य;
+                पक्ष GGML_UNARY_OP_FLOOR:
+                पक्ष GGML_UNARY_OP_आवर्तनम्:
+                पक्ष GGML_UNARY_OP_TRUNC:
+                    प्रत्यागम सत्य;
+                स्वभाव:
+                    प्रत्यागम असत्य;
             }
-        case GGML_OP_GLU:
-            switch (ggml_get_glu_op(op)) {
-                case GGML_GLU_OP_REGLU:
-                case GGML_GLU_OP_GEGLU:
-                case GGML_GLU_OP_SWIGLU:
-                case GGML_GLU_OP_SWIGLU_OAI:
-                case GGML_GLU_OP_GEGLU_ERF:
-                case GGML_GLU_OP_GEGLU_QUICK:
-                case GGML_GLU_OP_SWIGLU_CLAMP:
+        पक्ष GGML_OP_GLU:
+            विकल्प (ggml_get_glu_op(op)) {
+                पक्ष GGML_GLU_OP_REGLU:
+                पक्ष GGML_GLU_OP_GEGLU:
+                पक्ष GGML_GLU_OP_SWIGLU:
+                पक्ष GGML_GLU_OP_SWIGLU_OAI:
+                पक्ष GGML_GLU_OP_GEGLU_ERF:
+                पक्ष GGML_GLU_OP_GEGLU_शीघ्र:
+                पक्ष GGML_GLU_OP_SWIGLU_CLAMP:
                     // the fused GLU kernels only have f32/f16 instantiations
-                    return ggml_is_contiguous_1(op->src[0]) &&
+                    प्रत्यागम ggml_is_contiguous_1(op->src[0]) &&
                            (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16);
-                default:
-                    return false;
+                स्वभाव:
+                    प्रत्यागम असत्य;
             }
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
+        पक्ष GGML_OP_MUL_MAT:
+        पक्ष GGML_OP_MUL_MAT_ID:
             {
-                struct ggml_tensor * a = op->src[0];
-                struct ggml_tensor * b = op->src[1];
+                संरचना ggml_tensor * a = op->src[0];
+                संरचना ggml_tensor * b = op->src[1];
 
-                if (a->ne[3] != b->ne[3]) {
-                    return false;
+                यदि (a->ne[3] != b->ne[3]) {
+                    प्रत्यागम असत्य;
                 }
 
                 ggml_type src0_type = op->src[0]->type;
 
                 // TODO: The configuration below needs more work to be supported with oneDNN
-                if (ggml_is_permuted(a) && !ggml_is_contiguous(a) &&
+                यदि (ggml_is_permuted(a) && !ggml_is_contiguous(a) &&
                     a->ne[2] > 1 && a->ne[3] > 1 && src0_type == GGML_TYPE_F16) {
-                  return false;
+                  प्रत्यागम असत्य;
                 }
 
                 // TODO: This specific configuration can fail with oneDNN and needs more debugging
-                if (!ggml_is_permuted(a) && ggml_is_permuted(b) && b->ne[2] > 1 && b->ne[3] > 1 &&
+                यदि (!ggml_is_permuted(a) && ggml_is_permuted(b) && b->ne[2] > 1 && b->ne[3] > 1 &&
                     a->ne[0] > 128 && a->ne[2] == 1 && src0_type == GGML_TYPE_F16) {
-                    return false;
+                    प्रत्यागम असत्य;
                 }
 
-                if (src0_type == GGML_TYPE_TQ2_0 || src0_type == GGML_TYPE_TQ1_0) {
-                    return false;
+                यदि (src0_type == GGML_TYPE_TQ2_0 || src0_type == GGML_TYPE_TQ1_0) {
+                    प्रत्यागम असत्य;
                 }
 
-                return true;
+                प्रत्यागम सत्य;
             }
-        case GGML_OP_OUT_PROD:
-            return op->type == GGML_TYPE_F32 &&
+        पक्ष GGML_OP_बहिर्गमनम्_PROD:
+            प्रत्यागम op->type == GGML_TYPE_F32 &&
                    (op->src[0]->type == GGML_TYPE_F32 ||
                     (op->src[0]->type == GGML_TYPE_Q1_0 && op->src[0]->ne[2] == op->src[1]->ne[2] &&
                      op->src[0]->ne[3] == op->src[1]->ne[3])) &&
                    op->src[1]->type == GGML_TYPE_F32;
-        case GGML_OP_GET_ROWS:
+        पक्ष GGML_OP_GET_पङ्क्तिकाः:
             {
-                switch (op->src[0]->type) {
-                    case GGML_TYPE_I32:
-                    case GGML_TYPE_F16:
-                    case GGML_TYPE_BF16:
-                    case GGML_TYPE_F32:
-                    case GGML_TYPE_Q1_0:
-                    case GGML_TYPE_MXFP4:
-                    case GGML_TYPE_NVFP4:
-                    case GGML_TYPE_IQ2_XXS:
-                    case GGML_TYPE_IQ2_XS:
-                    case GGML_TYPE_IQ2_S:
-                    case GGML_TYPE_IQ3_XXS:
-                    case GGML_TYPE_IQ1_S:
-                    case GGML_TYPE_IQ1_M:
-                    case GGML_TYPE_IQ3_S:
-                    case GGML_TYPE_IQ4_NL:
-                    case GGML_TYPE_IQ4_XS:
-                    case GGML_TYPE_Q2_K:
-                    case GGML_TYPE_Q3_K:
-                    case GGML_TYPE_Q4_0:
-                    case GGML_TYPE_Q4_1:
-                    case GGML_TYPE_Q4_K:
-                    case GGML_TYPE_Q5_0:
-                    case GGML_TYPE_Q5_1:
-                    case GGML_TYPE_Q5_K:
-                    case GGML_TYPE_Q6_K:
-                    case GGML_TYPE_Q8_0:
-                        return true;
-                    default:
-                        return false;
+                विकल्प (op->src[0]->type) {
+                    पक्ष GGML_TYPE_I32:
+                    पक्ष GGML_TYPE_F16:
+                    पक्ष GGML_TYPE_BF16:
+                    पक्ष GGML_TYPE_F32:
+                    पक्ष GGML_TYPE_Q1_0:
+                    पक्ष GGML_TYPE_MXFP4:
+                    पक्ष GGML_TYPE_NVFP4:
+                    पक्ष GGML_TYPE_IQ2_XXS:
+                    पक्ष GGML_TYPE_IQ2_XS:
+                    पक्ष GGML_TYPE_IQ2_S:
+                    पक्ष GGML_TYPE_IQ3_XXS:
+                    पक्ष GGML_TYPE_IQ1_S:
+                    पक्ष GGML_TYPE_IQ1_M:
+                    पक्ष GGML_TYPE_IQ3_S:
+                    पक्ष GGML_TYPE_IQ4_NL:
+                    पक्ष GGML_TYPE_IQ4_XS:
+                    पक्ष GGML_TYPE_Q2_K:
+                    पक्ष GGML_TYPE_Q3_K:
+                    पक्ष GGML_TYPE_Q4_0:
+                    पक्ष GGML_TYPE_Q4_1:
+                    पक्ष GGML_TYPE_Q4_K:
+                    पक्ष GGML_TYPE_Q5_0:
+                    पक्ष GGML_TYPE_Q5_1:
+                    पक्ष GGML_TYPE_Q5_K:
+                    पक्ष GGML_TYPE_Q6_K:
+                    पक्ष GGML_TYPE_Q8_0:
+                        प्रत्यागम सत्य;
+                    स्वभाव:
+                        प्रत्यागम असत्य;
                 }
             }
-        case GGML_OP_GET_ROWS_BACK:
+        पक्ष GGML_OP_GET_पङ्क्तिकाः_पृष्ठभागः:
             // return true;
-             return op->type == GGML_TYPE_F32 &&
+             प्रत्यागम op->type == GGML_TYPE_F32 &&
                  (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16) &&
                  op->src[1]->type == GGML_TYPE_I32 &&
                  op->ne[2] == 1 && op->ne[3] == 1;
-         case GGML_OP_SET:
-               return (op->type == GGML_TYPE_F32) &&
+         पक्ष GGML_OP_समुच्चयः:
+               प्रत्यागम (op->type == GGML_TYPE_F32) &&
                       (op->src[0] && op->src[1]) &&
                       (op->src[0]->type == GGML_TYPE_F32) &&
                       (op->src[1]->type == GGML_TYPE_F32);
 
-        case GGML_OP_SET_ROWS:
+        पक्ष GGML_OP_समुच्चयः_पङ्क्तिकाः:
             {
-                if (op->type == GGML_TYPE_TQ2_0 || op->type == GGML_TYPE_TQ1_0) {
-                    return false;
+                यदि (op->type == GGML_TYPE_TQ2_0 || op->type == GGML_TYPE_TQ1_0) {
+                    प्रत्यागम असत्य;
                 }
-                auto res = (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16 ||
+                स्वचालित res = (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16 ||
                             op->src[0]->type == GGML_TYPE_BF16) &&
                            (op->src[1]->type == GGML_TYPE_I64 || op->src[1]->type == GGML_TYPE_I32);
-                return res;
+                प्रत्यागम res;
             }
-        case GGML_OP_DSV4_HC_PRE:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
+        पक्ष GGML_OP_DSV4_HC_PRE:
+            प्रत्यागम op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
                 op->type == GGML_TYPE_F32;
-        case GGML_OP_DSV4_HC_COMB:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
+        पक्ष GGML_OP_DSV4_HC_COMB:
+            प्रत्यागम op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
                 op->src[2]->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
-        case GGML_OP_DSV4_HC_POST:
-            return op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
+        पक्ष GGML_OP_DSV4_HC_POST:
+            प्रत्यागम op->src[0]->type == GGML_TYPE_F32 && op->src[1]->type == GGML_TYPE_F32 &&
                 op->src[2]->type == GGML_TYPE_F32 &&
-                (op->src[3] == nullptr || op->src[3]->type == GGML_TYPE_F32) &&
+                (op->src[3] == शून्यसूचकः || op->src[3]->type == GGML_TYPE_F32) &&
                 op->type == GGML_TYPE_F32;
-        case GGML_OP_LIGHTNING_INDEXER:
-            return op->src[0]->type == GGML_TYPE_F32 &&
+        पक्ष GGML_OP_LIGHTNING_INDEXER:
+            प्रत्यागम op->src[0]->type == GGML_TYPE_F32 &&
                 (op->src[1]->type == GGML_TYPE_F16 || op->src[1]->type == GGML_TYPE_F32 ||
                  op->src[1]->type == GGML_TYPE_BF16 || op->src[1]->type == GGML_TYPE_Q8_0 ||
                  op->src[1]->type == GGML_TYPE_Q5_1 || op->src[1]->type == GGML_TYPE_Q5_0 ||
@@ -7077,14 +7077,14 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                 op->src[2]->type == GGML_TYPE_F32 &&
                 op->src[3]->type == GGML_TYPE_F16 &&
                 op->type == GGML_TYPE_F32 &&
-                op->src[0]->ne[0] == WARP_SIZE * 8;
-        case GGML_OP_CPY:
+                op->src[0]->ne[0] == WARP_आकार * 8;
+        पक्ष GGML_OP_CPY:
             {
                 ggml_type src0_type = op->src[0]->type;
                 ggml_type src1_type = op->src[1]->type;
 
-                if (src0_type == GGML_TYPE_F16) {
-                    if (src1_type == GGML_TYPE_Q2_K ||
+                यदि (src0_type == GGML_TYPE_F16) {
+                    यदि (src1_type == GGML_TYPE_Q2_K ||
                         src1_type == GGML_TYPE_Q3_K ||
                         src1_type == GGML_TYPE_Q4_K ||
                         src1_type == GGML_TYPE_Q5_K ||
@@ -7097,12 +7097,12 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src1_type == GGML_TYPE_IQ1_M ||
                         src1_type == GGML_TYPE_IQ3_S ||
                         src1_type == GGML_TYPE_IQ4_XS) {
-                        return false;
+                        प्रत्यागम असत्य;
                     }
                 }
 
-                if (src0_type == GGML_TYPE_BF16) {
-                    if (src1_type == GGML_TYPE_Q4_0 || //big error in ut
+                यदि (src0_type == GGML_TYPE_BF16) {
+                    यदि (src1_type == GGML_TYPE_Q4_0 || //big error in ut
                         src1_type == GGML_TYPE_Q4_1 || //big error in ut
                         src1_type == GGML_TYPE_Q8_0 || //big error in ut
                         src1_type == GGML_TYPE_Q2_K ||
@@ -7118,12 +7118,12 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src1_type == GGML_TYPE_IQ1_M ||
                         src1_type == GGML_TYPE_IQ3_S ||
                         src1_type == GGML_TYPE_IQ4_XS) {
-                        return false;
+                        प्रत्यागम असत्य;
                     }
                 }
 
-                if (src0_type == GGML_TYPE_F32) {
-                    if (src1_type == GGML_TYPE_Q2_K ||
+                यदि (src0_type == GGML_TYPE_F32) {
+                    यदि (src1_type == GGML_TYPE_Q2_K ||
                         src1_type == GGML_TYPE_Q3_K ||
                         src1_type == GGML_TYPE_Q4_K ||
                         src1_type == GGML_TYPE_Q5_K ||
@@ -7136,12 +7136,12 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src1_type == GGML_TYPE_IQ1_M ||
                         src1_type == GGML_TYPE_IQ3_S ||
                         src1_type == GGML_TYPE_IQ4_XS) {
-                        return false;
+                        प्रत्यागम असत्य;
                     }
                 }
 
-                if (src1_type == GGML_TYPE_F32) {
-                    if (src0_type == GGML_TYPE_Q1_0 ||
+                यदि (src1_type == GGML_TYPE_F32) {
+                    यदि (src0_type == GGML_TYPE_Q1_0 ||
                         src0_type == GGML_TYPE_NVFP4 ||
                         src0_type == GGML_TYPE_Q2_K ||
                         src0_type == GGML_TYPE_Q3_K ||
@@ -7158,12 +7158,12 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src0_type == GGML_TYPE_IQ4_NL ||
                         src0_type == GGML_TYPE_IQ4_XS
                     ) {
-                        return false;
+                        प्रत्यागम असत्य;
                     }
                 }
 
-                if (src0_type == src1_type) {
-                    if (src1_type == GGML_TYPE_IQ2_XXS ||
+                यदि (src0_type == src1_type) {
+                    यदि (src1_type == GGML_TYPE_IQ2_XXS ||
                         src1_type == GGML_TYPE_IQ2_XS ||
                         src1_type == GGML_TYPE_IQ2_S ||
                         src1_type == GGML_TYPE_IQ3_XXS ||
@@ -7172,261 +7172,261 @@ static bool do_ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, cons
                         src1_type == GGML_TYPE_IQ1_M ||
                         src1_type == GGML_TYPE_TQ2_0 ||
                         src1_type == GGML_TYPE_TQ1_0) {
-                        return false;
+                        प्रत्यागम असत्य;
                     }
                 }
 
-                if (src0_type == GGML_TYPE_TQ2_0 || src1_type == GGML_TYPE_TQ2_0 ||
+                यदि (src0_type == GGML_TYPE_TQ2_0 || src1_type == GGML_TYPE_TQ2_0 ||
                     src0_type == GGML_TYPE_TQ1_0 || src1_type == GGML_TYPE_TQ1_0) {
-                    return false;
+                    प्रत्यागम असत्य;
                 }
 
-                return true;
+                प्रत्यागम सत्य;
             }
-        case GGML_OP_REPEAT_BACK:
+        पक्ष GGML_OP_REPEAT_पृष्ठभागः:
             {
                 ggml_type src0_type = op->src[0]->type;
-                return src0_type == GGML_TYPE_F32;
+                प्रत्यागम src0_type == GGML_TYPE_F32;
             }
-        case GGML_OP_CONCAT:
-        case GGML_OP_DUP:
-        case GGML_OP_ARGMAX:
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_ADD:
-        case GGML_OP_ADD1:
-        case GGML_OP_ADD_ID:
-        case GGML_OP_SUB:
-        case GGML_OP_COUNT_EQUAL:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
-        case GGML_OP_REPEAT:
-            return true;
-        case GGML_OP_PAD_REFLECT_1D:
-            return ggml_is_contiguous(op->src[0]) && op-> type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_SIN:
-        case GGML_OP_COS:
-        case GGML_OP_CLAMP:
-        case GGML_OP_LOG:
-        case GGML_OP_NORM:
-        case GGML_OP_L2_NORM:
-        case GGML_OP_GROUP_NORM:
-        case GGML_OP_RMS_NORM:
-            return true;
-        case GGML_OP_RMS_NORM_BACK:
-            return ggml_is_contiguous(op->src[0]);
-        case GGML_OP_SCALE:
+        पक्ष GGML_OP_CONCAT:
+        पक्ष GGML_OP_DUP:
+        पक्ष GGML_OP_ARGMAX:
+        पक्ष GGML_OP_NONE:
+        पक्ष GGML_OP_RESHAPE:
+        पक्ष GGML_OP_VIEW:
+        पक्ष GGML_OP_PERMUTE:
+        पक्ष GGML_OP_TRANSPOSE:
+        पक्ष GGML_OP_सङ्कलय:
+        पक्ष GGML_OP_ADD1:
+        पक्ष GGML_OP_सङ्कलय_ID:
+        पक्ष GGML_OP_SUB:
+        पक्ष GGML_OP_गणनम्_EQUAL:
+        पक्ष GGML_OP_MUL:
+        पक्ष GGML_OP_DIV:
+        पक्ष GGML_OP_REPEAT:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_PAD_REFLECT_1D:
+            प्रत्यागम ggml_is_contiguous(op->src[0]) && op-> type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
+        पक्ष GGML_OP_SQR:
+        पक्ष GGML_OP_SQRT:
+        पक्ष GGML_OP_SIN:
+        पक्ष GGML_OP_COS:
+        पक्ष GGML_OP_CLAMP:
+        पक्ष GGML_OP_LOG:
+        पक्ष GGML_OP_NORM:
+        पक्ष GGML_OP_L2_NORM:
+        पक्ष GGML_OP_गणः_NORM:
+        पक्ष GGML_OP_RMS_NORM:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_RMS_NORM_पृष्ठभागः:
+            प्रत्यागम ggml_is_contiguous(op->src[0]);
+        पक्ष GGML_OP_SCALE:
             // the scale kernel is f32 only
-            return op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_CONT:
-            return true;
-        case GGML_OP_TRI:
+            प्रत्यागम op->type == GGML_TYPE_F32 && op->src[0]->type == GGML_TYPE_F32;
+        पक्ष GGML_OP_CONT:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_TRI:
             {
-                const ggml_tensor * src0 = op->src[0];
-                return src0 &&
+                ध्रुव ggml_tensor * src0 = op->src[0];
+                प्रत्यागम src0 &&
                        op->type == GGML_TYPE_F32 &&
                        ggml_is_contiguous(src0);
             }
-        case GGML_OP_DIAG_MASK_INF:
-            return true;
-        case GGML_OP_SOFT_MAX:
-            return true;
-        case GGML_OP_SOFT_MAX_BACK: {
-            float max_bias = 0.0f;
-            memcpy(&max_bias, (const float *) op->op_params + 1, sizeof(float));
-            return max_bias == 0.0f;
+        पक्ष GGML_OP_DIAG_आवरणम्_INF:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_SOFT_MAX:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_SOFT_MAX_पृष्ठभागः: {
+            भिन्न max_bias = 0.0f;
+            स्मृतिं_प्रतिलिख(&max_bias, (ध्रुव भिन्न *) op->op_params + 1, परिमाण(भिन्न));
+            प्रत्यागम max_bias == 0.0f;
         }
-        case GGML_OP_ROPE:
-        case GGML_OP_ROPE_BACK:
-        case GGML_OP_IM2COL:
-        case GGML_OP_IM2COL_3D:
-        case GGML_OP_UPSCALE:
-            return true;
-        case GGML_OP_COL2IM_1D:
-            return ggml_is_contiguous(op->src[0]) &&
+        पक्ष GGML_OP_ROPE:
+        पक्ष GGML_OP_ROPE_पृष्ठभागः:
+        पक्ष GGML_OP_IM2COL:
+        पक्ष GGML_OP_IM2COL_3D:
+        पक्ष GGML_OP_UPSCALE:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_COL2IM_1D:
+            प्रत्यागम ggml_is_contiguous(op->src[0]) &&
                    (op->type == GGML_TYPE_F32 || op->type == GGML_TYPE_F16
-#ifdef GGML_SYCL_HAS_BF16
+#यदि_परिभाषितम् GGML_SYCL_HAS_BF16
                     || op->type == GGML_TYPE_BF16
-#endif
+#यदि_अन्तः
                    ) &&
                    op->src[0]->type == op->type;
-        case GGML_OP_CONV_3D: {
-            const int32_t * opts = (const int32_t *) op->op_params;
+        पक्ष GGML_OP_CONV_3D: {
+            ध्रुव int32_t * opts = (ध्रुव int32_t *) op->op_params;
             // zero kernel volume, channels or output makes the im2col GEMM degenerate (k == 0 or m == 0)
             // and MKL BLAS rejects it; let those fall back to the CPU backend
-            const int64_t knl_n_total = op->src[0]->ne[0] * op->src[0]->ne[1] * op->src[0]->ne[2] * opts[9];
-            const int64_t patch_total = op->ne[0] * op->ne[1] * op->ne[2] * opts[10];
-            return op->type == GGML_TYPE_F32 &&
+            ध्रुव int64_t knl_n_योग = op->src[0]->ne[0] * op->src[0]->ne[1] * op->src[0]->ne[2] * opts[9];
+            ध्रुव int64_t patch_योग = op->ne[0] * op->ne[1] * op->ne[2] * opts[10];
+            प्रत्यागम op->type == GGML_TYPE_F32 &&
                    (op->src[0]->type == GGML_TYPE_F32 || op->src[0]->type == GGML_TYPE_F16) &&
                    op->src[1]->type == GGML_TYPE_F32 &&
                    ggml_is_contiguous(op->src[0]) &&
                    ggml_is_contiguous(op->src[1]) &&
-                   knl_n_total > 0 && patch_total > 0;
+                   knl_n_योग > 0 && patch_योग > 0;
         }
-        case GGML_OP_SUM:
-        case GGML_OP_SUM_ROWS:
-        case GGML_OP_MEAN:
-            return ggml_is_contiguous(op->src[0]);
-        case GGML_OP_ARGSORT:
-            return true;
-        case GGML_OP_TOP_K: {
-            const ggml_tensor * src0 = op->src[0];
-            const int k = op->ne[0];
-            return src0 &&
+        पक्ष GGML_OP_योग:
+        पक्ष GGML_OP_योग_पङ्क्तिकाः:
+        पक्ष GGML_OP_माध्यम्:
+            प्रत्यागम ggml_is_contiguous(op->src[0]);
+        पक्ष GGML_OP_ARGSORT:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_शिखरम्_K: {
+            ध्रुव ggml_tensor * src0 = op->src[0];
+            ध्रुव पूर्णाङ्क k = op->ne[0];
+            प्रत्यागम src0 &&
                 op->type == GGML_TYPE_I32 &&
                 src0->type == GGML_TYPE_F32 &&
                 ggml_is_contiguous(src0) &&
                 k > 0 && k <= src0->ne[0];
         }
-        case GGML_OP_POOL_2D:
-        case GGML_OP_POOL_1D:
-        case GGML_OP_ACC:
-            return true;
-        case GGML_OP_PAD:
-            if (ggml_get_op_params_i32(op, 8) != 0) {
-                return false;
+        पक्ष GGML_OP_POOL_2D:
+        पक्ष GGML_OP_POOL_1D:
+        पक्ष GGML_OP_ACC:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_PAD:
+            यदि (ggml_get_op_params_i32(op, 8) != 0) {
+                प्रत्यागम असत्य;
             }
-            return true;
-        case GGML_OP_LEAKY_RELU:
-        case GGML_OP_TIMESTEP_EMBEDDING:
-        case GGML_OP_RWKV_WKV6:
-        case GGML_OP_RWKV_WKV7:
-        case GGML_OP_GATED_LINEAR_ATTN:
-        case GGML_OP_GATED_DELTA_NET:
-        case GGML_OP_OPT_STEP_ADAMW:
-        case GGML_OP_OPT_STEP_SGD:
-            return true;
-        case GGML_OP_SSM_CONV:
-            return op->type == GGML_TYPE_F32 &&
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_LEAKY_RELU:
+        पक्ष GGML_OP_TIMESTEP_EMBEDDING:
+        पक्ष GGML_OP_RWKV_WKV6:
+        पक्ष GGML_OP_RWKV_WKV7:
+        पक्ष GGML_OP_GATED_रैखिकम्_ATTN:
+        पक्ष GGML_OP_GATED_DELTA_NET:
+        पक्ष GGML_OP_OPT_चरणः_ADAMW:
+        पक्ष GGML_OP_OPT_चरणः_SGD:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_SSM_CONV:
+            प्रत्यागम op->type == GGML_TYPE_F32 &&
                    op->src[0]->type == GGML_TYPE_F32 &&
                    op->src[1]->type == GGML_TYPE_F32;
-        case GGML_OP_ROLL:
-            return op->type == GGML_TYPE_F32;
-        case GGML_OP_ARANGE:
-            return op->type == GGML_TYPE_F32;
-        case GGML_OP_SSM_SCAN:
-            if (op->src[3]->ne[0] == 1) {
+        पक्ष GGML_OP_ROLL:
+            प्रत्यागम op->type == GGML_TYPE_F32;
+        पक्ष GGML_OP_ARANGE:
+            प्रत्यागम op->type == GGML_TYPE_F32;
+        पक्ष GGML_OP_SSM_अवलोकनम्:
+            यदि (op->src[3]->ne[0] == 1) {
                 // Mamba2
                 // (kernel only supports (d_state == 128 || d_state == 256) && d_head % WARP_SIZE == 0)
-                return (op->src[0]->ne[0] == 128 || op->src[0]->ne[0] == 256) && op->src[0]->ne[1] % WARP_SIZE == 0;
-            } else {
+                प्रत्यागम (op->src[0]->ne[0] == 128 || op->src[0]->ne[0] == 256) && op->src[0]->ne[1] % WARP_आकार == 0;
+            } अन्यथा {
                 // TODO Mamba-1 not yet ported to SYCL
-                return false;
+                प्रत्यागम असत्य;
             }
-        case GGML_OP_FILL:
-        case GGML_OP_CUMSUM:
-        case GGML_OP_DIAG:
-        case GGML_OP_CROSS_ENTROPY_LOSS:
-        case GGML_OP_CROSS_ENTROPY_LOSS_BACK:
-            return true;
-        case GGML_OP_SOLVE_TRI:
-            return op->src[0]->ne[0] <= SYCL_SOLVE_TRI_MAX_N && op->src[1]->ne[0] <= SYCL_SOLVE_TRI_MAX_K;
-        case GGML_OP_FLASH_ATTN_EXT:
-            return ggml_sycl_flash_attn_ext_supported(device, op);
-        default:
-            return false;
+        पक्ष GGML_OP_FILL:
+        पक्ष GGML_OP_CUMSUM:
+        पक्ष GGML_OP_DIAG:
+        पक्ष GGML_OP_CROSS_ENTROPY_LOSS:
+        पक्ष GGML_OP_CROSS_ENTROPY_LOSS_पृष्ठभागः:
+            प्रत्यागम सत्य;
+        पक्ष GGML_OP_SOLVE_TRI:
+            प्रत्यागम op->src[0]->ne[0] <= SYCL_SOLVE_TRI_MAX_N && op->src[1]->ne[0] <= SYCL_SOLVE_TRI_MAX_K;
+        पक्ष GGML_OP_FLASH_ATTN_EXT:
+            प्रत्यागम ggml_sycl_flash_attn_ext_supported(device, op);
+        स्वभाव:
+            प्रत्यागम असत्य;
     }
 
-    GGML_UNUSED(dev);
+    GGML_अप्रयुक्तम्(dev);
 }
 
-static bool ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
-    bool res = do_ggml_backend_sycl_device_supports_op(dev, op);
+स्थिर तार्किक ggml_backend_sycl_device_supports_op(ggml_backend_dev_t dev, ध्रुव ggml_tensor * op) {
+    तार्किक res = do_ggml_backend_sycl_device_supports_op(dev, op);
     GGML_SYCL_DEBUG("[SYCL] call %s op->op=%s op->type=%s -> %s\n", __func__, ggml_op_name(op->op),
                     ggml_type_name(op->type), res ? "true" : "false");
-    return res;
+    प्रत्यागम res;
 }
 
-static bool ggml_backend_sycl_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    if (buft->iface.get_name != ggml_backend_sycl_buffer_type_get_name) {
-        return false;
+स्थिर तार्किक ggml_backend_sycl_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_बफर_type_t buft) {
+    यदि (buft->iface.get_name != ggml_backend_sycl_बफर_type_get_name) {
+        प्रत्यागम असत्य;
     }
-    ggml_backend_sycl_buffer_type_context * buft_ctx = (ggml_backend_sycl_buffer_type_context *)buft->context;
+    ggml_backend_sycl_बफर_type_context * buft_ctx = (ggml_backend_sycl_बफर_type_context *)buft->context;
     ggml_backend_sycl_device_context * sycl_ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return buft_ctx->device == sycl_ctx->device;
+    प्रत्यागम buft_ctx->device == sycl_ctx->device;
 }
 
-static int64_t get_op_batch_size(const ggml_tensor * op) {
-    switch (op->op) {
-        case GGML_OP_GET_ROWS:
-            return 0;
-        case GGML_OP_MUL_MAT:
-            return op->ne[1];
-        case GGML_OP_MUL_MAT_ID:
-        case GGML_OP_ROPE:
-            return op->ne[2];
-        default:
-            return ggml_nrows(op);
+स्थिर int64_t get_op_batch_आकार(ध्रुव ggml_tensor * op) {
+    विकल्प (op->op) {
+        पक्ष GGML_OP_GET_पङ्क्तिकाः:
+            प्रत्यागम 0;
+        पक्ष GGML_OP_MUL_MAT:
+            प्रत्यागम op->ne[1];
+        पक्ष GGML_OP_MUL_MAT_ID:
+        पक्ष GGML_OP_ROPE:
+            प्रत्यागम op->ne[2];
+        स्वभाव:
+            प्रत्यागम ggml_nrows(op);
     }
 }
 
-static bool ggml_backend_sycl_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+स्थिर तार्किक ggml_backend_sycl_device_offload_op(ggml_backend_dev_t dev, ध्रुव ggml_tensor * op) {
     ggml_backend_sycl_device_context * sycl_ctx = (ggml_backend_sycl_device_context *)dev->context;
-    return get_op_batch_size(op) >= sycl_ctx->op_offload_min_batch_size;
+    प्रत्यागम get_op_batch_आकार(op) >= sycl_ctx->op_offload_min_batch_आकार;
 }
 
-static ggml_backend_event_t
+स्थिर ggml_backend_event_t
 ggml_backend_sycl_device_event_new(ggml_backend_dev_t dev) {
 
-#ifdef GGML_SYCL_NO_PEER_COPY
-    return nullptr;
-#else
-  sycl::event *event_ptr = new sycl::event();
+#यदि_परिभाषितम् GGML_SYCL_NO_PEER_COPY
+    प्रत्यागम शून्यसूचकः;
+#अन्यथा
+  sycl::event *event_ptr = नूतन sycl::event();
 
-  return new ggml_backend_event{
+  प्रत्यागम नूतन ggml_backend_event{
       /* .device = */ dev,
       /* .context = */ event_ptr,
   };
-#endif
+#यदि_अन्तः
 }
 
-static void ggml_backend_sycl_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) try {
-  GGML_UNUSED(dev);
-  if (event == nullptr) {
-    return;
+स्थिर शून्य ggml_backend_sycl_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) यत्न {
+  GGML_अप्रयुक्तम्(dev);
+  यदि (event == शून्यसूचकः) {
+    प्रत्यागम;
   }
 
-  if (event->context != nullptr) {
+  यदि (event->context != शून्यसूचकः) {
     sycl::event *sycl_event = static_cast<sycl::event *>(event->context);
-    delete sycl_event;
-    event->context = nullptr;
+    विलोपय sycl_event;
+    event->context = शून्यसूचकः;
   }
 
-  delete event;
-} catch (sycl::exception const &exc) {
+  विलोपय event;
+} गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
 
-static void ggml_backend_sycl_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) try {
-  GGML_UNUSED(dev);
+स्थिर शून्य ggml_backend_sycl_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) यत्न {
+  GGML_अप्रयुक्तम्(dev);
   GGML_SYCL_DEBUG("[SYCL] call %s\n", __func__);
 
   sycl::event *sycl_event = static_cast<sycl::event *>(event->context);
-  SYCL_CHECK(CHECK_TRY_ERROR(sycl_event->wait()));
-} catch (sycl::exception const &exc) {
+  SYCL_CHECK(CHECK_TRY_ERROR(sycl_event->प्रतीक्षस्व()));
+} गृहाण (sycl::exception ध्रुव &exc) {
   std::cerr << exc.what() << "Exception caught at file:" << __FILE__
-            << ", line:" << __LINE__ << std::endl;
-  std::exit(1);
+            << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
+  std::निर्गच्छ(1);
 }
 
-static const ggml_backend_device_i ggml_backend_sycl_device_interface = {
+स्थिर ध्रुव ggml_backend_device_i ggml_backend_sycl_device_interface = {
     /* .get_name                = */ ggml_backend_sycl_device_get_name,
     /* .get_description         = */ ggml_backend_sycl_device_get_description,
-    /* .get_memory              = */ ggml_backend_sycl_device_get_memory,
+    /* .get_memory              = */ ggml_backend_sycl_device_get_स्मृतिः,
     /* .get_type                = */ ggml_backend_sycl_device_get_type,
     /* .get_props               = */ ggml_backend_sycl_device_get_props,
     /* .init_backend            = */ ggml_backend_sycl_device_init,
-    /* .get_buffer_type         = */ ggml_backend_sycl_device_get_buffer_type,
-    /* .get_host_buffer_type    = */ ggml_backend_sycl_device_get_host_buffer_type,
-    /* .buffer_from_host_ptr    = */ ggml_backend_sycl_device_buffer_from_host_ptr,
+    /* .get_buffer_type         = */ ggml_backend_sycl_device_get_बफर_type,
+    /* .get_host_buffer_type    = */ ggml_backend_sycl_device_get_host_बफर_type,
+    /* .buffer_from_host_ptr    = */ ggml_backend_sycl_device_बफर_from_host_ptr,
     /* .supports_op             = */ ggml_backend_sycl_device_supports_op,
     /* .supports_buft           = */ ggml_backend_sycl_device_supports_buft,
     /* .offload_op              = */ ggml_backend_sycl_device_offload_op,
@@ -7437,24 +7437,24 @@ static const ggml_backend_device_i ggml_backend_sycl_device_interface = {
 
 // backend reg
 
-struct ggml_backend_sycl_reg_context {
+संरचना ggml_backend_sycl_reg_context {
     std::vector<ggml_backend_dev_t> devices;
 };
 
-static const char * ggml_backend_sycl_reg_get_name(ggml_backend_reg_t reg) {
-    GGML_UNUSED(reg);
-    return GGML_SYCL_NAME;
+स्थिर ध्रुव वर्ण * ggml_backend_sycl_reg_get_name(ggml_backend_reg_t reg) {
+    GGML_अप्रयुक्तम्(reg);
+    प्रत्यागम GGML_SYCL_NAME;
 }
 
-static size_t ggml_backend_sycl_reg_get_device_count(ggml_backend_reg_t reg) {
+स्थिर size_t ggml_backend_sycl_reg_get_device_गणनम्(ggml_backend_reg_t reg) {
     ggml_backend_sycl_reg_context * ctx = (ggml_backend_sycl_reg_context *)reg->context;
-    return ctx->devices.size();
+    प्रत्यागम ctx->devices.size();
 }
 
-static ggml_backend_dev_t ggml_backend_sycl_reg_get_device(ggml_backend_reg_t reg, size_t index) {
+स्थिर ggml_backend_dev_t ggml_backend_sycl_reg_get_device(ggml_backend_reg_t reg, size_t सूचकांक) {
     ggml_backend_sycl_reg_context * ctx = (ggml_backend_sycl_reg_context *)reg->context;
-    GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    GGML_ASSERT(सूचकांक < ctx->devices.size());
+    प्रत्यागम ctx->devices[सूचकांक];
 }
 
 // ==========================================================================
@@ -7492,7 +7492,7 @@ static ggml_backend_dev_t ggml_backend_sycl_reg_get_device(ggml_backend_reg_t re
 // butterfly all-reduce fallback.
 // ==========================================================================
 
-struct ggml_backend_sycl_comm_context {
+संरचना ggml_backend_sycl_comm_context {
     std::vector<ggml_backend_t> backends;
     // ONE persistent per-device byte buffer, 4*nelem bytes.  Both the
     // FP32 small-tensor path and the BF16 large-tensor path share it
@@ -7502,132 +7502,132 @@ struct ggml_backend_sycl_comm_context {
     int64_t buf_nelem = 0;
 
     // pinned host staging per device context, reused across calls (queues are in-order)
-    uint8_t * host_out[2] = { nullptr, nullptr };
-    uint8_t * host_in[2]  = { nullptr, nullptr };
-    size_t    host_bytes  = 0;
+    uint8_t * host_बहिर्गमनम्[2] = { शून्यसूचकः, शून्यसूचकः };
+    uint8_t * host_अन्तर्[2]  = { शून्यसूचकः, शून्यसूचकः };
+    size_t    host_अष्टकानि  = 0;
 
-    void free_host() {
-        for (int i = 0; i < 2; ++i) {
-            const sycl::context sctx = ((ggml_backend_sycl_context *) backends[i]->context)->stream()->get_context();
-            if (host_out[i]) { sycl::free(host_out[i], sctx); host_out[i] = nullptr; }
-            if (host_in[i])  { sycl::free(host_in[i],  sctx); host_in[i]  = nullptr; }
+    शून्य free_host() {
+        प्रति (पूर्णाङ्क i = 0; i < 2; ++i) {
+            ध्रुव sycl::context sctx = ((ggml_backend_sycl_context *) backends[i]->context)->stream()->get_context();
+            यदि (host_बहिर्गमनम्[i]) { sycl::मुक्त(host_बहिर्गमनम्[i], sctx); host_बहिर्गमनम्[i] = शून्यसूचकः; }
+            यदि (host_अन्तर्[i])  { sycl::मुक्त(host_अन्तर्[i],  sctx); host_अन्तर्[i]  = शून्यसूचकः; }
         }
-        host_bytes = 0;
+        host_अष्टकानि = 0;
     }
 };
 
 // dst0 <- src1 and dst1 <- src0 through pinned host memory, with a single host wait
-static void ggml_sycl_comm_exchange(ggml_backend_sycl_comm_context * comm, queue_ptr q0, queue_ptr q1,
-                                    void * dst0, const void * src1, void * dst1, const void * src0,
+स्थिर शून्य ggml_sycl_comm_exchange(ggml_backend_sycl_comm_context * comm, queue_ptr q0, queue_ptr q1,
+                                    शून्य * dst0, ध्रुव शून्य * src1, शून्य * dst1, ध्रुव शून्य * src0,
                                     size_t nbytes) {
-    if (comm->host_bytes < nbytes) {
-        q0->wait();
-        q1->wait();
+    यदि (comm->host_अष्टकानि < nbytes) {
+        q0->प्रतीक्षस्व();
+        q1->प्रतीक्षस्व();
         comm->free_host();
-        comm->host_out[0] = sycl::malloc_host<uint8_t>(nbytes, q0->get_context());
-        comm->host_in[0]  = sycl::malloc_host<uint8_t>(nbytes, q0->get_context());
-        comm->host_out[1] = sycl::malloc_host<uint8_t>(nbytes, q1->get_context());
-        comm->host_in[1]  = sycl::malloc_host<uint8_t>(nbytes, q1->get_context());
-        GGML_ASSERT(comm->host_out[0] && comm->host_in[0] && comm->host_out[1] && comm->host_in[1]);
-        comm->host_bytes = nbytes;
+        comm->host_बहिर्गमनम्[0] = sycl::malloc_host<uint8_t>(nbytes, q0->get_context());
+        comm->host_अन्तर्[0]  = sycl::malloc_host<uint8_t>(nbytes, q0->get_context());
+        comm->host_बहिर्गमनम्[1] = sycl::malloc_host<uint8_t>(nbytes, q1->get_context());
+        comm->host_अन्तर्[1]  = sycl::malloc_host<uint8_t>(nbytes, q1->get_context());
+        GGML_ASSERT(comm->host_बहिर्गमनम्[0] && comm->host_अन्तर्[0] && comm->host_बहिर्गमनम्[1] && comm->host_अन्तर्[1]);
+        comm->host_अष्टकानि = nbytes;
     }
 
-    sycl::event e0 = q0->memcpy(comm->host_out[0], src0, nbytes);
-    sycl::event e1 = q1->memcpy(comm->host_out[1], src1, nbytes);
-    e0.wait();
-    e1.wait();
-    std::memcpy(comm->host_in[0], comm->host_out[1], nbytes);
-    std::memcpy(comm->host_in[1], comm->host_out[0], nbytes);
-    q0->memcpy(dst0, comm->host_in[0], nbytes);
-    q1->memcpy(dst1, comm->host_in[1], nbytes);
+    sycl::event e0 = q0->स्मृतिं_प्रतिलिख(comm->host_बहिर्गमनम्[0], src0, nbytes);
+    sycl::event e1 = q1->स्मृतिं_प्रतिलिख(comm->host_बहिर्गमनम्[1], src1, nbytes);
+    e0.प्रतीक्षस्व();
+    e1.प्रतीक्षस्व();
+    std::स्मृतिं_प्रतिलिख(comm->host_अन्तर्[0], comm->host_बहिर्गमनम्[1], nbytes);
+    std::स्मृतिं_प्रतिलिख(comm->host_अन्तर्[1], comm->host_बहिर्गमनम्[0], nbytes);
+    q0->स्मृतिं_प्रतिलिख(dst0, comm->host_अन्तर्[0], nbytes);
+    q1->स्मृतिं_प्रतिलिख(dst1, comm->host_अन्तर्[1], nbytes);
 }
 
-void * ggml_backend_sycl_comm_init(ggml_backend_t * backends, size_t n_backends) try {
-    for (size_t i = 0; i < n_backends; ++i) {
-        if (!ggml_backend_is_sycl(backends[i])) {
-            return nullptr;
+शून्य * ggml_backend_sycl_comm_init(ggml_backend_t * backends, size_t n_backends) यत्न {
+    प्रति (size_t i = 0; i < n_backends; ++i) {
+        यदि (!ggml_backend_is_sycl(backends[i])) {
+            प्रत्यागम शून्यसूचकः;
         }
     }
 
     // Initial version: N=2 only. For N!=2, returning null makes the
     // meta-backend skip this backend-specific allreduce entirely.
-    if (n_backends != 2) {
-        return nullptr;
+    यदि (n_backends != 2) {
+        प्रत्यागम शून्यसूचकः;
     }
 
-    auto * ctx = new ggml_backend_sycl_comm_context;
-    ctx->backends.assign(backends, backends + n_backends);
-    auto * sctx0 = (ggml_backend_sycl_context *) backends[0]->context;
-    auto * sctx1 = (ggml_backend_sycl_context *) backends[1]->context;
+    स्वचालित * ctx = नूतन ggml_backend_sycl_comm_context;
+    ctx->backends.नियोजय(backends, backends + n_backends);
+    स्वचालित * sctx0 = (ggml_backend_sycl_context *) backends[0]->context;
+    स्वचालित * sctx1 = (ggml_backend_sycl_context *) backends[1]->context;
     ctx->buf0 = std::make_unique<ggml_sycl_pool_alloc<uint8_t>>(sctx0->pool());
     ctx->buf1 = std::make_unique<ggml_sycl_pool_alloc<uint8_t>>(sctx1->pool());
-    return ctx;
+    प्रत्यागम ctx;
 }
-catch (const sycl::exception &) { return nullptr; }
-catch (...)                     { return nullptr; }
+गृहाण (ध्रुव sycl::exception &) { प्रत्यागम शून्यसूचकः; }
+गृहाण (...)                     { प्रत्यागम शून्यसूचकः; }
 
-void ggml_backend_sycl_comm_free(void * comm_ctx_v) {
-    auto * comm_ctx = static_cast<ggml_backend_sycl_comm_context *>(comm_ctx_v);
-    if (comm_ctx == nullptr) {
-        return;
+शून्य ggml_backend_sycl_comm_free(शून्य * comm_ctx_v) {
+    स्वचालित * comm_ctx = static_cast<ggml_backend_sycl_comm_context *>(comm_ctx_v);
+    यदि (comm_ctx == शून्यसूचकः) {
+        प्रत्यागम;
     }
 
     // Sync both per-device queues so the pool_alloc destructors don't
     // return memory still in use by the last kernel.
-    if (comm_ctx->backends.size() == 2) {
-        auto * sctx0 = (ggml_backend_sycl_context *) comm_ctx->backends[0]->context;
-        auto * sctx1 = (ggml_backend_sycl_context *) comm_ctx->backends[1]->context;
-        try {
-            sctx0->stream()->wait();
-            sctx1->stream()->wait();
+    यदि (comm_ctx->backends.size() == 2) {
+        स्वचालित * sctx0 = (ggml_backend_sycl_context *) comm_ctx->backends[0]->context;
+        स्वचालित * sctx1 = (ggml_backend_sycl_context *) comm_ctx->backends[1]->context;
+        यत्न {
+            sctx0->stream()->प्रतीक्षस्व();
+            sctx1->stream()->प्रतीक्षस्व();
             comm_ctx->free_host();
-        } catch (...) { /* best effort during shutdown */ }
+        } गृहाण (...) { /* best effort during shutdown */ }
     }
 
-    delete comm_ctx;
+    विलोपय comm_ctx;
 }
 
-bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tensor ** tensors) try {
-    if (comm_ctx_v == nullptr) {
-        return false;
+तार्किक ggml_backend_sycl_comm_allreduce_tensor(शून्य * comm_ctx_v, संरचना ggml_tensor ** tensors) यत्न {
+    यदि (comm_ctx_v == शून्यसूचकः) {
+        प्रत्यागम असत्य;
     }
 
-    auto * comm_ctx = static_cast<ggml_backend_sycl_comm_context *>(comm_ctx_v);
-    const size_t n_backends = comm_ctx->backends.size();
+    स्वचालित * comm_ctx = static_cast<ggml_backend_sycl_comm_context *>(comm_ctx_v);
+    ध्रुव size_t n_backends = comm_ctx->backends.size();
 
     // Fast path: N=2, F32/F16, contiguous, matching shapes.
-    if (n_backends != 2) {
-        return false;
+    यदि (n_backends != 2) {
+        प्रत्यागम असत्य;
     }
     // Accept F32 or F16 inputs natively (types must match). F16 takes the
     // direct 2-byte memcpy + add path below; other types return false so the
     // meta-backend uses its generic all-reduce.
-    if (tensors[0]->type != tensors[1]->type) {
-        return false;
+    यदि (tensors[0]->type != tensors[1]->type) {
+        प्रत्यागम असत्य;
     }
-    if (tensors[0]->type != GGML_TYPE_F32 && tensors[0]->type != GGML_TYPE_F16) {
-        return false;
+    यदि (tensors[0]->type != GGML_TYPE_F32 && tensors[0]->type != GGML_TYPE_F16) {
+        प्रत्यागम असत्य;
     }
-    if (!ggml_is_contiguous(tensors[0]) || !ggml_is_contiguous(tensors[1])) {
-        return false;
+    यदि (!ggml_is_contiguous(tensors[0]) || !ggml_is_contiguous(tensors[1])) {
+        प्रत्यागम असत्य;
     }
-    if (ggml_nelements(tensors[0]) != ggml_nelements(tensors[1])) {
-        return false;
-    }
-
-    const int64_t nelem  = ggml_nelements(tensors[0]);
-    const size_t  nbytes = ggml_nbytes(tensors[0]);
-    if (nelem == 0) {
-        return true;
+    यदि (ggml_nelements(tensors[0]) != ggml_nelements(tensors[1])) {
+        प्रत्यागम असत्य;
     }
 
-    auto * ctx0 = (ggml_backend_sycl_context *) comm_ctx->backends[0]->context;
-    auto * ctx1 = (ggml_backend_sycl_context *) comm_ctx->backends[1]->context;
+    ध्रुव int64_t nelem  = ggml_nelements(tensors[0]);
+    ध्रुव size_t  nbytes = ggml_nbytes(tensors[0]);
+    यदि (nelem == 0) {
+        प्रत्यागम सत्य;
+    }
+
+    स्वचालित * ctx0 = (ggml_backend_sycl_context *) comm_ctx->backends[0]->context;
+    स्वचालित * ctx1 = (ggml_backend_sycl_context *) comm_ctx->backends[1]->context;
     queue_ptr q0 = ctx0->stream();
     queue_ptr q1 = ctx1->stream();
 
     // Grow per-device byte buffers if needed (4 * nelem bytes each).
-    if (comm_ctx->buf_nelem < nelem) {
+    यदि (comm_ctx->buf_nelem < nelem) {
         comm_ctx->buf0->realloc(nelem * 4);
         comm_ctx->buf1->realloc(nelem * 4);
         comm_ctx->buf_nelem = nelem;
@@ -7638,43 +7638,43 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
     // F16 native path: direct 2-byte cross-device copy + add, skipping the
     // F32 round-trip the meta-backend fallback would force. The devices are in separate SYCL
     // contexts (a raw peer-USM q->memcpy would be a silent no-op), so copies go through host memory.
-    if (tensors[0]->type == GGML_TYPE_F16) {
-        sycl::half * f16_out0 = (sycl::half *) tensors[0]->data;
-        sycl::half * f16_out1 = (sycl::half *) tensors[1]->data;
+    यदि (tensors[0]->type == GGML_TYPE_F16) {
+        sycl::half * f16_out0 = (sycl::half *) tensors[0]->दत्त;
+        sycl::half * f16_out1 = (sycl::half *) tensors[1]->दत्त;
         sycl::half * f16_tmp0 = (sycl::half *) buf0;
         sycl::half * f16_tmp1 = (sycl::half *) buf1;
 
-        ggml_sycl_comm_exchange(comm_ctx, q0, q1, f16_tmp0, tensors[1]->data, f16_tmp1, tensors[0]->data, nbytes);
+        ggml_sycl_comm_exchange(comm_ctx, q0, q1, f16_tmp0, tensors[1]->दत्त, f16_tmp1, tensors[0]->दत्त, nbytes);
 
         q0->submit([&](sycl::handler & h) {
             h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
-                f16_out0[i] = (sycl::half) ((float) f16_out0[i] + (float) f16_tmp0[i]);
+                f16_out0[i] = (sycl::half) ((भिन्न) f16_out0[i] + (भिन्न) f16_tmp0[i]);
             });
         });
         q1->submit([&](sycl::handler & h) {
             h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
-                f16_out1[i] = (sycl::half) ((float) f16_out1[i] + (float) f16_tmp1[i]);
+                f16_out1[i] = (sycl::half) ((भिन्न) f16_out1[i] + (भिन्न) f16_tmp1[i]);
             });
         });
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    float * out0 = (float *) tensors[0]->data;
-    float * out1 = (float *) tensors[1]->data;
+    भिन्न * out0 = (भिन्न *) tensors[0]->दत्त;
+    भिन्न * out1 = (भिन्न *) tensors[1]->दत्त;
 
     // BF16 threshold: above this, the PCIe savings from halving the
     // cross-device bytes outweigh the 2 extra compress kernels.
     // Below: stay on the FP32 fast path.  Threshold mirrors the CUDA
     // NCCL allreduce pattern for n_backends=2.
-    static constexpr int64_t BF16_THRESHOLD = 32768;
+    स्थिर constexpr int64_t BF16_देहली = 32768;
 
-    if (nelem < BF16_THRESHOLD) {
+    यदि (nelem < BF16_देहली) {
         // FP32 small path: 4 SYCL submissions per allreduce.
-        float * tmp0 = (float *) buf0;
-        float * tmp1 = (float *) buf1;
+        भिन्न * tmp0 = (भिन्न *) buf0;
+        भिन्न * tmp1 = (भिन्न *) buf1;
 
         // separate SYCL contexts: a raw peer-USM q->memcpy is a silent no-op, so stage through host memory
-        ggml_sycl_comm_exchange(comm_ctx, q0, q1, tmp0, tensors[1]->data, tmp1, tensors[0]->data, nbytes);
+        ggml_sycl_comm_exchange(comm_ctx, q0, q1, tmp0, tensors[1]->दत्त, tmp1, tensors[0]->दत्त, nbytes);
 
         q0->submit([&](sycl::handler & h) {
             h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
@@ -7686,7 +7686,7 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
                 out1[i] += tmp1[i];
             });
         });
-        return true;
+        प्रत्यागम सत्य;
     }
 
     // BF16 large path: 6 SYCL submissions per allreduce, but the
@@ -7707,57 +7707,57 @@ bool ggml_backend_sycl_comm_allreduce_tensor(void * comm_ctx_v, struct ggml_tens
     });
 
     // Phase B: exchange the compressed bytes (in-order queues keep this after the compress kernels).
-    const size_t bf16_bytes = nelem * sizeof(uint16_t);
-    ggml_sycl_comm_exchange(comm_ctx, q0, q1, inbox0, outbox1, inbox1, outbox0, bf16_bytes);
+    ध्रुव size_t bf16_अष्टकानि = nelem * परिमाण(uint16_t);
+    ggml_sycl_comm_exchange(comm_ctx, q0, q1, inbox0, outbox1, inbox1, outbox0, bf16_अष्टकानि);
 
     // Phase C: decompress + add into local FP32 partial.
     q0->submit([&](sycl::handler & h) {
         h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
-            out0[i] += sycl::bit_cast<float>(((uint32_t) inbox0[i]) << 16);
+            out0[i] += sycl::bit_cast<भिन्न>(((uint32_t) inbox0[i]) << 16);
         });
     });
 
     q1->submit([&](sycl::handler & h) {
         h.parallel_for(sycl::range<1>(nelem), [=](sycl::id<1> i) {
-            out1[i] += sycl::bit_cast<float>(((uint32_t) inbox1[i]) << 16);
+            out1[i] += sycl::bit_cast<भिन्न>(((uint32_t) inbox1[i]) << 16);
         });
     });
 
-    return true;
+    प्रत्यागम सत्य;
 }
-catch (const sycl::exception &) { return false; }
-catch (...)                     { return false; }
+गृहाण (ध्रुव sycl::exception &) { प्रत्यागम असत्य; }
+गृहाण (...)                     { प्रत्यागम असत्य; }
 
-static void *ggml_backend_sycl_reg_get_proc_address(ggml_backend_reg_t reg, const char *name) {
-    GGML_UNUSED(reg);
+स्थिर शून्य *ggml_backend_sycl_reg_get_proc_स्थानाङ्कः(ggml_backend_reg_t reg, ध्रुव वर्ण *name) {
+    GGML_अप्रयुक्तम्(reg);
 
-    if (strcmp(name, "ggml_backend_split_buffer_type") == 0) {
-        return (void *)ggml_backend_sycl_split_buffer_type;
+    यदि (वाक्यं_तुलय(name, "ggml_backend_split_buffer_type") == 0) {
+        प्रत्यागम (शून्य *)ggml_backend_sycl_विभज_बफर_type;
     }
 
     // Tensor parallelism (--split-mode tensor) entry points.
-    if (strcmp(name, "ggml_backend_comm_init") == 0) {
-        return (void *)ggml_backend_sycl_comm_init;
+    यदि (वाक्यं_तुलय(name, "ggml_backend_comm_init") == 0) {
+        प्रत्यागम (शून्य *)ggml_backend_sycl_comm_init;
     }
-    if (strcmp(name, "ggml_backend_comm_free") == 0) {
-        return (void *)ggml_backend_sycl_comm_free;
+    यदि (वाक्यं_तुलय(name, "ggml_backend_comm_free") == 0) {
+        प्रत्यागम (शून्य *)ggml_backend_sycl_comm_free;
     }
-    if (strcmp(name, "ggml_backend_comm_allreduce_tensor") == 0) {
-        return (void *)ggml_backend_sycl_comm_allreduce_tensor;
+    यदि (वाक्यं_तुलय(name, "ggml_backend_comm_allreduce_tensor") == 0) {
+        प्रत्यागम (शून्य *)ggml_backend_sycl_comm_allreduce_tensor;
     }
 
     // SYCL doesn't support registering host memory, left here for reference
     // "ggml_backend_register_host_buffer"
     // "ggml_backend_unregister_host_buffer"
-    GGML_UNUSED(name);
-    return nullptr;
+    GGML_अप्रयुक्तम्(name);
+    प्रत्यागम शून्यसूचकः;
 }
 
-static const ggml_backend_reg_i ggml_backend_sycl_reg_interface = {
+स्थिर ध्रुव ggml_backend_reg_i ggml_backend_sycl_reg_interface = {
     /* .get_name          = */ ggml_backend_sycl_reg_get_name,
-    /* .get_device_count  = */ ggml_backend_sycl_reg_get_device_count,
+    /* .get_device_count  = */ ggml_backend_sycl_reg_get_device_गणनम्,
     /* .get_device        = */ ggml_backend_sycl_reg_get_device,
-    /* .get_proc_address  = */ ggml_backend_sycl_reg_get_proc_address,
+    /* .get_proc_address  = */ ggml_backend_sycl_reg_get_proc_स्थानाङ्कः,
 };
 
 
@@ -7765,32 +7765,32 @@ static const ggml_backend_reg_i ggml_backend_sycl_reg_interface = {
 
 ggml_backend_reg_t ggml_backend_sycl_reg() {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_reg\n");
-    static ggml_backend_reg reg;
-    static bool initialized = false;
+    स्थिर ggml_backend_reg reg;
+    स्थिर तार्किक initialized = असत्य;
 
     {
-        static std::mutex mutex;
-        std::lock_guard<std::mutex> lock(mutex);
-        if (!initialized) {
+        स्थिर std::mutex mutex;
+        std::lock_guard<std::mutex> तालकम्(mutex);
+        यदि (!initialized) {
             ggml_check_sycl();
-            ggml_backend_sycl_reg_context * ctx = new ggml_backend_sycl_reg_context;
-            const int min_batch_size = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
+            ggml_backend_sycl_reg_context * ctx = नूतन ggml_backend_sycl_reg_context;
+            ध्रुव पूर्णाङ्क min_batch_आकार = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
 
-            for (int i = 0; i < ggml_sycl_info().device_count; i++) {
-                ggml_backend_sycl_device_context * dev_ctx = new ggml_backend_sycl_device_context;
+            प्रति (पूर्णाङ्क i = 0; i < ggml_sycl_info().device_गणनम्; i++) {
+                ggml_backend_sycl_device_context * dev_ctx = नूतन ggml_backend_sycl_device_context;
                 dev_ctx->device = i;
                 dev_ctx->name = GGML_SYCL_NAME + std::to_string(i);
 
-                ggml_sycl_set_device(i);
+                ggml_sycl_समुच्चयः_device(i);
 
                 dpct::device_info prop;
                 SYCL_CHECK(CHECK_TRY_ERROR(dpct::get_device_info(
                     prop, dpct::dev_mgr::instance().get_device(i))));
 
                 dev_ctx->description = prop.get_name();
-                dev_ctx->op_offload_min_batch_size = min_batch_size;
+                dev_ctx->op_offload_min_batch_आकार = min_batch_आकार;
 
-                ggml_backend_dev_t dev = new ggml_backend_device {
+                ggml_backend_dev_t dev = नूतन ggml_backend_device {
                     /* .iface       = */ ggml_backend_sycl_device_interface,
                     /* .reg         = */ &reg,
                     /* .context     = */ dev_ctx
@@ -7799,38 +7799,38 @@ ggml_backend_reg_t ggml_backend_sycl_reg() {
             }
 
             reg = ggml_backend_reg {
-                /* .api_version = */ GGML_BACKEND_API_VERSION,
+                /* .api_version = */ GGML_BACKEND_API_संस्करणम्,
                 /* .iface       = */ ggml_backend_sycl_reg_interface,
                 /* .context     = */ ctx
             };
         }
 
-        initialized = true;
+        initialized = सत्य;
     }
 
-    return &reg;
+    प्रत्यागम &reg;
 }
 
-ggml_backend_t ggml_backend_sycl_init(int device) {
+ggml_backend_t ggml_backend_sycl_init(पूर्णाङ्क device) {
     GGML_SYCL_DEBUG("[SYCL] call ggml_backend_sycl_init\n");
     ggml_check_sycl();
 
-    check_allow_gpu_index(device);
+    check_allow_gpu_सूचकांक(device);
 
-    ggml_backend_sycl_context * ctx = new ggml_backend_sycl_context(device);
-    if (ctx == nullptr) {
+    ggml_backend_sycl_context * ctx = नूतन ggml_backend_sycl_context(device);
+    यदि (ctx == शून्यसूचकः) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return nullptr;
+        प्रत्यागम शून्यसूचकः;
     };
 
-    ggml_backend_t sycl_backend = new ggml_backend {
+    ggml_backend_t sycl_backend = नूतन ggml_backend {
         /* .guid    = */ ggml_backend_sycl_guid(),
         /* .iface   = */ ggml_backend_sycl_interface,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_sycl_reg(), device),
         /* .context = */ ctx
     };
 
-    return sycl_backend;
+    प्रत्यागम sycl_backend;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_sycl_reg)

@@ -1,14 +1,14 @@
-#include "openvino/pass/matcher_pass.hpp"
+#अन्तर्भाव "openvino/pass/matcher_pass.hpp"
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 namespace pass {
 
-class FuseToConv : public ov::pass::MatcherPass {
-public:
+class Fuse_गन्तव्यम्_Conv : सार्वजनिक ov::pass::MatcherPass {
+सार्वजनिक:
     OPENVINO_MATCHER_PASS_RTTI("ov::frontend::ggml::pass::FuseToConv")
-    FuseToConv();
+    Fuse_गन्तव्यम्_Conv();
 };
 
 }  // namespace pass

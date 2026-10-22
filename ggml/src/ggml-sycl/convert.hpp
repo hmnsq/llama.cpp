@@ -10,55 +10,55 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_CONVERT_HPP
-#define GGML_SYCL_CONVERT_HPP
+#यदि_अपरिभाषितम् GGML_SYCL_CONVERT_HPP
+#परिभाषय GGML_SYCL_CONVERT_HPP
 
-#include "common.hpp"
+#अन्तर्भाव "common.hpp"
 
-template <typename T>
-using to_t_sycl_t = void (*)(const void * __restrict__ x, T * __restrict__ y, int64_t k, dpct::queue_ptr stream);
-typedef to_t_sycl_t<float>      to_fp32_sycl_t;
-typedef to_t_sycl_t<sycl::half> to_fp16_sycl_t;
+प्रतिरूपम् <प्रकारनाम T>
+उपयुज्य गन्तव्यम्_t_sycl_t = शून्य (*)(ध्रुव शून्य * __restrict__ x, T * __restrict__ y, int64_t k, dpct::queue_ptr stream);
+प्रकारनिर्देश गन्तव्यम्_t_sycl_t<भिन्न>      गन्तव्यम्_fp32_sycl_t;
+प्रकारनिर्देश गन्तव्यम्_t_sycl_t<sycl::half> गन्तव्यम्_fp16_sycl_t;
 
-to_fp16_sycl_t ggml_get_to_fp16_sycl(ggml_type type, ggml_tensor * dst);
-to_fp32_sycl_t ggml_get_to_fp32_sycl(ggml_type type, ggml_tensor * dst);
+गन्तव्यम्_fp16_sycl_t ggml_get_गन्तव्यम्_fp16_sycl(ggml_type type, ggml_tensor * dst);
+गन्तव्यम्_fp32_sycl_t ggml_get_गन्तव्यम्_fp32_sycl(ggml_type type, ggml_tensor * dst);
 
-#ifdef GGML_SYCL_HAS_BF16
-typedef to_t_sycl_t<sycl::ext::oneapi::bfloat16> to_bf16_sycl_t;
-to_bf16_sycl_t ggml_get_to_bf16_sycl(ggml_type type, ggml_tensor * dst);
-#endif
+#यदि_परिभाषितम् GGML_SYCL_HAS_BF16
+प्रकारनिर्देश गन्तव्यम्_t_sycl_t<sycl::ext::oneapi::bfloat16> गन्तव्यम्_bf16_sycl_t;
+गन्तव्यम्_bf16_sycl_t ggml_get_गन्तव्यम्_bf16_sycl(ggml_type type, ggml_tensor * dst);
+#यदि_अन्तः
 
 // Nc = Non-contiguous
-template <typename T>
-using to_t_nc_sycl_t = void (*)(const void * x, T * y, int64_t ne00, int64_t ne01, int64_t ne02, int64_t ne03,
+प्रतिरूपम् <प्रकारनाम T>
+उपयुज्य गन्तव्यम्_t_nc_sycl_t = शून्य (*)(ध्रुव शून्य * x, T * y, int64_t ne00, int64_t ne01, int64_t ne02, int64_t ne03,
                                    int64_t s01, int64_t s02, int64_t s03, dpct::queue_ptr queue);
 
-typedef to_t_nc_sycl_t<sycl::half> to_fp16_nc_sycl_t;
-to_fp16_nc_sycl_t ggml_get_to_fp16_nc_sycl(ggml_type type);
+प्रकारनिर्देश गन्तव्यम्_t_nc_sycl_t<sycl::half> गन्तव्यम्_fp16_nc_sycl_t;
+गन्तव्यम्_fp16_nc_sycl_t ggml_get_गन्तव्यम्_fp16_nc_sycl(ggml_type type);
 
-template<typename dst_t, typename src_t>
- inline dst_t ggml_sycl_cast(src_t x) {
-    if constexpr (std::is_same_v<dst_t, src_t>) {
-        return x;
-#ifdef GGML_SYCL_HAS_BF16
-    } else if constexpr (std::is_same_v<dst_t, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::bfloat16(float(x));
-    } else if constexpr (std::is_same_v<src_t, sycl::ext::oneapi::bfloat16>) {
-        return static_cast<float>(x);
-#endif
-    } else if constexpr (std::is_same_v<src_t, sycl::float2> && std::is_same_v<dst_t, sycl::half2>) {
-        return x.template convert<sycl::half, sycl::rounding_mode::rte>();
-#ifdef GGML_SYCL_HAS_BF16
-    } else if constexpr (std::is_same_v<src_t, sycl::float2> &&
+प्रतिरूपम्<प्रकारनाम dst_t, प्रकारनाम src_t>
+ अन्तःस्थ dst_t ggml_sycl_cast(src_t x) {
+    यदि constexpr (std::is_same_v<dst_t, src_t>) {
+        प्रत्यागम x;
+#यदि_परिभाषितम् GGML_SYCL_HAS_BF16
+    } अन्यथा यदि constexpr (std::is_same_v<dst_t, sycl::ext::oneapi::bfloat16>) {
+        प्रत्यागम sycl::ext::oneapi::bfloat16(भिन्न(x));
+    } अन्यथा यदि constexpr (std::is_same_v<src_t, sycl::ext::oneapi::bfloat16>) {
+        प्रत्यागम static_cast<भिन्न>(x);
+#यदि_अन्तः
+    } अन्यथा यदि constexpr (std::is_same_v<src_t, sycl::float2> && std::is_same_v<dst_t, sycl::half2>) {
+        प्रत्यागम x.प्रतिरूपम् convert<sycl::half, sycl::rounding_बहुलकम्::rte>();
+#यदि_परिभाषितम् GGML_SYCL_HAS_BF16
+    } अन्यथा यदि constexpr (std::is_same_v<src_t, sycl::float2> &&
                          std::is_same_v<dst_t, sycl::vec<sycl::ext::oneapi::bfloat16, 2>>) {
-        return {x.x, x.y};
-#endif
-    } else if constexpr(std::is_same_v<dst_t, int32_t>) {
-        return int32_t(x);
-    } else {
-        return float(x);
+        प्रत्यागम {x.x, x.y};
+#यदि_अन्तः
+    } अन्यथा यदि constexpr(std::is_same_v<dst_t, int32_t>) {
+        प्रत्यागम int32_t(x);
+    } अन्यथा {
+        प्रत्यागम भिन्न(x);
     }
 }
 
 
-#endif  // GGML_SYCL_CONVERT_HPP
+#यदि_अन्तः  // GGML_SYCL_CONVERT_HPP

@@ -1,5 +1,5 @@
-#ifndef GGML_SYCL_BASE_HPP
-#define GGML_SYCL_BASE_HPP
+#यदि_अपरिभाषितम् GGML_SYCL_आधारः_HPP
+#परिभाषय GGML_SYCL_आधारः_HPP
 
 /**
  * Module: base
@@ -14,30 +14,30 @@
  * - High stability and backward compatibility required.
  */
 
-#include <cstdio>
+#अन्तर्भाव <cstdio>
 
-extern int g_ggml_sycl_debug;
-extern int g_ggml_sycl_dev_debug;
+बाह्य पूर्णाङ्क g_ggml_sycl_debug;
+बाह्य पूर्णाङ्क g_ggml_sycl_dev_debug;
 
-#if defined(__clang__) && __has_builtin(__builtin_expect)
+#यदि defined(__clang__) && __has_builtin(__builtin_expect)
 // Hint the optimizer to pipeline the more likely following instruction in branches
-#    define LIKELY(expr)   __builtin_expect(expr, true)
-#    define UNLIKELY(expr) __builtin_expect(expr, false)
-#else
-#    define LIKELY(expr)   (expr)
-#    define UNLIKELY(expr) (expr)
-#endif
+#    define LIKELY(व्यञ्जकम्)   __builtin_expect(व्यञ्जकम्, सत्य)
+#    define UNLIKELY(व्यञ्जकम्) __builtin_expect(व्यञ्जकम्, असत्य)
+#अन्यथा
+#    define LIKELY(व्यञ्जकम्)   (व्यञ्जकम्)
+#    define UNLIKELY(व्यञ्जकम्) (व्यञ्जकम्)
+#यदि_अन्तः
 
-#define GGML_SYCL_DEBUG(...)              \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_debug))  \
+#परिभाषय GGML_SYCL_DEBUG(...)              \
+    कुरु {                                  \
+        यदि (UNLIKELY(g_ggml_sycl_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } यावत् (0)
 
-#define GGML_SYCL_DEV_DEBUG(...)          \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_dev_debug))  \
+#परिभाषय GGML_SYCL_DEV_DEBUG(...)          \
+    कुरु {                                  \
+        यदि (UNLIKELY(g_ggml_sycl_dev_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } यावत् (0)
 
-#endif  // GGML_SYCL_BASE_HPP
+#यदि_अन्तः  // GGML_SYCL_BASE_HPP

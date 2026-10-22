@@ -1,48 +1,48 @@
-#include "ggml-backend-dl.h"
+#अन्तर्भाव "ggml-backend-dl.h"
 
-#ifdef _WIN32
+#यदि_परिभाषितम् _WIN32
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_आरोपय_library(ध्रुव fs::path & path) {
     // suppress error dialogs for missing DLLs
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+    DWORD old_बहुलकम् = समुच्चयः_Error_बहुलकम्(SEM_FAILCRITICALERRORS);
+    समुच्चयः_Error_बहुलकम्(old_बहुलकम् | SEM_FAILCRITICALERRORS);
 
-    HMODULE handle = LoadLibraryW(path.wstring().c_str());
+    HMODULE handle = आरोपय_Library_W(path.wstring().c_str());
 
-    SetErrorMode(old_mode);
+    समुच्चयः_Error_बहुलकम्(old_बहुलकम्);
 
-    return handle;
+    प्रत्यागम handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+शून्य * dl_get_sym(dl_handle * handle, ध्रुव वर्ण * name) {
+    DWORD old_बहुलकम् = समुच्चयः_Error_बहुलकम्(SEM_FAILCRITICALERRORS);
+    समुच्चयः_Error_बहुलकम्(old_बहुलकम् | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    शून्य * p = (शून्य *) Get_Proc_स्थानाङ्कः(handle, name);
 
-    SetErrorMode(old_mode);
+    समुच्चयः_Error_बहुलकम्(old_बहुलकम्);
 
-    return p;
+    प्रत्यागम p;
 }
 
-const char * dl_error() {
-    return "";
+ध्रुव वर्ण * dl_error() {
+    प्रत्यागम "";
 }
 
-#else
+#अन्यथा
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_आरोपय_library(ध्रुव fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    प्रत्यागम handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+शून्य * dl_get_sym(dl_handle * handle, ध्रुव वर्ण * name) {
+    प्रत्यागम dlsym(handle, name);
 }
 
-const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ध्रुव वर्ण * dl_error() {
+    ध्रुव वर्ण *rslt = dlerror();
+    प्रत्यागम rslt != शून्यसूचकः ? rslt : "";
 }
 
-#endif
+#यदि_अन्तः

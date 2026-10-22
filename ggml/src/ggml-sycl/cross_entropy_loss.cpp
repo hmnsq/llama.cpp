@@ -1,147 +1,147 @@
-#include "cross_entropy_loss.hpp"
+#अन्तर्भाव "cross_entropy_loss.hpp"
 
-#include <cstdint>
-#include <cmath>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <cmath>
 
-template <bool has_shared>
-static __dpct_inline__ void cross_entropy_loss_f32_kernel(
-        const float * __restrict__ logits,
-        const float * __restrict__ labels,
-        float * __restrict__ row_loss,
-        const int nclasses,
-        const int nrows,
-        float * __restrict__ smem,
-        const sycl::nd_item<3> & item) {
+प्रतिरूपम् <तार्किक has_shared>
+स्थिर __dpct_inline__ शून्य cross_entropy_loss_f32_kernel(
+        ध्रुव भिन्न * __restrict__ logits,
+        ध्रुव भिन्न * __restrict__ labels,
+        भिन्न * __restrict__ row_loss,
+        ध्रुव पूर्णाङ्क nclasses,
+        ध्रुव पूर्णाङ्क nrows,
+        भिन्न * __restrict__ smem,
+        ध्रुव sycl::nd_item<3> & item) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    ध्रुव पूर्णाङ्क row = item.get_गणः(2);
+    ध्रुव पूर्णाङ्क tid = item.get_local_id(2);
 
     logits += (int64_t) row * nclasses;
     labels += (int64_t) row * nclasses;
 
-    float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = logits[i];
+    भिन्न max_logit = -INFINITY;
+    प्रति (पूर्णाङ्क i = tid; i < nclasses; i += WARP_आकार) {
+        ध्रुव भिन्न v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        यदि (has_shared) {
             smem[i] = v;
         }
     }
-    max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
+    max_logit = warp_reduce_max<WARP_आकार>(max_logit);
 
-    float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = has_shared ? smem[i] : logits[i];
-        sum_exp += sycl::exp(v - max_logit);
+    भिन्न योग_exp = 0.0f;
+    प्रति (पूर्णाङ्क i = tid; i < nclasses; i += WARP_आकार) {
+        ध्रुव भिन्न v = has_shared ? smem[i] : logits[i];
+        योग_exp += sycl::घातांकः(v - max_logit);
     }
-    sum_exp = warp_reduce_sum<WARP_SIZE>(sum_exp);
-    const float log_sum = sycl::log(sum_exp);
+    योग_exp = warp_reduce_योग<WARP_आकार>(योग_exp);
+    ध्रुव भिन्न log_योग = sycl::लघुगणकः(योग_exp);
 
-    float loss = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = has_shared ? smem[i] : logits[i];
-        loss += (v - max_logit - log_sum) * labels[i];
+    भिन्न loss = 0.0f;
+    प्रति (पूर्णाङ्क i = tid; i < nclasses; i += WARP_आकार) {
+        ध्रुव भिन्न v = has_shared ? smem[i] : logits[i];
+        loss += (v - max_logit - log_योग) * labels[i];
     }
-    loss = -warp_reduce_sum<WARP_SIZE>(loss) / (float) nrows;
+    loss = -warp_reduce_योग<WARP_आकार>(loss) / (भिन्न) nrows;
 
-    if (tid == 0) {
+    यदि (tid == 0) {
         row_loss[row] = loss;
     }
 }
 
-template <bool has_shared>
-static __dpct_inline__ void cross_entropy_loss_back_f32_kernel(
-        const float * __restrict__ grad,
-        const float * __restrict__ logits,
-        const float * __restrict__ labels,
-        float * __restrict__ dst,
-        const int nclasses,
-        const int nrows,
-        float * __restrict__ smem,
-        const sycl::nd_item<3> & item) {
+प्रतिरूपम् <तार्किक has_shared>
+स्थिर __dpct_inline__ शून्य cross_entropy_loss_पृष्ठभागः_f32_kernel(
+        ध्रुव भिन्न * __restrict__ grad,
+        ध्रुव भिन्न * __restrict__ logits,
+        ध्रुव भिन्न * __restrict__ labels,
+        भिन्न * __restrict__ dst,
+        ध्रुव पूर्णाङ्क nclasses,
+        ध्रुव पूर्णाङ्क nrows,
+        भिन्न * __restrict__ smem,
+        ध्रुव sycl::nd_item<3> & item) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    ध्रुव पूर्णाङ्क row = item.get_गणः(2);
+    ध्रुव पूर्णाङ्क tid = item.get_local_id(2);
 
     logits += (int64_t) row * nclasses;
     labels += (int64_t) row * nclasses;
     dst    += (int64_t) row * nclasses;
 
-    float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = logits[i];
+    भिन्न max_logit = -INFINITY;
+    प्रति (पूर्णाङ्क i = tid; i < nclasses; i += WARP_आकार) {
+        ध्रुव भिन्न v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        यदि (has_shared) {
             smem[i] = v;
         }
     }
-    max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
+    max_logit = warp_reduce_max<WARP_आकार>(max_logit);
 
-    float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = sycl::exp((has_shared ? smem[i] : logits[i]) - max_logit);
-        sum_exp += v;
-        if (has_shared) {
+    भिन्न योग_exp = 0.0f;
+    प्रति (पूर्णाङ्क i = tid; i < nclasses; i += WARP_आकार) {
+        ध्रुव भिन्न v = sycl::घातांकः((has_shared ? smem[i] : logits[i]) - max_logit);
+        योग_exp += v;
+        यदि (has_shared) {
             smem[i] = v;
-        } else {
+        } अन्यथा {
             dst[i] = v;
         }
     }
-    sum_exp = warp_reduce_sum<WARP_SIZE>(sum_exp);
-    const float inv_sum = 1.0f / sum_exp;
+    योग_exp = warp_reduce_योग<WARP_आकार>(योग_exp);
+    ध्रुव भिन्न inv_योग = 1.0f / योग_exp;
 
-    const float d_by_nrows = grad[0] / (float) nrows;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float sm_num = has_shared ? smem[i] : dst[i];
-        dst[i] = (sm_num * inv_sum - labels[i]) * d_by_nrows;
+    ध्रुव भिन्न d_by_nrows = grad[0] / (भिन्न) nrows;
+    प्रति (पूर्णाङ्क i = tid; i < nclasses; i += WARP_आकार) {
+        ध्रुव भिन्न sm_अङ्कः = has_shared ? smem[i] : dst[i];
+        dst[i] = (sm_अङ्कः * inv_योग - labels[i]) * d_by_nrows;
     }
 }
 
-static void cross_entropy_reduce_rows(
+स्थिर शून्य cross_entropy_reduce_पङ्क्तिकाः(
         ggml_backend_sycl_context & ctx,
-        const float * row_loss,
-        float * dst,
-        const int64_t nrows) {
-    if (nrows == 1) {
+        ध्रुव भिन्न * row_loss,
+        भिन्न * dst,
+        ध्रुव int64_t nrows) {
+    यदि (nrows == 1) {
         SYCL_CHECK(CHECK_TRY_ERROR(
-            ctx.stream()->memcpy(dst, row_loss, sizeof(float))));
-        return;
+            ctx.stream()->स्मृतिं_प्रतिलिख(dst, row_loss, परिमाण(भिन्न))));
+        प्रत्यागम;
     }
 
-    ggml_sycl_pool_alloc<float> tmp_alloc(ctx.pool(), nrows);
-    float * tmp = tmp_alloc.get();
+    ggml_sycl_pool_alloc<भिन्न> tmp_alloc(ctx.pool(), nrows);
+    भिन्न * tmp = tmp_alloc.get();
     SYCL_CHECK(CHECK_TRY_ERROR(
-        ctx.stream()->memcpy(tmp, row_loss, nrows * sizeof(float))));
+        ctx.stream()->स्मृतिं_प्रतिलिख(tmp, row_loss, nrows * परिमाण(भिन्न))));
 
     int64_t cur = nrows;
-    while (cur > 1) {
-        const int64_t out = (cur + WARP_SIZE - 1) / WARP_SIZE;
-        const sycl::range<3> block(1, 1, WARP_SIZE);
-        const sycl::range<3> grid(1, 1, out);
+    यावत् (cur > 1) {
+        ध्रुव int64_t बहिर्गमनम् = (cur + WARP_आकार - 1) / WARP_आकार;
+        ध्रुव sycl::range<3> खण्डम्(1, 1, WARP_आकार);
+        ध्रुव sycl::range<3> grid(1, 1, बहिर्गमनम्);
         ctx.stream()->parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                const int row = item.get_group(2);
-                const int tid = item.get_local_id(2);
-                const int64_t i = (int64_t) row * WARP_SIZE + tid;
-                float v = i < cur ? tmp[i] : 0.0f;
-                v = warp_reduce_sum<WARP_SIZE>(v);
-                if (tid == 0) {
+            sycl::nd_range<3>(grid * खण्डम्, खण्डम्),
+            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
+                ध्रुव पूर्णाङ्क row = item.get_गणः(2);
+                ध्रुव पूर्णाङ्क tid = item.get_local_id(2);
+                ध्रुव int64_t i = (int64_t) row * WARP_आकार + tid;
+                भिन्न v = i < cur ? tmp[i] : 0.0f;
+                v = warp_reduce_योग<WARP_आकार>(v);
+                यदि (tid == 0) {
                     tmp[row] = v;
                 }
             });
-        cur = out;
+        cur = बहिर्गमनम्;
     }
 
     SYCL_CHECK(CHECK_TRY_ERROR(
-        ctx.stream()->memcpy(dst, tmp, sizeof(float))));
+        ctx.stream()->स्मृतिं_प्रतिलिख(dst, tmp, परिमाण(भिन्न))));
 }
 
-void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+शून्य ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    ध्रुव ggml_tensor * src0 = dst->src[0];
+    ध्रुव ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
@@ -152,55 +152,55 @@ void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor *
     GGML_ASSERT(ggml_are_same_shape(src0, src1));
     GGML_ASSERT(ggml_is_scalar(dst));
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
 
-    const int64_t nclasses = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    ध्रुव int64_t nclasses = src0->ne[0];
+    ध्रुव int64_t nrows = ggml_nrows(src0);
 
-    const float * logits_d = (const float *) src0->data;
-    const float * labels_d = (const float *) src1->data;
-    float * dst_d = (float *) dst->data;
+    ध्रुव भिन्न * logits_d = (ध्रुव भिन्न *) src0->दत्त;
+    ध्रुव भिन्न * labels_d = (ध्रुव भिन्न *) src1->दत्त;
+    भिन्न * dst_d = (भिन्न *) dst->दत्त;
 
-    ggml_sycl_pool_alloc<float> row_loss_alloc(ctx.pool(), nrows);
-    float * row_loss = row_loss_alloc.get();
+    ggml_sycl_pool_alloc<भिन्न> row_loss_alloc(ctx.pool(), nrows);
+    भिन्न * row_loss = row_loss_alloc.get();
 
-    const sycl::range<3> block(1, 1, WARP_SIZE);
-    const sycl::range<3> grid(1, 1, nrows);
-    const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
-    const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
+    ध्रुव sycl::range<3> खण्डम्(1, 1, WARP_आकार);
+    ध्रुव sycl::range<3> grid(1, 1, nrows);
+    ध्रुव size_t nbytes_shared = (size_t) nclasses * परिमाण(भिन्न);
+    ध्रुव size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    यदि (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
+            sycl::local_accessor<भिन्न, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(grid * block, block),
-                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    cross_entropy_loss_f32_kernel<true>(
+                sycl::nd_range<3>(grid * खण्डम्, खण्डम्),
+                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
+                    cross_entropy_loss_f32_kernel<सत्य>(
                         logits_d, labels_d, row_loss,
-                        (int) nclasses, (int) nrows,
+                        (पूर्णाङ्क) nclasses, (पूर्णाङ्क) nrows,
                         get_pointer(smem), item);
                 });
         });
-    } else {
+    } अन्यथा {
         ctx.stream()->parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                cross_entropy_loss_f32_kernel<false>(
+            sycl::nd_range<3>(grid * खण्डम्, खण्डम्),
+            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
+                cross_entropy_loss_f32_kernel<असत्य>(
                     logits_d, labels_d, row_loss,
-                    (int) nclasses, (int) nrows,
-                    nullptr, item);
+                    (पूर्णाङ्क) nclasses, (पूर्णाङ्क) nrows,
+                    शून्यसूचकः, item);
             });
     }
 
-    cross_entropy_reduce_rows(ctx, row_loss, dst_d, nrows);
+    cross_entropy_reduce_पङ्क्तिकाः(ctx, row_loss, dst_d, nrows);
 }
 
-void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+शून्य ggml_sycl_cross_entropy_loss_पृष्ठभागः(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
 
-    const ggml_tensor * grad  = dst->src[0];
-    const ggml_tensor * src0f = dst->src[1];
-    const ggml_tensor * src1f = dst->src[2];
+    ध्रुव ggml_tensor * grad  = dst->src[0];
+    ध्रुव ggml_tensor * src0f = dst->src[1];
+    ध्रुव ggml_tensor * src1f = dst->src[2];
 
     GGML_ASSERT(grad->type == GGML_TYPE_F32);
     GGML_ASSERT(src0f->type == GGML_TYPE_F32);
@@ -215,41 +215,41 @@ void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_ten
     GGML_ASSERT(ggml_are_same_shape(src0f, src1f));
     GGML_ASSERT(ggml_are_same_shape(src0f, dst));
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    SYCL_CHECK(ggml_sycl_समुच्चयः_device(ctx.device));
 
-    const int64_t nclasses = src0f->ne[0];
-    const int64_t nrows = ggml_nrows(src0f);
+    ध्रुव int64_t nclasses = src0f->ne[0];
+    ध्रुव int64_t nrows = ggml_nrows(src0f);
 
-    const float * grad_d  = (const float *) grad->data;
-    const float * logits_d = (const float *) src0f->data;
-    const float * labels_d = (const float *) src1f->data;
-    float * dst_d = (float *) dst->data;
+    ध्रुव भिन्न * grad_d  = (ध्रुव भिन्न *) grad->दत्त;
+    ध्रुव भिन्न * logits_d = (ध्रुव भिन्न *) src0f->दत्त;
+    ध्रुव भिन्न * labels_d = (ध्रुव भिन्न *) src1f->दत्त;
+    भिन्न * dst_d = (भिन्न *) dst->दत्त;
 
-    const sycl::range<3> block(1, 1, WARP_SIZE);
-    const sycl::range<3> grid(1, 1, nrows);
-    const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
-    const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
+    ध्रुव sycl::range<3> खण्डम्(1, 1, WARP_आकार);
+    ध्रुव sycl::range<3> grid(1, 1, nrows);
+    ध्रुव size_t nbytes_shared = (size_t) nclasses * परिमाण(भिन्न);
+    ध्रुव size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    यदि (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
+            sycl::local_accessor<भिन्न, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(grid * block, block),
-                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    cross_entropy_loss_back_f32_kernel<true>(
+                sycl::nd_range<3>(grid * खण्डम्, खण्डम्),
+                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
+                    cross_entropy_loss_पृष्ठभागः_f32_kernel<सत्य>(
                         grad_d, logits_d, labels_d, dst_d,
-                        (int) nclasses, (int) nrows,
+                        (पूर्णाङ्क) nclasses, (पूर्णाङ्क) nrows,
                         get_pointer(smem), item);
                 });
         });
-    } else {
+    } अन्यथा {
         ctx.stream()->parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                cross_entropy_loss_back_f32_kernel<false>(
+            sycl::nd_range<3>(grid * खण्डम्, खण्डम्),
+            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_गणः_आकार(WARP_आकार)]] {
+                cross_entropy_loss_पृष्ठभागः_f32_kernel<असत्य>(
                     grad_d, logits_d, labels_d, dst_d,
-                    (int) nclasses, (int) nrows,
-                    nullptr, item);
+                    (पूर्णाङ्क) nclasses, (पूर्णाङ्क) nrows,
+                    शून्यसूचकः, item);
             });
     }
 }

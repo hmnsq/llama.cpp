@@ -1,181 +1,181 @@
-#ifndef HTP_BINARY_OPS_H
-#define HTP_BINARY_OPS_H
+#यदि_अपरिभाषितम् HTP_द्विमान_OPS_H
+#परिभाषय HTP_द्विमान_OPS_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#अन्तर्भाव <stddef.h>
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <string.h>
 
-#include "hex-common.h"
-#include "htp-ops.h"
-#include "htp-vtcm.h"
+#अन्तर्भाव "hex-common.h"
+#अन्तर्भाव "htp-ops.h"
+#अन्तर्भाव "htp-vtcm.h"
 
-enum htp_binary_kernel_type {
-    HTP_BINARY_KERNEL_SAME_SHAPE = 0,
-    HTP_BINARY_KERNEL_ROW_BCAST,
-    HTP_BINARY_KERNEL_SCALAR,
-    HTP_BINARY_KERNEL_ADD_ID,
-    HTP_BINARY_KERNEL_COMPLEX,
-    HTP_BINARY_KERNEL_REPEAT,
-    HTP_BINARY_KERNEL_CHUNKED,
+गणना htp_द्विमान_kernel_type {
+    HTP_द्विमान_KERNEL_SAME_SHAPE = 0,
+    HTP_द्विमान_KERNEL_ROW_BCAST,
+    HTP_द्विमान_KERNEL_SCALAR,
+    HTP_द्विमान_KERNEL_सङ्कलय_ID,
+    HTP_द्विमान_KERNEL_COMPLEX,
+    HTP_द्विमान_KERNEL_REPEAT,
+    HTP_द्विमान_KERNEL_CHUNKED,
 };
 
-struct htp_binary_kernel_params {
+संरचना htp_द्विमान_kernel_params {
     uint32_t kernel_type;
-    uint32_t n_threads;
-    uint32_t rows_per_buffer;
+    uint32_t n_तन्तवः;
+    uint32_t पङ्क्तिकाः_प्रत्येकम्_बफर;
 
-    uint32_t src0_row_size_aligned;
-    uint32_t src1_row_size_aligned;
-    uint32_t dst_row_size_aligned;
+    uint32_t src0_row_आकार_aligned;
+    uint32_t src1_row_आकार_aligned;
+    uint32_t dst_row_आकार_aligned;
 
-    uint32_t src1_size;
-    uint32_t src2_size;
-    uint32_t vtcm_size;
+    uint32_t src1_आकार;
+    uint32_t src2_आकार;
+    uint32_t vtcm_आकार;
 
-    uint32_t chunk_size;
-    uint32_t chunk_bytes;
+    uint32_t chunk_आकार;
+    uint32_t chunk_अष्टकानि;
     uint32_t is_scalar;
 
-    uint8_t  split_at_ne01;
-    uint8_t  split_at_ne02;
+    uint8_t  विभज_at_ne01;
+    uint8_t  विभज_at_ne02;
     uint8_t  src1_strided;
     uint8_t  pad;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#यदि defined(__cplusplus)
+static_assert(परिमाण(संरचना htp_द्विमान_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 
-struct ggml_tensor;
-static inline bool htp_binary_strides_safe(
-    const struct ggml_tensor * src0,
-    const struct ggml_tensor * src1,
-    const struct ggml_tensor * dst,
-    size_t elem_size
+संरचना ggml_tensor;
+स्थिर अन्तःस्थ bool htp_द्विमान_strides_safe(
+    ध्रुव संरचना ggml_tensor * src0,
+    ध्रुव संरचना ggml_tensor * src1,
+    ध्रुव संरचना ggml_tensor * dst,
+    size_t elem_आकार
 ) {
-    if ((src0->ne[0] != 1 && src0->nb[0] != elem_size) ||
-        (src1->ne[0] != 1 && src1->nb[0] != elem_size) ||
-        (dst->ne[0]  != 1 && dst->nb[0]  != elem_size)) {
-        return false;
+    यदि ((src0->ne[0] != 1 && src0->nb[0] != elem_आकार) ||
+        (src1->ne[0] != 1 && src1->nb[0] != elem_आकार) ||
+        (dst->ne[0]  != 1 && dst->nb[0]  != elem_आकार)) {
+        प्रत्यागम false;
     }
-    if ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_size) ||
-        (src1->ne[1] > 1 && src1->nb[1] < src1->ne[0] * elem_size) ||
-        (dst->ne[1]  > 1 && dst->nb[1]  < dst->ne[0]  * elem_size)) {
-        return false;
+    यदि ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_आकार) ||
+        (src1->ne[1] > 1 && src1->nb[1] < src1->ne[0] * elem_आकार) ||
+        (dst->ne[1]  > 1 && dst->nb[1]  < dst->ne[0]  * elem_आकार)) {
+        प्रत्यागम false;
     }
-    return true;
+    प्रत्यागम true;
 }
-#else
-_Static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
-#endif
+#अन्यथा
+_Static_assert(परिमाण(संरचना htp_द्विमान_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#यदि_अन्तः
 
-struct htp_binary_vtcm_layout {
-    size_t total_bytes;
+संरचना htp_द्विमान_vtcm_layout {
+    size_t योग_अष्टकानि;
     size_t off_src0;
     size_t off_src1;
     size_t off_src2;
     size_t off_dst;
 
-    size_t src0_bytes_per_thread;
-    size_t src1_bytes_per_thread;
-    size_t dst_bytes_per_thread;
+    size_t src0_अष्टकानि_प्रत्येकम्_thread;
+    size_t src1_अष्टकानि_प्रत्येकम्_thread;
+    size_t dst_अष्टकानि_प्रत्येकम्_thread;
 
-    size_t src0_spad_half_size;
-    size_t src1_spad_half_size;
-    size_t dst_spad_half_size;
+    size_t src0_spad_half_आकार;
+    size_t src1_spad_half_आकार;
+    size_t dst_spad_half_आकार;
 
-    size_t src1_size;
-    size_t src2_size;
-    uint32_t rows_per_buffer;
+    size_t src1_आकार;
+    size_t src2_आकार;
+    uint32_t पङ्क्तिकाः_प्रत्येकम्_बफर;
 };
 
-static inline void htp_binary_vtcm_layout_build(
-    struct htp_binary_vtcm_layout * L,
-    const struct htp_binary_kernel_params * kparams,
-    size_t vtcm_size
+स्थिर अन्तःस्थ शून्य htp_द्विमान_vtcm_layout_build(
+    संरचना htp_द्विमान_vtcm_layout * L,
+    ध्रुव संरचना htp_द्विमान_kernel_params * kparams,
+    size_t vtcm_आकार
 ) {
-    memset(L, 0, sizeof(*L));
+    स्मृतिं_पूरय(L, 0, परिमाण(*L));
 
-    const uint32_t n_threads = kparams->n_threads;
-    if (n_threads == 0) {
-        return;
+    ध्रुव uint32_t n_तन्तवः = kparams->n_तन्तवः;
+    यदि (n_तन्तवः == 0) {
+        प्रत्यागम;
     }
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
-        const size_t chunk_bytes = kparams->chunk_bytes;
-        if (chunk_bytes == 0) {
-            return;
+    यदि (kparams->kernel_type == HTP_द्विमान_KERNEL_CHUNKED) {
+        ध्रुव size_t chunk_अष्टकानि = kparams->chunk_अष्टकानि;
+        यदि (chunk_अष्टकानि == 0) {
+            प्रत्यागम;
         }
 
-        L->src0_bytes_per_thread = 2 * chunk_bytes;
-        L->src1_bytes_per_thread = kparams->is_scalar ? 0 : (2 * chunk_bytes);
-        L->dst_bytes_per_thread  = 2 * chunk_bytes;
+        L->src0_अष्टकानि_प्रत्येकम्_thread = 2 * chunk_अष्टकानि;
+        L->src1_अष्टकानि_प्रत्येकम्_thread = kparams->is_scalar ? 0 : (2 * chunk_अष्टकानि);
+        L->dst_अष्टकानि_प्रत्येकम्_thread  = 2 * chunk_अष्टकानि;
 
-        L->src0_spad_half_size = chunk_bytes;
-        L->src1_spad_half_size = kparams->is_scalar ? 0 : chunk_bytes;
-        L->dst_spad_half_size  = chunk_bytes;
+        L->src0_spad_half_आकार = chunk_अष्टकानि;
+        L->src1_spad_half_आकार = kparams->is_scalar ? 0 : chunk_अष्टकानि;
+        L->dst_spad_half_आकार  = chunk_अष्टकानि;
 
-        L->rows_per_buffer = 1;
-        L->src1_size = 0;
+        L->पङ्क्तिकाः_प्रत्येकम्_बफर = 1;
+        L->src1_आकार = 0;
 
-        const size_t src0_total = n_threads * L->src0_bytes_per_thread;
-        const size_t src1_total = kparams->is_scalar ? 128 : (n_threads * L->src1_bytes_per_thread);
-        const size_t dst_total  = n_threads * L->dst_bytes_per_thread;
+        ध्रुव size_t src0_योग = n_तन्तवः * L->src0_अष्टकानि_प्रत्येकम्_thread;
+        ध्रुव size_t src1_योग = kparams->is_scalar ? 128 : (n_तन्तवः * L->src1_अष्टकानि_प्रत्येकम्_thread);
+        ध्रुव size_t dst_योग  = n_तन्तवः * L->dst_अष्टकानि_प्रत्येकम्_thread;
 
         size_t off = 0;
-        VTCM_LAYOUT_ALLOC(off, off_src0, src0_total);
-        VTCM_LAYOUT_ALLOC(off, off_src1, src1_total);
-        VTCM_LAYOUT_ALLOC(off, off_dst,  dst_total);
+        VTCM_LAYOUT_ALLOC(off, off_src0, src0_योग);
+        VTCM_LAYOUT_ALLOC(off, off_src1, src1_योग);
+        VTCM_LAYOUT_ALLOC(off, off_dst,  dst_योग);
 
-        if (off > vtcm_size) {
-            return;
+        यदि (off > vtcm_आकार) {
+            प्रत्यागम;
         }
 
-        L->total_bytes = off;
-        return;
+        L->योग_अष्टकानि = off;
+        प्रत्यागम;
     }
 
-    const size_t spad_row_total = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
-        ? 2 * (kparams->src0_row_size_aligned + kparams->src1_row_size_aligned + kparams->dst_row_size_aligned)
-        : 2 * (kparams->src0_row_size_aligned + kparams->dst_row_size_aligned);
+    ध्रुव size_t spad_row_योग = (kparams->kernel_type == HTP_द्विमान_KERNEL_SAME_SHAPE)
+        ? 2 * (kparams->src0_row_आकार_aligned + kparams->src1_row_आकार_aligned + kparams->dst_row_आकार_aligned)
+        : 2 * (kparams->src0_row_आकार_aligned + kparams->dst_row_आकार_aligned);
 
-    const size_t static_vtcm_size = kparams->src1_size + kparams->src2_size;
-    if (spad_row_total == 0 || vtcm_size < static_vtcm_size) {
-        return;
+    ध्रुव size_t static_vtcm_आकार = kparams->src1_आकार + kparams->src2_आकार;
+    यदि (spad_row_योग == 0 || vtcm_आकार < static_vtcm_आकार) {
+        प्रत्यागम;
     }
 
-    const size_t rows_per_buffer = (vtcm_size - static_vtcm_size) / (n_threads * spad_row_total);
-    if (rows_per_buffer == 0) {
-        return;
+    ध्रुव size_t पङ्क्तिकाः_प्रत्येकम्_बफर = (vtcm_आकार - static_vtcm_आकार) / (n_तन्तवः * spad_row_योग);
+    यदि (पङ्क्तिकाः_प्रत्येकम्_बफर == 0) {
+        प्रत्यागम;
     }
 
-    L->rows_per_buffer = (uint32_t) rows_per_buffer;
-    L->src1_size = kparams->src1_size;
-    L->src2_size = kparams->src2_size;
+    L->पङ्क्तिकाः_प्रत्येकम्_बफर = (uint32_t) पङ्क्तिकाः_प्रत्येकम्_बफर;
+    L->src1_आकार = kparams->src1_आकार;
+    L->src2_आकार = kparams->src2_आकार;
 
-    L->src0_bytes_per_thread = rows_per_buffer * 2 * kparams->src0_row_size_aligned;
-    L->dst_bytes_per_thread  = rows_per_buffer * 2 * kparams->dst_row_size_aligned;
-    L->src1_bytes_per_thread = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
-        ? rows_per_buffer * 2 * kparams->src1_row_size_aligned
+    L->src0_अष्टकानि_प्रत्येकम्_thread = पङ्क्तिकाः_प्रत्येकम्_बफर * 2 * kparams->src0_row_आकार_aligned;
+    L->dst_अष्टकानि_प्रत्येकम्_thread  = पङ्क्तिकाः_प्रत्येकम्_बफर * 2 * kparams->dst_row_आकार_aligned;
+    L->src1_अष्टकानि_प्रत्येकम्_thread = (kparams->kernel_type == HTP_द्विमान_KERNEL_SAME_SHAPE)
+        ? पङ्क्तिकाः_प्रत्येकम्_बफर * 2 * kparams->src1_row_आकार_aligned
         : 0;
 
-    L->src0_spad_half_size = L->src0_bytes_per_thread / 2;
-    L->src1_spad_half_size = L->src1_bytes_per_thread / 2;
-    L->dst_spad_half_size  = L->dst_bytes_per_thread / 2;
+    L->src0_spad_half_आकार = L->src0_अष्टकानि_प्रत्येकम्_thread / 2;
+    L->src1_spad_half_आकार = L->src1_अष्टकानि_प्रत्येकम्_thread / 2;
+    L->dst_spad_half_आकार  = L->dst_अष्टकानि_प्रत्येकम्_thread / 2;
 
-    const size_t src0_total = n_threads * L->src0_bytes_per_thread;
-    const size_t src1_total = (kparams->src1_size > 0)
-        ? kparams->src1_size
-        : n_threads * L->src1_bytes_per_thread;
-    const size_t src2_total = kparams->src2_size;
-    const size_t dst_total  = n_threads * L->dst_bytes_per_thread;
+    ध्रुव size_t src0_योग = n_तन्तवः * L->src0_अष्टकानि_प्रत्येकम्_thread;
+    ध्रुव size_t src1_योग = (kparams->src1_आकार > 0)
+        ? kparams->src1_आकार
+        : n_तन्तवः * L->src1_अष्टकानि_प्रत्येकम्_thread;
+    ध्रुव size_t src2_योग = kparams->src2_आकार;
+    ध्रुव size_t dst_योग  = n_तन्तवः * L->dst_अष्टकानि_प्रत्येकम्_thread;
 
     size_t off = 0;
-    VTCM_LAYOUT_ALLOC(off, off_src0, src0_total);
-    VTCM_LAYOUT_ALLOC(off, off_src1, src1_total);
-    VTCM_LAYOUT_ALLOC(off, off_src2, src2_total);
-    VTCM_LAYOUT_ALLOC(off, off_dst,  dst_total);
+    VTCM_LAYOUT_ALLOC(off, off_src0, src0_योग);
+    VTCM_LAYOUT_ALLOC(off, off_src1, src1_योग);
+    VTCM_LAYOUT_ALLOC(off, off_src2, src2_योग);
+    VTCM_LAYOUT_ALLOC(off, off_dst,  dst_योग);
 
-    L->total_bytes = off;
+    L->योग_अष्टकानि = off;
 }
 
-#endif
+#यदि_अन्तः

@@ -4,107 +4,107 @@
 // Source may have arbitrary strides; destination must be contiguous.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#अन्तर्भाव "ggml_tensor.h"
+#अन्तर्भाव "math_fp.h"
+#अन्तर्भाव "platform.h"
 
-#include <stdbool.h>
-#include <stdint.h>
+#अन्तर्भाव <stdbool.h>
+#अन्तर्भाव <stdint.h>
 
-struct ggml_et_cont_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+संरचना ggml_et_cont_params {
+    संरचना ggml_tensor src0;
+    संरचना ggml_tensor dst;
 };
 
-int entry_point(struct ggml_et_cont_params * params, void * env) {
+पूर्णाङ्क प्रविष्टिः_point(संरचना ggml_et_cont_params * params, शून्य * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || !params) {
-        return -1;
+    यदि (!kernel_env || !params) {
+        प्रत्यागम -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    पूर्णाङ्क thread_id   = get_relative_thread_id(kernel_env->shire_आवरणम्);
+    पूर्णाङ्क अङ्कः_तन्तवः = get_अङ्कः_तन्तवः(kernel_env->shire_आवरणम्);
 
-    if (thread_id < 0) {
-        return 0;
+    यदि (thread_id < 0) {
+        प्रत्यागम 0;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    संरचना ggml_tensor * src0 = &params->src0;
+    संरचना ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
-        return -1;
+    यदि (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
+        प्रत्यागम -1;
     }
 
-    const char * src_data = (const char *) src0->data;
-    uint16_t *   dst_data = (uint16_t *) dst->data;
+    ध्रुव वर्ण * src_दत्त = (ध्रुव वर्ण *) src0->दत्त;
+    uint16_t *   dst_दत्त = (uint16_t *) dst->दत्त;
 
-    if (!src_data || !dst_data) {
-        return -1;
+    यदि (!src_दत्त || !dst_दत्त) {
+        प्रत्यागम -1;
     }
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ध्रुव int64_t ne00 = src0->ne[0];
+    ध्रुव int64_t ne01 = src0->ne[1];
+    ध्रुव int64_t ne02 = src0->ne[2];
+    ध्रुव int64_t ne03 = src0->ne[3];
 
-    const int64_t nb00 = src0->nb[0];
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
+    ध्रुव int64_t nb00 = src0->nb[0];
+    ध्रुव int64_t nb01 = src0->nb[1];
+    ध्रुव int64_t nb02 = src0->nb[2];
+    ध्रुव int64_t nb03 = src0->nb[3];
 
-    const int64_t total_elements = ne00 * ne01 * ne02 * ne03;
+    ध्रुव int64_t योग_elements = ne00 * ne01 * ne02 * ne03;
 
-    if (total_elements == 0) {
-        return 0;
+    यदि (योग_elements == 0) {
+        प्रत्यागम 0;
     }
 
     // Check if src is contiguous F32
-    const bool src_contiguous =
+    ध्रुव bool src_contiguous =
         (nb00 == 4 && nb01 == ne00 * 4 && nb02 == ne00 * ne01 * 4 && nb03 == ne00 * ne01 * ne02 * 4);
 
     // Distribute by cache lines (16 F16 elements = 32 bytes = half cache line)
     // Use 32 elements per chunk to keep output cache-line aligned
-    const int64_t elems_per_cl = 32;
-    const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    ध्रुव int64_t elems_प्रत्येकम्_cl = 32;
+    ध्रुव int64_t योग_cl     = (योग_elements + elems_प्रत्येकम्_cl - 1) / elems_प्रत्येकम्_cl;
 
-    const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-    const int64_t cl_start      = thread_id * cl_per_thread;
-    int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
-        cl_end = total_cl;
+    ध्रुव int64_t cl_प्रत्येकम्_thread = (योग_cl + अङ्कः_तन्तवः - 1) / अङ्कः_तन्तवः;
+    ध्रुव int64_t cl_start      = thread_id * cl_प्रत्येकम्_thread;
+    int64_t       cl_अन्तः        = cl_start + cl_प्रत्येकम्_thread;
+    यदि (cl_अन्तः > योग_cl) {
+        cl_अन्तः = योग_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
-    }
-
-    const int64_t es = cl_start * elems_per_cl;
-    int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
-        ee = total_elements;
+    यदि (cl_start >= योग_cl) {
+        प्रत्यागम 0;
     }
 
-    if (src_contiguous) {
+    ध्रुव int64_t es = cl_start * elems_प्रत्येकम्_cl;
+    int64_t       ee = cl_अन्तः * elems_प्रत्येकम्_cl;
+    यदि (ee > योग_elements) {
+        ee = योग_elements;
+    }
+
+    यदि (src_contiguous) {
         // Fast path: src is contiguous F32
-        const float * src_f32 = (const float *) src_data;
-        for (int64_t i = es; i < ee; ++i) {
-            dst_data[i] = fp32_to_fp16(src_f32[i]);
+        ध्रुव भिन्न * src_f32 = (ध्रुव भिन्न *) src_दत्त;
+        प्रति (int64_t i = es; i < ee; ++i) {
+            dst_दत्त[i] = fp32_गन्तव्यम्_fp16(src_f32[i]);
         }
-    } else {
+    } अन्यथा {
         // General path: stride-aware read
-        for (int64_t idx = es; idx < ee; ++idx) {
-            const int64_t i00  = idx % ne00;
-            const int64_t rem1 = idx / ne00;
-            const int64_t i01  = rem1 % ne01;
-            const int64_t rem2 = rem1 / ne01;
-            const int64_t i02  = rem2 % ne02;
-            const int64_t i03  = rem2 / ne02;
+        प्रति (int64_t idx = es; idx < ee; ++idx) {
+            ध्रुव int64_t i00  = idx % ne00;
+            ध्रुव int64_t rem1 = idx / ne00;
+            ध्रुव int64_t i01  = rem1 % ne01;
+            ध्रुव int64_t rem2 = rem1 / ne01;
+            ध्रुव int64_t i02  = rem2 % ne02;
+            ध्रुव int64_t i03  = rem2 / ne02;
 
-            const float val = *(const float *) (src_data + i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03);
-            dst_data[idx]   = fp32_to_fp16(val);
+            ध्रुव भिन्न val = *(ध्रुव भिन्न *) (src_दत्त + i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            dst_दत्त[idx]   = fp32_गन्तव्यम्_fp16(val);
         }
     }
 
-    return 0;
+    प्रत्यागम 0;
 }

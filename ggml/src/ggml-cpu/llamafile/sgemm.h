@@ -1,25 +1,25 @@
-#pragma once
-#include <stdint.h>
-#include <stdbool.h>
+#निर्देशः once
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <stdbool.h>
 
-#if defined(__VXE__) || defined(__VXE2__)
-#include <vecintrin.h>
-#endif
+#यदि defined(__VXE__) || defined(__VXE2__)
+#अन्तर्भाव <vecintrin.h>
+#यदि_अन्तः
 
-#ifdef _MSC_VER
-#define NOINLINE __declspec(noinline)
-#else
-#define NOINLINE __attribute__((__noinline__))
-#endif
+#यदि_परिभाषितम् _MSC_VER
+#परिभाषय NOINLINE __declspec(noinline)
+#अन्यथा
+#परिभाषय NOINLINE __attribute__((__noinline__))
+#यदि_अन्तः
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#यदि_परिभाषितम् __cplusplus
+बाह्य "C" {
+#यदि_अन्तः
 
-bool llamafile_sgemm(const struct ggml_compute_params * params, int64_t, int64_t, int64_t,
-                     const void *, int64_t, const void *, int64_t, void *, int64_t,
-                     int, int, int);
+bool llamafile_sgemm(ध्रुव संरचना ggml_compute_params * params, int64_t, int64_t, int64_t,
+                     ध्रुव शून्य *, int64_t, ध्रुव शून्य *, int64_t, शून्य *, int64_t,
+                     पूर्णाङ्क, पूर्णाङ्क, पूर्णाङ्क);
 
-#ifdef __cplusplus
+#यदि_परिभाषितम् __cplusplus
 }
-#endif
+#यदि_अन्तः

@@ -1,6 +1,6 @@
-#pragma once
+#निर्देशः once
 
-#include "node_context.h"
+#अन्तर्भाव "node_context.h"
 
 namespace ov {
 namespace frontend {
@@ -8,15 +8,15 @@ namespace ggml {
 
 namespace op {
 
-#define GGML_OP_CONVERTER(op) OutputVector op(const NodeContext & context)
+#परिभाषय GGML_OP_CONVERTER(op) Output_सदिशम् op(ध्रुव ग्रन्थिः_Context & context)
 
-GGML_OP_CONVERTER(translate_add);
+GGML_OP_CONVERTER(translate_सङ्कलय);
 GGML_OP_CONVERTER(translate_cont);
 GGML_OP_CONVERTER(translate_concat);
-GGML_OP_CONVERTER(translate_add_id);
+GGML_OP_CONVERTER(translate_सङ्कलय_id);
 GGML_OP_CONVERTER(translate_div);
 GGML_OP_CONVERTER(translate_fill);
-GGML_OP_CONVERTER(translate_get_rows);
+GGML_OP_CONVERTER(translate_get_पङ्क्तिकाः);
 GGML_OP_CONVERTER(translate_im2col);
 GGML_OP_CONVERTER(translate_im2col_3d);
 GGML_OP_CONVERTER(translate_mulmat);
@@ -26,7 +26,7 @@ GGML_OP_CONVERTER(translate_reshape);
 GGML_OP_CONVERTER(translate_rms_norm);
 GGML_OP_CONVERTER(translate_norm);
 GGML_OP_CONVERTER(translate_l2_norm);
-GGML_OP_CONVERTER(translate_sum_rows);
+GGML_OP_CONVERTER(translate_योग_पङ्क्तिकाः);
 GGML_OP_CONVERTER(translate_sqr);
 GGML_OP_CONVERTER(translate_rope);
 GGML_OP_CONVERTER(translate_scale);
@@ -39,8 +39,8 @@ GGML_OP_CONVERTER(translate_glu_swiglu);
 GGML_OP_CONVERTER(translate_glu_swiglu_oai);
 GGML_OP_CONVERTER(translate_glu_swiglu_clamp);
 GGML_OP_CONVERTER(translate_glu_geglu);
-GGML_OP_CONVERTER(translate_glu_geglu_quick);
-GGML_OP_CONVERTER(translate_set_rows);
+GGML_OP_CONVERTER(translate_glu_geglu_शीघ्र);
+GGML_OP_CONVERTER(translate_समुच्चयः_पङ्क्तिकाः);
 GGML_OP_CONVERTER(translate_cpy);
 GGML_OP_CONVERTER(translate_argsort);
 GGML_OP_CONVERTER(translate_flash_attn_ext);
@@ -51,22 +51,22 @@ GGML_OP_CONVERTER(translate_gated_delta_net);
 GGML_OP_CONVERTER(translate_repeat);
 GGML_OP_CONVERTER(translate_cumsum);
 GGML_OP_CONVERTER(translate_fill);
-GGML_OP_CONVERTER(translate_set);
+GGML_OP_CONVERTER(translate_समुच्चयः);
 GGML_OP_CONVERTER(translate_diag);
 GGML_OP_CONVERTER(translate_tri);
 GGML_OP_CONVERTER(translate_solve_tri);
 GGML_OP_CONVERTER(translate_pool_2d);
 GGML_OP_CONVERTER(translate_roll);
 GGML_OP_CONVERTER(translate_upscale);
-GGML_OP_CONVERTER(translate_mean);
-GGML_OP_CONVERTER(translate_sum);
+GGML_OP_CONVERTER(translate_माध्यम्);
+GGML_OP_CONVERTER(translate_योग);
 GGML_OP_CONVERTER(translate_unary_gelu);
 GGML_OP_CONVERTER(translate_unary_gelu_erf);
-GGML_OP_CONVERTER(translate_unary_gelu_quick);
+GGML_OP_CONVERTER(translate_unary_gelu_शीघ्र);
 GGML_OP_CONVERTER(translate_unary_elu);
 GGML_OP_CONVERTER(translate_unary_hardsigmoid);
-GGML_OP_CONVERTER(translate_unary_step);
-GGML_OP_CONVERTER(translate_unary_round);
+GGML_OP_CONVERTER(translate_unary_चरणः);
+GGML_OP_CONVERTER(translate_unary_आवर्तनम्);
 GGML_OP_CONVERTER(translate_unary_expm1);
 GGML_OP_CONVERTER(translate_conv_2d);
 GGML_OP_CONVERTER(translate_conv_2d_dw);

@@ -10,13 +10,13 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_POOL_HPP
-#define GGML_SYCL_POOL_HPP
+#यदि_अपरिभाषितम् GGML_SYCL_POOL_HPP
+#परिभाषय GGML_SYCL_POOL_HPP
 
-#include "common.hpp"
-#include "presets.hpp"
+#अन्तर्भाव "common.hpp"
+#अन्तर्भाव "presets.hpp"
 
-void ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
-void ggml_sycl_op_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+शून्य ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+शून्य ggml_sycl_op_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_POOL_HPP
+#यदि_अन्तः // GGML_SYCL_POOL_HPP

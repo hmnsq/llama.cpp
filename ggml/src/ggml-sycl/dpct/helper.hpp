@@ -10,137 +10,137 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_DPCT_HELPER_HPP
-#define GGML_SYCL_DPCT_HELPER_HPP
+#यदि_अपरिभाषितम् GGML_SYCL_DPCT_HELPER_HPP
+#परिभाषय GGML_SYCL_DPCT_HELPER_HPP
 
-#include <cstdlib>
-#include <iostream>
-#include <map>
+#अन्तर्भाव <cstdlib>
+#अन्तर्भाव <iostream>
+#अन्तर्भाव <map>
 
-#include <sycl/sycl.hpp>
-#include <sycl/half_type.hpp>
-#include <oneapi/mkl.hpp>
+#अन्तर्भाव <sycl/sycl.hpp>
+#अन्तर्भाव <sycl/half_type.hpp>
+#अन्तर्भाव <oneapi/mkl.hpp>
 
-#if defined(__linux__)
-#include <sys/mman.h>
-#elif defined(_WIN64)
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#else
-#error "Only support Windows and Linux."
-#endif
+#यदि defined(__linux__)
+#अन्तर्भाव <sys/mman.h>
+#नोचेद्यदि defined(_WIN64)
+#यदि_अपरिभाषितम् NOMINMAX
+#परिभाषय NOMINMAX
+#यदि_अन्तः
+#अन्तर्भाव <windows.h>
+#अन्यथा
+#दोषः "Only support Windows and Linux."
+#यदि_अन्तः
 
-#if defined(__linux__)
-#include <unistd.h>
-#include <sys/syscall.h>
-#endif
-#if defined(_WIN64)
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#endif
+#यदि defined(__linux__)
+#अन्तर्भाव <unistd.h>
+#अन्तर्भाव <sys/syscall.h>
+#यदि_अन्तः
+#यदि defined(_WIN64)
+#यदि_अपरिभाषितम् NOMINMAX
+#परिभाषय NOMINMAX
+#यदि_अन्तः
+#अन्तर्भाव <windows.h>
+#यदि_अन्तः
 
 
-#define DPCT_COMPATIBILITY_TEMP (900)
+#परिभाषय DPCT_COMPATIBILITY_अस्थायी (900)
 
-#if defined(_MSC_VER)
-#define __dpct_align__(n) __declspec(align(n))
-#define __dpct_inline__ __forceinline
-#else
-#define __dpct_align__(n) __attribute__((aligned(n)))
-#define __dpct_inline__ __inline__ __attribute__((always_inline))
-#endif
+#यदि defined(_MSC_VER)
+#परिभाषय __dpct_align__(n) __declspec(align(n))
+#परिभाषय __dpct_inline__ __forceinline
+#अन्यथा
+#परिभाषय __dpct_align__(n) __attribute__((aligned(n)))
+#परिभाषय __dpct_inline__ __inline__ __attribute__((always_inline))
+#यदि_अन्तः
 
-#if defined(_MSC_VER)
-#define __dpct_noinline__ __declspec(noinline)
-#else
-#define __dpct_noinline__ __attribute__((noinline))
-#endif
+#यदि defined(_MSC_VER)
+#परिभाषय __dpct_noinline__ __declspec(noinline)
+#अन्यथा
+#परिभाषय __dpct_noinline__ __attribute__((noinline))
+#यदि_अन्तः
 
-#define DPCT_UNUSED(x) (void)(x)
+#परिभाषय DPCT_अप्रयुक्तम्(x) (शून्य)(x)
 
-[[noreturn]] inline void _abort(const char * str) {
-    std::cerr << str << std::endl;
+[[noreturn]] अन्तःस्थ शून्य _abort(ध्रुव वर्ण * str) {
+    std::cerr << str << std::पङ्क्त्यन्तः;
     std::abort();
 }
 
-inline std::string get_device_type_name(const sycl::device &Device) {
-    auto DeviceType = Device.get_info<sycl::info::device::device_type>();
-    switch (DeviceType) {
-    case sycl::info::device_type::cpu:
-        return "cpu";
-    case sycl::info::device_type::gpu:
-        return "gpu";
-    case sycl::info::device_type::host:
-        return "host";
-    case sycl::info::device_type::accelerator:
-        return "acc";
-    default:
-        return "unknown";
+अन्तःस्थ std::string get_device_type_name(ध्रुव sycl::device &Device) {
+    स्वचालित DeviceType = Device.get_info<sycl::info::device::device_type>();
+    विकल्प (DeviceType) {
+    पक्ष sycl::info::device_type::cpu:
+        प्रत्यागम "cpu";
+    पक्ष sycl::info::device_type::gpu:
+        प्रत्यागम "gpu";
+    पक्ष sycl::info::device_type::host:
+        प्रत्यागम "host";
+    पक्ष sycl::info::device_type::accelerator:
+        प्रत्यागम "acc";
+    स्वभाव:
+        प्रत्यागम "unknown";
     }
 }
 
-inline std::string get_device_backend_and_type(const sycl::device &device) {
+अन्तःस्थ std::string get_device_backend_and_type(ध्रुव sycl::device &device) {
     std::stringstream device_type;
     sycl::backend backend = device.get_backend();
     device_type <<  backend << ":" << get_device_type_name(device);
-    return device_type.str();
+    प्रत्यागम device_type.str();
 }
 
-template <typename Ts> struct matrix_info_t {
+प्रतिरूपम् <प्रकारनाम Ts> संरचना matrix_info_t {
     oneapi::mkl::transpose transpose_info[2];
-    Ts                     value_info[2];
-    std::int64_t           size_info[3];
+    Ts                     मानम्_info[2];
+    std::int64_t           आकार_info[3];
     std::int64_t           ld_info[3];
     std::int64_t           groupsize_info;
 };
 
-namespace dpct
+नामाकाश dpct
 {
-    typedef sycl::queue *queue_ptr;
-    typedef sycl::event *event_ptr;
-    typedef char *device_ptr;
-    typedef uint8_t byte_t;
-    typedef sycl::buffer<byte_t> buffer_t;
+    प्रकारनिर्देश sycl::queue *queue_ptr;
+    प्रकारनिर्देश sycl::event *event_ptr;
+    प्रकारनिर्देश वर्ण *device_ptr;
+    प्रकारनिर्देश uint8_t byte_t;
+    प्रकारनिर्देश sycl::बफर<byte_t> बफर_t;
 
     /// SYCL default exception handler
-    inline auto exception_handler = [](sycl::exception_list exceptions)
+    अन्तःस्थ स्वचालित exception_handler = [](sycl::exception_list exceptions)
     {
-        for (std::exception_ptr const &e : exceptions)
+        प्रति (std::exception_ptr ध्रुव &e : exceptions)
         {
-            try
+            यत्न
             {
                 std::rethrow_exception(e);
             }
-            catch (sycl::exception const &e)
+            गृहाण (sycl::exception ध्रुव &e)
             {
-                std::cerr << "Caught asynchronous SYCL exception:" << std::endl
-                          << e.what() << std::endl
+                std::cerr << "Caught asynchronous SYCL exception:" << std::पङ्क्त्यन्तः
+                          << e.what() << std::पङ्क्त्यन्तः
                           << "Exception caught at file:" << __FILE__
-                          << ", line:" << __LINE__ << std::endl;
+                          << ", line:" << __LINE__ << std::पङ्क्त्यन्तः;
             }
         }
     };
 
-    enum error_code
+    गणना error_code
     {
         success = 0,
         default_error = 999
     };
 
-    enum memcpy_direction
+    गणना memcpy_direction
     {
-        host_to_host,
-        host_to_device,
-        device_to_host,
-        device_to_device,
+        host_गन्तव्यम्_host,
+        host_गन्तव्यम्_device,
+        device_गन्तव्यम्_host,
+        device_गन्तव्यम्_device,
         automatic
     };
 
-    enum memory_region
+    गणना स्मृतिः_region
     {
         global = 0, // device global memory
         constant,   // device constant memory
@@ -148,7 +148,7 @@ namespace dpct
         shared,     // memory which can be accessed by host and device
     };
 
-    enum class library_data_t : unsigned char
+    गणना वर्ग library_दत्त_t : अचिह्नित वर्ण
     {
         real_float = 0,
         complex_float,
@@ -181,77 +181,77 @@ namespace dpct
         real_int8_4,
         real_int8_32,
         real_uint8_4,
-        library_data_t_size
+        library_दत्त_t_आकार
     };
 
-    template <typename T>
-    struct DataType
+    प्रतिरूपम् <प्रकारनाम T>
+    संरचना दत्त_Type_2
     {
-        using T2 = T;
+        उपयुज्य T2 = T;
     };
-    template <typename T>
-    struct DataType<sycl::vec<T, 2>>
+    प्रतिरूपम् <प्रकारनाम T>
+    संरचना दत्त_Type_2<sycl::vec<T, 2>>
     {
-        using T2 = std::complex<T>;
+        उपयुज्य T2 = std::complex<T>;
     };
 
-    static void destroy_event(event_ptr event)
+    स्थिर शून्य destroy_event(event_ptr event)
     {
-        delete event;
+        विलोपय event;
     }
 
-    static inline unsigned int get_tid()
+    स्थिर अन्तःस्थ अचिह्नित पूर्णाङ्क get_tid()
     {
-#if defined(__linux__)
-        return syscall(SYS_gettid);
-#elif defined(_WIN64)
-        return GetCurrentThreadId();
-#else
-#error "Only support Windows and Linux."
-#endif
+#यदि defined(__linux__)
+        प्रत्यागम syscall(SYS_gettid);
+#नोचेद्यदि defined(_WIN64)
+        प्रत्यागम GetCurrentThreadId();
+#अन्यथा
+#दोषः "Only support Windows and Linux."
+#यदि_अन्तः
     }
 
-    namespace detail
+    नामाकाश detail
     {
-        static void get_version(const sycl::device &dev, int &major, int &minor)
+        स्थिर शून्य get_संस्करणम्(ध्रुव sycl::device &dev, पूर्णाङ्क &major, पूर्णाङ्क &minor)
         {
             // Version string has the following format:
             // a. OpenCL<space><major.minor><space><vendor-specific-information>
             // b. <major.minor>
             // c. <AmdGcnArchName> e.g gfx1030
             std::string ver;
-            ver = dev.get_info<sycl::info::device::version>();
+            ver = dev.get_info<sycl::info::device::संस्करणम्_2>();
             std::string::size_type i = 0;
-            while (i < ver.size()) {
-              if (isdigit(ver[i]))
-                break;
+            यावत् (i < ver.size()) {
+              यदि (अङ्कः_वा(ver[i]))
+                भङ्ग;
               i++;
             }
             major = std::stoi(&(ver[i]));
-            while (i < ver.size()) {
-              if (ver[i] == '.')
-                break;
+            यावत् (i < ver.size()) {
+              यदि (ver[i] == '.')
+                भङ्ग;
               i++;
             }
-            if (i < ver.size()) {
+            यदि (i < ver.size()) {
               // a. and b.
               i++;
               minor = std::stoi(&(ver[i]));
-            } else {
+            } अन्यथा {
               // c.
               minor = 0;
             }
         }
 
-        template <typename tag, typename T>
-        class generic_error_type
+        प्रतिरूपम् <प्रकारनाम चिह्नकम्, प्रकारनाम T>
+        वर्ग generic_error_type
         {
-        public:
-            generic_error_type() = default;
+        सार्वजनिक:
+            generic_error_type() = स्वभाव;
             generic_error_type(T value) : value{value} {}
-            operator T() const { return value; }
+            संक्रियकः T() ध्रुव { प्रत्यागम value; }
 
-        private:
+        गुप्त:
             T value;
         };
 
@@ -259,776 +259,776 @@ namespace dpct
 
     // COPY from DPCT head files
     /// dim3 is used to store 3 component dimensions.
-    class dim3 {
-        public:
-        unsigned x, y, z;
+    वर्ग dim3 {
+        सार्वजनिक:
+        अचिह्नित x, y, z;
 
-        constexpr dim3(unsigned x = 1, unsigned y = 1, unsigned z = 1)
+        constexpr dim3(अचिह्नित x = 1, अचिह्नित y = 1, अचिह्नित z = 1)
             : x(x), y(y), z(z) {}
 
-        dim3(const sycl::id<3> &r) : dim3(r[2], r[1], r[0]) {}
+        dim3(ध्रुव sycl::id<3> &r) : dim3(r[2], r[1], r[0]) {}
 
-        operator sycl::range<3>() const { return sycl::range<3>(z, y, x); }
+        संक्रियकः sycl::range<3>() ध्रुव { प्रत्यागम sycl::range<3>(z, y, x); }
     }; // namespace dim3
 
-    inline dim3 operator*(const dim3 &a, const dim3 &b) {
-    return dim3{a.x * b.x, a.y * b.y, a.z * b.z};
+    अन्तःस्थ dim3 संक्रियकः*(ध्रुव dim3 &a, ध्रुव dim3 &b) {
+    प्रत्यागम dim3{a.x * b.x, a.y * b.y, a.z * b.z};
     }
     // COPY from DPCT head files
 
 
     /// Pitched 2D/3D memory data.
-    class pitched_data
+    वर्ग pitched_दत्त
     {
-    public:
-        pitched_data() : pitched_data(nullptr, 0, 0, 0) {}
-        pitched_data(void *data, size_t pitch, size_t x, size_t y)
-            : _data(data), _pitch(pitch), _x(x), _y(y) {}
+    सार्वजनिक:
+        pitched_दत्त() : pitched_दत्त(शून्यसूचकः, 0, 0, 0) {}
+        pitched_दत्त(शून्य *दत्त, size_t pitch, size_t x, size_t y)
+            : दत्त_2(दत्त), _pitch(pitch), _x(x), _y(y) {}
 
-        void *get_data_ptr() { return _data; }
-        void set_data_ptr(void *data) { _data = data; }
+        शून्य *get_दत्त_ptr() { प्रत्यागम दत्त_2; }
+        शून्य समुच्चयः_दत्त_ptr(शून्य *दत्त) { दत्त_2 = दत्त; }
 
-        size_t get_pitch() { return _pitch; }
-        void set_pitch(size_t pitch) { _pitch = pitch; }
+        size_t get_pitch() { प्रत्यागम _pitch; }
+        शून्य समुच्चयः_pitch(size_t pitch) { _pitch = pitch; }
 
-        size_t get_x() { return _x; }
-        void set_x(size_t x) { _x = x; }
+        size_t get_x() { प्रत्यागम _x; }
+        शून्य समुच्चयः_x(size_t x) { _x = x; }
 
-        size_t get_y() { return _y; }
-        void set_y(size_t y) { _y = y; }
+        size_t get_y() { प्रत्यागम _y; }
+        शून्य समुच्चयः_y(size_t y) { _y = y; }
 
-    private:
-        void *_data;
+    गुप्त:
+        शून्य *दत्त_2;
         size_t _pitch, _x, _y;
     };
 
-    class device_info
+    वर्ग device_info
     {
-    public:
+    सार्वजनिक:
         // get interface
-        const char *get_name() const { return _name; }
-        char *get_name() { return _name; }
-        template <typename WorkItemSizesTy = sycl::range<3>,
+        ध्रुव वर्ण *get_name() ध्रुव { प्रत्यागम _name; }
+        वर्ण *get_name() { प्रत्यागम _name; }
+        प्रतिरूपम् <प्रकारनाम WorkItemSizesTy = sycl::range<3>,
                   std::enable_if_t<std::is_same_v<WorkItemSizesTy, sycl::range<3>> ||
-                                       std::is_same_v<WorkItemSizesTy, int *>,
-                                   int> = 0>
-        auto get_max_work_item_sizes() const
+                                       std::is_same_v<WorkItemSizesTy, पूर्णाङ्क *>,
+                                   पूर्णाङ्क> = 0>
+        स्वचालित get_max_work_item_sizes() ध्रुव
         {
-            if constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)
-                return sycl::range<3>(_max_work_item_sizes_i[0],
+            यदि constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)
+                प्रत्यागम sycl::range<3>(_max_work_item_sizes_i[0],
                                       _max_work_item_sizes_i[1],
                                       _max_work_item_sizes_i[2]);
-            else
+            अन्यथा
             {
-                return _max_work_item_sizes_i;
+                प्रत्यागम _max_work_item_sizes_i;
             }
         }
-        template <typename WorkItemSizesTy = sycl::range<3>,
+        प्रतिरूपम् <प्रकारनाम WorkItemSizesTy = sycl::range<3>,
                   std::enable_if_t<std::is_same_v<WorkItemSizesTy, sycl::range<3>> ||
-                                       std::is_same_v<WorkItemSizesTy, int *>,
-                                   int> = 0>
-        auto get_max_work_item_sizes()
+                                       std::is_same_v<WorkItemSizesTy, पूर्णाङ्क *>,
+                                   पूर्णाङ्क> = 0>
+        स्वचालित get_max_work_item_sizes()
         {
-            if constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)
-                return sycl::range<3>(_max_work_item_sizes_i[0],
+            यदि constexpr (std::is_same_v<WorkItemSizesTy, sycl::range<3>>)
+                प्रत्यागम sycl::range<3>(_max_work_item_sizes_i[0],
                                       _max_work_item_sizes_i[1],
                                       _max_work_item_sizes_i[2]);
-            else
+            अन्यथा
             {
-                return _max_work_item_sizes_i;
+                प्रत्यागम _max_work_item_sizes_i;
             }
         }
-        bool get_host_unified_memory() const { return _host_unified_memory; }
-        int get_major_version() const { return _major; }
-        int get_minor_version() const { return _minor; }
-        int get_integrated() const { return _integrated; }
-        int get_max_clock_frequency() const { return _frequency; }
-        int get_max_compute_units() const { return _max_compute_units; }
-        int get_max_work_group_size() const { return _max_work_group_size; }
-        int get_max_sub_group_size() const { return _max_sub_group_size; }
-        int get_max_work_items_per_compute_unit() const
+        तार्किक get_host_unified_स्मृतिः() ध्रुव { प्रत्यागम host_unified_स्मृतिः; }
+        पूर्णाङ्क get_major_संस्करणम्() ध्रुव { प्रत्यागम _major; }
+        पूर्णाङ्क get_minor_संस्करणम्() ध्रुव { प्रत्यागम _minor; }
+        पूर्णाङ्क get_integrated() ध्रुव { प्रत्यागम _integrated; }
+        पूर्णाङ्क get_max_clock_frequency() ध्रुव { प्रत्यागम _frequency; }
+        पूर्णाङ्क get_max_compute_units() ध्रुव { प्रत्यागम _max_compute_units; }
+        पूर्णाङ्क get_max_work_गणः_आकार() ध्रुव { प्रत्यागम max_work_गणः_आकार_2; }
+        पूर्णाङ्क get_max_sub_गणः_आकार() ध्रुव { प्रत्यागम max_sub_गणः_आकार; }
+        पूर्णाङ्क get_max_work_वस्तूनि_प्रत्येकम्_compute_unit() ध्रुव
         {
-            return _max_work_items_per_compute_unit;
+            प्रत्यागम max_work_वस्तूनि_प्रत्येकम्_compute_unit;
         }
-        int get_max_register_size_per_work_group() const
+        पूर्णाङ्क get_max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः() ध्रुव
         {
-            return _max_register_size_per_work_group;
+            प्रत्यागम max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः;
         }
-        template <typename NDRangeSizeTy = size_t *,
-                  std::enable_if_t<std::is_same_v<NDRangeSizeTy, size_t *> ||
-                                       std::is_same_v<NDRangeSizeTy, int *>,
-                                   int> = 0>
-        auto get_max_nd_range_size() const
+        प्रतिरूपम् <प्रकारनाम NDRange_आकार_Ty = size_t *,
+                  std::enable_if_t<std::is_same_v<NDRange_आकार_Ty, size_t *> ||
+                                       std::is_same_v<NDRange_आकार_Ty, पूर्णाङ्क *>,
+                                   पूर्णाङ्क> = 0>
+        स्वचालित get_max_nd_range_आकार() ध्रुव
         {
-            if constexpr (std::is_same_v<NDRangeSizeTy, size_t *>)
-                return _max_nd_range_size;
-            else
-                return _max_nd_range_size_i;
+            यदि constexpr (std::is_same_v<NDRange_आकार_Ty, size_t *>)
+                प्रत्यागम max_nd_range_आकार;
+            अन्यथा
+                प्रत्यागम max_nd_range_आकार_i;
         }
-        template <typename NDRangeSizeTy = size_t *,
-                  std::enable_if_t<std::is_same_v<NDRangeSizeTy, size_t *> ||
-                                       std::is_same_v<NDRangeSizeTy, int *>,
-                                   int> = 0>
-        auto get_max_nd_range_size()
+        प्रतिरूपम् <प्रकारनाम NDRange_आकार_Ty = size_t *,
+                  std::enable_if_t<std::is_same_v<NDRange_आकार_Ty, size_t *> ||
+                                       std::is_same_v<NDRange_आकार_Ty, पूर्णाङ्क *>,
+                                   पूर्णाङ्क> = 0>
+        स्वचालित get_max_nd_range_आकार()
         {
-            if constexpr (std::is_same_v<NDRangeSizeTy, size_t *>)
-                return _max_nd_range_size;
-            else
-                return _max_nd_range_size_i;
+            यदि constexpr (std::is_same_v<NDRange_आकार_Ty, size_t *>)
+                प्रत्यागम max_nd_range_आकार;
+            अन्यथा
+                प्रत्यागम max_nd_range_आकार_i;
         }
-        size_t get_global_mem_size() const { return _global_mem_size; }
-        size_t get_local_mem_size() const { return _local_mem_size; }
-        size_t get_max_mem_alloc_size() const { return _max_mem_alloc_size; }
+        size_t get_global_mem_आकार() ध्रुव { प्रत्यागम global_mem_आकार_2; }
+        size_t get_local_mem_आकार() ध्रुव { प्रत्यागम local_mem_आकार; }
+        size_t get_max_mem_alloc_आकार() ध्रुव { प्रत्यागम max_mem_alloc_आकार; }
         /// Returns the maximum clock rate of device's global memory in kHz. If
         /// compiler does not support this API then returns default value 3200000 kHz.
-        unsigned int get_memory_clock_rate() const { return _memory_clock_rate; }
+        अचिह्नित पूर्णाङ्क get_स्मृतिः_clock_दरः() ध्रुव { प्रत्यागम स्मृतिः_clock_दरः; }
         /// Returns the maximum bus width between device and memory in bits. If
         /// compiler does not support this API then returns default value 64 bits.
-        unsigned int get_memory_bus_width() const { return _memory_bus_width; }
-        uint32_t get_device_id() const { return _device_id; }
-        std::array<unsigned char, 16> get_uuid() const { return _uuid; }
+        अचिह्नित पूर्णाङ्क get_स्मृतिः_bus_विस्तारः() ध्रुव { प्रत्यागम स्मृतिः_bus_विस्तारः; }
+        uint32_t get_device_id() ध्रुव { प्रत्यागम _device_id; }
+        std::array<अचिह्नित वर्ण, 16> get_uuid() ध्रुव { प्रत्यागम _uuid; }
         /// Returns global memory cache size in bytes.
-        unsigned int get_global_mem_cache_size() const
+        अचिह्नित पूर्णाङ्क get_global_mem_cache_आकार() ध्रुव
         {
-            return _global_mem_cache_size;
+            प्रत्यागम global_mem_cache_आकार;
         }
 
         // set interface
-        void set_name(const char *name)
+        शून्य समुच्चयः_name(ध्रुव वर्ण *name)
         {
-            size_t length = strlen(name);
-            if (length < 256)
+            size_t दीर्घता = वाक्यदैर्घ्यम्(name);
+            यदि (दीर्घता < 256)
             {
-                std::memcpy(_name, name, length + 1);
+                std::स्मृतिं_प्रतिलिख(_name, name, दीर्घता + 1);
             }
-            else
+            अन्यथा
             {
-                std::memcpy(_name, name, 255);
+                std::स्मृतिं_प्रतिलिख(_name, name, 255);
                 _name[255] = '\0';
             }
         }
-        void set_max_work_item_sizes(const sycl::range<3> max_work_item_sizes)
+        शून्य समुच्चयः_max_work_item_sizes(ध्रुव sycl::range<3> max_work_item_sizes)
         {
-            for (int i = 0; i < 3; ++i)
+            प्रति (पूर्णाङ्क i = 0; i < 3; ++i)
                 _max_work_item_sizes_i[i] = max_work_item_sizes[i];
         }
-        [[deprecated]] void
-        set_max_work_item_sizes(const sycl::id<3> max_work_item_sizes)
+        [[deprecated]] शून्य
+        समुच्चयः_max_work_item_sizes(ध्रुव sycl::id<3> max_work_item_sizes)
         {
-            for (int i = 0; i < 3; ++i)
+            प्रति (पूर्णाङ्क i = 0; i < 3; ++i)
             {
                 _max_work_item_sizes_i[i] = max_work_item_sizes[i];
             }
         }
-        void set_host_unified_memory(bool host_unified_memory)
+        शून्य समुच्चयः_host_unified_स्मृतिः(तार्किक host_unified_स्मृतिः_2)
         {
-            _host_unified_memory = host_unified_memory;
+            host_unified_स्मृतिः = host_unified_स्मृतिः_2;
         }
-        void set_major_version(int major) { _major = major; }
-        void set_minor_version(int minor) { _minor = minor; }
-        void set_integrated(int integrated) { _integrated = integrated; }
-        void set_max_clock_frequency(int frequency) { _frequency = frequency; }
-        void set_max_compute_units(int max_compute_units)
+        शून्य समुच्चयः_major_संस्करणम्(पूर्णाङ्क major) { _major = major; }
+        शून्य समुच्चयः_minor_संस्करणम्(पूर्णाङ्क minor) { _minor = minor; }
+        शून्य समुच्चयः_integrated(पूर्णाङ्क integrated) { _integrated = integrated; }
+        शून्य समुच्चयः_max_clock_frequency(पूर्णाङ्क frequency) { _frequency = frequency; }
+        शून्य समुच्चयः_max_compute_units(पूर्णाङ्क max_compute_units)
         {
             _max_compute_units = max_compute_units;
         }
-        void set_global_mem_size(size_t global_mem_size)
+        शून्य समुच्चयः_global_mem_आकार(size_t global_mem_आकार)
         {
-            _global_mem_size = global_mem_size;
+            global_mem_आकार_2 = global_mem_आकार;
         }
-        void set_local_mem_size(size_t local_mem_size)
+        शून्य समुच्चयः_local_mem_आकार(size_t local_mem_आकार_2)
         {
-            _local_mem_size = local_mem_size;
+            local_mem_आकार = local_mem_आकार_2;
         }
-        void set_max_mem_alloc_size(size_t max_mem_alloc_size)
+        शून्य समुच्चयः_max_mem_alloc_आकार(size_t max_mem_alloc_आकार_2)
         {
-            _max_mem_alloc_size = max_mem_alloc_size;
+            max_mem_alloc_आकार = max_mem_alloc_आकार_2;
         }
-        void set_max_work_group_size(int max_work_group_size)
+        शून्य समुच्चयः_max_work_गणः_आकार(पूर्णाङ्क max_work_गणः_आकार)
         {
-            _max_work_group_size = max_work_group_size;
+            max_work_गणः_आकार_2 = max_work_गणः_आकार;
         }
-        void set_max_sub_group_size(int max_sub_group_size)
+        शून्य समुच्चयः_max_sub_गणः_आकार(पूर्णाङ्क max_sub_गणः_आकार_2)
         {
-            _max_sub_group_size = max_sub_group_size;
+            max_sub_गणः_आकार = max_sub_गणः_आकार_2;
         }
-        void
-        set_max_work_items_per_compute_unit(int max_work_items_per_compute_unit)
+        शून्य
+        समुच्चयः_max_work_वस्तूनि_प्रत्येकम्_compute_unit(पूर्णाङ्क max_work_वस्तूनि_प्रत्येकम्_compute_unit_2)
         {
-            _max_work_items_per_compute_unit = max_work_items_per_compute_unit;
+            max_work_वस्तूनि_प्रत्येकम्_compute_unit = max_work_वस्तूनि_प्रत्येकम्_compute_unit_2;
         }
-        void set_max_nd_range_size(int max_nd_range_size[])
+        शून्य समुच्चयः_max_nd_range_आकार(पूर्णाङ्क max_nd_range_आकार_2[])
         {
-            for (int i = 0; i < 3; i++)
+            प्रति (पूर्णाङ्क i = 0; i < 3; i++)
             {
-                _max_nd_range_size[i] = max_nd_range_size[i];
-                _max_nd_range_size_i[i] = max_nd_range_size[i];
+                max_nd_range_आकार[i] = max_nd_range_आकार_2[i];
+                max_nd_range_आकार_i[i] = max_nd_range_आकार_2[i];
             }
         }
-        void set_memory_clock_rate(unsigned int memory_clock_rate)
+        शून्य समुच्चयः_स्मृतिः_clock_दरः(अचिह्नित पूर्णाङ्क स्मृतिः_clock_दरः_2)
         {
-            _memory_clock_rate = memory_clock_rate;
+            स्मृतिः_clock_दरः = स्मृतिः_clock_दरः_2;
         }
-        void set_memory_bus_width(unsigned int memory_bus_width)
+        शून्य समुच्चयः_स्मृतिः_bus_विस्तारः(अचिह्नित पूर्णाङ्क स्मृतिः_bus_विस्तारः_2)
         {
-            _memory_bus_width = memory_bus_width;
+            स्मृतिः_bus_विस्तारः = स्मृतिः_bus_विस्तारः_2;
         }
-        void
-        set_max_register_size_per_work_group(int max_register_size_per_work_group)
+        शून्य
+        समुच्चयः_max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः(पूर्णाङ्क max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः_2)
         {
-            _max_register_size_per_work_group = max_register_size_per_work_group;
+            max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः = max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः_2;
         }
-        void set_device_id(uint32_t device_id)
+        शून्य समुच्चयः_device_id(uint32_t device_id)
         {
             _device_id = device_id;
         }
-        void set_uuid(std::array<unsigned char, 16> uuid)
+        शून्य समुच्चयः_uuid(std::array<अचिह्नित वर्ण, 16> uuid)
         {
             _uuid = std::move(uuid);
         }
-        void set_global_mem_cache_size(unsigned int global_mem_cache_size)
+        शून्य समुच्चयः_global_mem_cache_आकार(अचिह्नित पूर्णाङ्क global_mem_cache_आकार_2)
         {
-            _global_mem_cache_size = global_mem_cache_size;
+            global_mem_cache_आकार = global_mem_cache_आकार_2;
         }
 
-    private:
-        char _name[256];
-        int _max_work_item_sizes_i[3];
-        bool _host_unified_memory = false;
-        int _major;
-        int _minor;
-        int _integrated = 0;
-        int _frequency;
+    गुप्त:
+        वर्ण _name[256];
+        पूर्णाङ्क _max_work_item_sizes_i[3];
+        तार्किक host_unified_स्मृतिः = असत्य;
+        पूर्णाङ्क _major;
+        पूर्णाङ्क _minor;
+        पूर्णाङ्क _integrated = 0;
+        पूर्णाङ्क _frequency;
         // Set estimated value 3200000 kHz as default value.
-        unsigned int _memory_clock_rate = 3200000;
+        अचिह्नित पूर्णाङ्क स्मृतिः_clock_दरः = 3200000;
         // Set estimated value 64 bits as default value.
-        unsigned int _memory_bus_width = 64;
-        unsigned int _global_mem_cache_size;
-        int _max_compute_units;
-        int _max_work_group_size;
-        int _max_sub_group_size;
-        int _max_work_items_per_compute_unit;
-        int _max_register_size_per_work_group;
-        size_t _global_mem_size;
-        size_t _local_mem_size;
-        size_t _max_mem_alloc_size;
-        size_t _max_nd_range_size[3];
-        int _max_nd_range_size_i[3];
+        अचिह्नित पूर्णाङ्क स्मृतिः_bus_विस्तारः = 64;
+        अचिह्नित पूर्णाङ्क global_mem_cache_आकार;
+        पूर्णाङ्क _max_compute_units;
+        पूर्णाङ्क max_work_गणः_आकार_2;
+        पूर्णाङ्क max_sub_गणः_आकार;
+        पूर्णाङ्क max_work_वस्तूनि_प्रत्येकम्_compute_unit;
+        पूर्णाङ्क max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः;
+        size_t global_mem_आकार_2;
+        size_t local_mem_आकार;
+        size_t max_mem_alloc_आकार;
+        size_t max_nd_range_आकार[3];
+        पूर्णाङ्क max_nd_range_आकार_i[3];
         uint32_t _device_id;
-        std::array<unsigned char, 16> _uuid;
+        std::array<अचिह्नित वर्ण, 16> _uuid;
     };
 
-    static int get_major_version(const sycl::device &dev)
+    स्थिर पूर्णाङ्क get_major_संस्करणम्(ध्रुव sycl::device &dev)
     {
-        int major, minor;
-        detail::get_version(dev, major, minor);
-        return major;
+        पूर्णाङ्क major, minor;
+        detail::get_संस्करणम्(dev, major, minor);
+        प्रत्यागम major;
     }
 
-    static int get_minor_version(const sycl::device &dev)
+    स्थिर पूर्णाङ्क get_minor_संस्करणम्(ध्रुव sycl::device &dev)
     {
-        int major, minor;
-        detail::get_version(dev, major, minor);
-        return minor;
+        पूर्णाङ्क major, minor;
+        detail::get_संस्करणम्(dev, major, minor);
+        प्रत्यागम minor;
     }
 
-    static void get_device_info(device_info &out, const sycl::device &dev)
+    स्थिर शून्य get_device_info(device_info &बहिर्गमनम्, ध्रुव sycl::device &dev)
     {
         device_info prop;
-        prop.set_name(dev.get_info<sycl::info::device::name>().c_str());
+        prop.समुच्चयः_name(dev.get_info<sycl::info::device::name>().c_str());
 
-        int major, minor;
-        detail::get_version(dev, major, minor);
-        prop.set_major_version(major);
-        prop.set_minor_version(minor);
+        पूर्णाङ्क major, minor;
+        detail::get_संस्करणम्(dev, major, minor);
+        prop.समुच्चयः_major_संस्करणम्(major);
+        prop.समुच्चयः_minor_संस्करणम्(minor);
 
-        prop.set_max_work_item_sizes(
-#if (__SYCL_COMPILER_VERSION && __SYCL_COMPILER_VERSION < 20220902)
+        prop.समुच्चयः_max_work_item_sizes(
+#यदि (__SYCL_COMPILER_VERSION && __SYCL_COMPILER_VERSION < 20220902)
             // oneAPI DPC++ compiler older than 2022/09/02, where max_work_item_sizes
             // is an enum class element
             dev.get_info<sycl::info::device::max_work_item_sizes>());
-#else
+#अन्यथा
             // SYCL 2020-conformant code, max_work_item_sizes is a struct templated by
             // an int
             dev.get_info<sycl::info::device::max_work_item_sizes<3>>());
-#endif
-        prop.set_host_unified_memory(dev.has(sycl::aspect::usm_host_allocations));
+#यदि_अन्तः
+        prop.समुच्चयः_host_unified_स्मृतिः(dev.has(sycl::aspect::usm_host_allocations));
 
-        prop.set_max_clock_frequency(
+        prop.समुच्चयः_max_clock_frequency(
             dev.get_info<sycl::info::device::max_clock_frequency>() * 1000);
 
-        prop.set_max_compute_units(
+        prop.समुच्चयः_max_compute_units(
             dev.get_info<sycl::info::device::max_compute_units>());
-        prop.set_max_work_group_size(
-            dev.get_info<sycl::info::device::max_work_group_size>());
-        prop.set_global_mem_size(dev.get_info<sycl::info::device::global_mem_size>());
-        prop.set_local_mem_size(dev.get_info<sycl::info::device::local_mem_size>());
-        prop.set_max_mem_alloc_size(dev.get_info<sycl::info::device::max_mem_alloc_size>());
+        prop.समुच्चयः_max_work_गणः_आकार(
+            dev.get_info<sycl::info::device::max_work_गणः_आकार>());
+        prop.समुच्चयः_global_mem_आकार(dev.get_info<sycl::info::device::global_mem_आकार>());
+        prop.समुच्चयः_local_mem_आकार(dev.get_info<sycl::info::device::local_mem_आकार_2>());
+        prop.समुच्चयः_max_mem_alloc_आकार(dev.get_info<sycl::info::device::max_mem_alloc_आकार_2>());
 
-#if (defined(SYCL_EXT_INTEL_DEVICE_INFO) && SYCL_EXT_INTEL_DEVICE_INFO >= 6)
-        if (dev.has(sycl::aspect::ext_intel_memory_clock_rate))
+#यदि (defined(SYCL_EXT_INTEL_DEVICE_INFO) && SYCL_EXT_INTEL_DEVICE_INFO >= 6)
+        यदि (dev.has(sycl::aspect::ext_intel_स्मृतिः_clock_दरः))
         {
-            unsigned int tmp =
-                dev.get_info<sycl::ext::intel::info::device::memory_clock_rate>();
-            if (tmp != 0)
-                prop.set_memory_clock_rate(1000 * tmp);
+            अचिह्नित पूर्णाङ्क tmp =
+                dev.get_info<sycl::ext::intel::info::device::स्मृतिः_clock_दरः_2>();
+            यदि (tmp != 0)
+                prop.समुच्चयः_स्मृतिः_clock_दरः(1000 * tmp);
         }
-        if (dev.has(sycl::aspect::ext_intel_memory_bus_width))
+        यदि (dev.has(sycl::aspect::ext_intel_स्मृतिः_bus_विस्तारः))
         {
-            prop.set_memory_bus_width(
-                dev.get_info<sycl::ext::intel::info::device::memory_bus_width>());
+            prop.समुच्चयः_स्मृतिः_bus_विस्तारः(
+                dev.get_info<sycl::ext::intel::info::device::स्मृतिः_bus_विस्तारः_2>());
         }
-        if (dev.has(sycl::aspect::ext_intel_device_id))
+        यदि (dev.has(sycl::aspect::ext_intel_device_id))
         {
-            prop.set_device_id(
+            prop.समुच्चयः_device_id(
                 dev.get_info<sycl::ext::intel::info::device::device_id>());
         }
-        if (dev.has(sycl::aspect::ext_intel_device_info_uuid))
+        यदि (dev.has(sycl::aspect::ext_intel_device_info_uuid))
         {
-            prop.set_uuid(dev.get_info<sycl::ext::intel::info::device::uuid>());
+            prop.समुच्चयः_uuid(dev.get_info<sycl::ext::intel::info::device::uuid>());
         }
-#elif defined(_MSC_VER) && !defined(__clang__)
-#pragma message("get_device_info: querying memory_clock_rate and \
-        memory_bus_width are not supported by the compiler used. \
-        Use 3200000 kHz as memory_clock_rate default value. \
-        Use 64 bits as memory_bus_width default value.")
-#else
-#warning "get_device_info: querying memory_clock_rate and \
-        memory_bus_width are not supported by the compiler used. \
-        Use 3200000 kHz as memory_clock_rate default value. \
-        Use 64 bits as memory_bus_width default value."
-#endif
+#नोचेद्यदि defined(_MSC_VER) && !defined(__clang__)
+#निर्देशः सन्देशः("get_device_info: querying स्मृतिः_clock_दरः_2 and \
+        स्मृतिः_bus_विस्तारः_2 are not supported by the compiler प्रयुक्तम्. \
+        Use 3200000 kHz as स्मृतिः_clock_दरः_2 स्वभाव value. \
+        Use 64 द्वयङ्काः as स्मृतिः_bus_विस्तारः_2 स्वभाव value.")
+#अन्यथा
+#warning "get_device_info: querying स्मृतिः_clock_दरः_2 and \
+        स्मृतिः_bus_विस्तारः_2 are not supported by the compiler प्रयुक्तम्. \
+        Use 3200000 kHz as स्मृतिः_clock_दरः_2 स्वभाव value. \
+        Use 64 द्वयङ्काः as स्मृतिः_bus_विस्तारः_2 स्वभाव value."
+#यदि_अन्तः
 
-        size_t max_sub_group_size = 1;
-        std::vector<size_t> sub_group_sizes =
-            dev.get_info<sycl::info::device::sub_group_sizes>();
+        size_t max_sub_गणः_आकार_2 = 1;
+        std::vector<size_t> sub_गणः_sizes =
+            dev.get_info<sycl::info::device::sub_गणः_sizes>();
 
-        for (const auto &sub_group_size : sub_group_sizes)
+        प्रति (ध्रुव स्वचालित &sub_गणः_आकार : sub_गणः_sizes)
         {
-            if (max_sub_group_size < sub_group_size)
-                max_sub_group_size = sub_group_size;
+            यदि (max_sub_गणः_आकार_2 < sub_गणः_आकार)
+                max_sub_गणः_आकार_2 = sub_गणः_आकार;
         }
 
-        prop.set_max_sub_group_size(max_sub_group_size);
+        prop.समुच्चयः_max_sub_गणः_आकार(max_sub_गणः_आकार_2);
 
-        prop.set_max_work_items_per_compute_unit(
-            dev.get_info<sycl::info::device::max_work_group_size>());
-        int max_nd_range_size[] = {0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF};
-        prop.set_max_nd_range_size(max_nd_range_size);
+        prop.समुच्चयः_max_work_वस्तूनि_प्रत्येकम्_compute_unit(
+            dev.get_info<sycl::info::device::max_work_गणः_आकार>());
+        पूर्णाङ्क max_nd_range_आकार_2[] = {0x7FFFFFFF, 0x7FFFFFFF, 0x7FFFFFFF};
+        prop.समुच्चयः_max_nd_range_आकार(max_nd_range_आकार_2);
 
         // Estimates max register size per work group, feel free to update the value
         // according to device properties.
-        prop.set_max_register_size_per_work_group(65536);
+        prop.समुच्चयः_max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः(65536);
 
-        prop.set_global_mem_cache_size(
-            dev.get_info<sycl::info::device::global_mem_cache_size>());
-        out = prop;
+        prop.समुच्चयः_global_mem_cache_आकार(
+            dev.get_info<sycl::info::device::global_mem_cache_आकार_2>());
+        बहिर्गमनम् = prop;
     }
 
     /// dpct device extension
-    class device_ext : public sycl::device {
-      typedef std::mutex mutex_type;
+    वर्ग device_ext : सार्वजनिक sycl::device {
+      प्रकारनिर्देश std::mutex mutex_type;
 
-     public:
+     सार्वजनिक:
       device_ext() : sycl::device() {}
       ~device_ext() {
-        std::lock_guard<mutex_type> lock(m_mutex);
+        std::lock_guard<mutex_type> तालकम्(m_mutex);
         clear_queues();
       }
-      device_ext(const sycl::device &base) : sycl::device(base) {
-        std::lock_guard<mutex_type> lock(m_mutex);
+      device_ext(ध्रुव sycl::device &आधारः) : sycl::device(आधारः) {
+        std::lock_guard<mutex_type> तालकम्(m_mutex);
         init_queues();
       }
 
-      int is_native_atomic_supported() { return 0; }
-      int get_major_version() const { return dpct::get_major_version(*this); }
+      पूर्णाङ्क is_native_atomic_supported() { प्रत्यागम 0; }
+      पूर्णाङ्क get_major_संस्करणम्() ध्रुव { प्रत्यागम dpct::get_major_संस्करणम्(*एतत्); }
 
-      int get_minor_version() const { return dpct::get_minor_version(*this); }
+      पूर्णाङ्क get_minor_संस्करणम्() ध्रुव { प्रत्यागम dpct::get_minor_संस्करणम्(*एतत्); }
 
-      int get_max_compute_units() const {
-        return get_device_info().get_max_compute_units();
+      पूर्णाङ्क get_max_compute_units() ध्रुव {
+        प्रत्यागम get_device_info().get_max_compute_units();
       }
 
       /// Return the maximum clock frequency of this device in KHz.
-      int get_max_clock_frequency() const {
-        return get_device_info().get_max_clock_frequency();
+      पूर्णाङ्क get_max_clock_frequency() ध्रुव {
+        प्रत्यागम get_device_info().get_max_clock_frequency();
       }
 
-      int get_integrated() const { return get_device_info().get_integrated(); }
+      पूर्णाङ्क get_integrated() ध्रुव { प्रत्यागम get_device_info().get_integrated(); }
 
-      int get_max_sub_group_size() const {
-        return get_device_info().get_max_sub_group_size();
+      पूर्णाङ्क get_max_sub_गणः_आकार() ध्रुव {
+        प्रत्यागम get_device_info().get_max_sub_गणः_आकार();
       }
 
-      int get_max_register_size_per_work_group() const {
-        return get_device_info().get_max_register_size_per_work_group();
+      पूर्णाङ्क get_max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः() ध्रुव {
+        प्रत्यागम get_device_info().get_max_पञ्जिकाकोशः_आकार_प्रत्येकम्_work_गणः();
       }
 
-      int get_max_work_group_size() const {
-        return get_device_info().get_max_work_group_size();
+      पूर्णाङ्क get_max_work_गणः_आकार() ध्रुव {
+        प्रत्यागम get_device_info().get_max_work_गणः_आकार();
       }
 
-      int get_mem_base_addr_align() const {
-        return get_info<sycl::info::device::mem_base_addr_align>();
+      पूर्णाङ्क get_mem_आधारः_addr_align() ध्रुव {
+        प्रत्यागम get_info<sycl::info::device::mem_आधारः_addr_align>();
       }
 
-      size_t get_global_mem_size() const {
-        return get_device_info().get_global_mem_size();
+      size_t get_global_mem_आकार() ध्रुव {
+        प्रत्यागम get_device_info().get_global_mem_आकार();
       }
 
-      size_t get_max_mem_alloc_size() const {
-        return get_device_info().get_max_mem_alloc_size();
+      size_t get_max_mem_alloc_आकार() ध्रुव {
+        प्रत्यागम get_device_info().get_max_mem_alloc_आकार();
       }
 
       /// Get the number of bytes of free and total memory on the SYCL device.
       /// \param [out] free_memory The number of bytes of free memory on the
       /// SYCL device. \param [out] total_memory The number of bytes of total
       /// memory on the SYCL device.
-      void get_memory_info(size_t &free_memory, size_t &total_memory) {
-        total_memory = get_device_info().get_global_mem_size();
-        const char *warning_info =
+      शून्य get_स्मृतिः_info(size_t &free_स्मृतिः, size_t &योग_स्मृतिः) {
+        योग_स्मृतिः = get_device_info().get_global_mem_आकार();
+        ध्रुव वर्ण *warning_info =
             "get_memory_info: [warning] ext_intel_free_memory is not "
             "supported (export/set ZES_ENABLE_SYSMAN=1 to support), "
             "use total memory as free memory";
-#if (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
-        if (!has(sycl::aspect::ext_intel_free_memory)) {
-          std::cerr << warning_info << std::endl;
-          free_memory = total_memory;
-        } else {
-          free_memory = get_info<sycl::ext::intel::info::device::free_memory>();
+#यदि (defined(__SYCL_COMPILER_VERSION) && __SYCL_COMPILER_VERSION >= 20221105)
+        यदि (!has(sycl::aspect::ext_intel_free_स्मृतिः)) {
+          std::cerr << warning_info << std::पङ्क्त्यन्तः;
+          free_स्मृतिः = योग_स्मृतिः;
+        } अन्यथा {
+          free_स्मृतिः = get_info<sycl::ext::intel::info::device::free_स्मृतिः>();
         }
-#else
-        std::cerr << warning_info << std::endl;
-        free_memory = total_memory;
-#if defined(_MSC_VER) && !defined(__clang__)
-#pragma message("Querying the number of bytes of free memory is not supported")
-#else
+#अन्यथा
+        std::cerr << warning_info << std::पङ्क्त्यन्तः;
+        free_स्मृतिः = योग_स्मृतिः;
+#यदि defined(_MSC_VER) && !defined(__clang__)
+#निर्देशः सन्देशः("Querying the number of bytes of free memory is not supported")
+#अन्यथा
 #warning "Querying the number of bytes of free memory is not supported"
-#endif
-#endif
+#यदि_अन्तः
+#यदि_अन्तः
       }
 
-      void get_device_info(device_info &out) const {
-        dpct::get_device_info(out, *this);
+      शून्य get_device_info(device_info &बहिर्गमनम्) ध्रुव {
+        dpct::get_device_info(बहिर्गमनम्, *एतत्);
       }
 
-      device_info get_device_info() const {
+      device_info get_device_info() ध्रुव {
         device_info prop;
-        dpct::get_device_info(prop, *this);
-        return prop;
+        dpct::get_device_info(prop, *एतत्);
+        प्रत्यागम prop;
       }
 
-      void reset() {
-        std::lock_guard<mutex_type> lock(m_mutex);
+      शून्य reset() {
+        std::lock_guard<mutex_type> तालकम्(m_mutex);
         clear_queues();
         init_queues();
       }
 
-      sycl::queue &in_order_queue() { return _q_in_order; }
+      sycl::queue &अन्तर्_क्रमः_queue() { प्रत्यागम q_अन्तर्_क्रमः; }
 
-      sycl::queue &out_of_order_queue() { return _q_out_of_order; }
+      sycl::queue &बहिर्गमनम्_सम्बन्धि_क्रमः_queue() { प्रत्यागम q_बहिर्गमनम्_सम्बन्धि_क्रमः; }
 
-      sycl::queue &default_queue() { return in_order_queue(); }
+      sycl::queue &default_queue() { प्रत्यागम अन्तर्_क्रमः_queue(); }
 
-      void queues_wait_and_throw() {
-        std::unique_lock<mutex_type> lock(m_mutex);
-        lock.unlock();
-        for (auto &q : _queues) {
+      शून्य queues_wait_and_throw() {
+        std::unique_lock<mutex_type> तालकम्(m_mutex);
+        तालकम्.unlock();
+        प्रति (स्वचालित &q : _queues) {
             q.wait_and_throw();
         }
         // Guard the destruct of current_queues to make sure the ref count is
         // safe.
-        lock.lock();
+        तालकम्.तालकम्();
       }
 
-      sycl::queue create_queue(bool enable_exception_handler = false) {
-        return create_in_order_queue(enable_exception_handler);
+      sycl::queue create_queue(तार्किक enable_exception_handler = असत्य) {
+        प्रत्यागम create_अन्तर्_क्रमः_queue(enable_exception_handler);
       }
 
       sycl::queue create_queue(sycl::device device,
-                               bool enable_exception_handler = false) {
-        return create_in_order_queue(device, enable_exception_handler);
+                               तार्किक enable_exception_handler = असत्य) {
+        प्रत्यागम create_अन्तर्_क्रमः_queue(device, enable_exception_handler);
       }
 
-      sycl::queue create_in_order_queue(bool enable_exception_handler = false) {
-        std::lock_guard<mutex_type> lock(m_mutex);
-        return create_queue_impl(enable_exception_handler,
-                                 sycl::property::queue::in_order());
+      sycl::queue create_अन्तर्_क्रमः_queue(तार्किक enable_exception_handler = असत्य) {
+        std::lock_guard<mutex_type> तालकम्(m_mutex);
+        प्रत्यागम create_queue_impl(enable_exception_handler,
+                                 sycl::property::queue::अन्तर्_क्रमः());
       }
 
-      sycl::queue create_in_order_queue(sycl::device device,
-                                        bool enable_exception_handler = false) {
-        std::lock_guard<mutex_type> lock(m_mutex);
-        return create_queue_impl(device, enable_exception_handler,
-                                 sycl::property::queue::in_order());
+      sycl::queue create_अन्तर्_क्रमः_queue(sycl::device device,
+                                        तार्किक enable_exception_handler = असत्य) {
+        std::lock_guard<mutex_type> तालकम्(m_mutex);
+        प्रत्यागम create_queue_impl(device, enable_exception_handler,
+                                 sycl::property::queue::अन्तर्_क्रमः());
       }
 
-      sycl::queue create_out_of_order_queue(
-          bool enable_exception_handler = false) {
-        std::lock_guard<mutex_type> lock(m_mutex);
-        return create_queue_impl(enable_exception_handler);
+      sycl::queue create_बहिर्गमनम्_सम्बन्धि_क्रमः_queue(
+          तार्किक enable_exception_handler = असत्य) {
+        std::lock_guard<mutex_type> तालकम्(m_mutex);
+        प्रत्यागम create_queue_impl(enable_exception_handler);
       }
 
-      void destroy_queue(sycl::queue queue) {
-        std::lock_guard<mutex_type> lock(m_mutex);
+      शून्य destroy_queue(sycl::queue queue) {
+        std::lock_guard<mutex_type> तालकम्(m_mutex);
         _queues.erase(std::remove_if(_queues.begin(), _queues.end(),
-                                    [=](const sycl::queue &q) -> bool
+                                    [=](ध्रुव sycl::queue &q) -> तार्किक
                                     {
-                                        return q == queue;
+                                        प्रत्यागम q == queue;
                                     }),
                     _queues.end());
       }
-      void set_saved_queue(sycl::queue q) {
-        std::lock_guard<mutex_type> lock(m_mutex);
+      शून्य समुच्चयः_saved_queue(sycl::queue q) {
+        std::lock_guard<mutex_type> तालकम्(m_mutex);
         _saved_queue = q;
       }
-      sycl::queue get_saved_queue() const {
-        std::lock_guard<mutex_type> lock(m_mutex);
-        return _saved_queue;
+      sycl::queue get_saved_queue() ध्रुव {
+        std::lock_guard<mutex_type> तालकम्(m_mutex);
+        प्रत्यागम _saved_queue;
       }
 
-     private:
-      void clear_queues() { _queues.clear(); }
+     गुप्त:
+      शून्य clear_queues() { _queues.clear(); }
 
-      void init_queues() {
-        _q_in_order =
-            create_queue_impl(true, sycl::property::queue::in_order());
-        _q_out_of_order = create_queue_impl(true);
+      शून्य init_queues() {
+        q_अन्तर्_क्रमः =
+            create_queue_impl(सत्य, sycl::property::queue::अन्तर्_क्रमः());
+        q_बहिर्गमनम्_सम्बन्धि_क्रमः = create_queue_impl(सत्य);
         _saved_queue = default_queue();
       }
 
       /// Caller should acquire resource \p m_mutex before calling this
       /// function.
-      template <class... Properties>
-      sycl::queue create_queue_impl(bool enable_exception_handler,
+      प्रतिरूपम् <वर्ग... Properties>
+      sycl::queue create_queue_impl(तार्किक enable_exception_handler,
                                     Properties... properties) {
         sycl::async_handler eh = {};
-        if (enable_exception_handler) {
+        यदि (enable_exception_handler) {
           eh = exception_handler;
         }
         _queues.push_back(sycl::queue(
-            *this, eh,
+            *एतत्, eh,
             sycl::property_list(
-#ifdef DPCT_PROFILING_ENABLED
+#यदि_परिभाषितम् DPCT_PROFILING_ENABLED
                 sycl::property::queue::enable_profiling(),
-#endif
+#यदि_अन्तः
                 properties...)));
 
-        return _queues.back();
+        प्रत्यागम _queues.back();
       }
 
-      template <class... Properties>
+      प्रतिरूपम् <वर्ग... Properties>
       sycl::queue create_queue_impl(sycl::device device,
-                                    bool enable_exception_handler,
+                                    तार्किक enable_exception_handler,
                                     Properties... properties) {
         sycl::async_handler eh = {};
-        if (enable_exception_handler) {
+        यदि (enable_exception_handler) {
           eh = exception_handler;
         }
         _queues.push_back(sycl::queue(
             device, eh,
                         sycl::property_list(
-#ifdef DPCT_PROFILING_ENABLED
+#यदि_परिभाषितम् DPCT_PROFILING_ENABLED
                             sycl::property::queue::enable_profiling(),
-#endif
+#यदि_अन्तः
                             properties...)));
 
-        return _queues.back();
+        प्रत्यागम _queues.back();
       }
 
-      void get_version(int &major, int &minor) const {
-        detail::get_version(*this, major, minor);
+      शून्य get_संस्करणम्(पूर्णाङ्क &major, पूर्णाङ्क &minor) ध्रुव {
+        detail::get_संस्करणम्(*एतत्, major, minor);
       }
-      sycl::queue _q_in_order, _q_out_of_order;
+      sycl::queue q_अन्तर्_क्रमः, q_बहिर्गमनम्_सम्बन्धि_क्रमः;
       sycl::queue _saved_queue;
       std::vector<sycl::queue> _queues;
-      mutable mutex_type m_mutex;
+      परिवर्तनीय mutex_type m_mutex;
     };
 
 
     /// device manager
-    class dev_mgr
+    वर्ग dev_mgr
     {
-    public:
+    सार्वजनिक:
         device_ext &current_device()
         {
-            unsigned int dev_id = current_device_id();
+            अचिह्नित पूर्णाङ्क dev_id = current_device_id();
             check_id(dev_id);
-            return *_devs[dev_id];
+            प्रत्यागम *_devs[dev_id];
         }
-        device_ext &cpu_device() const
+        device_ext &cpu_device() ध्रुव
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
-            if (_cpu_device == -1)
+            std::lock_guard<std::recursive_mutex> तालकम्(m_mutex);
+            यदि (_cpu_device == -1)
             {
-                throw std::runtime_error("no valid cpu device");
+                क्षिप std::runtime_error("no valid cpu device");
             }
-            else
+            अन्यथा
             {
-                return *_devs[_cpu_device];
+                प्रत्यागम *_devs[_cpu_device];
             }
         }
-        device_ext &get_device(unsigned int id) const
+        device_ext &get_device(अचिह्नित पूर्णाङ्क id) ध्रुव
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> तालकम्(m_mutex);
             check_id(id);
-            return *_devs[id];
+            प्रत्यागम *_devs[id];
         }
-        unsigned int current_device_id() const
+        अचिह्नित पूर्णाङ्क current_device_id() ध्रुव
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
-            auto it = _thread2dev_map.find(get_tid());
-            if (it != _thread2dev_map.end())
-                return it->second;
-            return DEFAULT_DEVICE_ID;
+            std::lock_guard<std::recursive_mutex> तालकम्(m_mutex);
+            स्वचालित it = _thread2dev_map.find(get_tid());
+            यदि (it != _thread2dev_map.end())
+                प्रत्यागम it->second;
+            प्रत्यागम DEFAULT_DEVICE_ID;
         }
 
         /// Select device with a device ID.
         /// \param [in] id The id of the device which can
         /// be obtained through get_device_id(const sycl::device).
-        void select_device(unsigned int id)
+        शून्य select_device(अचिह्नित पूर्णाङ्क id)
         {
-            std::lock_guard<std::recursive_mutex> lock(m_mutex);
+            std::lock_guard<std::recursive_mutex> तालकम्(m_mutex);
             check_id(id);
             _thread2dev_map[get_tid()] = id;
         }
-        unsigned int device_count() { return _devs.size(); }
+        अचिह्नित पूर्णाङ्क device_गणनम्() { प्रत्यागम _devs.size(); }
 
-        unsigned int get_device_id(const sycl::device &dev)
+        अचिह्नित पूर्णाङ्क get_device_id(ध्रुव sycl::device &dev)
         {
-            unsigned int id = 0;
-            for (auto &dev_item : _devs)
+            अचिह्नित पूर्णाङ्क id = 0;
+            प्रति (स्वचालित &dev_item : _devs)
             {
-                if (*dev_item == dev)
+                यदि (*dev_item == dev)
                 {
-                    return id;
+                    प्रत्यागम id;
                 }
                 id++;
             }
-            return -1;
+            प्रत्यागम -1;
         }
 
-        inline std::string get_preferred_gpu_platform_name() {
-            std::string result;
+        अन्तःस्थ std::string get_preferred_gpu_platform_name() {
+            std::string परिणाम;
 
             std::string filter = "";
-            char* env = getenv("ONEAPI_DEVICE_SELECTOR");
-            if (env) {
-                if (std::strstr(env, "level_zero")) {
+            वर्ण* env = getenv("ONEAPI_DEVICE_SELECTOR");
+            यदि (env) {
+                यदि (std::वाक्ये_अन्विष(env, "level_zero")) {
                     filter = "level-zero";
                 }
-                else if (std::strstr(env, "opencl")) {
+                अन्यथा यदि (std::वाक्ये_अन्विष(env, "opencl")) {
                     filter = "opencl";
                 }
-                else if (std::strstr(env, "cuda")) {
+                अन्यथा यदि (std::वाक्ये_अन्विष(env, "cuda")) {
                     filter = "cuda";
                 }
-                else if (std::strstr(env, "hip")) {
+                अन्यथा यदि (std::वाक्ये_अन्विष(env, "hip")) {
                     filter = "hip";
                 }
-                else {
-                    throw std::runtime_error("invalid device filter: " + std::string(env));
+                अन्यथा {
+                    क्षिप std::runtime_error("invalid device filter: " + std::string(env));
                 }
-            } else {
-                auto default_device = sycl::device(sycl::default_selector_v);
-                auto default_platform_name = default_device.get_platform().get_info<sycl::info::platform::name>();
+            } अन्यथा {
+                स्वचालित default_device = sycl::device(sycl::default_selector_v);
+                स्वचालित default_platform_name = default_device.get_platform().get_info<sycl::info::platform::name>();
 
-                if (std::strstr(default_platform_name.c_str(), "Level-Zero") || default_device.is_cpu()) {
+                यदि (std::वाक्ये_अन्विष(default_platform_name.c_str(), "Level-Zero") || default_device.is_cpu()) {
                     filter = "level-zero";
                 }
-                else if (std::strstr(default_platform_name.c_str(), "CUDA")) {
+                अन्यथा यदि (std::वाक्ये_अन्विष(default_platform_name.c_str(), "CUDA")) {
                     filter = "cuda";
                 }
-                else if (std::strstr(default_platform_name.c_str(), "HIP")) {
+                अन्यथा यदि (std::वाक्ये_अन्विष(default_platform_name.c_str(), "HIP")) {
                     filter = "hip";
                 }
             }
 
-            auto platform_list = sycl::platform::get_platforms();
+            स्वचालित platform_list = sycl::platform::get_platforms();
 
-            for (const auto& platform : platform_list) {
-                auto devices = platform.get_devices();
-                auto gpu_dev = std::find_if(devices.begin(), devices.end(), [](const sycl::device& d) {
-                    return d.is_gpu();
+            प्रति (ध्रुव स्वचालित& platform : platform_list) {
+                स्वचालित devices = platform.get_devices();
+                स्वचालित gpu_dev = std::find_if(devices.begin(), devices.end(), [](ध्रुव sycl::device& d) {
+                    प्रत्यागम d.is_gpu();
                 });
 
-                if (gpu_dev == devices.end()) {
+                यदि (gpu_dev == devices.end()) {
                     // cout << "platform [" << platform_name
                     //      << "] does not contain GPU devices, skipping\n";
-                    continue;
+                    अनुवर्त;
                 }
 
-                auto platform_name = platform.get_info<sycl::info::platform::name>();
-                std::string platform_name_low_case;
-                platform_name_low_case.resize(platform_name.size());
+                स्वचालित platform_name = platform.get_info<sycl::info::platform::name>();
+                std::string platform_name_नीचः_case;
+                platform_name_नीचः_case.resize(platform_name.size());
 
                 std::transform(
-                    platform_name.begin(), platform_name.end(), platform_name_low_case.begin(), ::tolower);
+                    platform_name.begin(), platform_name.end(), platform_name_नीचः_case.begin(), ::tolower);
 
-                if (platform_name_low_case.find(filter) == std::string::npos) {
+                यदि (platform_name_नीचः_case.find(filter) == std::string::npos) {
                     // cout << "platform [" << platform_name
                     //      << "] does not match with requested "
                     //      << filter << ", skipping\n";
-                    continue;
+                    अनुवर्त;
                 }
 
-                result = platform_name;
+                परिणाम = platform_name;
             }
 
-            if (result.empty())
-                throw std::runtime_error("can not find preferred GPU platform");
+            यदि (परिणाम.रिक्तानि())
+                क्षिप std::runtime_error("can not find preferred GPU platform");
 
-            return result;
+            प्रत्यागम परिणाम;
         }
 
-        template <class DeviceSelector>
+        प्रतिरूपम् <वर्ग DeviceSelector>
         std::enable_if_t<
-            std::is_invocable_r_v<int, DeviceSelector, const sycl::device &>>
-        select_device(const DeviceSelector &selector = sycl::gpu_selector_v)
+            std::is_invocable_r_v<पूर्णाङ्क, DeviceSelector, ध्रुव sycl::device &>>
+        select_device(ध्रुव DeviceSelector &selector = sycl::gpu_selector_v)
         {
             sycl::device selected_device = sycl::device(selector);
-            unsigned int selected_device_id = get_device_id(selected_device);
+            अचिह्नित पूर्णाङ्क selected_device_id = get_device_id(selected_device);
             select_device(selected_device_id);
         }
 
         /// Returns the instance of device manager singleton.
-        static dev_mgr &instance()
+        स्थिर dev_mgr &instance()
         {
-            static dev_mgr d_m;
-            return d_m;
+            स्थिर dev_mgr d_m;
+            प्रत्यागम d_m;
         }
-        dev_mgr(const dev_mgr &) = delete;
-        dev_mgr &operator=(const dev_mgr &) = delete;
-        dev_mgr(dev_mgr &&) = delete;
-        dev_mgr &operator=(dev_mgr &&) = delete;
+        dev_mgr(ध्रुव dev_mgr &) = विलोपय;
+        dev_mgr &संक्रियकः=(ध्रुव dev_mgr &) = विलोपय;
+        dev_mgr(dev_mgr &&) = विलोपय;
+        dev_mgr &संक्रियकः=(dev_mgr &&) = विलोपय;
 
-    private:
-        mutable std::recursive_mutex m_mutex;
-        static bool compare_dev(sycl::device &device1, sycl::device &device2)
+    गुप्त:
+        परिवर्तनीय std::recursive_mutex m_mutex;
+        स्थिर तार्किक compare_dev(sycl::device &device1, sycl::device &device2)
         {
             sycl::backend backend1 = device1.get_backend();
             sycl::backend backend2 = device2.get_backend();
             // levelzero backends always come first
-            if(backend1 == sycl::backend::ext_oneapi_level_zero && backend2 != sycl::backend::ext_oneapi_level_zero) return true;
-            if(backend1 != sycl::backend::ext_oneapi_level_zero && backend2 == sycl::backend::ext_oneapi_level_zero) return false;
+            यदि(backend1 == sycl::backend::ext_oneapi_level_zero && backend2 != sycl::backend::ext_oneapi_level_zero) प्रत्यागम सत्य;
+            यदि(backend1 != sycl::backend::ext_oneapi_level_zero && backend2 == sycl::backend::ext_oneapi_level_zero) प्रत्यागम असत्य;
             dpct::device_info prop1;
             dpct::get_device_info(prop1, device1);
             dpct::device_info prop2;
             dpct::get_device_info(prop2, device2);
-            return prop1.get_max_compute_units() > prop2.get_max_compute_units();
+            प्रत्यागम prop1.get_max_compute_units() > prop2.get_max_compute_units();
         }
-        static int convert_backend_index(std::string & backend) {
-            if (backend == "ext_oneapi_level_zero:gpu") return 0;
-            if (backend == "opencl:gpu") return 1;
-            if (backend == "ext_oneapi_cuda:gpu") return 2;
-            if (backend == "ext_oneapi_hip:gpu") return 3;
-            if (backend == "opencl:cpu") return 4;
-            if (backend == "opencl:acc") return 5;
-            printf("convert_backend_index: can't handle backend=%s\n", backend.c_str());
+        स्थिर पूर्णाङ्क convert_backend_सूचकांक(std::string & backend) {
+            यदि (backend == "ext_oneapi_level_zero:gpu") प्रत्यागम 0;
+            यदि (backend == "opencl:gpu") प्रत्यागम 1;
+            यदि (backend == "ext_oneapi_cuda:gpu") प्रत्यागम 2;
+            यदि (backend == "ext_oneapi_hip:gpu") प्रत्यागम 3;
+            यदि (backend == "opencl:cpu") प्रत्यागम 4;
+            यदि (backend == "opencl:acc") प्रत्यागम 5;
+            प्रारूप_लिख("convert_backend_index: can't handle backend=%s\n", backend.c_str());
             _abort("fatal error");
         }
-        static bool compare_backend(std::string &backend1, std::string &backend2) {
-            return convert_backend_index(backend1) < convert_backend_index(backend2);
+        स्थिर तार्किक compare_backend(std::string &backend1, std::string &backend2) {
+            प्रत्यागम convert_backend_सूचकांक(backend1) < convert_backend_सूचकांक(backend2);
         }
         dev_mgr()
         {
@@ -1038,81 +1038,81 @@ namespace dpct
 
             std::vector<sycl::device> sycl_all_devs;
             // Collect other devices except for the default device.
-            if (default_device.is_cpu())
+            यदि (default_device.is_cpu())
                 _cpu_device = 0;
 
-            auto Platforms = sycl::platform::get_platforms();
+            स्वचालित Platforms = sycl::platform::get_platforms();
             // Keep track of the number of devices per backend
             std::map<sycl::backend, size_t> DeviceNums;
             std::map<std::string, std::vector<sycl::device>> backend_devices;
-            auto preferred_platform_name = get_preferred_gpu_platform_name();
+            स्वचालित preferred_platform_name = get_preferred_gpu_platform_name();
 
-            while (!Platforms.empty()) {
-                auto Platform = Platforms.back();
+            यावत् (!Platforms.रिक्तानि()) {
+                स्वचालित Platform = Platforms.back();
                 Platforms.pop_back();
-                auto platform_name = Platform.get_info<sycl::info::platform::name>();
-                if (platform_name.compare(preferred_platform_name) != 0) {
-                    continue;
+                स्वचालित platform_name = Platform.get_info<sycl::info::platform::name>();
+                यदि (platform_name.compare(preferred_platform_name) != 0) {
+                    अनुवर्त;
                 }
-                auto devices = Platform.get_devices();
+                स्वचालित devices = Platform.get_devices();
                 std::string backend_type = get_device_backend_and_type(devices[0]);
-                for (const auto &device : devices) {
+                प्रति (ध्रुव स्वचालित &device : devices) {
                     backend_devices[backend_type].push_back(device);
                 }
             }
 
-            std::vector<std::string> keys;
-            for(auto it = backend_devices.begin(); it != backend_devices.end(); ++it) {
-                keys.push_back(it->first);
+            std::vector<std::string> कुञ्चिकाः;
+            प्रति(स्वचालित it = backend_devices.begin(); it != backend_devices.end(); ++it) {
+                कुञ्चिकाः.push_back(it->first);
             }
-            std::sort(keys.begin(), keys.end(), compare_backend);
+            std::sort(कुञ्चिकाः.begin(), कुञ्चिकाः.end(), compare_backend);
 
-            for (auto &key : keys) {
-                std::vector<sycl::device> devs = backend_devices[key];
+            प्रति (स्वचालित &कुञ्चिका : कुञ्चिकाः) {
+                std::vector<sycl::device> devs = backend_devices[कुञ्चिका];
                 std::sort(devs.begin(), devs.end(), compare_dev);
-                for (const auto &dev : devs) {
+                प्रति (ध्रुव स्वचालित &dev : devs) {
                     sycl_all_devs.push_back(dev);
                 }
             }
 
-            for (auto &dev : sycl_all_devs)
+            प्रति (स्वचालित &dev : sycl_all_devs)
             {
-                if (dev == default_device)
+                यदि (dev == default_device)
                 {
-                    continue;
+                    अनुवर्त;
                 }
                 _devs.push_back(std::make_shared<device_ext>(dev));
-                if (_cpu_device == -1 && dev.is_cpu())
+                यदि (_cpu_device == -1 && dev.is_cpu())
                 {
                     _cpu_device = _devs.size() - 1;
                 }
             }
         }
-        void check_id(unsigned int id) const
+        शून्य check_id(अचिह्नित पूर्णाङ्क id) ध्रुव
         {
-            if (id >= _devs.size())
+            यदि (id >= _devs.size())
             {
-                throw std::runtime_error("invalid device id");
+                क्षिप std::runtime_error("invalid device id");
             }
         }
         std::vector<std::shared_ptr<device_ext>> _devs;
         /// DEFAULT_DEVICE_ID is used, if current_device_id() can not find current
         /// thread id in _thread2dev_map, which means default device should be used
         /// for the current thread.
-        const unsigned int DEFAULT_DEVICE_ID = 0;
+        ध्रुव अचिह्नित पूर्णाङ्क DEFAULT_DEVICE_ID = 0;
         /// thread-id to device-id map.
-        std::map<unsigned int, unsigned int> _thread2dev_map;
-        int _cpu_device = -1;
+        std::map<अचिह्नित पूर्णाङ्क, अचिह्नित पूर्णाङ्क> _thread2dev_map;
+        पूर्णाङ्क _cpu_device = -1;
     };
 
-    static inline sycl::queue &get_default_queue()
+    स्थिर अन्तःस्थ sycl::queue &get_default_queue()
     {
-        return dev_mgr::instance().current_device().default_queue();
+        प्रत्यागम dev_mgr::instance().current_device().default_queue();
     }
 
-    namespace detail
+    नामाकाश detail
     {
-        enum class pointer_access_attribute
+        गणना वर्ग pointer_access_attribute
         {
             host_only = 0,
             device_only,
@@ -1120,210 +1120,210 @@ namespace dpct
             end
         };
 
-        static pointer_access_attribute get_pointer_attribute(sycl::queue &q,
-                                                              const void *ptr)
+        स्थिर pointer_access_attribute get_pointer_attribute(sycl::queue &q,
+                                                              ध्रुव शून्य *ptr)
         {
-            switch (sycl::get_pointer_type(ptr, q.get_context()))
+            विकल्प (sycl::get_pointer_type(ptr, q.get_context()))
             {
-            case sycl::usm::alloc::unknown:
-                return pointer_access_attribute::host_only;
-            case sycl::usm::alloc::device:
-                return pointer_access_attribute::device_only;
-            case sycl::usm::alloc::shared:
-            case sycl::usm::alloc::host:
-                return pointer_access_attribute::host_device;
+            पक्ष sycl::usm::alloc::unknown:
+                प्रत्यागम pointer_access_attribute::host_only;
+            पक्ष sycl::usm::alloc::device:
+                प्रत्यागम pointer_access_attribute::device_only;
+            पक्ष sycl::usm::alloc::shared:
+            पक्ष sycl::usm::alloc::host:
+                प्रत्यागम pointer_access_attribute::host_device;
             }
         }
 
-        template <typename ArgT>
-        inline constexpr std::uint64_t get_type_combination_id(ArgT Val)
+        प्रतिरूपम् <प्रकारनाम ArgT>
+        अन्तःस्थ constexpr std::uint64_t get_type_combination_id(ArgT Val)
         {
-            static_assert((unsigned char)library_data_t::library_data_t_size <=
-                              std::numeric_limits<unsigned char>::max() &&
+            static_assert((अचिह्नित वर्ण)library_दत्त_t::library_दत्त_t_आकार <=
+                              std::numeric_limits<अचिह्नित वर्ण>::max() &&
                           "library_data_t size exceeds limit.");
-            static_assert(std::is_same_v<ArgT, library_data_t>, "Unsupported ArgT");
-            return (std::uint64_t)Val;
+            static_assert(std::is_same_v<ArgT, library_दत्त_t>, "Unsupported ArgT");
+            प्रत्यागम (std::uint64_t)Val;
         }
 
-        template <typename FirstT, typename... RestT>
-        inline constexpr std::uint64_t get_type_combination_id(FirstT FirstVal,
+        प्रतिरूपम् <प्रकारनाम FirstT, प्रकारनाम... RestT>
+        अन्तःस्थ constexpr std::uint64_t get_type_combination_id(FirstT FirstVal,
                                                                RestT... RestVal)
         {
-            static_assert((std::uint8_t)library_data_t::library_data_t_size <=
-                              std::numeric_limits<unsigned char>::max() &&
+            static_assert((std::uint8_t)library_दत्त_t::library_दत्त_t_आकार <=
+                              std::numeric_limits<अचिह्नित वर्ण>::max() &&
                           "library_data_t size exceeds limit.");
-            static_assert(sizeof...(RestT) <= 8 && "Too many parameters");
-            static_assert(std::is_same_v<FirstT, library_data_t>, "Unsupported FirstT");
-            return get_type_combination_id(RestVal...) << 8 | ((std::uint64_t)FirstVal);
+            static_assert(परिमाण...(RestT) <= 8 && "Too many parameters");
+            static_assert(std::is_same_v<FirstT, library_दत्त_t>, "Unsupported FirstT");
+            प्रत्यागम get_type_combination_id(RestVal...) << 8 | ((std::uint64_t)FirstVal);
         }
 
-        class mem_mgr
+        वर्ग mem_mgr
         {
             mem_mgr()
             {
                 // Reserved address space, no real memory allocation happens here.
-#if defined(__linux__)
-                mapped_address_space =
-                    (byte_t *)mmap(nullptr, mapped_region_size, PROT_NONE,
+#यदि defined(__linux__)
+                mapped_स्थानाङ्कः_space =
+                    (byte_t *)mmap(शून्यसूचकः, mapped_region_आकार, PROT_NONE,
                                    MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-#elif defined(_WIN64)
-                mapped_address_space = (byte_t *)VirtualAlloc(
-                    NULL,               // NULL specified as the base address parameter
-                    mapped_region_size, // Size of allocation
+#नोचेद्यदि defined(_WIN64)
+                mapped_स्थानाङ्कः_space = (byte_t *)VirtualAlloc(
+                    रिक्त,               // NULL specified as the base address parameter
+                    mapped_region_आकार, // Size of allocation
                     MEM_RESERVE,        // Allocate reserved pages
                     PAGE_NOACCESS);     // Protection = no access
-#else
-#error "Only support Windows and Linux."
-#endif
-                next_free = mapped_address_space;
+#अन्यथा
+#दोषः "Only support Windows and Linux."
+#यदि_अन्तः
+                अग्र_free = mapped_स्थानाङ्कः_space;
             }
 
-        public:
-            using buffer_id_t = int;
+        सार्वजनिक:
+            उपयुज्य बफर_id_t = पूर्णाङ्क;
 
-            struct allocation
+            संरचना आवण्टनम्
             {
-                buffer_t buffer;
+                बफर_t बफर;
                 byte_t *alloc_ptr;
                 size_t size;
             };
 
             ~mem_mgr()
             {
-#if defined(__linux__)
-                munmap(mapped_address_space, mapped_region_size);
-#elif defined(_WIN64)
-                VirtualFree(mapped_address_space, 0, MEM_RELEASE);
-#else
-#error "Only support Windows and Linux."
-#endif
+#यदि defined(__linux__)
+                munmap(mapped_स्थानाङ्कः_space, mapped_region_आकार);
+#नोचेद्यदि defined(_WIN64)
+                VirtualFree(mapped_स्थानाङ्कः_space, 0, MEM_RELEASE);
+#अन्यथा
+#दोषः "Only support Windows and Linux."
+#यदि_अन्तः
             }
 
-            mem_mgr(const mem_mgr &) = delete;
-            mem_mgr &operator=(const mem_mgr &) = delete;
-            mem_mgr(mem_mgr &&) = delete;
-            mem_mgr &operator=(mem_mgr &&) = delete;
+            mem_mgr(ध्रुव mem_mgr &) = विलोपय;
+            mem_mgr &संक्रियकः=(ध्रुव mem_mgr &) = विलोपय;
+            mem_mgr(mem_mgr &&) = विलोपय;
+            mem_mgr &संक्रियकः=(mem_mgr &&) = विलोपय;
 
             /// Allocate
-            void *mem_alloc(size_t size)
+            शून्य *mem_alloc(size_t size)
             {
-                if (!size)
-                    return nullptr;
-                std::lock_guard<std::mutex> lock(m_mutex);
-                if (next_free + size > mapped_address_space + mapped_region_size)
+                यदि (!size)
+                    प्रत्यागम शून्यसूचकः;
+                std::lock_guard<std::mutex> तालकम्(m_mutex);
+                यदि (अग्र_free + size > mapped_स्थानाङ्कः_space + mapped_region_आकार)
                 {
-                    throw std::runtime_error("dpct_malloc: out of memory for virtual memory pool");
+                    क्षिप std::runtime_error("dpct_malloc: out of memory for virtual memory pool");
                 }
-                // Allocation
+                //आवण्टनम्
                 sycl::range<1> r(size);
-                buffer_t buf(r);
-                allocation A{buf, next_free, size};
+                बफर_t buf(r);
+                आवण्टनम् A{buf, अग्र_free, size};
                 // Map allocation to device pointer
-                void *result = next_free;
-                m_map.emplace(next_free + size, A);
+                शून्य *परिणाम = अग्र_free;
+                m_map.emplace(अग्र_free + size, A);
                 // Update pointer to the next free space.
-                next_free += (size + extra_padding + alignment - 1) & ~(alignment - 1);
+                अग्र_free += (size + extra_padding + alignment - 1) & ~(alignment - 1);
 
-                return result;
+                प्रत्यागम परिणाम;
             }
 
             /// Deallocate
-            void mem_free(const void *ptr)
+            शून्य mem_free(ध्रुव शून्य *ptr)
             {
-                if (!ptr)
-                    return;
-                std::lock_guard<std::mutex> lock(m_mutex);
-                auto it = get_map_iterator(ptr);
+                यदि (!ptr)
+                    प्रत्यागम;
+                std::lock_guard<std::mutex> तालकम्(m_mutex);
+                स्वचालित it = get_map_iterator(ptr);
                 m_map.erase(it);
             }
 
             /// map: device pointer -> allocation(buffer, alloc_ptr, size)
-            allocation translate_ptr(const void *ptr)
+            आवण्टनम् translate_ptr(ध्रुव शून्य *ptr)
             {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                auto it = get_map_iterator(ptr);
-                return it->second;
+                std::lock_guard<std::mutex> तालकम्(m_mutex);
+                स्वचालित it = get_map_iterator(ptr);
+                प्रत्यागम it->second;
             }
 
             /// Check if the pointer represents device pointer or not.
-            bool is_device_ptr(const void *ptr) const
+            तार्किक is_device_ptr(ध्रुव शून्य *ptr) ध्रुव
             {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                return (mapped_address_space <= ptr) &&
-                       (ptr < mapped_address_space + mapped_region_size);
+                std::lock_guard<std::mutex> तालकम्(m_mutex);
+                प्रत्यागम (mapped_स्थानाङ्कः_space <= ptr) &&
+                       (ptr < mapped_स्थानाङ्कः_space + mapped_region_आकार);
             }
 
             /// Returns the instance of memory manager singleton.
-            static mem_mgr &instance()
+            स्थिर mem_mgr &instance()
             {
-                static mem_mgr m;
-                return m;
+                स्थिर mem_mgr m;
+                प्रत्यागम m;
             }
 
-        private:
-            std::map<byte_t *, allocation> m_map;
-            mutable std::mutex m_mutex;
-            byte_t *mapped_address_space;
-            byte_t *next_free;
-            const size_t mapped_region_size = 128ull * 1024 * 1024 * 1024;
-            const size_t alignment = 256;
+        गुप्त:
+            std::map<byte_t *, आवण्टनम्> m_map;
+            परिवर्तनीय std::mutex m_mutex;
+            byte_t *mapped_स्थानाङ्कः_space;
+            byte_t *अग्र_free;
+            ध्रुव size_t mapped_region_आकार = 128ull * 1024 * 1024 * 1024;
+            ध्रुव size_t alignment = 256;
             /// This padding may be defined to some positive value to debug
             /// out of bound accesses.
-            const size_t extra_padding = 0;
+            ध्रुव size_t extra_padding = 0;
 
-            std::map<byte_t *, allocation>::iterator get_map_iterator(const void *ptr)
+            std::map<byte_t *, आवण्टनम्>::iterator get_map_iterator(ध्रुव शून्य *ptr)
             {
-                auto it = m_map.upper_bound(const_cast<byte_t *>(reinterpret_cast<const byte_t *>(ptr)));
-                if (it == m_map.end())
+                स्वचालित it = m_map.upper_bound(const_cast<byte_t *>(reinterpret_cast<ध्रुव byte_t *>(ptr)));
+                यदि (it == m_map.end())
                 {
                     // Not a virtual pointer.
-                    throw std::runtime_error("can not get buffer from non-virtual pointer");
+                    क्षिप std::runtime_error("can not get buffer from non-virtual pointer");
                 }
-                const allocation &alloc = it->second;
-                if (ptr < alloc.alloc_ptr)
+                ध्रुव आवण्टनम् &alloc = it->second;
+                यदि (ptr < alloc.alloc_ptr)
                 {
                     // Out of bound.
                     // This may happen if there's a gap between allocations due to alignment
                     // or extra padding and pointer points to this gap.
-                    throw std::runtime_error("invalid virtual pointer");
+                    क्षिप std::runtime_error("invalid virtual pointer");
                 }
-                return it;
+                प्रत्यागम it;
             }
         };
 
-        template <class T, memory_region Memory, size_t Dimension>
-        class accessor;
-        template <memory_region Memory, class T = byte_t>
-        class memory_traits
+        प्रतिरूपम् <वर्ग T, स्मृतिः_region स्मृतिः_2, size_t Dimension>
+        वर्ग accessor;
+        प्रतिरूपम् <स्मृतिः_region स्मृतिः_2, वर्ग T = byte_t>
+        वर्ग स्मृतिः_traits
         {
-        public:
-            static constexpr sycl::access::target target =
+        सार्वजनिक:
+            स्थिर constexpr sycl::access::target target =
                 sycl::access::target::device;
-            static constexpr sycl::access_mode mode =
-                (Memory == constant) ? sycl::access_mode::read
-                                     : sycl::access_mode::read_write;
-            static constexpr size_t type_size = sizeof(T);
-            using element_t =
-                typename std::conditional<Memory == constant, const T, T>::type;
-            using value_t = typename std::remove_cv<T>::type;
-            template <size_t Dimension = 1>
-            using accessor_t = typename std::conditional<
-                Memory == local, sycl::local_accessor<value_t, Dimension>,
+            स्थिर constexpr sycl::access_बहुलकम् mode =
+                (स्मृतिः_2 == constant) ? sycl::access_बहुलकम्::पठ
+                                     : sycl::access_बहुलकम्::read_write;
+            स्थिर constexpr size_t type_आकार = परिमाण(T);
+            उपयुज्य element_t =
+                प्रकारनाम std::conditional<स्मृतिः_2 == constant, ध्रुव T, T>::type;
+            उपयुज्य मानम्_t = प्रकारनाम std::remove_cv<T>::type;
+            प्रतिरूपम् <size_t Dimension = 1>
+            उपयुज्य accessor_t = प्रकारनाम std::conditional<
+                स्मृतिः_2 == local, sycl::local_accessor<मानम्_t, Dimension>,
                 sycl::accessor<T, Dimension, mode, target>>::type;
-            using pointer_t = T *;
+            उपयुज्य pointer_t = T *;
         };
 
-        static inline void *dpct_malloc(size_t size, sycl::queue &q)
+        स्थिर अन्तःस्थ शून्य *dpct_malloc(size_t size, sycl::queue &q)
         {
-            return sycl::malloc_device(size, q.get_device(), q.get_context());
+            प्रत्यागम sycl::malloc_device(size, q.get_device(), q.get_context());
         }
 
-#define PITCH_DEFAULT_ALIGN(x) (((x) + 31) & ~(0x1F))
-        static inline void *dpct_malloc(size_t &pitch, size_t x, size_t y, size_t z,
+#परिभाषय PITCH_DEFAULT_ALIGN(x) (((x) + 31) & ~(0x1F))
+        स्थिर अन्तःस्थ शून्य *dpct_malloc(size_t &pitch, size_t x, size_t y, size_t z,
                                         sycl::queue &q)
         {
             pitch = PITCH_DEFAULT_ALIGN(x);
-            return dpct_malloc(pitch * y * z, q);
+            प्रत्यागम dpct_malloc(pitch * y * z, q);
         }
 
         /**
@@ -1335,11 +1335,11 @@ namespace dpct
          * @param [in] size Number of elements to be set to the value.
          * @return An event representing the memset operation.
          */
-        template <typename valueT>
-        static inline sycl::event dpct_memset(sycl::queue &q, void *dev_ptr,
-                                              valueT value, size_t size)
+        प्रतिरूपम् <प्रकारनाम मानम्_T>
+        स्थिर अन्तःस्थ sycl::event dpct_memset(sycl::queue &q, शून्य *dev_ptr,
+                                              मानम्_T value, size_t size)
         {
-            return q.fill(dev_ptr, value, size);
+            प्रत्यागम q.fill(dev_ptr, value, size);
         }
 
         /**
@@ -1351,25 +1351,25 @@ namespace dpct
          * @param [in] size 3D memory region by number of elements.
          * @return An event list representing the memset operations.
          */
-        template <typename valueT>
-        static inline std::vector<sycl::event>
-        dpct_memset(sycl::queue &q, pitched_data data, valueT value,
+        प्रतिरूपम् <प्रकारनाम मानम्_T>
+        स्थिर अन्तःस्थ std::vector<sycl::event>
+        dpct_memset(sycl::queue &q, pitched_दत्त दत्त, मानम्_T value,
                     sycl::range<3> size)
         {
             std::vector<sycl::event> event_list;
-            size_t slice = data.get_pitch() * data.get_y();
-            unsigned char *data_surface = (unsigned char *)data.get_data_ptr();
-            for (size_t z = 0; z < size.get(2); ++z)
+            size_t खण्डिका_2 = दत्त.get_pitch() * दत्त.get_y();
+            अचिह्नित वर्ण *दत्त_surface = (अचिह्नित वर्ण *)दत्त.get_दत्त_ptr();
+            प्रति (size_t z = 0; z < size.get(2); ++z)
             {
-                unsigned char *data_ptr = data_surface;
-                for (size_t y = 0; y < size.get(1); ++y)
+                अचिह्नित वर्ण *दत्त_ptr = दत्त_surface;
+                प्रति (size_t y = 0; y < size.get(1); ++y)
                 {
-                    event_list.push_back(dpct_memset(q, data_ptr, value, size.get(0)));
-                    data_ptr += data.get_pitch();
+                    event_list.push_back(dpct_memset(q, दत्त_ptr, value, size.get(0)));
+                    दत्त_ptr += दत्त.get_pitch();
                 }
-                data_surface += slice;
+                दत्त_surface += खण्डिका_2;
             }
-            return event_list;
+            प्रत्यागम event_list;
         }
 
         /**
@@ -1383,1028 +1383,1028 @@ namespace dpct
          * @param [in] y The height of memory region by number of elements.
          * @return An event list representing the memset operations.
          */
-        template <typename valueT>
-        static inline std::vector<sycl::event>
-        dpct_memset(sycl::queue &q, void *ptr, size_t pitch, valueT val, size_t x,
+        प्रतिरूपम् <प्रकारनाम मानम्_T>
+        स्थिर अन्तःस्थ std::vector<sycl::event>
+        dpct_memset(sycl::queue &q, शून्य *ptr, size_t pitch, मानम्_T val, size_t x,
                     size_t y)
         {
-            return dpct_memset(q, pitched_data(ptr, pitch, x, 1), val,
+            प्रत्यागम dpct_memset(q, pitched_दत्त(ptr, pitch, x, 1), val,
                                sycl::range<3>(x, y, 1));
         }
 
-        static memcpy_direction deduce_memcpy_direction(sycl::queue &q, void *to_ptr,
-                                                        const void *from_ptr,
+        स्थिर memcpy_direction deduce_memcpy_direction(sycl::queue &q, शून्य *गन्तव्यम्_ptr,
+                                                        ध्रुव शून्य *from_ptr,
                                                         memcpy_direction dir)
         {
-            switch (dir)
+            विकल्प (dir)
             {
-            case memcpy_direction::host_to_host:
-            case memcpy_direction::host_to_device:
-            case memcpy_direction::device_to_host:
-            case memcpy_direction::device_to_device:
-                return dir;
-            case memcpy_direction::automatic:
+            पक्ष memcpy_direction::host_गन्तव्यम्_host:
+            पक्ष memcpy_direction::host_गन्तव्यम्_device:
+            पक्ष memcpy_direction::device_गन्तव्यम्_host:
+            पक्ष memcpy_direction::device_गन्तव्यम्_device:
+                प्रत्यागम dir;
+            पक्ष memcpy_direction::automatic:
             {
                 // table[to_attribute][from_attribute]
-                static const memcpy_direction
-                    direction_table[static_cast<unsigned>(pointer_access_attribute::end)]
-                                   [static_cast<unsigned>(pointer_access_attribute::end)] =
-                                       {{memcpy_direction::host_to_host,
-                                         memcpy_direction::device_to_host,
-                                         memcpy_direction::host_to_host},
-                                        {memcpy_direction::host_to_device,
-                                         memcpy_direction::device_to_device,
-                                         memcpy_direction::device_to_device},
-                                        {memcpy_direction::host_to_host,
-                                         memcpy_direction::device_to_device,
-                                         memcpy_direction::device_to_device}};
-                return direction_table[static_cast<unsigned>(get_pointer_attribute(
-                    q, to_ptr))][static_cast<unsigned>(get_pointer_attribute(q, from_ptr))];
+                स्थिर ध्रुव memcpy_direction
+                    direction_सारणी[static_cast<अचिह्नित>(pointer_access_attribute::end)]
+                                   [static_cast<अचिह्नित>(pointer_access_attribute::end)] =
+                                       {{memcpy_direction::host_गन्तव्यम्_host,
+                                         memcpy_direction::device_गन्तव्यम्_host,
+                                         memcpy_direction::host_गन्तव्यम्_host},
+                                        {memcpy_direction::host_गन्तव्यम्_device,
+                                         memcpy_direction::device_गन्तव्यम्_device,
+                                         memcpy_direction::device_गन्तव्यम्_device},
+                                        {memcpy_direction::host_गन्तव्यम्_host,
+                                         memcpy_direction::device_गन्तव्यम्_device,
+                                         memcpy_direction::device_गन्तव्यम्_device}};
+                प्रत्यागम direction_सारणी[static_cast<अचिह्नित>(get_pointer_attribute(
+                    q, गन्तव्यम्_ptr))][static_cast<अचिह्नित>(get_pointer_attribute(q, from_ptr))];
             }
-            default:
-                throw std::runtime_error("dpct_memcpy: invalid direction value");
+            स्वभाव:
+                क्षिप std::runtime_error("dpct_memcpy: invalid direction value");
             }
         }
 
-        static sycl::event
-        dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr, size_t size,
+        स्थिर sycl::event
+        dpct_memcpy(sycl::queue &q, शून्य *गन्तव्यम्_ptr, ध्रुव शून्य *from_ptr, size_t size,
                     memcpy_direction direction,
-                    const std::vector<sycl::event> &dep_events = {})
+                    ध्रुव std::vector<sycl::event> &dep_events = {})
         {
-            if (!size)
-                return sycl::event{};
-            return q.memcpy(to_ptr, from_ptr, size, dep_events);
-            DPCT_UNUSED(direction);
+            यदि (!size)
+                प्रत्यागम sycl::event{};
+            प्रत्यागम q.स्मृतिं_प्रतिलिख(गन्तव्यम्_ptr, from_ptr, size, dep_events);
+            DPCT_अप्रयुक्तम्(direction);
         }
 
         // Get actual copy range and make sure it will not exceed range.
-        static inline size_t get_copy_range(sycl::range<3> size, size_t slice,
+        स्थिर अन्तःस्थ size_t get_copy_range(sycl::range<3> size, size_t खण्डिका_2,
                                             size_t pitch)
         {
-            return slice * (size.get(2) - 1) + pitch * (size.get(1) - 1) + size.get(0);
+            प्रत्यागम खण्डिका_2 * (size.get(2) - 1) + pitch * (size.get(1) - 1) + size.get(0);
         }
 
-        static inline size_t get_offset(sycl::id<3> id, size_t slice,
+        स्थिर अन्तःस्थ size_t get_विस्थापनम्(sycl::id<3> id, size_t खण्डिका_2,
                                         size_t pitch)
         {
-            return slice * id.get(2) + pitch * id.get(1) + id.get(0);
+            प्रत्यागम खण्डिका_2 * id.get(2) + pitch * id.get(1) + id.get(0);
         }
 
         /// copy 3D matrix specified by \p size from 3D matrix specified by \p from_ptr
         /// and \p from_range to another specified by \p to_ptr and \p to_range.
-        static inline std::vector<sycl::event>
-        dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr,
-                    sycl::range<3> to_range, sycl::range<3> from_range,
-                    sycl::id<3> to_id, sycl::id<3> from_id,
+        स्थिर अन्तःस्थ std::vector<sycl::event>
+        dpct_memcpy(sycl::queue &q, शून्य *गन्तव्यम्_ptr, ध्रुव शून्य *from_ptr,
+                    sycl::range<3> गन्तव्यम्_range, sycl::range<3> from_range,
+                    sycl::id<3> गन्तव्यम्_id, sycl::id<3> from_id,
                     sycl::range<3> size, memcpy_direction direction,
-                    const std::vector<sycl::event> &dep_events = {})
+                    ध्रुव std::vector<sycl::event> &dep_events = {})
         {
             // RAII for host pointer
-            class host_buffer
+            वर्ग host_बफर
             {
-                void *_buf;
-                size_t _size;
+                शून्य *_buf;
+                size_t आकार_2;
                 sycl::queue &_q;
-                const std::vector<sycl::event> &_deps; // free operation depends
+                ध्रुव std::vector<sycl::event> &_deps; // free operation depends
 
-            public:
-                host_buffer(size_t size, sycl::queue &q,
-                            const std::vector<sycl::event> &deps)
-                    : _buf(std::malloc(size)), _size(size), _q(q), _deps(deps) {}
-                void *get_ptr() const { return _buf; }
-                size_t get_size() const { return _size; }
-                ~host_buffer()
+            सार्वजनिक:
+                host_बफर(size_t size, sycl::queue &q,
+                            ध्रुव std::vector<sycl::event> &deps)
+                    : _buf(std::स्मृतिं_देहि(size)), आकार_2(size), _q(q), _deps(deps) {}
+                शून्य *get_ptr() ध्रुव { प्रत्यागम _buf; }
+                size_t get_आकार() ध्रुव { प्रत्यागम आकार_2; }
+                ~host_बफर()
                 {
-                    if (_buf)
+                    यदि (_buf)
                     {
                         _q.submit([&](sycl::handler &cgh)
                                   {
         cgh.depends_on(_deps);
-        cgh.host_task([buf = _buf] { std::free(buf); }); });
+        cgh.host_task([buf = _buf] { std::मुक्त(buf); }); });
                     }
                 }
             };
             std::vector<sycl::event> event_list;
 
-            size_t to_slice = to_range.get(1) * to_range.get(0),
-                   from_slice = from_range.get(1) * from_range.get(0);
-            unsigned char *to_surface =
-                (unsigned char *)to_ptr + get_offset(to_id, to_slice, to_range.get(0));
-            const unsigned char *from_surface =
-                (const unsigned char *)from_ptr +
-                get_offset(from_id, from_slice, from_range.get(0));
+            size_t गन्तव्यम्_खण्डिका = गन्तव्यम्_range.get(1) * गन्तव्यम्_range.get(0),
+                   from_खण्डिका = from_range.get(1) * from_range.get(0);
+            अचिह्नित वर्ण *गन्तव्यम्_surface =
+                (अचिह्नित वर्ण *)गन्तव्यम्_ptr + get_विस्थापनम्(गन्तव्यम्_id, गन्तव्यम्_खण्डिका, गन्तव्यम्_range.get(0));
+            ध्रुव अचिह्नित वर्ण *from_surface =
+                (ध्रुव अचिह्नित वर्ण *)from_ptr +
+                get_विस्थापनम्(from_id, from_खण्डिका, from_range.get(0));
 
-            if (to_slice == from_slice && to_slice == size.get(1) * size.get(0))
+            यदि (गन्तव्यम्_खण्डिका == from_खण्डिका && गन्तव्यम्_खण्डिका == size.get(1) * size.get(0))
             {
-                return {dpct_memcpy(q, to_surface, from_surface, to_slice * size.get(2),
+                प्रत्यागम {dpct_memcpy(q, गन्तव्यम्_surface, from_surface, गन्तव्यम्_खण्डिका * size.get(2),
                                     direction, dep_events)};
             }
-            direction = deduce_memcpy_direction(q, to_ptr, from_ptr, direction);
-            size_t size_slice = size.get(1) * size.get(0);
-            switch (direction)
+            direction = deduce_memcpy_direction(q, गन्तव्यम्_ptr, from_ptr, direction);
+            size_t आकार_खण्डिका = size.get(1) * size.get(0);
+            विकल्प (direction)
             {
-            case host_to_host:
-                for (size_t z = 0; z < size.get(2); ++z)
+            पक्ष host_गन्तव्यम्_host:
+                प्रति (size_t z = 0; z < size.get(2); ++z)
                 {
-                    unsigned char *to_ptr = to_surface;
-                    const unsigned char *from_ptr = from_surface;
-                    if (to_range.get(0) == from_range.get(0) &&
-                        to_range.get(0) == size.get(0))
+                    अचिह्नित वर्ण *गन्तव्यम्_ptr = गन्तव्यम्_surface;
+                    ध्रुव अचिह्नित वर्ण *from_ptr = from_surface;
+                    यदि (गन्तव्यम्_range.get(0) == from_range.get(0) &&
+                        गन्तव्यम्_range.get(0) == size.get(0))
                     {
-                        event_list.push_back(dpct_memcpy(q, to_ptr, from_ptr, size_slice,
+                        event_list.push_back(dpct_memcpy(q, गन्तव्यम्_ptr, from_ptr, आकार_खण्डिका,
                                                          direction, dep_events));
                     }
-                    else
+                    अन्यथा
                     {
-                        for (size_t y = 0; y < size.get(1); ++y)
+                        प्रति (size_t y = 0; y < size.get(1); ++y)
                         {
-                            event_list.push_back(dpct_memcpy(q, to_ptr, from_ptr, size.get(0),
+                            event_list.push_back(dpct_memcpy(q, गन्तव्यम्_ptr, from_ptr, size.get(0),
                                                              direction, dep_events));
-                            to_ptr += to_range.get(0);
+                            गन्तव्यम्_ptr += गन्तव्यम्_range.get(0);
                             from_ptr += from_range.get(0);
                         }
                     }
-                    to_surface += to_slice;
-                    from_surface += from_slice;
+                    गन्तव्यम्_surface += गन्तव्यम्_खण्डिका;
+                    from_surface += from_खण्डिका;
                 }
-                break;
-            case host_to_device:
+                भङ्ग;
+            पक्ष host_गन्तव्यम्_device:
             {
-                host_buffer buf(get_copy_range(size, to_slice, to_range.get(0)), q,
+                host_बफर buf(get_copy_range(size, गन्तव्यम्_खण्डिका, गन्तव्यम्_range.get(0)), q,
                                 event_list);
                 std::vector<sycl::event> host_events;
-                if (to_slice == size_slice)
+                यदि (गन्तव्यम्_खण्डिका == आकार_खण्डिका)
                 {
                     // Copy host data to a temp host buffer with the shape of target.
                     host_events =
-                        dpct_memcpy(q, buf.get_ptr(), from_surface, to_range, from_range,
+                        dpct_memcpy(q, buf.get_ptr(), from_surface, गन्तव्यम्_range, from_range,
                                     sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size,
-                                    host_to_host, dep_events);
+                                    host_गन्तव्यम्_host, dep_events);
                 }
-                else
+                अन्यथा
                 {
                     // Copy host data to a temp host buffer with the shape of target.
                     host_events = dpct_memcpy(
-                        q, buf.get_ptr(), from_surface, to_range, from_range,
-                        sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size, host_to_host,
+                        q, buf.get_ptr(), from_surface, गन्तव्यम्_range, from_range,
+                        sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size, host_गन्तव्यम्_host,
                         // If has padding data, not sure whether it is useless. So fill temp
                         // buffer with it.
                         std::vector<sycl::event>{
-                            dpct_memcpy(q, buf.get_ptr(), to_surface, buf.get_size(),
-                                        device_to_host, dep_events)});
+                            dpct_memcpy(q, buf.get_ptr(), गन्तव्यम्_surface, buf.get_आकार(),
+                                        device_गन्तव्यम्_host, dep_events)});
                 }
                 // Copy from temp host buffer to device with only one submit.
-                event_list.push_back(dpct_memcpy(q, to_surface, buf.get_ptr(),
-                                                 buf.get_size(), host_to_device,
+                event_list.push_back(dpct_memcpy(q, गन्तव्यम्_surface, buf.get_ptr(),
+                                                 buf.get_आकार(), host_गन्तव्यम्_device,
                                                  host_events));
-                break;
+                भङ्ग;
             }
-            case device_to_host:
+            पक्ष device_गन्तव्यम्_host:
             {
-                host_buffer buf(get_copy_range(size, from_slice, from_range.get(0)), q,
+                host_बफर buf(get_copy_range(size, from_खण्डिका, from_range.get(0)), q,
                                 event_list);
                 // Copy from host temp buffer to host target with reshaping.
                 event_list = dpct_memcpy(
-                    q, to_surface, buf.get_ptr(), to_range, from_range, sycl::id<3>(0, 0, 0),
-                    sycl::id<3>(0, 0, 0), size, host_to_host,
+                    q, गन्तव्यम्_surface, buf.get_ptr(), गन्तव्यम्_range, from_range, sycl::id<3>(0, 0, 0),
+                    sycl::id<3>(0, 0, 0), size, host_गन्तव्यम्_host,
                     // Copy from device to temp host buffer with only one submit.
                     std::vector<sycl::event>{dpct_memcpy(q, buf.get_ptr(), from_surface,
-                                                         buf.get_size(),
-                                                         device_to_host, dep_events)});
-                break;
+                                                         buf.get_आकार(),
+                                                         device_गन्तव्यम्_host, dep_events)});
+                भङ्ग;
             }
-            case device_to_device:
+            पक्ष device_गन्तव्यम्_device:
                 event_list.push_back(q.submit([&](sycl::handler &cgh){
                 cgh.depends_on(dep_events);
-                cgh.parallel_for<class dpct_memcpy_3d_detail>(
+                cgh.parallel_for<वर्ग dpct_memcpy_3d_detail>(
                     size,
                     [=](sycl::id<3> id) {
-                        to_surface[get_offset(id, to_slice, to_range.get(0))] =
-                            from_surface[get_offset(id, from_slice, from_range.get(0))];
+                        गन्तव्यम्_surface[get_विस्थापनम्(id, गन्तव्यम्_खण्डिका, गन्तव्यम्_range.get(0))] =
+                            from_surface[get_विस्थापनम्(id, from_खण्डिका, from_range.get(0))];
                     }); }));
-                break;
-            default:
-                throw std::runtime_error("dpct_memcpy: invalid direction value");
+                भङ्ग;
+            स्वभाव:
+                क्षिप std::runtime_error("dpct_memcpy: invalid direction value");
             }
-            return event_list;
+            प्रत्यागम event_list;
         }
 
         /// memcpy 2D/3D matrix specified by pitched_data.
-        static inline std::vector<sycl::event>
-        dpct_memcpy(sycl::queue &q, pitched_data to, sycl::id<3> to_id,
-                    pitched_data from, sycl::id<3> from_id, sycl::range<3> size,
+        स्थिर अन्तःस्थ std::vector<sycl::event>
+        dpct_memcpy(sycl::queue &q, pitched_दत्त गन्तव्यम्, sycl::id<3> गन्तव्यम्_id,
+                    pitched_दत्त from, sycl::id<3> from_id, sycl::range<3> size,
                     memcpy_direction direction = automatic)
         {
-            return dpct_memcpy(q, to.get_data_ptr(), from.get_data_ptr(),
-                               sycl::range<3>(to.get_pitch(), to.get_y(), 1),
-                               sycl::range<3>(from.get_pitch(), from.get_y(), 1), to_id, from_id,
+            प्रत्यागम dpct_memcpy(q, गन्तव्यम्.get_दत्त_ptr(), from.get_दत्त_ptr(),
+                               sycl::range<3>(गन्तव्यम्.get_pitch(), गन्तव्यम्.get_y(), 1),
+                               sycl::range<3>(from.get_pitch(), from.get_y(), 1), गन्तव्यम्_id, from_id,
                                size, direction);
         }
 
         /// memcpy 2D matrix with pitch.
-        static inline std::vector<sycl::event>
-        dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr,
-                    size_t to_pitch, size_t from_pitch, size_t x, size_t y,
+        स्थिर अन्तःस्थ std::vector<sycl::event>
+        dpct_memcpy(sycl::queue &q, शून्य *गन्तव्यम्_ptr, ध्रुव शून्य *from_ptr,
+                    size_t गन्तव्यम्_pitch, size_t from_pitch, size_t x, size_t y,
                     memcpy_direction direction = automatic)
         {
-            return dpct_memcpy(q, to_ptr, from_ptr, sycl::range<3>(to_pitch, y, 1),
+            प्रत्यागम dpct_memcpy(q, गन्तव्यम्_ptr, from_ptr, sycl::range<3>(गन्तव्यम्_pitch, y, 1),
                                sycl::range<3>(from_pitch, y, 1),
                                sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0),
                                sycl::range<3>(x, y, 1), direction);
         }
 
-        namespace deprecated
+        नामाकाश deprecated
         {
 
-            template <typename T, sycl::usm::alloc AllocKind>
-            class usm_allocator
+            प्रतिरूपम् <प्रकारनाम T, sycl::usm::alloc Alloc_विधा>
+            वर्ग usm_allocator
             {
-            private:
-                using Alloc = sycl::usm_allocator<T, AllocKind>;
+            गुप्त:
+                उपयुज्य Alloc = sycl::usm_allocator<T, Alloc_विधा>;
                 Alloc _impl;
 
-            public:
-                using value_type = typename std::allocator_traits<Alloc>::value_type;
-                using pointer = typename std::allocator_traits<Alloc>::pointer;
-                using const_pointer = typename std::allocator_traits<Alloc>::const_pointer;
-                using void_pointer = typename std::allocator_traits<Alloc>::void_pointer;
-                using const_void_pointer =
-                    typename std::allocator_traits<Alloc>::const_void_pointer;
-                using reference = typename std::allocator_traits<Alloc>::value_type &;
-                using const_reference =
-                    const typename std::allocator_traits<Alloc>::value_type &;
-                using difference_type =
-                    typename std::allocator_traits<Alloc>::difference_type;
-                using size_type = typename std::allocator_traits<Alloc>::size_type;
-                using propagate_on_container_copy_assignment = typename std::allocator_traits<
+            सार्वजनिक:
+                उपयुज्य value_type = प्रकारनाम std::allocator_traits<Alloc>::value_type;
+                उपयुज्य pointer = प्रकारनाम std::allocator_traits<Alloc>::pointer;
+                उपयुज्य const_pointer = प्रकारनाम std::allocator_traits<Alloc>::const_pointer;
+                उपयुज्य void_pointer = प्रकारनाम std::allocator_traits<Alloc>::void_pointer;
+                उपयुज्य const_void_pointer =
+                    प्रकारनाम std::allocator_traits<Alloc>::const_void_pointer;
+                उपयुज्य reference = प्रकारनाम std::allocator_traits<Alloc>::value_type &;
+                उपयुज्य const_reference =
+                    ध्रुव प्रकारनाम std::allocator_traits<Alloc>::value_type &;
+                उपयुज्य difference_type =
+                    प्रकारनाम std::allocator_traits<Alloc>::difference_type;
+                उपयुज्य size_type = प्रकारनाम std::allocator_traits<Alloc>::size_type;
+                उपयुज्य propagate_on_container_copy_assignment = प्रकारनाम std::allocator_traits<
                     Alloc>::propagate_on_container_copy_assignment;
-                using propagate_on_container_move_assignment = typename std::allocator_traits<
+                उपयुज्य propagate_on_container_move_assignment = प्रकारनाम std::allocator_traits<
                     Alloc>::propagate_on_container_move_assignment;
-                using propagate_on_container_swap =
-                    typename std::allocator_traits<Alloc>::propagate_on_container_swap;
-                using is_always_equal =
-                    typename std::allocator_traits<Alloc>::is_always_equal;
+                उपयुज्य propagate_on_container_swap =
+                    प्रकारनाम std::allocator_traits<Alloc>::propagate_on_container_swap;
+                उपयुज्य is_always_equal =
+                    प्रकारनाम std::allocator_traits<Alloc>::is_always_equal;
 
-                template <typename U>
-                struct rebind
+                प्रतिरूपम् <प्रकारनाम U>
+                संरचना rebind
                 {
-                    typedef usm_allocator<U, AllocKind> other;
+                    प्रकारनिर्देश usm_allocator<U, Alloc_विधा> other;
                 };
 
                 usm_allocator() : _impl(dpct::get_default_queue()) {}
                 ~usm_allocator() {}
-                usm_allocator(const usm_allocator &other) : _impl(other._impl) {}
+                usm_allocator(ध्रुव usm_allocator &other) : _impl(other._impl) {}
                 usm_allocator(usm_allocator &&other) : _impl(std::move(other._impl)) {}
-                pointer address(reference r) { return &r; }
-                const_pointer address(const_reference r) { return &r; }
-                pointer allocate(size_type cnt, const_void_pointer hint = nullptr)
+                pointer address(reference r) { प्रत्यागम &r; }
+                const_pointer address(const_reference r) { प्रत्यागम &r; }
+                pointer allocate(size_type cnt, const_void_pointer hint = शून्यसूचकः)
                 {
-                    return std::allocator_traits<Alloc>::allocate(_impl, cnt, hint);
+                    प्रत्यागम std::allocator_traits<Alloc>::allocate(_impl, cnt, hint);
                 }
-                void deallocate(pointer p, size_type cnt)
+                शून्य deallocate(pointer p, size_type cnt)
                 {
                     std::allocator_traits<Alloc>::deallocate(_impl, p, cnt);
                 }
-                size_type max_size() const
+                size_type max_size() ध्रुव
                 {
-                    return std::allocator_traits<Alloc>::max_size(_impl);
+                    प्रत्यागम std::allocator_traits<Alloc>::max_size(_impl);
                 }
-                bool operator==(const usm_allocator &other) const { return _impl == other._impl; }
-                bool operator!=(const usm_allocator &other) const { return _impl != other._impl; }
+                तार्किक संक्रियकः==(ध्रुव usm_allocator &other) ध्रुव { प्रत्यागम _impl == other._impl; }
+                तार्किक संक्रियकः!=(ध्रुव usm_allocator &other) ध्रुव { प्रत्यागम _impl != other._impl; }
             };
 
         } // namespace deprecated
 
-        inline void dpct_free(void *ptr,
-                              const sycl::queue &q)
+        अन्तःस्थ शून्य dpct_free(शून्य *ptr,
+                              ध्रुव sycl::queue &q)
         {
-            if (ptr)
+            यदि (ptr)
             {
-                sycl::free(ptr, q.get_context());
+                sycl::मुक्त(ptr, q.get_context());
             }
         }
 
-        template <typename T>
-        inline auto get_memory(const void *x)
+        प्रतिरूपम् <प्रकारनाम T>
+        अन्तःस्थ स्वचालित get_स्मृतिः(ध्रुव शून्य *x)
         {
-            T *new_x = reinterpret_cast<T *>(const_cast<void *>(x));
-            return new_x;
+            T *new_x = reinterpret_cast<T *>(const_cast<शून्य *>(x));
+            प्रत्यागम new_x;
         }
 
-        template <typename T>
-        inline typename DataType<T>::T2 get_value(const T *s, sycl::queue &q)
+        प्रतिरूपम् <प्रकारनाम T>
+        अन्तःस्थ प्रकारनाम दत्त_Type_2<T>::T2 get_मानम्(ध्रुव T *s, sycl::queue &q)
         {
-            using Ty = typename DataType<T>::T2;
+            उपयुज्य Ty = प्रकारनाम दत्त_Type_2<T>::T2;
             Ty s_h;
-            if (get_pointer_attribute(q, s) == pointer_access_attribute::device_only)
-                detail::dpct_memcpy(q, (void *)&s_h, (const void *)s, sizeof(T), device_to_host)
-                    .wait();
-            else
-                s_h = *reinterpret_cast<const Ty *>(s);
-            return s_h;
+            यदि (get_pointer_attribute(q, s) == pointer_access_attribute::device_only)
+                detail::dpct_memcpy(q, (शून्य *)&s_h, (ध्रुव शून्य *)s, परिमाण(T), device_गन्तव्यम्_host)
+                    .प्रतीक्षस्व();
+            अन्यथा
+                s_h = *reinterpret_cast<ध्रुव Ty *>(s);
+            प्रत्यागम s_h;
         }
 
     } // namespace detail
 
-    template <typename T>
-    inline auto get_value(const T *s, sycl::queue &q)
+    प्रतिरूपम् <प्रकारनाम T>
+    अन्तःस्थ स्वचालित get_मानम्(ध्रुव T *s, sycl::queue &q)
     {
-        return detail::get_value(s, q);
+        प्रत्यागम detail::get_मानम्(s, q);
     }
 
-    namespace detail
+    नामाकाश detail
     {
-    template <class Ta, class Tb, class Tc, class Ts>
-    inline void gemm_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m,
-                          int n, int k, const void * alpha, const void * a, int lda, const void * b, int ldb,
-                          const void * beta, void * c, int ldc) {
-        Ts   alpha_value = dpct::get_value(reinterpret_cast<const Ts *>(alpha), q);
-        Ts   beta_value  = dpct::get_value(reinterpret_cast<const Ts *>(beta), q);
-        auto data_a      = get_memory<const Ta>(a);
-        auto data_b      = get_memory<const Tb>(b);
-        auto data_c      = get_memory<Tc>(c);
-        oneapi::mkl::blas::column_major::gemm(q, a_trans, b_trans, m, n, k, alpha_value, data_a,
-                                               lda, data_b, ldb, beta_value, data_c, ldc);
+    प्रतिरूपम् <वर्ग Ta, वर्ग Tb, वर्ग Tc, वर्ग Ts>
+    अन्तःस्थ शून्य gemm_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, पूर्णाङ्क m,
+                          पूर्णाङ्क n, पूर्णाङ्क k, ध्रुव शून्य * alpha, ध्रुव शून्य * a, पूर्णाङ्क lda, ध्रुव शून्य * b, पूर्णाङ्क ldb,
+                          ध्रुव शून्य * beta, शून्य * c, पूर्णाङ्क ldc) {
+        Ts   alpha_मानम्_2 = dpct::get_मानम्(reinterpret_cast<ध्रुव Ts *>(alpha), q);
+        Ts   beta_मानम्  = dpct::get_मानम्(reinterpret_cast<ध्रुव Ts *>(beta), q);
+        स्वचालित दत्त_a      = get_स्मृतिः<ध्रुव Ta>(a);
+        स्वचालित दत्त_b      = get_स्मृतिः<ध्रुव Tb>(b);
+        स्वचालित दत्त_c      = get_स्मृतिः<Tc>(c);
+        oneapi::mkl::blas::column_major::gemm(q, a_trans, b_trans, m, n, k, alpha_मानम्_2, दत्त_a,
+                                               lda, दत्त_b, ldb, beta_मानम्, दत्त_c, ldc);
     }
 
-        template <typename VecT, class BinaryOperation, class = void>
-        class vectorized_binary
+        प्रतिरूपम् <प्रकारनाम VecT, वर्ग द्विमान_Operation, वर्ग = शून्य>
+        वर्ग vectorized_द्विमान
         {
-        public:
-            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)
+        सार्वजनिक:
+            अन्तःस्थ VecT संक्रियकः()(VecT a, VecT b, ध्रुव द्विमान_Operation द्विमान_op)
             {
                 VecT v4;
-                for (size_t i = 0; i < v4.size(); ++i)
+                प्रति (size_t i = 0; i < v4.size(); ++i)
                 {
-                    v4[i] = binary_op(a[i], b[i]);
+                    v4[i] = द्विमान_op(a[i], b[i]);
                 }
-                return v4;
+                प्रत्यागम v4;
             }
         };
 
-        template <typename VecT, class BinaryOperation>
-        class vectorized_binary<
-            VecT, BinaryOperation,
-            std::void_t<std::invoke_result_t<BinaryOperation, VecT, VecT>>>
+        प्रतिरूपम् <प्रकारनाम VecT, वर्ग द्विमान_Operation>
+        वर्ग vectorized_द्विमान<
+            VecT, द्विमान_Operation,
+            std::void_t<std::invoke_result_t<द्विमान_Operation, VecT, VecT>>>
         {
-        public:
-            inline VecT operator()(VecT a, VecT b, const BinaryOperation binary_op)
+        सार्वजनिक:
+            अन्तःस्थ VecT संक्रियकः()(VecT a, VecT b, ध्रुव द्विमान_Operation द्विमान_op)
             {
-                return binary_op(a, b).template as<VecT>();
+                प्रत्यागम द्विमान_op(a, b).प्रतिरूपम् as<VecT>();
             }
         };
 
-        template <class Ta, class Tb, class Tc, class Ts>
-        inline void gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
-                                    int m, int n, int k, const void * alpha, const void ** a, int lda, const void ** b,
-                                    int ldb, const void * beta, void ** c, int ldc, int batch_size,
-                                    matrix_info_t<float> * matrix_info) {
-            Ts alpha_value = dpct::get_value(reinterpret_cast<const Ts *>(alpha), q);
-            Ts beta_value = dpct::get_value(reinterpret_cast<const Ts *>(beta), q);
+        प्रतिरूपम् <वर्ग Ta, वर्ग Tb, वर्ग Tc, वर्ग Ts>
+        अन्तःस्थ शून्य gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
+                                    पूर्णाङ्क m, पूर्णाङ्क n, पूर्णाङ्क k, ध्रुव शून्य * alpha, ध्रुव शून्य ** a, पूर्णाङ्क lda, ध्रुव शून्य ** b,
+                                    पूर्णाङ्क ldb, ध्रुव शून्य * beta, शून्य ** c, पूर्णाङ्क ldc, पूर्णाङ्क batch_आकार,
+                                    matrix_info_t<भिन्न> * matrix_info) {
+            Ts alpha_मानम्_2 = dpct::get_मानम्(reinterpret_cast<ध्रुव Ts *>(alpha), q);
+            Ts beta_मानम् = dpct::get_मानम्(reinterpret_cast<ध्रुव Ts *>(beta), q);
 
             matrix_info->transpose_info[0] = a_trans;
             matrix_info->transpose_info[1] = b_trans;
-            matrix_info->value_info[0] = alpha_value;
-            matrix_info->value_info[1] = beta_value;
-            matrix_info->size_info[0] = m;
-            matrix_info->size_info[1] = n;
-            matrix_info->size_info[2] = k;
+            matrix_info->मानम्_info[0] = alpha_मानम्_2;
+            matrix_info->मानम्_info[1] = beta_मानम्;
+            matrix_info->आकार_info[0] = m;
+            matrix_info->आकार_info[1] = n;
+            matrix_info->आकार_info[2] = k;
             matrix_info->ld_info[0] = lda;
             matrix_info->ld_info[1] = ldb;
             matrix_info->ld_info[2] = ldc;
-            matrix_info->groupsize_info = batch_size;
+            matrix_info->groupsize_info = batch_आकार;
 
             sycl::event e = oneapi::mkl::blas::column_major::gemm_batch(
                 q, matrix_info->transpose_info, matrix_info->transpose_info + 1,
-                matrix_info->size_info, matrix_info->size_info + 1, matrix_info->size_info + 2,
-                reinterpret_cast<Ts *>(matrix_info->value_info), reinterpret_cast<const Ta **>(a), matrix_info->ld_info,
-                reinterpret_cast<const Tb **>(b), matrix_info->ld_info + 1,
-                reinterpret_cast<Ts *>(matrix_info->value_info + 1), reinterpret_cast<Tc **>(c),
+                matrix_info->आकार_info, matrix_info->आकार_info + 1, matrix_info->आकार_info + 2,
+                reinterpret_cast<Ts *>(matrix_info->मानम्_info), reinterpret_cast<ध्रुव Ta **>(a), matrix_info->ld_info,
+                reinterpret_cast<ध्रुव Tb **>(b), matrix_info->ld_info + 1,
+                reinterpret_cast<Ts *>(matrix_info->मानम्_info + 1), reinterpret_cast<Tc **>(c),
                 matrix_info->ld_info + 2, 1, &(matrix_info->groupsize_info));
         }
 
-        template <class Ta, class Tb, class Tc, class Ts>
-        inline void gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
-                                    int m, int n, int k, const void * alpha, const void * a, int lda,
-                                    long long int stride_a, const void * b, int ldb, long long int stride_b,
-                                    const void * beta, void * c, int ldc, long long int stride_c, int batch_size) {
-            Ts alpha_value = dpct::get_value(reinterpret_cast<const Ts *>(alpha), q);
-            Ts beta_value = dpct::get_value(reinterpret_cast<const Ts *>(beta), q);
-            auto data_a = get_memory<const Ta>(a);
-            auto data_b = get_memory<const Tb>(b);
-            auto data_c = get_memory<Tc>(c);
-            oneapi::mkl::blas::column_major::gemm_batch(q, a_trans, b_trans, m, n, k, alpha_value,
-                                                         data_a, lda, stride_a, data_b, ldb, stride_b, beta_value,
-                                                         data_c, ldc, stride_c, batch_size);
+        प्रतिरूपम् <वर्ग Ta, वर्ग Tb, वर्ग Tc, वर्ग Ts>
+        अन्तःस्थ शून्य gemm_batch_impl(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans,
+                                    पूर्णाङ्क m, पूर्णाङ्क n, पूर्णाङ्क k, ध्रुव शून्य * alpha, ध्रुव शून्य * a, पूर्णाङ्क lda,
+                                    दीर्घ दीर्घ पूर्णाङ्क stride_a, ध्रुव शून्य * b, पूर्णाङ्क ldb, दीर्घ दीर्घ पूर्णाङ्क stride_b,
+                                    ध्रुव शून्य * beta, शून्य * c, पूर्णाङ्क ldc, दीर्घ दीर्घ पूर्णाङ्क stride_c, पूर्णाङ्क batch_आकार) {
+            Ts alpha_मानम्_2 = dpct::get_मानम्(reinterpret_cast<ध्रुव Ts *>(alpha), q);
+            Ts beta_मानम् = dpct::get_मानम्(reinterpret_cast<ध्रुव Ts *>(beta), q);
+            स्वचालित दत्त_a = get_स्मृतिः<ध्रुव Ta>(a);
+            स्वचालित दत्त_b = get_स्मृतिः<ध्रुव Tb>(b);
+            स्वचालित दत्त_c = get_स्मृतिः<Tc>(c);
+            oneapi::mkl::blas::column_major::gemm_batch(q, a_trans, b_trans, m, n, k, alpha_मानम्_2,
+                                                         दत्त_a, lda, stride_a, दत्त_b, ldb, stride_b, beta_मानम्,
+                                                         दत्त_c, ldc, stride_c, batch_आकार);
         }
 
     } // namespace detail
 
-    template <typename VecT, class BinaryOperation>
-    inline unsigned vectorized_binary(unsigned a, unsigned b,
-                                      const BinaryOperation binary_op)
+    प्रतिरूपम् <प्रकारनाम VecT, वर्ग द्विमान_Operation>
+    अन्तःस्थ अचिह्नित vectorized_द्विमान(अचिह्नित a, अचिह्नित b,
+                                      ध्रुव द्विमान_Operation द्विमान_op)
     {
-        sycl::vec<unsigned, 1> v0{a}, v1{b};
-        auto v2 = v0.as<VecT>();
-        auto v3 = v1.as<VecT>();
-        auto v4 =
-            detail::vectorized_binary<VecT, BinaryOperation>()(v2, v3, binary_op);
-        v0 = v4.template as<sycl::vec<unsigned, 1>>();
-        return v0;
+        sycl::vec<अचिह्नित, 1> v0{a}, v1{b};
+        स्वचालित v2 = v0.as<VecT>();
+        स्वचालित v3 = v1.as<VecT>();
+        स्वचालित v4 =
+            detail::vectorized_द्विमान<VecT, द्विमान_Operation>()(v2, v3, द्विमान_op);
+        v0 = v4.प्रतिरूपम् as<sycl::vec<अचिह्नित, 1>>();
+        प्रत्यागम v0;
     }
 
-    static void async_dpct_memcpy(void *to_ptr, const void *from_ptr, size_t size,
+    स्थिर शून्य async_dpct_memcpy(शून्य *गन्तव्यम्_ptr, ध्रुव शून्य *from_ptr, size_t size,
                                   memcpy_direction direction = automatic,
                                   sycl::queue &q = dpct::get_default_queue())
     {
-        detail::dpct_memcpy(q, to_ptr, from_ptr, size, direction);
+        detail::dpct_memcpy(q, गन्तव्यम्_ptr, from_ptr, size, direction);
     }
 
-    static inline unsigned int select_device(unsigned int id)
+    स्थिर अन्तःस्थ अचिह्नित पूर्णाङ्क select_device(अचिह्नित पूर्णाङ्क id)
     {
         dev_mgr::instance().select_device(id);
-        return id;
+        प्रत्यागम id;
     }
 
-    template <typename T>
-    T permute_sub_group_by_xor(sycl::sub_group g, T x, unsigned int mask,
-                               unsigned int logical_sub_group_size = 32)
+    प्रतिरूपम् <प्रकारनाम T>
+    T permute_sub_गणः_by_xor(sycl::sub_गणः g, T x, अचिह्नित पूर्णाङ्क आवरणम्,
+                               अचिह्नित पूर्णाङ्क logical_sub_गणः_आकार = 32)
     {
-        unsigned int id = g.get_local_linear_id();
-        unsigned int start_index =
-            id / logical_sub_group_size * logical_sub_group_size;
-        unsigned int target_offset = (id % logical_sub_group_size) ^ mask;
-        return sycl::select_from_group(g, x,
-                                       target_offset < logical_sub_group_size
-                                           ? start_index + target_offset
+        अचिह्नित पूर्णाङ्क id = g.get_local_रैखिकम्_id();
+        अचिह्नित पूर्णाङ्क start_सूचकांक =
+            id / logical_sub_गणः_आकार * logical_sub_गणः_आकार;
+        अचिह्नित पूर्णाङ्क target_विस्थापनम् = (id % logical_sub_गणः_आकार) ^ आवरणम्;
+        प्रत्यागम sycl::select_from_गणः(g, x,
+                                       target_विस्थापनम् < logical_sub_गणः_आकार
+                                           ? start_सूचकांक + target_विस्थापनम्
                                            : id);
     }
 
-    template <typename T1, typename T2>
-    using dot_product_acc_t = std::conditional_t<
+    प्रतिरूपम् <प्रकारनाम T1, प्रकारनाम T2>
+    उपयुज्य dot_गुणनफलम्_acc_t = std::conditional_t<
         std::is_unsigned_v<T1> && std::is_unsigned_v<T2>,
         uint32_t,
         int32_t>;
 
-    template <typename T>
+    प्रतिरूपम् <प्रकारनाम T>
     sycl::vec<T, 4> extract_and_sign_or_zero_extend4(T val) {
-      return sycl::vec<T, 1>(val)
-          .template as<sycl::vec<
+      प्रत्यागम sycl::vec<T, 1>(val)
+          .प्रतिरूपम् as<sycl::vec<
               std::conditional_t<std::is_signed_v<T>, int8_t, uint8_t>,
               4>>()
-          .template convert<T>();
+          .प्रतिरूपम् convert<T>();
     }
 
-    template <typename T1, typename T2, typename T3>
-    inline auto dp4a(T1 a, T2 b, T3 c) {
-      dot_product_acc_t<T1, T2> res = c;
-      auto va = extract_and_sign_or_zero_extend4(a);
-      auto vb = extract_and_sign_or_zero_extend4(b);
+    प्रतिरूपम् <प्रकारनाम T1, प्रकारनाम T2, प्रकारनाम T3>
+    अन्तःस्थ स्वचालित dp4a(T1 a, T2 b, T3 c) {
+      dot_गुणनफलम्_acc_t<T1, T2> res = c;
+      स्वचालित va = extract_and_sign_or_zero_extend4(a);
+      स्वचालित vb = extract_and_sign_or_zero_extend4(b);
       res += va[0] * vb[0];
       res += va[1] * vb[1];
       res += va[2] * vb[2];
       res += va[3] * vb[3];
-      return res;
+      प्रत्यागम res;
     }
 
-    struct sub_sat
+    संरचना sub_sat
     {
-        template <typename T>
-        auto operator()(const T x, const T y) const
+        प्रतिरूपम् <प्रकारनाम T>
+        स्वचालित संक्रियकः()(ध्रुव T x, ध्रुव T y) ध्रुव
         {
-            return sycl::sub_sat(x, y);
+            प्रत्यागम sycl::sub_sat(x, y);
         }
     };
 
-    template <typename S, typename T>
-    inline T vectorized_min(T a, T b)
+    प्रतिरूपम् <प्रकारनाम S, प्रकारनाम T>
+    अन्तःस्थ T vectorized_min(T a, T b)
     {
         sycl::vec<T, 1> v0{a}, v1{b};
-        auto v2 = v0.template as<S>();
-        auto v3 = v1.template as<S>();
-        auto v4 = sycl::min(v2, v3);
-        v0 = v4.template as<sycl::vec<T, 1>>();
-        return v0;
+        स्वचालित v2 = v0.प्रतिरूपम् as<S>();
+        स्वचालित v3 = v1.प्रतिरूपम् as<S>();
+        स्वचालित v4 = sycl::min(v2, v3);
+        v0 = v4.प्रतिरूपम् as<sycl::vec<T, 1>>();
+        प्रत्यागम v0;
     }
 
-    inline float pow(const float a, const int b) { return sycl::pown(a, b); }
-    inline double pow(const double a, const int b) { return sycl::pown(a, b); }
-    inline float pow(const float a, const float b) { return sycl::pow(a, b); }
-    inline double pow(const double a, const double b) { return sycl::pow(a, b); }
-    template <typename T, typename U>
-    inline typename std::enable_if_t<std::is_floating_point_v<T>, T>
-    pow(const T a, const U b)
+    अन्तःस्थ भिन्न घातः(ध्रुव भिन्न a, ध्रुव पूर्णाङ्क b) { प्रत्यागम sycl::pown(a, b); }
+    अन्तःस्थ द्विगुण घातः(ध्रुव द्विगुण a, ध्रुव पूर्णाङ्क b) { प्रत्यागम sycl::pown(a, b); }
+    अन्तःस्थ भिन्न घातः(ध्रुव भिन्न a, ध्रुव भिन्न b) { प्रत्यागम sycl::घातः(a, b); }
+    अन्तःस्थ द्विगुण घातः(ध्रुव द्विगुण a, ध्रुव द्विगुण b) { प्रत्यागम sycl::घातः(a, b); }
+    प्रतिरूपम् <प्रकारनाम T, प्रकारनाम U>
+    अन्तःस्थ प्रकारनाम std::enable_if_t<std::is_floating_point_v<T>, T>
+    घातः(ध्रुव T a, ध्रुव U b)
     {
-        return sycl::pow(a, static_cast<T>(b));
+        प्रत्यागम sycl::घातः(a, static_cast<T>(b));
     }
-    template <typename T, typename U>
-    inline typename std::enable_if_t<!std::is_floating_point_v<T>, double>
-    pow(const T a, const U b)
+    प्रतिरूपम् <प्रकारनाम T, प्रकारनाम U>
+    अन्तःस्थ प्रकारनाम std::enable_if_t<!std::is_floating_point_v<T>, द्विगुण>
+    घातः(ध्रुव T a, ध्रुव U b)
     {
-        return sycl::pow(static_cast<double>(a), static_cast<double>(b));
+        प्रत्यागम sycl::घातः(static_cast<द्विगुण>(a), static_cast<द्विगुण>(b));
     }
 
-    inline double min(const double a, const float b)
+    अन्तःस्थ द्विगुण min(ध्रुव द्विगुण a, ध्रुव भिन्न b)
     {
-        return sycl::fmin(a, static_cast<double>(b));
+        प्रत्यागम sycl::fmin(a, static_cast<द्विगुण>(b));
     }
-    inline double min(const float a, const double b)
+    अन्तःस्थ द्विगुण min(ध्रुव भिन्न a, ध्रुव द्विगुण b)
     {
-        return sycl::fmin(static_cast<double>(a), b);
+        प्रत्यागम sycl::fmin(static_cast<द्विगुण>(a), b);
     }
-    inline float min(const float a, const float b) { return sycl::fmin(a, b); }
-    inline double min(const double a, const double b) { return sycl::fmin(a, b); }
-    inline std::uint32_t min(const std::uint32_t a, const std::int32_t b)
+    अन्तःस्थ भिन्न min(ध्रुव भिन्न a, ध्रुव भिन्न b) { प्रत्यागम sycl::fmin(a, b); }
+    अन्तःस्थ द्विगुण min(ध्रुव द्विगुण a, ध्रुव द्विगुण b) { प्रत्यागम sycl::fmin(a, b); }
+    अन्तःस्थ std::uint32_t min(ध्रुव std::uint32_t a, ध्रुव std::int32_t b)
     {
-        return sycl::min(a, static_cast<std::uint32_t>(b));
+        प्रत्यागम sycl::min(a, static_cast<std::uint32_t>(b));
     }
-    inline std::uint32_t min(const std::int32_t a, const std::uint32_t b)
+    अन्तःस्थ std::uint32_t min(ध्रुव std::int32_t a, ध्रुव std::uint32_t b)
     {
-        return sycl::min(static_cast<std::uint32_t>(a), b);
+        प्रत्यागम sycl::min(static_cast<std::uint32_t>(a), b);
     }
-    inline std::int32_t min(const std::int32_t a, const std::int32_t b)
+    अन्तःस्थ std::int32_t min(ध्रुव std::int32_t a, ध्रुव std::int32_t b)
     {
-        return sycl::min(a, b);
+        प्रत्यागम sycl::min(a, b);
     }
-    inline std::uint32_t min(const std::uint32_t a, const std::uint32_t b)
+    अन्तःस्थ std::uint32_t min(ध्रुव std::uint32_t a, ध्रुव std::uint32_t b)
     {
-        return sycl::min(a, b);
+        प्रत्यागम sycl::min(a, b);
     }
-    inline std::uint64_t min(const std::uint64_t a, const std::int64_t b)
+    अन्तःस्थ std::uint64_t min(ध्रुव std::uint64_t a, ध्रुव std::int64_t b)
     {
-        return sycl::min(a, static_cast<std::uint64_t>(b));
+        प्रत्यागम sycl::min(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t min(const std::int64_t a, const std::uint64_t b)
+    अन्तःस्थ std::uint64_t min(ध्रुव std::int64_t a, ध्रुव std::uint64_t b)
     {
-        return sycl::min(static_cast<std::uint64_t>(a), b);
+        प्रत्यागम sycl::min(static_cast<std::uint64_t>(a), b);
     }
-    inline std::int64_t min(const std::int64_t a, const std::int64_t b)
+    अन्तःस्थ std::int64_t min(ध्रुव std::int64_t a, ध्रुव std::int64_t b)
     {
-        return sycl::min(a, b);
+        प्रत्यागम sycl::min(a, b);
     }
-    inline std::uint64_t min(const std::uint64_t a, const std::uint64_t b)
+    अन्तःस्थ std::uint64_t min(ध्रुव std::uint64_t a, ध्रुव std::uint64_t b)
     {
-        return sycl::min(a, b);
+        प्रत्यागम sycl::min(a, b);
     }
-    inline std::uint64_t min(const std::uint64_t a, const std::int32_t b)
+    अन्तःस्थ std::uint64_t min(ध्रुव std::uint64_t a, ध्रुव std::int32_t b)
     {
-        return sycl::min(a, static_cast<std::uint64_t>(b));
+        प्रत्यागम sycl::min(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t min(const std::int32_t a, const std::uint64_t b)
+    अन्तःस्थ std::uint64_t min(ध्रुव std::int32_t a, ध्रुव std::uint64_t b)
     {
-        return sycl::min(static_cast<std::uint64_t>(a), b);
+        प्रत्यागम sycl::min(static_cast<std::uint64_t>(a), b);
     }
-    inline std::uint64_t min(const std::uint64_t a, const std::uint32_t b)
+    अन्तःस्थ std::uint64_t min(ध्रुव std::uint64_t a, ध्रुव std::uint32_t b)
     {
-        return sycl::min(a, static_cast<std::uint64_t>(b));
+        प्रत्यागम sycl::min(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t min(const std::uint32_t a, const std::uint64_t b)
+    अन्तःस्थ std::uint64_t min(ध्रुव std::uint32_t a, ध्रुव std::uint64_t b)
     {
-        return sycl::min(static_cast<std::uint64_t>(a), b);
+        प्रत्यागम sycl::min(static_cast<std::uint64_t>(a), b);
     }
     // max function overloads.
     // For floating-point types, `float` or `double` arguments are acceptable.
     // For integer types, `std::uint32_t`, `std::int32_t`, `std::uint64_t` or
     // `std::int64_t` type arguments are acceptable.
-    inline double max(const double a, const float b)
+    अन्तःस्थ द्विगुण max(ध्रुव द्विगुण a, ध्रुव भिन्न b)
     {
-        return sycl::fmax(a, static_cast<double>(b));
+        प्रत्यागम sycl::fmax(a, static_cast<द्विगुण>(b));
     }
-    inline double max(const float a, const double b)
+    अन्तःस्थ द्विगुण max(ध्रुव भिन्न a, ध्रुव द्विगुण b)
     {
-        return sycl::fmax(static_cast<double>(a), b);
+        प्रत्यागम sycl::fmax(static_cast<द्विगुण>(a), b);
     }
-    inline float max(const float a, const float b) { return sycl::fmax(a, b); }
-    inline double max(const double a, const double b) { return sycl::fmax(a, b); }
-    inline std::uint32_t max(const std::uint32_t a, const std::int32_t b)
+    अन्तःस्थ भिन्न max(ध्रुव भिन्न a, ध्रुव भिन्न b) { प्रत्यागम sycl::fmax(a, b); }
+    अन्तःस्थ द्विगुण max(ध्रुव द्विगुण a, ध्रुव द्विगुण b) { प्रत्यागम sycl::fmax(a, b); }
+    अन्तःस्थ std::uint32_t max(ध्रुव std::uint32_t a, ध्रुव std::int32_t b)
     {
-        return sycl::max(a, static_cast<std::uint32_t>(b));
+        प्रत्यागम sycl::max(a, static_cast<std::uint32_t>(b));
     }
-    inline std::uint32_t max(const std::int32_t a, const std::uint32_t b)
+    अन्तःस्थ std::uint32_t max(ध्रुव std::int32_t a, ध्रुव std::uint32_t b)
     {
-        return sycl::max(static_cast<std::uint32_t>(a), b);
+        प्रत्यागम sycl::max(static_cast<std::uint32_t>(a), b);
     }
-    inline std::int32_t max(const std::int32_t a, const std::int32_t b)
+    अन्तःस्थ std::int32_t max(ध्रुव std::int32_t a, ध्रुव std::int32_t b)
     {
-        return sycl::max(a, b);
+        प्रत्यागम sycl::max(a, b);
     }
-    inline std::uint32_t max(const std::uint32_t a, const std::uint32_t b)
+    अन्तःस्थ std::uint32_t max(ध्रुव std::uint32_t a, ध्रुव std::uint32_t b)
     {
-        return sycl::max(a, b);
+        प्रत्यागम sycl::max(a, b);
     }
-    inline std::uint64_t max(const std::uint64_t a, const std::int64_t b)
+    अन्तःस्थ std::uint64_t max(ध्रुव std::uint64_t a, ध्रुव std::int64_t b)
     {
-        return sycl::max(a, static_cast<std::uint64_t>(b));
+        प्रत्यागम sycl::max(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t max(const std::int64_t a, const std::uint64_t b)
+    अन्तःस्थ std::uint64_t max(ध्रुव std::int64_t a, ध्रुव std::uint64_t b)
     {
-        return sycl::max(static_cast<std::uint64_t>(a), b);
+        प्रत्यागम sycl::max(static_cast<std::uint64_t>(a), b);
     }
-    inline std::int64_t max(const std::int64_t a, const std::int64_t b)
+    अन्तःस्थ std::int64_t max(ध्रुव std::int64_t a, ध्रुव std::int64_t b)
     {
-        return sycl::max(a, b);
+        प्रत्यागम sycl::max(a, b);
     }
-    inline std::uint64_t max(const std::uint64_t a, const std::uint64_t b)
+    अन्तःस्थ std::uint64_t max(ध्रुव std::uint64_t a, ध्रुव std::uint64_t b)
     {
-        return sycl::max(a, b);
+        प्रत्यागम sycl::max(a, b);
     }
-    inline std::uint64_t max(const std::uint64_t a, const std::int32_t b)
+    अन्तःस्थ std::uint64_t max(ध्रुव std::uint64_t a, ध्रुव std::int32_t b)
     {
-        return sycl::max(a, static_cast<std::uint64_t>(b));
+        प्रत्यागम sycl::max(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t max(const std::int32_t a, const std::uint64_t b)
+    अन्तःस्थ std::uint64_t max(ध्रुव std::int32_t a, ध्रुव std::uint64_t b)
     {
-        return sycl::max(static_cast<std::uint64_t>(a), b);
+        प्रत्यागम sycl::max(static_cast<std::uint64_t>(a), b);
     }
-    inline std::uint64_t max(const std::uint64_t a, const std::uint32_t b)
+    अन्तःस्थ std::uint64_t max(ध्रुव std::uint64_t a, ध्रुव std::uint32_t b)
     {
-        return sycl::max(a, static_cast<std::uint64_t>(b));
+        प्रत्यागम sycl::max(a, static_cast<std::uint64_t>(b));
     }
-    inline std::uint64_t max(const std::uint32_t a, const std::uint64_t b)
+    अन्तःस्थ std::uint64_t max(ध्रुव std::uint32_t a, ध्रुव std::uint64_t b)
     {
-        return sycl::max(static_cast<std::uint64_t>(a), b);
+        प्रत्यागम sycl::max(static_cast<std::uint64_t>(a), b);
     }
 
-    inline void
-    has_capability_or_fail(const sycl::device &dev,
-                           const std::initializer_list<sycl::aspect> &props)
+    अन्तःस्थ शून्य
+    has_capability_or_fail(ध्रुव sycl::device &dev,
+                           ध्रुव std::initializer_list<sycl::aspect> &props)
     {
-        for (const auto &it : props)
+        प्रति (ध्रुव स्वचालित &it : props)
         {
-            if (dev.has(it))
-                continue;
-            switch (it)
+            यदि (dev.has(it))
+                अनुवर्त;
+            विकल्प (it)
             {
-            case sycl::aspect::fp64:
-                throw std::runtime_error("'double' is not supported in '" +
+            पक्ष sycl::aspect::fp64:
+                क्षिप std::runtime_error("'double' is not supported in '" +
                                          dev.get_info<sycl::info::device::name>() +
                                          "' device");
-                break;
-            case sycl::aspect::fp16:
-                throw std::runtime_error("'half' is not supported in '" +
+                भङ्ग;
+            पक्ष sycl::aspect::fp16:
+                क्षिप std::runtime_error("'half' is not supported in '" +
                                          dev.get_info<sycl::info::device::name>() +
                                          "' device");
-                break;
-            default:
-#define __SYCL_ASPECT(ASPECT, ID) \
-    case sycl::aspect::ASPECT:    \
-        return #ASPECT;
-#define __SYCL_ASPECT_DEPRECATED(ASPECT, ID, MESSAGE) __SYCL_ASPECT(ASPECT, ID)
-#define __SYCL_ASPECT_DEPRECATED_ALIAS(ASPECT, ID, MESSAGE)
-                auto getAspectNameStr = [](sycl::aspect AspectNum) -> std::string
+                भङ्ग;
+            स्वभाव:
+#परिभाषय __SYCL_ASPECT(ASPECT, ID) \
+    पक्ष sycl::aspect::ASPECT:    \
+        प्रत्यागम #ASPECT;
+#परिभाषय __SYCL_ASPECT_DEPRECATED(ASPECT, ID, सन्देशः_3) __SYCL_ASPECT(ASPECT, ID)
+#परिभाषय __SYCL_ASPECT_DEPRECATED_ALIAS(ASPECT, ID, सन्देशः_3)
+                स्वचालित getAspectNameStr = [](sycl::aspect Aspect_अङ्कः) -> std::string
                 {
-                    switch (AspectNum)
+                    विकल्प (Aspect_अङ्कः)
                     {
-#include <sycl/info/aspects.def>
-#include <sycl/info/aspects_deprecated.def>
-                    default:
-                        return "unknown aspect";
+#अन्तर्भाव <sycl/info/aspects.def>
+#अन्तर्भाव <sycl/info/aspects_deprecated.def>
+                    स्वभाव:
+                        प्रत्यागम "unknown aspect";
                     }
                 };
-#undef __SYCL_ASPECT_DEPRECATED_ALIAS
-#undef __SYCL_ASPECT_DEPRECATED
-#undef __SYCL_ASPECT
-                throw std::runtime_error(
+#अपरिभाषय __SYCL_ASPECT_DEPRECATED_ALIAS
+#अपरिभाषय __SYCL_ASPECT_DEPRECATED
+#अपरिभाषय __SYCL_ASPECT
+                क्षिप std::runtime_error(
                     "'" + getAspectNameStr(it) + "' is not supported in '" +
                     dev.get_info<sycl::info::device::name>() + "' device");
             }
-            break;
+            भङ्ग;
         }
     }
 
-    static inline unsigned int get_current_device_id()
+    स्थिर अन्तःस्थ अचिह्नित पूर्णाङ्क get_current_device_id()
     {
-        return dev_mgr::instance().current_device_id();
+        प्रत्यागम dev_mgr::instance().current_device_id();
     }
 
-    static inline device_ext &get_current_device()
+    स्थिर अन्तःस्थ device_ext &get_current_device()
     {
-        return dev_mgr::instance().current_device();
+        प्रत्यागम dev_mgr::instance().current_device();
     }
 
-    static inline device_ext &get_device(unsigned int id)
+    स्थिर अन्तःस्थ device_ext &get_device(अचिह्नित पूर्णाङ्क id)
     {
-        return dev_mgr::instance().get_device(id);
+        प्रत्यागम dev_mgr::instance().get_device(id);
     }
 
-    static inline sycl::queue &get_in_order_queue()
+    स्थिर अन्तःस्थ sycl::queue &get_अन्तर्_क्रमः_queue()
     {
-        return dev_mgr::instance().current_device().in_order_queue();
+        प्रत्यागम dev_mgr::instance().current_device().अन्तर्_क्रमः_queue();
     }
 
-    static sycl::event
-    dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr, size_t size,
+    स्थिर sycl::event
+    dpct_memcpy(sycl::queue &q, शून्य *गन्तव्यम्_ptr, ध्रुव शून्य *from_ptr, size_t size,
                 memcpy_direction direction,
-                const std::vector<sycl::event> &dep_events = {})
+                ध्रुव std::vector<sycl::event> &dep_events = {})
     {
-        if (!size)
-            return sycl::event{};
-        return q.memcpy(to_ptr, from_ptr, size, dep_events);
-        DPCT_UNUSED(direction);
+        यदि (!size)
+            प्रत्यागम sycl::event{};
+        प्रत्यागम q.स्मृतिं_प्रतिलिख(गन्तव्यम्_ptr, from_ptr, size, dep_events);
+        DPCT_अप्रयुक्तम्(direction);
     }
 
     // Get actual copy range and make sure it will not exceed range.
-    static inline size_t get_copy_range(sycl::range<3> size, size_t slice,
+    स्थिर अन्तःस्थ size_t get_copy_range(sycl::range<3> size, size_t खण्डिका_2,
                                         size_t pitch)
     {
-        return slice * (size.get(2) - 1) + pitch * (size.get(1) - 1) + size.get(0);
+        प्रत्यागम खण्डिका_2 * (size.get(2) - 1) + pitch * (size.get(1) - 1) + size.get(0);
     }
 
-    static inline size_t get_offset(sycl::id<3> id, size_t slice,
+    स्थिर अन्तःस्थ size_t get_विस्थापनम्(sycl::id<3> id, size_t खण्डिका_2,
                                     size_t pitch)
     {
-        return slice * id.get(2) + pitch * id.get(1) + id.get(0);
+        प्रत्यागम खण्डिका_2 * id.get(2) + pitch * id.get(1) + id.get(0);
     }
 
     /// copy 3D matrix specified by \p size from 3D matrix specified by \p from_ptr
     /// and \p from_range to another specified by \p to_ptr and \p to_range.
-    static inline std::vector<sycl::event>
-    dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr,
-                sycl::range<3> to_range, sycl::range<3> from_range,
-                sycl::id<3> to_id, sycl::id<3> from_id,
+    स्थिर अन्तःस्थ std::vector<sycl::event>
+    dpct_memcpy(sycl::queue &q, शून्य *गन्तव्यम्_ptr, ध्रुव शून्य *from_ptr,
+                sycl::range<3> गन्तव्यम्_range, sycl::range<3> from_range,
+                sycl::id<3> गन्तव्यम्_id, sycl::id<3> from_id,
                 sycl::range<3> size, memcpy_direction direction,
-                const std::vector<sycl::event> &dep_events = {})
+                ध्रुव std::vector<sycl::event> &dep_events = {})
     {
         // RAII for host pointer
-        class host_buffer
+        वर्ग host_बफर
         {
-            void *_buf;
-            size_t _size;
+            शून्य *_buf;
+            size_t आकार_2;
             sycl::queue &_q;
-            const std::vector<sycl::event> &_deps; // free operation depends
+            ध्रुव std::vector<sycl::event> &_deps; // free operation depends
 
-        public:
-            host_buffer(size_t size, sycl::queue &q,
-                        const std::vector<sycl::event> &deps)
-                : _buf(std::malloc(size)), _size(size), _q(q), _deps(deps) {}
-            void *get_ptr() const { return _buf; }
-            size_t get_size() const { return _size; }
-            ~host_buffer()
+        सार्वजनिक:
+            host_बफर(size_t size, sycl::queue &q,
+                        ध्रुव std::vector<sycl::event> &deps)
+                : _buf(std::स्मृतिं_देहि(size)), आकार_2(size), _q(q), _deps(deps) {}
+            शून्य *get_ptr() ध्रुव { प्रत्यागम _buf; }
+            size_t get_आकार() ध्रुव { प्रत्यागम आकार_2; }
+            ~host_बफर()
             {
-                if (_buf)
+                यदि (_buf)
                 {
                     _q.submit([&](sycl::handler &cgh)
                               {
             cgh.depends_on(_deps);
-            cgh.host_task([buf = _buf] { std::free(buf); }); });
+            cgh.host_task([buf = _buf] { std::मुक्त(buf); }); });
                 }
             }
         };
         std::vector<sycl::event> event_list;
 
-        size_t to_slice = to_range.get(1) * to_range.get(0),
-               from_slice = from_range.get(1) * from_range.get(0);
-        unsigned char *to_surface =
-            (unsigned char *)to_ptr + get_offset(to_id, to_slice, to_range.get(0));
-        const unsigned char *from_surface =
-            (const unsigned char *)from_ptr +
-            get_offset(from_id, from_slice, from_range.get(0));
+        size_t गन्तव्यम्_खण्डिका = गन्तव्यम्_range.get(1) * गन्तव्यम्_range.get(0),
+               from_खण्डिका = from_range.get(1) * from_range.get(0);
+        अचिह्नित वर्ण *गन्तव्यम्_surface =
+            (अचिह्नित वर्ण *)गन्तव्यम्_ptr + get_विस्थापनम्(गन्तव्यम्_id, गन्तव्यम्_खण्डिका, गन्तव्यम्_range.get(0));
+        ध्रुव अचिह्नित वर्ण *from_surface =
+            (ध्रुव अचिह्नित वर्ण *)from_ptr +
+            get_विस्थापनम्(from_id, from_खण्डिका, from_range.get(0));
 
-        if (to_slice == from_slice && to_slice == size.get(1) * size.get(0))
+        यदि (गन्तव्यम्_खण्डिका == from_खण्डिका && गन्तव्यम्_खण्डिका == size.get(1) * size.get(0))
         {
-            return {dpct_memcpy(q, to_surface, from_surface, to_slice * size.get(2),
+            प्रत्यागम {dpct_memcpy(q, गन्तव्यम्_surface, from_surface, गन्तव्यम्_खण्डिका * size.get(2),
                                 direction, dep_events)};
         }
-        direction = detail::deduce_memcpy_direction(q, to_ptr, from_ptr, direction);
-        size_t size_slice = size.get(1) * size.get(0);
-        switch (direction)
+        direction = detail::deduce_memcpy_direction(q, गन्तव्यम्_ptr, from_ptr, direction);
+        size_t आकार_खण्डिका = size.get(1) * size.get(0);
+        विकल्प (direction)
         {
-        case host_to_host:
-            for (size_t z = 0; z < size.get(2); ++z)
+        पक्ष host_गन्तव्यम्_host:
+            प्रति (size_t z = 0; z < size.get(2); ++z)
             {
-                unsigned char *to_ptr = to_surface;
-                const unsigned char *from_ptr = from_surface;
-                if (to_range.get(0) == from_range.get(0) &&
-                    to_range.get(0) == size.get(0))
+                अचिह्नित वर्ण *गन्तव्यम्_ptr = गन्तव्यम्_surface;
+                ध्रुव अचिह्नित वर्ण *from_ptr = from_surface;
+                यदि (गन्तव्यम्_range.get(0) == from_range.get(0) &&
+                    गन्तव्यम्_range.get(0) == size.get(0))
                 {
-                    event_list.push_back(dpct_memcpy(q, to_ptr, from_ptr, size_slice,
+                    event_list.push_back(dpct_memcpy(q, गन्तव्यम्_ptr, from_ptr, आकार_खण्डिका,
                                                      direction, dep_events));
                 }
-                else
+                अन्यथा
                 {
-                    for (size_t y = 0; y < size.get(1); ++y)
+                    प्रति (size_t y = 0; y < size.get(1); ++y)
                     {
-                        event_list.push_back(dpct_memcpy(q, to_ptr, from_ptr, size.get(0),
+                        event_list.push_back(dpct_memcpy(q, गन्तव्यम्_ptr, from_ptr, size.get(0),
                                                          direction, dep_events));
-                        to_ptr += to_range.get(0);
+                        गन्तव्यम्_ptr += गन्तव्यम्_range.get(0);
                         from_ptr += from_range.get(0);
                     }
                 }
-                to_surface += to_slice;
-                from_surface += from_slice;
+                गन्तव्यम्_surface += गन्तव्यम्_खण्डिका;
+                from_surface += from_खण्डिका;
             }
-            break;
-        case host_to_device:
+            भङ्ग;
+        पक्ष host_गन्तव्यम्_device:
         {
-            host_buffer buf(get_copy_range(size, to_slice, to_range.get(0)), q,
+            host_बफर buf(get_copy_range(size, गन्तव्यम्_खण्डिका, गन्तव्यम्_range.get(0)), q,
                             event_list);
             std::vector<sycl::event> host_events;
-            if (to_slice == size_slice)
+            यदि (गन्तव्यम्_खण्डिका == आकार_खण्डिका)
             {
                 // Copy host data to a temp host buffer with the shape of target.
                 host_events =
-                    dpct_memcpy(q, buf.get_ptr(), from_surface, to_range, from_range,
+                    dpct_memcpy(q, buf.get_ptr(), from_surface, गन्तव्यम्_range, from_range,
                                 sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size,
-                                host_to_host, dep_events);
+                                host_गन्तव्यम्_host, dep_events);
             }
-            else
+            अन्यथा
             {
                 // Copy host data to a temp host buffer with the shape of target.
                 host_events = dpct_memcpy(
-                    q, buf.get_ptr(), from_surface, to_range, from_range,
-                    sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size, host_to_host,
+                    q, buf.get_ptr(), from_surface, गन्तव्यम्_range, from_range,
+                    sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0), size, host_गन्तव्यम्_host,
                     // If has padding data, not sure whether it is useless. So fill temp
                     // buffer with it.
                     std::vector<sycl::event>{
-                        dpct_memcpy(q, buf.get_ptr(), to_surface, buf.get_size(),
-                                    device_to_host, dep_events)});
+                        dpct_memcpy(q, buf.get_ptr(), गन्तव्यम्_surface, buf.get_आकार(),
+                                    device_गन्तव्यम्_host, dep_events)});
             }
             // Copy from temp host buffer to device with only one submit.
-            event_list.push_back(dpct_memcpy(q, to_surface, buf.get_ptr(),
-                                             buf.get_size(), host_to_device,
+            event_list.push_back(dpct_memcpy(q, गन्तव्यम्_surface, buf.get_ptr(),
+                                             buf.get_आकार(), host_गन्तव्यम्_device,
                                              host_events));
-            break;
+            भङ्ग;
         }
-        case device_to_host:
+        पक्ष device_गन्तव्यम्_host:
         {
-            host_buffer buf(get_copy_range(size, from_slice, from_range.get(0)), q,
+            host_बफर buf(get_copy_range(size, from_खण्डिका, from_range.get(0)), q,
                             event_list);
             // Copy from host temp buffer to host target with reshaping.
             event_list = dpct_memcpy(
-                q, to_surface, buf.get_ptr(), to_range, from_range, sycl::id<3>(0, 0, 0),
-                sycl::id<3>(0, 0, 0), size, host_to_host,
+                q, गन्तव्यम्_surface, buf.get_ptr(), गन्तव्यम्_range, from_range, sycl::id<3>(0, 0, 0),
+                sycl::id<3>(0, 0, 0), size, host_गन्तव्यम्_host,
                 // Copy from device to temp host buffer with only one submit.
                 std::vector<sycl::event>{dpct_memcpy(q, buf.get_ptr(), from_surface,
-                                                     buf.get_size(),
-                                                     device_to_host, dep_events)});
-            break;
+                                                     buf.get_आकार(),
+                                                     device_गन्तव्यम्_host, dep_events)});
+            भङ्ग;
         }
-        case device_to_device:
+        पक्ष device_गन्तव्यम्_device:
             event_list.push_back(q.submit([&](sycl::handler &cgh)
                                           {
         cgh.depends_on(dep_events);
-        cgh.parallel_for<class dpct_memcpy_3d_detail>(
+        cgh.parallel_for<वर्ग dpct_memcpy_3d_detail>(
             size,
             [=](sycl::id<3> id) {
-                to_surface[get_offset(id, to_slice, to_range.get(0))] =
-                    from_surface[get_offset(id, from_slice, from_range.get(0))];
+                गन्तव्यम्_surface[get_विस्थापनम्(id, गन्तव्यम्_खण्डिका, गन्तव्यम्_range.get(0))] =
+                    from_surface[get_विस्थापनम्(id, from_खण्डिका, from_range.get(0))];
             }); }));
-        break;
-        default:
-            throw std::runtime_error("dpct_memcpy: invalid direction value");
+        भङ्ग;
+        स्वभाव:
+            क्षिप std::runtime_error("dpct_memcpy: invalid direction value");
         }
-        return event_list;
+        प्रत्यागम event_list;
     }
 
     /// memcpy 2D/3D matrix specified by pitched_data.
-    static inline std::vector<sycl::event>
-    dpct_memcpy(sycl::queue &q, pitched_data to, sycl::id<3> to_id,
-                pitched_data from, sycl::id<3> from_id, sycl::range<3> size,
+    स्थिर अन्तःस्थ std::vector<sycl::event>
+    dpct_memcpy(sycl::queue &q, pitched_दत्त गन्तव्यम्, sycl::id<3> गन्तव्यम्_id,
+                pitched_दत्त from, sycl::id<3> from_id, sycl::range<3> size,
                 memcpy_direction direction = automatic)
     {
-        return dpct_memcpy(q, to.get_data_ptr(), from.get_data_ptr(),
-                           sycl::range<3>(to.get_pitch(), to.get_y(), 1),
-                           sycl::range<3>(from.get_pitch(), from.get_y(), 1), to_id, from_id,
+        प्रत्यागम dpct_memcpy(q, गन्तव्यम्.get_दत्त_ptr(), from.get_दत्त_ptr(),
+                           sycl::range<3>(गन्तव्यम्.get_pitch(), गन्तव्यम्.get_y(), 1),
+                           sycl::range<3>(from.get_pitch(), from.get_y(), 1), गन्तव्यम्_id, from_id,
                            size, direction);
     }
 
     /// memcpy 2D matrix with pitch.
-    static inline std::vector<sycl::event>
-    dpct_memcpy(sycl::queue &q, void *to_ptr, const void *from_ptr,
-                size_t to_pitch, size_t from_pitch, size_t x, size_t y,
+    स्थिर अन्तःस्थ std::vector<sycl::event>
+    dpct_memcpy(sycl::queue &q, शून्य *गन्तव्यम्_ptr, ध्रुव शून्य *from_ptr,
+                size_t गन्तव्यम्_pitch, size_t from_pitch, size_t x, size_t y,
                 memcpy_direction direction = automatic)
     {
-        return dpct_memcpy(q, to_ptr, from_ptr, sycl::range<3>(to_pitch, y, 1),
+        प्रत्यागम dpct_memcpy(q, गन्तव्यम्_ptr, from_ptr, sycl::range<3>(गन्तव्यम्_pitch, y, 1),
                            sycl::range<3>(from_pitch, y, 1),
                            sycl::id<3>(0, 0, 0), sycl::id<3>(0, 0, 0),
                            sycl::range<3>(x, y, 1), direction);
     }
 
-    inline void gemm(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m, int n,
-                     int k, const void * alpha, const void * a, library_data_t a_type, int lda, const void * b,
-                     library_data_t b_type, int ldb, const void * beta, void * c, library_data_t c_type, int ldc,
-                     library_data_t scaling_type) {
-        if (scaling_type == library_data_t::real_float &&
-            c_type == library_data_t::complex_float)
+    अन्तःस्थ शून्य gemm(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, पूर्णाङ्क m, पूर्णाङ्क n,
+                     पूर्णाङ्क k, ध्रुव शून्य * alpha, ध्रुव शून्य * a, library_दत्त_t a_type, पूर्णाङ्क lda, ध्रुव शून्य * b,
+                     library_दत्त_t b_type, पूर्णाङ्क ldb, ध्रुव शून्य * beta, शून्य * c, library_दत्त_t c_type, पूर्णाङ्क ldc,
+                     library_दत्त_t scaling_type) {
+        यदि (scaling_type == library_दत्त_t::real_float &&
+            c_type == library_दत्त_t::complex_float)
         {
-            scaling_type = library_data_t::complex_float;
+            scaling_type = library_दत्त_t::complex_float;
         }
-        else if (scaling_type == library_data_t::real_double &&
-                 c_type == library_data_t::complex_double)
+        अन्यथा यदि (scaling_type == library_दत्त_t::real_double &&
+                 c_type == library_दत्त_t::complex_double)
         {
-            scaling_type = library_data_t::complex_double;
+            scaling_type = library_दत्त_t::complex_double;
         }
 
-        std::uint64_t key =
+        std::uint64_t कुञ्चिका =
             detail::get_type_combination_id(a_type, b_type, c_type, scaling_type);
-        switch (key)
+        विकल्प (कुञ्चिका)
         {
-        case detail::get_type_combination_id(
-            library_data_t::real_float, library_data_t::real_float,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_float, library_दत्त_t::real_float,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_impl<float, float, float, float>(
+            detail::gemm_impl<भिन्न, भिन्न, भिन्न, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_double, library_data_t::real_double,
-            library_data_t::real_double, library_data_t::real_double):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_double, library_दत्त_t::real_double,
+            library_दत्त_t::real_double, library_दत्त_t::real_double):
         {
-            detail::gemm_impl<double, double, double, double>(
+            detail::gemm_impl<द्विगुण, द्विगुण, द्विगुण, द्विगुण>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::complex_float, library_data_t::complex_float,
-            library_data_t::complex_float, library_data_t::complex_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::complex_float, library_दत्त_t::complex_float,
+            library_दत्त_t::complex_float, library_दत्त_t::complex_float):
         {
-            detail::gemm_impl<std::complex<float>, std::complex<float>,
-                              std::complex<float>, std::complex<float>>(
+            detail::gemm_impl<std::complex<भिन्न>, std::complex<भिन्न>,
+                              std::complex<भिन्न>, std::complex<भिन्न>>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::complex_double, library_data_t::complex_double,
-            library_data_t::complex_double, library_data_t::complex_double):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::complex_double, library_दत्त_t::complex_double,
+            library_दत्त_t::complex_double, library_दत्त_t::complex_double):
         {
-            detail::gemm_impl<std::complex<double>, std::complex<double>,
-                              std::complex<double>, std::complex<double>>(
+            detail::gemm_impl<std::complex<द्विगुण>, std::complex<द्विगुण>,
+                              std::complex<द्विगुण>, std::complex<द्विगुण>>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_half):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_half, library_दत्त_t::real_half,
+            library_दत्त_t::real_half, library_दत्त_t::real_half):
         {
             detail::gemm_impl<sycl::half, sycl::half, sycl::half,
                               sycl::half>(q, a_trans, b_trans, m, n, k, alpha, a,
                                           lda, b, ldb, beta, c, ldc);
-            break;
+            भङ्ग;
         }
-#ifdef __INTEL_MKL__
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_float, library_data_t::real_float):
+#यदि_परिभाषितम् __INTEL_MKL__
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_bfloat16, library_दत्त_t::real_bfloat16,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float, float>(
+            detail::gemm_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, भिन्न, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_half, library_दत्त_t::real_half,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_impl<sycl::half, sycl::half, float, float>(
+            detail::gemm_impl<sycl::half, sycl::half, भिन्न, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_half, library_दत्त_t::real_half,
+            library_दत्त_t::real_half, library_दत्त_t::real_float):
         {
-            float alpha_value =
-                dpct::get_value(reinterpret_cast<const float *>(alpha), q);
-            float beta_value =
-                dpct::get_value(reinterpret_cast<const float *>(beta), q);
-            sycl::half alpha_half(alpha_value);
-            sycl::half beta_half(beta_value);
+            भिन्न alpha_मानम्_2 =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव भिन्न *>(alpha), q);
+            भिन्न beta_मानम् =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव भिन्न *>(beta), q);
+            sycl::half alpha_half(alpha_मानम्_2);
+            sycl::half beta_half(beta_मानम्);
             detail::gemm_impl<sycl::half, sycl::half, sycl::half,
                               sycl::half>(q, a_trans, b_trans, m, n, k, &alpha_half,
                                           a, lda, b, ldb, &beta_half, c, ldc);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_int8, library_दत्त_t::real_int8,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_impl<std::int8_t, std::int8_t, float, float>(
+            detail::gemm_impl<std::int8_t, std::int8_t, भिन्न, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_bfloat16, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_bfloat16, library_दत्त_t::real_bfloat16,
+            library_दत्त_t::real_bfloat16, library_दत्त_t::real_float):
         {
-            detail::gemm_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float>(
+            detail::gemm_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_int32, library_data_t::real_int32):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_int8, library_दत्त_t::real_int8,
+            library_दत्त_t::real_int32, library_दत्त_t::real_int32):
         {
-            float alpha_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(alpha), q);
-            float beta_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(beta), q);
-            detail::gemm_impl<std::int8_t, std::int8_t, std::int32_t, float>(
+            भिन्न alpha_float =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव std::int32_t *>(alpha), q);
+            भिन्न beta_float =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव std::int32_t *>(beta), q);
+            detail::gemm_impl<std::int8_t, std::int8_t, std::int32_t, भिन्न>(
                 q, a_trans, b_trans, m, n, k, &alpha_float, a, lda, b, ldb, &beta_float, c, ldc);
-            break;
+            भङ्ग;
         }
-#endif // __INTEL_MKL__
-        default:
-            throw std::runtime_error("the combination of data type is unsupported");
+#यदि_अन्तः // __INTEL_MKL__
+        स्वभाव:
+            क्षिप std::runtime_error("the combination of data type is unsupported");
         }
     }  // gemm()
 
@@ -2428,102 +2428,102 @@ namespace dpct
     /// \param [in] ldc Leading dimension of C.
     /// \param [in] batch_size Specifies the number of matrix multiply operations to perform.
     /// \param [in] scaling_type Data type of the scaling factors.
-    inline void gemm_batch(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m,
-                           int n, int k, const void * alpha, const void * a[], library_data_t a_type, int lda,
-                           const void * b[], library_data_t b_type, int ldb, const void * beta, void * c[],
-                           library_data_t c_type, int ldc, int batch_size, library_data_t scaling_type,
-                           matrix_info_t<float> * matrix_info) {
-        std::uint64_t key =
+    अन्तःस्थ शून्य gemm_batch(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, पूर्णाङ्क m,
+                           पूर्णाङ्क n, पूर्णाङ्क k, ध्रुव शून्य * alpha, ध्रुव शून्य * a[], library_दत्त_t a_type, पूर्णाङ्क lda,
+                           ध्रुव शून्य * b[], library_दत्त_t b_type, पूर्णाङ्क ldb, ध्रुव शून्य * beta, शून्य * c[],
+                           library_दत्त_t c_type, पूर्णाङ्क ldc, पूर्णाङ्क batch_आकार, library_दत्त_t scaling_type,
+                           matrix_info_t<भिन्न> * matrix_info) {
+        std::uint64_t कुञ्चिका =
             detail::get_type_combination_id(a_type, b_type, c_type, scaling_type);
-        switch (key)
+        विकल्प (कुञ्चिका)
         {
-        case detail::get_type_combination_id(
-            library_data_t::real_float, library_data_t::real_float,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_float, library_दत्त_t::real_float,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<float, float, float, float>(q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb,
-                                                                beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<भिन्न, भिन्न, भिन्न, भिन्न>(q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb,
+                                                                beta, c, ldc, batch_आकार, matrix_info);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_double, library_data_t::real_double,
-            library_data_t::real_double, library_data_t::real_double):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_double, library_दत्त_t::real_double,
+            library_दत्त_t::real_double, library_दत्त_t::real_double):
         {
-            detail::gemm_batch_impl<double, double, double, double>(q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb,
-                                                                    beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<द्विगुण, द्विगुण, द्विगुण, द्विगुण>(q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb,
+                                                                    beta, c, ldc, batch_आकार, matrix_info);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_half):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_half, library_दत्त_t::real_half,
+            library_दत्त_t::real_half, library_दत्त_t::real_half):
         {
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half, sycl::half>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_आकार, matrix_info);
+            भङ्ग;
         }
-#ifdef __INTEL_MKL__
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_bfloat16, library_data_t::real_float):
+#यदि_परिभाषितम् __INTEL_MKL__
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_bfloat16, library_दत्त_t::real_bfloat16,
+            library_दत्त_t::real_bfloat16, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, भिन्न>(
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_आकार, matrix_info);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_bfloat16, library_दत्त_t::real_bfloat16,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float, float>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, भिन्न, भिन्न>(
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_आकार, matrix_info);
+            भङ्ग;
         }
-#endif
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_int32, library_data_t::real_int32):
+#यदि_अन्तः
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_int8, library_दत्त_t::real_int8,
+            library_दत्त_t::real_int32, library_दत्त_t::real_int32):
         {
-            float alpha_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(alpha), q);
-            float beta_float =
-                dpct::get_value(reinterpret_cast<const std::int32_t *>(beta), q);
-            detail::gemm_batch_impl<std::int8_t, std::int8_t, std::int32_t, float>(
-                q, a_trans, b_trans, m, n, k, &alpha_float, a, lda, b, ldb, &beta_float, c, ldc, batch_size,
+            भिन्न alpha_float =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव std::int32_t *>(alpha), q);
+            भिन्न beta_float =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव std::int32_t *>(beta), q);
+            detail::gemm_batch_impl<std::int8_t, std::int8_t, std::int32_t, भिन्न>(
+                q, a_trans, b_trans, m, n, k, &alpha_float, a, lda, b, ldb, &beta_float, c, ldc, batch_आकार,
                 matrix_info);
-            break;
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_int8, library_दत्त_t::real_int8,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<std::int8_t, std::int8_t, float, float>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<std::int8_t, std::int8_t, भिन्न, भिन्न>(
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_आकार, matrix_info);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_half, library_दत्त_t::real_half,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<sycl::half, sycl::half, float, float>(
-                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_size, matrix_info);
-            break;
+            detail::gemm_batch_impl<sycl::half, sycl::half, भिन्न, भिन्न>(
+                q, a_trans, b_trans, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc, batch_आकार, matrix_info);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_half, library_दत्त_t::real_half,
+            library_दत्त_t::real_half, library_दत्त_t::real_float):
         {
-            float alpha_value =
-                dpct::get_value(reinterpret_cast<const float *>(alpha), q);
-            float beta_value =
-                dpct::get_value(reinterpret_cast<const float *>(beta), q);
-            sycl::half alpha_half(alpha_value);
-            sycl::half beta_half(beta_value);
+            भिन्न alpha_मानम्_2 =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव भिन्न *>(alpha), q);
+            भिन्न beta_मानम् =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव भिन्न *>(beta), q);
+            sycl::half alpha_half(alpha_मानम्_2);
+            sycl::half beta_half(beta_मानम्);
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half, sycl::half>(
-                q, a_trans, b_trans, m, n, k, &alpha_half, a, lda, b, ldb, &beta_half, c, ldc, batch_size, matrix_info);
-            break;
+                q, a_trans, b_trans, m, n, k, &alpha_half, a, lda, b, ldb, &beta_half, c, ldc, batch_आकार, matrix_info);
+            भङ्ग;
         }
-        default:
-            throw std::runtime_error("the combination of data type is unsupported");
+        स्वभाव:
+            क्षिप std::runtime_error("the combination of data type is unsupported");
         }
     }
 
@@ -2550,256 +2550,256 @@ namespace dpct
     /// \param [in] stride_c Stride between the different C matrices.
     /// \param [in] batch_size Specifies the number of matrix multiply operations to perform.
     /// \param [in] scaling_type Data type of the scaling factors.
-    inline void gemm_batch(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, int m,
-                           int n, int k, const void * alpha, const void * a, library_data_t a_type, int lda,
-                           long long int stride_a, const void * b, library_data_t b_type, int ldb,
-                           long long int stride_b, const void * beta, void * c, library_data_t c_type, int ldc,
-                           long long int stride_c, int batch_size, library_data_t scaling_type) {
-        if (scaling_type == library_data_t::real_float &&
-            c_type == library_data_t::complex_float)
+    अन्तःस्थ शून्य gemm_batch(sycl::queue & q, oneapi::mkl::transpose a_trans, oneapi::mkl::transpose b_trans, पूर्णाङ्क m,
+                           पूर्णाङ्क n, पूर्णाङ्क k, ध्रुव शून्य * alpha, ध्रुव शून्य * a, library_दत्त_t a_type, पूर्णाङ्क lda,
+                           दीर्घ दीर्घ पूर्णाङ्क stride_a, ध्रुव शून्य * b, library_दत्त_t b_type, पूर्णाङ्क ldb,
+                           दीर्घ दीर्घ पूर्णाङ्क stride_b, ध्रुव शून्य * beta, शून्य * c, library_दत्त_t c_type, पूर्णाङ्क ldc,
+                           दीर्घ दीर्घ पूर्णाङ्क stride_c, पूर्णाङ्क batch_आकार, library_दत्त_t scaling_type) {
+        यदि (scaling_type == library_दत्त_t::real_float &&
+            c_type == library_दत्त_t::complex_float)
         {
-            scaling_type = library_data_t::complex_float;
+            scaling_type = library_दत्त_t::complex_float;
         }
-        else if (scaling_type == library_data_t::real_double &&
-                 c_type == library_data_t::complex_double)
+        अन्यथा यदि (scaling_type == library_दत्त_t::real_double &&
+                 c_type == library_दत्त_t::complex_double)
         {
-            scaling_type = library_data_t::complex_double;
+            scaling_type = library_दत्त_t::complex_double;
         }
 
-        std::uint64_t key =
+        std::uint64_t कुञ्चिका =
             detail::get_type_combination_id(a_type, b_type, c_type, scaling_type);
-        switch (key)
+        विकल्प (कुञ्चिका)
         {
-        case detail::get_type_combination_id(
-            library_data_t::real_float, library_data_t::real_float,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_float, library_दत्त_t::real_float,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<float, float, float, float>(
+            detail::gemm_batch_impl<भिन्न, भिन्न, भिन्न, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_आकार);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_double, library_data_t::real_double,
-            library_data_t::real_double, library_data_t::real_double):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_double, library_दत्त_t::real_double,
+            library_दत्त_t::real_double, library_दत्त_t::real_double):
         {
-            detail::gemm_batch_impl<double, double, double, double>(
+            detail::gemm_batch_impl<द्विगुण, द्विगुण, द्विगुण, द्विगुण>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_आकार);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::complex_float, library_data_t::complex_float,
-            library_data_t::complex_float, library_data_t::complex_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::complex_float, library_दत्त_t::complex_float,
+            library_दत्त_t::complex_float, library_दत्त_t::complex_float):
         {
-            detail::gemm_batch_impl<std::complex<float>, std::complex<float>,
-                                    std::complex<float>, std::complex<float>>(
+            detail::gemm_batch_impl<std::complex<भिन्न>, std::complex<भिन्न>,
+                                    std::complex<भिन्न>, std::complex<भिन्न>>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_आकार);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::complex_double, library_data_t::complex_double,
-            library_data_t::complex_double, library_data_t::complex_double):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::complex_double, library_दत्त_t::complex_double,
+            library_दत्त_t::complex_double, library_दत्त_t::complex_double):
         {
-            detail::gemm_batch_impl<std::complex<double>, std::complex<double>,
-                                    std::complex<double>, std::complex<double>>(
+            detail::gemm_batch_impl<std::complex<द्विगुण>, std::complex<द्विगुण>,
+                                    std::complex<द्विगुण>, std::complex<द्विगुण>>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_आकार);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_half):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_half, library_दत्त_t::real_half,
+            library_दत्त_t::real_half, library_दत्त_t::real_half):
         {
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half,
                                     sycl::half>(q, a_trans, b_trans, m, n, k, alpha,
                                                 a, lda, stride_a, b, ldb, stride_b,
-                                                beta, c, ldc, stride_c, batch_size);
-            break;
+                                                beta, c, ldc, stride_c, batch_आकार);
+            भङ्ग;
         }
-#ifdef __INTEL_MKL__
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_bfloat16, library_data_t::real_float):
+#यदि_परिभाषितम् __INTEL_MKL__
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_bfloat16, library_दत्त_t::real_bfloat16,
+            library_दत्त_t::real_bfloat16, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float>(
+            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b, beta, c, ldc, stride_c,
-                batch_size);
-            break;
+                batch_आकार);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_bfloat16, library_data_t::real_bfloat16,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_bfloat16, library_दत्त_t::real_bfloat16,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, float, float>(
+            detail::gemm_batch_impl<oneapi::mkl::bfloat16, oneapi::mkl::bfloat16, भिन्न, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b, beta, c, ldc, stride_c,
-                batch_size);
-            break;
+                batch_आकार);
+            भङ्ग;
         }
-#endif
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_int32, library_data_t::real_int32):
+#यदि_अन्तः
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_int8, library_दत्त_t::real_int8,
+            library_दत्त_t::real_int32, library_दत्त_t::real_int32):
         {
             detail::gemm_batch_impl<std::int8_t, std::int8_t, std::int32_t,
                                     std::int32_t>(q, a_trans, b_trans, m, n, k, alpha,
                                                   a, lda, stride_a, b, ldb, stride_b,
-                                                  beta, c, ldc, stride_c, batch_size);
-            break;
+                                                  beta, c, ldc, stride_c, batch_आकार);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_int8, library_data_t::real_int8,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_int8, library_दत्त_t::real_int8,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<std::int8_t, std::int8_t, float, float>(
+            detail::gemm_batch_impl<std::int8_t, std::int8_t, भिन्न, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_आकार);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_float, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_half, library_दत्त_t::real_half,
+            library_दत्त_t::real_float, library_दत्त_t::real_float):
         {
-            detail::gemm_batch_impl<sycl::half, sycl::half, float, float>(
+            detail::gemm_batch_impl<sycl::half, sycl::half, भिन्न, भिन्न>(
                 q, a_trans, b_trans, m, n, k, alpha, a, lda, stride_a, b, ldb, stride_b,
-                beta, c, ldc, stride_c, batch_size);
-            break;
+                beta, c, ldc, stride_c, batch_आकार);
+            भङ्ग;
         }
-        case detail::get_type_combination_id(
-            library_data_t::real_half, library_data_t::real_half,
-            library_data_t::real_half, library_data_t::real_float):
+        पक्ष detail::get_type_combination_id(
+            library_दत्त_t::real_half, library_दत्त_t::real_half,
+            library_दत्त_t::real_half, library_दत्त_t::real_float):
         {
-            float alpha_value =
-                dpct::get_value(reinterpret_cast<const float *>(alpha), q);
-            float beta_value =
-                dpct::get_value(reinterpret_cast<const float *>(beta), q);
-            sycl::half alpha_half(alpha_value);
-            sycl::half beta_half(beta_value);
+            भिन्न alpha_मानम्_2 =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव भिन्न *>(alpha), q);
+            भिन्न beta_मानम् =
+                dpct::get_मानम्(reinterpret_cast<ध्रुव भिन्न *>(beta), q);
+            sycl::half alpha_half(alpha_मानम्_2);
+            sycl::half beta_half(beta_मानम्);
             detail::gemm_batch_impl<sycl::half, sycl::half, sycl::half, sycl::half>(
                 q, a_trans, b_trans, m, n, k, &alpha_half, a, lda, stride_a, b, ldb, stride_b,
-                &beta_half, c, ldc, stride_c, batch_size);
-            break;
+                &beta_half, c, ldc, stride_c, batch_आकार);
+            भङ्ग;
         }
-        default:
-            throw std::runtime_error("the combination of data type is unsupported");
+        स्वभाव:
+            क्षिप std::runtime_error("the combination of data type is unsupported");
         }
     }
 
-    static inline void
-    async_dpct_memcpy(void *to_ptr, size_t to_pitch, const void *from_ptr,
+    स्थिर अन्तःस्थ शून्य
+    async_dpct_memcpy(शून्य *गन्तव्यम्_ptr, size_t गन्तव्यम्_pitch, ध्रुव शून्य *from_ptr,
                       size_t from_pitch, size_t x, size_t y,
                       memcpy_direction direction = automatic,
                       sycl::queue &q = get_default_queue())
     {
-        detail::dpct_memcpy(q, to_ptr, from_ptr, to_pitch, from_pitch, x, y,
+        detail::dpct_memcpy(q, गन्तव्यम्_ptr, from_ptr, गन्तव्यम्_pitch, from_pitch, x, y,
                             direction);
     }
 
-    using err0 = detail::generic_error_type<struct err0_tag, int>;
-    using err1 = detail::generic_error_type<struct err1_tag, int>;
+    उपयुज्य err0 = detail::generic_error_type<संरचना err0_चिह्नकम्, पूर्णाङ्क>;
+    उपयुज्य err1 = detail::generic_error_type<संरचना err1_चिह्नकम्, पूर्णाङ्क>;
 
-    static inline void dpct_free(void *ptr, sycl::queue &q = get_default_queue()) {
+    स्थिर अन्तःस्थ शून्य dpct_free(शून्य *ptr, sycl::queue &q = get_default_queue()) {
         detail::dpct_free(ptr, q);
     }
 
     /// dpct accessor used as device function parameter.
-    template <class T, memory_region Memory, size_t Dimension> class accessor;
-    template <class T, memory_region Memory> class accessor<T, Memory, 3> {
-    public:
-        using memory_t = detail::memory_traits<Memory, T>;
-        using element_t = typename memory_t::element_t;
-        using pointer_t = typename memory_t::pointer_t;
-        using accessor_t = typename memory_t::template accessor_t<3>;
-        accessor(pointer_t data, const sycl::range<3> &in_range)
-            : _data(data), _range(in_range) {}
-        template <memory_region M = Memory>
-        accessor(typename std::enable_if<M != local, const accessor_t>::type &acc)
+    प्रतिरूपम् <वर्ग T, स्मृतिः_region स्मृतिः_2, size_t Dimension> वर्ग accessor;
+    प्रतिरूपम् <वर्ग T, स्मृतिः_region स्मृतिः_2> वर्ग accessor<T, स्मृतिः_2, 3> {
+    सार्वजनिक:
+        उपयुज्य स्मृतिः_t = detail::स्मृतिः_traits<स्मृतिः_2, T>;
+        उपयुज्य element_t = प्रकारनाम स्मृतिः_t::element_t;
+        उपयुज्य pointer_t = प्रकारनाम स्मृतिः_t::pointer_t;
+        उपयुज्य accessor_t = प्रकारनाम स्मृतिः_t::प्रतिरूपम् accessor_t<3>;
+        accessor(pointer_t दत्त, ध्रुव sycl::range<3> &अन्तर्_range)
+            : दत्त_2(दत्त), _range(अन्तर्_range) {}
+        प्रतिरूपम् <स्मृतिः_region M = स्मृतिः_2>
+        accessor(प्रकारनाम std::enable_if<M != local, ध्रुव accessor_t>::type &acc)
             : accessor(acc, acc.get_range()) {}
-        accessor(const accessor_t &acc, const sycl::range<3> &in_range)
-            : accessor(acc.get_pointer(), in_range) {}
-        accessor<T, Memory, 2> operator[](size_t index) const {
+        accessor(ध्रुव accessor_t &acc, ध्रुव sycl::range<3> &अन्तर्_range)
+            : accessor(acc.get_pointer(), अन्तर्_range) {}
+        accessor<T, स्मृतिः_2, 2> संक्रियकः[](size_t सूचकांक) ध्रुव {
             sycl::range<2> sub(_range.get(1), _range.get(2));
-            return accessor<T, Memory, 2>(_data + index * sub.size(), sub);
+            प्रत्यागम accessor<T, स्मृतिः_2, 2>(दत्त_2 + सूचकांक * sub.size(), sub);
         }
 
-        pointer_t get_ptr() const { return _data; }
+        pointer_t get_ptr() ध्रुव { प्रत्यागम दत्त_2; }
 
-    private:
-        pointer_t _data;
+    गुप्त:
+        pointer_t दत्त_2;
         sycl::range<3> _range;
     };
-    template <class T, memory_region Memory> class accessor<T, Memory, 2> {
-    public:
-        using memory_t = detail::memory_traits<Memory, T>;
-        using element_t = typename memory_t::element_t;
-        using pointer_t = typename memory_t::pointer_t;
-        using accessor_t = typename memory_t::template accessor_t<2>;
-        accessor(pointer_t data, const sycl::range<2> &in_range)
-            : _data(data), _range(in_range) {}
-        template <memory_region M = Memory>
-        accessor(typename std::enable_if<M != local, const accessor_t>::type &acc)
+    प्रतिरूपम् <वर्ग T, स्मृतिः_region स्मृतिः_2> वर्ग accessor<T, स्मृतिः_2, 2> {
+    सार्वजनिक:
+        उपयुज्य स्मृतिः_t = detail::स्मृतिः_traits<स्मृतिः_2, T>;
+        उपयुज्य element_t = प्रकारनाम स्मृतिः_t::element_t;
+        उपयुज्य pointer_t = प्रकारनाम स्मृतिः_t::pointer_t;
+        उपयुज्य accessor_t = प्रकारनाम स्मृतिः_t::प्रतिरूपम् accessor_t<2>;
+        accessor(pointer_t दत्त, ध्रुव sycl::range<2> &अन्तर्_range)
+            : दत्त_2(दत्त), _range(अन्तर्_range) {}
+        प्रतिरूपम् <स्मृतिः_region M = स्मृतिः_2>
+        accessor(प्रकारनाम std::enable_if<M != local, ध्रुव accessor_t>::type &acc)
             : accessor(acc, acc.get_range()) {}
-        accessor(const accessor_t &acc, const sycl::range<2> &in_range)
-            : accessor(acc.get_pointer(), in_range) {}
+        accessor(ध्रुव accessor_t &acc, ध्रुव sycl::range<2> &अन्तर्_range)
+            : accessor(acc.get_pointer(), अन्तर्_range) {}
 
-        pointer_t operator[](size_t index) const {
-            return _data + _range.get(1) * index;
+        pointer_t संक्रियकः[](size_t सूचकांक) ध्रुव {
+            प्रत्यागम दत्त_2 + _range.get(1) * सूचकांक;
         }
 
-        pointer_t get_ptr() const { return _data; }
+        pointer_t get_ptr() ध्रुव { प्रत्यागम दत्त_2; }
 
-    private:
-        pointer_t _data;
+    गुप्त:
+        pointer_t दत्त_2;
         sycl::range<2> _range;
     };
 
-    namespace detail {
+    नामाकाश detail {
         /// Device variable with address space of shared, global or constant.
-        template <class T, memory_region Memory, size_t Dimension> class device_memory {
-        public:
-            using accessor_t =
-                typename detail::memory_traits<Memory,
-                                            T>::template accessor_t<Dimension>;
-            using value_t = typename detail::memory_traits<Memory, T>::value_t;
-            using dpct_accessor_t = dpct::accessor<T, Memory, Dimension>;
+        प्रतिरूपम् <वर्ग T, स्मृतिः_region स्मृतिः_2, size_t Dimension> वर्ग device_स्मृतिः {
+        सार्वजनिक:
+            उपयुज्य accessor_t =
+                प्रकारनाम detail::स्मृतिः_traits<स्मृतिः_2,
+                                            T>::प्रतिरूपम् accessor_t<Dimension>;
+            उपयुज्य मानम्_t = प्रकारनाम detail::स्मृतिः_traits<स्मृतिः_2, T>::मानम्_t;
+            उपयुज्य dpct_accessor_t = dpct::accessor<T, स्मृतिः_2, Dimension>;
 
-            device_memory() : device_memory(sycl::range<Dimension>(1)) {}
+            device_स्मृतिः() : device_स्मृतिः(sycl::range<Dimension>(1)) {}
 
             /// Constructor of 1-D array with initializer list
-            device_memory(const sycl::range<Dimension> &in_range,
-                        std::initializer_list<value_t> &&init_list)
-                : device_memory(in_range) {
-                assert(init_list.size() <= in_range.size());
-                _host_ptr = (value_t *)std::malloc(_size);
-                std::memset(_host_ptr, 0, _size);
-                std::memcpy(_host_ptr, init_list.begin(), init_list.size() * sizeof(T));
+            device_स्मृतिः(ध्रुव sycl::range<Dimension> &अन्तर्_range,
+                        std::initializer_list<मानम्_t> &&init_list)
+                : device_स्मृतिः(अन्तर्_range) {
+                प्रतिज्ञा(init_list.size() <= अन्तर्_range.size());
+                _host_ptr = (मानम्_t *)std::स्मृतिं_देहि(आकार_2);
+                std::स्मृतिं_पूरय(_host_ptr, 0, आकार_2);
+                std::स्मृतिं_प्रतिलिख(_host_ptr, init_list.begin(), init_list.size() * परिमाण(T));
             }
 
             /// Constructor of 2-D array with initializer list
-            template <size_t D = Dimension>
-            device_memory(
-                const typename std::enable_if<D == 2, sycl::range<2>>::type &in_range,
-                std::initializer_list<std::initializer_list<value_t>> &&init_list)
-                : device_memory(in_range) {
-                assert(init_list.size() <= in_range[0]);
-                _host_ptr = (value_t *)std::malloc(_size);
-                std::memset(_host_ptr, 0, _size);
-                auto tmp_data = _host_ptr;
-                for (auto sub_list : init_list) {
-                    assert(sub_list.size() <= in_range[1]);
-                    std::memcpy(tmp_data, sub_list.begin(),
-                                sub_list.size() * sizeof(T));
-                    tmp_data += in_range[1];
+            प्रतिरूपम् <size_t D = Dimension>
+            device_स्मृतिः(
+                ध्रुव प्रकारनाम std::enable_if<D == 2, sycl::range<2>>::type &अन्तर्_range,
+                std::initializer_list<std::initializer_list<मानम्_t>> &&init_list)
+                : device_स्मृतिः(अन्तर्_range) {
+                प्रतिज्ञा(init_list.size() <= अन्तर्_range[0]);
+                _host_ptr = (मानम्_t *)std::स्मृतिं_देहि(आकार_2);
+                std::स्मृतिं_पूरय(_host_ptr, 0, आकार_2);
+                स्वचालित tmp_दत्त = _host_ptr;
+                प्रति (स्वचालित sub_list : init_list) {
+                    प्रतिज्ञा(sub_list.size() <= अन्तर्_range[1]);
+                    std::स्मृतिं_प्रतिलिख(tmp_दत्त, sub_list.begin(),
+                                sub_list.size() * परिमाण(T));
+                    tmp_दत्त += अन्तर्_range[1];
                 }
             }
 
             /// Constructor with range
-            device_memory(const sycl::range<Dimension> &range_in)
-                : _size(range_in.size() * sizeof(T)), _range(range_in),
-                _reference(false), _host_ptr(nullptr), _device_ptr(nullptr) {
+            device_स्मृतिः(ध्रुव sycl::range<Dimension> &range_अन्तर्)
+                : आकार_2(range_अन्तर्.size() * परिमाण(T)), _range(range_अन्तर्),
+                _reference(असत्य), _host_ptr(शून्यसूचकः), _device_ptr(शून्यसूचकः) {
                 static_assert(
-                    (Memory == global) || (Memory == constant) || (Memory == shared),
+                    (स्मृतिः_2 == global) || (स्मृतिः_2 == constant) || (स्मृतिः_2 == shared),
                     "device memory region should be global, constant or shared");
                 // Make sure that singleton class mem_mgr and dev_mgr will destruct
                 // later than this.
@@ -2808,174 +2808,174 @@ namespace dpct
             }
 
             /// Constructor with range
-            template <class... Args>
-            device_memory(Args... Arguments)
-                : device_memory(sycl::range<Dimension>(Arguments...)) {}
+            प्रतिरूपम् <वर्ग... तर्काः>
+            device_स्मृतिः(तर्काः... Arguments)
+                : device_स्मृतिः(sycl::range<Dimension>(Arguments...)) {}
 
-            ~device_memory() {
-                if (_device_ptr && !_reference)
+            ~device_स्मृतिः() {
+                यदि (_device_ptr && !_reference)
                     dpct::dpct_free(_device_ptr);
-                if (_host_ptr)
-                    std::free(_host_ptr);
+                यदि (_host_ptr)
+                    std::मुक्त(_host_ptr);
             }
 
             /// Allocate memory with default queue, and init memory if has initial
             /// value.
-            void init() { init(dpct::get_default_queue()); }
+            शून्य init() { init(dpct::get_default_queue()); }
             /// Allocate memory with specified queue, and init memory if has initial
             /// value.
-            void init(sycl::queue &q) {
-                if (_device_ptr)
-                    return;
-                if (!_size)
-                    return;
+            शून्य init(sycl::queue &q) {
+                यदि (_device_ptr)
+                    प्रत्यागम;
+                यदि (!आकार_2)
+                    प्रत्यागम;
                 allocate_device(q);
-                if (_host_ptr)
-                    detail::dpct_memcpy(q, _device_ptr, _host_ptr, _size,
-                                        host_to_device);
+                यदि (_host_ptr)
+                    detail::dpct_memcpy(q, _device_ptr, _host_ptr, आकार_2,
+                                        host_गन्तव्यम्_device);
             }
 
             /// The variable is assigned to a device pointer.
-            void assign(value_t *src, size_t size) {
-                this->~device_memory();
-                new (this) device_memory(src, size);
+            शून्य नियोजय(मानम्_t *src, size_t size) {
+                एतत्->~device_स्मृतिः();
+                नूतन (एतत्) device_स्मृतिः(src, size);
             }
 
             /// Get memory pointer of the memory object, which is virtual pointer when
             /// usm is not used, and device pointer when usm is used.
-            value_t *get_ptr() { return get_ptr(get_default_queue()); }
+            मानम्_t *get_ptr() { प्रत्यागम get_ptr(get_default_queue()); }
             /// Get memory pointer of the memory object, which is virtual pointer when
             /// usm is not used, and device pointer when usm is used.
-            value_t *get_ptr(sycl::queue &q) {
+            मानम्_t *get_ptr(sycl::queue &q) {
                 init(q);
-                return _device_ptr;
+                प्रत्यागम _device_ptr;
             }
 
             /// Get the device memory object size in bytes.
-            size_t get_size() { return _size; }
+            size_t get_आकार() { प्रत्यागम आकार_2; }
 
-            template <size_t D = Dimension>
-            typename std::enable_if<D == 1, T>::type &operator[](size_t index) {
+            प्रतिरूपम् <size_t D = Dimension>
+            प्रकारनाम std::enable_if<D == 1, T>::type &संक्रियकः[](size_t सूचकांक) {
                 init();
-                return _device_ptr[index];
+                प्रत्यागम _device_ptr[सूचकांक];
             }
 
             /// Get dpct::accessor with dimension info for the device memory object
             /// when usm is used and dimension is greater than 1.
-            template <size_t D = Dimension>
-            typename std::enable_if<D != 1, dpct_accessor_t>::type
+            प्रतिरूपम् <size_t D = Dimension>
+            प्रकारनाम std::enable_if<D != 1, dpct_accessor_t>::type
             get_access([[maybe_unused]] sycl::handler &cgh) {
-                return dpct_accessor_t((T *)_device_ptr, _range);
+                प्रत्यागम dpct_accessor_t((T *)_device_ptr, _range);
             }
 
-        private:
-            device_memory(value_t *memory_ptr, size_t size)
-                : _size(size), _range(size / sizeof(T)), _reference(true),
-                _device_ptr(memory_ptr) {}
+        गुप्त:
+            device_स्मृतिः(मानम्_t *स्मृतिः_ptr, size_t size)
+                : आकार_2(size), _range(size / परिमाण(T)), _reference(सत्य),
+                _device_ptr(स्मृतिः_ptr) {}
 
-            void allocate_device(sycl::queue &q) {
-        #ifndef DPCT_USM_LEVEL_NONE
-                if (Memory == shared) {
-                    _device_ptr = (value_t *)sycl::malloc_shared(_size, q.get_device(),
+            शून्य allocate_device(sycl::queue &q) {
+        #यदि_अपरिभाषितम् DPCT_USM_LEVEL_NONE
+                यदि (स्मृतिः_2 == shared) {
+                    _device_ptr = (मानम्_t *)sycl::malloc_shared(आकार_2, q.get_device(),
                                                                 q.get_context());
-                    return;
+                    प्रत्यागम;
                 }
-        #ifdef SYCL_EXT_ONEAPI_USM_DEVICE_READ_ONLY
-                if (Memory == constant) {
-                    _device_ptr = (value_t *)sycl::malloc_device(
-                        _size, q.get_device(), q.get_context(),
+        #यदि_परिभाषितम् SYCL_EXT_ONEAPI_USM_DEVICE_READ_ONLY
+                यदि (स्मृतिः_2 == constant) {
+                    _device_ptr = (मानम्_t *)sycl::malloc_device(
+                        आकार_2, q.get_device(), q.get_context(),
                         sycl::ext::oneapi::property::usm::device_read_only());
-                    return;
+                    प्रत्यागम;
                 }
-        #endif
-        #endif
-                _device_ptr = (value_t *)detail::dpct_malloc(_size, q);
+        #यदि_अन्तः
+        #यदि_अन्तः
+                _device_ptr = (मानम्_t *)detail::dpct_malloc(आकार_2, q);
             }
 
-            size_t _size;
+            size_t आकार_2;
             sycl::range<Dimension> _range;
-            bool _reference;
-            value_t *_host_ptr;
-            value_t *_device_ptr;
+            तार्किक _reference;
+            मानम्_t *_host_ptr;
+            मानम्_t *_device_ptr;
         };
-        template <class T, memory_region Memory>
-        class device_memory<T, Memory, 0> : public device_memory<T, Memory, 1> {
-        public:
-            using base = device_memory<T, Memory, 1>;
-            using value_t = typename base::value_t;
-            using accessor_t =
-                typename detail::memory_traits<Memory, T>::template accessor_t<0>;
+        प्रतिरूपम् <वर्ग T, स्मृतिः_region स्मृतिः_2>
+        वर्ग device_स्मृतिः<T, स्मृतिः_2, 0> : सार्वजनिक device_स्मृतिः<T, स्मृतिः_2, 1> {
+        सार्वजनिक:
+            उपयुज्य आधारः = device_स्मृतिः<T, स्मृतिः_2, 1>;
+            उपयुज्य मानम्_t = प्रकारनाम आधारः::मानम्_t;
+            उपयुज्य accessor_t =
+                प्रकारनाम detail::स्मृतिः_traits<स्मृतिः_2, T>::प्रतिरूपम् accessor_t<0>;
 
             /// Constructor with initial value.
-            device_memory(const value_t &val) : base(sycl::range<1>(1), {val}) {}
+            device_स्मृतिः(ध्रुव मानम्_t &val) : आधारः(sycl::range<1>(1), {val}) {}
 
             /// Default constructor
-            device_memory() : base(1) {}
+            device_स्मृतिः() : आधारः(1) {}
         };
         } // namespace detail
 
-    template <class T, size_t Dimension>
-    using global_memory = detail::device_memory<T, global, Dimension>;
-    template <class T, size_t Dimension>
-    using constant_memory = detail::device_memory<T, constant, Dimension>;
-    template <class T, size_t Dimension>
-    using shared_memory = detail::device_memory<T, shared, Dimension>;
+    प्रतिरूपम् <वर्ग T, size_t Dimension>
+    उपयुज्य global_स्मृतिः = detail::device_स्मृतिः<T, global, Dimension>;
+    प्रतिरूपम् <वर्ग T, size_t Dimension>
+    उपयुज्य constant_स्मृतिः = detail::device_स्मृतिः<T, constant, Dimension>;
+    प्रतिरूपम् <वर्ग T, size_t Dimension>
+    उपयुज्य shared_स्मृतिः = detail::device_स्मृतिः<T, shared, Dimension>;
 
 
-    template <typename T,
-            sycl::access::address_space addressSpace =
-                sycl::access::address_space::global_space,
-            sycl::memory_order memoryOrder = sycl::memory_order::relaxed,
-            sycl::memory_scope memoryScope = sycl::memory_scope::device>
-    inline T atomic_fetch_add(T *addr, T operand) {
-    auto atm =
-        sycl::atomic_ref<T, memoryOrder, memoryScope, addressSpace>(addr[0]);
-    return atm.fetch_add(operand);
+    प्रतिरूपम् <प्रकारनाम T,
+            sycl::access::स्थानाङ्कः_space स्थानाङ्कः_Space =
+                sycl::access::स्थानाङ्कः_space::global_space,
+            sycl::memory_order स्मृतिः_क्रमः = sycl::memory_order::relaxed,
+            sycl::स्मृतिः_scope स्मृतिः_Scope = sycl::स्मृतिः_scope::device>
+    अन्तःस्थ T atomic_fetch_add(T *addr, T सङ्कार्यम्) {
+    स्वचालित atm =
+        sycl::atomic_ref<T, स्मृतिः_क्रमः, स्मृतिः_Scope, स्थानाङ्कः_Space>(addr[0]);
+    प्रत्यागम atm.fetch_add(सङ्कार्यम्);
     }
 
-    template <sycl::access::address_space addressSpace =
-                sycl::access::address_space::global_space,
-            sycl::memory_order memoryOrder = sycl::memory_order::relaxed,
-            sycl::memory_scope memoryScope = sycl::memory_scope::device,
-            typename T1, typename T2>
-    inline T1 atomic_fetch_add(T1 *addr, T2 operand) {
-    auto atm =
-        sycl::atomic_ref<T1, memoryOrder, memoryScope, addressSpace>(addr[0]);
-    return atm.fetch_add(operand);
+    प्रतिरूपम् <sycl::access::स्थानाङ्कः_space स्थानाङ्कः_Space =
+                sycl::access::स्थानाङ्कः_space::global_space,
+            sycl::memory_order स्मृतिः_क्रमः = sycl::memory_order::relaxed,
+            sycl::स्मृतिः_scope स्मृतिः_Scope = sycl::स्मृतिः_scope::device,
+            प्रकारनाम T1, प्रकारनाम T2>
+    अन्तःस्थ T1 atomic_fetch_add(T1 *addr, T2 सङ्कार्यम्) {
+    स्वचालित atm =
+        sycl::atomic_ref<T1, स्मृतिः_क्रमः, स्मृतिः_Scope, स्थानाङ्कः_Space>(addr[0]);
+    प्रत्यागम atm.fetch_add(सङ्कार्यम्);
     }
 
-    template <typename T, sycl::access::address_space addressSpace =
-                            sycl::access::address_space::global_space>
-    inline T atomic_fetch_add(T *addr, T operand,
-                            sycl::memory_order memoryOrder) {
-    switch (memoryOrder) {
-        case sycl::memory_order::relaxed:
-            return atomic_fetch_add<T, addressSpace, sycl::memory_order::relaxed,
-                                    sycl::memory_scope::device>(addr, operand);
-        case sycl::memory_order::acq_rel:
-            return atomic_fetch_add<T, addressSpace, sycl::memory_order::acq_rel,
-                                    sycl::memory_scope::device>(addr, operand);
-        case sycl::memory_order::seq_cst:
-            return atomic_fetch_add<T, addressSpace, sycl::memory_order::seq_cst,
-                                    sycl::memory_scope::device>(addr, operand);
-        default:
-            assert(false && "Invalid memory_order for atomics. Valid memory_order for "
+    प्रतिरूपम् <प्रकारनाम T, sycl::access::स्थानाङ्कः_space स्थानाङ्कः_Space =
+                            sycl::access::स्थानाङ्कः_space::global_space>
+    अन्तःस्थ T atomic_fetch_add(T *addr, T सङ्कार्यम्,
+                            sycl::memory_order स्मृतिः_क्रमः) {
+    विकल्प (स्मृतिः_क्रमः) {
+        पक्ष sycl::memory_order::relaxed:
+            प्रत्यागम atomic_fetch_add<T, स्थानाङ्कः_Space, sycl::memory_order::relaxed,
+                                    sycl::स्मृतिः_scope::device>(addr, सङ्कार्यम्);
+        पक्ष sycl::memory_order::acq_rel:
+            प्रत्यागम atomic_fetch_add<T, स्थानाङ्कः_Space, sycl::memory_order::acq_rel,
+                                    sycl::स्मृतिः_scope::device>(addr, सङ्कार्यम्);
+        पक्ष sycl::memory_order::seq_cst:
+            प्रत्यागम atomic_fetch_add<T, स्थानाङ्कः_Space, sycl::memory_order::seq_cst,
+                                    sycl::स्मृतिः_scope::device>(addr, सङ्कार्यम्);
+        स्वभाव:
+            प्रतिज्ञा(असत्य && "Invalid memory_order for atomics. Valid memory_order for "
                             "atomics are: sycl::memory_order::relaxed, "
                             "sycl::memory_order::acq_rel, sycl::memory_order::seq_cst!");
         }
     }
 
-    template <sycl::access::address_space addressSpace =
-                sycl::access::address_space::global_space,
-            typename T1, typename T2>
-    inline T1 atomic_fetch_add(T1 *addr, T2 operand,
-                            sycl::memory_order memoryOrder) {
-    atomic_fetch_add<T1, addressSpace>(addr, operand, memoryOrder);
+    प्रतिरूपम् <sycl::access::स्थानाङ्कः_space स्थानाङ्कः_Space =
+                sycl::access::स्थानाङ्कः_space::global_space,
+            प्रकारनाम T1, प्रकारनाम T2>
+    अन्तःस्थ T1 atomic_fetch_add(T1 *addr, T2 सङ्कार्यम्,
+                            sycl::memory_order स्मृतिः_क्रमः) {
+    atomic_fetch_add<T1, स्थानाङ्कः_Space>(addr, सङ्कार्यम्, स्मृतिः_क्रमः);
     }
 
-    inline unsigned int byte_level_permute(
-        unsigned int a, unsigned int b, unsigned int s) {
-      unsigned int ret;
+    अन्तःस्थ अचिह्नित पूर्णाङ्क byte_level_permute(
+        अचिह्नित पूर्णाङ्क a, अचिह्नित पूर्णाङ्क b, अचिह्नित पूर्णाङ्क s) {
+      अचिह्नित पूर्णाङ्क ret;
       ret = ((((std::uint64_t)b << 32 | a) >> (s & 0x7) * 8) & 0xff) |
             (((((std::uint64_t)b << 32 | a) >> ((s >> 4) & 0x7) * 8) & 0xff)
              << 8) |
@@ -2983,11 +2983,11 @@ namespace dpct
              << 16) |
             (((((std::uint64_t)b << 32 | a) >> ((s >> 12) & 0x7) * 8) & 0xff)
              << 24);
-      return ret;
+      प्रत्यागम ret;
     }
 
-    inline uint32_t byte_level_permute_custom(
-        uint32_t low32, uint32_t high32, uint32_t sel, int mode = 0) {
+    अन्तःस्थ uint32_t byte_level_permute_custom(
+        uint32_t low32, uint32_t high32, uint32_t sel, पूर्णाङ्क mode = 0) {
       constexpr uint16_t lookup[6][4] = {
           {0x3210, 0x4321, 0x5432, 0x6543},  // Forward 4-byte extract
           {0x5670, 0x6701, 0x7012, 0x0123},  // Backward 4-byte extract
@@ -2997,16 +2997,16 @@ namespace dpct
           {0x1010, 0x3232, 0x1010, 0x3232}   // Replicate 16-bit values
       };
 
-      if (mode >= 1 && mode <= 6) {
-        return byte_level_permute(low32, high32, lookup[mode - 1][sel & 0x3]);
-      } else if (!mode) {
-        return byte_level_permute(low32, high32, sel);
+      यदि (mode >= 1 && mode <= 6) {
+        प्रत्यागम byte_level_permute(low32, high32, lookup[mode - 1][sel & 0x3]);
+      } अन्यथा यदि (!mode) {
+        प्रत्यागम byte_level_permute(low32, high32, sel);
       }
-      return 0;
+      प्रत्यागम 0;
     }
 
-    template <int n_nondefault_params, int n_default_params, typename T>
-    class args_selector;
+    प्रतिरूपम् <पूर्णाङ्क n_nondefault_params, पूर्णाङ्क n_default_params, प्रकारनाम T>
+    वर्ग तर्काः_selector;
 
     /// args_selector is a helper class for extracting arguments from an
     /// array of pointers to arguments or buffer of arguments to pass to a
@@ -3027,88 +3027,88 @@ namespace dpct
     ///   selector.get<0>() returns a reference to sycl::float*,
     ///   selector.get<1>() returns a reference to int,
     ///   selector.get<2>() returns a reference to float
-    template <int n_nondefault_params, int n_default_params, typename R,
-              typename... Ts>
-    class args_selector<n_nondefault_params, n_default_params, R(Ts...)> {
-      private:
-        void **kernel_params;
-        char *args_buffer;
+    प्रतिरूपम् <पूर्णाङ्क n_nondefault_params, पूर्णाङ्क n_default_params, प्रकारनाम R,
+              प्रकारनाम... Ts>
+    वर्ग तर्काः_selector<n_nondefault_params, n_default_params, R(Ts...)> {
+      गुप्त:
+        शून्य **kernel_params;
+        वर्ण *तर्काः_बफर;
 
-        template <int i> static constexpr int account_for_default_params() {
-            constexpr int n_total_params = sizeof...(Ts);
-            if constexpr (i >= n_nondefault_params) {
-                return n_total_params - n_default_params +
+        प्रतिरूपम् <पूर्णाङ्क i> स्थिर constexpr पूर्णाङ्क account_for_default_params() {
+            constexpr पूर्णाङ्क n_योग_params = परिमाण...(Ts);
+            यदि constexpr (i >= n_nondefault_params) {
+                प्रत्यागम n_योग_params - n_default_params +
                        (i - n_nondefault_params);
-            } else {
-                return i;
+            } अन्यथा {
+                प्रत्यागम i;
             }
         }
 
-      public:
+      सार्वजनिक:
         /// Get the type of the ith argument of R(Ts...)
         /// \param [in] i Index of parameter to get
         /// \returns Type of ith parameter
-        template <int i>
-        using arg_type = std::tuple_element_t<account_for_default_params<i>(),
+        प्रतिरूपम् <पूर्णाङ्क i>
+        उपयुज्य arg_type = std::tuple_element_t<account_for_default_params<i>(),
                                               std::tuple<Ts...>>;
-        static constexpr int params_num = sizeof...(Ts);
+        स्थिर constexpr पूर्णाङ्क params_अङ्कः = परिमाण...(Ts);
 
-      private:
-        template <int i> static constexpr int get_offset() {
-            if constexpr (i == 0) {
+      गुप्त:
+        प्रतिरूपम् <पूर्णाङ्क i> स्थिर constexpr पूर्णाङ्क get_विस्थापनम्() {
+            यदि constexpr (i == 0) {
                 // we can assume args_buffer is properly aligned to the
                 // first argument
-                return 0;
-            } else {
-                constexpr int prev_off = get_offset<i - 1>();
-                constexpr int prev_past_end =
-                    prev_off + sizeof(arg_type<i - 1>);
-                using T = arg_type<i>;
+                प्रत्यागम 0;
+            } अन्यथा {
+                constexpr पूर्णाङ्क पूर्व_off = get_विस्थापनम्<i - 1>();
+                constexpr पूर्णाङ्क पूर्व_past_अन्तः =
+                    पूर्व_off + परिमाण(arg_type<i - 1>);
+                उपयुज्य T = arg_type<i>;
                 // is the past-the-end of the i-1st element properly aligned
                 // with the ith element's alignment?
-                if constexpr (prev_past_end % alignof(T) == 0) {
-                    return prev_past_end;
+                यदि constexpr (पूर्व_past_अन्तः % alignof(T) == 0) {
+                    प्रत्यागम पूर्व_past_अन्तः;
                 }
                 // otherwise bump prev_past_end to match alignment
-                else {
-                    return prev_past_end +
-                           (alignof(T) - (prev_past_end % alignof(T)));
+                अन्यथा {
+                    प्रत्यागम पूर्व_past_अन्तः +
+                           (alignof(T) - (पूर्व_past_अन्तः % alignof(T)));
                 }
             }
         }
 
-        static char *get_args_buffer(void **extra) {
-            if (!extra)
-                return nullptr;
-            for (; (std::size_t)*extra != 0; ++extra) {
-                if ((std::size_t)*extra == 1) {
-                    return static_cast<char *>(*(extra + 1));
+        स्थिर वर्ण *get_तर्काः_बफर(शून्य **extra) {
+            यदि (!extra)
+                प्रत्यागम शून्यसूचकः;
+            प्रति (; (std::size_t)*extra != 0; ++extra) {
+                यदि ((std::size_t)*extra == 1) {
+                    प्रत्यागम static_cast<वर्ण *>(*(extra + 1));
                 }
             }
-            return nullptr;
+            प्रत्यागम शून्यसूचकः;
         }
 
-      public:
+      सार्वजनिक:
         /// If kernel_params is nonnull, then args_selector will
         /// extract arguments from kernel_params. Otherwise, it
         /// will extract them from extra.
         /// \param [in] kernel_params Array of pointers to arguments
         /// a or null pointer.
         /// \param [in] extra Array containing pointer to argument buffer.
-        args_selector(void **kernel_params, void **extra)
+        तर्काः_selector(शून्य **kernel_params, शून्य **extra)
             : kernel_params(kernel_params),
-              args_buffer(get_args_buffer(extra)) {}
+              तर्काः_बफर(get_तर्काः_बफर(extra)) {}
 
         /// Get a reference to the ith argument extracted from kernel_params
         /// or extra.
         /// \param [in] i Index of argument to get
         /// \returns Reference to the ith argument
-        template <int i> arg_type<i> &get() {
-            if (kernel_params) {
-                return *static_cast<arg_type<i> *>(kernel_params[i]);
-            } else {
-                return *reinterpret_cast<arg_type<i> *>(args_buffer +
-                                                        get_offset<i>());
+        प्रतिरूपम् <पूर्णाङ्क i> arg_type<i> &get() {
+            यदि (kernel_params) {
+                प्रत्यागम *static_cast<arg_type<i> *>(kernel_params[i]);
+            } अन्यथा {
+                प्रत्यागम *reinterpret_cast<arg_type<i> *>(तर्काः_बफर +
+                                                        get_विस्थापनम्<i>());
             }
         }
     }; // COPY from DPCT head file
@@ -3139,49 +3139,49 @@ namespace dpct
     ///   void *fp = (void *)wrapper_register(&kernel_func_wrapper).get();
     ///   dpct::kernel_launcher::launch(fp, dpct::dim3(1), dpct::dim3(1), args,
     ///   0, 0);
-    class kernel_launcher {
-        template <typename FuncT, typename ArgSelector, std::size_t... Index>
-        static void launch_helper(FuncT &&func, ArgSelector &selector,
-                                  std::index_sequence<Index...>) {
-            func(selector.template get<Index>()...);
+    वर्ग kernel_launcher {
+        प्रतिरूपम् <प्रकारनाम FuncT, प्रकारनाम ArgSelector, std::size_t... सूचकांक_2>
+        स्थिर शून्य launch_helper(FuncT &&func, ArgSelector &selector,
+                                  std::index_sequence<सूचकांक_2...>) {
+            func(selector.प्रतिरूपम् get<सूचकांक_2>()...);
         }
-        static void set_execution_config(dim3 group_range, dim3 local_range,
-                                         unsigned int local_mem_size,
+        स्थिर शून्य समुच्चयः_execution_config(dim3 गणः_range, dim3 local_range,
+                                         अचिह्नित पूर्णाङ्क local_mem_आकार_2,
                                          queue_ptr que) {
-            if (que) {
+            यदि (que) {
                 _que = que;
-            } else {
+            } अन्यथा {
                 _que = &get_default_queue();
             }
             _nr = sycl::nd_range<3>(
-                static_cast<sycl::range<3>>(group_range * local_range),
+                static_cast<sycl::range<3>>(गणः_range * local_range),
                 static_cast<sycl::range<3>>(local_range));
-            _local_mem_size = local_mem_size;
+            local_mem_आकार = local_mem_आकार_2;
 
 
         }
-        static inline std::mutex kernel_function_ptr_map_mutex;
+        स्थिर अन्तःस्थ std::mutex kernel_function_ptr_map_mutex;
 
-      public:
+      सार्वजनिक:
         /// Variables for storing execution configuration.
-        static inline thread_local sycl::queue *_que = nullptr;
-        static inline thread_local sycl::nd_range<3> _nr = sycl::nd_range<3>();
-        static inline thread_local unsigned int _local_mem_size = 0;
+        स्थिर अन्तःस्थ thread_local sycl::queue *_que = शून्यसूचकः;
+        स्थिर अन्तःस्थ thread_local sycl::nd_range<3> _nr = sycl::nd_range<3>();
+        स्थिर अन्तःस्थ thread_local अचिह्नित पूर्णाङ्क local_mem_आकार = 0;
         /// Map for retrieving launchable functor from a raw pointer.
-        static inline std::map<
-            const void *,
-            std::function<void(dim3, dim3, void **, unsigned int, queue_ptr)>>
+        स्थिर अन्तःस्थ std::map<
+            ध्रुव शून्य *,
+            std::function<शून्य(dim3, dim3, शून्य **, अचिह्नित पूर्णाङ्क, queue_ptr)>>
             kernel_function_ptr_map = {};
 
         /// Registers a kernel function pointer with a corresponding launchable
         /// functor.
         /// \param [in] func Pointer to the kernel function.
         /// \param [in] launcher Functor to handle kernel invocation.
-        static void register_kernel_ptr(
-            const void *func,
-            std::function<void(dim3, dim3, void **, unsigned int, queue_ptr)>
+        स्थिर शून्य पञ्जिकाकोशः_kernel_ptr(
+            ध्रुव शून्य *func,
+            std::function<शून्य(dim3, dim3, शून्य **, अचिह्नित पूर्णाङ्क, queue_ptr)>
                 launcher) {
-            std::lock_guard<std::mutex> lock(kernel_function_ptr_map_mutex);
+            std::lock_guard<std::mutex> तालकम्(kernel_function_ptr_map_mutex);
             kernel_function_ptr_map[func] = std::move(launcher);
         }
         /// Launches a kernel function with arguments provided directly through
@@ -3194,12 +3194,12 @@ namespace dpct
         /// \param [in] local_mem_size The size of local memory required by the
         /// kernel function. \param [in] que SYCL queue used to execute kernel.
         /// \param [in] args Kernel arguments.
-        template <typename FuncT, typename... ArgsT>
-        static std::enable_if_t<std::is_invocable_v<FuncT *, ArgsT...>, void>
-        launch(FuncT *func, dim3 group_range, dim3 local_range,
-               unsigned int local_mem_size, queue_ptr que, ArgsT... args) {
-            set_execution_config(group_range, local_range, local_mem_size, que);
-            func(args...);
+        प्रतिरूपम् <प्रकारनाम FuncT, प्रकारनाम... तर्काः_T>
+        स्थिर std::enable_if_t<std::is_invocable_v<FuncT *, तर्काः_T...>, शून्य>
+        launch(FuncT *func, dim3 गणः_range, dim3 local_range,
+               अचिह्नित पूर्णाङ्क local_mem_आकार_2, queue_ptr que, तर्काः_T... तर्काः_2) {
+            समुच्चयः_execution_config(गणः_range, local_range, local_mem_आकार_2, que);
+            func(तर्काः_2...);
         }
         /// Launches a kernel function through registered kernel function
         /// wrapper. \param [in] func Pointer to the registered kernel function
@@ -3208,16 +3208,16 @@ namespace dpct
         /// kernel arguments. \param [in] local_mem_size The size of local
         /// memory required by the kernel function. \param [in] que SYCL queue
         /// used to execute kernel.
-        static void launch(const void *func, dim3 group_range, dim3 local_range,
-                           void **args, unsigned int local_mem_size,
+        स्थिर शून्य launch(ध्रुव शून्य *func, dim3 गणः_range, dim3 local_range,
+                           शून्य **तर्काः_2, अचिह्नित पूर्णाङ्क local_mem_आकार_2,
                            queue_ptr que) {
-            std::lock_guard<std::mutex> lock(kernel_function_ptr_map_mutex);
-            auto Iter = kernel_function_ptr_map.find(func);
-            if (Iter == kernel_function_ptr_map.end()) {
-                throw std::runtime_error("dpct::launch() : no registered "
+            std::lock_guard<std::mutex> तालकम्(kernel_function_ptr_map_mutex);
+            स्वचालित Iter = kernel_function_ptr_map.find(func);
+            यदि (Iter == kernel_function_ptr_map.end()) {
+                क्षिप std::runtime_error("dpct::launch() : no registered "
                                          "kernel function wrapper found.");
             }
-            (Iter->second)(group_range, local_range, args, local_mem_size, que);
+            (Iter->second)(गणः_range, local_range, तर्काः_2, local_mem_आकार_2, que);
         }
         /// Launches a kernel function with packed arguments through kernel
         /// function wrapper.
@@ -3228,74 +3228,74 @@ namespace dpct
         /// \param [in] args Array of pointers to kernel arguments.
         /// \param [in] local_mem_size The size of local memory required by the
         /// kernel function. \param [in] que SYCL queue used to execute kernel.
-        template <typename FuncT>
-        static std::enable_if_t<std::is_function_v<FuncT>, void>
-        launch(FuncT *func, dim3 group_range, dim3 local_range, void **args,
-               unsigned int local_mem_size, queue_ptr que) {
-            constexpr size_t p_num = args_selector<0, 0, FuncT>::params_num;
-            set_execution_config(group_range, local_range, local_mem_size, que);
-            args_selector<p_num, p_num, FuncT> selector(args, nullptr);
-            launch_helper(func, selector, std::make_index_sequence<p_num>{});
+        प्रतिरूपम् <प्रकारनाम FuncT>
+        स्थिर std::enable_if_t<std::is_function_v<FuncT>, शून्य>
+        launch(FuncT *func, dim3 गणः_range, dim3 local_range, शून्य **तर्काः_2,
+               अचिह्नित पूर्णाङ्क local_mem_आकार_2, queue_ptr que) {
+            constexpr size_t p_अङ्कः = तर्काः_selector<0, 0, FuncT>::params_अङ्कः;
+            समुच्चयः_execution_config(गणः_range, local_range, local_mem_आकार_2, que);
+            तर्काः_selector<p_अङ्कः, p_अङ्कः, FuncT> selector(तर्काः_2, शून्यसूचकः);
+            launch_helper(func, selector, std::make_index_sequence<p_अङ्कः>{});
         }
     }; // COPY from DPCT head file
        // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/kernel.hpp
 
     // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/util.hpp
-    template <typename T>
-    T select_from_sub_group(
-        sycl::sub_group g,
+    प्रतिरूपम् <प्रकारनाम T>
+    T select_from_sub_गणः(
+        sycl::sub_गणः g,
         T x,
-        int remote_local_id,
-        int logical_sub_group_size = 32) {
-      unsigned int start_index = g.get_local_linear_id() /
-                                 logical_sub_group_size *
-                                 logical_sub_group_size;
-      return sycl::select_from_group(
-          g, x, start_index + remote_local_id % logical_sub_group_size);
+        पूर्णाङ्क remote_local_id,
+        पूर्णाङ्क logical_sub_गणः_आकार = 32) {
+      अचिह्नित पूर्णाङ्क start_सूचकांक = g.get_local_रैखिकम्_id() /
+                                 logical_sub_गणः_आकार *
+                                 logical_sub_गणः_आकार;
+      प्रत्यागम sycl::select_from_गणः(
+          g, x, start_सूचकांक + remote_local_id % logical_sub_गणः_आकार);
     }
 
     // /opt/intel/oneapi/dpcpp-ct/latest/include/dpct/math.hpp
-    template <typename T>
-    void ldmatrix(uintptr_t addr, T* m, bool trans = false, unsigned mat = 0) {
-      auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
-      int lane = sg.get_local_linear_id();
+    प्रतिरूपम् <प्रकारनाम T>
+    शून्य ldmatrix(uintptr_t addr, T* m, तार्किक trans = असत्य, अचिह्नित mat = 0) {
+      स्वचालित sg = sycl::ext::oneapi::this_work_item::get_sub_गणः();
+      पूर्णाङ्क lane = sg.get_local_रैखिकम्_id();
 
-      int lane_group8_row = lane / 8;
-      int lane_group8_col = lane % 8;
+      पूर्णाङ्क lane_group8_row = lane / 8;
+      पूर्णाङ्क lane_group8_col = lane % 8;
 
-      if (!trans) {
+      यदि (!trans) {
         // calculate the source lane
-        int src_lane = 2 * lane_group8_row;
-        if (lane_group8_col >= 4)
+        पूर्णाङ्क src_lane = 2 * lane_group8_row;
+        यदि (lane_group8_col >= 4)
           src_lane += 1;
 
         // Broadcast the address from the source lane
-        auto recv_addr_uintp =
-            dpct::select_from_sub_group(sg, addr, mat * 8 + src_lane);
+        स्वचालित recv_addr_uintp =
+            dpct::select_from_sub_गणः(sg, addr, mat * 8 + src_lane);
 
         // Cast the received address from uintptr_t to the type of 'm'
-        auto recv_addr = reinterpret_cast<T*>(recv_addr_uintp);
+        स्वचालित recv_addr = reinterpret_cast<T*>(recv_addr_uintp);
 
         // Non-transposed load
         *m = recv_addr[lane_group8_col % 4];
-      } else {
+      } अन्यथा {
         // calculate the source lane
-        int src_lane = (lane % 4) * 2;
+        पूर्णाङ्क src_lane = (lane % 4) * 2;
 
         // Broadcast the address from the source lane
-        auto recv_addr_uintp_1 =
-            dpct::select_from_sub_group(sg, addr, mat * 8 + src_lane);
-        auto recv_addr_uintp_2 =
-            dpct::select_from_sub_group(sg, addr, mat * 8 + src_lane + 1);
+        स्वचालित recv_addr_uintp_1 =
+            dpct::select_from_sub_गणः(sg, addr, mat * 8 + src_lane);
+        स्वचालित recv_addr_uintp_2 =
+            dpct::select_from_sub_गणः(sg, addr, mat * 8 + src_lane + 1);
 
         // Cast the received address from uintptr_t to 'half *'
-        auto recv_addr_1 = reinterpret_cast<sycl::half*>(recv_addr_uintp_1);
-        auto recv_addr_2 = reinterpret_cast<sycl::half*>(recv_addr_uintp_2);
+        स्वचालित recv_addr_1 = reinterpret_cast<sycl::half*>(recv_addr_uintp_1);
+        स्वचालित recv_addr_2 = reinterpret_cast<sycl::half*>(recv_addr_uintp_2);
 
         // Transposed load
-        int index = lane / 4;
-        sycl::half val0 = recv_addr_1[index];
-        sycl::half val1 = recv_addr_2[index];
+        पूर्णाङ्क सूचकांक = lane / 4;
+        sycl::half val0 = recv_addr_1[सूचकांक];
+        sycl::half val1 = recv_addr_2[सूचकांक];
 
         // Combine the two 16-bits into one 32-bit value
         sycl::half2 val = sycl::half2(val0, val1);
@@ -3303,17 +3303,17 @@ namespace dpct
       }
     }
 
-    template <typename T>
-    void ldmatrix(uintptr_t addr, T* m1, T* m2, bool trans = false) {
+    प्रतिरूपम् <प्रकारनाम T>
+    शून्य ldmatrix(uintptr_t addr, T* m1, T* m2, तार्किक trans = असत्य) {
       // Load 1st matrix
       ldmatrix(addr, m1, trans, 0);
       // Load 2nd matrix
       ldmatrix(addr, m2, trans, 1);
     }
 
-    template <typename T>
-    void ldmatrix(
-        uintptr_t addr, T* m1, T* m2, T* m3, T* m4, bool trans = false) {
+    प्रतिरूपम् <प्रकारनाम T>
+    शून्य ldmatrix(
+        uintptr_t addr, T* m1, T* m2, T* m3, T* m4, तार्किक trans = असत्य) {
       // Load 1st matrix
       ldmatrix(addr, m1, trans, 0);
       // Load 2nd matrix
@@ -3332,9 +3332,9 @@ namespace dpct
     /// The MMAType struct is specialized for different types of input matrices.
     /// Currently, the specialization for f16, bf16 and s8 types is defined
     /// below. \tparam [in] T The type of the input matrix fragments
-    template <typename T>
-    struct MMAType {
-      using PackType = uint32_t;
+    प्रतिरूपम् <प्रकारनाम T>
+    संरचना MMAType {
+      उपयुज्य PackType = uint32_t;
     };
 
     /// Each work item of a sub-group (limited to size 32) calling this function
@@ -3360,21 +3360,21 @@ namespace dpct
     /// the input matrix B to be multiplied with A matrix fragment \param [in]
     /// c_mat_frag The fragment of the input matrix C to be added with the
     /// result of A * B fragments
-    template <int M, int N, int K, typename ABType, typename CDType>
-    void mma(
-        volatile void** d_mat_frag,
-        void* a_mat_frag,
-        void* b_mat_frag,
-        void* c_mat_frag) {
-      auto d = reinterpret_cast<volatile CDType**>(d_mat_frag);
-      auto a =
-          reinterpret_cast<typename MMAType<ABType>::PackType*>(a_mat_frag);
-      auto b =
-          reinterpret_cast<typename MMAType<ABType>::PackType*>(b_mat_frag);
-      auto c = reinterpret_cast<CDType*>(c_mat_frag);
+    प्रतिरूपम् <पूर्णाङ्क M, पूर्णाङ्क N, पूर्णाङ्क K, प्रकारनाम ABType, प्रकारनाम CDType>
+    शून्य mma(
+        चञ्चल शून्य** d_mat_frag,
+        शून्य* a_mat_frag,
+        शून्य* b_mat_frag,
+        शून्य* c_mat_frag) {
+      स्वचालित d = reinterpret_cast<चञ्चल CDType**>(d_mat_frag);
+      स्वचालित a =
+          reinterpret_cast<प्रकारनाम MMAType<ABType>::PackType*>(a_mat_frag);
+      स्वचालित b =
+          reinterpret_cast<प्रकारनाम MMAType<ABType>::PackType*>(b_mat_frag);
+      स्वचालित c = reinterpret_cast<CDType*>(c_mat_frag);
 
-      auto sg = sycl::ext::oneapi::this_work_item::get_sub_group();
-      int lane = sg.get_local_linear_id();
+      स्वचालित sg = sycl::ext::oneapi::this_work_item::get_sub_गणः();
+      पूर्णाङ्क lane = sg.get_local_रैखिकम्_id();
 
       static_assert(
           (M == 8 && N == 8 && K == 4) || (M == 8 && N == 8 && K == 16) ||
@@ -3382,12 +3382,12 @@ namespace dpct
               (M == 16 && N == 8 && K == 32),
           "Unsupported MMA shape!");
 
-      short row_load_offset = 4 * (lane >> 2);
-      short col_load_offset = 8 * (lane % 4);
+      ह्रस्व row_आरोपय_विस्थापनम् = 4 * (lane >> 2);
+      ह्रस्व col_आरोपय_विस्थापनम् = 8 * (lane % 4);
 
-      if constexpr (M == 8 && N == 8 && K == 4) {
-        if constexpr (std::is_floating_point_v<CDType>) {
-          col_load_offset = row_load_offset % 16;
+      यदि constexpr (M == 8 && N == 8 && K == 4) {
+        यदि constexpr (std::is_floating_point_v<CDType>) {
+          col_आरोपय_विस्थापनम् = row_आरोपय_विस्थापनम् % 16;
 
           // Init D matrix with fragments of C matrix
           *d[0] = c[0];
@@ -3401,8 +3401,8 @@ namespace dpct
 
           // Calculate the row and col offset indices to iterate through the row
           // & col fragments of A & B matrices
-          int r_ind = (lane % 2) ? 1 : 0;
-          int c_ind = ((lane % 4) / 2) ? 2 : 0;
+          पूर्णाङ्क r_ind = (lane % 2) ? 1 : 0;
+          पूर्णाङ्क c_ind = ((lane % 4) / 2) ? 2 : 0;
 
           // Each sub-group is responsible for computing a fragment size of 8*8
           // elements of matrix D for each of 4 MMA computations.
@@ -3414,25 +3414,25 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          प्रकारनाम MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
-          for (int i = 0; i < 4; i++) {
+          प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
             // Load partial fragment from col0 of matrix A ({a0, a1})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[0], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col0 of matrix A ({a2, a3})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[1], row_आरोपय_विस्थापनम् + i);
 
             // Load partial fragment from row0 of matrix B ({b0, b1})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i);
             // Load partial fragment from row0 of matrix B ({b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i);
+                dpct::select_from_sub_गणः(sg, b[1], col_आरोपय_विस्थापनम् + i);
 
-            auto ra = reinterpret_cast<ABType*>(recv_a);
-            auto rb = reinterpret_cast<ABType*>(recv_b);
+            स्वचालित ra = reinterpret_cast<ABType*>(recv_a);
+            स्वचालित rb = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment (for
@@ -3442,20 +3442,20 @@ namespace dpct
             // b2 } d1 += col0{ a1 } * row0{ b3 } d2 += col1{ a3 } * row0{ b2 }
             // d3 += col1{ a3 } * row0{ b3 }
             *d[0] +=
-                static_cast<float>(ra[r_ind]) * static_cast<float>(rb[c_ind]);
-            *d[1] += static_cast<float>(ra[r_ind]) *
-                     static_cast<float>(rb[c_ind + 1]);
-            *d[2] += static_cast<float>(ra[r_ind + 2]) *
-                     static_cast<float>(rb[c_ind]);
-            *d[3] += static_cast<float>(ra[r_ind + 2]) *
-                     static_cast<float>(rb[c_ind + 1]);
+                static_cast<भिन्न>(ra[r_ind]) * static_cast<भिन्न>(rb[c_ind]);
+            *d[1] += static_cast<भिन्न>(ra[r_ind]) *
+                     static_cast<भिन्न>(rb[c_ind + 1]);
+            *d[2] += static_cast<भिन्न>(ra[r_ind + 2]) *
+                     static_cast<भिन्न>(rb[c_ind]);
+            *d[3] += static_cast<भिन्न>(ra[r_ind + 2]) *
+                     static_cast<भिन्न>(rb[c_ind + 1]);
 
             // Load partial fragment from row1 of matrix B ({b0, b1})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 16);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i + 16);
             // Load partial fragment from row1 of matrix B ({b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i + 16);
+                dpct::select_from_sub_गणः(sg, b[1], col_आरोपय_विस्थापनम् + i + 16);
 
             // (for even work item indices)
             // d0 += col0{ a0 } * row1{ b0 }
@@ -3468,17 +3468,17 @@ namespace dpct
             // d2 += col1{ a3 } * row1{ b2 }
             // d3 += col1{ a3 } * row1{ b3 }
             *d[4] +=
-                static_cast<float>(ra[r_ind]) * static_cast<float>(rb[c_ind]);
-            *d[5] += static_cast<float>(ra[r_ind]) *
-                     static_cast<float>(rb[c_ind + 1]);
-            *d[6] += static_cast<float>(ra[r_ind + 2]) *
-                     static_cast<float>(rb[c_ind]);
-            *d[7] += static_cast<float>(ra[r_ind + 2]) *
-                     static_cast<float>(rb[c_ind + 1]);
+                static_cast<भिन्न>(ra[r_ind]) * static_cast<भिन्न>(rb[c_ind]);
+            *d[5] += static_cast<भिन्न>(ra[r_ind]) *
+                     static_cast<भिन्न>(rb[c_ind + 1]);
+            *d[6] += static_cast<भिन्न>(ra[r_ind + 2]) *
+                     static_cast<भिन्न>(rb[c_ind]);
+            *d[7] += static_cast<भिन्न>(ra[r_ind + 2]) *
+                     static_cast<भिन्न>(rb[c_ind + 1]);
           }
         }
-      } else if constexpr (M == 8 && N == 8 && K == 16) {
-        if constexpr (std::is_integral_v<ABType>) {
+      } अन्यथा यदि constexpr (M == 8 && N == 8 && K == 16) {
+        यदि constexpr (std::is_integral_v<ABType>) {
           // Init D matrix with fragments of C matrix
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3493,20 +3493,20 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a, recv_b[2];
+          प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
+            प्रकारनाम MMAType<ABType>::PackType recv_a, recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a0, a1, a2, a3})
-            recv_a = dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+            recv_a = dpct::select_from_sub_गणः(sg, a[0], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col0 of matrix B ({b0, b1, b2, b3})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col1 of matrix B ({b0, b1, b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 4);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i + 4);
 
-            auto a = reinterpret_cast<ABType*>(&recv_a);
-            auto b = reinterpret_cast<ABType*>(recv_b);
+            स्वचालित a = reinterpret_cast<ABType*>(&recv_a);
+            स्वचालित b = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3514,14 +3514,14 @@ namespace dpct
             // a0, a1, a2, a3 } * col1{ b0, b1, b2, b3 } d2 += row0{ a0, a1, a2,
             // a3 } * col0{ b0, b1, b2, b3 } d3 += row0{ a0, a1, a2, a3 } *
             // col1{ b0, b1, b2, b3 }
-            for (int j = 0; j < 4; j++) {
+            प्रति (पूर्णाङ्क j = 0; j < 4; j++) {
               *d[0] += a[j] * b[j];
               *d[1] += a[j] * b[j + 4];
             }
           }
         }
-      } else if constexpr (M == 16 && N == 8 && K == 8) {
-        if constexpr (std::is_floating_point_v<CDType>) {
+      } अन्यथा यदि constexpr (M == 16 && N == 8 && K == 8) {
+        यदि constexpr (std::is_floating_point_v<CDType>) {
           // Init D matrix fragment with C matrix fragment
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3538,43 +3538,43 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
+            प्रकारनाम MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a0, a1})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[0], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from row1 of matrix A ({a2, a3})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[1], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col0 of matrix B ({b0, b1})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col1 of matrix B ({b0, b1})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 4);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i + 4);
 
-            auto ra = reinterpret_cast<ABType*>(recv_a);
-            auto rb = reinterpret_cast<ABType*>(recv_b);
+            स्वचालित ra = reinterpret_cast<ABType*>(recv_a);
+            स्वचालित rb = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
             // += row0{ a0, a1 } * col0{ b0, b1 } d1 += row0{ a0, a1 } * col1{
             // b0, b1 } d2 += row1{ a2, a3 } * col0{ b0, b1 } d3 += row1{ a2, a3
             // } * col1{ b0, b1 }
-            for (int j = 0; j < 2; j++) {
-              *d[0] += static_cast<float>(ra[j]) * static_cast<float>(rb[j]);
+            प्रति (पूर्णाङ्क j = 0; j < 2; j++) {
+              *d[0] += static_cast<भिन्न>(ra[j]) * static_cast<भिन्न>(rb[j]);
               *d[1] +=
-                  static_cast<float>(ra[j]) * static_cast<float>(rb[j + 2]);
+                  static_cast<भिन्न>(ra[j]) * static_cast<भिन्न>(rb[j + 2]);
               *d[2] +=
-                  static_cast<float>(ra[j + 2]) * static_cast<float>(rb[j]);
+                  static_cast<भिन्न>(ra[j + 2]) * static_cast<भिन्न>(rb[j]);
               *d[3] +=
-                  static_cast<float>(ra[j + 2]) * static_cast<float>(rb[j + 2]);
+                  static_cast<भिन्न>(ra[j + 2]) * static_cast<भिन्न>(rb[j + 2]);
             }
           }
         }
-      } else if constexpr (M == 16 && N == 8 && K == 16) {
-        if constexpr (std::is_floating_point_v<CDType>) {
+      } अन्यथा यदि constexpr (M == 16 && N == 8 && K == 16) {
+        यदि constexpr (std::is_floating_point_v<CDType>) {
           // Init D matrix fragment with C matrix fragment
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3591,37 +3591,37 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[4], recv_b[4];
+          प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
+            प्रकारनाम MMAType<ABType>::PackType recv_a[4], recv_b[4];
 
             // Load partial fragment from row0 of matrix A ({a0, a1})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[0], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from row0 of matrix A ({a2, a3})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[2], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[2], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from row1 of matrix A ({a0, a1})
             recv_a[2] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[1], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from row1 of matrix A ({a2, a3})
             recv_a[3] =
-                dpct::select_from_sub_group(sg, a[3], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[3], row_आरोपय_विस्थापनम् + i);
 
             // Load partial fragment from col0 of matrix B ({b0, b1})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col0 of matrix B ({b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i);
+                dpct::select_from_sub_गणः(sg, b[1], col_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col1 of matrix B ({b0, b1})
             recv_b[2] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + 4 + i);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + 4 + i);
             // Load partial fragment from col1 of matrix B ({b2, b3})
             recv_b[3] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + 4 + i);
+                dpct::select_from_sub_गणः(sg, b[1], col_आरोपय_विस्थापनम् + 4 + i);
 
-            auto ra = reinterpret_cast<ABType*>(recv_a);
-            auto rb = reinterpret_cast<ABType*>(recv_b);
+            स्वचालित ra = reinterpret_cast<ABType*>(recv_a);
+            स्वचालित rb = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3629,7 +3629,7 @@ namespace dpct
             // a0, a1, a2, a3 } * col1{ b0, b1, b2, b3 } d2 += row1{ a0, a1, a2,
             // a3 } * col0{ b0, b1, b2, b3 } d3 += row1{ a0, a1, a2, a3 } *
             // col1{ b0, b1, b2, b3 }
-            for (int j = 0; j < 4; j++) {
+            प्रति (पूर्णाङ्क j = 0; j < 4; j++) {
               *d[0] += static_cast<CDType>(ra[j]) * static_cast<CDType>(rb[j]);
               *d[1] +=
                   static_cast<CDType>(ra[j]) * static_cast<CDType>(rb[j + 4]);
@@ -3639,7 +3639,7 @@ namespace dpct
                        static_cast<CDType>(rb[j + 4]);
             }
           }
-        } else if constexpr (std::is_integral_v<ABType>) {
+        } अन्यथा यदि constexpr (std::is_integral_v<ABType>) {
           // Init D matrix with fragments of C matrix
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3656,24 +3656,24 @@ namespace dpct
           // As each row & col fragment of A & B matrices is distributed across
           // 4 work items, each iteration of below loop loads a partial fragment
           // of matrix A (row) and matrix B (col) using the row & col offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
+            प्रकारनाम MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a0, a1, a2, a3})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[0], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from row1 of matrix A ({a4, a5, a6, a7})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[1], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col0 of matrix B ({b0, b1, b2, b3})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col1 of matrix B ({b4, b5, b6, b7})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 4);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i + 4);
 
-            auto ra = reinterpret_cast<ABType*>(recv_a);
-            auto rb = reinterpret_cast<ABType*>(recv_b);
+            स्वचालित ra = reinterpret_cast<ABType*>(recv_a);
+            स्वचालित rb = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3681,7 +3681,7 @@ namespace dpct
             // a0, a1, a2, a3 } * col1{ b4, b5, b6, b7 } d2 += row1{ a4, a5, a6,
             // a7 } * col0{ b0, b1, b2, b3 } d3 += row1{ a4, a5, a6, a7 } *
             // col1{ b4, b5, b6, b7 }
-            for (int i = 0; i < 4; i++) {
+            प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
               *d[0] += ra[i] * rb[i];
               *d[1] += ra[i] * rb[i + 4];
               *d[2] += ra[i + 4] * rb[i];
@@ -3689,8 +3689,8 @@ namespace dpct
             }
           }
         }
-      } else if constexpr (M == 16 && N == 8 && K == 32) {
-        if constexpr (std::is_integral_v<ABType>) {
+      } अन्यथा यदि constexpr (M == 16 && N == 8 && K == 32) {
+        यदि constexpr (std::is_integral_v<ABType>) {
           // Init D matrix with fragments of C matrix
           *d[0] = c[0];
           *d[1] = c[1];
@@ -3708,24 +3708,24 @@ namespace dpct
           // across 4 work items, each iteration of below loop loads a partial
           // fragment of matrix A (row) and matrix B (col) using the row & col
           // offsets.
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
+            प्रकारनाम MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a0, a1, a2, a3})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[0], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[0], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from row1 of matrix A ({a4, a5, a6, a7})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[1], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[1], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col0 of matrix B ({b0, b1, b2, b3})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col1 of matrix B ({b0, b1, b2, b3})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[0], col_load_offset + i + 4);
+                dpct::select_from_sub_गणः(sg, b[0], col_आरोपय_विस्थापनम् + i + 4);
 
-            auto a = reinterpret_cast<ABType*>(recv_a);
-            auto b = reinterpret_cast<ABType*>(recv_b);
+            स्वचालित a = reinterpret_cast<ABType*>(recv_a);
+            स्वचालित b = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3733,7 +3733,7 @@ namespace dpct
             // a0, a1, a2, a3 } * col1{ b0, b1, b2, b3 } d2 += row1{ a4, a5, a6,
             // a7 } * col0{ b0, b1, b2, b3 } d3 += row1{ a4, a5, a6, a7 } *
             // col1{ b0, b1, b2, b3 }
-            for (int j = 0; j < 4; j++) {
+            प्रति (पूर्णाङ्क j = 0; j < 4; j++) {
               *d[0] += a[j] * b[j];
               *d[1] += a[j] * b[j + 4];
               *d[2] += a[j + 4] * b[j];
@@ -3741,25 +3741,25 @@ namespace dpct
             }
           }
 
-          for (int i = 0; i < 4; i++) {
-            typename MMAType<ABType>::PackType recv_a[2], recv_b[2];
+          प्रति (पूर्णाङ्क i = 0; i < 4; i++) {
+            प्रकारनाम MMAType<ABType>::PackType recv_a[2], recv_b[2];
 
             // Load partial fragment from row0 of matrix A ({a8, a9, a10, a11})
             recv_a[0] =
-                dpct::select_from_sub_group(sg, a[2], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[2], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from row1 of matrix A ({a12, a13, a14,
             // a15})
             recv_a[1] =
-                dpct::select_from_sub_group(sg, a[3], row_load_offset + i);
+                dpct::select_from_sub_गणः(sg, a[3], row_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col0 of matrix B ({b4, b5, b6, b7})
             recv_b[0] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i);
+                dpct::select_from_sub_गणः(sg, b[1], col_आरोपय_विस्थापनम् + i);
             // Load partial fragment from col1 of matrix B ({b4, b5, b6, b7})
             recv_b[1] =
-                dpct::select_from_sub_group(sg, b[1], col_load_offset + i + 4);
+                dpct::select_from_sub_गणः(sg, b[1], col_आरोपय_विस्थापनम् + i + 4);
 
-            auto a = reinterpret_cast<ABType*>(recv_a);
-            auto b = reinterpret_cast<ABType*>(recv_b);
+            स्वचालित a = reinterpret_cast<ABType*>(recv_a);
+            स्वचालित b = reinterpret_cast<ABType*>(recv_b);
 
             // Each work item calculates a partial product of A & B matrix
             // fragments and adds it to the corresponding D matrix fragment d0
@@ -3767,7 +3767,7 @@ namespace dpct
             // a8, a9, a10, a11 } * col1{ b4, b5, b6, b7 } d2 += row1{ a12, a13,
             // a14, a15 } * col0{ b4, b5, b6, b7 } d3 += row1{ a12, a13, a14,
             // a15 } * col1{ b4, b5, b6, b7 }
-            for (int j = 0; j < 4; j++) {
+            प्रति (पूर्णाङ्क j = 0; j < 4; j++) {
               *d[0] += a[j] * b[j];
               *d[1] += a[j] * b[j + 4];
               *d[2] += a[j + 4] * b[j];
@@ -3779,4 +3779,4 @@ namespace dpct
     }
 } // COPY from DPCT head files
 
-#endif // GGML_SYCL_DPCT_HELPER_HPP
+#यदि_अन्तः // GGML_SYCL_DPCT_HELPER_HPP
