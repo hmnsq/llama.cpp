@@ -1,47 +1,47 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <openvino/core/except.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/equal.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/greater_eq.hpp>
-#include <openvino/op/if.hpp>
-#include <openvino/op/less.hpp>
-#include <openvino/op/logical_or.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/range.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <vector>
+#ضمن <openvino/core/except.hpp>
+#ضمن <openvino/op/add.hpp>
+#ضمن <openvino/op/concat.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/convert.hpp>
+#ضمن <openvino/op/equal.hpp>
+#ضمن <openvino/op/gather.hpp>
+#ضمن <openvino/op/greater_eq.hpp>
+#ضمن <openvino/op/if.hpp>
+#ضمن <openvino/op/less.hpp>
+#ضمن <openvino/op/logical_or.hpp>
+#ضمن <openvino/op/multiply.hpp>
+#ضمن <openvino/op/range.hpp>
+#ضمن <openvino/op/reshape.hpp>
+#ضمن <openvino/op/shape_of.hpp>
+#ضمن <openvino/op/slice.hpp>
+#ضمن <openvino/op/squeeze.hpp>
+#ضمن <openvino/op/unsqueeze.hpp>
+#ضمن <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_scale(const NodeContext & context) {
+OutputVector translate_scale(ثابت NodeContext & context) {
     num_inputs_check(context, 1, 1);
 
-    float scale;
-    float bias;
-    memcpy(&scale, (float *) context.get_output_op_params() + 0, sizeof(float));
-    memcpy(&bias, (float *) context.get_output_op_params() + 1, sizeof(float));
+    عائم scale;
+    عائم bias;
+    memcpy(&scale, (عائم *) context.get_output_op_params() + 0, حجم(عائم));
+    memcpy(&bias, (عائم *) context.get_output_op_params() + 1, حجم(عائم));
 
-    auto scale_node = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{scale});
+    auto scale_node = std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<عائم>{scale});
 
-    if (context.get_op_case() == 2) {
-        return {context.get_input(0)};
+    ܐܢ (context.get_op_case() == 2) {
+        ܦܢܐ {context.get_input(0)};
     }
 
-    if (context.get_op_case() == 1 && context.has_input("cache_rs_reset_len")) {
+    ܐܢ (context.get_op_case() == 1 && context.has_input("cache_rs_reset_len")) {
         auto cache_rs_reset_idx = context.get_input("cache_rs_reset_idx");
         auto cache_rs_reset_len = context.get_input("cache_rs_reset_len");
 
@@ -67,21 +67,21 @@ OutputVector translate_scale(const NodeContext & context) {
             keep_mask_f32, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {1}));
 
         auto cleared_cache_rs = std::make_shared<ov::op::v1::Multiply>(cache_rs, keep_mask_reshape);
-        return rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
+        ܦܢܐ rename_outputs_with_suffix({cleared_cache_rs}, context.get_name());
     }
 
     auto scaled = std::make_shared<ov::op::v1::Multiply>(context.get_input(0), scale_node);
 
     std::shared_ptr<ov::Node> res;
-    if (bias != 0.0f) {
+    ܐܢ (bias != 0.0f) {
         auto bias_node =
-            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<float>{bias});
+            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{}, std::vector<عائم>{bias});
         res = std::make_shared<ov::op::v1::Add>(scaled, bias_node);
-    } else {
+    } ܐܚܪܢܐ {
         res = scaled;
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ܦܢܐ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

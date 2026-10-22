@@ -1,23 +1,23 @@
 #ifndef HTP_CONCAT_OPS_H
 #define HTP_CONCAT_OPS_H
 
-#include "hex-common.h"
-#include "gather-rows.h"
-#include <stdint.h>
+#ضمن "hex-common.h"
+#ضمن "gather-rows.h"
+#ضمن <stdint.h>
 
-enum htp_concat_kernel_type {
+تعداد htp_concat_kernel_type {
     HTP_CONCAT_KERNEL_UNSUPPORTED = 0,
     HTP_CONCAT_KERNEL_REGULAR     = 1,
     HTP_CONCAT_KERNEL_TRANSPOSED  = 2,
     HTP_CONCAT_KERNEL_GATHER_ROWS = 3,
 };
 
-struct htp_concat_transposed_params {
+بنية htp_concat_transposed_params {
     uint32_t spad0_size_per_thread;
     uint32_t spad1_size_per_thread;
 };
 
-struct htp_concat_kernel_params {
+بنية htp_concat_kernel_params {
     uint8_t  kernel_type;
     uint8_t  dim;
     uint8_t  n_threads;
@@ -25,26 +25,26 @@ struct htp_concat_kernel_params {
 
     uint32_t vtcm_size;
 
-    union {
-        struct htp_concat_transposed_params transposed;
-        struct htp_gather_rows_params       gather;
+    اتحاد {
+        بنية htp_concat_transposed_params transposed;
+        بنية htp_gather_rows_params       gather;
     } u;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
+#ܐܢ defined(__cplusplus)
+static_assert(حجم(بنية htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
+#ܐܚܪܢܐ
+_Static_assert(حجم(بنية htp_concat_kernel_params) <= 128, "htp_concat_kernel_params is too large for kernel_params blob");
 #endif
 
-struct htp_concat_transposed_vtcm_layout {
+بنية htp_concat_transposed_vtcm_layout {
     uint32_t src0_spad_size_per_thread;
     uint32_t src1_spad_size_per_thread;
     uint32_t total_bytes;
 };
 
-static inline void htp_concat_transposed_vtcm_layout_build(
-    struct htp_concat_transposed_vtcm_layout * layout,
+ساكن مضمن فراغ htp_concat_transposed_vtcm_layout_build(
+    بنية htp_concat_transposed_vtcm_layout * layout,
     uint32_t src0_ne0,
     uint32_t src1_ne0,
     uint32_t type_size,

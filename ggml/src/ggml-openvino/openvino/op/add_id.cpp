@@ -1,39 +1,39 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
+#ضمن <memory>
+#ضمن <openvino/core/node.hpp>
+#ضمن <openvino/core/node_output.hpp>
+#ضمن <openvino/op/add.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/convert.hpp>
+#ضمن <openvino/op/gather.hpp>
+#ضمن <openvino/op/reshape.hpp>
+#ضمن <openvino/op/shape_of.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-static ov::Output<ov::Node> reshape_add_id_input_to_2d(const ov::Output<ov::Node> & input,
-                                                       const ov::PartialShape & input_shape,
-                                                       const std::vector<int> & dims) {
-    const auto & actual_shape = input.get_partial_shape();
-    if (actual_shape.rank().is_static() && actual_shape.rank().get_length() == 2) {
-        return input;
+ساكن ov::Output<ov::Node> reshape_add_id_input_to_2d(ثابت ov::Output<ov::Node> & input,
+                                                       ثابت ov::PartialShape & input_shape,
+                                                       ثابت std::vector<صحيح> & dims) {
+    ثابت auto & actual_shape = input.get_partial_shape();
+    ܐܢ (actual_shape.rank().is_static() && actual_shape.rank().get_length() == 2) {
+        ܦܢܐ input;
     }
 
-    if (input_shape.rank().is_static() && input_shape.rank().get_length() == 2) {
-        return input;
+    ܐܢ (input_shape.rank().is_static() && input_shape.rank().get_length() == 2) {
+        ܦܢܐ input;
     }
 
     auto shape = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    return std::make_shared<ov::op::v1::Reshape>(input, get_dimensions(shape, dims), false);
+    ܦܢܐ std::make_shared<ov::op::v1::Reshape>(input, get_dimensions(shape, dims), ܕܓܠܐ);
 }
 
-OutputVector translate_add_id(const NodeContext & context) {
+OutputVector translate_add_id(ثابت NodeContext & context) {
     num_inputs_check(context, 3, 3);
 
     auto input = process_view_input_new(context, 0);
@@ -48,26 +48,26 @@ OutputVector translate_add_id(const NodeContext & context) {
     bias = reshape_add_id_input_to_2d(bias, context.get_input_shape(1), {2, 3});
     ids = reshape_add_id_input_to_2d(ids, context.get_input_shape(2), {2, 3});
 
-    if (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
+    ܐܢ (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
         ids = std::make_shared<ov::op::v0::Convert>(ids, ov::element::i32);
     }
 
     auto gather_axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
     ov::Output<ov::Node> selected_bias = std::make_shared<ov::op::v8::Gather>(bias, ids, gather_axis);
     selected_bias = std::make_shared<ov::op::v1::Reshape>(
-        selected_bias, std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64), false);
+        selected_bias, std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64), ܕܓܠܐ);
 
-    if (selected_bias.get_element_type() != input.get_element_type()) {
+    ܐܢ (selected_bias.get_element_type() != input.get_element_type()) {
         selected_bias = std::make_shared<ov::op::v0::Convert>(selected_bias, input.get_element_type());
     }
 
     ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Add>(input, selected_bias);
-    const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ثابت auto output_type = context.get_output_type();
+    ܐܢ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ܦܢܐ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

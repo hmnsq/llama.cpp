@@ -1,24 +1,24 @@
 
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <memory>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
+#ضمن <memory>
+#ضمن <openvino/op/reshape.hpp>
+#ضمن <openvino/op/slice.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_cont(const NodeContext & context) {
+OutputVector translate_cont(ثابت NodeContext & context) {
     num_inputs_check(context, 1, 1);
 
     auto src_shape = context.get_input_shape(0).to_shape();
     auto dst_shape = context.get_output_shape().to_shape();
 
-    if (context.get_op_dynamic_dim() != -1) {
+    ܐܢ (context.get_op_dynamic_dim() != -1) {
         dst_shape[3 - context.get_op_dynamic_dim()] = -1;
     }
 
@@ -26,9 +26,9 @@ OutputVector translate_cont(const NodeContext & context) {
 
     ov::Output<Node> res;
     res = std::make_shared<ov::op::v1::Reshape>(
-        input, ov::op::v0::Constant::create(ov::element::i64, {dst_shape.size()}, dst_shape), false);
+        input, ov::op::v0::Constant::create(ov::element::i64, {dst_shape.size()}, dst_shape), ܕܓܠܐ);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ܦܢܐ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

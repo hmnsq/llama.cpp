@@ -1,38 +1,38 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <climits>
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/op/util/op_types.hpp>
-#include <vector>
+#ضمن <climits>
+#ضمن <cstdint>
+#ضمن <memory>
+#ضمن <openvino/core/node.hpp>
+#ضمن <openvino/core/node_output.hpp>
+#ضمن <openvino/op/broadcast.hpp>
+#ضمن <openvino/op/concat.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/convert.hpp>
+#ضمن <openvino/op/matmul.hpp>
+#ضمن <openvino/op/reshape.hpp>
+#ضمن <openvino/op/slice.hpp>
+#ضمن <openvino/op/transpose.hpp>
+#ضمن <openvino/op/unsqueeze.hpp>
+#ضمن <openvino/op/util/op_types.hpp>
+#ضمن <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_mulmat(const NodeContext & context) {
+OutputVector translate_mulmat(ثابت NodeContext & context) {
     num_inputs_check(context, 2, 2);
 
-    int op_case = context.get_op_case();
+    صحيح op_case = context.get_op_case();
 
     ov::Output<ov::Node> B = process_view_input_new(context, 0);
     ov::Output<ov::Node> A = process_view_input_new(context, 1);
 
-    if (A.get_element_type() != B.get_element_type()) {
+    ܐܢ (A.get_element_type() != B.get_element_type()) {
         B = std::make_shared<ov::op::v0::Convert>(B, context.get_input_type(1));
     }
 
@@ -48,7 +48,7 @@ OutputVector translate_mulmat(const NodeContext & context) {
     Output<Node> Z = A_batch_larger ? B : A;
     auto Z_shape = A_batch_larger ? B_shape : A_shape;
     int64_t factor = batch_large / batch_small;
-    if (factor > 1 && batch_small > 1) {
+    ܐܢ (factor > 1 && batch_small > 1) {
         auto batch_large_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_large});
         auto batch_small_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_small});
         auto factor_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{factor});
@@ -60,30 +60,30 @@ OutputVector translate_mulmat(const NodeContext & context) {
             ov::element::i64, {5}, {(int64_t) 1, (int64_t) 1, factor, (int64_t) 1, (int64_t) 1});
         auto new_Z_shape = ov::op::v0::Constant::create(ov::element::i64, {4},
                                                         {(int64_t) 0, batch_large, (int64_t) -1, (int64_t) Z_shape[3]});
-        if (op_case == 2) {
+        ܐܢ (op_case == 2) {
             new_Z_shape = ov::op::v0::Constant::create(ov::element::i64, {4},
                                                        {(int64_t) 0, batch_large, (int64_t) Z_shape[2], (int64_t) -1});
         }
 
         auto Z_broadcasted = std::make_shared<ov::op::v3::Broadcast>(Z_unsqueezed, broadcast_shape,
                                                                      ov::op::BroadcastType::BIDIRECTIONAL);
-        Z = std::make_shared<ov::op::v1::Reshape>(Z_broadcasted, new_Z_shape, true);
+        Z = std::make_shared<ov::op::v1::Reshape>(Z_broadcasted, new_Z_shape, ܫܪܪܐ);
     }
-    if (A_batch_larger) {
+    ܐܢ (A_batch_larger) {
         B = Z;
-    } else {
+    } ܐܚܪܢܐ {
         A = Z;
     }
 
-    bool transpose_b = true;
-    ov::Output<Node> res = std::make_shared<ov::op::v0::MatMul>(A, B, false, transpose_b);
+    منطقي transpose_b = ܫܪܪܐ;
+    ov::Output<Node> res = std::make_shared<ov::op::v0::MatMul>(A, B, ܕܓܠܐ, transpose_b);
 
-    const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ثابت auto output_type = context.get_output_type();
+    ܐܢ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ܦܢܐ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

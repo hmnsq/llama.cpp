@@ -1,12 +1,12 @@
 #ifndef HTP_TENSOR_H
 #define HTP_TENSOR_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "htp-ops.h"
-#include "hex-bitmap.h"
-#include "hex-common.h"
-#include "hex-fastdiv.h"
+#ضمن <stdint.h>
+#ضمن <stdbool.h>
+#ضمن "htp-ops.h"
+#ضمن "hex-bitmap.h"
+#ضمن "hex-common.h"
+#ضمن "hex-fastdiv.h"
 
 #define HTP_TENSOR_MDEV_LINE_SIZE   128
 
@@ -33,166 +33,166 @@
 // Tiled weight tensor layouts (Q4_0, Q8_0, IQ4_NL, MXFP4, Q1_0, Q2_0, K-quants):
 // See docs/backend/snapdragon/developer.md ("Tiled Weight Formats").
 
-struct htp_tensor_mdev_range {
+بنية htp_tensor_mdev_range {
     uint32_t start;
     uint32_t count;
 };
 
-static inline bool htp_tensor_is_extended(const struct htp_tensor * t) {
-    return t && (t->data >> 32) != 0;
+ساكن مضمن bool htp_tensor_is_extended(ثابت بنية htp_tensor * t) {
+    ܦܢܐ t && (t->data >> 32) != 0;
 }
 
-static inline bool htp_tensor_is_contiguous(const struct htp_tensor * t, uint32_t type_size) {
+ساكن مضمن bool htp_tensor_is_contiguous(ثابت بنية htp_tensor * t, uint32_t type_size) {
     uint32_t next_nb = type_size;
-    if (t->ne[0] != 1 && t->nb[0] != next_nb) {
-        return false;
+    ܐܢ (t->ne[0] != 1 && t->nb[0] != next_nb) {
+        ܦܢܐ false;
     }
     next_nb *= t->ne[0];
-    for (int i = 1; i < HTP_OP_MAX_DIMS; i++) {
-        if (t->ne[i] != 1 && t->nb[i] != next_nb) {
-            return false;
+    لكل (صحيح i = 1; i < HTP_OP_MAX_DIMS; i++) {
+        ܐܢ (t->ne[i] != 1 && t->nb[i] != next_nb) {
+            ܦܢܐ false;
         }
         next_nb *= t->ne[i];
     }
-    return true;
+    ܦܢܐ true;
 }
 
-static inline bool htp_tensor_is_permuted(const struct htp_tensor * t) {
-    return t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
+ساكن مضمن bool htp_tensor_is_permuted(ثابت بنية htp_tensor * t) {
+    ܦܢܐ t->nb[0] > t->nb[1] || t->nb[1] > t->nb[2] || t->nb[2] > t->nb[3];
 }
 
-static inline bool htp_tensor_mdev_data_aligned(const struct htp_tensor * t) {
-    return ((uintptr_t) t->data & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0;
+ساكن مضمن bool htp_tensor_mdev_data_aligned(ثابت بنية htp_tensor * t) {
+    ܦܢܐ ((uintptr_t) t->data & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0;
 }
 
-static inline bool htp_tensor_can_row_partition(const struct htp_tensor * t, uint32_t elem_size) {
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+ساكن مضمن bool htp_tensor_can_row_partition(ثابت بنية htp_tensor * t, uint32_t elem_size) {
+    ܐܢ (!htp_tensor_mdev_data_aligned(t)) {
+        ܦܢܐ false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    ܐܢ (t->ne[0] != 1 && t->nb[0] != elem_size) {
+        ܦܢܐ false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    ܐܢ (htp_tensor_is_permuted(t)) {
+        ܦܢܐ false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    if (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) return false;
-    return true;
+    ܐܢ (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) ܦܢܐ false;
+    ܐܢ (t->ne[2] > 1 && (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) ܦܢܐ false;
+    ܐܢ (t->ne[3] > 1 && (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) != 0) ܦܢܐ false;
+    ܦܢܐ true;
 }
 
-static inline bool htp_tensor_mdev_rows_per_chunk(const struct htp_tensor * t, uint32_t elem_size, uint32_t row_size, uint32_t * rows_per_chunk) {
+ساكن مضمن bool htp_tensor_mdev_rows_per_chunk(ثابت بنية htp_tensor * t, uint32_t elem_size, uint32_t row_size, uint32_t * rows_per_chunk) {
     *rows_per_chunk = 0;
 
-    if (!htp_tensor_mdev_data_aligned(t)) {
-        return false;
+    ܐܢ (!htp_tensor_mdev_data_aligned(t)) {
+        ܦܢܐ false;
     }
-    if (t->ne[0] != 1 && t->nb[0] != elem_size) {
-        return false;
+    ܐܢ (t->ne[0] != 1 && t->nb[0] != elem_size) {
+        ܦܢܐ false;
     }
-    if (htp_tensor_is_permuted(t)) {
-        return false;
+    ܐܢ (htp_tensor_is_permuted(t)) {
+        ܦܢܐ false;
     }
-    if (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
+    ܐܢ (t->ne[1] > 1 && (t->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
         (t->ne[2] <= 1 || (t->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0) &&
         (t->ne[3] <= 1 || (t->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0)) {
         *rows_per_chunk = 1;
-        return true;
+        ܦܢܐ true;
     }
-    if (t->nb[1] == row_size &&
+    ܐܢ (t->nb[1] == row_size &&
         (t->ne[2] <= 1 || t->nb[2] == t->nb[1] * t->ne[1]) &&
         (t->ne[3] <= 1 || t->nb[3] == t->nb[2] * t->ne[2])) {
         *rows_per_chunk = (row_size > 0) ? (HTP_TENSOR_MDEV_LINE_SIZE / hex_gcd_u32(row_size, HTP_TENSOR_MDEV_LINE_SIZE)) : 1;
-        return true;
+        ܦܢܐ true;
     }
-    return false;
+    ܦܢܐ false;
 }
 
-static inline struct htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_count, const struct fastdiv_values * mdev_count_div) {
-    struct htp_tensor_mdev_range range = { 0, total_units };
+ساكن مضمن بنية htp_tensor_mdev_range htp_tensor_mdev_partition(uint32_t total_units, uint32_t units_per_chunk, uint32_t mdev_idx, uint32_t mdev_count, ثابت بنية fastdiv_values * mdev_count_div) {
+    بنية htp_tensor_mdev_range range = { 0, total_units };
 
-    if (mdev_count <= 1) {
-        return range;
+    ܐܢ (mdev_count <= 1) {
+        ܦܢܐ range;
     }
 
-    if (units_per_chunk == 0) {
+    ܐܢ (units_per_chunk == 0) {
         range.start = (mdev_idx == 0) ? 0 : total_units;
         range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+        ܦܢܐ range;
     }
 
-    const uint32_t total_chunks = total_units / units_per_chunk;
-    if (total_chunks < mdev_count) {
+    ثابت uint32_t total_chunks = total_units / units_per_chunk;
+    ܐܢ (total_chunks < mdev_count) {
         range.start = (mdev_idx == 0) ? 0 : total_units;
         range.count = (mdev_idx == 0) ? total_units : 0;
-        return range;
+        ܦܢܐ range;
     }
 
-    const uint32_t chunks_per_mdev = fastdiv(total_chunks + mdev_count - 1, mdev_count_div);
+    ثابت uint32_t chunks_per_mdev = fastdiv(total_chunks + mdev_count - 1, mdev_count_div);
     range.start = MIN(mdev_idx * chunks_per_mdev * units_per_chunk, total_units);
-    if (mdev_idx == mdev_count - 1) {
+    ܐܢ (mdev_idx == mdev_count - 1) {
         range.count = total_units - range.start;
-    } else {
+    } ܐܚܪܢܐ {
         range.count = MIN(chunks_per_mdev * units_per_chunk, total_units - range.start);
     }
-    return range;
+    ܦܢܐ range;
 }
 
-static inline uint32_t htp_tensor_get_tile_size(int type) {
-    switch (type) {
-        case HTP_TYPE_Q4_0:   return HTP_TENSOR_TILE_SIZE_Q4_0;
-        case HTP_TYPE_IQ4_NL: return HTP_TENSOR_TILE_SIZE_IQ4_NL;
-        case HTP_TYPE_Q4_1:   return HTP_TENSOR_TILE_SIZE_Q4_1;
-        case HTP_TYPE_Q4_K:   return HTP_TENSOR_TILE_SIZE_Q4_K;
-        case HTP_TYPE_Q8_0:   return HTP_TENSOR_TILE_SIZE_Q8_0;
-        case HTP_TYPE_Q5_K:   return HTP_TENSOR_TILE_SIZE_Q5_K;
-        case HTP_TYPE_Q6_K:   return HTP_TENSOR_TILE_SIZE_Q6_K;
-        case HTP_TYPE_Q3_K:   return HTP_TENSOR_TILE_SIZE_Q3_K;
-        case HTP_TYPE_Q2_K:   return HTP_TENSOR_TILE_SIZE_Q2_K;
-        case HTP_TYPE_Q1_0:   return HTP_TENSOR_TILE_SIZE_Q1_0;
-        case HTP_TYPE_Q2_0:   return HTP_TENSOR_TILE_SIZE_Q2_0;
-        case HTP_TYPE_MXFP4:  return HTP_TENSOR_TILE_SIZE_MXFP4;
-        case HTP_TYPE_F16:    return HTP_TENSOR_TILE_SIZE_F16;
-        default:              return 0;
+ساكن مضمن uint32_t htp_tensor_get_tile_size(صحيح type) {
+    بدل (type) {
+        حالة HTP_TYPE_Q4_0:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q4_0;
+        حالة HTP_TYPE_IQ4_NL: ܦܢܐ HTP_TENSOR_TILE_SIZE_IQ4_NL;
+        حالة HTP_TYPE_Q4_1:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q4_1;
+        حالة HTP_TYPE_Q4_K:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q4_K;
+        حالة HTP_TYPE_Q8_0:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q8_0;
+        حالة HTP_TYPE_Q5_K:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q5_K;
+        حالة HTP_TYPE_Q6_K:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q6_K;
+        حالة HTP_TYPE_Q3_K:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q3_K;
+        حالة HTP_TYPE_Q2_K:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q2_K;
+        حالة HTP_TYPE_Q1_0:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q1_0;
+        حالة HTP_TYPE_Q2_0:   ܦܢܐ HTP_TENSOR_TILE_SIZE_Q2_0;
+        حالة HTP_TYPE_MXFP4:  ܦܢܐ HTP_TENSOR_TILE_SIZE_MXFP4;
+        حالة HTP_TYPE_F16:    ܦܢܐ HTP_TENSOR_TILE_SIZE_F16;
+        افتراضي:              ܦܢܐ 0;
     }
 }
 
-static inline uint32_t htp_tensor_get_tile_k(int type) {
-    switch (type) {
-        case HTP_TYPE_Q1_0: return HTP_TENSOR_TILE_K_Q1_0;
-        case HTP_TYPE_Q2_0: return HTP_TENSOR_TILE_K_Q2_0;
-        default:            return 32;
+ساكن مضمن uint32_t htp_tensor_get_tile_k(صحيح type) {
+    بدل (type) {
+        حالة HTP_TYPE_Q1_0: ܦܢܐ HTP_TENSOR_TILE_K_Q1_0;
+        حالة HTP_TYPE_Q2_0: ܦܢܐ HTP_TENSOR_TILE_K_Q2_0;
+        افتراضي:            ܦܢܐ 32;
     }
 }
 
-static inline uint32_t htp_tensor_get_tile_padded_size(int type) {
-    return (htp_tensor_get_tile_size(type) + 127u) & ~127u;
+ساكن مضمن uint32_t htp_tensor_get_tile_padded_size(صحيح type) {
+    ܦܢܐ (htp_tensor_get_tile_size(type) + 127u) & ~127u;
 }
 
-static inline bool htp_tensor_is_tiled(const struct htp_tensor * t) {
-    return t && (t->flags & HTP_TENSOR_TILED) != 0;
+ساكن مضمن bool htp_tensor_is_tiled(ثابت بنية htp_tensor * t) {
+    ܦܢܐ t && (t->flags & HTP_TENSOR_TILED) != 0;
 }
 
-static inline uint32_t htp_tensor_get_row_size(int type, uint32_t ne00) {
-    switch (type) {
-        case HTP_TYPE_F32:    return ne00 * 4;
-        case HTP_TYPE_F16:
-        case HTP_TYPE_BF16:   return ne00 * 2;
-        case HTP_TYPE_Q8_0:   return (ne00 / 32) * 34;
-        case HTP_TYPE_Q4_0:
-        case HTP_TYPE_IQ4_NL: return (ne00 / 32) * 18;
-        case HTP_TYPE_Q4_1:   return (ne00 / 32) * 20;
-        case HTP_TYPE_MXFP4:  return (ne00 / 32) * 17;
-        case HTP_TYPE_Q2_K:   return (ne00 / 256) * 84;
-        case HTP_TYPE_Q2_0:   return (ne00 / 64) * 18;
-        case HTP_TYPE_Q3_K:   return (ne00 / 256) * 110;
-        case HTP_TYPE_Q4_K:   return (ne00 / 256) * 144;
-        case HTP_TYPE_Q5_K:   return (ne00 / 256) * 176;
-        case HTP_TYPE_Q6_K:   return (ne00 / 256) * 210;
-        case HTP_TYPE_Q1_0:   return (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
-        case HTP_TYPE_I32:    return ne00 * 4;
-        case HTP_TYPE_I64:    return ne00 * 8;
-        default:              return 0;
+ساكن مضمن uint32_t htp_tensor_get_row_size(صحيح type, uint32_t ne00) {
+    بدل (type) {
+        حالة HTP_TYPE_F32:    ܦܢܐ ne00 * 4;
+        حالة HTP_TYPE_F16:
+        حالة HTP_TYPE_BF16:   ܦܢܐ ne00 * 2;
+        حالة HTP_TYPE_Q8_0:   ܦܢܐ (ne00 / 32) * 34;
+        حالة HTP_TYPE_Q4_0:
+        حالة HTP_TYPE_IQ4_NL: ܦܢܐ (ne00 / 32) * 18;
+        حالة HTP_TYPE_Q4_1:   ܦܢܐ (ne00 / 32) * 20;
+        حالة HTP_TYPE_MXFP4:  ܦܢܐ (ne00 / 32) * 17;
+        حالة HTP_TYPE_Q2_K:   ܦܢܐ (ne00 / 256) * 84;
+        حالة HTP_TYPE_Q2_0:   ܦܢܐ (ne00 / 64) * 18;
+        حالة HTP_TYPE_Q3_K:   ܦܢܐ (ne00 / 256) * 110;
+        حالة HTP_TYPE_Q4_K:   ܦܢܐ (ne00 / 256) * 144;
+        حالة HTP_TYPE_Q5_K:   ܦܢܐ (ne00 / 256) * 176;
+        حالة HTP_TYPE_Q6_K:   ܦܢܐ (ne00 / 256) * 210;
+        حالة HTP_TYPE_Q1_0:   ܦܢܐ (ne00 / HTP_TENSOR_TILE_K_Q1_0) * 18;
+        حالة HTP_TYPE_I32:    ܦܢܐ ne00 * 4;
+        حالة HTP_TYPE_I64:    ܦܢܐ ne00 * 8;
+        افتراضي:              ܦܢܐ 0;
     }
 }
 

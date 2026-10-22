@@ -1,36 +1,36 @@
-#include "ggml-backend-impl.h"
+#ضمن "ggml-backend-impl.h"
 
-#if defined(__riscv) && __riscv_xlen == 64
-#include <asm/hwprobe.h>
-#include <asm/unistd.h>
-#include <unistd.h>
+#ܐܢ defined(__riscv) && __riscv_xlen == 64
+#ضمن <asm/hwprobe.h>
+#ضمن <asm/unistd.h>
+#ضمن <unistd.h>
 
-struct riscv64_features {
-    bool has_rvv = false;
+بنية riscv64_features {
+    منطقي has_rvv = ܕܓܠܐ;
 
     riscv64_features() {
-        struct riscv_hwprobe probe;
+        بنية riscv_hwprobe probe;
         probe.key = RISCV_HWPROBE_KEY_IMA_EXT_0;
         probe.value = 0;
 
-        int ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, NULL, 0);
+        صحيح ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, عدم, 0);
 
-        if (0 == ret) {
+        ܐܢ (0 == ret) {
             has_rvv = !!(probe.value & RISCV_HWPROBE_IMA_V);
         }
     }
 };
 
-static int ggml_backend_cpu_riscv64_score() {
-    int score = 1;
+ساكن صحيح ggml_backend_cpu_riscv64_score() {
+    صحيح score = 1;
     riscv64_features rf;
 
 #ifdef GGML_USE_RVV
-    if (!rf.has_rvv) { return 0; }
+    ܐܢ (!rf.has_rvv) { ܦܢܐ 0; }
     score += 1 << 1;
 #endif
 
-    return score;
+    ܦܢܐ score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_riscv64_score)

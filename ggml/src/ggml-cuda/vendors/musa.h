@@ -1,10 +1,10 @@
 #pragma once
 
-#include <musa_runtime.h>
-#include <musa.h>
-#include <mublas.h>
-#include <musa_bf16.h>
-#include <musa_fp16.h>
+#ضمن <musa_runtime.h>
+#ضمن <musa.h>
+#ضمن <mublas.h>
+#ضمن <musa_bf16.h>
+#ضمن <musa_fp16.h>
 
 #ifdef __MUSA_ARCH__
 #define __CUDA_ARCH__ 1300 // GGML_CUDA_CC_RUBIN
@@ -157,5 +157,5 @@
 #define cudaStreamIsCapturing musaStreamIsCapturing
 #define cudaOccupancyMaxActiveBlocksPerMultiprocessor musaOccupancyMaxActiveBlocksPerMultiprocessor
 
-typedef __mt_bfloat16 nv_bfloat16;
-typedef __mt_bfloat162 nv_bfloat162;
+تعريفنوع __mt_bfloat16 nv_bfloat16;
+تعريفنوع __mt_bfloat162 nv_bfloat162;

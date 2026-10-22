@@ -23,42 +23,42 @@
 #ifndef CANN_ACLNN_OPS
 #define CANN_ACLNN_OPS
 
-#include "acl_tensor.h"
-#include "common.h"
+#ضمن "acl_tensor.h"
+#ضمن "common.h"
 
-#include <aclnnop/aclnn_abs.h>
-#include <aclnnop/aclnn_arange.h>
-#include <aclnnop/aclnn_argsort.h>
-#include <aclnnop/aclnn_cat.h>
-#include <aclnnop/aclnn_clamp.h>
-#include <aclnnop/aclnn_cos.h>
-#include <aclnnop/aclnn_cumsum.h>
-#include <aclnnop/aclnn_tril.h>
-#include <aclnnop/aclnn_triu.h>
-#include <aclnnop/aclnn_exp.h>
-#include <aclnnop/aclnn_gelu.h>
-#include <aclnnop/aclnn_gelu_v2.h>
-#include <aclnnop/aclnn_hardsigmoid.h>
-#include <aclnnop/aclnn_hardswish.h>
-#include <aclnnop/aclnn_leaky_relu.h>
-#include <aclnnop/aclnn_log.h>
-#include <aclnnop/aclnn_logsoftmax.h>
-#include <aclnnop/aclnn_neg.h>
-#include <aclnnop/aclnn_norm.h>
-#include <aclnnop/aclnn_relu.h>
-#include <aclnnop/aclnn_sigmoid.h>
-#include <aclnnop/aclnn_sign.h>
-#include <aclnnop/aclnn_silu.h>
-#include <aclnnop/aclnn_sin.h>
-#include <aclnnop/aclnn_softplus.h>
-#include <aclnnop/aclnn_swi_glu.h>
-#include <aclnnop/aclnn_geglu.h>
-#include <aclnnop/aclnn_slice.h>
-#include <aclnnop/aclnn_sqrt.h>
-#include <aclnnop/aclnn_tanh.h>
+#ضمن <aclnnop/aclnn_abs.h>
+#ضمن <aclnnop/aclnn_arange.h>
+#ضمن <aclnnop/aclnn_argsort.h>
+#ضمن <aclnnop/aclnn_cat.h>
+#ضمن <aclnnop/aclnn_clamp.h>
+#ضمن <aclnnop/aclnn_cos.h>
+#ضمن <aclnnop/aclnn_cumsum.h>
+#ضمن <aclnnop/aclnn_tril.h>
+#ضمن <aclnnop/aclnn_triu.h>
+#ضمن <aclnnop/aclnn_exp.h>
+#ضمن <aclnnop/aclnn_gelu.h>
+#ضمن <aclnnop/aclnn_gelu_v2.h>
+#ضمن <aclnnop/aclnn_hardsigmoid.h>
+#ضمن <aclnnop/aclnn_hardswish.h>
+#ضمن <aclnnop/aclnn_leaky_relu.h>
+#ضمن <aclnnop/aclnn_log.h>
+#ضمن <aclnnop/aclnn_logsoftmax.h>
+#ضمن <aclnnop/aclnn_neg.h>
+#ضمن <aclnnop/aclnn_norm.h>
+#ضمن <aclnnop/aclnn_relu.h>
+#ضمن <aclnnop/aclnn_sigmoid.h>
+#ضمن <aclnnop/aclnn_sign.h>
+#ضمن <aclnnop/aclnn_silu.h>
+#ضمن <aclnnop/aclnn_sin.h>
+#ضمن <aclnnop/aclnn_softplus.h>
+#ضمن <aclnnop/aclnn_swi_glu.h>
+#ضمن <aclnnop/aclnn_geglu.h>
+#ضمن <aclnnop/aclnn_slice.h>
+#ضمن <aclnnop/aclnn_sqrt.h>
+#ضمن <aclnnop/aclnn_tanh.h>
 
-#include <functional>
-#include <unordered_set>
+#ضمن <functional>
+#ضمن <unordered_set>
 
 /**
  * @brief   Repeats a ggml tensor along each dimension to match the dimensions
@@ -73,11 +73,11 @@
  * @param   dst The ggml tensor representing the destination, which op is
  *              GGML_OP_REPEAT and specifies the desired dimensions.
  */
-void ggml_cann_repeat(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_repeat(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
-void ggml_cann_swiglu(ggml_backend_cann_context & ctx, ggml_tensor * dst);
-void ggml_cann_swiglu_clamp(ggml_backend_cann_context & ctx, ggml_tensor * dst);
-void ggml_cann_geglu(ggml_backend_cann_context & ctx, ggml_tensor * dst, int64_t approximate);
+فراغ ggml_cann_swiglu(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_swiglu_clamp(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_geglu(ggml_backend_cann_context & ctx, ggml_tensor * dst, int64_t approximate);
 
 /**
  * @brief   Applies the Leaky ReLU activation function to a tensor using the CANN
@@ -97,7 +97,7 @@ void ggml_cann_geglu(ggml_backend_cann_context & ctx, ggml_tensor * dst, int64_t
  * @param dst The destination tensor where the result of the Leaky ReLU
  *            activation is stored, which op is `GGML_OP_LEAKY_RELU`
  */
-void ggml_cann_leaky_relu(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_leaky_relu(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief    Concatenates multiple tensors along a specified dimension using the
@@ -112,7 +112,7 @@ void ggml_cann_leaky_relu(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @attention tensorList length should be 2 and the dimension using for concat
  *            default to 1.
  */
-void ggml_cann_concat(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_concat(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Generates a sequence of evenly spaced values within a specified
@@ -128,7 +128,7 @@ void ggml_cann_concat(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  *            `start`, 'stop' and 'step' are in dst->op_params and dst->op is
  *            `GGML_OP_ARANGE`.
  */
-void ggml_cann_arange(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_arange(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Applies a clamp operation to the elements of a ggml tensor using the
@@ -146,7 +146,7 @@ void ggml_cann_arange(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the clamped values will be stored.
  *            dst->op is `GGML_OP_CLAMP`, `min` and `max` value is in dst->params.
  */
-void ggml_cann_clamp(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_clamp(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Scales the elements of a ggml tensor by a constant factor using the
@@ -163,7 +163,7 @@ void ggml_cann_clamp(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the scaled values will be stored.
  *            dst->op is `GGML_OP_SCALE` and `scale` value is in dst->params.
  */
-void ggml_cann_scale(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_scale(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Sorts the elements of a ggml tensor and returns the indices that
@@ -178,7 +178,7 @@ void ggml_cann_scale(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the sorted indices will be stored.
  *            dst->op is `GGML_OP_ARGSORT`.
  */
-void ggml_cann_argsort(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_argsort(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the Layer Normalization for a ggml tensor using the CANN
@@ -200,7 +200,7 @@ void ggml_cann_argsort(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the normalized values will be stored.
  * @attention `Var` defaults to dst->ne[0].
  */
-void ggml_cann_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the L2 Normalization for a ggml tensor using the CANN
@@ -223,7 +223,7 @@ void ggml_cann_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @attention The normalization is performed along the last dimension of the
  *            input tensor by default.
  */
-void ggml_cann_l2_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_l2_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the Cross Entropy Loss for a ggml tensor using the CANN
@@ -260,7 +260,7 @@ void ggml_cann_l2_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @note The computation is performed using CANN backend operators including
  *       LogSoftmax, Mul, ReduceSum, and Muls for the final scaling.
  */
-void ggml_cann_cross_entropy_loss(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_cross_entropy_loss(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief  Computes the Group Normalization for a ggml tensor using the CANN
@@ -284,7 +284,7 @@ void ggml_cann_cross_entropy_loss(ggml_backend_cann_context & ctx, ggml_tensor *
  *
  * @attention eps defaults to 1e-6f.
  */
-void ggml_cann_group_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_group_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the accumulation of tensors using the CANN backend.
@@ -303,7 +303,7 @@ void ggml_cann_group_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the accumulated values will be stored.
  *            `inplace` is in dst->params, and dst->op is `GGML_OP_ACC`.
  */
-void ggml_cann_acc(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_acc(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the sum of elements along the last dimension of a ggml tensor
@@ -319,7 +319,7 @@ void ggml_cann_acc(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  *
  * @attention `reduce_dims` defaults to 3, which means the last dimension.
  */
-void ggml_cann_sum_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_sum_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the sum of elements in a ggml tensor.
@@ -333,7 +333,7 @@ void ggml_cann_sum_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  *
  */
 
-void ggml_cann_sum(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_sum(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the cumulative sum of a ggml tensor along dim 0 using the
@@ -342,7 +342,7 @@ void ggml_cann_sum(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param ctx The CANN context used for operations.
  * @param dst The destination tensor. dst->op is `GGML_OP_CUMSUM`.
  */
-void ggml_cann_cumsum(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_cumsum(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes a triangular mask (tril/triu) of a square ggml tensor
@@ -351,7 +351,7 @@ void ggml_cann_cumsum(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param ctx The CANN context used for operations.
  * @param dst The destination tensor. dst->op is `GGML_OP_TRI`.
  */
-void ggml_cann_tri(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_tri(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Solves a triangular linear system AX=B using the CANN backend.
@@ -359,7 +359,7 @@ void ggml_cann_tri(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param ctx The CANN context used for operations.
  * @param dst The destination tensor. dst->op is `GGML_OP_SOLVE_TRI`.
  */
-void ggml_cann_solve_tri(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_solve_tri(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Creates a diagonal matrix from a vector using the CANN backend.
@@ -367,7 +367,7 @@ void ggml_cann_solve_tri(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param ctx The CANN context used for operations.
  * @param dst The destination tensor. dst->op is `GGML_OP_DIAG`.
  */
-void ggml_cann_diag(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_diag(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Fills a tensor with a constant scalar value using the CANN backend.
@@ -375,7 +375,7 @@ void ggml_cann_diag(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param ctx The CANN context used for operations.
  * @param dst The destination tensor. dst->op is `GGML_OP_FILL`.
  */
-void ggml_cann_fill(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_fill(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Upsamples a ggml tensor using nearest neighbor interpolation using
@@ -391,7 +391,7 @@ void ggml_cann_fill(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the upsampled values will be stored.
  *            dst->op is `GGML_OP_UPSCALE`.
  */
-void ggml_cann_upsample_nearest2d(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_upsample_nearest2d(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Pads a ggml tensor to match the dimensions of the destination tensor
@@ -406,7 +406,7 @@ void ggml_cann_upsample_nearest2d(ggml_backend_cann_context & ctx, ggml_tensor *
  * @param dst The destination tensor, which specifies the target dimensions for
  *            padding. dst->op is `GGML_OP_PAD`.
  */
-void ggml_cann_pad(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_pad(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Executes a 2D pooling operation on a ggml tensor using the CANN
@@ -423,7 +423,7 @@ void ggml_cann_pad(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor on which the pooling operation is to be
  *            performed. dst->op is `GGML_OP_POOL_2D`.
  */
-void ggml_cann_pool2d(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_pool2d(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Duplicates a ggml tensor using the CANN backend.
@@ -442,7 +442,7 @@ void ggml_cann_pool2d(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  *            different shape and dst is no-contiguous.
  * @note:     This func need to simplify.
  */
-void ggml_cann_dup(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_dup(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the Root Mean Square (RMS) normalization of a ggml tensor
@@ -464,7 +464,7 @@ void ggml_cann_dup(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the normalized values will be stored.
  *            dst->op is `GGML_OP_RMS_NORM`.
  */
-void ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Applies a diagonal mask to the tensor with a specified value.
@@ -479,7 +479,7 @@ void ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  *            `GGML_OP_DIAG_MASK`
  * @param value The value to use for masking.
  */
-void ggml_cann_diag_mask(ggml_backend_cann_context & ctx, ggml_tensor * dst, float value);
+فراغ ggml_cann_diag_mask(ggml_backend_cann_context & ctx, ggml_tensor * dst, عائم value);
 
 /**
  * @brief   Performs an image-to-column transformation on the input tensor.
@@ -494,7 +494,7 @@ void ggml_cann_diag_mask(ggml_backend_cann_context & ctx, ggml_tensor * dst, flo
  * @param dst The destination tensor that stores the result of the operation.
  *            dst->op is `GGML_OP_IM2COL`.
  */
-void ggml_cann_im2col(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_im2col(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes time step embeddings using sine and cosine functions.
@@ -508,13 +508,13 @@ void ggml_cann_im2col(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the result of the embedding operation
  *            will be stored. dst->op is `GGML_OP_TIMESTEP_EMBEDDING`.
  */
-void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 // @see ggml_cann_dup.
-void ggml_cann_cpy(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_cpy(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 // @see ggml_cann_acc, but copies src1 into dst instead of adding.
-void ggml_cann_set(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_set(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the softmax activation with optional masking.
@@ -536,7 +536,7 @@ void ggml_cann_set(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the result will be stored. dst->op is
  *            `GGML_OP_SOFTMAX`.
  */
-void ggml_cann_softmax(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_softmax(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Extracts specific rows from a tensor based on indices.
@@ -548,7 +548,7 @@ void ggml_cann_softmax(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param ctx The backend CANN context for executing operations.
  * @param dst The destination tensor where the extracted rows will be stored.
  */
-void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Writes specific rows into a tensor at positions specified by indices.
@@ -560,7 +560,7 @@ void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param ctx The backend CANN context for executing operations.
  * @param dst The destination tensor where the specified rows will be updated.
  */
-void ggml_cann_set_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_set_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Executes matrix multiplication for the given tensor.
@@ -573,7 +573,7 @@ void ggml_cann_set_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor for storing the result of the matrix
  *            multiplication. dst->op is `GGML_OP_MUL_MAT`.
  */
-void ggml_cann_mul_mat(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_mul_mat(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief Applies Rotary Positional Embedding (RoPE) to the input tensor.
@@ -596,7 +596,7 @@ void ggml_cann_mul_mat(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @note The function currently does not support cases where the freq_scale is
  *       not equal 1.
  */
-void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief Pre-load the RoPE cache before ACL graph capture.
@@ -611,7 +611,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param ctx  CANN backend context.
  * @param dst  A ROPE destination tensor from the computation graph.
  */
-void ggml_cann_rope_cache_preload(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_rope_cache_preload(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the index of the maximum value along the specified dimension
@@ -626,7 +626,7 @@ void ggml_cann_rope_cache_preload(ggml_backend_cann_context & ctx, ggml_tensor *
  * @param dst The destination tensor where the indices of the maximum values will
  *            be stored. dst->op is `GGML_OP_ARGMAX`.
  */
-void ggml_cann_argmax(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_argmax(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief Adds two tensors element-wise and stores the result in a destination
@@ -643,7 +643,7 @@ void ggml_cann_argmax(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param acl_src1 The second source tensor.
  * @param acl_dst The destination tensor where the result will be stored.
  */
-void aclnn_add(ggml_backend_cann_context & ctx,
+فراغ aclnn_add(ggml_backend_cann_context & ctx,
                aclTensor *                 acl_src0,
                aclTensor *                 acl_src1,
                aclTensor *                 acl_dst = nullptr);
@@ -663,7 +663,7 @@ void aclnn_add(ggml_backend_cann_context & ctx,
  * @param acl_src1 The second source tensor.
  * @param acl_dst The destination tensor where the result will be stored.
  */
-void aclnn_sub(ggml_backend_cann_context & ctx,
+فراغ aclnn_sub(ggml_backend_cann_context & ctx,
                aclTensor *                 acl_src0,
                aclTensor *                 acl_src1,
                aclTensor *                 acl_dst = nullptr);
@@ -684,7 +684,7 @@ void aclnn_sub(ggml_backend_cann_context & ctx,
  * @param acl_other The second tensor for element-wise multiplication.
  * @param acl_dst The destination tensor where the result will be stored.
  */
-void aclnn_mul(ggml_backend_cann_context & ctx,
+فراغ aclnn_mul(ggml_backend_cann_context & ctx,
                aclTensor *                 acl_src,
                aclTensor *                 acl_other,
                aclTensor *                 acl_dst = nullptr);
@@ -707,7 +707,7 @@ void aclnn_mul(ggml_backend_cann_context & ctx,
  * @param inplace Flag indicating whether to perform the operation in-place on
  * `acl_src`.
  */
-void aclnn_div(ggml_backend_cann_context & ctx,
+فراغ aclnn_div(ggml_backend_cann_context & ctx,
                aclTensor *                 acl_src,
                aclTensor *                 acl_other,
                aclTensor *                 acl_dst = nullptr);
@@ -726,7 +726,7 @@ void aclnn_div(ggml_backend_cann_context & ctx,
  * @param acl_dst The destination tensor where the cosine results will be
  * stored.
  */
-void aclnn_cos(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst);
+فراغ aclnn_cos(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst);
 
 /**
  * @brief Applies element-wise sine function to the elements of a tensor.
@@ -743,7 +743,7 @@ void aclnn_cos(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor *
  * @param acl_src The source tensor on which the sine function will be applied.
  * @param acl_dst The destination tensor where the sine results will be stored.
  */
-void aclnn_sin(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst);
+فراغ aclnn_sin(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst);
 
 /**
  * @brief Prepares broadcast-compatible ACL tensors for two input tensors and one
@@ -761,7 +761,7 @@ void aclnn_sin(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor *
  * @param acl_src1 Output pointer to the created ACL tensor corresponding to src1.
  * @param acl_dst  Output pointer to the created ACL tensor corresponding to dst.
  */
-void bcast_shape(ggml_tensor *    src0,
+فراغ bcast_shape(ggml_tensor *    src0,
                  ggml_tensor *    src1,
                  ggml_tensor *    dst,
                  acl_tensor_ptr & acl_src0,
@@ -781,7 +781,7 @@ void bcast_shape(ggml_tensor *    src0,
  * @param dst The destination tensor where the transposed convolution result
  * will be stored. dst->op is `GGML_OP_CONV_TRANSPOSE_1D`.
  */
-void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Applies the ELU (Exponential Linear Unit) activation to a ggml tensor
@@ -806,7 +806,7 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
  * @param dst The destination tensor where the ELU-activated result will be stored.
  *            dst->op is expected to be `GGML_OP_ELU`.
  */
-void ggml_cann_elu(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_elu(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Computes the mean of a ggml tensor element-wise using the CANN backend.
@@ -821,7 +821,7 @@ void ggml_cann_elu(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the mean result will be stored.
  *            dst->op is expected to be `GGML_OP_MEAN`.
  */
-void ggml_cann_mean(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_mean(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Applies 1D reflect padding to a ggml tensor using the CANN backend.
@@ -836,7 +836,7 @@ void ggml_cann_mean(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the padded result will be stored.
  *            dst->op is expected to be `GGML_OP_PAD_REFLECT_1D`.
  */
-void ggml_cann_pad_reflect_1d(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_pad_reflect_1d(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Counts the number of equal elements in two ggml tensors using the CANN backend.
@@ -852,7 +852,7 @@ void ggml_cann_pad_reflect_1d(ggml_backend_cann_context & ctx, ggml_tensor * dst
  * @param dst The destination tensor where the result will be stored.
  *            dst->op is expected to be `GGML_OP_COUNT_EQUAL`.
  */
-void ggml_cann_count_equal(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_count_equal(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Applies the Step activation function to a ggml tensor using the CANN backend.
@@ -867,9 +867,9 @@ void ggml_cann_count_equal(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the result will be stored.
  *            dst->op is expected to be `GGML_OP_STEP`.
  */
-void ggml_cann_step(ggml_backend_cann_context & ctx, ggml_tensor * dst);
-void ggml_cann_softplus(ggml_backend_cann_context & ctx, ggml_tensor * dst);
-void ggml_cann_geglu_quick(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_step(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_softplus(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_geglu_quick(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief   Performs the Flash Attention extended operator using the CANN backend.
@@ -884,7 +884,7 @@ void ggml_cann_geglu_quick(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param dst The destination tensor where the result will be stored.
  *            dst->op is expected to be `GGML_OP_FLASH_ATTN_EXT`.
  */
-void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief Forward Gated Linear Attention on the CANN backend.
@@ -899,7 +899,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
  * @param ctx Backend context providing stream/allocator utilities.
  * @param dst Output tensor; src deps are k, v, q, g, s as above.
  */
-void ggml_cann_gated_linear_attn(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_gated_linear_attn(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief Launches an asynchronous task using the memory allocator.
@@ -920,18 +920,18 @@ void ggml_cann_gated_linear_attn(ggml_backend_cann_context & ctx, ggml_tensor * 
  */
 
 #    define GGML_CANN_CALL_ACLNN_OP(CTX, OP_NAME, ...)                                           \
-        do {                                                                                     \
+        ܥܒܕ {                                                                                     \
             uint64_t        workspaceSize = 0;                                                   \
             aclOpExecutor * executor;                                                            \
-            void *          workspaceAddr = nullptr;                                             \
+            فراغ *          workspaceAddr = nullptr;                                             \
             ACL_CHECK(aclnn##OP_NAME##GetWorkspaceSize(__VA_ARGS__, &workspaceSize, &executor)); \
             /* workspace should alloced in main thread to keep malloc order when using vmm. */   \
-            if (workspaceSize > 0) {                                                             \
+            ܐܢ (workspaceSize > 0) {                                                             \
                 ggml_cann_pool_alloc workspace_allocator(CTX.pool(), workspaceSize);             \
                 workspaceAddr = workspace_allocator.get();                                       \
             }                                                                                    \
             ACL_CHECK(aclnn##OP_NAME(workspaceAddr, workspaceSize, executor, CTX.stream()));     \
-        } while (0)
+        } ܟܡܐ (0)
 
 /**
  * @brief   Performs sparse expert-based matrix multiplication using the CANN backend.
@@ -958,7 +958,7 @@ void ggml_cann_gated_linear_attn(ggml_backend_cann_context & ctx, ggml_tensor * 
  * @param dst The destination tensor where the expert-weighted token outputs are stored.
  *            Expected to be of shape [M, K, N, 1].
  */
-void ggml_cann_mul_mat_id(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_mul_mat_id(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief Performs fused ADD + RMS_NORM operation using the CANN backend.
@@ -972,7 +972,7 @@ void ggml_cann_mul_mat_id(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  * @param rms_norm_tensor The RMS_NORM operation node, contains the gamma weights
  *                        and epsilon parameter.
  */
-void ggml_cann_op_add_rms_norm_fused(ggml_backend_cann_context & ctx,
+فراغ ggml_cann_op_add_rms_norm_fused(ggml_backend_cann_context & ctx,
                                      ggml_tensor *               add_node,
                                      ggml_tensor *               rms_norm_node);
 
@@ -986,19 +986,19 @@ void ggml_cann_op_add_rms_norm_fused(ggml_backend_cann_context & ctx,
  *
  * @param tensor Pointer to the target ggml_tensor object (const-qualified).
  */
-static bool is_matmul_weight(const ggml_tensor * tensor) {
+ساكن bool is_matmul_weight(ثابت ggml_tensor * tensor) {
     std::string                                  name = ggml_get_name(tensor);
-    static const std::unordered_set<std::string> weight_suffixes{ "output.weight",      "attn_q.weight",
+    ساكن ثابت std::unordered_set<std::string> weight_suffixes{ "output.weight",      "attn_q.weight",
                                                                   "attn_k.weight",      "attn_v.weight",
                                                                   "attn_output.weight", "ffn_gate.weight",
                                                                   "ffn_up.weight",      "ffn_down.weight" };
 
-    for (const auto & suffix : weight_suffixes) {
-        if (name.find(suffix) != std::string::npos) {
-            return true;
+    لكل (ثابت auto & suffix : weight_suffixes) {
+        ܐܢ (name.find(suffix) != std::string::npos) {
+            ܦܢܐ true;
         }
     }
-    return false;
+    ܦܢܐ false;
 }
 
 /**
@@ -1017,7 +1017,7 @@ static bool is_matmul_weight(const ggml_tensor * tensor) {
  * @param ctx The CANN backend context used to manage execution and resources.
  * @param dst The destination tensor.
  */
-template <auto binary_op> void ggml_cann_binary_op(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
+template <auto binary_op> فراغ ggml_cann_binary_op(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src0 = dst->src[0];
     ggml_tensor * src1 = dst->src[1];
 
@@ -1040,8 +1040,8 @@ template <auto binary_op> void ggml_cann_binary_op(ggml_backend_cann_context & c
  * @param ctx The CANN backend context for managing resources and execution.
  * @param dst The destination tensor. Its src[0] is treated as the input tensor.
  */
-template <void unary_op(ggml_backend_cann_context &, aclTensor *, aclTensor *)>
-void ggml_cann_op_unary(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
+template <فراغ unary_op(ggml_backend_cann_context &, aclTensor *, aclTensor *)>
+فراغ ggml_cann_op_unary(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src = dst->src[0];
 
     acl_tensor_ptr acl_src = ggml_cann_create_tensor(src);
@@ -1070,11 +1070,11 @@ void ggml_cann_op_unary(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
  *
  * @see GGML_CANN_CALL_OP_UNARY
  */
-void ggml_cann_op_unary(std::function<void(ggml_backend_cann_context &, aclTensor *, aclTensor *)> unary_op,
+فراغ ggml_cann_op_unary(std::function<فراغ(ggml_backend_cann_context &, aclTensor *, aclTensor *)> unary_op,
                         ggml_backend_cann_context &                                                ctx,
                         ggml_tensor *                                                              dst);
 
-void ggml_cann_ssm_conv(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_ssm_conv(ggml_backend_cann_context & ctx, ggml_tensor * dst);
 
 /**
  * @brief Applies a gated (GLU-style) unary operation using the CANN backend.
@@ -1106,7 +1106,7 @@ void ggml_cann_ssm_conv(ggml_backend_cann_context & ctx, ggml_tensor * dst);
  *
  * @see GGML_CANN_CALL_OP_UNARY_GATED
  */
-void ggml_cann_op_unary_gated(std::function<void(ggml_backend_cann_context &, aclTensor *, aclTensor *)> unary_op,
+فراغ ggml_cann_op_unary_gated(std::function<فراغ(ggml_backend_cann_context &, aclTensor *, aclTensor *)> unary_op,
                               ggml_backend_cann_context &                                                ctx,
                               ggml_tensor *                                                              dst);
 
@@ -1132,12 +1132,12 @@ void ggml_cann_op_unary_gated(std::function<void(ggml_backend_cann_context &, ac
  * @see GGML_CANN_CALL_ACLNN_OP
  */
 #    define GGML_CANN_CALL_OP_UNARY(OP_NAME)                                                              \
-        do {                                                                                              \
+        ܥܒܕ {                                                                                              \
             auto lambda = [](ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst) { \
                 GGML_CANN_CALL_ACLNN_OP(ctx, OP_NAME, acl_src, acl_dst);                                  \
             };                                                                                            \
             ggml_cann_op_unary(lambda, ctx, dst);                                                         \
-        } while (0)
+        } ܟܡܐ (0)
 
 /**
  * @brief Helper macro to call a gated unary ACL operator via ggml_cann_op_unary_gated.
@@ -1161,12 +1161,12 @@ void ggml_cann_op_unary_gated(std::function<void(ggml_backend_cann_context &, ac
  * @see GGML_CANN_CALL_ACLNN_OP
  */
 #    define GGML_CANN_CALL_OP_UNARY_GATED(OP_NAME)                                                        \
-        do {                                                                                              \
+        ܥܒܕ {                                                                                              \
             auto lambda = [](ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst) { \
                 GGML_CANN_CALL_ACLNN_OP(ctx, OP_NAME, acl_src, acl_dst);                                  \
             };                                                                                            \
             ggml_cann_op_unary_gated(lambda, ctx, dst);                                                   \
-        } while (0)
+        } ܟܡܐ (0)
 
 #endif  // CANN_ACLNN_OPS
 
@@ -1188,4 +1188,4 @@ void ggml_cann_op_unary_gated(std::function<void(ggml_backend_cann_context &, ac
  *
  * @see GGML_CANN_CALL_ACLNN_OP for CANN operator invocation
  */
-void ggml_cann_out_prod(ggml_backend_cann_context & ctx, ggml_tensor * dst);
+فراغ ggml_cann_out_prod(ggml_backend_cann_context & ctx, ggml_tensor * dst);
