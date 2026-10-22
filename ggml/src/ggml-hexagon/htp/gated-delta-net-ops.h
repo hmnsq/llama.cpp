@@ -58,9 +58,9 @@ struct htp_gdn_kernel_params {
     struct fastdiv_values div_n_threads;
 };
 
-#if defined(__cplusplus)
+#만약 defined(__cplusplus)
 static_assert(sizeof(struct htp_gdn_kernel_params) <= 128, "htp_gdn_kernel_params is too large for kernel_params blob");
-#else
+#아니면
 _Static_assert(sizeof(struct htp_gdn_kernel_params) <= 128, "htp_gdn_kernel_params is too large for kernel_params blob");
 #endif
 
@@ -272,30 +272,30 @@ static inline bool htp_gdn_hmx_solve_layout(
     uint32_t * n_heads_batch_out
 ) {
     uint32_t max_batch = 8;
-    if (max_batch > total_rows) {
+    만약 (max_batch > total_rows) {
         max_batch = total_rows;
     }
-    if (max_batch > n_threads) {
+    만약 (max_batch > n_threads) {
         max_batch = n_threads;
     }
     static const uint32_t candidates[] = { 8, 6, 4, 2, 1 };
-    for (size_t i = 0; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
+    위해 (size_t i = 0; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
         uint32_t bh = candidates[i];
-        if (bh > max_batch) {
+        만약 (bh > max_batch) {
             continue;
         }
         struct htp_gdn_hmx_vtcm_layout L;
         htp_gdn_hmx_vtcm_layout_build(&L, S_v, chunk_size, bh, n_threads, pipeline);
-        if (L.total_bytes <= vtcm_budget) {
+        만약 (L.total_bytes <= vtcm_budget) {
             *layout_out = L;
             *n_heads_batch_out = bh;
-            return true;
+            반환 true;
         }
     }
-    if (pipeline) {
-        return htp_gdn_hmx_solve_layout(layout_out, S_v, chunk_size, total_rows, vtcm_budget, n_threads, false, n_heads_batch_out);
+    만약 (pipeline) {
+        반환 htp_gdn_hmx_solve_layout(layout_out, S_v, chunk_size, total_rows, vtcm_budget, n_threads, false, n_heads_batch_out);
     }
-    return false;
+    반환 false;
 }
 
 #endif // HTP_GATED_DELTA_NET_OPS_H

@@ -11,23 +11,23 @@ static constexpr size_t GGML_QUANTIZATION_GROUP_SIZE = 32;
 inline const char * extra_quant_type_name(ExtraQuantType t) {
     switch (t) {
     case ExtraQuantType::F16:
-        return "F16";
+        반환 "F16";
     case ExtraQuantType::Q4_0_C:
-        return "Q4_0_C";
+        반환 "Q4_0_C";
     case ExtraQuantType::Q4_0_128:
-        return "Q4_0_128";
+        반환 "Q4_0_128";
     case ExtraQuantType::Q8_0_C:
-        return "Q8_0_C";
+        반환 "Q8_0_C";
     case ExtraQuantType::Q8_0_32:
-        return "Q8_0_32";
+        반환 "Q8_0_32";
     case ExtraQuantType::Q8_1_C:
-        return "Q8_1_C";
+        반환 "Q8_1_C";
     case ExtraQuantType::Q4_0_64:
-        return "Q4_0_64";
+        반환 "Q4_0_64";
     case ExtraQuantType::Q4_1_64:
-        return "Q4_1_64";
+        반환 "Q4_1_64";
     default:
-        return "unknown";
+        반환 "unknown";
     }
 }
 
@@ -40,7 +40,7 @@ struct OvWeight {
     ov::Tensor scales;
     ov::Tensor zp;
 
-    bool is_quantized() const { return layout.scales_size > 0; }
+    bool is_quantized() const { 반환 layout.scales_size > 0; }
 };
 
 // Process weight tensor and create an OpenVINO weight node

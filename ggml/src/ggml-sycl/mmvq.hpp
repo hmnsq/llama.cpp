@@ -17,9 +17,9 @@
 
 // q5_K multi-column MMVQ shares weights across columns, pairs rows and fuses gate/up in the reorder
 // layout: faster on Xe2 (BMG), so untested archs keep the per-column kernel
-inline bool ggml_sycl_q5_k_mmvq_reuse(int device) {
+inline bool ggml_sycl_q5_k_mmvq_reuse(정수 device) {
     const gpu_arch arch = ggml_sycl_info().devices[device].hw_info.arch;
-    return arch == gpu_arch::intel_gpu_bmg_g21 || arch == gpu_arch::intel_gpu_bmg_g31;
+    반환 arch == gpu_arch::intel_gpu_bmg_g21 || arch == gpu_arch::intel_gpu_bmg_g31;
 }
 
 void ggml_sycl_op_mul_mat_vec_q(
@@ -38,9 +38,9 @@ bool ggml_sycl_mul_mat_vec_q_id(
     const void *       vy,                  // pre-quantized src1 (Q8_1)
     const int32_t *    ids_dev,             // device-side int32, length n_experts_used
     float *            dst_base,
-    int                ncols,
-    int                nrows,
-    int                n_experts_used,
+    정수                ncols,
+    정수                nrows,
+    정수                n_experts_used,
     size_t             expert_weight_stride, // bytes between experts in vx_base
     size_t             dst_row_stride,       // bytes between dst rows
     size_t             src1_row_stride,      // 0 = shared src1, else per-expert stride in bytes
@@ -55,9 +55,9 @@ bool ggml_sycl_mul_mat_vec_q_id_reorder(
     const void *       vy,
     const int32_t *    ids_dev,
     float *            dst_base,
-    int                ncols,
-    int                nrows,
-    int                n_experts_used,
+    정수                ncols,
+    정수                nrows,
+    정수                n_experts_used,
     size_t             expert_weight_stride,
     size_t             dst_row_stride,
     size_t             src1_row_stride,
@@ -72,11 +72,11 @@ bool ggml_sycl_mul_mat_vec_q_glu_reorder(
     const void *       vgate,
     const void *       vy,
     float *            dst,
-    int                ncols,                // K, shared by both weights
-    int                nrows,                // output rows, i.e. weight ne[1]
-    int                ncols_dst,            // activation columns, 1..MMVQ_MAX_BATCH_SIZE
-    int                stride_col_y_bytes,   // bytes between activation columns in vy
-    int                stride_col_dst,       // floats between output columns in dst
+    정수                ncols,                // K, shared by both weights
+    정수                nrows,                // output rows, i.e. weight ne[1]
+    정수                ncols_dst,            // activation columns, 1..MMVQ_MAX_BATCH_SIZE
+    정수                stride_col_y_bytes,   // bytes between activation columns in vy
+    정수                stride_col_dst,       // floats between output columns in dst
     dpct::queue_ptr    stream);
 
 
@@ -92,11 +92,11 @@ bool ggml_sycl_mul_mat_vec_q_glu_plain(
     const void *       vup,
     const void *       vy,
     float *            dst,
-    int                ncols,                // K, shared by both weights
-    int                nrows,                // output rows, i.e. weight ne[1]
-    int                ncols_dst,            // activation columns, 1..MMVQ_MAX_BATCH_SIZE
-    int                stride_col_y,         // block_q8_1 units between activation columns
-    int                stride_col_dst,       // floats between output columns in dst
+    정수                ncols,                // K, shared by both weights
+    정수                nrows,                // output rows, i.e. weight ne[1]
+    정수                ncols_dst,            // activation columns, 1..MMVQ_MAX_BATCH_SIZE
+    정수                stride_col_y,         // block_q8_1 units between activation columns
+    정수                stride_col_dst,       // floats between output columns in dst
     dpct::queue_ptr    stream);
 
 #endif // GGML_SYCL_MMVQ_HPP

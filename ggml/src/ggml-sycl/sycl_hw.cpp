@@ -55,13 +55,13 @@ sycl_hw_info get_device_hw_info(sycl::device* device_ptr) {
     map<syclex::architecture,
         std::pair<const char*, sycl_intel_gpu_family>>::iterator it =
         arch2name.find(res.arch);
-    if (it != arch2name.end()) {
+    만약 (it != arch2name.end()) {
         res.arch_name = it->second.first;
         res.gpu_family = it->second.second;
-    } else {
+    } 아니면 {
         res.arch_name = "unknown";
         res.gpu_family = GPU_FAMILY_UKNOWN;
     }
 
-    return res;
+    반환 res;
 }

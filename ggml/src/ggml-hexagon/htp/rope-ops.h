@@ -23,9 +23,9 @@ struct htp_rope_kernel_params {
     struct fastdiv_values div_ne1;
 };
 
-#if defined(__cplusplus)
+#만약 defined(__cplusplus)
 static_assert(sizeof(struct htp_rope_kernel_params) <= 128, "htp_rope_kernel_params is too large for kernel_params blob");
-#else
+#아니면
 _Static_assert(sizeof(struct htp_rope_kernel_params) <= 128, "htp_rope_kernel_params is too large for kernel_params blob");
 #endif
 
@@ -56,7 +56,7 @@ static inline void htp_rope_vtcm_layout_build(
 }
 
 static inline uint8_t * rope_spad_slot(uint8_t * base, uint32_t slot, size_t row_size_aligned) {
-    return base + (slot * HTP_ROPE_SPAD_BLOCK) * row_size_aligned;
+    반환 base + (slot * HTP_ROPE_SPAD_BLOCK) * row_size_aligned;
 }
 
 #endif // HTP_ROPE_OPS_H

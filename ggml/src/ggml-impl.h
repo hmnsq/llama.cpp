@@ -16,7 +16,7 @@
 #include <arm_sve.h>
 #endif // __ARM_FEATURE_SVE
 
-#if defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
+#만약 defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
 // if YCM cannot find <arm_neon.h>, make a symbolic link to it, for example:
 //
 //   $ ln -sfn /Library/Developer/CommandLineTools/usr/lib/clang/13.1.6/include/arm_neon.h ./src/
@@ -49,42 +49,42 @@ uint64_t ggml_graph_next_uid(void);
 // ref: https://stackoverflow.com/a/53923785/4039976
 #ifndef __cplusplus
     #ifndef static_assert
-        #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
+        #만약 defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
             #define static_assert(cond, msg) _Static_assert(cond, msg)
-        #else
+        #아니면
             #define static_assert(cond, msg) struct global_scope_noop_trick
         #endif
     #endif
 #endif
 
-static inline int ggml_up32(int n) {
-    return (n + 31) & ~31;
+static inline 정수 ggml_up32(정수 n) {
+    반환 (n + 31) & ~31;
 }
 
 //static inline int ggml_up64(int n) {
 //    return (n + 63) & ~63;
 //}
 
-static inline int ggml_up(int n, int m) {
+static inline 정수 ggml_up(정수 n, 정수 m) {
     // assert m is a power of 2
     GGML_ASSERT((m & (m - 1)) == 0);
-    return (n + m - 1) & ~(m - 1);
+    반환 (n + m - 1) & ~(m - 1);
 }
 
 // TODO: move to ggml.h? (won't be able to inline)
 static bool ggml_are_same_layout(const struct ggml_tensor * a, const struct ggml_tensor * b) {
-    if (a->type != b->type) {
-        return false;
+    만약 (a->type != b->type) {
+        반환 false;
     }
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (a->ne[i] != b->ne[i]) {
-            return false;
+    위해 (정수 i = 0; i < GGML_MAX_DIMS; i++) {
+        만약 (a->ne[i] != b->ne[i]) {
+            반환 false;
         }
-        if (a->nb[i] != b->nb[i]) {
-            return false;
+        만약 (a->nb[i] != b->nb[i]) {
+            반환 false;
         }
     }
-    return true;
+    반환 true;
 }
 
 static bool ggml_op_is_empty(enum ggml_op op) {
@@ -94,18 +94,18 @@ static bool ggml_op_is_empty(enum ggml_op op) {
         case GGML_OP_TRANSPOSE:
         case GGML_OP_VIEW:
         case GGML_OP_PERMUTE:
-            return true;
+            반환 true;
         default:
-            return false;
+            반환 false;
     }
 }
 
 static inline bool ggml_impl_is_view(const struct ggml_tensor * t) {
-    return t->view_src != NULL;
+    반환 t->view_src != NULL;
 }
 
 static inline float ggml_compute_softplus_f32(float input) {
-    return (input > 20.0f) ? input : logf(1 + expf(input));
+    반환 (input > 20.0f) ? input : logf(1 + expf(input));
 }
 //
 // logging
@@ -124,21 +124,21 @@ GGML_API void ggml_log_callback_default(enum ggml_log_level level, const char * 
 
 #define GGML_DEBUG 0
 
-#if (GGML_DEBUG >= 1)
+#만약 (GGML_DEBUG >= 1)
 #define GGML_PRINT_DEBUG(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#아니면
 #define GGML_PRINT_DEBUG(...)
 #endif
 
-#if (GGML_DEBUG >= 5)
+#만약 (GGML_DEBUG >= 5)
 #define GGML_PRINT_DEBUG_5(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#아니면
 #define GGML_PRINT_DEBUG_5(...)
 #endif
 
-#if (GGML_DEBUG >= 10)
+#만약 (GGML_DEBUG >= 10)
 #define GGML_PRINT_DEBUG_10(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#아니면
 #define GGML_PRINT_DEBUG_10(...)
 #endif
 
@@ -152,12 +152,12 @@ static void ggml_set_op_params(struct ggml_tensor * tensor, const void * params,
 
 static int32_t ggml_get_op_params_i32(const struct ggml_tensor * tensor, uint32_t i) {
     assert(i < GGML_MAX_OP_PARAMS / sizeof(int32_t));
-    return ((const int32_t *)(tensor->op_params))[i];
+    반환 ((const int32_t *)(tensor->op_params))[i];
 }
 
 static float ggml_get_op_params_f32(const struct ggml_tensor * tensor, uint32_t i) {
     assert(i < GGML_MAX_OP_PARAMS / sizeof(float));
-    return ((const float *)(tensor->op_params))[i];
+    반환 ((const float *)(tensor->op_params))[i];
 }
 
 // [TAG_GGML_PREC]
@@ -184,25 +184,25 @@ static void ggml_set_op_params_f32(struct ggml_tensor * tensor, uint32_t i, floa
 
 struct ggml_map_custom1_op_params {
     ggml_custom1_op_t  fun;
-    int                n_tasks;
+    정수                n_tasks;
     void             * userdata;
 };
 
 struct ggml_map_custom2_op_params {
     ggml_custom2_op_t   fun;
-    int                 n_tasks;
+    정수                 n_tasks;
     void              * userdata;
 };
 
 struct ggml_map_custom3_op_params {
     ggml_custom3_op_t fun;
-    int               n_tasks;
+    정수               n_tasks;
     void            * userdata;
 };
 
 struct ggml_custom_op_params {
     ggml_custom_op_t fun;
-    int              n_tasks;
+    정수              n_tasks;
     void           * userdata;
 };
 
@@ -215,11 +215,11 @@ static_assert(sizeof(ggml_bitset_t) == 4, "bitset_t constants must be updated");
 #define BITSET_MASK (sizeof(ggml_bitset_t)*8 - 1)
 
 static size_t ggml_bitset_size(size_t n) {
-    return (n + BITSET_MASK) >> BITSET_SHR;
+    반환 (n + BITSET_MASK) >> BITSET_SHR;
 }
 
 static inline bool ggml_bitset_get(const ggml_bitset_t * bitset, size_t i) {
-    return !!(bitset[i >> BITSET_SHR] & (1u << (i & BITSET_MASK)));
+    반환 !!(bitset[i >> BITSET_SHR] & (1u << (i & BITSET_MASK)));
 }
 
 static inline void ggml_bitset_set(ggml_bitset_t * bitset, size_t i) {
@@ -265,7 +265,7 @@ static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct g
 // hash function for ggml_tensor
 static inline size_t ggml_hash(const struct ggml_tensor * p) {
     // the last 4 bits are always zero due to alignment
-    return (size_t)(uintptr_t)p >> 4;
+    반환 (size_t)(uintptr_t)p >> 4;
 }
 
 static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct ggml_tensor * key) {
@@ -273,19 +273,19 @@ static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct
 
     // linear probing
     size_t i = h;
-    while (ggml_bitset_get(hash_set->used, i) && hash_set->keys[i] != key) {
+    동안 (ggml_bitset_get(hash_set->used, i) && hash_set->keys[i] != key) {
         i = (i + 1) % hash_set->size;
-        if (i == h) {
+        만약 (i == h) {
             // visited all hash table entries -> not found
-            return GGML_HASHSET_FULL;
+            반환 GGML_HASHSET_FULL;
         }
     }
-    return i;
+    반환 i;
 }
 
 static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
     size_t i = ggml_hash_find(hash_set, key);
-    return i != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, i);
+    반환 i != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, i);
 }
 
 static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
@@ -294,16 +294,16 @@ static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tens
     // linear probing
     size_t i = h;
     do {
-        if (!ggml_bitset_get(hash_set->used, i)) {
+        만약 (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
             hash_set->keys[i] = key;
-            return i;
+            반환 i;
         }
-        if (hash_set->keys[i] == key) {
-            return GGML_HASHSET_ALREADY_EXISTS;
+        만약 (hash_set->keys[i] == key) {
+            반환 GGML_HASHSET_ALREADY_EXISTS;
         }
         i = (i + 1) % hash_set->size;
-    } while (i != h);
+    } 동안 (i != h);
 
     // visited all hash table entries -> not found
     GGML_ABORT("fatal error");
@@ -315,16 +315,16 @@ static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct g
     // linear probing
     size_t i = h;
     do {
-        if (!ggml_bitset_get(hash_set->used, i)) {
+        만약 (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
             hash_set->keys[i] = key;
-            return i;
+            반환 i;
         }
-        if (hash_set->keys[i] == key) {
-            return i;
+        만약 (hash_set->keys[i] == key) {
+            반환 i;
         }
         i = (i + 1) % hash_set->size;
-    } while (i != h);
+    } 동안 (i != h);
 
     // visited all hash table entries -> not found
     GGML_ABORT("fatal error");
@@ -339,9 +339,9 @@ enum ggml_cgraph_eval_order {
 };
 
 struct ggml_cgraph {
-    int size;    // maximum number of nodes/leafs/grads/grad_accs
-    int n_nodes; // number of nodes currently in use
-    int n_leafs; // number of leafs currently in use
+    정수 size;    // maximum number of nodes/leafs/grads/grad_accs
+    정수 n_nodes; // number of nodes currently in use
+    정수 n_leafs; // number of leafs currently in use
 
     struct ggml_tensor ** nodes;     // tensors with data that can change if the graph is evaluated
     struct ggml_tensor ** grads;     // the outputs of these tensors are the gradients of the nodes
@@ -361,7 +361,7 @@ struct ggml_cgraph {
 // returns a slice of cgraph with nodes [i0, i1)
 // the slice does not have leafs or gradients
 // if you need the gradients, get them from the original graph
-struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph, int i0, int i1);
+struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph, 정수 i0, 정수 i1);
 
 // ggml-alloc.c: true if the operation can reuse memory from its sources
 GGML_API bool ggml_op_can_inplace(enum ggml_op op);
@@ -381,7 +381,7 @@ static inline float fp32_from_bits(uint32_t w) {
         float as_value;
     } fp32;
     fp32.as_bits = w;
-    return fp32.as_value;
+    반환 fp32.as_value;
 }
 
 static inline uint32_t fp32_to_bits(float f) {
@@ -390,7 +390,7 @@ static inline uint32_t fp32_to_bits(float f) {
         uint32_t as_bits;
     } fp32;
     fp32.as_value = f;
-    return fp32.as_bits;
+    반환 fp32.as_bits;
 }
 
 static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
@@ -399,9 +399,9 @@ static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
     const uint32_t two_w = w + w;
 
     const uint32_t exp_offset = UINT32_C(0xE0) << 23;
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+#만약 (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
     const float exp_scale = 0x1.0p-112f;
-#else
+#아니면
     const float exp_scale = fp32_from_bits(UINT32_C(0x7800000));
 #endif
     const float normalized_value = fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
@@ -413,14 +413,14 @@ static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
     const uint32_t denormalized_cutoff = UINT32_C(1) << 27;
     const uint32_t result = sign |
         (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_value) : fp32_to_bits(normalized_value));
-    return fp32_from_bits(result);
+    반환 fp32_from_bits(result);
 }
 
 static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+#만약 (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
     const float scale_to_inf = 0x1.0p+112f;
     const float scale_to_zero = 0x1.0p-110f;
-#else
+#아니면
     const float scale_to_inf = fp32_from_bits(UINT32_C(0x77800000));
     const float scale_to_zero = fp32_from_bits(UINT32_C(0x08800000));
 #endif
@@ -430,7 +430,7 @@ static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
     const uint32_t shl1_w = w + w;
     const uint32_t sign = w & UINT32_C(0x80000000);
     uint32_t bias = shl1_w & UINT32_C(0xFF000000);
-    if (bias < UINT32_C(0x71000000)) {
+    만약 (bias < UINT32_C(0x71000000)) {
         bias = UINT32_C(0x71000000);
     }
 
@@ -439,7 +439,7 @@ static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
     const uint32_t exp_bits = (bits >> 13) & UINT32_C(0x00007C00);
     const uint32_t mantissa_bits = bits & UINT32_C(0x00000FFF);
     const uint32_t nonsign = exp_bits + mantissa_bits;
-    return (sign >> 16) | (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign);
+    반환 (sign >> 16) | (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign);
 }
 
 #define GGML_COMPUTE_FP16_TO_FP32(x) ggml_compute_fp16_to_fp32(x)
@@ -452,7 +452,7 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
     uint32_t bits;  // Stores the raw bit representation of the float
 
     // Handle special case for minimum exponent (denormalized float)
-    if (x == 0) {
+    만약 (x == 0) {
         // Bit pattern for 2^(-127):
         // - Sign bit: 0 (positive)
         // - Exponent: 0 (denormalized number)
@@ -470,7 +470,7 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
     //    bits = 0x7FC00000;
     //}
     // Normalized values (most common case)
-    else {
+    아니면 {
         // Construct normalized float by shifting exponent into position:
         // - Exponent field: 8 bits (positions 30-23)
         // - Mantissa: 0 (implicit leading 1)
@@ -481,7 +481,7 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
     float result;  // Final float value
                    // Safely reinterpret bit pattern as float without type-punning issues
     memcpy(&result, &bits, sizeof(float));
-    return result;
+    반환 result;
 }
 
 // Equal to ggml_e8m0_to_fp32/2
@@ -490,12 +490,12 @@ static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
     uint32_t bits;
 
     // For x < 2: use precomputed denormal patterns
-    if (x < 2) {
+    만약 (x < 2) {
         // 0x00200000 = 2^(-128), 0x00400000 = 2^(-127)
         bits = 0x00200000 << x;
     }
     // For x >= 2: normalized exponent adjustment
-    else {
+    아니면 {
         // 0.5 * 2^(x-127) = 2^(x-128) = normalized with exponent (x-1)
         bits = (uint32_t)(x - 1) << 23;
     }
@@ -503,7 +503,7 @@ static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
 
     float result;
     memcpy(&result, &bits, sizeof(float));
-    return result;
+    반환 result;
 }
 
 #define GGML_E8M0_TO_FP32(x) ggml_e8m0_to_fp32(x)
@@ -512,56 +512,56 @@ static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
 // UE4M3: unsigned, 4 exp bits (bias=7), 3 mantissa bits
 // Returns value * 0.5 to match kvalues_mxfp4 convention (kvalues = 2 * E2M1_float)
 static inline float ggml_ue4m3_to_fp32(uint8_t x) {
-    if (x == 0 || x == 0x7F) {
-        return 0.0f;
+    만약 (x == 0 || x == 0x7F) {
+        반환 0.0f;
     }
-    int   exp = (x >> 3) & 0xF;
-    int   man = x & 0x7;
+    정수   exp = (x >> 3) & 0xF;
+    정수   man = x & 0x7;
     float raw;
-    if (exp == 0) {
+    만약 (exp == 0) {
         raw = ldexpf((float) man, -9);
-    } else {
+    } 아니면 {
         raw = ldexpf(1.0f + (float) man / 8.0f, exp - 7);
     }
-    return raw * 0.5f;
+    반환 raw * 0.5f;
 }
 
 static inline uint8_t ggml_fp32_to_ue4m3(float x) {
-    if (!(x > 0.0f)) {
-        return 0;
+    만약 (!(x > 0.0f)) {
+        반환 0;
     }
-    if (x > 448.0f) {
+    만약 (x > 448.0f) {
         x = 448.0f;
     }
     uint32_t bits;
     memcpy(&bits, &x, 4);
-    int fp32_exp  = ((bits >> 23) & 0xFF) - 127;
-    int fp32_man  = (bits >> 20) & 0x7;
-    int ue4m3_exp = fp32_exp + 7;
-    if (ue4m3_exp <= 0) {
+    정수 fp32_exp  = ((bits >> 23) & 0xFF) - 127;
+    정수 fp32_man  = (bits >> 20) & 0x7;
+    정수 ue4m3_exp = fp32_exp + 7;
+    만약 (ue4m3_exp <= 0) {
         // subnormal: value = man * 2^-9, man = round(x * 2^9)
-        int man = (int) (x * 512.0f + 0.5f);
-        if (man > 7) {
+        정수 man = (정수) (x * 512.0f + 0.5f);
+        만약 (man > 7) {
             man = 7;
         }
-        if (man < 1) {
-            return 0;
+        만약 (man < 1) {
+            반환 0;
         }
-        return (uint8_t) man;
+        반환 (uint8_t) man;
     }
-    if (ue4m3_exp >= 15) {
-        return 0x7E;
+    만약 (ue4m3_exp >= 15) {
+        반환 0x7E;
     }
-    int round_bit = (bits >> 19) & 1;
-    int ue4m3_man = fp32_man + round_bit;
-    if (ue4m3_man > 7) {
+    정수 round_bit = (bits >> 19) & 1;
+    정수 ue4m3_man = fp32_man + round_bit;
+    만약 (ue4m3_man > 7) {
         ue4m3_man = 0;
         ue4m3_exp++;
-        if (ue4m3_exp >= 15) {
-            return 0x7E;
+        만약 (ue4m3_exp >= 15) {
+            반환 0x7E;
         }
     }
-    return (uint8_t) ((ue4m3_exp << 3) | ue4m3_man);
+    반환 (uint8_t) ((ue4m3_exp << 3) | ue4m3_man);
 }
 
 /**
@@ -609,7 +609,7 @@ static inline float ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
         uint32_t i;
     } u;
     u.i = (uint32_t)h.bits << 16;
-    return u.f;
+    반환 u.f;
 }
 
 /**
@@ -627,49 +627,49 @@ static inline ggml_bf16_t ggml_compute_fp32_to_bf16(float s) {
         uint32_t i;
     } u;
     u.f = s;
-    if ((u.i & 0x7fffffff) > 0x7f800000) { /* nan */
+    만약 ((u.i & 0x7fffffff) > 0x7f800000) { /* nan */
         h.bits = (u.i >> 16) | 64; /* force to quiet */
-        return h;
+        반환 h;
     }
     h.bits = (u.i + (0x7fff + ((u.i >> 16) & 1))) >> 16;
-    return h;
+    반환 h;
 }
 
 #define GGML_FP32_TO_BF16(x) ggml_compute_fp32_to_bf16(x)
 #define GGML_BF16_TO_FP32(x) ggml_compute_bf16_to_fp32(x)
 
-static inline int32_t ggml_node_get_use_count(const struct ggml_cgraph * cgraph, int node_idx) {
+static inline int32_t ggml_node_get_use_count(const struct ggml_cgraph * cgraph, 정수 node_idx) {
     const struct ggml_tensor * node = cgraph->nodes[node_idx];
 
     size_t hash_pos = ggml_hash_find(&cgraph->visited_hash_set, node);
-    if (!ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
-        return 0;
+    만약 (!ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
+        반환 0;
     }
-    return cgraph->use_counts[hash_pos];
+    반환 cgraph->use_counts[hash_pos];
 }
 
 // return true if the node's results are only used by N other nodes
 // and can be fused into their calculations.
-static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int node_idx, int32_t n_uses) {
+static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, 정수 node_idx, int32_t n_uses) {
     const struct ggml_tensor * node = cgraph->nodes[node_idx];
 
     // check the use count against how many we're replacing
-    if (ggml_node_get_use_count(cgraph, node_idx) != n_uses) {
-        return false;
+    만약 (ggml_node_get_use_count(cgraph, node_idx) != n_uses) {
+        반환 false;
     }
 
     // if node is a view, some other node might be using the intermediate result
     // via the view source.
-    if (node->view_src) {
-        return false;
+    만약 (node->view_src) {
+        반환 false;
     }
 
     // If the user requested output for the node, can't fuse
-    if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
-        return false;
+    만약 (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
+        반환 false;
     }
 
-    return true;
+    반환 true;
 }
 
 // Returns true if nodes with indices { node_idxs } are the sequence of ggml_ops in ops[]
@@ -678,79 +678,79 @@ static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int n
 // - all nodes except the last are a src of the following node.
 // - all nodes are the same shape.
 // TODO: Consider allowing GGML_OP_NONE nodes in between
-static inline bool ggml_can_fuse_ext(const struct ggml_cgraph * cgraph, const int * node_idxs, const enum ggml_op * ops, int num_ops) {
-    for (int i = 0; i < num_ops; ++i) {
-        if (node_idxs[i] >= cgraph->n_nodes) {
-            return false;
+static inline bool ggml_can_fuse_ext(const struct ggml_cgraph * cgraph, const 정수 * node_idxs, const enum ggml_op * ops, 정수 num_ops) {
+    위해 (정수 i = 0; i < num_ops; ++i) {
+        만약 (node_idxs[i] >= cgraph->n_nodes) {
+            반환 false;
         }
 
         struct ggml_tensor * node = cgraph->nodes[node_idxs[i]];
-        if (node->op != ops[i]) {
-            return false;
+        만약 (node->op != ops[i]) {
+            반환 false;
         }
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+        만약 ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            반환 false;
         }
-        if (i < num_ops - 1 && !ggml_node_has_n_uses(cgraph, node_idxs[i], 1)) {
-            return false;
+        만약 (i < num_ops - 1 && !ggml_node_has_n_uses(cgraph, node_idxs[i], 1)) {
+            반환 false;
         }
-        if (i > 0) {
+        만약 (i > 0) {
             struct ggml_tensor * prev = cgraph->nodes[node_idxs[i - 1]];
-            if (node->src[0] != prev && node->src[1] != prev) {
-                return false;
+            만약 (node->src[0] != prev && node->src[1] != prev) {
+                반환 false;
             }
-            if (!ggml_are_same_shape(node, prev)) {
-                return false;
+            만약 (!ggml_are_same_shape(node, prev)) {
+                반환 false;
             }
         }
     }
-    return true;
+    반환 true;
 }
 
 // same as above, for sequential indices starting at node_idx
-static inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, const enum ggml_op * ops, int num_ops) {
+static inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, 정수 node_idx, const enum ggml_op * ops, 정수 num_ops) {
     assert(num_ops < 32);
 
-    if (node_idx + num_ops > cgraph->n_nodes) {
-        return false;
+    만약 (node_idx + num_ops > cgraph->n_nodes) {
+        반환 false;
     }
 
-    int idxs[32];
-    for (int i = 0; i < num_ops; ++i) {
+    정수 idxs[32];
+    위해 (정수 i = 0; i < num_ops; ++i) {
         idxs[i] = node_idx + i;
     }
 
-    return ggml_can_fuse_ext(cgraph, idxs, ops, num_ops);
+    반환 ggml_can_fuse_ext(cgraph, idxs, ops, num_ops);
 }
 
 GGML_API bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
-                                         const int *                node_idxs,
-                                         int                        count,
+                                         const 정수 *                node_idxs,
+                                         정수                        count,
                                          const enum ggml_op *       ops,
-                                         const int *                outputs,
-                                         int                        num_outputs);
+                                         const 정수 *                outputs,
+                                         정수                        num_outputs);
 
 // Returns true if the subgraph formed by {node_idxs} can be fused
 // checks whethers all nodes which are not part of outputs can be elided
 // by checking if their num_uses are confined to the subgraph
 static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
-                                          int                        node_idx,
-                                          int                        count,
+                                          정수                        node_idx,
+                                          정수                        count,
                                           const enum ggml_op *       ops,
-                                          const int *                outputs,
-                                          int                        num_outputs) {
+                                          const 정수 *                outputs,
+                                          정수                        num_outputs) {
     GGML_ASSERT(count < 32);
-    if (node_idx + count > cgraph->n_nodes) {
-        return false;
+    만약 (node_idx + count > cgraph->n_nodes) {
+        반환 false;
     }
 
-    int idxs[32];
+    정수 idxs[32];
 
-    for (int i = 0; i < count; ++i) {
+    위해 (정수 i = 0; i < count; ++i) {
         idxs[i] = node_idx + i;
     }
 
-    return ggml_can_fuse_subgraph_ext(cgraph, idxs, count, ops, outputs, num_outputs);
+    반환 ggml_can_fuse_subgraph_ext(cgraph, idxs, count, ops, outputs, num_outputs);
 }
 
 #ifdef __cplusplus
@@ -763,30 +763,30 @@ static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
 #include <vector>
 
 // nicer C++ syntax for ggml_can_fuse
-inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
-    return ggml_can_fuse(cgraph, node_idx, ops.begin(), (int)ops.size());
+inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, 정수 node_idx, std::initializer_list<enum ggml_op> ops) {
+    반환 ggml_can_fuse(cgraph, node_idx, ops.begin(), (정수)ops.size());
 }
 
 inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph *          cgraph,
-                                   int                                 start_idx,
+                                   정수                                 start_idx,
                                    std::initializer_list<enum ggml_op> ops,
-                                   std::initializer_list<int>          outputs = {}) {
-    return ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());
+                                   std::initializer_list<정수>          outputs = {}) {
+    반환 ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());
 }
 
 // Return true if the edges in the graph match expectations.
 inline bool ggml_check_edges(const struct ggml_cgraph *                cgraph,
-                             int                                       start_idx,
-                             std::initializer_list<std::array<int, 3>> edges) {
-    for (const auto & edge : edges) {
-        int dst_node = edge[0];
-        int src_idx  = edge[1];
-        int src_node = edge[2];
-        if (cgraph->nodes[start_idx + dst_node]->src[src_idx] != cgraph->nodes[start_idx + src_node]) {
-            return false;
+                             정수                                       start_idx,
+                             std::initializer_list<std::array<정수, 3>> edges) {
+    위해 (const auto & edge : edges) {
+        정수 dst_node = edge[0];
+        정수 src_idx  = edge[1];
+        정수 src_node = edge[2];
+        만약 (cgraph->nodes[start_idx + dst_node]->src[src_idx] != cgraph->nodes[start_idx + src_node]) {
+            반환 false;
         }
     }
-    return true;
+    반환 true;
 }
 
 // expose GGUF internals for test code

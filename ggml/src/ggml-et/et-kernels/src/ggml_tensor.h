@@ -30,15 +30,15 @@ struct ggml_et_mul_mat_id_params {
 };
 
 // ne[i] == 1 axes are skipped: their stride is unobservable.
-static inline int ggml_tensor_is_contiguous(const struct ggml_tensor * t, int type_size) {
+static inline 정수 ggml_tensor_is_contiguous(const struct ggml_tensor * t, 정수 type_size) {
     int64_t expected = type_size;
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (t->ne[i] > 1 && (int64_t) t->nb[i] != expected) {
-            return 0;
+    위해 (정수 i = 0; i < GGML_MAX_DIMS; i++) {
+        만약 (t->ne[i] > 1 && (int64_t) t->nb[i] != expected) {
+            반환 0;
         }
         expected *= t->ne[i];
     }
-    return 1;
+    반환 1;
 }
 
 #endif  // GGML_TENSOR_H

@@ -19,7 +19,7 @@ extern "C" {
         // allocate a buffer of this type
         ggml_backend_buffer_t (*alloc_buffer)    (ggml_backend_buffer_type_t buft, size_t size);
         // (optional) allocate tensors from a list into a buffer of this type (defaults to alloc_buffer + linear allocator)
-        ggml_backend_buffer_t (*alloc_buffer_n)  (ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors);
+        ggml_backend_buffer_t (*alloc_buffer_n)  (ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, 정수 n_tensors);
         // tensor alignment
         size_t                (*get_alignment)   (ggml_backend_buffer_type_t buft);
         // (optional) max buffer size that can be allocated (defaults to SIZE_MAX)
@@ -27,7 +27,7 @@ extern "C" {
         // (optional) data size needed to allocate the tensor, including padding (defaults to ggml_nbytes)
         size_t                (*get_alloc_size)  (ggml_backend_buffer_type_t buft, const struct ggml_tensor * tensor);
         // (optional) total data size needed to allocate the given tensors, including padding and splitting (defaults to per-tensor get_alloc_size)
-        size_t                (*get_alloc_size_n)(ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors);
+        size_t                (*get_alloc_size_n)(ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, 정수 n_tensors);
         // (optional) check if tensor data is in host memory and uses standard ggml tensor layout (defaults to false)
         bool                  (*is_host)         (ggml_backend_buffer_type_t buft);
     };
@@ -241,7 +241,7 @@ extern "C" {
     };
 
     struct ggml_backend_reg {
-        int api_version; // initialize to GGML_BACKEND_API_VERSION
+        정수 api_version; // initialize to GGML_BACKEND_API_VERSION
         struct ggml_backend_reg_i iface;
         void * context;
     };
@@ -252,7 +252,7 @@ extern "C" {
     typedef ggml_backend_reg_t (*ggml_backend_init_t)(void);
     // Optional: obtain a score for the backend based on the system configuration
     // Higher scores are preferred, 0 means the backend is not supported in the current system
-    typedef int                (*ggml_backend_score_t)(void);
+    typedef 정수                (*ggml_backend_score_t)(void);
 
 #ifdef GGML_BACKEND_DL
 #    ifdef __cplusplus
@@ -261,28 +261,28 @@ extern "C" {
             GGML_BACKEND_API ggml_backend_reg_t ggml_backend_init(void); \
             }                                                            \
             ggml_backend_reg_t ggml_backend_init(void) {                 \
-                return reg_fn();                                         \
+                반환 reg_fn();                                         \
             }
 #        define GGML_BACKEND_DL_SCORE_IMPL(score_fn)       \
             extern "C" {                                   \
-            GGML_BACKEND_API int ggml_backend_score(void); \
+            GGML_BACKEND_API 정수 ggml_backend_score(void); \
             }                                              \
-            int ggml_backend_score(void) {                 \
-                return score_fn();                         \
+            정수 ggml_backend_score(void) {                 \
+                반환 score_fn();                         \
             }
-#    else
+#    아니면
 #        define GGML_BACKEND_DL_IMPL(reg_fn)                              \
             GGML_BACKEND_API ggml_backend_reg_t ggml_backend_init(void);  \
             ggml_backend_reg_t                  ggml_backend_init(void) { \
-                return reg_fn();                                          \
+                반환 reg_fn();                                          \
             }
 #        define GGML_BACKEND_DL_SCORE_IMPL(score_fn)        \
-            GGML_BACKEND_API int ggml_backend_score(void);  \
-            int                  ggml_backend_score(void) { \
-                return score_fn();                          \
+            GGML_BACKEND_API 정수 ggml_backend_score(void);  \
+            정수                  ggml_backend_score(void) { \
+                반환 score_fn();                          \
             }
 #    endif
-#else
+#아니면
 #    define GGML_BACKEND_DL_IMPL(reg_fn)
 #    define GGML_BACKEND_DL_SCORE_IMPL(score_fn)
 #endif

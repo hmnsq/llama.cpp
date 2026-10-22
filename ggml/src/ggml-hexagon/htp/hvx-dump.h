@@ -14,11 +14,11 @@ static void hvx_vec_dump_f16_n(char * pref, HVX_Vector v, uint32_t n) {
 
     const uint32_t n0 = n / 16;
     const uint32_t n1 = n % 16;
-    int            i  = 0;
-    for (; i < n0; i++) {
+    정수            i  = 0;
+    위해 (; i < n0; i++) {
         hex_dump_f16_line(pref, u.fp16 + (16 * i), 16);
     }
-    if (n1) {
+    만약 (n1) {
         hex_dump_f16_line(pref, u.fp16 + (16 * i), n1);
     }
 }
@@ -32,11 +32,11 @@ static void hvx_vec_dump_f32_n(char * pref, HVX_Vector v, uint32_t n) {
 
     const uint32_t n0 = n / 16;
     const uint32_t n1 = n % 16;
-    int            i  = 0;
-    for (; i < n0; i++) {
+    정수            i  = 0;
+    위해 (; i < n0; i++) {
         hex_dump_f32_line(pref, u.fp32 + (16 * i), 16);
     }
-    if (n1) {
+    만약 (n1) {
         hex_dump_f32_line(pref, u.fp32 + (16 * i), n1);
     }
 }
@@ -61,7 +61,7 @@ static void hvx_vec_dump_int32(char * pref, HVX_Vector v) {
         int32_t    d[32];
     } u = { .v = v };
 
-    for (int i = 0; i < 32 / 16; i++) {
+    위해 (정수 i = 0; i < 32 / 16; i++) {
         hex_dump_int32_line(pref, u.d + (16 * i), 16);
     }
 }
@@ -92,7 +92,7 @@ static void hvx_vec_dump_int8(char * pref, HVX_Vector v) {
         int8_t     d[128];
     } u = { .v = v };
 
-    for (int i = 0; i < 128 / 16; i++) {
+    위해 (정수 i = 0; i < 128 / 16; i++) {
         hex_dump_int8_line(pref, u.d + (16 * i), 16);
     }
 }
@@ -103,7 +103,7 @@ static void hvx_vec_dump_uint8(char * pref, HVX_Vector v) {
         uint8_t    d[128];
     } u = { .v = v };
 
-    for (int i = 0; i < 128 / 16; i++) {
+    위해 (정수 i = 0; i < 128 / 16; i++) {
         hex_dump_uint8_line(pref, u.d + (16 * i), 16);
     }
 }
@@ -117,13 +117,13 @@ static bool hvx_vec_eq(HVX_Vector v0, HVX_Vector v1, size_t n) {
     U u0 = { .v = v0 };
     U u1 = { .v = v1 };
 
-    for (int i = 0; i < n; i++) {
-        if (u0.d[i] != u1.d[i]) {
-            return false;
+    위해 (정수 i = 0; i < n; i++) {
+        만약 (u0.d[i] != u1.d[i]) {
+            반환 false;
         }
     }
 
-    return true;
+    반환 true;
 }
 
 #endif /* HVX_DUMP_H */

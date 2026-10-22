@@ -1,7 +1,7 @@
 #include "virtgpu-forward-impl.h"
 #include "virtgpu-shm.h"
 
-int apir_device_get_count(virtgpu * gpu) {
+정수 apir_device_get_count(virtgpu * gpu) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -14,7 +14,7 @@ int apir_device_get_count(virtgpu * gpu) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return dev_count;
+    반환 dev_count;
 }
 
 char * apir_device_get_name(virtgpu * gpu) {
@@ -27,15 +27,15 @@ char * apir_device_get_name(virtgpu * gpu) {
 
     const size_t string_size = apir_decode_array_size_unchecked(decoder);
     char *       string      = (char *) apir_decoder_alloc_array(sizeof(char), string_size);
-    if (!string) {
+    만약 (!string) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Could not allocate the device name buffer\n", __func__);
-        return NULL;
+        반환 NULL;
     }
     apir_decode_char_array(decoder, string, string_size);
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return string;
+    반환 string;
 }
 
 char * apir_device_get_description(virtgpu * gpu) {
@@ -49,22 +49,22 @@ char * apir_device_get_description(virtgpu * gpu) {
 
     const size_t string_size = apir_decode_array_size_unchecked(decoder);
     char *       string      = (char *) apir_decoder_alloc_array(sizeof(char), string_size);
-    if (!string) {
+    만약 (!string) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Could not allocate the device description buffer\n", __func__);
 
-        return NULL;
+        반환 NULL;
     }
     apir_decode_char_array(decoder, string, string_size);
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return string;
+    반환 string;
 }
 
 uint32_t apir_device_get_type(virtgpu * gpu) {
     static uint32_t dev_type = 255;
-    if (dev_type != 255) {
-        return dev_type;
+    만약 (dev_type != 255) {
+        반환 dev_type;
     }
 
     apir_encoder *        encoder;
@@ -79,7 +79,7 @@ uint32_t apir_device_get_type(virtgpu * gpu) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return dev_type;
+    반환 dev_type;
 }
 
 void apir_device_get_memory(virtgpu * gpu, size_t * free, size_t * total) {
@@ -101,7 +101,7 @@ void apir_device_get_memory(virtgpu * gpu, size_t * free, size_t * total) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return;
+    반환;
 }
 
 bool apir_device_supports_op(virtgpu * gpu, const ggml_tensor * op) {
@@ -120,7 +120,7 @@ bool apir_device_supports_op(virtgpu * gpu, const ggml_tensor * op) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return supports_op;
+    반환 supports_op;
 }
 
 apir_buffer_type_host_handle_t apir_device_get_buffer_type(virtgpu * gpu) {
@@ -137,7 +137,7 @@ apir_buffer_type_host_handle_t apir_device_get_buffer_type(virtgpu * gpu) {
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return buft_handle;
+    반환 buft_handle;
 }
 
 void apir_device_get_props(virtgpu * gpu,
@@ -162,7 +162,7 @@ void apir_device_get_props(virtgpu * gpu,
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return;
+    반환;
 }
 
 apir_buffer_context_t apir_device_buffer_from_ptr(virtgpu * gpu, size_t size, size_t max_tensor_size) {
@@ -174,7 +174,7 @@ apir_buffer_context_t apir_device_buffer_from_ptr(virtgpu * gpu, size_t size, si
 
     REMOTE_CALL_PREPARE(gpu, encoder, APIR_COMMAND_TYPE_DEVICE_BUFFER_FROM_PTR);
 
-    if (virtgpu_shmem_create(gpu, size, &buffer_context.shmem)) {
+    만약 (virtgpu_shmem_create(gpu, size, &buffer_context.shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: Couldn't allocate %ldb of guest-host shared buffer", __func__, size);
     }
 
@@ -190,5 +190,5 @@ apir_buffer_context_t apir_device_buffer_from_ptr(virtgpu * gpu, size_t size, si
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return buffer_context;
+    반환 buffer_context;
 }

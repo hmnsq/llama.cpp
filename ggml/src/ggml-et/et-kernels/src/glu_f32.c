@@ -27,18 +27,18 @@ static inline float silu_f32(float x) {
     // For large negative x, exp(-x) -> inf, so silu(x) -> 0
     // For large positive x, exp(-x) -> 0, so silu(x) -> x
 
-    if (x > 20.0f) {
+    만약 (x > 20.0f) {
         // For x > 20, exp(-x) is negligible, silu(x) ~ x
-        return x;
-    } else if (x < -20.0f) {
+        반환 x;
+    } 아니면 만약 (x < -20.0f) {
         // For x < -20, silu(x) ~ 0
-        return 0.0f;
-    } else {
+        반환 0.0f;
+    } 아니면 {
         // Use standard formula: silu(x) = x / (1 + exp(-x))
         // Optimized using ET hardware division
         float exp_neg_x   = et_expf(-x);
         float denominator = 1.0f + exp_neg_x;
-        return et_fdiv(x, denominator);
+        반환 et_fdiv(x, denominator);
     }
 }
 
@@ -46,7 +46,7 @@ static inline float silu_f32(float x) {
 // gelu(x) = 0.5*x*(1 + tanh(z)) = x * (1 - 1/(exp(2z)+1))
 // where z = sqrt(2/pi) * x * (1 + 0.044715*x^2)
 // Reformulated to avoid inf*0 NaN: uses x * sigmoid(2z) identity
-static inline void block_geglu(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static inline void block_geglu(float * dst_block, const float * x_block, const float * g_block, 정수 elements) {
     unsigned long temp_mask;
     __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
     __asm__ volatile("mov.m.x m0, x0, 0xFF");
@@ -56,7 +56,7 @@ static inline void block_geglu(float * dst_block, const float * x_block, const f
     float sqrt2pi_const   = 0.79788456080286535587989211986876f;  // sqrt(2/pi)
     float two_log2e_const = 2.8853900817779268f;                  // 2 * log2(e)
 
-    for (int32_t i = 0; i < elements; i += 8) {
+    위해 (int32_t i = 0; i < elements; i += 8) {
         __asm__ volatile(
             // Load inputs
             "flw.ps f10, %[x_vec]\n"  // f10 = x
@@ -104,7 +104,7 @@ static inline void block_geglu(float * dst_block, const float * x_block, const f
 }
 
 // Vectorized SwiGLU block processing (16 elements = 1 cache line)
-static inline void block_swiglu(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static inline void block_swiglu(float * dst_block, const float * x_block, const float * g_block, 정수 elements) {
     // Process 8 elements at a time using vector instructions
     int32_t vec_end = (elements / 8) * 8;
 
@@ -118,7 +118,7 @@ static inline void block_swiglu(float * dst_block, const float * x_block, const 
     float one_const   = 1.0f;
     float log2e_const = 1.4426950408889634f;  // log2(e)
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
+    위해 (int32_t i = 0; i < vec_end; i += 8) {
         // Vectorized SwiGLU: dst = silu(x) * g = (x / (1 + exp(-x))) * g
         // Using ET hardware: exp, reciprocal, multiply operations
         __asm__ volatile(
@@ -168,13 +168,13 @@ static inline void block_swiglu(float * dst_block, const float * x_block, const 
     __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
 
     // Handle remaining elements (< 8) with scalar operations
-    for (int32_t i = vec_end; i < elements; i++) {
+    위해 (int32_t i = vec_end; i < elements; i++) {
         dst_block[i] = silu_f32(x_block[i]) * g_block[i];
     }
 }
 
 // Vectorized ReGLU block: dst = max(0, x) * g
-static inline void block_reglu(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static inline void block_reglu(float * dst_block, const float * x_block, const float * g_block, 정수 elements) {
     int32_t vec_end = (elements / 8) * 8;
 
     unsigned long temp_mask;
@@ -183,7 +183,7 @@ static inline void block_reglu(float * dst_block, const float * x_block, const f
 
     float zero_const = 0.0f;
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
+    위해 (int32_t i = 0; i < vec_end; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x_vec]\n"     // f10 = x
             "flw.ps  f11, %[g_vec]\n"     // f11 = g
@@ -199,7 +199,7 @@ static inline void block_reglu(float * dst_block, const float * x_block, const f
 
     __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
 
-    for (int32_t i = vec_end; i < elements; i++) {
+    위해 (int32_t i = vec_end; i < elements; i++) {
         float xv     = x_block[i];
         dst_block[i] = (xv > 0.0f) ? xv * g_block[i] : 0.0f;
     }
@@ -207,7 +207,7 @@ static inline void block_reglu(float * dst_block, const float * x_block, const f
 
 // Vectorized GeGLU-Quick block: dst = x * sigmoid(1.702 * x) * g
 // Using gelu_quick(x) = x / (1 + exp(-1.702*x))
-static inline void block_geglu_quick(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static inline void block_geglu_quick(float * dst_block, const float * x_block, const float * g_block, 정수 elements) {
     int32_t vec_end = (elements / 8) * 8;
 
     unsigned long temp_mask;
@@ -219,7 +219,7 @@ static inline void block_geglu_quick(float * dst_block, const float * x_block, c
     // -1.702 * log2(e), so that fexp.ps(x * neg_k_log2e) = exp(-1.702*x)
     float neg_k_log2e_const = -1.702f * 1.4426950408889634f;
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
+    위해 (int32_t i = 0; i < vec_end; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x_vec]\n"     // f10 = x
             "flw.ps  f11, %[g_vec]\n"     // f11 = g
@@ -241,7 +241,7 @@ static inline void block_geglu_quick(float * dst_block, const float * x_block, c
 
     __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
 
-    for (int32_t i = vec_end; i < elements; i++) {
+    위해 (int32_t i = vec_end; i < elements; i++) {
         float xv     = x_block[i];
         // Reuse silu reciprocal path: sigmoid(1.702*x) = 1/(1+exp(-1.702*x))
         float e      = et_expf(-1.702f * xv);
@@ -256,7 +256,7 @@ static inline void block_geglu_quick(float * dst_block, const float * x_block, c
 static inline void block_swiglu_oai(float *       dst_block,
                                     const float * x_block,
                                     const float * g_block,
-                                    int           elements,
+                                    정수           elements,
                                     float         alpha,
                                     float         limit) {
     int32_t vec_end = (elements / 8) * 8;
@@ -272,7 +272,7 @@ static inline void block_swiglu_oai(float *       dst_block,
     // -alpha * log2(e): feed (x * neg_alpha_log2e) into fexp.ps to get exp(-alpha*x)
     float neg_alpha_l2e = -alpha * 1.4426950408889634f;
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
+    위해 (int32_t i = 0; i < vec_end; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x_vec]\n"     // f10 = x raw
             "flw.ps  f11, %[g_vec]\n"     // f11 = g raw
@@ -314,16 +314,16 @@ static inline void block_swiglu_oai(float *       dst_block,
     __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
 
     // Scalar tail (mirrors CPU reference exactly)
-    for (int32_t i = vec_end; i < elements; i++) {
+    위해 (int32_t i = vec_end; i < elements; i++) {
         float xv = x_block[i];
         float yv = g_block[i];
-        if (xv > limit) {
+        만약 (xv > limit) {
             xv = limit;
         }
-        if (yv > limit) {
+        만약 (yv > limit) {
             yv = limit;
         }
-        if (yv < -limit) {
+        만약 (yv < -limit) {
             yv = -limit;
         }
         float e       = et_expf(-alpha * xv);
@@ -335,7 +335,7 @@ static inline void block_swiglu_oai(float *       dst_block,
 static inline void block_swiglu_clamp(float *       dst_block,
                                       const float * gate_block,
                                       const float * up_block,
-                                      int           elements,
+                                      정수           elements,
                                       float         limit) {
     int32_t vec_end = (elements / 8) * 8;
 
@@ -348,7 +348,7 @@ static inline void block_swiglu_clamp(float *       dst_block,
     float limit_neg = -limit;
     float neg_log2e = -1.4426950408889634f;
 
-    for (int32_t i = 0; i < vec_end; i += 8) {
+    위해 (int32_t i = 0; i < vec_end; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[gate_vec]\n"
             "flw.ps  f11, %[up_vec]\n"
@@ -374,7 +374,7 @@ static inline void block_swiglu_clamp(float *       dst_block,
 
     __asm__ volatile("mova.m.x %0" :: "r"(temp_mask));
 
-    for (int32_t i = vec_end; i < elements; i++) {
+    위해 (int32_t i = vec_end; i < elements; i++) {
         float gate   = gate_block[i] > limit ? limit : gate_block[i];
         float up     = up_block[i];
         up           = up > limit ? limit : up;
@@ -401,36 +401,36 @@ static inline float erf_approx(float x) {
     float t5   = t4 * t;
     float poly = a1 * t + a2 * t2 + a3 * t3 + a4 * t4 + a5 * t5;
     float y    = 1.0f - poly * et_expf(-ax * ax);
-    return sign * y;
+    반환 sign * y;
 }
 
 // GeGLU-Erf block: dst = 0.5 * x * (1 + erf(x / sqrt(2))) * g
 // Scalar implementation — variant is rarely used so we keep complexity low.
-static inline void block_geglu_erf(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static inline void block_geglu_erf(float * dst_block, const float * x_block, const float * g_block, 정수 elements) {
     const float sqrt_2_inv = 0.70710678118654752440f;
-    for (int32_t i = 0; i < elements; i++) {
+    위해 (int32_t i = 0; i < elements; i++) {
         float xv     = x_block[i];
         dst_block[i] = 0.5f * xv * (1.0f + erf_approx(xv * sqrt_2_inv)) * g_block[i];
     }
 }
 
 // Main entry point for GLU kernel
-int entry_point(struct ggml_et_glu_params * params, void * env) {
+정수 entry_point(struct ggml_et_glu_params * params, void * env) {
     // Cast env to proper type
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
     // Validate environment pointer
-    if (!kernel_env) {
-        return -1;
+    만약 (!kernel_env) {
+        반환 -1;
     }
 
     // Get thread info using shire mask from environment
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    정수 thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    정수 num_threads = get_num_threads(kernel_env->shire_mask);
 
     // Basic safety check on params
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    만약 (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        반환 -1;  // Invalid pointer
     }
 
     // Supported variants: SwiGLU, SwiGLU-OAI, GeGLU, GeGLU-Erf, GeGLU-Quick, ReGLU
@@ -444,7 +444,7 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
         case GGML_GLU_OP_REGLU:
             break;
         default:
-            return -1;  // Unsupported GLU operation
+            반환 -1;  // Unsupported GLU operation
     }
 
     // Extract tensor references
@@ -454,12 +454,12 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
     int32_t              swapped = params->swapped;
 
     // Validate tensor types (F32 only)
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    만약 (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        반환 -1;  // Unsupported type combination
     }
 
-    if (src1 && src1->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported src1 type
+    만약 (src1 && src1->type != GGML_TYPE_F32) {
+        반환 -1;  // Unsupported src1 type
     }
 
     // Get data pointers
@@ -468,8 +468,8 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
     float * dst_data  = (float *) dst->data;
 
     // Validate data pointers
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    만약 (!src0_data || !dst_data) {
+        반환 -1;  // Null data pointer
     }
 
     // Get tensor dimensions
@@ -482,15 +482,15 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
     const size_t dst_stride  = dst->nb[1];                        // Stride between rows in dst
 
     // Validate dimensions for split SwiGLU
-    if (src1) {
+    만약 (src1) {
         // Split tensor mode: src0 and src1 should have same shape as dst
-        if (src0->ne[0] != nc || src1->ne[0] != nc) {
-            return -1;  // Dimension mismatch in split mode
+        만약 (src0->ne[0] != nc || src1->ne[0] != nc) {
+            반환 -1;  // Dimension mismatch in split mode
         }
-    } else {
+    } 아니면 {
         // Single tensor mode: src0 should have 2*nc columns
-        if (src0->ne[0] != 2 * nc) {
-            return -1;  // Dimension mismatch in single tensor mode
+        만약 (src0->ne[0] != 2 * nc) {
+            반환 -1;  // Dimension mismatch in single tensor mode
         }
     }
 
@@ -505,39 +505,39 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
     int64_t end_cacheline         = start_cacheline + cachelines_per_thread;
 
     // Clamp end_cacheline to actual number of cache lines
-    if (end_cacheline > total_cachelines) {
+    만약 (end_cacheline > total_cachelines) {
         end_cacheline = total_cachelines;
     }
 
     // Thread should return if no work to do
-    if (start_cacheline >= total_cachelines) {
-        return 0;
+    만약 (start_cacheline >= total_cachelines) {
+        반환 0;
     }
 
     // Process cache lines assigned to this thread
-    for (int64_t cl = start_cacheline; cl < end_cacheline; cl++) {
+    위해 (int64_t cl = start_cacheline; cl < end_cacheline; cl++) {
         // Map cache line back to element coordinates
         int64_t global_element_start = cl * elements_per_cacheline;
         int64_t row                  = global_element_start / nc;
         int64_t col                  = global_element_start % nc;
 
         // Skip if we're past the end of data
-        if (global_element_start >= total_elements) {
+        만약 (global_element_start >= total_elements) {
             break;
         }
 
         // Calculate how many elements to process in this cache line
         int64_t elements_remaining = total_elements - global_element_start;
-        int     elements_this_block =
-            (int) ((elements_remaining < elements_per_cacheline) ? elements_remaining : elements_per_cacheline);
+        정수     elements_this_block =
+            (정수) ((elements_remaining < elements_per_cacheline) ? elements_remaining : elements_per_cacheline);
 
         // Process elements that span across rows
         int64_t elements_processed = 0;
-        while (elements_processed < elements_this_block && row < nr) {
+        동안 (elements_processed < elements_this_block && row < nr) {
             // Calculate elements to process in current row
             int64_t elements_in_row     = nc - col;
             int64_t elements_to_process = elements_this_block - elements_processed;
-            if (elements_to_process > elements_in_row) {
+            만약 (elements_to_process > elements_in_row) {
                 elements_to_process = elements_in_row;
             }
 
@@ -547,17 +547,17 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
             float * x_ptr;
             float * g_ptr;
 
-            if (src1) {
+            만약 (src1) {
                 // Split tensor mode
                 x_ptr = (float *) ((char *) src0_data + row * src0_stride) + col;
                 g_ptr = (float *) ((char *) src1_data + row * src1_stride) + col;
-            } else {
+            } 아니면 {
                 // Single tensor mode - src0 contains both x and g
                 float * src0_row = (float *) ((char *) src0_data + row * src0_stride);
-                if (swapped) {
+                만약 (swapped) {
                     g_ptr = src0_row + col;       // First half is gate
                     x_ptr = src0_row + nc + col;  // Second half is value
-                } else {
+                } 아니면 {
                     x_ptr = src0_row + col;       // First half is value
                     g_ptr = src0_row + nc + col;  // Second half is gate
                 }
@@ -566,28 +566,28 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
             // Process this segment
             switch (params->glu_op_type) {
                 case GGML_GLU_OP_GEGLU:
-                    block_geglu(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
+                    block_geglu(dst_ptr, x_ptr, g_ptr, (정수) elements_to_process);
                     break;
                 case GGML_GLU_OP_SWIGLU:
-                    block_swiglu(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
+                    block_swiglu(dst_ptr, x_ptr, g_ptr, (정수) elements_to_process);
                     break;
                 case GGML_GLU_OP_REGLU:
-                    block_reglu(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
+                    block_reglu(dst_ptr, x_ptr, g_ptr, (정수) elements_to_process);
                     break;
                 case GGML_GLU_OP_GEGLU_QUICK:
-                    block_geglu_quick(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
+                    block_geglu_quick(dst_ptr, x_ptr, g_ptr, (정수) elements_to_process);
                     break;
                 case GGML_GLU_OP_GEGLU_ERF:
-                    block_geglu_erf(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
+                    block_geglu_erf(dst_ptr, x_ptr, g_ptr, (정수) elements_to_process);
                     break;
                 case GGML_GLU_OP_SWIGLU_OAI:
-                    block_swiglu_oai(dst_ptr, x_ptr, g_ptr, (int) elements_to_process, params->alpha, params->limit);
+                    block_swiglu_oai(dst_ptr, x_ptr, g_ptr, (정수) elements_to_process, params->alpha, params->limit);
                     break;
                 case GGML_GLU_OP_SWIGLU_CLAMP:
-                    block_swiglu_clamp(dst_ptr, x_ptr, g_ptr, (int) elements_to_process, params->limit);
+                    block_swiglu_clamp(dst_ptr, x_ptr, g_ptr, (정수) elements_to_process, params->limit);
                     break;
                 default:
-                    return -1;
+                    반환 -1;
             }
 
             // Update counters
@@ -595,12 +595,12 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
             col += elements_to_process;
 
             // Move to next row if current row is complete
-            if (col >= nc) {
+            만약 (col >= nc) {
                 row++;
                 col = 0;
             }
         }
     }
 
-    return 0;
+    반환 0;
 }

@@ -17,7 +17,7 @@
 
 // number of Metal devices
 // note: can be overridden with GGML_METAL_DEVICES env to simulate virtual devices
-static int g_devices = 1;
+static 정수 g_devices = 1;
 
 // forward declaration
 static bool ggml_backend_buffer_is_metal(ggml_backend_buffer_t buffer);
@@ -41,7 +41,7 @@ static void * ggml_backend_metal_buffer_shared_get_base(ggml_backend_buffer_t bu
 
     GGML_ASSERT(ggml_metal_buffer_is_shared(ctx));
 
-    return ggml_metal_buffer_get_base(ctx);
+    반환 ggml_metal_buffer_get_base(ctx);
 }
 
 static void ggml_backend_metal_buffer_shared_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
@@ -73,11 +73,11 @@ static bool ggml_backend_metal_buffer_shared_cpy_tensor(ggml_backend_buffer_t bu
 
     GGML_ASSERT(ggml_metal_buffer_is_shared(ctx));
 
-    if (!ggml_backend_buffer_is_metal(src->buffer)) {
-        return false;
+    만약 (!ggml_backend_buffer_is_metal(src->buffer)) {
+        반환 false;
     }
 
-    return ggml_metal_buffer_cpy_tensor(ctx, src, dst);
+    반환 ggml_metal_buffer_cpy_tensor(ctx, src, dst);
 }
 
 static void ggml_backend_metal_buffer_shared_clear(ggml_backend_buffer_t buffer, uint8_t value) {
@@ -117,7 +117,7 @@ static void * ggml_backend_metal_buffer_private_get_base(ggml_backend_buffer_t b
 
     GGML_ASSERT(!ggml_metal_buffer_is_shared(ctx));
 
-    return ggml_metal_buffer_get_base(ctx);
+    반환 ggml_metal_buffer_get_base(ctx);
 }
 
 static void ggml_backend_metal_buffer_private_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
@@ -149,11 +149,11 @@ static bool ggml_backend_metal_buffer_private_cpy_tensor(ggml_backend_buffer_t b
 
     GGML_ASSERT(!ggml_metal_buffer_is_shared(ctx));
 
-    if (!ggml_backend_buffer_is_metal(src->buffer)) {
-        return false;
+    만약 (!ggml_backend_buffer_is_metal(src->buffer)) {
+        반환 false;
     }
 
-    return ggml_metal_buffer_cpy_tensor(ctx, src, dst);
+    반환 ggml_metal_buffer_cpy_tensor(ctx, src, dst);
 }
 
 static void ggml_backend_metal_buffer_private_clear(ggml_backend_buffer_t buffer, uint8_t value) {
@@ -179,7 +179,7 @@ static ggml_backend_buffer_i ggml_backend_metal_buffer_private_i = {
 };
 
 static bool ggml_backend_buffer_is_metal(ggml_backend_buffer_t buffer) {
-    return buffer->iface.free_buffer == ggml_backend_metal_buffer_shared_free_buffer ||
+    반환 buffer->iface.free_buffer == ggml_backend_metal_buffer_shared_free_buffer ||
            buffer->iface.free_buffer == ggml_backend_metal_buffer_private_free_buffer;
 }
 
@@ -188,7 +188,7 @@ static bool ggml_backend_buffer_is_metal(ggml_backend_buffer_t buffer) {
 //
 
 struct ggml_backend_metal_buffer_type {
-    int device;
+    정수 device;
     std::string name;
 };
 
@@ -205,16 +205,16 @@ static ggml_backend_buffer_t ggml_backend_metal_buffer_type_alloc_buffer(ggml_ba
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)buft->device->context;
     ggml_metal_buffer_t res = ggml_metal_buffer_init(ctx_dev, size, shared);
 
-    if (res == NULL) {
+    만약 (res == NULL) {
         GGML_LOG_ERROR("%s: failed to allocate Metal buffer of %zu bytes (out of memory)\n", __func__, size);
-        return NULL;
+        반환 NULL;
     }
 
     ggml_backend_buffer_i buf_i = ggml_metal_buffer_is_shared(res)
         ? ggml_backend_metal_buffer_shared_i
         : ggml_backend_metal_buffer_private_i;
 
-    return ggml_backend_buffer_init(buft, buf_i, res, size);
+    반환 ggml_backend_buffer_init(buft, buf_i, res, size);
 }
 
 static size_t ggml_backend_metal_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
@@ -253,7 +253,7 @@ static size_t ggml_backend_metal_buffer_type_get_alloc_size(ggml_backend_buffer_
             break;
     }
 
-    return res;
+    반환 res;
 
     GGML_UNUSED(buft);
 }
@@ -263,15 +263,15 @@ static size_t ggml_backend_metal_buffer_type_get_alloc_size(ggml_backend_buffer_
 static const char * ggml_backend_metal_buffer_type_shared_get_name(ggml_backend_buffer_type_t buft) {
     ggml_backend_metal_buffer_type * ctx = (ggml_backend_metal_buffer_type *)buft->context;
 
-    return ctx->name.c_str();
+    반환 ctx->name.c_str();
 }
 
 static ggml_backend_buffer_t ggml_backend_metal_buffer_type_shared_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    return ggml_backend_metal_buffer_type_alloc_buffer(buft, size, true);
+    반환 ggml_backend_metal_buffer_type_alloc_buffer(buft, size, true);
 }
 
 static size_t ggml_backend_metal_buffer_type_shared_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 32;
+    반환 32;
 
     GGML_UNUSED(buft);
 }
@@ -279,20 +279,20 @@ static size_t ggml_backend_metal_buffer_type_shared_get_alignment(ggml_backend_b
 static size_t ggml_backend_metal_buffer_type_shared_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)buft->device->context;
 
-    return ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
+    반환 ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
 }
 
 static size_t ggml_backend_metal_buffer_type_shared_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
+    반환 ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
 }
 
 static bool ggml_backend_metal_buffer_type_shared_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+    반환 false;
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_shared(int device) {
+static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_shared(정수 device) {
     static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -300,11 +300,11 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_shared(int devi
     static std::vector<ggml_backend_metal_buffer_type_ptr> ctxs;
 
     static bool initialized = false;
-    if (!initialized) {
+    만약 (!initialized) {
         bufts.reserve(g_devices);
         ctxs.reserve(g_devices);
 
-        for (int i = 0; i < g_devices; ++i) {
+        위해 (정수 i = 0; i < g_devices; ++i) {
             ggml_backend_metal_buffer_type * raw_ctx =
                 new ggml_backend_metal_buffer_type {
                     /* .device = */ i,
@@ -333,7 +333,7 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_shared(int devi
         initialized = true;
     }
 
-    return &bufts[device];
+    반환 &bufts[device];
 }
 
 // default (private) buffer type
@@ -341,15 +341,15 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_shared(int devi
 static const char * ggml_backend_metal_buffer_type_private_get_name(ggml_backend_buffer_type_t buft) {
     ggml_backend_metal_buffer_type * ctx = (ggml_backend_metal_buffer_type *)buft->context;
 
-    return ctx->name.c_str();
+    반환 ctx->name.c_str();
 }
 
 static ggml_backend_buffer_t ggml_backend_metal_buffer_type_private_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    return ggml_backend_metal_buffer_type_alloc_buffer(buft, size, false);
+    반환 ggml_backend_metal_buffer_type_alloc_buffer(buft, size, false);
 }
 
 static size_t ggml_backend_metal_buffer_type_private_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 32;
+    반환 32;
 
     GGML_UNUSED(buft);
 }
@@ -357,20 +357,20 @@ static size_t ggml_backend_metal_buffer_type_private_get_alignment(ggml_backend_
 static size_t ggml_backend_metal_buffer_type_private_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)buft->device->context;
 
-    return ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
+    반환 ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
 }
 
 static size_t ggml_backend_metal_buffer_type_private_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
+    반환 ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
 }
 
 static bool ggml_backend_metal_buffer_type_private_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+    반환 false;
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_private(int device) {
+static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_private(정수 device) {
     static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -378,11 +378,11 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_private(int dev
     static std::vector<ggml_backend_metal_buffer_type_ptr> ctxs;
 
     static bool initialized = false;
-    if (!initialized) {
+    만약 (!initialized) {
         bufts.reserve(g_devices);
         ctxs.reserve(g_devices);
 
-        for (int i = 0; i < g_devices; ++i) {
+        위해 (정수 i = 0; i < g_devices; ++i) {
             ggml_backend_metal_buffer_type * raw_ctx = new ggml_backend_metal_buffer_type{
                 /* .device = */ i,
                 /* .name   = */ GGML_METAL_NAME + std::to_string(i) + "_Private"
@@ -410,7 +410,7 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_private(int dev
         initialized = true;
     }
 
-    return &bufts[device];
+    반환 &bufts[device];
 }
 
 // mapped buffer type
@@ -418,16 +418,16 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_private(int dev
 static const char * ggml_backend_metal_buffer_type_mapped_get_name(ggml_backend_buffer_type_t buft) {
     ggml_backend_metal_buffer_type * ctx = (ggml_backend_metal_buffer_type *)buft->context;
 
-    return ctx->name.c_str();
+    반환 ctx->name.c_str();
 }
 
 static ggml_backend_buffer_t ggml_backend_metal_buffer_type_mapped_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
     // for mapped buffers, prefer shared memory
-    return ggml_backend_metal_buffer_type_alloc_buffer(buft, size, true);
+    반환 ggml_backend_metal_buffer_type_alloc_buffer(buft, size, true);
 }
 
 static size_t ggml_backend_metal_buffer_type_mapped_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 32;
+    반환 32;
 
     GGML_UNUSED(buft);
 }
@@ -435,20 +435,20 @@ static size_t ggml_backend_metal_buffer_type_mapped_get_alignment(ggml_backend_b
 static size_t ggml_backend_metal_buffer_type_mapped_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)buft->device->context;
 
-    return ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
+    반환 ggml_metal_device_get_props(ctx_dev)->max_buffer_size;
 }
 
 static size_t ggml_backend_metal_buffer_type_mapped_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
+    반환 ggml_backend_metal_buffer_type_get_alloc_size(buft, tensor);
 }
 
 static bool ggml_backend_metal_buffer_type_mapped_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+    반환 false;
 
     GGML_UNUSED(buft);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_mapped(int device) {
+static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_mapped(정수 device) {
     static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -456,11 +456,11 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_mapped(int devi
     static std::vector<ggml_backend_metal_buffer_type_ptr> ctxs;
 
     static bool initialized = false;
-    if (!initialized) {
+    만약 (!initialized) {
         bufts.reserve(g_devices);
         ctxs.reserve(g_devices);
 
-        for (int i = 0; i < g_devices; ++i) {
+        위해 (정수 i = 0; i < g_devices; ++i) {
             ggml_backend_metal_buffer_type * raw_ctx = new ggml_backend_metal_buffer_type{
                 /* .device = */ i,
                 /* .name   = */ GGML_METAL_NAME + std::to_string(i) + "_Mapped"
@@ -490,7 +490,7 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_mapped(int devi
         initialized = true;
     }
 
-    return &bufts[device];
+    반환 &bufts[device];
 }
 
 // backend
@@ -498,7 +498,7 @@ static ggml_backend_buffer_type_t ggml_backend_metal_buffer_type_mapped(int devi
 static const char * ggml_backend_metal_name(ggml_backend_t backend) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
-    return ggml_metal_get_name(ctx);
+    반환 ggml_metal_get_name(ctx);
 }
 
 static void ggml_backend_metal_free(ggml_backend_t backend) {
@@ -531,12 +531,12 @@ static void ggml_backend_metal_get_tensor_async(ggml_backend_t backend, const gg
 }
 
 static bool ggml_backend_metal_cpy_tensor_async(ggml_backend_t backend_src, ggml_backend_t backend_dst, const ggml_tensor * src, ggml_tensor * dst) {
-    if (!ggml_backend_is_metal(backend_src) || !ggml_backend_is_metal(backend_dst)) {
-        return false;
+    만약 (!ggml_backend_is_metal(backend_src) || !ggml_backend_is_metal(backend_dst)) {
+        반환 false;
     }
 
-    if (!ggml_backend_buffer_is_metal(src->buffer) || !ggml_backend_buffer_is_metal(dst->buffer)) {
-        return false;
+    만약 (!ggml_backend_buffer_is_metal(src->buffer) || !ggml_backend_buffer_is_metal(dst->buffer)) {
+        반환 false;
     }
 
     ggml_metal_t ctx_src = (ggml_metal_t)backend_src->context;
@@ -548,13 +548,13 @@ static bool ggml_backend_metal_cpy_tensor_async(ggml_backend_t backend_src, ggml
     //ggml_metal_buffer_t buf_ctx_src = (ggml_metal_buffer_t)buf_src->context;
     //ggml_metal_buffer_t buf_ctx_dst = (ggml_metal_buffer_t)buf_dst->context;
 
-    return ggml_metal_cpy_tensor_async(ctx_src, ctx_dst, src, dst);
+    반환 ggml_metal_cpy_tensor_async(ctx_src, ctx_dst, src, dst);
 }
 
 static enum ggml_status ggml_backend_metal_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
-    return ggml_metal_graph_compute(ctx, cgraph);
+    반환 ggml_metal_graph_compute(ctx, cgraph);
 }
 
 static void ggml_backend_metal_event_record(ggml_backend_t backend, ggml_backend_event_t event) {
@@ -583,7 +583,7 @@ static void ggml_backend_metal_graph_optimize(ggml_backend_t backend, ggml_cgrap
     ggml_metal_graph_optimize(ctx, cgraph);
 }
 
-static void ggml_backend_metal_set_n_cb(ggml_backend_t backend, int n_cb) {
+static void ggml_backend_metal_set_n_cb(ggml_backend_t backend, 정수 n_cb) {
     GGML_ASSERT(ggml_backend_is_metal(backend));
 
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
@@ -612,7 +612,7 @@ static ggml_backend_i ggml_backend_metal_i = {
 
 static ggml_guid_t ggml_backend_metal_guid(void) {
     static ggml_guid guid = { 0x81, 0xa1, 0x8b, 0x1e, 0x71, 0xec, 0x79, 0xed, 0x2b, 0x85, 0xdc, 0x8a, 0x61, 0x98, 0x30, 0xe6 };
-    return &guid;
+    반환 &guid;
 }
 
 ggml_backend_t ggml_backend_metal_init(void) {
@@ -620,9 +620,9 @@ ggml_backend_t ggml_backend_metal_init(void) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
     ggml_metal_t ctx = ggml_metal_init(ctx_dev);
-    if (ctx == NULL) {
+    만약 (ctx == NULL) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return NULL;
+        반환 NULL;
     }
 
     ggml_backend_t backend = (ggml_backend_t) malloc(sizeof(ggml_backend));
@@ -636,11 +636,11 @@ ggml_backend_t ggml_backend_metal_init(void) {
 
     ggml_backend_metal_set_n_cb(backend, 1);
 
-    return backend;
+    반환 backend;
 }
 
 bool ggml_backend_is_metal(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_metal_guid());
+    반환 backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_metal_guid());
 }
 
 void ggml_backend_metal_set_abort_callback(ggml_backend_t backend, ggml_abort_callback abort_callback, void * user_data) {
@@ -651,12 +651,12 @@ void ggml_backend_metal_set_abort_callback(ggml_backend_t backend, ggml_abort_ca
     ggml_metal_set_abort_callback(ctx, abort_callback, user_data);
 }
 
-bool ggml_backend_metal_supports_family(ggml_backend_t backend, int family) {
+bool ggml_backend_metal_supports_family(ggml_backend_t backend, 정수 family) {
     GGML_ASSERT(ggml_backend_is_metal(backend));
 
     ggml_metal_t ctx = (ggml_metal_t)backend->context;
 
-    return ggml_metal_supports_family(ctx, family);
+    반환 ggml_metal_supports_family(ctx, family);
 }
 
 void ggml_backend_metal_capture_next_compute(ggml_backend_t backend) {
@@ -674,13 +674,13 @@ static const char * ggml_backend_metal_device_get_name(ggml_backend_dev_t dev) {
 
     const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx_dev);
 
-    return props_dev->name;
+    반환 props_dev->name;
 }
 
 static const char * ggml_backend_metal_device_get_description(ggml_backend_dev_t dev) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    return ggml_metal_device_get_props(ctx_dev)->desc;
+    반환 ggml_metal_device_get_props(ctx_dev)->desc;
 }
 
 static void ggml_backend_metal_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
@@ -690,7 +690,7 @@ static void ggml_backend_metal_device_get_memory(ggml_backend_dev_t dev, size_t 
 }
 
 static enum ggml_backend_dev_type ggml_backend_metal_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    반환 GGML_BACKEND_DEVICE_TYPE_GPU;
 
     GGML_UNUSED(dev);
 }
@@ -715,9 +715,9 @@ static ggml_backend_t ggml_backend_metal_device_init_backend(ggml_backend_dev_t 
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
     ggml_metal_t ctx = ggml_metal_init(ctx_dev);
-    if (ctx == NULL) {
+    만약 (ctx == NULL) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return NULL;
+        반환 NULL;
     }
 
     ggml_backend_t backend = (ggml_backend_t) malloc(sizeof(ggml_backend));
@@ -731,7 +731,7 @@ static ggml_backend_t ggml_backend_metal_device_init_backend(ggml_backend_dev_t 
 
     ggml_backend_metal_set_n_cb(backend, 1);
 
-    return backend;
+    반환 backend;
 
     GGML_UNUSED(params);
 }
@@ -741,7 +741,7 @@ static ggml_backend_buffer_type_t ggml_backend_metal_device_get_buffer_type(ggml
 
     const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx_dev);
 
-    return props_dev->use_shared_buffers ? ggml_backend_metal_buffer_type_shared(props_dev->device) : ggml_backend_metal_buffer_type_private(props_dev->device);
+    반환 props_dev->use_shared_buffers ? ggml_backend_metal_buffer_type_shared(props_dev->device) : ggml_backend_metal_buffer_type_private(props_dev->device);
 }
 
 static ggml_backend_buffer_t ggml_backend_metal_device_buffer_mapped(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
@@ -751,17 +751,17 @@ static ggml_backend_buffer_t ggml_backend_metal_device_buffer_mapped(ggml_backen
 
     const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx_dev);
 
-    return ggml_backend_buffer_init(ggml_backend_metal_buffer_type_mapped(props_dev->device), ggml_backend_metal_buffer_shared_i, res, size);
+    반환 ggml_backend_buffer_init(ggml_backend_metal_buffer_type_mapped(props_dev->device), ggml_backend_metal_buffer_shared_i, res, size);
 }
 
 static bool ggml_backend_metal_device_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    return ggml_metal_device_supports_op(ctx_dev, op);
+    반환 ggml_metal_device_supports_op(ctx_dev, op);
 }
 
 static bool ggml_backend_metal_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return
+    반환
         buft->device == dev && (
         buft->iface.get_name == ggml_backend_metal_buffer_type_shared_get_name ||
         buft->iface.get_name == ggml_backend_metal_buffer_type_private_get_name ||
@@ -773,18 +773,18 @@ static bool ggml_backend_metal_device_supports_buft(ggml_backend_dev_t dev, ggml
 static int64_t get_op_batch_size(const ggml_tensor * op) {
     switch (op->op) {
         case GGML_OP_MUL_MAT:
-            return op->ne[1];
+            반환 op->ne[1];
         case GGML_OP_MUL_MAT_ID:
-            return op->ne[2];
+            반환 op->ne[2];
         default:
-            return ggml_nrows(op);
+            반환 ggml_nrows(op);
     }
 }
 
 static bool ggml_backend_metal_device_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    return (op->op == GGML_OP_MUL_MAT ||
+    반환 (op->op == GGML_OP_MUL_MAT ||
             op->op == GGML_OP_MUL_MAT_ID) &&
             get_op_batch_size(op) >= ggml_metal_device_get_props(ctx_dev)->op_offload_min_batch_size;
 }
@@ -800,7 +800,7 @@ static ggml_backend_event_t ggml_backend_metal_device_event_new(ggml_backend_dev
         /* .context = */ event,
     };
 
-    return ev;
+    반환 ev;
 }
 
 static void ggml_backend_metal_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
@@ -850,7 +850,7 @@ typedef struct ggml_backend_metal_reg * ggml_backend_metal_reg_t;
 static ggml_backend_metal_reg_t ggml_backend_metal_reg_init(void) {
     ggml_backend_metal_reg_t ctx = new struct ggml_backend_metal_reg;
 
-    return ctx;
+    반환 ctx;
 }
 
 static void ggml_backend_metal_reg_free(ggml_backend_metal_reg_t ctx) {
@@ -866,37 +866,37 @@ struct ggml_backend_metal_reg_deleter {
 typedef std::unique_ptr<struct ggml_backend_metal_reg, ggml_backend_metal_reg_deleter> ggml_backend_metal_reg_ptr;
 
 static const char * ggml_backend_metal_reg_get_name(ggml_backend_reg_t reg) {
-    return GGML_METAL_NAME;
+    반환 GGML_METAL_NAME;
 
     GGML_UNUSED(reg);
 }
 
 static size_t ggml_backend_metal_reg_device_count(ggml_backend_reg_t reg) {
     ggml_backend_metal_reg_t ctx = (ggml_backend_metal_reg_t)reg->context;
-    return ctx->devices.size();
+    반환 ctx->devices.size();
 }
 
 static ggml_backend_dev_t ggml_backend_metal_reg_device_get(ggml_backend_reg_t reg, size_t index) {
     ggml_backend_metal_reg_t ctx = (ggml_backend_metal_reg_t)reg->context;
     GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    반환 ctx->devices[index];
 }
 
 static ggml_backend_feature g_ggml_backend_metal_features[] = {
-#if defined(GGML_METAL_EMBED_LIBRARY)
+#만약 defined(GGML_METAL_EMBED_LIBRARY)
     { "EMBED_LIBRARY", "1" },
 #endif
     { NULL, NULL },
 };
 
 static ggml_backend_feature * ggml_backend_metal_get_features(ggml_backend_reg_t reg) {
-    return g_ggml_backend_metal_features;
+    반환 g_ggml_backend_metal_features;
 
     GGML_UNUSED(reg);
 }
 
 // test/tune-only override for the FA vec (Q, NE) selection, reached via proc_address.
-static void ggml_backend_metal_tuning_set_fa_vec_override(int Q, int NE) {
+static void ggml_backend_metal_tuning_set_fa_vec_override(정수 Q, 정수 NE) {
     ggml_metal_tuning::fa_vec_set_override({ (int8_t) Q, (int8_t) NE });
 }
 
@@ -904,22 +904,22 @@ static void ggml_backend_metal_tuning_clear_fa_vec_override(void) {
     ggml_metal_tuning::fa_vec_clear_override();
 }
 
-static int ggml_backend_metal_tuning_fa_vec_ne11_bucket(int64_t ne11) {
-    return ggml_metal_tuning::fa_vec_ne11_bucket(ne11);
+static 정수 ggml_backend_metal_tuning_fa_vec_ne11_bucket(int64_t ne11) {
+    반환 ggml_metal_tuning::fa_vec_ne11_bucket(ne11);
 }
 
-static int ggml_backend_metal_tuning_fa_vec_ne01_bucket(int64_t ne01) {
-    return ggml_metal_tuning::fa_vec_ne01_bucket(ne01);
+static 정수 ggml_backend_metal_tuning_fa_vec_ne01_bucket(int64_t ne01) {
+    반환 ggml_metal_tuning::fa_vec_ne01_bucket(ne01);
 }
 
-static int ggml_backend_metal_tuning_fa_vec_baseline_ne(int dk, int dv) {
-    return ggml_metal_tuning::fa_vec_baseline_ne(dk, dv);
+static 정수 ggml_backend_metal_tuning_fa_vec_baseline_ne(정수 dk, 정수 dv) {
+    반환 ggml_metal_tuning::fa_vec_baseline_ne(dk, dv);
 }
 
 static const char * ggml_backend_metal_tuning_device_token(ggml_backend_dev_t dev) {
     ggml_metal_device_t ctx_dev = (ggml_metal_device_t)dev->context;
 
-    return ggml_metal_device_id_token(ggml_metal_device_get_props(ctx_dev)->device_id);
+    반환 ggml_metal_device_id_token(ggml_metal_device_get_props(ctx_dev)->device_id);
 }
 
 // generic fusion debugging API (ad-hoc proc-address mechanism): the test resolves the device
@@ -927,7 +927,7 @@ static const char * ggml_backend_metal_tuning_device_token(ggml_backend_dev_t de
 typedef void * ggml_backend_fusion_t;
 
 static ggml_backend_fusion_t ggml_backend_metal_fusion_get(ggml_backend_dev_t dev) {
-    return ggml_metal_device_get_fusion_info((ggml_metal_device_t)dev->context);
+    반환 ggml_metal_device_get_fusion_info((ggml_metal_device_t)dev->context);
 }
 
 static void ggml_backend_metal_fusion_stats_init(ggml_backend_fusion_t finfo) {
@@ -938,8 +938,8 @@ static void ggml_backend_metal_fusion_stats_reset(ggml_backend_fusion_t finfo) {
     ggml_metal_fusion_info_stats_reset((struct ggml_metal_fusion_info *) finfo);
 }
 
-static int ggml_backend_metal_fusion_stats_get(ggml_backend_fusion_t finfo, const char ** labels, uint64_t * counts, int n) {
-    return ggml_metal_fusion_info_stats_get((struct ggml_metal_fusion_info *) finfo, labels, counts, n);
+static 정수 ggml_backend_metal_fusion_stats_get(ggml_backend_fusion_t finfo, const char ** labels, uint64_t * counts, 정수 n) {
+    반환 ggml_metal_fusion_info_stats_get((struct ggml_metal_fusion_info *) finfo, labels, counts, n);
 }
 
 static void ggml_backend_metal_fusion_set_enabled(ggml_backend_fusion_t finfo, bool enabled) {
@@ -947,46 +947,46 @@ static void ggml_backend_metal_fusion_set_enabled(ggml_backend_fusion_t finfo, b
 }
 
 static void * ggml_backend_metal_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (strcmp(name, "ggml_backend_get_features") == 0) {
-        return (void *)ggml_backend_metal_get_features;
+    만약 (strcmp(name, "ggml_backend_get_features") == 0) {
+        반환 (void *)ggml_backend_metal_get_features;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_set_fa_vec_override") == 0) {
-        return (void *)ggml_backend_metal_tuning_set_fa_vec_override;
+    만약 (strcmp(name, "ggml_backend_metal_tuning_set_fa_vec_override") == 0) {
+        반환 (void *)ggml_backend_metal_tuning_set_fa_vec_override;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_clear_fa_vec_override") == 0) {
-        return (void *)ggml_backend_metal_tuning_clear_fa_vec_override;
+    만약 (strcmp(name, "ggml_backend_metal_tuning_clear_fa_vec_override") == 0) {
+        반환 (void *)ggml_backend_metal_tuning_clear_fa_vec_override;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_fa_vec_ne11_bucket") == 0) {
-        return (void *)ggml_backend_metal_tuning_fa_vec_ne11_bucket;
+    만약 (strcmp(name, "ggml_backend_metal_tuning_fa_vec_ne11_bucket") == 0) {
+        반환 (void *)ggml_backend_metal_tuning_fa_vec_ne11_bucket;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_fa_vec_ne01_bucket") == 0) {
-        return (void *)ggml_backend_metal_tuning_fa_vec_ne01_bucket;
+    만약 (strcmp(name, "ggml_backend_metal_tuning_fa_vec_ne01_bucket") == 0) {
+        반환 (void *)ggml_backend_metal_tuning_fa_vec_ne01_bucket;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_fa_vec_baseline_ne") == 0) {
-        return (void *)ggml_backend_metal_tuning_fa_vec_baseline_ne;
+    만약 (strcmp(name, "ggml_backend_metal_tuning_fa_vec_baseline_ne") == 0) {
+        반환 (void *)ggml_backend_metal_tuning_fa_vec_baseline_ne;
     }
-    if (strcmp(name, "ggml_backend_metal_tuning_device_token") == 0) {
-        return (void *)ggml_backend_metal_tuning_device_token;
+    만약 (strcmp(name, "ggml_backend_metal_tuning_device_token") == 0) {
+        반환 (void *)ggml_backend_metal_tuning_device_token;
     }
     // generic fusion debugging API (ad-hoc proc-address mechanism, not part of the official
     // ggml backend interface yet; a backend that adopts it exports these exact names)
-    if (strcmp(name, "ggml_backend_fusion_get") == 0) {
-        return (void *)ggml_backend_metal_fusion_get;
+    만약 (strcmp(name, "ggml_backend_fusion_get") == 0) {
+        반환 (void *)ggml_backend_metal_fusion_get;
     }
-    if (strcmp(name, "ggml_backend_fusion_stats_init") == 0) {
-        return (void *)ggml_backend_metal_fusion_stats_init;
+    만약 (strcmp(name, "ggml_backend_fusion_stats_init") == 0) {
+        반환 (void *)ggml_backend_metal_fusion_stats_init;
     }
-    if (strcmp(name, "ggml_backend_fusion_stats_reset") == 0) {
-        return (void *)ggml_backend_metal_fusion_stats_reset;
+    만약 (strcmp(name, "ggml_backend_fusion_stats_reset") == 0) {
+        반환 (void *)ggml_backend_metal_fusion_stats_reset;
     }
-    if (strcmp(name, "ggml_backend_fusion_stats_get") == 0) {
-        return (void *)ggml_backend_metal_fusion_stats_get;
+    만약 (strcmp(name, "ggml_backend_fusion_stats_get") == 0) {
+        반환 (void *)ggml_backend_metal_fusion_stats_get;
     }
-    if (strcmp(name, "ggml_backend_fusion_set_enabled") == 0) {
-        return (void *)ggml_backend_metal_fusion_set_enabled;
+    만약 (strcmp(name, "ggml_backend_fusion_set_enabled") == 0) {
+        반환 (void *)ggml_backend_metal_fusion_set_enabled;
     }
 
-    return NULL;
+    반환 NULL;
 
     GGML_UNUSED(reg);
 }
@@ -998,8 +998,8 @@ static ggml_backend_reg_i ggml_backend_metal_reg_i = {
     /* .get_proc_address = */ ggml_backend_metal_get_proc_address,
 };
 
-static ggml_backend_dev_t ggml_backend_metal_device_init(ggml_backend_reg_t reg, int device) {
-    return new ggml_backend_device {
+static ggml_backend_dev_t ggml_backend_metal_device_init(ggml_backend_reg_t reg, 정수 device) {
+    반환 new ggml_backend_device {
         /* .iface   = */ ggml_backend_metal_device_i,
         /* .reg     = */ reg,
         /* .context = */ ggml_metal_device_get(device, g_devices),
@@ -1027,20 +1027,20 @@ ggml_backend_reg_t ggml_backend_metal_reg(void) {
         std::lock_guard<std::mutex> lock(mutex);
 
         const char * env = getenv("GGML_METAL_DEVICES");
-        if (env) {
+        만약 (env) {
             g_devices = atoi(env);
         }
 
         static std::vector<ggml_backend_device_ptr> devs;
 
-        if (!initialized) {
+        만약 (!initialized) {
             // workaround macOS limitation (kIOGPUCommandBufferCallbackErrorImpactingInteractivity) until proper fix becomes possible
             // ref: https://github.com/ggml-org/llama.cpp/issues/20141#issuecomment-4272947703
             setenv("AGX_RELAX_CDM_CTXSTORE_TIMEOUT", "1", true);
 
             static ggml_backend_metal_reg_ptr reg_ctx(ggml_backend_metal_reg_init());
 
-            for (int i = 0; i < g_devices; ++i) {
+            위해 (정수 i = 0; i < g_devices; ++i) {
                 auto * dev = ggml_backend_metal_device_init(&reg, i);
                 devs.emplace_back(dev);
 
@@ -1057,7 +1057,7 @@ ggml_backend_reg_t ggml_backend_metal_reg(void) {
         initialized = true;
     }
 
-    return &reg;
+    반환 &reg;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_metal_reg)

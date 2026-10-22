@@ -26,40 +26,40 @@ struct Options {
 //==============================================================
 static std::string trim(const std::string & s) {
     size_t a = 0;
-    while (a < s.size() && std::isspace((unsigned char) s[a])) {
+    동안 (a < s.size() && std::isspace((unsigned char) s[a])) {
         a++;
     }
     size_t b = s.size();
-    while (b > a && std::isspace((unsigned char) s[b - 1])) {
+    동안 (b > a && std::isspace((unsigned char) s[b - 1])) {
         b--;
     }
-    return s.substr(a, b - a);
+    반환 s.substr(a, b - a);
 }
 
 static std::string trim_value(std::istream & is) {
     std::ostringstream ss;
     ss << is.rdbuf();
-    return trim(ss.str());
+    반환 trim(ss.str());
 }
 
 static bool isIdentChar(char c) {
-    return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
+    반환 std::isalnum(static_cast<unsigned char>(c)) || c == '_';
 }
 
 static bool endsWithContinuation(const std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    동안 (i > 0 && std::isspace((unsigned char) line[i - 1])) {
         i--;
     }
-    return i > 0 && line[i - 1] == '\\';
+    반환 i > 0 && line[i - 1] == '\\';
 }
 
 static void stripContinuation(std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    동안 (i > 0 && std::isspace((unsigned char) line[i - 1])) {
         i--;
     }
-    if (i > 0 && line[i - 1] == '\\') {
+    만약 (i > 0 && line[i - 1] == '\\') {
         line.erase(i - 1);
     }
 }
@@ -71,26 +71,26 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
 static std::string expandMacroValue(const std::string &                                  name,
                                     const std::unordered_map<std::string, std::string> & macros,
                                     std::unordered_set<std::string> &                    visiting) {
-    if (visiting.count(name)) {
+    만약 (visiting.count(name)) {
         throw std::runtime_error("Recursive macro: " + name);
     }
     visiting.insert(name);
 
     auto it = macros.find(name);
-    if (it == macros.end()) {
+    만약 (it == macros.end()) {
         visiting.erase(name);
-        return name;
+        반환 name;
     }
 
     const std::string & value = it->second;
-    if (value.empty()) {
+    만약 (value.empty()) {
         visiting.erase(name);
-        return "";
+        반환 "";
     }
 
     std::string expanded = expandMacrosRecursiveInternal(value, macros, visiting);
     visiting.erase(name);
-    return expanded;
+    반환 expanded;
 }
 
 static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
@@ -100,33 +100,33 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
     result.reserve(line.size());
 
     size_t i = 0;
-    while (i < line.size()) {
-        if (isIdentChar(line[i])) {
+    동안 (i < line.size()) {
+        만약 (isIdentChar(line[i])) {
             size_t start = i;
-            while (i < line.size() && isIdentChar(line[i])) {
+            동안 (i < line.size() && isIdentChar(line[i])) {
                 i++;
             }
             std::string token = line.substr(start, i - start);
 
             auto it = macros.find(token);
-            if (it != macros.end()) {
+            만약 (it != macros.end()) {
                 result += expandMacroValue(token, macros, visiting);
-            } else {
+            } 아니면 {
                 result += token;
             }
-        } else {
+        } 아니면 {
             result += line[i];
             i++;
         }
     }
 
-    return result;
+    반환 result;
 }
 
 static std::string expandMacrosRecursive(const std::string &                                  line,
                                          const std::unordered_map<std::string, std::string> & macros) {
     std::unordered_set<std::string> visiting;
-    return expandMacrosRecursiveInternal(line, macros, visiting);
+    반환 expandMacrosRecursiveInternal(line, macros, visiting);
 }
 
 //==============================================================
@@ -145,57 +145,57 @@ class ExprLexer {
 
     Tok next() {
         skipWS();
-        if (pos >= src.size()) {
-            return { END, "" };
+        만약 (pos >= src.size()) {
+            반환 { END, "" };
         }
 
         char c = src[pos];
 
         // number
-        if (std::isdigit((unsigned char) c)) {
+        만약 (std::isdigit((unsigned char) c)) {
             size_t start = pos;
-            while (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
+            동안 (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
                 pos++;
             }
-            return { NUMBER, std::string(src.substr(start, pos - start)) };
+            반환 { NUMBER, std::string(src.substr(start, pos - start)) };
         }
 
         // identifier
-        if (std::isalpha((unsigned char) c) || c == '_') {
+        만약 (std::isalpha((unsigned char) c) || c == '_') {
             size_t start = pos;
-            while (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
+            동안 (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
                 pos++;
             }
-            return { IDENT, std::string(src.substr(start, pos - start)) };
+            반환 { IDENT, std::string(src.substr(start, pos - start)) };
         }
 
-        if (c == '(') {
+        만약 (c == '(') {
             pos++;
-            return { LPAREN, "(" };
+            반환 { LPAREN, "(" };
         }
-        if (c == ')') {
+        만약 (c == ')') {
             pos++;
-            return { RPAREN, ")" };
+            반환 { RPAREN, ")" };
         }
 
         // multi-char operators
         static const char * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
-        for (auto op : two_ops) {
-            if (src.substr(pos, 2) == op) {
+        위해 (auto op : two_ops) {
+            만약 (src.substr(pos, 2) == op) {
                 pos += 2;
-                return { OP, std::string(op) };
+                반환 { OP, std::string(op) };
             }
         }
 
         // single-char operators
-        if (std::string("+-*/%<>!").find(c) != std::string::npos) {
+        만약 (std::string("+-*/%<>!").find(c) != std::string::npos) {
             pos++;
-            return { OP, std::string(1, c) };
+            반환 { OP, std::string(1, c) };
         }
 
         // unexpected
         pos++;
-        return { END, "" };
+        반환 { END, "" };
     }
 
   private:
@@ -203,7 +203,7 @@ class ExprLexer {
     size_t           pos;
 
     void skipWS() {
-        while (pos < src.size() && std::isspace((unsigned char) src[pos])) {
+        동안 (pos < src.size() && std::isspace((unsigned char) src[pos])) {
             pos++;
         }
     }
@@ -223,7 +223,7 @@ class ExprParser {
         advance();
     }
 
-    int parse() { return parseLogicalOr(); }
+    정수 parse() { 반환 parseLogicalOr(); }
 
   private:
     ExprLexer                                            lex;
@@ -234,210 +234,210 @@ class ExprParser {
     void advance() { tok = lex.next(); }
 
     bool acceptOp(const std::string & s) {
-        if (tok.kind == ExprLexer::OP && tok.text == s) {
+        만약 (tok.kind == ExprLexer::OP && tok.text == s) {
             advance();
-            return true;
+            반환 true;
         }
-        return false;
+        반환 false;
     }
 
     bool acceptKind(ExprLexer::Kind k) {
-        if (tok.kind == k) {
+        만약 (tok.kind == k) {
             advance();
-            return true;
+            반환 true;
         }
-        return false;
+        반환 false;
     }
 
-    int parseLogicalOr() {
-        int v = parseLogicalAnd();
-        while (acceptOp("||")) {
-            int rhs = parseLogicalAnd();
+    정수 parseLogicalOr() {
+        정수 v = parseLogicalAnd();
+        동안 (acceptOp("||")) {
+            정수 rhs = parseLogicalAnd();
             v       = (v || rhs);
         }
-        return v;
+        반환 v;
     }
 
-    int parseLogicalAnd() {
-        int v = parseEquality();
-        while (acceptOp("&&")) {
-            int rhs = parseEquality();
+    정수 parseLogicalAnd() {
+        정수 v = parseEquality();
+        동안 (acceptOp("&&")) {
+            정수 rhs = parseEquality();
             v       = (v && rhs);
         }
-        return v;
+        반환 v;
     }
 
-    int parseEquality() {
-        int v = parseRelational();
-        for (;;) {
-            if (acceptOp("==")) {
-                int rhs = parseRelational();
+    정수 parseEquality() {
+        정수 v = parseRelational();
+        위해 (;;) {
+            만약 (acceptOp("==")) {
+                정수 rhs = parseRelational();
                 v       = (v == rhs);
-            } else if (acceptOp("!=")) {
-                int rhs = parseRelational();
+            } 아니면 만약 (acceptOp("!=")) {
+                정수 rhs = parseRelational();
                 v       = (v != rhs);
-            } else {
+            } 아니면 {
                 break;
             }
         }
-        return v;
+        반환 v;
     }
 
-    int parseRelational() {
-        int v = parseShift();
-        for (;;) {
-            if (acceptOp("<")) {
-                int rhs = parseShift();
+    정수 parseRelational() {
+        정수 v = parseShift();
+        위해 (;;) {
+            만약 (acceptOp("<")) {
+                정수 rhs = parseShift();
                 v       = (v < rhs);
-            } else if (acceptOp(">")) {
-                int rhs = parseShift();
+            } 아니면 만약 (acceptOp(">")) {
+                정수 rhs = parseShift();
                 v       = (v > rhs);
-            } else if (acceptOp("<=")) {
-                int rhs = parseShift();
+            } 아니면 만약 (acceptOp("<=")) {
+                정수 rhs = parseShift();
                 v       = (v <= rhs);
-            } else if (acceptOp(">=")) {
-                int rhs = parseShift();
+            } 아니면 만약 (acceptOp(">=")) {
+                정수 rhs = parseShift();
                 v       = (v >= rhs);
-            } else {
+            } 아니면 {
                 break;
             }
         }
-        return v;
+        반환 v;
     }
 
-    int parseShift() {
-        int v = parseAdd();
-        for (;;) {
-            if (acceptOp("<<")) {
-                int rhs = parseAdd();
+    정수 parseShift() {
+        정수 v = parseAdd();
+        위해 (;;) {
+            만약 (acceptOp("<<")) {
+                정수 rhs = parseAdd();
                 v       = (v << rhs);
-            } else if (acceptOp(">>")) {
-                int rhs = parseAdd();
+            } 아니면 만약 (acceptOp(">>")) {
+                정수 rhs = parseAdd();
                 v       = (v >> rhs);
-            } else {
+            } 아니면 {
                 break;
             }
         }
-        return v;
+        반환 v;
     }
 
-    int parseAdd() {
-        int v = parseMult();
-        for (;;) {
-            if (acceptOp("+")) {
-                int rhs = parseMult();
+    정수 parseAdd() {
+        정수 v = parseMult();
+        위해 (;;) {
+            만약 (acceptOp("+")) {
+                정수 rhs = parseMult();
                 v       = (v + rhs);
-            } else if (acceptOp("-")) {
-                int rhs = parseMult();
+            } 아니면 만약 (acceptOp("-")) {
+                정수 rhs = parseMult();
                 v       = (v - rhs);
-            } else {
+            } 아니면 {
                 break;
             }
         }
-        return v;
+        반환 v;
     }
 
-    int parseMult() {
-        int v = parseUnary();
-        for (;;) {
-            if (acceptOp("*")) {
-                int rhs = parseUnary();
+    정수 parseMult() {
+        정수 v = parseUnary();
+        위해 (;;) {
+            만약 (acceptOp("*")) {
+                정수 rhs = parseUnary();
                 v       = (v * rhs);
-            } else if (acceptOp("/")) {
-                int rhs = parseUnary();
+            } 아니면 만약 (acceptOp("/")) {
+                정수 rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v / rhs);
-            } else if (acceptOp("%")) {
-                int rhs = parseUnary();
+            } 아니면 만약 (acceptOp("%")) {
+                정수 rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v % rhs);
-            } else {
+            } 아니면 {
                 break;
             }
         }
-        return v;
+        반환 v;
     }
 
-    int parseUnary() {
-        if (acceptOp("!")) {
-            return !parseUnary();
+    정수 parseUnary() {
+        만약 (acceptOp("!")) {
+            반환 !parseUnary();
         }
-        if (acceptOp("-")) {
-            return -parseUnary();
+        만약 (acceptOp("-")) {
+            반환 -parseUnary();
         }
-        if (acceptOp("+")) {
-            return +parseUnary();
+        만약 (acceptOp("+")) {
+            반환 +parseUnary();
         }
-        return parsePrimary();
+        반환 parsePrimary();
     }
 
-    int parsePrimary() {
+    정수 parsePrimary() {
         // '(' expr ')'
-        if (acceptKind(ExprLexer::LPAREN)) {
-            int v = parse();
-            if (!acceptKind(ExprLexer::RPAREN)) {
+        만약 (acceptKind(ExprLexer::LPAREN)) {
+            정수 v = parse();
+            만약 (!acceptKind(ExprLexer::RPAREN)) {
                 throw std::runtime_error("missing ')'");
             }
-            return v;
+            반환 v;
         }
 
         // number
-        if (tok.kind == ExprLexer::NUMBER) {
-            int v = std::stoi(tok.text);
+        만약 (tok.kind == ExprLexer::NUMBER) {
+            정수 v = std::stoi(tok.text);
             advance();
-            return v;
+            반환 v;
         }
 
         // defined(identifier)
-        if (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
+        만약 (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
             advance();
-            if (acceptKind(ExprLexer::LPAREN)) {
-                if (tok.kind != ExprLexer::IDENT) {
+            만약 (acceptKind(ExprLexer::LPAREN)) {
+                만약 (tok.kind != ExprLexer::IDENT) {
                     throw std::runtime_error("expected identifier in defined()");
                 }
                 std::string name = tok.text;
                 advance();
-                if (!acceptKind(ExprLexer::RPAREN)) {
+                만약 (!acceptKind(ExprLexer::RPAREN)) {
                     throw std::runtime_error("missing ) in defined()");
                 }
-                return macros.count(name) ? 1 : 0;
-            } else {
+                반환 macros.count(name) ? 1 : 0;
+            } 아니면 {
                 // defined NAME
-                if (tok.kind != ExprLexer::IDENT) {
+                만약 (tok.kind != ExprLexer::IDENT) {
                     throw std::runtime_error("expected identifier in defined NAME");
                 }
                 std::string name = tok.text;
                 advance();
-                return macros.count(name) ? 1 : 0;
+                반환 macros.count(name) ? 1 : 0;
             }
         }
 
         // identifier -> treat as integer, if defined use its value else 0
-        if (tok.kind == ExprLexer::IDENT) {
+        만약 (tok.kind == ExprLexer::IDENT) {
             std::string name = tok.text;
             advance();
             auto it = macros.find(name);
-            if (it == macros.end()) {
-                return 0;
+            만약 (it == macros.end()) {
+                반환 0;
             }
-            if (it->second.empty()) {
-                return 1;
+            만약 (it->second.empty()) {
+                반환 1;
             }
-            return evalMacroExpression(name, it->second);
+            반환 evalMacroExpression(name, it->second);
         }
 
         // unexpected
-        return 0;
+        반환 0;
     }
 
-    int evalMacroExpression(const std::string & name, const std::string & value) {
-        if (visiting.count(name)) {
+    정수 evalMacroExpression(const std::string & name, const std::string & value) {
+        만약 (visiting.count(name)) {
             throw std::runtime_error("Recursive macro: " + name);
         }
 
         visiting.insert(name);
         ExprParser ep(value, macros, visiting);
-        int        v = ep.parse();
+        정수        v = ep.parse();
         visiting.erase(name);
-        return v;
+        반환 v;
     }
 };
 
@@ -448,7 +448,7 @@ class Preprocessor {
   public:
     explicit Preprocessor(Options opts = {}) : opts_(std::move(opts)) {
         // Treat empty include path as current directory
-        if (opts_.include_path.empty()) {
+        만약 (opts_.include_path.empty()) {
             opts_.include_path = ".";
         }
         parseMacroDefinitions(opts_.macros);
@@ -461,7 +461,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        반환 result;
     }
 
     std::string preprocess(const std::string & contents, const std::vector<std::string> & additional_macros = {}) {
@@ -471,7 +471,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        반환 result;
     }
 
     std::string preprocess_includes_file(const std::string & filename) {
@@ -479,7 +479,7 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        반환 result;
     }
 
     std::string preprocess_includes(const std::string & contents) {
@@ -487,7 +487,7 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        반환 result;
     }
 
   private:
@@ -506,14 +506,14 @@ class Preprocessor {
     // Parse macro definitions into global_macros
     //----------------------------------------------------------
     void parseMacroDefinitions(const std::vector<std::string> & macro_defs) {
-        for (const auto & def : macro_defs) {
+        위해 (const auto & def : macro_defs) {
             size_t eq_pos = def.find('=');
-            if (eq_pos != std::string::npos) {
+            만약 (eq_pos != std::string::npos) {
                 // Format: NAME=VALUE
                 std::string name    = trim(def.substr(0, eq_pos));
                 std::string value   = trim(def.substr(eq_pos + 1));
                 global_macros[name] = value;
-            } else {
+            } 아니면 {
                 // Format: NAME
                 std::string name    = trim(def);
                 global_macros[name] = "";
@@ -530,17 +530,17 @@ class Preprocessor {
         macros = global_macros;
         predefined.clear();
 
-        for (const auto & [name, value] : global_macros) {
+        위해 (const auto & [name, value] : global_macros) {
             predefined.insert(name);
         }
 
-        for (const auto & def : additional_macros) {
+        위해 (const auto & def : additional_macros) {
             size_t      eq_pos = def.find('=');
             std::string name, value;
-            if (eq_pos != std::string::npos) {
+            만약 (eq_pos != std::string::npos) {
                 name  = trim(def.substr(0, eq_pos));
                 value = trim(def.substr(eq_pos + 1));
-            } else {
+            } 아니면 {
                 name  = trim(def);
                 value = "";
             }
@@ -556,19 +556,19 @@ class Preprocessor {
     //----------------------------------------------------------
     std::string loadFile(const std::string & fname) {
         std::ifstream f(fname);
-        if (!f.is_open()) {
+        만약 (!f.is_open()) {
             throw std::runtime_error("Could not open file: " + fname);
         }
         std::stringstream ss;
         ss << f.rdbuf();
-        return ss.str();
+        반환 ss.str();
     }
 
     bool condActive(const std::vector<Cond> & cond) const {
-        if (cond.empty()) {
-            return true;
+        만약 (cond.empty()) {
+            반환 true;
         }
-        return cond.back().active;
+        반환 cond.back().active;
     }
 
     //----------------------------------------------------------
@@ -579,7 +579,7 @@ class Preprocessor {
                             const std::unordered_set<std::string> &        predefined_macros,
                             std::unordered_set<std::string> &              include_stack,
                             DirectiveMode                                  mode) {
-        if (include_stack.count(name)) {
+        만약 (include_stack.count(name)) {
             throw std::runtime_error("Recursive include: " + name);
         }
 
@@ -587,7 +587,7 @@ class Preprocessor {
         std::string shader_code = loadFile(name);
         std::string out         = processString(shader_code, macros, predefined_macros, include_stack, mode);
         include_stack.erase(name);
-        return out;
+        반환 out;
     }
 
     std::string processIncludeFile(const std::string &                            fname,
@@ -596,7 +596,7 @@ class Preprocessor {
                                    std::unordered_set<std::string> &              include_stack,
                                    DirectiveMode                                  mode) {
         std::string full_path = opts_.include_path + "/" + fname;
-        return processFile(full_path, macros, predefined_macros, include_stack, mode);
+        반환 processFile(full_path, macros, predefined_macros, include_stack, mode);
     }
 
     //----------------------------------------------------------
@@ -612,13 +612,13 @@ class Preprocessor {
         std::istringstream in(shader_code);
         std::string        line;
 
-        while (std::getline(in, line)) {
+        동안 (std::getline(in, line)) {
             std::string logical = line;
             std::string t       = trim(logical);
-            if (!t.empty() && t[0] == '#') {
-                while (endsWithContinuation(logical)) {
+            만약 (!t.empty() && t[0] == '#') {
+                동안 (endsWithContinuation(logical)) {
                     stripContinuation(logical);
-                    if (!std::getline(in, line)) {
+                    만약 (!std::getline(in, line)) {
                         break;
                     }
                     logical += "\n";
@@ -627,15 +627,15 @@ class Preprocessor {
                 t = trim(logical);
             }
 
-            if (!t.empty() && t[0] == '#') {
+            만약 (!t.empty() && t[0] == '#') {
                 bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_stack, mode);
-                if (mode == DirectiveMode::IncludesOnly && !handled) {
+                만약 (mode == DirectiveMode::IncludesOnly && !handled) {
                     out << logical << "\n";
                 }
-            } else {
-                if (mode == DirectiveMode::IncludesOnly) {
+            } 아니면 {
+                만약 (mode == DirectiveMode::IncludesOnly) {
                     out << logical << "\n";
-                } else if (condActive(cond)) {
+                } 아니면 만약 (condActive(cond)) {
                     // Expand macros in the line before outputting
                     std::string expanded = expandMacrosRecursive(logical, macros);
                     out << expanded << "\n";
@@ -643,11 +643,11 @@ class Preprocessor {
             }
         }
 
-        if (mode == DirectiveMode::All && !cond.empty()) {
+        만약 (mode == DirectiveMode::All && !cond.empty()) {
             throw std::runtime_error("Unclosed #if directive");
         }
 
-        return out.str();
+        반환 out.str();
     }
 
     //----------------------------------------------------------
@@ -666,136 +666,136 @@ class Preprocessor {
         std::string        cmd;
         iss >> cmd;
 
-        if (cmd == "include") {
-            if (mode == DirectiveMode::All && !condActive(cond)) {
-                return true;
+        만약 (cmd == "include") {
+            만약 (mode == DirectiveMode::All && !condActive(cond)) {
+                반환 true;
             }
             std::string file;
             iss >> file;
-            if (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
+            만약 (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
                 file = file.substr(1, file.size() - 2);
             }
             out << processIncludeFile(file, macros, predefined_macros, include_stack, mode);
-            return true;
+            반환 true;
         }
 
-        if (mode == DirectiveMode::IncludesOnly) {
-            return false;
+        만약 (mode == DirectiveMode::IncludesOnly) {
+            반환 false;
         }
 
-        if (cmd == "define") {
-            if (!condActive(cond)) {
-                return true;
+        만약 (cmd == "define") {
+            만약 (!condActive(cond)) {
+                반환 true;
             }
             std::string name;
             iss >> name;
             // Don't override predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            만약 (predefined_macros.count(name)) {
+                반환 true;
             }
             std::string value = trim_value(iss);
             macros[name]      = value;
-            return true;
+            반환 true;
         }
 
-        if (cmd == "undef") {
-            if (!condActive(cond)) {
-                return true;
+        만약 (cmd == "undef") {
+            만약 (!condActive(cond)) {
+                반환 true;
             }
             std::string name;
             iss >> name;
             // Don't undef predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            만약 (predefined_macros.count(name)) {
+                반환 true;
             }
             macros.erase(name);
-            return true;
+            반환 true;
         }
 
-        if (cmd == "ifdef") {
+        만약 (cmd == "ifdef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            반환 true;
         }
 
-        if (cmd == "ifndef") {
+        만약 (cmd == "ifndef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = !macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            반환 true;
         }
 
-        if (cmd == "if") {
+        만약 (cmd == "if") {
             std::string expr = trim_value(iss);
             bool        p    = condActive(cond);
             bool        v    = false;
-            if (p) {
+            만약 (p) {
                 std::unordered_set<std::string> visiting;
                 ExprParser                      ep(expr, macros, visiting);
                 v = ep.parse() != 0;
             }
             cond.push_back({ p, p && v, p && v });
-            return true;
+            반환 true;
         }
 
-        if (cmd == "elif") {
+        만약 (cmd == "elif") {
             std::string expr = trim_value(iss);
 
-            if (cond.empty()) {
+            만약 (cond.empty()) {
                 throw std::runtime_error("#elif without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            만약 (!c.parent_active) {
                 c.active = false;
-                return true;
+                반환 true;
             }
 
-            if (c.taken) {
+            만약 (c.taken) {
                 c.active = false;
-                return true;
+                반환 true;
             }
 
             std::unordered_set<std::string> visiting;
             ExprParser                      ep(expr, macros, visiting);
             bool                            v = ep.parse() != 0;
             c.active                          = v;
-            if (v) {
+            만약 (v) {
                 c.taken = true;
             }
-            return true;
+            반환 true;
         }
 
-        if (cmd == "else") {
-            if (cond.empty()) {
+        만약 (cmd == "else") {
+            만약 (cond.empty()) {
                 throw std::runtime_error("#else without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            만약 (!c.parent_active) {
                 c.active = false;
-                return true;
+                반환 true;
             }
-            if (c.taken) {
+            만약 (c.taken) {
                 c.active = false;
-            } else {
+            } 아니면 {
                 c.active = true;
                 c.taken  = true;
             }
-            return true;
+            반환 true;
         }
 
-        if (cmd == "endif") {
-            if (cond.empty()) {
+        만약 (cmd == "endif") {
+            만약 (cond.empty()) {
                 throw std::runtime_error("#endif without #if");
             }
             cond.pop_back();
-            return true;
+            반환 true;
         }
 
         // Unknown directive

@@ -11,7 +11,7 @@ dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    반환 handle;
 }
 
 void * dl_get_sym(dl_handle * handle, const char * name) {
@@ -22,27 +22,27 @@ void * dl_get_sym(dl_handle * handle, const char * name) {
 
     SetErrorMode(old_mode);
 
-    return p;
+    반환 p;
 }
 
 const char * dl_error() {
-    return "";
+    반환 "";
 }
 
-#else
+#아니면
 
 dl_handle * dl_load_library(const fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    반환 handle;
 }
 
 void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+    반환 dlsym(handle, name);
 }
 
 const char * dl_error() {
     const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+    반환 rslt != nullptr ? rslt : "";
 }
 
 #endif

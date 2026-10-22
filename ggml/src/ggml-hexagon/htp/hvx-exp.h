@@ -136,7 +136,7 @@ static inline HVX_Vector hvx_vec_exp_f32(HVX_Vector in_vec) {
 
     y_v = Q6_V_vmux_QVV(qy_v_negative_exponent, zero_v, y_v);
 
-    return y_v;
+    반환 y_v;
 }
 
 static inline HVX_Vector hvx_vec_exp_f32_guard(HVX_Vector in_vec, HVX_Vector max_exp, HVX_Vector inf) {
@@ -144,20 +144,20 @@ static inline HVX_Vector hvx_vec_exp_f32_guard(HVX_Vector in_vec, HVX_Vector max
 
     HVX_Vector out = hvx_vec_exp_f32(in_vec);
 
-    return Q6_V_vmux_QVV(pred0, inf, out);
+    반환 Q6_V_vmux_QVV(pred0, inf, out);
 }
 
-static inline void hvx_exp_f32(uint8_t * restrict dst, const uint8_t * restrict src, const int num_elems, bool negate) {
-    int left_over       = num_elems & (VLEN_FP32 - 1);
-    int num_elems_whole = num_elems - left_over;
+static inline void hvx_exp_f32(uint8_t * restrict dst, const uint8_t * restrict src, const 정수 num_elems, bool negate) {
+    정수 left_over       = num_elems & (VLEN_FP32 - 1);
+    정수 num_elems_whole = num_elems - left_over;
 
-    int unaligned_addr = 0;
-    int unaligned_loop = 0;
-    if ((0 == hex_is_aligned((void *) src, VLEN)) || (0 == hex_is_aligned((void *) dst, VLEN))) {
+    정수 unaligned_addr = 0;
+    정수 unaligned_loop = 0;
+    만약 ((0 == hex_is_aligned((void *) src, VLEN)) || (0 == hex_is_aligned((void *) dst, VLEN))) {
         unaligned_addr = 1;
     }
     // assert((0 == unaligned_addr) || (0 == num_elems_whole));
-    if ((1 == unaligned_addr) && (num_elems_whole != 0)) {
+    만약 ((1 == unaligned_addr) && (num_elems_whole != 0)) {
         unaligned_loop = 1;
     }
 
@@ -169,44 +169,44 @@ static inline void hvx_exp_f32(uint8_t * restrict dst, const uint8_t * restrict 
     const HVX_Vector max_exp = hvx_vec_splat_f32(kMaxExp);
     const HVX_Vector inf     = hvx_vec_splat_f32(kInf);
 
-    if (0 == unaligned_loop) {
+    만약 (0 == unaligned_loop) {
         HVX_Vector * p_vec_in1 = (HVX_Vector *) src;
         HVX_Vector * p_vec_out = (HVX_Vector *) dst;
 
         #pragma unroll(2)
-        for (int i = 0; i < num_elems_whole; i += VLEN_FP32) {
-            if (true == negate) {
+        위해 (정수 i = 0; i < num_elems_whole; i += VLEN_FP32) {
+            만약 (true == negate) {
                 HVX_Vector neg_vec_in = hvx_vec_neg_f32(*p_vec_in1++);
                 *p_vec_out++          = hvx_vec_exp_f32_guard(neg_vec_in, max_exp, inf);
-            } else {
+            } 아니면 {
                 *p_vec_out++ = hvx_vec_exp_f32_guard(*p_vec_in1++, max_exp, inf);
             }
         }
-    } else {
+    } 아니면 {
         #pragma unroll(2)
-        for (int i = 0; i < num_elems_whole; i += VLEN_FP32) {
+        위해 (정수 i = 0; i < num_elems_whole; i += VLEN_FP32) {
             HVX_Vector in = *(HVX_UVector *) (src + i * SIZEOF_FP32);
 
-            if (true == negate) {
+            만약 (true == negate) {
                 HVX_Vector neg_vec_in                    = hvx_vec_neg_f32(in);
                 *(HVX_UVector *) (dst + i * SIZEOF_FP32) = hvx_vec_exp_f32_guard(neg_vec_in, max_exp, inf);
-            } else {
+            } 아니면 {
                 *(HVX_UVector *) (dst + i * SIZEOF_FP32) = hvx_vec_exp_f32_guard(in, max_exp, inf);
             }
         }
     }
 
-    if (left_over > 0) {
+    만약 (left_over > 0) {
         const float * srcf = (float *) src + num_elems_whole;
         float *       dstf = (float *) dst + num_elems_whole;
 
         HVX_Vector in = *(HVX_UVector *) srcf;
 
-        if (true == negate) {
+        만약 (true == negate) {
             HVX_Vector neg_vec_in = hvx_vec_neg_f32(in);
 
             vec_out = hvx_vec_exp_f32_guard(neg_vec_in, max_exp, inf);
-        } else {
+        } 아니면 {
             vec_out = hvx_vec_exp_f32_guard(in, max_exp, inf);
         }
 
@@ -249,7 +249,7 @@ static inline HVX_Vector hvx_vec_exp2_f16(HVX_Vector x_v) {
     y_exp                      = Q6_Vh_vadd_VhVh(k_v, y_exp);
     HVX_VectorPred q_underflow = Q6_Q_vcmp_gt_VhVh(zero_v, y_exp);
     y                          = Q6_Vh_vaslacc_VhVhR(y, k_v, 10);
-    return Q6_V_vmux_QVV(q_underflow, zero_v, y);
+    반환 Q6_V_vmux_QVV(q_underflow, zero_v, y);
 }
 
 #endif /* HVX_EXP_H */

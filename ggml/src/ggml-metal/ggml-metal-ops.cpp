@@ -20,15 +20,15 @@
 static constexpr int64_t GGML_METAL_MIN_THREADGROUPS = 128;
 
 static ggml_metal_buffer_id ggml_metal_get_buffer_id(const ggml_tensor * t) {
-    if (!t) {
-        return { nullptr, 0 };
+    만약 (!t) {
+        반환 { nullptr, 0 };
     }
 
     ggml_backend_buffer_t buffer = t->view_src ? t->view_src->buffer : t->buffer;
 
     ggml_metal_buffer_t ctx = (ggml_metal_buffer_t) buffer->context;
 
-    return ggml_metal_buffer_get_id(ctx, t);
+    반환 ggml_metal_buffer_get_id(ctx, t);
 }
 
 struct ggml_metal_op {
@@ -37,11 +37,11 @@ struct ggml_metal_op {
         ggml_metal_cmd_buf_t cmd_buf,
         ggml_cgraph * gf,
         ggml_metal_fusion_info * finfo,
-        int  idx_start,
-        int  idx_end,
+        정수  idx_start,
+        정수  idx_end,
         bool use_concurrency,
         bool use_capture,
-        int  debug_graph) {
+        정수  debug_graph) {
         this->dev             = dev;
         this->lib             = ggml_metal_device_get_library(dev);
         this->enc             = ggml_metal_encoder_init(cmd_buf, use_concurrency);
@@ -59,8 +59,8 @@ struct ggml_metal_op {
         // filter empty nodes
         // TODO: this can be removed when the allocator starts filtering them earlier
         //       https://github.com/ggml-org/llama.cpp/pull/16130#issuecomment-3327905830
-        for (int i = idx_start; i < idx_end; i++) {
-            if (!ggml_op_is_empty(gf->nodes[i]->op) && !ggml_is_empty(gf->nodes[i])) {
+        위해 (정수 i = idx_start; i < idx_end; i++) {
+            만약 (!ggml_op_is_empty(gf->nodes[i]->op) && !ggml_is_empty(gf->nodes[i])) {
                 idxs.push_back(i);
             }
         }
@@ -72,28 +72,28 @@ struct ggml_metal_op {
         ggml_mem_ranges_free(this->mem_ranges);
     }
 
-    int n_nodes() const {
-        return idxs.size();
+    정수 n_nodes() const {
+        반환 idxs.size();
     }
 
-    ggml_tensor * node(int i) const {
-        assert(i >= 0 && i < (int) idxs.size());
-        return ggml_graph_node(gf, idxs[i]);
+    ggml_tensor * node(정수 i) const {
+        assert(i >= 0 && i < (정수) idxs.size());
+        반환 ggml_graph_node(gf, idxs[i]);
     }
 
     // consult the fusion table for the longest pattern starting at i0
     // returns the matching pattern (nullptr if no fusion) and sets *n_out to the number of nodes
-    const ggml_metal_fusion * can_fuse(int i0, enum ggml_metal_fusion_mode mode, int * n_out) const {
+    const ggml_metal_fusion * can_fuse(정수 i0, enum ggml_metal_fusion_mode mode, 정수 * n_out) const {
         assert(use_fusion());
         assert(i0 >= 0 && i0 < n_nodes());
 
-        return ggml_metal_fusion_next(gf, idxs.data(), (int) idxs.size(), i0, mode, n_out);
+        반환 ggml_metal_fusion_next(gf, idxs.data(), (정수) idxs.size(), i0, mode, n_out);
     }
 
     // whether to attempt fusion; the toggle lives in the shared fusion debugging context owned
     // by the device (initialized from GGML_METAL_FUSION_DISABLE, overridable by the test)
     bool use_fusion() const {
-        return ggml_metal_fusion_info_enabled(finfo);
+        반환 ggml_metal_fusion_info_enabled(finfo);
     }
 
     // record that a fusion fired, indexed by the matching table entry
@@ -112,16 +112,16 @@ struct ggml_metal_op {
     bool use_concurrency;
     bool use_capture;
 
-    int debug_graph;
+    정수 debug_graph;
 
 private:
     ggml_cgraph * gf;
 
-    int idx_start;
-    int idx_end;
+    정수 idx_start;
+    정수 idx_end;
 
     // non-empty node indices
-    std::vector<int> idxs;
+    std::vector<정수> idxs;
 };
 
 ggml_metal_op_t ggml_metal_op_init(
@@ -129,11 +129,11 @@ ggml_metal_op_t ggml_metal_op_init(
         ggml_metal_cmd_buf_t cmd_buf,
         ggml_cgraph * gf,
         ggml_metal_fusion_info * finfo,
-        int idx_start,
-        int idx_end,
+        정수 idx_start,
+        정수 idx_end,
         bool use_concurrency,
         bool use_capture,
-        int debug_graph) {
+        정수 debug_graph) {
     ggml_metal_op_t res = new ggml_metal_op(
         dev,
         cmd_buf,
@@ -145,52 +145,52 @@ ggml_metal_op_t ggml_metal_op_init(
         use_capture,
         debug_graph);
 
-    return res;
+    반환 res;
 }
 
 void ggml_metal_op_free(ggml_metal_op_t ctx) {
     delete ctx;
 }
 
-int ggml_metal_op_n_nodes(ggml_metal_op_t ctx) {
-    return ctx->n_nodes();
+정수 ggml_metal_op_n_nodes(ggml_metal_op_t ctx) {
+    반환 ctx->n_nodes();
 }
 
 static bool ggml_metal_op_concurrency_reset(ggml_metal_op_t ctx) {
-    if (!ctx->mem_ranges) {
-        return true;
+    만약 (!ctx->mem_ranges) {
+        반환 true;
     }
 
     ggml_metal_encoder_memory_barrier(ctx->enc);
 
     ggml_mem_ranges_reset(ctx->mem_ranges);
 
-    return true;
+    반환 true;
 }
 
 static bool ggml_metal_op_concurrency_check(ggml_metal_op_t ctx, const ggml_tensor * node) {
-    if (!ctx->mem_ranges) {
-        return false;
+    만약 (!ctx->mem_ranges) {
+        반환 false;
     }
 
-    return ggml_mem_ranges_check(ctx->mem_ranges, node);
+    반환 ggml_mem_ranges_check(ctx->mem_ranges, node);
 }
 
 static bool ggml_metal_op_concurrency_add(ggml_metal_op_t ctx, const ggml_tensor * node) {
-    if (!ctx->mem_ranges) {
-        return true;
+    만약 (!ctx->mem_ranges) {
+        반환 true;
     }
 
-    return ggml_mem_ranges_add(ctx->mem_ranges, node);
+    반환 ggml_mem_ranges_add(ctx->mem_ranges, node);
 }
 
-static int ggml_metal_op_encode_impl(ggml_metal_op_t ctx, int idx) {
+static 정수 ggml_metal_op_encode_impl(ggml_metal_op_t ctx, 정수 idx) {
     struct ggml_tensor * node = ctx->node(idx);
 
     //GGML_LOG_INFO("%s: encoding node %3d, op = %8s\n", __func__, idx, ggml_op_name(node->op));
 
-    if (ggml_is_empty(node)) {
-        return 1;
+    만약 (ggml_is_empty(node)) {
+        반환 1;
     }
 
     switch (node->op) {
@@ -201,25 +201,25 @@ static int ggml_metal_op_encode_impl(ggml_metal_op_t ctx, int idx) {
         case GGML_OP_PERMUTE:
             {
                 // noop -> next node
-                if (ctx->debug_graph > 0) {
+                만약 (ctx->debug_graph > 0) {
                     GGML_LOG_DEBUG("%s: node[%5d] - %-12s %s\n", __func__, idx, ggml_op_name(node->op), "(noop)");
                 }
-            } return 1;
+            } 반환 1;
         default:
             {
             } break;
     }
 
-    if (!ggml_metal_device_supports_op(ctx->dev, node)) {
+    만약 (!ggml_metal_device_supports_op(ctx->dev, node)) {
         GGML_LOG_ERROR("%s: error: unsupported op '%s'\n", __func__, ggml_op_desc(node));
         GGML_ABORT("unsupported op");
     }
 
-    if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-        return 1;
+    만약 ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        반환 1;
     }
 
-    int n_fuse = 1;
+    정수 n_fuse = 1;
 
     // check if the current node can run concurrently with other nodes before it
     // the condition is that:
@@ -232,23 +232,23 @@ static int ggml_metal_op_encode_impl(ggml_metal_op_t ctx, int idx) {
     {
         bool is_concurrent = ggml_metal_op_concurrency_check(ctx, node);
 
-        if (is_concurrent && ctx->use_fusion()) {
-            int n_fuse = 1;
+        만약 (is_concurrent && ctx->use_fusion()) {
+            정수 n_fuse = 1;
             const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
-            if (fusion) {
+            만약 (fusion) {
                 // fused kernels write to the last node of the group, not necessarily to the first node's dst
                 is_concurrent = ggml_mem_ranges_check(ctx->mem_ranges, ctx->node(idx + n_fuse - 1));
             }
         }
 
-        if (!is_concurrent) {
+        만약 (!is_concurrent) {
             ggml_metal_op_concurrency_reset(ctx);
         }
 
-        if (ctx->debug_graph > 0) {
+        만약 (ctx->debug_graph > 0) {
             GGML_LOG_DEBUG("%s: node[%5d] - %-12s %-12s %s\n", __func__, idx, ggml_op_name(node->op), ggml_get_name(node), is_concurrent ? "(concurrent)" : "");
         }
-        if (ctx->debug_graph > 1) {
+        만약 (ctx->debug_graph > 1) {
             GGML_TENSOR_LOCALS( int64_t, ne0, node->src[0], ne);
             GGML_TENSOR_LOCALS(uint64_t, nb0, node->src[0], nb);
             GGML_TENSOR_LOCALS( int64_t, ne1, node->src[1], ne);
@@ -260,23 +260,23 @@ static int ggml_metal_op_encode_impl(ggml_metal_op_t ctx, int idx) {
             GGML_TENSOR_LOCALS( int64_t, ne,  node,         ne);
             GGML_TENSOR_LOCALS(uint64_t, nb,  node,         nb);
 
-            if (node->src[0]) {
+            만약 (node->src[0]) {
                 GGML_LOG_DEBUG("%s: src0 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[0]->type), ne00, ne01, ne02, ne03, nb00, nb01, nb02, nb03,
                         ggml_is_contiguous(node->src[0]), node->src[0]->name);
             }
-            if (node->src[1]) {
+            만약 (node->src[1]) {
                 GGML_LOG_DEBUG("%s: src1 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[1]->type), ne10, ne11, ne12, ne13, nb10, nb11, nb12, nb13,
                         ggml_is_contiguous(node->src[1]), node->src[1]->name);
             }
-            if (node->src[2]) {
+            만약 (node->src[2]) {
                 GGML_LOG_DEBUG("%s: src2 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[2]->type), ne20, ne21, ne22, ne23, nb20, nb21, nb22, nb23,
                         ggml_is_contiguous(node->src[2]), node->src[2]->name);
             }
-            if (node->src[3]) {
+            만약 (node->src[3]) {
                 GGML_LOG_DEBUG("%s: src3 - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], %d, %s\n", __func__, ggml_type_name(node->src[3]->type), ne30, ne31, ne32, ne33, nb30, nb31, nb32, nb33,
                         ggml_is_contiguous(node->src[3]), node->src[3]->name);
             }
-            if (node) {
+            만약 (node) {
                 GGML_LOG_DEBUG("%s: node - %4s [%5lld, %5lld, %5lld, %5lld] [%5lld, %5lld, %5lld, %5lld], 1, %s\n", __func__, ggml_type_name(node->type), ne0, ne1, ne2, ne3, nb0, nb1, nb2, nb3,
                         node->name);
             }
@@ -523,41 +523,41 @@ static int ggml_metal_op_encode_impl(ggml_metal_op_t ctx, int idx) {
             }
     }
 
-    if (ctx->debug_graph > 0) {
-        if (n_fuse > 1) {
+    만약 (ctx->debug_graph > 0) {
+        만약 (n_fuse > 1) {
             GGML_LOG_DEBUG("%s:               fuse %d ops\n", __func__, n_fuse);
         }
     }
 
     // update the mem ranges in the encoding context
-    for (int i = 0; i < n_fuse; ++i) {
-        if (!ggml_metal_op_concurrency_add(ctx, ctx->node(idx + i))) {
+    위해 (정수 i = 0; i < n_fuse; ++i) {
+        만약 (!ggml_metal_op_concurrency_add(ctx, ctx->node(idx + i))) {
             ggml_metal_op_concurrency_reset(ctx);
         }
     }
 
-    return n_fuse;
+    반환 n_fuse;
 }
 
-int ggml_metal_op_encode(ggml_metal_op_t ctx, int idx) {
-    if (ctx->use_capture) {
+정수 ggml_metal_op_encode(ggml_metal_op_t ctx, 정수 idx) {
+    만약 (ctx->use_capture) {
         ggml_metal_encoder_debug_group_push(ctx->enc, ggml_op_desc(ctx->node(idx)));
     }
 
-    int res = ggml_metal_op_encode_impl(ctx, idx);
-    if (idx + res > ctx->n_nodes()) {
+    정수 res = ggml_metal_op_encode_impl(ctx, idx);
+    만약 (idx + res > ctx->n_nodes()) {
         GGML_ABORT("fusion error: nodes spanning multiple encoders have been fused. this indicates a bug in the fusion logic %s",
                 "https://github.com/ggml-org/llama.cpp/pull/14849");
     }
 
-    if (ctx->use_capture) {
+    만약 (ctx->use_capture) {
         ggml_metal_encoder_debug_group_pop(ctx->enc);
     }
 
-    return res;
+    반환 res;
 }
 
-int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_concat(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -578,7 +578,7 @@ int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
     int32_t ne00_arg = ne00;
     int32_t ne10_arg = ne10;
     int32_t ne0_arg  = ne0;
-    if (is_q) {
+    만약 (is_q) {
         const int32_t blck = ggml_blck_size(op->type);
         GGML_ASSERT(ne00 % blck == 0);
         GGML_ASSERT(ne10 % blck == 0);
@@ -588,25 +588,25 @@ int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
         ne0_arg  = ne0/blck;
     }
 
-    int nth = std::min(256, ne0_arg);
+    정수 nth = std::min(256, ne0_arg);
 
     // when rows are small, we can batch them together in a single threadgroup
-    int nrptg = 1;
-    if (nth < 256) {
+    정수 nrptg = 1;
+    만약 (nth < 256) {
         nrptg = std::min((256 + nth - 1) / nth, ne1);
-        if (nrptg * nth > 256) {
+        만약 (nrptg * nth > 256) {
             nrptg = 256 / nth;
         }
     }
 
-    const int nw0 = (ne1 + nrptg - 1) / nrptg;
+    const 정수 nw0 = (ne1 + nrptg - 1) / nrptg;
 
     // split long rows across threadgroups when there are too few rows to fill the GPU
     const int64_t n_rows = (int64_t) nw0*ne2*ne3;
 
-    int nc0 = 1;
-    if (nrptg == 1) {
-        nc0 = (int) std::max<int64_t>(1, std::min<int64_t>((ne0_arg + nth - 1)/nth, (GGML_METAL_MIN_THREADGROUPS + n_rows - 1)/n_rows));
+    정수 nc0 = 1;
+    만약 (nrptg == 1) {
+        nc0 = (정수) std::max<int64_t>(1, std::min<int64_t>((ne0_arg + nth - 1)/nth, (GGML_METAL_MIN_THREADGROUPS + n_rows - 1)/n_rows));
     }
 
     ggml_metal_kargs_concat args = {
@@ -648,10 +648,10 @@ int ggml_metal_op_concat(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*nc0, ne2, ne3, nth, nrptg, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_repeat(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_repeat(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -690,14 +690,14 @@ int ggml_metal_op_repeat(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    const 정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_acc(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -724,7 +724,7 @@ int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
 
     const bool inplace = (bool) ((const int32_t *) op->op_params)[4];
 
-    if (!inplace) {
+    만약 (!inplace) {
         // run a separate kernel to cpy src->dst
         // not sure how to avoid this
         // TODO: make a simpler cpy_bytes kernel
@@ -757,7 +757,7 @@ int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
         ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
 
-        const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
+        const 정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
@@ -801,20 +801,20 @@ int ggml_metal_op_acc(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
 
-    const int nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    const 정수 nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
-    int nth = 1;
+    정수 nth = 1;
 
-    while (2*nth < args.ne0 && nth < nth_max) {
+    동안 (2*nth < args.ne0 && nth < nth_max) {
         nth *= 2;
     }
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne11, ne12, ne13, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_unary(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -855,25 +855,25 @@ int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
         /*.max   =*/ 0.0,
     };
 
-    if (op->op == GGML_OP_LEAKY_RELU) {
+    만약 (op->op == GGML_OP_LEAKY_RELU) {
         args.slope = ggml_get_op_params_f32(op, 0);
     }
 
-    if (op->op == GGML_OP_SCALE) {
+    만약 (op->op == GGML_OP_SCALE) {
         args.scale = ggml_get_op_params_f32(op, 0);
         args.bias  = ggml_get_op_params_f32(op, 1);
     }
 
-    if (op->op == GGML_OP_FILL) {
+    만약 (op->op == GGML_OP_FILL) {
         args.val = ggml_get_op_params_f32(op, 0);
     }
 
-    if (op->op == GGML_OP_CLAMP) {
+    만약 (op->op == GGML_OP_CLAMP) {
         args.min = ggml_get_op_params_f32(op, 0);
         args.max = ggml_get_op_params_f32(op, 1);
     }
 
-    if (op->op == GGML_OP_UNARY && ggml_get_unary_op(op) == GGML_UNARY_OP_XIELU) {
+    만약 (op->op == GGML_OP_UNARY && ggml_get_unary_op(op) == GGML_UNARY_OP_XIELU) {
         args.slope = ggml_get_op_params_f32(op, 1); // alpha_n
         args.scale = ggml_get_op_params_f32(op, 2); // alpha_p
         args.bias  = ggml_get_op_params_f32(op, 3); // beta
@@ -882,7 +882,7 @@ int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_unary(lib, op);
 
-    if (pipeline.c4) {
+    만약 (pipeline.c4) {
         args.ne00 = ne00/4;
         args.ne0  = ne0/4;
     }
@@ -892,22 +892,22 @@ int ggml_metal_op_unary(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
     ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
 
-    if (pipeline.cnt) {
-        const int n = pipeline.c4 ? ggml_nelements(op)/4 : ggml_nelements(op);
+    만약 (pipeline.cnt) {
+        const 정수 n = pipeline.c4 ? ggml_nelements(op)/4 : ggml_nelements(op);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, 1, 1, 1);
-    } else {
-        const int nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-        const int nth = MIN(args.ne00, nth_max);
-        const int nk0 = (args.ne00 + nth - 1)/nth;
+    } 아니면 {
+        const 정수 nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+        const 정수 nth = MIN(args.ne00, nth_max);
+        const 정수 nk0 = (args.ne00 + nth - 1)/nth;
 
         ggml_metal_encoder_dispatch_threadgroups(enc, nk0*ne01, ne02, ne03, nth, 1, 1);
     }
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_glu(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_glu(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -920,7 +920,7 @@ int ggml_metal_op_glu(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    if (op->src[1]) {
+    만약 (op->src[1]) {
         GGML_ASSERT(ggml_are_same_shape(op->src[0], op->src[1]));
     }
 
@@ -953,19 +953,19 @@ int ggml_metal_op_glu(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    if (op->src[1]) {
+    만약 (op->src[1]) {
         ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    } else {
+    } 아니면 {
         ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 2);
     }
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_sum(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_sum(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op  = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -979,16 +979,16 @@ int ggml_metal_op_sum(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_sum(lib, op);
 
-    int nth = 32; // SIMD width
+    정수 nth = 32; // SIMD width
 
-    while (nth < (int) n && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    동안 (nth < (정수) n && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
     nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    nth = std::min(nth, (int) n);
+    nth = std::min(nth, (정수) n);
 
-    const int nsg = (nth + 31) / 32;
+    const 정수 nsg = (nth + 31) / 32;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -999,10 +999,10 @@ int ggml_metal_op_sum(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_sum_rows(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_sum_rows(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -1039,19 +1039,19 @@ int ggml_metal_op_sum_rows(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_sum_rows(lib, op);
 
-    if (pipeline.c4) {
+    만약 (pipeline.c4) {
         args.ne00 = ne00/4;
         args.ne0  = ne0/4;
     }
 
-    int nth = 32; // SIMD width
+    정수 nth = 32; // SIMD width
 
-    while (nth < args.ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    동안 (nth < args.ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
     nth = std::min(nth, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    nth = std::min(nth, (int) args.ne00);
+    nth = std::min(nth, (정수) args.ne00);
 
     const size_t smem = pipeline.smem;
 
@@ -1064,10 +1064,10 @@ int ggml_metal_op_sum_rows(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_cumsum(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -1082,8 +1082,8 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline_blk = ggml_metal_library_get_pipeline_cumsum_blk(lib, op);
 
-    int nth = 1;
-    while (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_blk)) {
+    정수 nth = 1;
+    동안 (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_blk)) {
         nth *= 2;
     }
 
@@ -1139,7 +1139,7 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_dispatch_threadgroups(enc, net0*ne01, ne02, ne03, nth, 1, 1);
     }
 
-    if (ne00 > nth) {
+    만약 (ne00 > nth) {
         ggml_metal_op_concurrency_reset(ctx);
 
         {
@@ -1207,10 +1207,10 @@ int ggml_metal_op_cumsum(ggml_metal_op_t ctx, int idx) {
         }
     }
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_get_rows(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_get_rows(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -1240,9 +1240,9 @@ int ggml_metal_op_get_rows(ggml_metal_op_t ctx, int idx) {
         /*.nb3   =*/ nb3,
     };
 
-    const int nth = std::min(args.ne00t, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    const 정수 nth = std::min(args.ne00t, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
-    const int nw0 = (args.ne00t + nth - 1)/nth;
+    const 정수 nw0 = (args.ne00t + nth - 1)/nth;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -1252,10 +1252,10 @@ int ggml_metal_op_get_rows(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*ne10, ne11, ne12, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_set_rows(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_set_rows(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -1272,18 +1272,18 @@ int ggml_metal_op_set_rows(ggml_metal_op_t ctx, int idx) {
 
     const int32_t nk0 = ne0/ggml_blck_size(op->type);
 
-    int nth = 32; // SIMD width
+    정수 nth = 32; // SIMD width
 
-    while (nth < nk0 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    동안 (nth < nk0 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    int nrptg = 1;
-    if (nth > nk0) {
+    정수 nrptg = 1;
+    만약 (nth > nk0) {
         nrptg = (nth + nk0 - 1)/nk0;
         nth   = nk0;
 
-        if (nrptg*nth > ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+        만약 (nrptg*nth > ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
             nrptg--;
         }
     }
@@ -1314,10 +1314,10 @@ int ggml_metal_op_set_rows(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nrptg - 1)/nrptg, ne02, ne03, nth, nrptg, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_diag(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_diag(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -1356,10 +1356,10 @@ int ggml_metal_op_diag(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, 32, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1409,9 +1409,9 @@ int ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(m),  4);
     ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 5);
 
-    const int nsg   = OP_LIGHTNING_INDEXER_NSG;
-    const int nkptg = OP_LIGHTNING_INDEXER_NKPSG*nsg;
-    const int nbptg = OP_LIGHTNING_INDEXER_NBPTG;
+    const 정수 nsg   = OP_LIGHTNING_INDEXER_NSG;
+    const 정수 nkptg = OP_LIGHTNING_INDEXER_NKPSG*nsg;
+    const 정수 nbptg = OP_LIGHTNING_INDEXER_NBPTG;
 
     auto pipeline = ggml_metal_library_get_pipeline_lightning_indexer(ctx->lib, op);
     ggml_metal_encoder_set_pipeline(enc, pipeline);
@@ -1421,10 +1421,10 @@ int ggml_metal_op_lightning_indexer(ggml_metal_op_t ctx, int idx) {
             (q->ne[2] + nbptg - 1)/nbptg,
             q->ne[3], 32, nsg, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_encoder_t enc = ctx->enc;
@@ -1468,7 +1468,7 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
                 // One SIMDgroup owns one 4x4 Sinkhorn matrix. Packing up to four
                 // independent tokens per threadgroup keeps both decode and prompt
                 // dispatches compact without any threadgroup-memory synchronization.
-                const int nsg = std::min(4, args.n_tokens);
+                const 정수 nsg = std::min(4, args.n_tokens);
                 ggml_metal_encoder_dispatch_threadgroups(
                         enc, (args.n_tokens + nsg - 1)/nsg, 1, 1, 32, nsg, 1);
             } break;
@@ -1500,8 +1500,8 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
                 ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(weights), 2);
                 ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),      3);
 
-                const int n_tiles = (args.n_embd + 31)/32;
-                const int nsg = std::min(4, n_tiles);
+                const 정수 n_tiles = (args.n_embd + 31)/32;
+                const 정수 nsg = std::min(4, n_tiles);
                 ggml_metal_encoder_dispatch_threadgroups(
                         enc, (n_tiles + nsg - 1)/nsg, args.n_tokens, 1, 32, nsg, 1);
             } break;
@@ -1540,15 +1540,15 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
                 ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(x),        1);
                 ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(residual), 2);
                 ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(post),     3);
-                if (comb) {
+                만약 (comb) {
                     ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(comb), 4);
                     ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),   5);
-                } else {
+                } 아니면 {
                     ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op),   4);
                 }
 
-                const int n_tiles = (args.n_embd + 31)/32;
-                const int nsg = std::min(4, n_tiles);
+                const 정수 n_tiles = (args.n_embd + 31)/32;
+                const 정수 nsg = std::min(4, n_tiles);
                 ggml_metal_encoder_dispatch_threadgroups(
                         enc, (n_tiles + nsg - 1)/nsg, args.n_tokens, 1, 32, nsg, 1);
             } break;
@@ -1556,17 +1556,17 @@ int ggml_metal_op_dsv4_hc(ggml_metal_op_t ctx, int idx) {
             GGML_ABORT("fatal error");
     }
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_soft_max(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
-    if (ctx->use_fusion()) {
-        int n = 1;
+    만약 (ctx->use_fusion()) {
+        정수 n = 1;
         const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_TOPK_MOE) {
-            return ggml_metal_op_topk_moe(ctx, idx);
+        만약 (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_TOPK_MOE) {
+            반환 ggml_metal_op_topk_moe(ctx, idx);
         }
     }
 
@@ -1621,14 +1621,14 @@ int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_soft_max(lib, op);
 
-    int nth = 32; // SIMD width
+    정수 nth = 32; // SIMD width
 
-    if (ne00%4 == 0) {
-        while (nth < ne00/4 && nth*ne01*ne02*ne03 < 256) {
+    만약 (ne00%4 == 0) {
+        동안 (nth < ne00/4 && nth*ne01*ne02*ne03 < 256) {
             nth *= 2;
         }
-    } else {
-        while (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
+    } 아니면 {
+        동안 (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
             nth *= 2;
         }
     }
@@ -1638,14 +1638,14 @@ int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes(enc, &args, sizeof(args), 0);
     ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 1);
-    if (op->src[1]) {
+    만약 (op->src[1]) {
         ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    } else {
+    } 아니면 {
         ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 2);
     }
-    if (op->src[2]) {
+    만약 (op->src[2]) {
         ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-    } else {
+    } 아니면 {
         ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op->src[0]), 3);
     }
     ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 4);
@@ -1654,10 +1654,10 @@ int ggml_metal_op_soft_max(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -1670,13 +1670,13 @@ int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    int n_fuse = 1;
+    정수 n_fuse = 1;
     bool use_silu = false;
 
-    if (ctx->use_fusion()) {
-        int n = 1;
+    만약 (ctx->use_fusion()) {
+        정수 n = 1;
         const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SSM_CONV_SILU) {
+        만약 (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SSM_CONV_SILU) {
             n_fuse = n;
             use_silu = true;
 
@@ -1707,16 +1707,16 @@ int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
     // Use batched kernel for prefill (ne1 > 1) to reduce threadgroup dispatch overhead
     const bool use_batched = (ne1 > 1);
 
-    if (use_batched) {
+    만약 (use_batched) {
         // Determine the smallest power of 2 that's >= ne1, but <= 256
-        int BATCH_SIZE;
-        if      (ne1 > 128) BATCH_SIZE = 256;
-        else if (ne1 > 64 ) BATCH_SIZE = 128;
-        else if (ne1 > 32 ) BATCH_SIZE = 64;
-        else if (ne1 > 16 ) BATCH_SIZE = 32;
-        else if (ne1 > 8  ) BATCH_SIZE = 16;
-        else if (ne1 > 4  ) BATCH_SIZE = 8;
-        else                BATCH_SIZE = 2;
+        정수 BATCH_SIZE;
+        만약      (ne1 > 128) BATCH_SIZE = 256;
+        아니면 만약 (ne1 > 64 ) BATCH_SIZE = 128;
+        아니면 만약 (ne1 > 32 ) BATCH_SIZE = 64;
+        아니면 만약 (ne1 > 16 ) BATCH_SIZE = 32;
+        아니면 만약 (ne1 > 8  ) BATCH_SIZE = 16;
+        아니면 만약 (ne1 > 4  ) BATCH_SIZE = 8;
+        아니면                BATCH_SIZE = 2;
 
         auto pipeline = ggml_metal_library_get_pipeline_ssm_conv_batched(lib, op, BATCH_SIZE, (int32_t) ne10, use_silu);
 
@@ -1728,9 +1728,9 @@ int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
 
         // Dispatch: ne01 rows, ceil(ne1/BATCH_SIZE) token batches, ne02 sequences
         // Each threadgroup has BATCH_SIZE threads, each handling one token
-        const int n_token_batches = (ne1 + BATCH_SIZE - 1) / BATCH_SIZE;
+        const 정수 n_token_batches = (ne1 + BATCH_SIZE - 1) / BATCH_SIZE;
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, n_token_batches, ne02, BATCH_SIZE, 1, 1);
-    } else {
+    } 아니면 {
         auto pipeline = ggml_metal_library_get_pipeline_ssm_conv(lib, op, (int32_t) ne10, use_silu);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
@@ -1742,14 +1742,14 @@ int ggml_metal_op_ssm_conv(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne1, ne02, 1, 1, 1);
     }
 
-    if (n_fuse > 1 && ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    만약 (n_fuse > 1 && ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: SSM_CONV + UNARY\n", __func__);
     }
 
-    return n_fuse;
+    반환 n_fuse;
 }
 
-int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -1860,9 +1860,9 @@ int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_dispatch_threadgroups(enc, n_tg_x, n_head, n_seqs, nth, 1, 1);
     };
 
-    if (!use_mma) {
+    만약 (!use_mma) {
         dispatch(ggml_metal_library_get_pipeline_ssm_scan(lib, op, false), d_state, d_inner);
-        return 1;
+        반환 1;
     }
 
     args.n_seq_tokens = mma_tokens;
@@ -1871,7 +1871,7 @@ int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
         OP_SSM_SCAN_SSD_NSG*32,
         1);
 
-    if (mma_tokens < n_seq_tokens) {
+    만약 (mma_tokens < n_seq_tokens) {
         ggml_metal_op_concurrency_reset(ctx);
 
         args.n_seq_tokens = n_seq_tokens - mma_tokens;
@@ -1879,10 +1879,10 @@ int ggml_metal_op_ssm_scan(ggml_metal_op_t ctx, int idx) {
         dispatch(ggml_metal_library_get_pipeline_ssm_scan(lib, op, true), d_state, d_inner);
     }
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_rwkv(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_rwkv(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -1900,7 +1900,7 @@ int ggml_metal_op_rwkv(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_rwkv(lib, op);
 
-    int ida = 0;
+    정수 ida = 0;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), ida++);
@@ -1909,7 +1909,7 @@ int ggml_metal_op_rwkv(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), ida++);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), ida++);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[5]), ida++);
-    if (op->op == GGML_OP_RWKV_WKV7) {
+    만약 (op->op == GGML_OP_RWKV_WKV7) {
         ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[6]), ida++);
     }
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         ida++);
@@ -1920,17 +1920,17 @@ int ggml_metal_op_rwkv(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, B * H, 1, 1, C/H, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
     const bool use_fusion = ctx->use_fusion();
-    const int  debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
+    const 정수  debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -1947,13 +1947,13 @@ int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
     // recurrent cache and the cpy is skipped (see GGML_METAL_FUSION_GDN_CACHE)
     ggml_metal_buffer_id bid_out = ggml_metal_get_buffer_id(op);
     uint64_t nb_out = 0;
-    int n_fuse = 1;
+    정수 n_fuse = 1;
 
-    if (use_fusion) {
-        int n = 1;
+    만약 (use_fusion) {
+        정수 n = 1;
         const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
 
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_GDN_CACHE) {
+        만약 (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_GDN_CACHE) {
             const ggml_tensor * dst_cache = ctx->node(idx + 1)->src[1]; // cache view
 
             bid_out = ggml_metal_get_buffer_id(dst_cache);
@@ -1962,13 +1962,13 @@ int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
 
             ctx->count_fusions(fusion);
 
-            if (debug_fusion > 1) {
+            만약 (debug_fusion > 1) {
                 GGML_LOG_DEBUG("%s: fuse: GATED_DELTA_NET + CPY\n", __func__);
             }
         }
     }
 
-    int ida = 0;
+    정수 ida = 0;
 
     ggml_metal_kargs_gated_delta_net args = {
         /*.ne00 =*/ ne00,
@@ -2020,14 +2020,14 @@ int ggml_metal_op_gated_delta_net(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         ida++); // dst (attn)
     ggml_metal_encoder_set_buffer  (enc, bid_out,                              ida++); // state_out
 
-    const int nsg = pipeline.nsg;
+    const 정수 nsg = pipeline.nsg;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, op->src[2]->ne[0]/nsg, op->src[2]->ne[1], op->src[2]->ne[3], 32, nsg, 1);
 
-    return n_fuse;
+    반환 n_fuse;
 }
 
-int ggml_metal_op_solve_tri(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_solve_tri(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2075,16 +2075,16 @@ int ggml_metal_op_solve_tri(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
 
-    const int nsg = pipeline.nsg;
+    const 정수 nsg = pipeline.nsg;
 
     ggml_metal_encoder_set_threadgroup_memory_size(enc, pipeline.smem, 0);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (ne10 + nsg - 1)/nsg, ne02, ne03, 32, nsg, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_set(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2108,7 +2108,7 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
 
     const bool inplace = (bool) ((const int32_t *) op->op_params)[4];
 
-    if (!inplace) {
+    만약 (!inplace) {
         // run a separate kernel to cpy src->dst
         // not sure how to avoid this
         // TODO: make a simpler cpy_bytes kernel
@@ -2141,7 +2141,7 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_set_buffer  (enc, bid_src0, 1);
         ggml_metal_encoder_set_buffer  (enc, bid_dst,  2);
 
-        const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
+        const 정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
@@ -2153,30 +2153,30 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ne10 % ggml_blck_size(op->src[1]->type) == 0);
 
     int64_t nk0 = ne10;
-    if (ggml_is_quantized(op->src[1]->type)) {
+    만약 (ggml_is_quantized(op->src[1]->type)) {
         nk0 = ne10/16;
-    } else if (ggml_is_quantized(op->type)) {
+    } 아니면 만약 (ggml_is_quantized(op->type)) {
         nk0 = ne10/ggml_blck_size(op->type);
     }
 
-    int nth = std::min<int>(nk0*ne11, 256);
+    정수 nth = std::min<정수>(nk0*ne11, 256);
 
     // when rows are small, we can batch them together in a single threadgroup
-    int nrptg = 1;
+    정수 nrptg = 1;
 
     // TODO: relax this constraint in the future
-    if (ggml_blck_size(op->src[1]->type) == 1 && ggml_blck_size(op->type) == 1) {
-        if (nth > nk0) {
+    만약 (ggml_blck_size(op->src[1]->type) == 1 && ggml_blck_size(op->type) == 1) {
+        만약 (nth > nk0) {
             nrptg = (nth + nk0 - 1)/nk0;
             nth   = nk0;
 
-            if (nrptg*nth > 256) {
+            만약 (nrptg*nth > 256) {
                 nrptg--;
             }
         }
     }
 
-    nth = std::min<int>(nth, nk0);
+    nth = std::min<정수>(nth, nk0);
 
     ggml_metal_kargs_cpy args = {
         /*.nk0  =*/ nk0,
@@ -2198,7 +2198,7 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ pnb3,
     };
 
-    const int nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
+    const 정수 nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
 
     bid_dst.offs += offs;
 
@@ -2209,10 +2209,10 @@ int ggml_metal_op_set(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*(ne11 + nrptg - 1)/nrptg, ne12, ne13, nth, nrptg, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_cpy(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2228,30 +2228,30 @@ int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ne00 % ggml_blck_size(op->src[0]->type) == 0);
 
     int64_t nk0 = ne00;
-    if (ggml_is_quantized(op->src[0]->type)) {
+    만약 (ggml_is_quantized(op->src[0]->type)) {
         nk0 = ne00/16;
-    } else if (ggml_is_quantized(op->type)) {
+    } 아니면 만약 (ggml_is_quantized(op->type)) {
         nk0 = ne00/ggml_blck_size(op->type);
     }
 
-    int nth = std::min<int>(nk0*ne01, 256);
+    정수 nth = std::min<정수>(nk0*ne01, 256);
 
     // when rows are small, we can batch them together in a single threadgroup
-    int nrptg = 1;
+    정수 nrptg = 1;
 
     // TODO: relax this constraint in the future
-    if (ggml_blck_size(op->src[0]->type) == 1 && ggml_blck_size(op->type) == 1) {
-        if (nth > nk0) {
+    만약 (ggml_blck_size(op->src[0]->type) == 1 && ggml_blck_size(op->type) == 1) {
+        만약 (nth > nk0) {
             nrptg = (nth + nk0 - 1)/nk0;
             nth   = nk0;
 
-            if (nrptg*nth > 256) {
+            만약 (nrptg*nth > 256) {
                 nrptg--;
             }
         }
     }
 
-    nth = std::min<int>(nth, nk0);
+    nth = std::min<정수>(nth, nk0);
 
     ggml_metal_kargs_cpy args = {
         /*.nk0  =*/ nk0,
@@ -2273,7 +2273,7 @@ int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
         /*.nb3  =*/ nb3,
     };
 
-    const int nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
+    const 정수 nw0 = nrptg == 1 ? (nk0 + nth - 1)/nth : 1;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -2282,10 +2282,10 @@ int ggml_metal_op_cpy(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nw0*(ne01 + nrptg - 1)/nrptg, ne02, ne03, nth, nrptg, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_pool_1d(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_pool_1d(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2319,8 +2319,8 @@ int ggml_metal_op_pool_1d(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_pool_1d(lib, op, op_pool);
 
-    const int nth = std::min(256, std::max(1, k0));
-    const int ntg = (int) np;
+    const 정수 nth = std::min(256, std::max(1, k0));
+    const 정수 ntg = (정수) np;
 
     const size_t smem = op_pool == GGML_OP_POOL_AVG ?
         2*32*sizeof(float) :
@@ -2334,10 +2334,10 @@ int ggml_metal_op_pool_1d(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_fwht(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_fwht(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2359,27 +2359,27 @@ int ggml_metal_op_fwht(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(src1), 1);
     ggml_metal_encoder_set_buffer(enc, ggml_metal_get_buffer_id(op), 2);
 
-    const int th_max = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
-    const int simd_size = 32;
+    const 정수 th_max = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
+    const 정수 simd_size = 32;
 
-    if (n >= GGML_METAL_FWHT_TG_MIN_N) {
+    만약 (n >= GGML_METAL_FWHT_TG_MIN_N) {
         GGML_ASSERT(th_max >= GGML_METAL_FWHT_TG_NT);
         ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, GGML_METAL_FWHT_TG_NT, 1, 1);
 
-        return 1;
+        반환 1;
     }
 
-    int sg_per_tg = 2;
+    정수 sg_per_tg = 2;
     sg_per_tg = std::min(sg_per_tg, th_max/simd_size);
     sg_per_tg = std::max(sg_per_tg, 1);
 
     const int64_t n_tg = (nrows + sg_per_tg - 1) / sg_per_tg;
     ggml_metal_encoder_dispatch_threadgroups(enc, n_tg, 1, 1, 32*sg_per_tg, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_pool_2d(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_pool_2d(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2426,8 +2426,8 @@ int ggml_metal_op_pool_2d(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_pool_2d(lib, op, op_pool);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), (int) np);
-    const int ntg = (np + nth - 1) / nth;
+    const 정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), (정수) np);
+    const 정수 ntg = (np + nth - 1) / nth;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args_pool_2d, sizeof(args_pool_2d), 0);
@@ -2436,31 +2436,31 @@ int ggml_metal_op_pool_2d(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
 // the number of nodes from idx on that the fusion table fuses as pattern id into one dispatch, 1 if it fuses none
-static int ggml_metal_op_try_fusion(ggml_metal_op_t ctx, int idx, ggml_metal_fusion_id id) {
-    if (!ctx->use_fusion()) {
-        return 1;
+static 정수 ggml_metal_op_try_fusion(ggml_metal_op_t ctx, 정수 idx, ggml_metal_fusion_id id) {
+    만약 (!ctx->use_fusion()) {
+        반환 1;
     }
 
-    int n = 1;
+    정수 n = 1;
     const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
-    if (fusion == nullptr || ggml_metal_fusion_get_id(fusion) != id) {
-        return 1;
+    만약 (fusion == nullptr || ggml_metal_fusion_get_id(fusion) != id) {
+        반환 1;
     }
 
     ctx->count_fusions(fusion);
 
-    if (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    만약 (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: %s to %s, %d nodes\n", __func__, ggml_op_name(ctx->node(idx)->op), ggml_op_name(ctx->node(idx + n - 1)->op), n);
     }
 
-    return n;
+    반환 n;
 }
 
-static int ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, int idx) {
+static 정수 ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2473,13 +2473,13 @@ static int ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
 
     // the MMA store adds the residual when the table fuses the ADD after this mat-mul
-    const int  n_fuse   = ggml_metal_op_try_fusion(ctx, idx, GGML_METAL_FUSION_MUL_MAT_ADD);
+    const 정수  n_fuse   = ggml_metal_op_try_fusion(ctx, idx, GGML_METAL_FUSION_MUL_MAT_ADD);
     const bool fuse_add = n_fuse > 1;
 
     const ggml_tensor * dst = op;
     const ggml_tensor * res = dst;
 
-    if (fuse_add) {
+    만약 (fuse_add) {
         dst = ctx->node(idx + n_fuse - 1);
         // the residual is the other operand of the ADD, by identity: it can itself be a MUL_MAT output
         res = dst->src[0] == op ? dst->src[1] : dst->src[0];
@@ -2517,16 +2517,16 @@ static int ggml_metal_op_mul_mat_mma(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_set_threadgroup_memory_size(enc, pipeline.smem, 0);
 
-    const int rows0 = pipeline.nr0;
-    const int rows1 = pipeline.nr1;
+    const 정수 rows0 = pipeline.nr0;
+    const 정수 rows1 = pipeline.nr1;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + rows0 - 1)/rows0, (ne11 + rows1 - 1)/rows1, ne12*ne13, 32, pipeline.nsg, 1);
 
-    return n_fuse;
+    반환 n_fuse;
 }
 
 // the generic mat-vec kernel, or its 2-row Q4_0 variant if nc
-static int ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, int idx) {
+static 정수 ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2543,9 +2543,9 @@ static int ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_mul_mv(lib, op);
 
-    const int nr0 = pipeline.nr0;
-    const int nr1 = pipeline.nr1;
-    const int nsg = pipeline.nsg;
+    const 정수 nr0 = pipeline.nr0;
+    const 정수 nr1 = pipeline.nr1;
+    const 정수 nsg = pipeline.nsg;
 
     const size_t smem = pipeline.smem;
 
@@ -2579,19 +2579,19 @@ static int ggml_metal_op_mul_mat_mv(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
 
-    if (op->src[0]->type == GGML_TYPE_F32 ||
+    만약 (op->src[0]->type == GGML_TYPE_F32 ||
         op->src[0]->type == GGML_TYPE_F16 ||
         op->src[0]->type == GGML_TYPE_BF16 ||
         op->src[0]->type == GGML_TYPE_Q8_0) {
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne01 + nr0 - 1)/(nr0)), ((ne11 + nr1 - 1)/nr1), ne12*ne13, 32, nsg, 1);
-    } else {
+    } 아니면 {
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne01 + nr0*nsg - 1)/(nr0*nsg)), ((ne11 + nr1 - 1)/nr1), ne12*ne13, 32, nsg, 1);
     }
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_mul_mat(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2599,12 +2599,12 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
 
     const ggml_metal_device_props * props_dev = ggml_metal_device_get_props(ctx->dev);
 
-    if (ggml_metal_op_mul_mat_use_fwht(op, props_dev->max_theadgroup_memory_size)) {
-        return ggml_metal_op_fwht(ctx, idx);
+    만약 (ggml_metal_op_mul_mat_use_fwht(op, props_dev->max_theadgroup_memory_size)) {
+        반환 ggml_metal_op_fwht(ctx, idx);
     }
 
-    if (props_dev->has_simdgroup_mm && ggml_metal_op_mul_mat_use_mma(op)) {
-        return ggml_metal_op_mul_mat_mma(ctx, idx);
+    만약 (props_dev->has_simdgroup_mm && ggml_metal_op_mul_mat_use_mma(op)) {
+        반환 ggml_metal_op_mul_mat_mma(ctx, idx);
     }
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
@@ -2624,7 +2624,7 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
 
     // first try to use small-batch mat-mv kernels
     // these should be efficient for BS [2, ~8]
-    if (op->src[1]->type == GGML_TYPE_F32 && (ne00%128 == 0) &&
+    만약 (op->src[1]->type == GGML_TYPE_F32 && (ne00%128 == 0) &&
         (
          (
           (
@@ -2661,15 +2661,15 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
         //       my current hypothesis is that the work grid is not evenly divisible for different nsg
         //       values and there can be some tail effects when nsg is high. need to confirm this
         //
-        const int nsg    = 2;                 // num simdgroups per threadgroup
+        const 정수 nsg    = 2;                 // num simdgroups per threadgroup
 
         // num threads along row per simdgroup
         int16_t nxpsg = 0;
-        if (ne00 % 256 == 0 && ne11 < 3) {
+        만약 (ne00 % 256 == 0 && ne11 < 3) {
             nxpsg = 16;
-        } else if (ne00 % 128 == 0) {
+        } 아니면 만약 (ne00 % 128 == 0) {
             nxpsg = 8;
-        } else {
+        } 아니면 {
             nxpsg = 4;
         }
 
@@ -2724,7 +2724,7 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         3);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne01 + r0ptg - 1)/r0ptg), ((ne11 + r1ptg - 1)/r1ptg), ne12*ne13, 32, nsg, 1);
-    } else if (ggml_metal_op_mul_mat_use_mm(op, props_dev->has_simdgroup_mm)) {
+    } 아니면 만약 (ggml_metal_op_mul_mat_use_mm(op, props_dev->has_simdgroup_mm)) {
         //GGML_LOG_INFO("matrix: ne00 = %6d, ne01 = %6d, ne02 = %6d, ne11 = %6d, ne12 = %6d\n", ne00, ne01, ne02, ne11, ne12);
 
         // some Metal matrix data types require aligned pointers
@@ -2765,16 +2765,16 @@ int ggml_metal_op_mul_mat(ggml_metal_op_t ctx, int idx) {
 
         ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
 
-        const int nr0 = pipeline.nr0;
-        const int nr1 = pipeline.nr1;
-        const int nsg = pipeline.nsg;
+        const 정수 nr0 = pipeline.nr0;
+        const 정수 nr1 = pipeline.nr1;
+        const 정수 nsg = pipeline.nsg;
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ((ne11 + nr1 - 1) / nr1), ((ne01 + nr0 - 1) / nr0), ne12 * ne13, 32, nsg, 1);
-    } else {
-        return ggml_metal_op_mul_mat_mv(ctx, idx);
+    } 아니면 {
+        반환 ggml_metal_op_mul_mat_mv(ctx, idx);
     }
 
-    return 1;
+    반환 1;
 }
 
 // upper bound on the number of entry tiles emitted by kernel_mul_mm_id_map0: the full tiles
@@ -2787,7 +2787,7 @@ static int64_t ggml_metal_op_mul_mat_id_max_tiles(const ggml_tensor * op) {
     const int64_t n_rows = ne20*ne21;
     const int64_t tiles  = (n_rows + 31)/32 + (ne02 < n_rows ? ne02 : n_rows) - 1;
 
-    return n_rows < tiles ? n_rows : tiles;
+    반환 n_rows < tiles ? n_rows : tiles;
 }
 
 size_t ggml_metal_op_mul_mat_id_extra_tpe(const ggml_tensor * op) {
@@ -2797,7 +2797,7 @@ size_t ggml_metal_op_mul_mat_id_extra_tpe(const ggml_tensor * op) {
     // (expert, first entry, valid rows) descriptor per tile
     const int64_t max_tiles = ggml_metal_op_mul_mat_id_max_tiles(op);
 
-    return ggml_type_size(GGML_TYPE_I32)*(1 + 3*max_tiles);
+    반환 ggml_type_size(GGML_TYPE_I32)*(1 + 3*max_tiles);
 }
 
 size_t ggml_metal_op_mul_mat_id_extra_ids(const ggml_tensor * op) {
@@ -2809,7 +2809,7 @@ size_t ggml_metal_op_mul_mat_id_extra_ids(const ggml_tensor * op) {
 
     // one entry per (expert used, token) pair of ids plus one padding slot per expert
     // (see kernel_mul_mm_id_map0)
-    return ggml_type_size(GGML_TYPE_I32)*(ne20*ne21 + ne02);
+    반환 ggml_type_size(GGML_TYPE_I32)*(ne20*ne21 + ne02);
 }
 
 size_t ggml_metal_op_mul_mat_id_extra_amax(const ggml_tensor * op) {
@@ -2818,10 +2818,10 @@ size_t ggml_metal_op_mul_mat_id_extra_amax(const ggml_tensor * op) {
     GGML_UNUSED(op);
 
     // 2 scaling factors (8 bytes) + N_MM_NPART_AMAX per-threadgroup scales for stage-1
-    return 8 + N_MM_NPART_AMAX*sizeof(float);
+    반환 8 + N_MM_NPART_AMAX*sizeof(float);
 }
 
-int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -2855,7 +2855,7 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
     const uint32_t r2 = 1;
     const uint32_t r3 = 1;
 
-    if (ggml_metal_op_mul_mat_id_use_mm(op, props_dev->has_simdgroup_mm)) {
+    만약 (ggml_metal_op_mul_mat_id_use_mm(op, props_dev->has_simdgroup_mm)) {
         // some Metal matrix data types require aligned pointers
         // ref: https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf (Table 2.5)
         //switch (op->src[0]->type) {
@@ -2880,7 +2880,7 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
 
         // src1 rescale factors, computed before the matmul
         // ref: https://github.com/ggml-org/llama.cpp/pull/26223
-        if (use_amax) {
+        만약 (use_amax) {
             ggml_metal_kargs_mul_mm_id_amax args = {
                 /*.ne00 =*/ ne10,
                 /*.ne01 =*/ ne11,
@@ -2937,7 +2937,7 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
 
         ggml_metal_op_concurrency_reset(ctx);
 
-        if (use_amax) {
+        만약 (use_amax) {
             auto pipeline = ggml_metal_library_get_pipeline_mul_mm_id_amax(lib);
 
             ggml_metal_encoder_set_pipeline(enc, pipeline);
@@ -2985,16 +2985,16 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
 
             ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
 
-            const int max_tiles = (int) ggml_metal_op_mul_mat_id_max_tiles(op);
+            const 정수 max_tiles = (정수) ggml_metal_op_mul_mat_id_max_tiles(op);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, max_tiles, (ne01 + 63)/64, 1, 128, 1, 1);
         }
-    } else {
+    } 아니면 {
         auto pipeline = ggml_metal_library_get_pipeline_mul_mv_id(lib, op);
 
-        const int nr0 = pipeline.nr0;
-        const int nr1 = pipeline.nr1;
-        const int nsg = pipeline.nsg;
+        const 정수 nr0 = pipeline.nr0;
+        const 정수 nr1 = pipeline.nr1;
+        const 정수 nsg = pipeline.nsg;
 
         const size_t smem = pipeline.smem;
 
@@ -3021,7 +3021,7 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
             /*.nr0  =*/ nr0,
         };
 
-        if (ggml_is_quantized(op->src[0]->type)) {
+        만약 (ggml_is_quantized(op->src[0]->type)) {
             GGML_ASSERT(ne00 >= nsg*nr0);
         }
 
@@ -3037,20 +3037,20 @@ int ggml_metal_op_mul_mat_id(ggml_metal_op_t ctx, int idx) {
 
         ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
 
-        if (op->src[0]->type == GGML_TYPE_F32 ||
+        만약 (op->src[0]->type == GGML_TYPE_F32 ||
             op->src[0]->type == GGML_TYPE_F16 ||
             op->src[0]->type == GGML_TYPE_BF16 ||
             op->src[0]->type == GGML_TYPE_Q8_0) {
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nr0 - 1)/(nr0), (_ne1 + nr1 - 1)/nr1, ne123, 32, nsg, 1);
-        } else {
+        } 아니면 {
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nr0*nsg - 1)/(nr0*nsg), (_ne1 + nr1 - 1)/nr1, ne123, 32, nsg, 1);
         }
     }
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_add_id(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_add_id(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -3089,11 +3089,11 @@ int ggml_metal_op_add_id(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), 3);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         4);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
+    const 정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne00);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
 bool ggml_metal_op_flash_attn_ext_use_vec(const ggml_tensor * op) {
@@ -3103,7 +3103,7 @@ bool ggml_metal_op_flash_attn_ext_use_vec(const ggml_tensor * op) {
     const int64_t ne01 = op->src[0]->ne[1]; // batch size
 
     // use vec kernel if the batch size is small and if the head size is supported
-    return (ne01 < 20) && (ne00 % 32 == 0);
+    반환 (ne01 < 20) && (ne00 % 32 == 0);
 }
 
 // ref: https://github.com/ggml-org/llama.cpp/pull/27390
@@ -3115,9 +3115,9 @@ static bool ggml_metal_op_flash_attn_ext_use_kv_f16(const ggml_tensor * op) {
     // ref: https://github.com/ggml-org/llama.cpp/pull/27390#issuecomment-5355152767
     // TODO: tune per device
     // large heads need the upfront dequant to fit the non-vec threadgroup memory
-    if (op->src[0]->ne[1] < 32 &&
+    만약 (op->src[0]->ne[1] < 32 &&
         (op->src[0]->ne[0] < 512 || ggml_metal_op_flash_attn_ext_use_vec(op))) {
-        return false;
+        반환 false;
     }
 
     switch (op->src[1]->type) {
@@ -3126,17 +3126,17 @@ static bool ggml_metal_op_flash_attn_ext_use_kv_f16(const ggml_tensor * op) {
         case GGML_TYPE_Q5_0:
         case GGML_TYPE_Q5_1:
         case GGML_TYPE_Q8_0:
-            return true;
+            반환 true;
         default:
-            return false;
+            반환 false;
     }
 }
 
 static bool ggml_metal_op_flash_attn_ext_use_tensor(const ggml_tensor * op, bool has_tensor) {
     assert(op->op == GGML_OP_FLASH_ATTN_EXT);
 
-    if (!has_tensor || ggml_metal_op_flash_attn_ext_use_vec(op)) {
-        return false;
+    만약 (!has_tensor || ggml_metal_op_flash_attn_ext_use_vec(op)) {
+        반환 false;
     }
 
     const int64_t ne01 = op->src[0]->ne[1];
@@ -3153,8 +3153,8 @@ static bool ggml_metal_op_flash_attn_ext_use_tensor(const ggml_tensor * op, bool
                           (dk == 512 && dv == 512) ||
                           (dk == 576 && dv == 512);
 
-    if (!dk_dv_ok) {
-        return false;
+    만약 (!dk_dv_ok) {
+        반환 false;
     }
 
     // large heads use fewer queries per threadgroup, so that the queries fit in threadgroup memory
@@ -3162,38 +3162,38 @@ static bool ggml_metal_op_flash_attn_ext_use_tensor(const ggml_tensor * op, bool
 
     // few heads and small batches do not fill the GPU - the half8x8 kernel is faster there
     // TODO: tune per device
-    if (((ne01 + nqptg - 1)/nqptg)*ne02*ne03*dk < 8192) {
-        return false;
+    만약 (((ne01 + nqptg - 1)/nqptg)*ne02*ne03*dk < 8192) {
+        반환 false;
     }
 
-    if (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_BF16 && !ggml_metal_op_flash_attn_ext_use_kv_f16(op)) {
-        return false;
+    만약 (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_BF16 && !ggml_metal_op_flash_attn_ext_use_kv_f16(op)) {
+        반환 false;
     }
 
-    return op->src[1]->ne[1] % OP_FLASH_ATTN_EXT_TENSOR_NCPSG == 0;
+    반환 op->src[1]->ne[1] % OP_FLASH_ATTN_EXT_TENSOR_NCPSG == 0;
 }
 
 // returns the n_kv_max hint if the sparse path is available for this op, or 0 otherwise
 // the mask (src[3]) remains the single source of truth: finite entries are the valid KV positions,
 // n_kv_max is only an upper bound on their number per mask row, used to size the index lists
-static int ggml_metal_op_flash_attn_ext_n_kv_max_sparse(const ggml_tensor * op) {
+static 정수 ggml_metal_op_flash_attn_ext_n_kv_max_sparse(const ggml_tensor * op) {
     assert(op->op == GGML_OP_FLASH_ATTN_EXT);
 
     int32_t n_kv_max = 0;
     memcpy(&n_kv_max, ((const int32_t *) op->op_params) + 4, sizeof(n_kv_max));
 
-    if (n_kv_max <= 0) {
-        return 0;
+    만약 (n_kv_max <= 0) {
+        반환 0;
     }
 
     // the sparse indices are gathered from the mask
-    if (!op->src[3]) {
-        return 0;
+    만약 (!op->src[3]) {
+        반환 0;
     }
 
     // bound the size of the index lists
-    if (n_kv_max > 4096) {
-        return 0;
+    만약 (n_kv_max > 4096) {
+        반환 0;
     }
 
     // vec kernel instantiations exist for these (type, dk, dv) combinations only
@@ -3213,8 +3213,8 @@ static int ggml_metal_op_flash_attn_ext_n_kv_max_sparse(const ggml_tensor * op) 
                           (dk == 512 && dv == 512) ||
                           (dk == 576 && dv == 512);
 
-    if (!dk_dv_ok) {
-        return 0;
+    만약 (!dk_dv_ok) {
+        반환 0;
     }
 
     switch (op->src[1]->type) {
@@ -3228,10 +3228,10 @@ static int ggml_metal_op_flash_attn_ext_n_kv_max_sparse(const ggml_tensor * op) 
         case GGML_TYPE_Q8_0:
             break;
         default:
-            return 0;
+            반환 0;
     }
 
-    return n_kv_max;
+    반환 n_kv_max;
 }
 
 // in some models (e.g. MLA-based), V is a view of K (the first ne20 elements of each K row);
@@ -3243,7 +3243,7 @@ static bool ggml_metal_op_flash_attn_ext_v_is_view_of_k(const ggml_tensor * op) 
     const ggml_tensor * K = op->src[1];
     const ggml_tensor * V = op->src[2];
 
-    return V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
+    반환 V->view_src && (V->view_src == K || (V->view_src == K->view_src && V->view_offs == K->view_offs));
 }
 
 // size of the F16 dequantized K tensor; the dequantized V tensor follows it in the same scratch buffer
@@ -3252,7 +3252,7 @@ static size_t ggml_metal_op_flash_attn_ext_kv_f16_k_size(const ggml_tensor * op)
 
     GGML_TENSOR_LOCALS( int32_t, ne1, op->src[1], ne);
 
-    return GGML_PAD(sizeof(ggml_fp16_t)*(size_t) ne10*ne11*ne12*ne13, 16);
+    반환 GGML_PAD(sizeof(ggml_fp16_t)*(size_t) ne10*ne11*ne12*ne13, 16);
 }
 
 size_t ggml_metal_op_flash_attn_ext_extra_pad(const ggml_tensor * op) {
@@ -3278,7 +3278,7 @@ size_t ggml_metal_op_flash_attn_ext_extra_pad(const ggml_tensor * op) {
     uint64_t nb11_pad = nb11;
     uint64_t nb21_pad = nb21;
 
-    if (use_kv_f16) {
+    만약 (use_kv_f16) {
         nb11_pad = sizeof(ggml_fp16_t)*ne10;
         nb21_pad = sizeof(ggml_fp16_t)*(v_is_view_of_k ? ne10 : ne20);
     }
@@ -3287,22 +3287,22 @@ size_t ggml_metal_op_flash_attn_ext_extra_pad(const ggml_tensor * op) {
     GGML_ASSERT(OP_FLASH_ATTN_EXT_NCPSG >= OP_FLASH_ATTN_EXT_VEC_NCPSG);
 
     //if (ggml_metal_op_flash_attn_ext_use_vec(op)) {
-    if (false) {
+    만약 (false) {
         // note: always reserve the padding space to avoid graph reallocations
         //const bool has_kvpad = ne11 % OP_FLASH_ATTN_EXT_VEC_NCPSG != 0;
         const bool has_kvpad = true;
 
-        if (has_kvpad) {
+        만약 (has_kvpad) {
             res += OP_FLASH_ATTN_EXT_VEC_NCPSG*(
                 nb11_pad*ne12*ne13 +
                 nb21_pad*ne22*ne23 +
                 (has_mask ? ggml_type_size(GGML_TYPE_F16)*ne31*ne32*ne33 : 0));
         }
-    } else {
+    } 아니면 {
         //const bool has_kvpad = ne11 % OP_FLASH_ATTN_EXT_NCPSG != 0;
         const bool has_kvpad = true;
 
-        if (has_kvpad) {
+        만약 (has_kvpad) {
             res += OP_FLASH_ATTN_EXT_NCPSG*(
                 nb11_pad*ne12*ne13 +
                 nb21_pad*ne22*ne23 +
@@ -3310,7 +3310,7 @@ size_t ggml_metal_op_flash_attn_ext_extra_pad(const ggml_tensor * op) {
         }
     }
 
-    return res;
+    반환 res;
 }
 
 size_t ggml_metal_op_flash_attn_ext_extra_blk(const ggml_tensor * op) {
@@ -3329,8 +3329,8 @@ size_t ggml_metal_op_flash_attn_ext_extra_blk(const ggml_tensor * op) {
 
     const bool has_mask = op->src[3] != nullptr;
 
-    if (!has_mask) {
-        return res;
+    만약 (!has_mask) {
+        반환 res;
     }
 
     const bool is_vec = ggml_metal_op_flash_attn_ext_use_vec(op);
@@ -3341,15 +3341,15 @@ size_t ggml_metal_op_flash_attn_ext_extra_blk(const ggml_tensor * op) {
     //    return res;
     //}
 
-    const int nqptg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NQPSG : OP_FLASH_ATTN_EXT_NQPSG;
-    const int ncpsg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NCPSG : OP_FLASH_ATTN_EXT_NCPSG;
+    const 정수 nqptg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NQPSG : OP_FLASH_ATTN_EXT_NQPSG;
+    const 정수 ncpsg = is_vec ? OP_FLASH_ATTN_EXT_VEC_NCPSG : OP_FLASH_ATTN_EXT_NCPSG;
 
     const int64_t ne1 = (ne01 + nqptg - 1)/nqptg;
     const int64_t ne0 = (ne30 + ncpsg - 1)/ncpsg;
 
     res += GGML_PAD(ggml_type_size(GGML_TYPE_I8)*ne0*ne1*ne32*ne33, 32);
 
-    return res;
+    반환 res;
 }
 
 size_t ggml_metal_op_flash_attn_ext_extra_tmp(const ggml_tensor * op) {
@@ -3368,7 +3368,7 @@ size_t ggml_metal_op_flash_attn_ext_extra_tmp(const ggml_tensor * op) {
 
     // note: always reserve the temp buffer to avoid graph reallocations
     //if (ggml_metal_op_flash_attn_ext_use_vec(op)) {
-    if (true) {
+    만약 (true) {
         const int64_t nwg = 32;
         const int64_t ne01_max = std::min(ne01, 32);
 
@@ -3378,7 +3378,7 @@ size_t ggml_metal_op_flash_attn_ext_extra_tmp(const ggml_tensor * op) {
         res += ggml_type_size(GGML_TYPE_F32)*(ne01_max*ne02*ne03*nwg*(ne20 + 2));
     }
 
-    return res;
+    반환 res;
 }
 
 size_t ggml_metal_op_flash_attn_ext_extra_kv_f16(const ggml_tensor * op) {
@@ -3395,13 +3395,13 @@ size_t ggml_metal_op_flash_attn_ext_extra_kv_f16(const ggml_tensor * op) {
 
     // when V is a view of K, the dequantized V is a view of the dequantized K
     const bool v_is_view_of_k = ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
-    if (v_is_view_of_k) {
-        return k_size;
+    만약 (v_is_view_of_k) {
+        반환 k_size;
     }
 
     const size_t v_size = GGML_PAD(sizeof(ggml_fp16_t)*(size_t) ne20*ne21*ne22*ne23, 16);
 
-    return k_size + v_size;
+    반환 k_size + v_size;
 }
 
 // size of the sparse index lists: one list of KV indices per mask row,
@@ -3411,18 +3411,18 @@ size_t ggml_metal_op_flash_attn_ext_extra_idx(const ggml_tensor * op) {
 
     GGML_TENSOR_LOCALS( int32_t, ne3, op->src[3], ne);
 
-    const int n_kv_max = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
+    const 정수 n_kv_max = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
 
-    if (n_kv_max <= 0) {
-        return 0;
+    만약 (n_kv_max <= 0) {
+        반환 0;
     }
 
-    const int n_kv_max_padded = GGML_PAD(n_kv_max, OP_FLASH_ATTN_EXT_VEC_NCPSG);
+    const 정수 n_kv_max_padded = GGML_PAD(n_kv_max, OP_FLASH_ATTN_EXT_VEC_NCPSG);
 
-    return GGML_PAD(sizeof(int32_t)*(size_t) n_kv_max_padded*ne31*ne32*ne33, 16);
+    반환 GGML_PAD(sizeof(int32_t)*(size_t) n_kv_max_padded*ne31*ne32*ne33, 16);
 }
 
-int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -3462,7 +3462,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
     memcpy(&max_bias,      ((const int32_t *) op->op_params) + 1, sizeof(max_bias));
     memcpy(&logit_softcap, ((const int32_t *) op->op_params) + 2, sizeof(logit_softcap));
 
-    if (logit_softcap != 0.0f) {
+    만약 (logit_softcap != 0.0f) {
         scale /= logit_softcap;
     }
 
@@ -3500,9 +3500,9 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
     bid_kv_f16.offs += ggml_metal_op_flash_attn_ext_extra_tmp(op);
 
     // sparse path: gather the finite mask entries into index lists and run the vec kernels over them
-    const int n_kv_max_sparse = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
+    const 정수 n_kv_max_sparse = ggml_metal_op_flash_attn_ext_n_kv_max_sparse(op);
     const bool use_sparse = n_kv_max_sparse > 0;
-    const int n_kv_max_padded = use_sparse ? GGML_PAD(n_kv_max_sparse, OP_FLASH_ATTN_EXT_VEC_NCPSG) : 0;
+    const 정수 n_kv_max_padded = use_sparse ? GGML_PAD(n_kv_max_sparse, OP_FLASH_ATTN_EXT_VEC_NCPSG) : 0;
 
     // the vec kernels dequantize the KV inline; no need for the F16 dequant pass in the sparse path
     const bool use_kv_f16 = !use_sparse && ggml_metal_op_flash_attn_ext_use_kv_f16(op);
@@ -3522,7 +3522,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
     uint64_t nb22_attn = nb22;
     uint64_t nb23_attn = nb23;
 
-    if (use_kv_f16) {
+    만약 (use_kv_f16) {
         assert(ggml_metal_op_flash_attn_ext_extra_kv_f16(op) != 0);
 
         const bool v_is_view_of_k = ggml_metal_op_flash_attn_ext_v_is_view_of_k(op);
@@ -3535,7 +3535,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         bid_v_f16.offs += ggml_metal_op_flash_attn_ext_kv_f16_k_size(op);
 
         auto pipeline0 = ggml_metal_library_get_pipeline_flash_attn_ext_kv_f16(lib, op);
-        const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
+        const 정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
 
         // K
         ggml_metal_kargs_flash_attn_ext_kv_f16 args_k = {
@@ -3558,7 +3558,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_dispatch_threadgroups(enc, (nblocks1 + nth - 1)/nth, 1, 1, nth, 1, 1);
 
         // V (skip when V is a view of K: the dequantized V is a view of the dequantized K)
-        if (!v_is_view_of_k) {
+        만약 (!v_is_view_of_k) {
             const int64_t nblocks2_64 = (ne20/ggml_blck_size(op->src[2]->type))*(int64_t) ne21*ne22*ne23;
             GGML_ASSERT(nblocks2_64 <= INT32_MAX);
             const int32_t nblocks2 = nblocks2_64;
@@ -3596,12 +3596,12 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         nb13_attn = nb12_attn*ne12;
 
         // if V is a view of K, the dequantized V is read from the dequantized K with K's strides
-        if (v_is_view_of_k) {
+        만약 (v_is_view_of_k) {
             nb20_attn = nb10_attn;
             nb21_attn = nb11_attn;
             nb22_attn = nb12_attn;
             nb23_attn = nb13_attn;
-        } else {
+        } 아니면 {
             // contiguous F16 layout of the dequantized V
             nb20_attn = sizeof(ggml_fp16_t);
             nb21_attn = nb20_attn*ne20;
@@ -3610,13 +3610,13 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         }
     }
 
-    if (!use_sparse && ggml_metal_op_flash_attn_ext_use_tensor(op, props_dev->has_tensor)) {
+    만약 (!use_sparse && ggml_metal_op_flash_attn_ext_use_tensor(op, props_dev->has_tensor)) {
         // tensor API kernel
-        const int nqptg = ne00 >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG; // queries per threadgroup
-        const int ncpsg = OP_FLASH_ATTN_EXT_TENSOR_NCPSG; // cache values per threadgroup
-        const int nsg   = OP_FLASH_ATTN_EXT_TENSOR_NSG;
+        const 정수 nqptg = ne00 >= 512 ? OP_FLASH_ATTN_EXT_TENSOR_NQPSG_LARGE : OP_FLASH_ATTN_EXT_TENSOR_NQPSG; // queries per threadgroup
+        const 정수 ncpsg = OP_FLASH_ATTN_EXT_TENSOR_NCPSG; // cache values per threadgroup
+        const 정수 nsg   = OP_FLASH_ATTN_EXT_TENSOR_NSG;
 
-        if (has_mask) {
+        만약 (has_mask) {
             assert(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_blk args0 = {
@@ -3704,10 +3704,10 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, ne02, ne03, 32, nsg, 1);
-    } else if (!use_sparse && !ggml_metal_op_flash_attn_ext_use_vec(op)) {
+    } 아니면 만약 (!use_sparse && !ggml_metal_op_flash_attn_ext_use_vec(op)) {
         // half8x8 kernel
-        const int nqptg = OP_FLASH_ATTN_EXT_NQPSG; // queries per threadgroup
-        const int ncpsg = OP_FLASH_ATTN_EXT_NCPSG; // cache values per simdgroup
+        const 정수 nqptg = OP_FLASH_ATTN_EXT_NQPSG; // queries per threadgroup
+        const 정수 ncpsg = OP_FLASH_ATTN_EXT_NCPSG; // cache values per simdgroup
 
         GGML_ASSERT(nqptg <= 32);
         GGML_ASSERT(nqptg  % 8  == 0);
@@ -3717,7 +3717,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
 
         const bool has_kvpad = ne11 % ncpsg != 0;
 
-        if (has_kvpad) {
+        만약 (has_kvpad) {
             assert(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_pad args0 = {
@@ -3755,7 +3755,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             need_sync = true;
         }
 
-        if (has_mask) {
+        만약 (has_mask) {
             assert(ggml_metal_op_flash_attn_ext_extra_blk(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_blk args0 = {
@@ -3784,11 +3784,11 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             need_sync = true;
         }
 
-        if (need_sync) {
+        만약 (need_sync) {
             ggml_metal_op_concurrency_reset(ctx);
         }
 
-        const int is_q = !use_kv_f16 && ggml_is_quantized(op->src[1]->type) ? 1 : 0;
+        const 정수 is_q = !use_kv_f16 && ggml_is_quantized(op->src[1]->type) ? 1 : 0;
 
         // shared memory layout (halfs unless noted):
         //   queries/attn/result: Q*(DK + 2*PAD2(DV,64) + 4*C)
@@ -3797,7 +3797,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
 
         auto fa_smem = [&](int32_t nsg) -> size_t {
             const size_t smem_half = nqptg*(ne00 + 2*dv_pad + 4*ncpsg) + is_q*(16*32*nsg);
-            return GGML_PAD(smem_half*sizeof(ggml_fp16_t), 16);
+            반환 GGML_PAD(smem_half*sizeof(ggml_fp16_t), 16);
         };
 
         // simdgroups per threadgroup (a.k.a. warps)
@@ -3861,21 +3861,21 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, ne02, ne03, 32, nsg, 1);
-    } else {
+    } 아니면 {
         // half4x4 kernel
         // sparse: the index lists are per query row, so a threadgroup can share KV with Q == 1 only
         auto cfg = use_sparse
-                ? ggml_metal_tuning::fa_vec_baseline_cfg((int) ne00, (int) ne20)
+                ? ggml_metal_tuning::fa_vec_baseline_cfg((정수) ne00, (정수) ne20)
                 : ggml_metal_tuning::fa_vec_pick(
                           props_dev->gpu_family,
-                          (int) op->src[1]->type,
-                          (int) ne00, (int) ne20,   // dk, dv (ne00 == dk for FA)
+                          (정수) op->src[1]->type,
+                          (정수) ne00, (정수) ne20,   // dk, dv (ne00 == dk for FA)
                           ne11, ne01);
 
-        int nqptg = cfg.Q; // queries per threadgroup
+        정수 nqptg = cfg.Q; // queries per threadgroup
 
-        const int ncpsg = OP_FLASH_ATTN_EXT_VEC_NCPSG; // cache values per simdgroup !! sync with kernel template arguments !!
-        const int nhptg = 1;                           // heads per threadgroup
+        const 정수 ncpsg = OP_FLASH_ATTN_EXT_VEC_NCPSG; // cache values per simdgroup !! sync with kernel template arguments !!
+        const 정수 nhptg = 1;                           // heads per threadgroup
 
         GGML_ASSERT(nqptg <= 32);
         GGML_ASSERT(nqptg == 1 || nqptg == 2 || nqptg == 4);  // only instantiated Q values
@@ -3885,7 +3885,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
 
         const bool has_kvpad = !use_sparse && ne11 % ncpsg != 0;
 
-        if (use_sparse) {
+        만약 (use_sparse) {
             assert(ggml_metal_op_flash_attn_ext_extra_idx(op) != 0);
 
             GGML_ASSERT(ne30 == ne11);
@@ -3909,7 +3909,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             ggml_metal_encoder_set_buffer  (enc, bid_src3, 1);
             ggml_metal_encoder_set_buffer  (enc, bid_idx,  2);
 
-            int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
+            정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline0), 256);
             nth = std::max(32, (nth/32)*32);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, ne31, ne32, ne33, nth, 1, 1);
@@ -3917,7 +3917,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             need_sync = true;
         }
 
-        if (has_kvpad) {
+        만약 (has_kvpad) {
             assert(ggml_metal_op_flash_attn_ext_extra_pad(op) != 0);
 
             ggml_metal_kargs_flash_attn_ext_pad args0 = {
@@ -3955,7 +3955,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             need_sync = true;
         }
 
-        if (need_sync) {
+        만약 (need_sync) {
             ggml_metal_op_concurrency_reset(ctx);
         }
 
@@ -3972,7 +3972,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
 
         auto fa_vec_smem = [&](int64_t nsg, int32_t nqptg) -> size_t {
             const size_t smem_half = (size_t) (dk_pad + 4*ncpsg + 2*dv_pad)*nqptg*nsg;
-            return GGML_PAD(smem_half*sizeof(ggml_fp16_t) + (use_sparse ? (size_t) nsg*ncpsg*sizeof(int) : 0), 16);
+            반환 GGML_PAD(smem_half*sizeof(ggml_fp16_t) + (use_sparse ? (size_t) nsg*ncpsg*sizeof(정수) : 0), 16);
         };
 
         int64_t nsg = 1;
@@ -3980,37 +3980,37 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         // workgroups
         // each workgroup handles nsg*nkpsg cache values
         int32_t nwg = 1;
-        if (use_sparse) {
-            if (ne01 > 32) {
+        만약 (use_sparse) {
+            만약 (ne01 > 32) {
                 // large sparse batch
                 nwg = 1;
                 nsg = 1;
-                if (n_kv_max_padded == 640) {
+                만약 (n_kv_max_padded == 640) {
                     nsg = 4; // 640 % (4*32) == 0
-                } else {
-                    while (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
+                } 아니면 {
+                    동안 (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
                         nsg *= 2;
                     }
                 }
-            } else {
+            } 아니면 {
                 // small sparse batch
                 nwg = 32;
                 nsg = 1;
-                while (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
+                동안 (2*nwg*nsg*ncpsg < n_kv_max_padded && nsg < 4) {
                     nsg *= 2;
                 }
             }
-        } else {
+        } 아니면 {
             nwg = 32;
             nsg = 1;
-            while (2*nwg*nsg*ncpsg < ne11 && nsg < 4) {
+            동안 (2*nwg*nsg*ncpsg < ne11 && nsg < 4) {
                 nsg *= 2;
             }
         }
 
         // fall back to baseline (Q=1) if the tuned config exceeds threadgroup memory
-        if (fa_vec_smem(nsg, nqptg) > props_dev->max_theadgroup_memory_size) {
-            cfg   = ggml_metal_tuning::fa_vec_baseline_cfg((int) ne00, (int) ne20);
+        만약 (fa_vec_smem(nsg, nqptg) > props_dev->max_theadgroup_memory_size) {
+            cfg   = ggml_metal_tuning::fa_vec_baseline_cfg((정수) ne00, (정수) ne20);
             nqptg = cfg.Q;  // = 1
         }
 
@@ -4070,7 +4070,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
 
         GGML_ASSERT(smem <= props_dev->max_theadgroup_memory_size);
 
-        if (nwg == 1) {
+        만약 (nwg == 1) {
             // using 1 workgroup -> write the result directly into dst
             ggml_metal_encoder_set_buffer(enc, bid_pad, 6);
             ggml_metal_encoder_set_buffer(enc, bid_dst, 7);
@@ -4078,7 +4078,7 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
             ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
 
             ggml_metal_encoder_dispatch_threadgroups(enc, (ne01 + nqptg - 1)/nqptg, (ne02 + nhptg - 1)/nhptg, ne03*nwg, 32, nsg, 1);
-        } else {
+        } 아니면 {
             // sanity checks
             assert(ggml_metal_op_flash_attn_ext_extra_tmp(op) != 0);
 
@@ -4115,30 +4115,30 @@ int ggml_metal_op_flash_attn_ext(ggml_metal_op_t ctx, int idx) {
         }
     }
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
-    int n_fuse = 1;
+정수 ggml_metal_op_bin(ggml_metal_op_t ctx, 정수 idx) {
+    정수 n_fuse = 1;
     const ggml_metal_fusion * fusion = nullptr;
 
     const bool use_fusion = ctx->use_fusion();
 
-    if (use_fusion) {
-        int n = 1;
+    만약 (use_fusion) {
+        정수 n = 1;
         fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
         n_fuse = n;
 
         // snake activation autofuse: mul -> sin -> sqr -> mul -> add
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SNAKE) {
+        만약 (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_SNAKE) {
             ctx->count_fusions(fusion);
-            return ggml_metal_op_snake_fused(ctx, idx);
+            반환 ggml_metal_op_snake_fused(ctx, idx);
         }
 
         // MoE output reduction: experts * weights -> weighted sum
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_MOE_REDUCE) {
+        만약 (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_MOE_REDUCE) {
             ctx->count_fusions(fusion);
-            return ggml_metal_op_moe_reduce(ctx, idx);
+            반환 ggml_metal_op_moe_reduce(ctx, idx);
         }
     }
 
@@ -4147,7 +4147,7 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    const int debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
+    const 정수 debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -4196,15 +4196,15 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
     // c[1] = add(c[0], b[1])
     // c[2] = add(c[1], b[2])
     // ...
-    if (use_fusion && fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_ADD_CHAIN) {
+    만약 (use_fusion && fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_ADD_CHAIN) {
         // the offsets of the fused addends are relative to the start of the src1 buffer
-        for (int i = 1; i < n_fuse; i++) {
+        위해 (정수 i = 1; i < n_fuse; i++) {
             args.o1[i] = ggml_metal_get_buffer_id(ctx->node(idx + i)->src[1]).offs;
         }
 
         ctx->count_fusions(fusion);
 
-        if (debug_fusion > 1) {
+        만약 (debug_fusion > 1) {
             GGML_LOG_DEBUG("%s: fuse: ADD x %d\n", __func__, n_fuse);
         }
     }
@@ -4216,11 +4216,11 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
 
     pipeline = ggml_metal_library_get_pipeline_bin(lib, op, n_fuse);
 
-    if (n_fuse > 1) {
+    만약 (n_fuse > 1) {
         bid_dst = ggml_metal_get_buffer_id(ctx->node(idx + n_fuse - 1));
 
-        for (int i = 1; i < n_fuse; ++i) {
-            if (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
+        위해 (정수 i = 1; i < n_fuse; ++i) {
+            만약 (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
                 ggml_metal_op_concurrency_reset(ctx);
 
                 break;
@@ -4228,7 +4228,7 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
         }
     }
 
-    if (pipeline.c4) {
+    만약 (pipeline.c4) {
         args.ne00 = ne00/4;
         args.ne10 = ne10/4;
         args.ne0  = ne0/4;
@@ -4240,24 +4240,24 @@ int ggml_metal_op_bin(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, bid_src1, 2);
     ggml_metal_encoder_set_buffer  (enc, bid_dst,  3);
 
-    if (pipeline.cnt) {
+    만약 (pipeline.cnt) {
         ggml_metal_encoder_dispatch_threadgroups(enc, args.ne0, ggml_nrows(op), 1, 1, 1, 1);
-    } else {
-        const int nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    } 아니면 {
+        const 정수 nth_max = MIN(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
-        int nth = 1;
+        정수 nth = 1;
 
-        while (2*nth < args.ne0 && nth < nth_max) {
+        동안 (2*nth < args.ne0 && nth < nth_max) {
             nth *= 2;
         }
 
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
     }
 
-    return n_fuse;
+    반환 n_fuse;
 }
 
-int ggml_metal_op_silu_back(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_silu_back(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4271,7 +4271,7 @@ int ggml_metal_op_silu_back(ggml_metal_op_t ctx, int idx) {
         /*.ne =*/ ne,
     };
 
-    int arg_idx{0};
+    정수 arg_idx{0};
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), arg_idx++);
@@ -4279,15 +4279,15 @@ int ggml_metal_op_silu_back(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), arg_idx++);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op), arg_idx++);
 
-    const int nth = std::min<int64_t>(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne);
+    const 정수 nth = std::min<int64_t>(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne);
     const int64_t n = (ne + nth - 1) / nth;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_l2_norm(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_l2_norm(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4328,14 +4328,14 @@ int ggml_metal_op_l2_norm(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_l2_norm(lib, op);
 
-    if (pipeline.c4) {
+    만약 (pipeline.c4) {
         args.ne00 = ne00/4;
         args.ne0  = ne0/4;
     }
 
-    int nth = 32; // SIMD width
+    정수 nth = 32; // SIMD width
 
-    while (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    동안 (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
@@ -4352,10 +4352,10 @@ int ggml_metal_op_l2_norm(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_group_norm(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4384,7 +4384,7 @@ int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_group_norm(lib, op);
 
-    int nth = 32; // SIMD width
+    정수 nth = 32; // SIMD width
     //while (nth < ne00/4 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
     //    nth *= 2;
     //}
@@ -4403,10 +4403,10 @@ int ggml_metal_op_group_norm(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ngrp, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_norm(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4414,7 +4414,7 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
 
     const bool use_fusion = ctx->use_fusion();
 
-    const int debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
+    const 정수 debug_fusion = ggml_metal_fusion_info_debug(ctx->finfo);
 
     GGML_TENSOR_LOCALS( int32_t, ne0, op->src[0], ne);
     GGML_TENSOR_LOCALS(uint64_t, nb0, op->src[0], nb);
@@ -4443,7 +4443,7 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
         /*.scale =*/ 1.0f,
     };
 
-    int n_fuse = 1;
+    정수 n_fuse = 1;
     bool fused_norm_scale = false;
 
     ggml_metal_buffer_id bid_fuse[2] = { bid_src0, bid_src0 };
@@ -4451,16 +4451,16 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
     // d[0] = norm(a)
     // d[1] = mul(d[0], b) or scale(d[0])
     // d[2] = add(d[1], c)
-    if (use_fusion) {
-        int n = 1;
+    만약 (use_fusion) {
+        정수 n = 1;
         const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n);
 
-        if (fusion && (ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL || ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL_ADD)) {
+        만약 (fusion && (ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL || ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_MUL_ADD)) {
             n_fuse = n;
 
             ctx->count_fusions(fusion);
 
-            for (int i = 1; i < n_fuse; i++) {
+            위해 (정수 i = 1; i < n_fuse; i++) {
                 const ggml_tensor * fn = ctx->node(idx + i);
 
                 bid_fuse[i - 1] = ggml_metal_get_buffer_id(fn->src[1]);
@@ -4474,17 +4474,17 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
                 args.nbf3[i] = fn->src[1]->nb[3];
             }
 
-            if (debug_fusion > 1) {
-                if (n_fuse == 2) {
+            만약 (debug_fusion > 1) {
+                만약 (n_fuse == 2) {
                     GGML_LOG_DEBUG("%s: fuse: %s + MUL\n", __func__, ggml_op_name(op->op));
                 }
-                if (n_fuse == 3) {
+                만약 (n_fuse == 3) {
                     GGML_LOG_DEBUG("%s: fuse: %s + MUL + ADD\n", __func__, ggml_op_name(op->op));
                 }
             }
         }
 
-        if (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_SCALE) {
+        만약 (fusion && ggml_metal_fusion_get_id(fusion) == GGML_METAL_FUSION_NORM_SCALE) {
             n_fuse = n;
             fused_norm_scale = true;
 
@@ -4493,17 +4493,17 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
             const ggml_tensor * scale_node = ctx->node(idx + 1);
             args.scale = ggml_get_op_params_f32(scale_node, 0);
 
-            if (debug_fusion > 1) {
+            만약 (debug_fusion > 1) {
                 GGML_LOG_DEBUG("%s: fuse: %s + SCALE\n", __func__, ggml_op_name(op->op));
             }
         }
     }
 
-    if (n_fuse > 1) {
+    만약 (n_fuse > 1) {
         bid_dst = ggml_metal_get_buffer_id(ctx->node(idx + n_fuse - 1));
 
-        for (int i = 1; i < n_fuse; ++i) {
-            if (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
+        위해 (정수 i = 1; i < n_fuse; ++i) {
+            만약 (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
                 ggml_metal_op_concurrency_reset(ctx);
 
                 break;
@@ -4515,9 +4515,9 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
         ggml_metal_library_get_pipeline_norm_scale(lib, op) :
         ggml_metal_library_get_pipeline_norm(lib, op, n_fuse);
 
-    int nth = 32; // SIMD width
+    정수 nth = 32; // SIMD width
 
-    while (nth < args.ne00_t && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    동안 (nth < args.ne00_t && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
@@ -4537,10 +4537,10 @@ int ggml_metal_op_norm(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return n_fuse;
+    반환 n_fuse;
 }
 
-int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_rope(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4557,13 +4557,13 @@ int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
     GGML_ASSERT(ne10 % ne02 == 0);
     GGML_ASSERT(ne10 >= ne02);
 
-    const int nth = std::min(1024, ne00);
+    const 정수 nth = std::min(1024, ne00);
 
-    const int n_past     = ((const int32_t *) op->op_params)[0];
-    const int n_dims     = ((const int32_t *) op->op_params)[1];
+    const 정수 n_past     = ((const int32_t *) op->op_params)[0];
+    const 정수 n_dims     = ((const int32_t *) op->op_params)[1];
   //const int mode       = ((const int32_t *) op->op_params)[2];
     // skip 3, n_ctx, used in GLM RoPE, unimplemented in metal
-    const int n_ctx_orig = ((const int32_t *) op->op_params)[4];
+    const 정수 n_ctx_orig = ((const int32_t *) op->op_params)[4];
 
     float freq_base;
     float freq_scale;
@@ -4580,12 +4580,12 @@ int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
     memcpy(&beta_slow,   (const int32_t *) op->op_params + 10, sizeof(float));
 
     // mrope
-    const int sect_0 = ((const int32_t *) op->op_params)[11];
-    const int sect_1 = ((const int32_t *) op->op_params)[12];
-    const int sect_2 = ((const int32_t *) op->op_params)[13];
-    const int sect_3 = ((const int32_t *) op->op_params)[14];
+    const 정수 sect_0 = ((const int32_t *) op->op_params)[11];
+    const 정수 sect_1 = ((const int32_t *) op->op_params)[12];
+    const 정수 sect_2 = ((const int32_t *) op->op_params)[13];
+    const 정수 sect_3 = ((const int32_t *) op->op_params)[14];
 
-    const int n_offs = ((const int32_t *) op->op_params)[15];
+    const 정수 n_offs = ((const int32_t *) op->op_params)[15];
 
     // when dst aliases src0, the channels outside the rotated window already hold the correct data
     const bool inplace = op->data == op->src[0]->data;
@@ -4631,19 +4631,19 @@ int ggml_metal_op_rope(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 1);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), 2);
-    if (op->src[2]) {
+    만약 (op->src[2]) {
         ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), 3);
-    } else {
+    } 아니면 {
         ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[0]), 3);
     }
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         4);
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_im2col(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4699,7 +4699,7 @@ int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_im2col(lib, op);
 
-    if (KH*KW <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    만약 (KH*KW <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         const uint64_t ntptg0 = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)/(KH*KW), N);
 
         ggml_metal_encoder_set_pipeline(enc, pipeline);
@@ -4708,7 +4708,7 @@ int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op),         2);
 
         ggml_metal_encoder_dispatch_threadgroups(enc, IC, OH, OW, ntptg0, KH, KW);
-    } else {
+    } 아니면 {
         const uint64_t n_threads = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), N);
         const int64_t  quotient  = N / n_threads + (N % n_threads > 0 ? 1 : 0);
 
@@ -4720,10 +4720,10 @@ int ggml_metal_op_im2col(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_dispatch_threadgroups(enc, quotient * CHW, OH, OW, n_threads, 1, 1);
     }
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_conv_2d(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4780,7 +4780,7 @@ int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_conv_2d(lib, op);
 
-    int nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
+    정수 nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
     nth = std::min(nth, 256);
     nth = std::max(nth, 1);
 
@@ -4788,7 +4788,7 @@ int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
 
     uint64_t tg = (n_out + nth - 1)/nth;
     tg = std::max<uint64_t>(tg, 1);
-    tg = std::min<uint64_t>(tg, (uint64_t) std::numeric_limits<int>::max());
+    tg = std::min<uint64_t>(tg, (uint64_t) std::numeric_limits<정수>::max());
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -4798,10 +4798,10 @@ int ggml_metal_op_conv_2d(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, tg, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4857,7 +4857,7 @@ int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_conv_2d_dw(lib, op, use_tiled);
 
-    int nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
+    정수 nth = ggml_metal_pipeline_max_theads_per_threadgroup(pipeline);
     nth = std::min(nth, 256);
     nth = std::max(nth, 1);
 
@@ -4866,9 +4866,9 @@ int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
     const int32_t C  = ne12;
     const int32_t N  = ne13;
 
-    const int tg_x = use_tiled ? (C + nth - 1) / nth : (OW + nth - 1) / nth;
-    const int tg_y = OH;
-    const int tg_z = use_tiled ? OW * N : C * N;
+    const 정수 tg_x = use_tiled ? (C + nth - 1) / nth : (OW + nth - 1) / nth;
+    const 정수 tg_y = OH;
+    const 정수 tg_z = use_tiled ? OW * N : C * N;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -4878,10 +4878,10 @@ int ggml_metal_op_conv_2d_dw(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, tg_x, tg_y, tg_z, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_conv_3d(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_conv_3d(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4930,15 +4930,15 @@ int ggml_metal_op_conv_3d(ggml_metal_op_t ctx, int idx) {
     auto pipeline = ggml_metal_library_get_pipeline_conv_3d(lib, op);
 
     // 5. Grid mapping
-    int nth0 = 32; // Standard SIMD width for Apple Silicon
-    int nth1 = 1;
-    int nth2 = 1;
+    정수 nth0 = 32; // Standard SIMD width for Apple Silicon
+    정수 nth1 = 1;
+    정수 nth2 = 1;
 
     int64_t spatial_volume = args.OW * args.OH * args.OD;
 
-    int ntg0 = (spatial_volume + nth0 - 1) / nth0;
-    int ntg1 = args.OC;
-    int ntg2 = args.N;
+    정수 ntg0 = (spatial_volume + nth0 - 1) / nth0;
+    정수 ntg1 = args.OC;
+    정수 ntg2 = args.N;
 
     // 6. Bind and Dispatch via the ggml C wrapper
     ggml_metal_encoder_set_pipeline(enc, pipeline);
@@ -4949,10 +4949,10 @@ int ggml_metal_op_conv_3d(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg0, ntg1, ntg2, nth0, nth1, nth2);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -4994,10 +4994,10 @@ int ggml_metal_op_conv_transpose_1d(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, OL, OC, 1, 1, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5024,9 +5024,9 @@ int ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_col2im_1d(lib, op);
 
-    const int total = T_out * OC;
-    const int nth   = 256;
-    const int ntg   = (total + nth - 1) / nth;
+    const 정수 total = T_out * OC;
+    const 정수 nth   = 256;
+    const 정수 ntg   = (total + nth - 1) / nth;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -5035,12 +5035,12 @@ int ggml_metal_op_col2im_1d(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
 // Dispatch the fused snake kernel from the matched mul -> sin -> sqr -> mul -> add chain.
 // idx points at the leading mul. The caller has validated the chain.
-int ggml_metal_op_snake_fused(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_snake_fused(ggml_metal_op_t ctx, 정수 idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
@@ -5053,13 +5053,13 @@ int ggml_metal_op_snake_fused(ggml_metal_op_t ctx, int idx) {
     const ggml_tensor * a = (x == mul0->src[0]) ? mul0->src[1] : mul0->src[0];
     const ggml_tensor * inv_b = (mul1->src[0] == sqr) ? mul1->src[1] : mul1->src[0];
 
-    const int T     = (int) x->ne[0];
-    const int C     = (int) x->ne[1];
-    const int total = T * C;
+    const 정수 T     = (정수) x->ne[0];
+    const 정수 C     = (정수) x->ne[1];
+    const 정수 total = T * C;
 
     // the encode loop pre-checked the leading mul only, check the rest of the chain
-    for (int i = 1; i < 5; ++i) {
-        if (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
+    위해 (정수 i = 1; i < 5; ++i) {
+        만약 (!ggml_metal_op_concurrency_check(ctx, ctx->node(idx + i))) {
             ggml_metal_op_concurrency_reset(ctx);
 
             break;
@@ -5080,14 +5080,14 @@ int ggml_metal_op_snake_fused(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(inv_b), 3);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(add),   4);
 
-    const int nth = 256;
-    const int ntg = (total + nth - 1) / nth;
+    const 정수 nth = 256;
+    const 정수 ntg = (total + nth - 1) / nth;
     ggml_metal_encoder_dispatch_threadgroups(enc, ntg, 1, 1, nth, 1, 1);
 
-    return 5;
+    반환 5;
 }
 
-int ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5142,10 +5142,10 @@ int ggml_metal_op_conv_transpose_2d(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, OW, OH, OC * N, KW, KH, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_upscale(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5165,7 +5165,7 @@ int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
 
     float poffs = 0.5f;
 
-    if (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
+    만약 (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) {
         poffs = 0.0f;
         sf0 = ne0 > 1 && ne00 > 1 ? (float)(ne0 - 1) / (ne00 - 1) : sf0;
         sf1 = ne1 > 1 && ne01 > 1 ? (float)(ne1 - 1) / (ne01 - 1) : sf1;
@@ -5197,7 +5197,7 @@ int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_upscale(lib, op);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    const 정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -5206,10 +5206,10 @@ int ggml_metal_op_upscale(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_roll(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_roll(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5250,7 +5250,7 @@ int ggml_metal_op_roll(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_roll(lib, op);
 
-    const int nth = std::min(1024, ne0);
+    const 정수 nth = std::min(1024, ne0);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -5259,10 +5259,10 @@ int ggml_metal_op_roll(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_pad(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_pad(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5298,9 +5298,9 @@ int ggml_metal_op_pad(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_pad(lib, op);
 
-    const int nth_max = MIN(64, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    const int nth = MIN(args.ne0, nth_max);
-    const int nk0 = (args.ne0 + 1024 - 1)/1024; // note: 1024 is hardcoded in the kernel!
+    const 정수 nth_max = MIN(64, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    const 정수 nth = MIN(args.ne0, nth_max);
+    const 정수 nk0 = (args.ne0 + 1024 - 1)/1024; // note: 1024 is hardcoded in the kernel!
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -5309,10 +5309,10 @@ int ggml_metal_op_pad(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nk0*ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5346,7 +5346,7 @@ int ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_pad_reflect_1d(lib, op);
 
-    const int nth = std::min(1024, ne0);
+    const 정수 nth = std::min(1024, ne0);
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -5355,10 +5355,10 @@ int ggml_metal_op_pad_reflect_1d(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne1, ne2, ne3, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_arange(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_arange(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5379,7 +5379,7 @@ int ggml_metal_op_arange(ggml_metal_op_t ctx, int idx) {
         /*.step  =*/ step
     };
 
-    const int nth = std::min(1024, ne0);
+    const 정수 nth = std::min(1024, ne0);
 
     auto pipeline = ggml_metal_library_get_pipeline_arange(lib, op);
 
@@ -5389,10 +5389,10 @@ int ggml_metal_op_arange(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, 1, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5403,8 +5403,8 @@ int ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, int idx) {
     GGML_TENSOR_LOCALS( int32_t, ne,  op,         ne);
     GGML_TENSOR_LOCALS(uint64_t, nb,  op,         nb);
 
-    const int dim        = op->op_params[0];
-    const int max_period = op->op_params[1];
+    const 정수 dim        = op->op_params[0];
+    const 정수 max_period = op->op_params[1];
 
     ggml_metal_kargs_timestep_embedding args = {
         /*.nb1 =*/ nb1,
@@ -5414,7 +5414,7 @@ int ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_timestep_embedding(lib, op);
 
-    const int nth = std::max(1, std::min(1024, dim/2));
+    const 정수 nth = std::max(1, std::min(1024, dim/2));
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -5423,7 +5423,7 @@ int ggml_metal_op_timestep_embedding(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne00, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
 size_t ggml_metal_op_argmax_extra(const ggml_tensor * op) {
@@ -5432,20 +5432,20 @@ size_t ggml_metal_op_argmax_extra(const ggml_tensor * op) {
     const int64_t ne00 = op->src[0]->ne[0];
     const int64_t ne01 = op->src[0]->ne[1];
 
-    int npart = 1;
-    if (ne00 > N_ARGMAX_CHUNK) {
-        npart = (int) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
+    정수 npart = 1;
+    만약 (ne00 > N_ARGMAX_CHUNK) {
+        npart = (정수) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
     }
 
-    if (npart == 1) {
-        return 0;
+    만약 (npart == 1) {
+        반환 0;
     }
 
     // partial max + partial argmax for every row
-    return (sizeof(float) + sizeof(int32_t)) * npart * ne01;
+    반환 (sizeof(float) + sizeof(int32_t)) * npart * ne01;
 }
 
-int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_argmax(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5458,9 +5458,9 @@ int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
 
     const int64_t nrows = ggml_nrows(op->src[0]);
 
-    int npart = 1;
-    if (ne00 > N_ARGMAX_CHUNK) {
-        npart = (int) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
+    정수 npart = 1;
+    만약 (ne00 > N_ARGMAX_CHUNK) {
+        npart = (정수) std::min<int64_t>(N_ARGMAX_NPART_MAX, (ne00 + N_ARGMAX_CHUNK - 1)/N_ARGMAX_CHUNK);
     }
 
     ggml_metal_kargs_argmax args = {
@@ -5472,7 +5472,7 @@ int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
 
     const size_t smem = 32*(sizeof(float) + sizeof(int32_t));
 
-    if (npart > 1) {
+    만약 (npart > 1) {
         auto pipeline_part = ggml_metal_library_get_pipeline_argmax_part(lib);
         auto pipeline_final = ggml_metal_library_get_pipeline_argmax_final(lib);
 
@@ -5489,8 +5489,8 @@ int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
 
         ggml_metal_op_concurrency_reset(ctx);
 
-        int nth = 32; // SIMD width
-        while (nth < npart && nth < 256) {
+        정수 nth = 32; // SIMD width
+        동안 (nth < npart && nth < 256) {
             nth *= 2;
         }
 
@@ -5501,13 +5501,13 @@ int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_set_threadgroup_memory_size(enc, smem, 0);
         ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, nth, 1, 1);
 
-        return 1;
+        반환 1;
     }
 
     auto pipeline = ggml_metal_library_get_pipeline_argmax(lib, op);
 
-    int nth = 32; // SIMD width
-    while (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
+    정수 nth = 32; // SIMD width
+    동안 (nth < ne00 && nth*ne01*ne02*ne03 < 256) {
         nth *= 2;
     }
 
@@ -5520,10 +5520,10 @@ int ggml_metal_op_argmax(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, nrows, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_argsort(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5539,12 +5539,12 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
     auto pipeline = ggml_metal_library_get_pipeline_argsort(lib, op);
 
     // bitonic sort requires the number of elements to be power of 2
-    int nth = 1;
-    while (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    정수 nth = 1;
+    동안 (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
-    const int npr = (ne00 + nth - 1)/nth;
+    const 정수 npr = (ne00 + nth - 1)/nth;
 
     // Metal kernels require the buffer size to be multiple of 16 bytes
     // https://developer.apple.com/documentation/metal/mtlcomputecommandencoder/1443142-setthreadgroupmemorylength
@@ -5556,7 +5556,7 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
     ggml_metal_buffer_id bid_tmp = bid_dst;
     bid_tmp.offs += ggml_nbytes(op);
 
-    if ((int) ceil(std::log(npr) / std::log(2)) % 2 == 1) {
+    만약 ((정수) ceil(std::log(npr) / std::log(2)) % 2 == 1) {
         std::swap(bid_dst, bid_tmp);
     }
 
@@ -5587,9 +5587,9 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline_merge = ggml_metal_library_get_pipeline_argsort_merge(lib, op);
 
-    int len = nth;
+    정수 len = nth;
 
-    while (len < ne00) {
+    동안 (len < ne00) {
         ggml_metal_op_concurrency_reset(ctx);
 
         ggml_metal_kargs_argsort_merge args_merge = {
@@ -5610,9 +5610,9 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
         };
 
         // merges per row
-        const int nm = (ne00 + 2*len - 1) / (2*len);
+        const 정수 nm = (ne00 + 2*len - 1) / (2*len);
 
-        const int nth = std::min(512, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge));
+        const 정수 nth = std::min(512, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge));
 
         ggml_metal_encoder_set_pipeline(enc, pipeline_merge);
         ggml_metal_encoder_set_bytes   (enc, &args_merge, sizeof(args_merge), 0);
@@ -5627,12 +5627,12 @@ int ggml_metal_op_argsort(ggml_metal_op_t ctx, int idx) {
         len <<= 1;
     }
 
-    return 1;
+    반환 1;
 }
 
 // bitonic-sort + merge fallback: efficient when k is small and there are few rows,
 // where the single-workgroup-per-row radix-select cannot reach enough parallelism
-static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
+static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5648,13 +5648,13 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
     auto pipeline = ggml_metal_library_get_pipeline_top_k(lib, op);
 
     // bitonic sort requires the number of elements to be power of 2
-    int nth = 1;
-    while (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    정수 nth = 1;
+    동안 (nth < ne00 && 2*nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
     // blocks per row
-    const int npr = (ne00 + nth - 1)/nth;
+    const 정수 npr = (ne00 + nth - 1)/nth;
 
     const size_t smem = GGML_PAD(nth*sizeof(int32_t), 16);
 
@@ -5664,11 +5664,11 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
     ggml_metal_buffer_id bid_tmp = bid_dst;
     bid_tmp.offs += sizeof(int32_t)*ggml_nelements(op->src[0]);
 
-    if ((int) ceil(std::log(npr) / std::log(2)) % 2 == 1) {
+    만약 ((정수) ceil(std::log(npr) / std::log(2)) % 2 == 1) {
         std::swap(bid_dst, bid_tmp);
     }
 
-    const int top_k = ne0;
+    const 정수 top_k = ne0;
 
     ggml_metal_kargs_argsort args = {
         /*.ne00  =*/ ne00,
@@ -5686,7 +5686,7 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
         /*.top_k =*/ std::min(nth, top_k), // for each block, keep just the top_k indices
     };
 
-    if (npr > 1) {
+    만약 (npr > 1) {
         args.ne0 = (npr - 1)*args.top_k + std::min(ne00 - (npr - 1)*nth, args.top_k);
     }
 
@@ -5701,15 +5701,15 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline_merge = ggml_metal_library_get_pipeline_top_k_merge(lib, op);
 
-    int len = args.top_k;
+    정수 len = args.top_k;
 
-    while (len < args.ne0) {
+    동안 (len < args.ne0) {
         ggml_metal_op_concurrency_reset(ctx);
 
         // merges per row
-        const int nm = (args.ne0 + 2*len - 1) / (2*len);
+        const 정수 nm = (args.ne0 + 2*len - 1) / (2*len);
 
-        const int nth = std::min(512, std::min(len, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge)));
+        const 정수 nth = std::min(512, std::min(len, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline_merge)));
 
         ggml_metal_kargs_argsort_merge args_merge = {
             /*.ne00  =*/ ne00,
@@ -5745,7 +5745,7 @@ static void ggml_metal_op_top_k_bitonic(ggml_metal_op_t ctx, int idx) {
 // radix-select: one workgroup per row. Maps each float to an order-preserving unsigned
 // key, finds the k-th largest via 4 radix-8 histogram passes, then compacts the top-k
 // indices. Fast for large k and/or many rows.
-static void ggml_metal_op_top_k_radix(ggml_metal_op_t ctx, int idx) {
+static void ggml_metal_op_top_k_radix(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5759,7 +5759,7 @@ static void ggml_metal_op_top_k_radix(ggml_metal_op_t ctx, int idx) {
     auto pipeline = ggml_metal_library_get_pipeline_top_k_radix(lib, op);
 
     // one workgroup per row; radix-select the k-th largest value
-    const int nth = std::min(1024, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    const 정수 nth = std::min(1024, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
     ggml_metal_kargs_top_k args = {
         /*.ne00  =*/ ne00,
@@ -5791,14 +5791,14 @@ static void ggml_metal_op_top_k_radix(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 }
 
-int ggml_metal_op_topk_moe(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_topk_moe(ggml_metal_op_t ctx, 정수 idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    int n_fuse = 1;
+    정수 n_fuse = 1;
     const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
-    if (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_TOPK_MOE) {
-        return 1;
+    만약 (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_TOPK_MOE) {
+        반환 1;
     }
 
     ggml_tensor * softmax  = ctx->node(idx);
@@ -5815,13 +5815,13 @@ int ggml_metal_op_topk_moe(ggml_metal_op_t ctx, int idx) {
     const bool with_scale = n_fuse == 4 || n_fuse == 7;
 
     float clamp = -INFINITY;
-    if (with_norm) {
+    만약 (with_norm) {
         ggml_tensor * clamp_node = ctx->node(idx + 4);
         clamp = ggml_get_op_params_f32(clamp_node, 0);
     }
 
     float scale = 1.0f;
-    if (with_scale) {
+    만약 (with_scale) {
         ggml_tensor * scale_node = ctx->node(idx + n_fuse - 1);
         scale = ggml_get_op_params_f32(scale_node, 0);
     }
@@ -5846,21 +5846,21 @@ int ggml_metal_op_topk_moe(ggml_metal_op_t ctx, int idx) {
 
     ctx->count_fusions(fusion);
 
-    if (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    만약 (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: SOFT_MAX + ARGSORT + GET_ROWS\n", __func__);
     }
 
-    return n_fuse;
+    반환 n_fuse;
 }
 
-int ggml_metal_op_moe_reduce(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_moe_reduce(ggml_metal_op_t ctx, 정수 idx) {
     ggml_metal_library_t lib = ctx->lib;
     ggml_metal_encoder_t enc = ctx->enc;
 
-    int n_fuse = 1;
+    정수 n_fuse = 1;
     const ggml_metal_fusion * fusion = ctx->can_fuse(idx, GGML_METAL_FUSION_FULL, &n_fuse);
-    if (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_MOE_REDUCE) {
-        return 1;
+    만약 (!fusion || ggml_metal_fusion_get_id(fusion) != GGML_METAL_FUSION_MOE_REDUCE) {
+        반환 1;
     }
 
     ggml_tensor * mul     = ctx->node(idx);
@@ -5875,8 +5875,8 @@ int ggml_metal_op_moe_reduce(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_moe_reduce(lib, (int32_t) experts->ne[1]);
 
-    const int nth = std::min(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
-    const int n_col_tiles = (args.ne00 + nth - 1) / nth;
+    const 정수 nth = std::min(256, ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
+    const 정수 n_col_tiles = (args.ne00 + nth - 1) / nth;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), 0);
@@ -5888,35 +5888,35 @@ int ggml_metal_op_moe_reduce(ggml_metal_op_t ctx, int idx) {
 
     ctx->count_fusions(fusion);
 
-    if (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
+    만약 (ggml_metal_fusion_info_debug(ctx->finfo) > 1) {
         GGML_LOG_DEBUG("%s: fuse: MOE_REDUCE\n", __func__);
     }
 
-    return n_fuse;
+    반환 n_fuse;
 }
 
-int ggml_metal_op_top_k(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_top_k(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     // radix-select has a fixed single-workgroup-per-row cost (~50-60us) that is only
     // amortized for long rows, many rows, or a large k; otherwise the bitonic path wins
-    const int ncols = op->src[0]->ne[0];
-    const int k     = op->ne[0];
-    const int nrows = ggml_nrows(op->src[0]);
+    const 정수 ncols = op->src[0]->ne[0];
+    const 정수 k     = op->ne[0];
+    const 정수 nrows = ggml_nrows(op->src[0]);
 
     const bool use_radix =
         ncols > 2048 && (k > 64 || (nrows > 4 && ncols >= 8192));
 
-    if (use_radix) {
+    만약 (use_radix) {
         ggml_metal_op_top_k_radix(ctx, idx);
-    } else {
+    } 아니면 {
         ggml_metal_op_top_k_bitonic(ctx, idx);
     }
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_tri(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_tri(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5948,9 +5948,9 @@ int ggml_metal_op_tri(ggml_metal_op_t ctx, int idx) {
 
     auto pipeline = ggml_metal_library_get_pipeline_tri(lib, op);
 
-    int nth = 32; // SIMD width
+    정수 nth = 32; // SIMD width
 
-    while (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
+    동안 (nth < ne00 && nth < ggml_metal_pipeline_max_theads_per_threadgroup(pipeline)) {
         nth *= 2;
     }
 
@@ -5964,10 +5964,10 @@ int ggml_metal_op_tri(ggml_metal_op_t ctx, int idx) {
 
     ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_opt_step_adamw(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_opt_step_adamw(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -5985,7 +5985,7 @@ int ggml_metal_op_opt_step_adamw(ggml_metal_op_t ctx, int idx) {
         /*.np =*/ np,
     };
 
-    int ida = 0;
+    정수 ida = 0;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), ida++);
@@ -5995,15 +5995,15 @@ int ggml_metal_op_opt_step_adamw(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[3]), ida++);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[4]), ida++);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    const 정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
     const int64_t n = (np + nth - 1) / nth;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_opt_step_sgd(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_opt_step_sgd(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -6021,7 +6021,7 @@ int ggml_metal_op_opt_step_sgd(ggml_metal_op_t ctx, int idx) {
         /*.np =*/ np,
     };
 
-    int ida = 0;
+    정수 ida = 0;
 
     ggml_metal_encoder_set_pipeline(enc, pipeline);
     ggml_metal_encoder_set_bytes   (enc, &args, sizeof(args), ida++);
@@ -6029,15 +6029,15 @@ int ggml_metal_op_opt_step_sgd(ggml_metal_op_t ctx, int idx) {
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[1]), ida++);
     ggml_metal_encoder_set_buffer  (enc, ggml_metal_get_buffer_id(op->src[2]), ida++);
 
-    const int nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
+    const 정수 nth = std::min(ggml_metal_pipeline_max_theads_per_threadgroup(pipeline), ne0);
     const int64_t n = (np + nth - 1) / nth;
 
     ggml_metal_encoder_dispatch_threadgroups(enc, n, 1, 1, nth, 1, 1);
 
-    return 1;
+    반환 1;
 }
 
-int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
+정수 ggml_metal_op_count_equal(ggml_metal_op_t ctx, 정수 idx) {
     ggml_tensor * op = ctx->node(idx);
 
     ggml_metal_library_t lib = ctx->lib;
@@ -6081,7 +6081,7 @@ int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
 
         const size_t smem = pipeline.smem;
 
-        const int nth = 32*pipeline.nsg;
+        const 정수 nth = 32*pipeline.nsg;
 
         GGML_ASSERT(nth <= ggml_metal_pipeline_max_theads_per_threadgroup(pipeline));
 
@@ -6095,5 +6095,5 @@ int ggml_metal_op_count_equal(ggml_metal_op_t ctx, int idx) {
         ggml_metal_encoder_dispatch_threadgroups(enc, ne01, ne02, ne03, nth, 1, 1);
     }
 
-    return 1;
+    반환 1;
 }

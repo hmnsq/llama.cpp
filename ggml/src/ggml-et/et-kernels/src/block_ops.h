@@ -31,10 +31,10 @@ static inline float compute_block_dot_product_q4_0(const block_q4_0 * a_block, c
     __asm__ volatile("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
     // Process 32 elements in 2 chunks of 16 elements (8 bytes) each
-    for (int chunk = 0; chunk < 2; chunk++) {
-        int offset_a      = chunk * 8;
-        int offset_b_low  = chunk * 8;       // Activations for lower nibbles
-        int offset_b_high = chunk * 8 + 16;  // Activations for upper nibbles (16 elements later)
+    위해 (정수 chunk = 0; chunk < 2; chunk++) {
+        정수 offset_a      = chunk * 8;
+        정수 offset_b_low  = chunk * 8;       // Activations for lower nibbles
+        정수 offset_b_high = chunk * 8 + 16;  // Activations for upper nibbles (16 elements later)
 
         __asm__ volatile(
             "fgb.ps f11, f31(%[a_ptr])\n"  // Gather 8 bytes (16 packed q4_0 weights)
@@ -80,7 +80,7 @@ static inline float compute_block_dot_product_q4_0(const block_q4_0 * a_block, c
     __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
 
     const float scale = fp16_to_fp32(a_block->d);
-    return final_sum * scale;
+    반환 final_sum * scale;
 }
 
 // Compute dot product between dequantized q8_0 block and f32 column vector
@@ -98,8 +98,8 @@ static inline float compute_block_dot_product_q8_0(const block_q8_0 * a_block, c
     __asm__ volatile("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
     // Process 32 elements in 4 chunks of 8 elements each
-    for (int chunk = 0; chunk < 4; chunk++) {
-        int offset = chunk << 3;  // chunk * 8
+    위해 (정수 chunk = 0; chunk < 4; chunk++) {
+        정수 offset = chunk << 3;  // chunk * 8
 
         __asm__ volatile(
             "flw.ps f12, %[b_vec]\n"         // Load 8 B values (floats)
@@ -131,7 +131,7 @@ static inline float compute_block_dot_product_q8_0(const block_q8_0 * a_block, c
     __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
 
     const float scale = fp16_to_fp32(a_block->d);
-    return final_sum * scale;
+    반환 final_sum * scale;
 }
 
 //******************************************************************************
@@ -166,15 +166,15 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
 
     __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
-    for (int64_t kb = 0; kb < n_blocks; kb++) {
+    위해 (int64_t kb = 0; kb < n_blocks; kb++) {
         const block_q8_0 * blk         = q_row + kb;
         const float *      b_ptr       = b_col + (kb << 5);
         const uintptr_t    qs_addr     = (uintptr_t) blk->qs;
         const uintptr_t    qs_aligned  = qs_addr & ~(uintptr_t) 31;
         const uintptr_t    qs_low      = qs_addr & 31;
-        const int          fast_chunks = (int) ((32 - qs_low) >> 3);
+        const 정수          fast_chunks = (정수) ((32 - qs_low) >> 3);
 
-        if (fast_chunks >= 3) {
+        만약 (fast_chunks >= 3) {
             __asm__ volatile(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
@@ -199,7 +199,7 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                   [bv0] "m"(*(const float (*)[8]) & b_ptr[0]), [bv1] "m"(*(const float (*)[8]) & b_ptr[8]),
                   [bv2] "m"(*(const float (*)[8]) & b_ptr[16]), [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
-        } else if (fast_chunks == 2) {
+        } 아니면 만약 (fast_chunks == 2) {
             __asm__ volatile(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
@@ -224,7 +224,7 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
-        } else if (fast_chunks == 1) {
+        } 아니면 만약 (fast_chunks == 1) {
             __asm__ volatile(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
@@ -249,7 +249,7 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
-        } else {
+        } 아니면 {
             __asm__ volatile(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
@@ -299,7 +299,7 @@ static inline float __attribute__((always_inline)) q8_dot_reduce(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    반환 result;
 }
 
 // Full-row dot product (convenience wrapper)
@@ -311,7 +311,7 @@ static inline float compute_row_dot_q8_0(const block_q8_0 * q_row, const float *
     q8_dot_tile(q_row, b_col, K_blocks);
     float result = q8_dot_reduce();
     __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-    return result;
+    반환 result;
 }
 
 //******************************************************************************
@@ -343,7 +343,7 @@ static inline void q8_dot_end(const q8_dot_state * state) {
 static inline float q8_dot_compute(const block_q8_0 * q_row, const float * b_col, int64_t K_blocks) {
     q8_dot_reset();
     q8_dot_tile(q_row, b_col, K_blocks);
-    return q8_dot_reduce();
+    반환 q8_dot_reduce();
 }
 
 // Compute two row dots together while reusing the same loaded B chunks.
@@ -366,7 +366,7 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
         "fbci.pi f21, 0\n" ::
             : "f20", "f21");
 
-    for (int64_t kb = 0; kb < K_blocks; kb++) {
+    위해 (int64_t kb = 0; kb < K_blocks; kb++) {
         const block_q8_0 * blk0  = q_row0 + kb;
         const block_q8_0 * blk1  = q_row1 + kb;
         const float *      b_ptr = b_col + (kb << 5);
@@ -375,9 +375,9 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
         const uintptr_t qs_addr1    = (uintptr_t) blk1->qs;
         const uintptr_t qs_aligned0 = qs_addr0 & ~(uintptr_t) 31;
         const uintptr_t qs_aligned1 = qs_addr1 & ~(uintptr_t) 31;
-        const int       fast_chunks = (int) ((32 - (qs_addr0 & 31)) >> 3);
+        const 정수       fast_chunks = (정수) ((32 - (qs_addr0 & 31)) >> 3);
 
-        if (fast_chunks >= 3) {
+        만약 (fast_chunks >= 3) {
             __asm__ volatile(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
@@ -421,7 +421,7 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
-        } else if (fast_chunks == 2) {
+        } 아니면 만약 (fast_chunks == 2) {
             __asm__ volatile(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
@@ -465,7 +465,7 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
-        } else if (fast_chunks == 1) {
+        } 아니면 만약 (fast_chunks == 1) {
             __asm__ volatile(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
@@ -508,7 +508,7 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                   [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
                   [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
-        } else {
+        } 아니면 {
             __asm__ volatile(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
@@ -607,7 +607,7 @@ static inline float compute_block_dot_product_f16_naive(const uint16_t * a_block
     // Load the pattern once into f31 for the duration of all 4 chunks
     __asm__ volatile("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
-    for (int chunk = 0; chunk < 4; chunk++) {
+    위해 (정수 chunk = 0; chunk < 4; chunk++) {
         // Correct pointers:
         // a_block elements are 2 bytes, b_col elements are 4 bytes
         const uint16_t * a_ptr = &a_block[chunk << 3];      // chunk * 8
@@ -628,7 +628,7 @@ static inline float compute_block_dot_product_f16_naive(const uint16_t * a_block
 
     __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
 
-    return acc_vec[0] + acc_vec[1] + acc_vec[2] + acc_vec[3] + acc_vec[4] + acc_vec[5] + acc_vec[6] + acc_vec[7];
+    반환 acc_vec[0] + acc_vec[1] + acc_vec[2] + acc_vec[3] + acc_vec[4] + acc_vec[5] + acc_vec[6] + acc_vec[7];
 }
 
 // Compute dot product between f16 block and f32 column vector
@@ -636,38 +636,38 @@ static inline float compute_block_dot_product_f16_naive(const uint16_t * a_block
 // Block size: up to 32 f16 values (can handle partial blocks for misaligned K)
 static inline float compute_block_dot_product_f16_partial(const uint16_t * a_block,
                                                           const float *    b_col_start,
-                                                          int              elements) {
+                                                          정수              elements) {
     // This matches compute_block_dot_product_f16_naive behavior
     float sum = 0.0f;
 
-    for (int i = 0; i < elements; i++) {
+    위해 (정수 i = 0; i < elements; i++) {
         float a_val = fp16_to_fp32(a_block[i]);
         float b_val = b_col_start[i];
         sum += a_val * b_val;
     }
 
-    return sum;
+    반환 sum;
 }
 
 // Compute dot product between f16 block and f16 column vector
 // Scalar implementation for generic non-matrix-engine fallback paths.
 static inline float compute_block_dot_product_f16_f16_partial(const uint16_t * a_block,
                                                               const uint16_t * b_col_start,
-                                                              int              elements) {
+                                                              정수              elements) {
     float sum = 0.0f;
 
-    for (int i = 0; i < elements; i++) {
+    위해 (정수 i = 0; i < elements; i++) {
         sum += fp16_to_fp32(a_block[i]) * fp16_to_fp32(b_col_start[i]);
     }
 
-    return sum;
+    반환 sum;
 }
 
 // Compute dot product between f16 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: 32 f16 values (64 bytes = 1 cache line)
 static inline float compute_block_dot_product_f16(const uint16_t * a_block, const float * b_col_start) {
-    return compute_block_dot_product_f16_partial(a_block, b_col_start, QK_F16);
+    반환 compute_block_dot_product_f16_partial(a_block, b_col_start, QK_F16);
 }
 
 // Compute dot product between f32 block and f32 column vector
@@ -675,20 +675,20 @@ static inline float compute_block_dot_product_f16(const uint16_t * a_block, cons
 // Block size: up to 16 f32 values (can handle partial blocks for misaligned K)
 static inline float compute_block_dot_product_f32_partial(const float * a_block,
                                                           const float * b_col_start,
-                                                          int           elements) {
+                                                          정수           elements) {
     float acc_vec[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };  // Accumulator vector
 
     // Calculate how many full 8-element chunks we can process
-    int vec_end = (elements / 8) * 8;
+    정수 vec_end = (elements / 8) * 8;
 
-    if (vec_end > 0) {
+    만약 (vec_end > 0) {
         // Set mask register to enable all 8 vector elements
         unsigned long temp_mask;
         __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
         __asm__ volatile("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
 
         // Process full 8-element chunks
-        for (int i = 0; i < vec_end; i += 8) {
+        위해 (정수 i = 0; i < vec_end; i += 8) {
             // Vectorized f32 multiply-accumulate
             __asm__ volatile(
                 "flw.ps f10, %[acc]\n"           // Load current accumulator (8 floats)
@@ -709,37 +709,37 @@ static inline float compute_block_dot_product_f32_partial(const float * a_block,
 
     // Horizontal sum: reduce 8 accumulator elements to single scalar
     float final_sum = 0.0f;
-    for (int i = 0; i < 8; i++) {
+    위해 (정수 i = 0; i < 8; i++) {
         final_sum += acc_vec[i];
     }
 
     // Handle remaining elements (< 8) with scalar operations
-    for (int i = vec_end; i < elements; i++) {
+    위해 (정수 i = vec_end; i < elements; i++) {
         final_sum += a_block[i] * b_col_start[i];
     }
 
-    return final_sum;
+    반환 final_sum;
 }
 
 // Compute dot product between f32 block and f16 column vector
 // Scalar implementation for generic non-matrix-engine fallback paths.
 static inline float compute_block_dot_product_f32_f16_partial(const float *    a_block,
                                                               const uint16_t * b_col_start,
-                                                              int              elements) {
+                                                              정수              elements) {
     float sum = 0.0f;
 
-    for (int i = 0; i < elements; i++) {
+    위해 (정수 i = 0; i < elements; i++) {
         sum += a_block[i] * fp16_to_fp32(b_col_start[i]);
     }
 
-    return sum;
+    반환 sum;
 }
 
 // Compute dot product between f32 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: 16 f32 values (64 bytes = 1 cache line)
 static inline float compute_block_dot_product_f32(const float * a_block, const float * b_col_start) {
-    return compute_block_dot_product_f32_partial(a_block, b_col_start, QK_F32);
+    반환 compute_block_dot_product_f32_partial(a_block, b_col_start, QK_F32);
 
     // float acc_vec[8];
     // unsigned long old_mask;
@@ -779,7 +779,7 @@ static inline void __attribute__((always_inline)) q4_dot_tile(const block_q4_0 *
     const int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
     __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
 
-    for (int64_t kb = 0; kb < n_blocks; kb++) {
+    위해 (int64_t kb = 0; kb < n_blocks; kb++) {
         const block_q4_0 * blk   = q_row + kb;
         const float *      b_ptr = b_col + (kb << 5);
 
@@ -841,7 +841,7 @@ static inline float __attribute__((always_inline)) q4_dot_reduce(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    반환 result;
 }
 
 static inline float compute_row_dot_q4_0(const block_q4_0 * q_row, const float * b_col, int64_t K_blocks) {
@@ -852,7 +852,7 @@ static inline float compute_row_dot_q4_0(const block_q4_0 * q_row, const float *
     q4_dot_tile(q_row, b_col, K_blocks);
     float result = q4_dot_reduce();
     __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-    return result;
+    반환 result;
 }
 
 typedef struct {
@@ -871,7 +871,7 @@ static inline void q4_dot_end(const q4_dot_state * state) {
 static inline float q4_dot_compute(const block_q4_0 * q_row, const float * b_col, int64_t K_blocks) {
     q4_dot_reset();
     q4_dot_tile(q_row, b_col, K_blocks);
-    return q4_dot_reduce();
+    반환 q4_dot_reduce();
 }
 
 static inline void q4_dot_compute_x2_aligned(const block_q4_0 * q_row0,
@@ -887,7 +887,7 @@ static inline void q4_dot_compute_x2_aligned(const block_q4_0 * q_row0,
         "fbci.pi f21, 0\n" ::
             : "f20", "f21");
 
-    for (int64_t kb = 0; kb < K_blocks; kb++) {
+    위해 (int64_t kb = 0; kb < K_blocks; kb++) {
         const block_q4_0 * blk0  = q_row0 + kb;
         const block_q4_0 * blk1  = q_row1 + kb;
         const float *      b_ptr = b_col + (kb << 5);

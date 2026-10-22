@@ -7,23 +7,23 @@
 #include <cmath>
 #include <stdexcept>
 
-#if !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
+#만약 !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
 #    error "riscv v extension or v_intrinsic not enabled"
-#else
+#아니면
 #    include <riscv_vector.h>
 #endif
 
-#if !defined(__riscv_zfh)
+#만약 !defined(__riscv_zfh)
 #    error "riscv zfh extension not enabled"
 #endif
 
-#if defined(RISCV64_SPACEMIT_IME1)
-#else
+#만약 defined(RISCV64_SPACEMIT_IME1)
+#아니면
 #    error "RISCV64_SPACEMIT_IME1 not defined"
 #endif
 
 // clang-format off
-#if defined(__GNUC__)
+#만약 defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #pragma GCC diagnostic ignored "-Wcast-qual"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -98,7 +98,7 @@ void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t *
     constexpr float range_max_reciprocal = 1.0f / ((1 << 7) - 1);
     const float     fone                 = 1.0f;
 
-    for (size_t row_index = 0; row_index < 4; ++row_index) {
+    위해 (size_t row_index = 0; row_index < 4; ++row_index) {
         const float * SRC = A + row_index * CountK;
         uint8_t *     DST = QuantA + row_index * sizeof(float);
 
@@ -595,15 +595,15 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
     const size_t INNER = BlkLen / 16;
     float        tmp[4 * 16];
 
-    if constexpr (HasZeroPoint) {
-        for (size_t n = 0; n < CountN; n += 16) {
+    만약 constexpr (HasZeroPoint) {
+        위해 (size_t n = 0; n < CountN; n += 16) {
             size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
                                       n * BlockCountK * BlkLen / 2 +       // b data
                                       n * BlockCountK * sizeof(uint8_t) +  // zp
                                       n * BlockCountK * sizeof(_Float16);  // scale
             float * CPtr = C + n;
-            if (NBLKS < 16) {
+            만약 (NBLKS < 16) {
                 CPtr = tmp;
                 LDC  = 16 * sizeof(float);
             }
@@ -685,14 +685,14 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4",
                   "s5", "s6");
         }
-    } else {
-        for (size_t n = 0; n < CountN; n += 16) {
+    } 아니면 {
+        위해 (size_t n = 0; n < CountN; n += 16) {
             size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
                                       n * BlockCountK * BlkLen / 2 +       // b data
                                       n * BlockCountK * sizeof(_Float16);  // scale
             float * CPtr = C + n;
-            if (NBLKS < 16) {
+            만약 (NBLKS < 16) {
                 CPtr = tmp;
                 LDC  = 16 * sizeof(float);
             }
@@ -772,8 +772,8 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
     GGML_UNUSED(ldc);
     size_t INNER = BlkLen / 16;
 
-    if constexpr (HasZeroPoint) {
-        for (size_t n = 0; n < CountN; n += 16) {
+    만약 constexpr (HasZeroPoint) {
+        위해 (size_t n = 0; n < CountN; n += 16) {
             size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
                                       n * BlockCountK * BlkLen / 2 +       // b data
@@ -889,8 +889,8 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [C] "r"(CPtr)
                 : "cc", "t0", "t5", "t3", "f1", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
         }
-    } else {
-        for (size_t n = 0; n < CountN; n += 16) {
+    } 아니면 {
+        위해 (size_t n = 0; n < CountN; n += 16) {
             size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
                                       n * BlockCountK * BlkLen / 2 +       // b data
@@ -1015,7 +1015,7 @@ static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
     const size_t INNER = BlkLen / 16;
     const size_t LDC   = ldc * sizeof(float);
 
-    for (size_t n = 0; n < CountN; n += 16) {
+    위해 (size_t n = 0; n < CountN; n += 16) {
         uint8_t * QuantBDataPtr =
             (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
         float * CPtr = C + n;
@@ -1102,7 +1102,7 @@ static void SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
     GGML_UNUSED(ldc);
     const size_t INNER = BlkLen / 16;  // = 2 for QK8_0=32
 
-    for (size_t n = 0; n < CountN; n += 16) {
+    위해 (size_t n = 0; n < CountN; n += 16) {
         size_t    nblks = (CountN - n) > 16 ? 16 : CountN - n;
         // Each x16 K-block is {16 fp16 scales (32B), 512B interleaved int8}; stride = 544B.
         uint8_t * QuantBDataPtr = (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
@@ -1221,24 +1221,24 @@ size_t gemm_kernel_i8i4(size_t          blk_len,
                         size_t          count_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
-        if (quant_b_zp != nullptr) {
+    만약 (count_m >= 4) {
+        만약 (quant_b_zp != nullptr) {
             SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
                                                              ldc);
-        } else {
+        } 아니면 {
             SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
                                                               k_blks, ldc);
         }
-        return 4;
-    } else {
-        if (quant_b_zp != nullptr) {
+        반환 4;
+    } 아니면 {
+        만약 (quant_b_zp != nullptr) {
             SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
                                                              ldc);
-        } else {
+        } 아니면 {
             SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
                                                               k_blks, ldc);
         }
-        return 1;
+        반환 1;
     }
 }
 
@@ -1252,13 +1252,13 @@ size_t gemm_kernel_i8i8(size_t          blk_len,
                         size_t          k_blks,
                         size_t          ldc) {
     GGML_UNUSED(quant_b_zp);
-    if (count_m >= 4) {
+    만약 (count_m >= 4) {
         SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
                                                    ldc);
-        return 4;
+        반환 4;
     }
     SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks, ldc);
-    return 1;
+    반환 1;
 }
 }  // namespace ime1
 }  // namespace spacemit_kernels

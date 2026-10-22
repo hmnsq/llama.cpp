@@ -39,12 +39,12 @@
 #define CACHE_LINE_F16_ELEMS  32  // 64 / 2
 
 static int64_t gcd64(int64_t a, int64_t b) {
-    while (b) {
+    동안 (b) {
         int64_t t = b;
         b         = a % b;
         a         = t;
     }
-    return a;
+    반환 a;
 }
 
 struct ggml_et_set_rows_params {
@@ -72,7 +72,7 @@ static void copy_cache_aligned_f16(uint16_t * dst, const float * src) {
     // Build offset vector for consecutive 16-bit stores: [0, 2, 4, 6, 8, 10, 12, 14]
     float      offset_vec_storage[8];
     uint32_t * offsets = (uint32_t *) offset_vec_storage;
-    for (int j = 0; j < 8; j++) {
+    위해 (정수 j = 0; j < 8; j++) {
         offsets[j] = j * 2;
     }
 
@@ -85,7 +85,7 @@ static void copy_cache_aligned_f16(uint16_t * dst, const float * src) {
         : "f1");
 
     // 4 iterations of 8 elements = 32 F16 elements = 64 bytes = 1 cache line
-    for (int i = 0; i < 32; i += 8) {
+    위해 (정수 i = 0; i < 32; i += 8) {
         __asm__ volatile(
             "flw.ps    f2, 0(%[src_ptr])    \n\t"
             "fcvt.f16.ps f3, f2             \n\t"
@@ -99,45 +99,45 @@ static void copy_cache_aligned_f16(uint16_t * dst, const float * src) {
 }
 
 static inline size_t tensor_bytes(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+    반환 (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
-int entry_point(struct ggml_et_set_rows_params * params, void * env) {
+정수 entry_point(struct ggml_et_set_rows_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    만약 (!kernel_env) {
+        반환 -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    정수 thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    정수 num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    만약 (thread_id < 0) {
+        반환 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    만약 (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        반환 -1;  // Invalid pointer
     }
 
     struct ggml_tensor * src0 = &params->src0;  // Source data tensor (F32)
     struct ggml_tensor * src1 = &params->src1;  // Row indices tensor (I64)
     struct ggml_tensor * dst  = &params->dst;   // Destination tensor (F32/F16)
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I64) {
-        return -1;  // Invalid source types
+    만약 (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I64) {
+        반환 -1;  // Invalid source types
     }
 
-    if (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) {
-        return -1;  // Unsupported destination type
+    만약 (dst->type != GGML_TYPE_F32 && dst->type != GGML_TYPE_F16) {
+        반환 -1;  // Unsupported destination type
     }
 
     float *   src0_data = (float *) src0->data;
     int64_t * src1_data = (int64_t *) src1->data;
     void *    dst_data  = dst->data;
 
-    if (!src0_data || !src1_data || !dst_data) {
-        return -1;  // Null data pointer
+    만약 (!src0_data || !src1_data || !dst_data) {
+        반환 -1;  // Null data pointer
     }
 
     const int64_t ne00 = src0->ne[0];  // Source columns (row width)
@@ -164,8 +164,8 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
     const int64_t nb3 = dst->nb[3];
 
     // Validate that number of indices matches number of source rows
-    if (ne10 != ne01) {
-        return -1;  // Number of indices must match number of source rows
+    만약 (ne10 != ne01) {
+        반환 -1;  // Number of indices must match number of source rows
     }
 #ifdef ET_UBERKERNEL
     evict_region_past_l2(params->src0.data, tensor_bytes(&params->src0));
@@ -181,7 +181,7 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
     // Check if rows are cache-line aligned in the destination
     const bool row_cache_aligned = (ne00 >= dst_cl_elems) && (ne00 % dst_cl_elems == 0);
 
-    if (row_cache_aligned) {
+    만약 (row_cache_aligned) {
         // Cache-aligned path: distribute dst cache lines across threads
         // Each thread owns complete cache lines -> no coherence conflicts
         const int64_t cls_per_row    = ne00 / dst_cl_elems;
@@ -189,14 +189,14 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
         const int64_t cls_per_thread = (total_cls + num_threads - 1) / num_threads;
         const int64_t my_start       = thread_id * cls_per_thread;
         int64_t       my_end         = my_start + cls_per_thread;
-        if (my_end > total_cls) {
+        만약 (my_end > total_cls) {
             my_end = total_cls;
         }
-        if (my_start >= total_cls) {
-            return 0;
+        만약 (my_start >= total_cls) {
+            반환 0;
         }
 
-        for (int64_t cl = my_start; cl < my_end; cl++) {
+        위해 (int64_t cl = my_start; cl < my_end; cl++) {
             // Map flat cache-line index -> (row, offset within row)
             const int64_t row_flat  = cl / cls_per_row;
             const int64_t cl_in_row = cl % cls_per_row;
@@ -214,8 +214,8 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
             const int64_t index_byte_offset = i10 * nb10 + i11 * nb11 + i12 * nb12;
             const int64_t dst_row_index     = *(int64_t *) ((char *) src1_data + index_byte_offset);
 
-            if (dst_row_index < 0 || dst_row_index >= ne_dst1) {
-                return -1;
+            만약 (dst_row_index < 0 || dst_row_index >= ne_dst1) {
+                반환 -1;
             }
 
             // Source pointer: row base + cache-line offset (always F32 source)
@@ -226,15 +226,15 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
             // Destination pointer: scattered row base + cache-line offset
             char * dst_row_base = (char *) dst_data + dst_row_index * nb1 + i02 * nb2 + i03 * nb3;
 
-            if (dst->type == GGML_TYPE_F32) {
+            만약 (dst->type == GGML_TYPE_F32) {
                 float * dst_ptr = (float *) dst_row_base + elem_offset;
                 copy_cache_aligned_f32(dst_ptr, src_ptr);
-            } else {
+            } 아니면 {
                 uint16_t * dst_ptr = (uint16_t *) dst_row_base + elem_offset;
                 copy_cache_aligned_f16(dst_ptr, src_ptr);
             }
         }
-    } else if (nb1 % CACHE_LINE_SIZE_BYTES == 0) {
+    } 아니면 만약 (nb1 % CACHE_LINE_SIZE_BYTES == 0) {
         // LCM-aligned path: destination row stride is cache-line-aligned, so
         // scattered rows never share a cache line even though ne00 doesn't
         // fill complete cache lines.  Group rows via lcm(ne00, dst_cl_elems)
@@ -249,11 +249,11 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
         const int64_t cls_per_thread = (total_cls + num_threads - 1) / num_threads;
         const int64_t my_start       = thread_id * cls_per_thread;
         int64_t       my_end         = my_start + cls_per_thread;
-        if (my_end > total_cls) {
+        만약 (my_end > total_cls) {
             my_end = total_cls;
         }
-        if (my_start >= total_cls) {
-            return 0;
+        만약 (my_start >= total_cls) {
+            반환 0;
         }
 
 #ifdef BUILD_FOR_UBERKERNEL
@@ -265,7 +265,7 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
 #endif
 
 
-        for (int64_t cl = my_start; cl < my_end; cl++) {
+        위해 (int64_t cl = my_start; cl < my_end; cl++) {
             const int64_t group_idx   = cl / cls_per_group;
             const int64_t cl_in_group = cl % cls_per_group;
 
@@ -277,16 +277,16 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
             const int64_t r_first = elem_start / ne00;
             const int64_t r_last  = (elem_end - 1) / ne00;
 
-            for (int64_t r = r_first; r <= r_last; r++) {
+            위해 (int64_t r = r_first; r <= r_last; r++) {
                 const int64_t row_flat = group_idx * rows_per_group + r;
-                if (row_flat >= total_rows) {
+                만약 (row_flat >= total_rows) {
                     break;
                 }
 
                 // Column range within this row
                 int64_t col_begin = (r == r_first) ? (elem_start - r * ne00) : 0;
                 int64_t col_end   = (r == r_last) ? (elem_end - r * ne00) : ne00;
-                if (col_end > ne00) {
+                만약 (col_end > ne00) {
                     col_end = ne00;
                 }
 
@@ -303,8 +303,8 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
                 const int64_t index_byte_offset = i10 * nb10 + i11 * nb11 + i12 * nb12;
                 const int64_t dst_row_index     = *(int64_t *) ((char *) src1_data + index_byte_offset);
 
-                if (dst_row_index < 0 || dst_row_index >= ne_dst1) {
-                    return -1;
+                만약 (dst_row_index < 0 || dst_row_index >= ne_dst1) {
+                    반환 -1;
                 }
 
                 const float * src_row = (const float *) ((char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
@@ -315,21 +315,21 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
                 // cache line at a cache-line-aligned offset within the row.
                 const bool full_cl = (col_begin % dst_cl_elems == 0) && (col_end - col_begin == dst_cl_elems);
 
-                if (dst->type == GGML_TYPE_F32) {
+                만약 (dst->type == GGML_TYPE_F32) {
                     float * dp = (float *) dst_row_base;
-                    if (full_cl) {
+                    만약 (full_cl) {
                         copy_cache_aligned_f32(dp + col_begin, src_row + col_begin);
-                    } else {
-                        for (int64_t i = col_begin; i < col_end; i++) {
+                    } 아니면 {
+                        위해 (int64_t i = col_begin; i < col_end; i++) {
                             dp[i] = src_row[i];
                         }
                     }
-                } else {
+                } 아니면 {
                     uint16_t * dp = (uint16_t *) dst_row_base;
-                    if (full_cl) {
+                    만약 (full_cl) {
                         copy_cache_aligned_f16(dp + col_begin, src_row + col_begin);
-                    } else {
-                        for (int64_t i = col_begin; i < col_end; i++) {
+                    } 아니면 {
+                        위해 (int64_t i = col_begin; i < col_end; i++) {
                             dp[i] = fp32_to_fp16(src_row[i]);
                         }
                     }
@@ -346,10 +346,10 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
 #endif
 
 
-    } else {
+    } 아니면 {
         // Fallback: nb1 not cache-line-aligned, so scattered destination rows
         // may share a cache line.  Use atomic global stores to bypass L1D.
-        for (int64_t row_flat = thread_id; row_flat < total_rows; row_flat += num_threads) {
+        위해 (int64_t row_flat = thread_id; row_flat < total_rows; row_flat += num_threads) {
             const int64_t i01 = row_flat % ne01;
             const int64_t tmp = row_flat / ne01;
             const int64_t i02 = tmp % ne02;
@@ -362,21 +362,21 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
             const int64_t index_byte_offset = i10 * nb10 + i11 * nb11 + i12 * nb12;
             const int64_t dst_row_index     = *(int64_t *) ((char *) src1_data + index_byte_offset);
 
-            if (dst_row_index < 0 || dst_row_index >= ne_dst1) {
-                return -1;
+            만약 (dst_row_index < 0 || dst_row_index >= ne_dst1) {
+                반환 -1;
             }
 
             const float * src_row      = (const float *) ((char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
             char *        dst_row_base = (char *) dst_data + dst_row_index * nb1 + i02 * nb2 + i03 * nb3;
 
-            if (dst->type == GGML_TYPE_F32) {
+            만약 (dst->type == GGML_TYPE_F32) {
                 volatile float * dst_row = (volatile float *) dst_row_base;
-                for (int64_t i = 0; i < ne00; i++) {
+                위해 (int64_t i = 0; i < ne00; i++) {
                     atomic_store_f32(dst_row + i, src_row[i]);
                 }
-            } else {
+            } 아니면 {
                 volatile uint16_t * dst_row = (volatile uint16_t *) dst_row_base;
-                for (int64_t i = 0; i < ne00; i++) {
+                위해 (int64_t i = 0; i < ne00; i++) {
                     atomic_store_f16(dst_row + i, fp32_to_fp16(src_row[i]));
                 }
             }
@@ -390,5 +390,5 @@ int entry_point(struct ggml_et_set_rows_params * params, void * env) {
     // // et_barrier(ET_BARRIER_GLOBAL);
     // FENCE;
 #endif
-    return 0;
+    반환 0;
 }

@@ -23,7 +23,7 @@
 
 #define UNUSED GGML_UNUSED
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
 #define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
 #define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
 #define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
@@ -41,23 +41,23 @@ static const uint64_t table_b2b_1[1 << 8] = { B8(10, 00) }; // (!b) << 4
 void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+    const 정수 nb = k / QK8_0;
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__POWER9_VECTOR__)
-    for (int i = 0; i < nb; i++) {
+#만약 defined(__POWER9_VECTOR__)
+    위해 (정수 i = 0; i < nb; i++) {
         vector float srcv [8];
         vector float asrcv[8];
         vector float amaxv[8];
-        vector signed int vi[8];
+        vector signed 정수 vi[8];
 
-        for (int j = 0; j < 8; j++) srcv[j]  = vec_xl(0, x + i*32 + 4*j);
-        for (int j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
+        위해 (정수 j = 0; j < 8; j++) srcv[j]  = vec_xl(0, x + i*32 + 4*j);
+        위해 (정수 j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
 
-        for (int j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
-        for (int j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
-        for (int j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
+        위해 (정수 j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
+        위해 (정수 j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
+        위해 (정수 j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
 
         const float amax = MAX(MAX(vec_extract(amaxv[0], 0),
                                    vec_extract(amaxv[0], 1)),
@@ -70,14 +70,14 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
         y[i].d = GGML_CPU_FP32_TO_FP16(d);
 
-        for (int j = 0; j < 8; j++) {
+        위해 (정수 j = 0; j < 8; j++) {
             const vector float v  = vec_round(vec_mul(srcv[j], vid));
             vi[j] = vec_cts(v, 0);
         }
         vec_xst(vec_pack(vec_pack(vi[0], vi[1]), vec_pack(vi[2], vi[3])),  0, &y[i].qs[0]);
         vec_xst(vec_pack(vec_pack(vi[4], vi[5]), vec_pack(vi[6], vi[7])), 16, &y[i].qs[0]);
     }
-#else
+#아니면
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
@@ -86,23 +86,23 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
 void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+    const 정수 nb = k / QK8_1;
 
     block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__POWER9_VECTOR__)
-    for (int i = 0; i < nb; i++) {
+#만약 defined(__POWER9_VECTOR__)
+    위해 (정수 i = 0; i < nb; i++) {
         vector float srcv [8];
         vector float asrcv[8];
         vector float amaxv[8];
-        vector signed int vi[8];
+        vector signed 정수 vi[8];
 
-        for (int j = 0; j < 8; j++) srcv[j]  = vec_xl(0, x + i*32 + 4*j);
-        for (int j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
+        위해 (정수 j = 0; j < 8; j++) srcv[j]  = vec_xl(0, x + i*32 + 4*j);
+        위해 (정수 j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
 
-        for (int j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
-        for (int j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
-        for (int j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
+        위해 (정수 j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
+        위해 (정수 j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
+        위해 (정수 j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
 
         const float amax = MAX(MAX(vec_extract(amaxv[0], 0),
                                    vec_extract(amaxv[0], 1)),
@@ -115,9 +115,9 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
         y[i].d = GGML_CPU_FP32_TO_FP16(d);
 
-        vector int accv = vec_splats(0);
+        vector 정수 accv = vec_splats(0);
 
-        for (int j = 0; j < 8; j++) {
+        위해 (정수 j = 0; j < 8; j++) {
             const vector float v  = vec_round(vec_mul(srcv[j], vid));
             vi[j] = vec_cts(v, 0);
 
@@ -131,7 +131,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         y[i].s = GGML_CPU_FP32_TO_FP16(d * vec_extract(accv, 0));
     }
 
-#else
+#아니면
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
@@ -141,9 +141,9 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
 //===================================== Dot products =================================
 
-void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q4_0_q8_0(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
+    const 정수 qk = QK8_0;
+    const 정수 nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -155,19 +155,19 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    정수 ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
-    const vector signed int v0 = vec_splats((int32_t)0);
+    const vector signed 정수 v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
     const vector signed char v8 = vec_splats((signed char)0x8);
 
     vector float vsumf0 = vec_splats(0.0f);
 
 #pragma GCC unroll 8
-    for (; ib < nb; ++ib) {
+    위해 (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
@@ -188,7 +188,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed short qv0 = vec_add(vec_mule(q4x0, q8y0), vec_mulo(q4x0, q8y0));
         vector signed short qv1 = vec_add(vec_mule(q4x1, q8y1), vec_mulo(q4x1, q8y1));
 
-        vector signed int vsumi0 = v0;
+        vector signed 정수 vsumi0 = v0;
 
         vsumi0 = vec_sum4s(qv0, vsumi0);
         vsumi0 = vec_sum4s(qv1, vsumi0);
@@ -202,7 +202,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(ib);
@@ -211,9 +211,9 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+void ggml_vec_dot_q4_1_q8_1(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
+    const 정수 qk = QK8_1;
+    const 정수 nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -225,18 +225,18 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    정수 ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
-    const vector signed int v0 = vec_splats((int32_t)0);
+    const vector signed 정수 v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
 
     vector float vsumf0 = vec_splats(0.0f);
 
 #pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
+    위해 (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
@@ -255,7 +255,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector unsigned char q4x0 = (vector unsigned char)vec_and(qxs, lowMask);
         vector unsigned char q4x1 = (vector unsigned char)vec_sr(qxs, v4);
 
-        vector signed int vsumi0 = v0;
+        vector signed 정수 vsumi0 = v0;
 
         vsumi0 = vec_msum(q8y0, q4x0, vsumi0);
         vsumi0 = vec_msum(q8y1, q4x1, vsumi0);
@@ -269,7 +269,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(ib);
@@ -278,7 +278,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_mxfp4_q8_0(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -290,12 +290,12 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     const block_mxfp4 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_MXFP4;
+    const 정수 nb = n / QK_MXFP4;
 
-    int ib = 0;
+    정수 ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector unsigned char vshift4 = vec_splats((unsigned char)4);
     vector float vsumf0 = vec_splats(0.0f);
@@ -303,7 +303,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     vector signed char kv = vec_xl(0, (const signed char *)kvalues_mxfp4);
 
 #pragma GCC unroll 8
-    for (; ib < nb; ++ib) {
+    위해 (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
@@ -324,7 +324,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         vector signed short qv0 = vec_add(vec_mule(q4x0, q8y0), vec_mulo(q4x0, q8y0));
         vector signed short qv1 = vec_add(vec_mule(q4x1, q8y1), vec_mulo(q4x1, q8y1));
 
-        vector signed int vsumi0 = vec_splats((int32_t)0);
+        vector signed 정수 vsumi0 = vec_splats((int32_t)0);
         vsumi0 = vec_sum4s(qv0, vsumi0);
         vsumi0 = vec_sum4s(qv1, vsumi0);
 
@@ -335,7 +335,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     vsumf0 = vec_add(vsumf0, vec_sld(vsumf0, vsumf0, 8));
     sumf = vec_extract(vsumf0, 0);
     *s = sumf;
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(ib);
@@ -344,11 +344,11 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q5_0_q8_0(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
+    const 정수 qk = QK8_0;
+    const 정수 nb = n / qk;
 
-    int ib = 0;
+    정수 ib = 0;
     float sumf = 0;
 
     assert(n % qk == 0);
@@ -362,14 +362,14 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector unsigned char v4 = vec_splats((unsigned char)4);
 
     vector float vsumf0 = vec_splats(0.0f);
 
 #pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
+    위해 (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
@@ -396,7 +396,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         qv0 = vec_add(qv0, qv1);
 
-        vector signed int vsumi0 = vec_add(vec_unpackh(qv0), vec_unpackl(qv0));
+        vector signed 정수 vsumi0 = vec_add(vec_unpackh(qv0), vec_unpackl(qv0));
 
         vsumf0 = vec_madd(vec_ctf(vsumi0, 0), vd, vsumf0);
     }
@@ -407,7 +407,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#아니면
     UNUSED(ib);
     UNUSED(sumf);
     UNUSED(x);
@@ -416,11 +416,11 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+void ggml_vec_dot_q5_1_q8_1(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
+    const 정수 qk = QK8_1;
+    const 정수 nb = n / qk;
 
-    int ib = 0;
+    정수 ib = 0;
     float sumf = 0;
 
     assert(n % qk == 0);
@@ -434,15 +434,15 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
-    const vector signed int v0 = vec_splats((int32_t)0);
+    const vector signed 정수 v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
 
     vector float vsumf0 = vec_splats(0.0f);
 
 #pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
+    위해 (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
@@ -468,7 +468,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed char q8y0 = vec_xl(  0, y[ib].qs);
         vector signed char q8y1 = vec_xl( 16, y[ib].qs);
 
-        vector signed int vsumi0 = v0;
+        vector signed 정수 vsumi0 = v0;
 
         vsumi0 = vec_msum(q8y0, q5x0, vsumi0);
         vsumi0 = vec_msum(q8y1, q5x1, vsumi0);
@@ -482,7 +482,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#아니면
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
@@ -492,9 +492,9 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q8_0_q8_0(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
+    const 정수 qk = QK8_0;
+    const 정수 nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -506,15 +506,15 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q8_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    정수 ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
-    const vector signed int v0 = vec_splats((int32_t)0);
+#만약 defined(__POWER9_VECTOR__)
+    const vector signed 정수 v0 = vec_splats((int32_t)0);
     vector float vsumf0 = vec_splats(0.0f);
 
 #pragma GCC unroll 8
-    for (; ib < nb; ++ib) {
+    위해 (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
@@ -532,8 +532,8 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed short qv2 = vec_mule(q8x1, q8y1);
         vector signed short qv3 = vec_mulo(q8x1, q8y1);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
 
         vsumi0 = vec_sum4s(qv0, vsumi0);
         vsumi1 = vec_sum4s(qv1, vsumi1);
@@ -551,7 +551,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#아니면
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -561,7 +561,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q2_K_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -571,12 +571,12 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q2_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0x3);
     const vector signed char lowScaleMask = vec_splats((signed char)0xF);
-    const vector int v0 = vec_splats((int32_t)0);
+    const vector 정수 v0 = vec_splats((int32_t)0);
     const vector unsigned char v2 = vec_splats((unsigned char)0x2);
     const vector unsigned char v6 = vec_splats((unsigned char)0x6);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
@@ -586,7 +586,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     vector float vsumf2 = vec_splats(0.0f);
     vector float vsumf3 = vec_splats(0.0f);
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
@@ -604,29 +604,29 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed short q2xmins0 = vec_unpackh(q2xmins);
         vector signed short q2xmins1 = vec_unpackl(q2xmins);
 
-        vector signed int prod0 = vec_mule(q2xmins0, q8ysums0);
-        vector signed int prod1 = vec_mulo(q2xmins0, q8ysums0);
-        vector signed int prod2 = vec_mule(q2xmins1, q8ysums1);
-        vector signed int prod3 = vec_mulo(q2xmins1, q8ysums1);
+        vector signed 정수 prod0 = vec_mule(q2xmins0, q8ysums0);
+        vector signed 정수 prod1 = vec_mulo(q2xmins0, q8ysums0);
+        vector signed 정수 prod2 = vec_mule(q2xmins1, q8ysums1);
+        vector signed 정수 prod3 = vec_mulo(q2xmins1, q8ysums1);
 
         vsumf0 = vec_nmsub(vec_ctf(prod0, 0), vdmin, vsumf0);
         vsumf1 = vec_nmsub(vec_ctf(prod1, 0), vdmin, vsumf1);
         vsumf2 = vec_nmsub(vec_ctf(prod2, 0), vdmin, vsumf2);
         vsumf3 = vec_nmsub(vec_ctf(prod3, 0), vdmin, vsumf3);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
-        vector signed int vsumi4 = v0;
-        vector signed int vsumi5 = v0;
-        vector signed int vsumi6 = v0;
-        vector signed int vsumi7 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
+        vector signed 정수 vsumi4 = v0;
+        vector signed 정수 vsumi5 = v0;
+        vector signed 정수 vsumi6 = v0;
+        vector signed 정수 vsumi7 = v0;
 
         const uint8_t * GGML_RESTRICT q2 = x[i].qs;
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        위해 (정수 j = 0; j < QK_K/128; ++j) {
             __builtin_prefetch(q2, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
@@ -653,26 +653,26 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             vector signed char q8y13 = vec_xl(112, q8);
             q8 += 128;
 
-            vector signed int qv0 = vec_msum(q8y00, q2x00, v0);
-            vector signed int qv1 = vec_msum(q8y01, q2x01, v0);
-            vector signed int qv2 = vec_msum(q8y02, q2x02, v0);
-            vector signed int qv3 = vec_msum(q8y03, q2x03, v0);
-            vector signed int qv4 = vec_msum(q8y10, q2x10, v0);
-            vector signed int qv5 = vec_msum(q8y11, q2x11, v0);
-            vector signed int qv6 = vec_msum(q8y12, q2x12, v0);
-            vector signed int qv7 = vec_msum(q8y13, q2x13, v0);
+            vector signed 정수 qv0 = vec_msum(q8y00, q2x00, v0);
+            vector signed 정수 qv1 = vec_msum(q8y01, q2x01, v0);
+            vector signed 정수 qv2 = vec_msum(q8y02, q2x02, v0);
+            vector signed 정수 qv3 = vec_msum(q8y03, q2x03, v0);
+            vector signed 정수 qv4 = vec_msum(q8y10, q2x10, v0);
+            vector signed 정수 qv5 = vec_msum(q8y11, q2x11, v0);
+            vector signed 정수 qv6 = vec_msum(q8y12, q2x12, v0);
+            vector signed 정수 qv7 = vec_msum(q8y13, q2x13, v0);
 
             vector signed short vscales_07 = vec_unpackh(vscales);
-            vector signed int vscales_03 = vec_unpackh(vscales_07);
-            vector signed int vscales_47 = vec_unpackl(vscales_07);
-            vector signed int vs0 = vec_splat(vscales_03, 0);
-            vector signed int vs1 = vec_splat(vscales_03, 1);
-            vector signed int vs2 = vec_splat(vscales_03, 2);
-            vector signed int vs3 = vec_splat(vscales_03, 3);
-            vector signed int vs4 = vec_splat(vscales_47, 0);
-            vector signed int vs5 = vec_splat(vscales_47, 1);
-            vector signed int vs6 = vec_splat(vscales_47, 2);
-            vector signed int vs7 = vec_splat(vscales_47, 3);
+            vector signed 정수 vscales_03 = vec_unpackh(vscales_07);
+            vector signed 정수 vscales_47 = vec_unpackl(vscales_07);
+            vector signed 정수 vs0 = vec_splat(vscales_03, 0);
+            vector signed 정수 vs1 = vec_splat(vscales_03, 1);
+            vector signed 정수 vs2 = vec_splat(vscales_03, 2);
+            vector signed 정수 vs3 = vec_splat(vscales_03, 3);
+            vector signed 정수 vs4 = vec_splat(vscales_47, 0);
+            vector signed 정수 vs5 = vec_splat(vscales_47, 1);
+            vector signed 정수 vs6 = vec_splat(vscales_47, 2);
+            vector signed 정수 vs7 = vec_splat(vscales_47, 3);
             vscales = vec_sld(vscales, vscales, 8);
 
             vsumi0 = vec_add(vec_mul(qv0, vs0), vsumi0);
@@ -706,7 +706,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -714,7 +714,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q3_K_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -728,13 +728,13 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q3_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0x3);
     const vector signed char lowMask1 = vec_splats((int8_t)0xf);
     const vector signed char lowMask2 = vec_splats((int8_t)0x30);
-    const vector int v0 = vec_splats((int32_t)0);
+    const vector 정수 v0 = vec_splats((int32_t)0);
     const vector signed char v1 = vec_splats((signed char)0x1);
     const vector unsigned char v2 = vec_splats((unsigned char)0x2);
     const vector unsigned char v3 = vec_splats((unsigned char)0x3);
@@ -747,7 +747,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     vector float vsumf2 = vec_splats(0.0f);
     vector float vsumf3 = vec_splats(0.0f);
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
@@ -758,7 +758,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed char u0 = (vector signed char)vec_xl_len(x[i].scales, 8);
         vector signed char u1 = vec_and(u0, lowMask1);
         vector signed char u2 = (vector signed char)vec_xl_len(x[i].scales + 8, 4);
-        vector signed char u3 = (vector signed char)vec_mergeh((vector signed int)u2, (vector signed int)vec_sr(u2, v2));
+        vector signed char u3 = (vector signed char)vec_mergeh((vector signed 정수)u2, (vector signed 정수)vec_sr(u2, v2));
         vector signed char u30 = vec_sl(vec_and(u3, lowMask), v4);
         vector signed char u31 = vec_and(u3, lowMask2);
 
@@ -771,19 +771,19 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         vscales = vec_sub(vscales, off);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
-        vector signed int vsumi4 = v0;
-        vector signed int vsumi5 = v0;
-        vector signed int vsumi6 = v0;
-        vector signed int vsumi7 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
+        vector signed 정수 vsumi4 = v0;
+        vector signed 정수 vsumi5 = v0;
+        vector signed 정수 vsumi6 = v0;
+        vector signed 정수 vsumi7 = v0;
 
         const uint8_t * GGML_RESTRICT q3 = x[i].qs;
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        위해 (정수 j = 0; j < QK_K/128; ++j) {
             __builtin_prefetch(q3, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
@@ -883,7 +883,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(x);
@@ -893,7 +893,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q4_K_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -904,7 +904,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
@@ -912,11 +912,11 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector signed char lowMask1 = vec_splats((int8_t)0x3f);
     const vector signed char lowMask2 = vec_splats((int8_t)0x30);
-    const vector int v0 = vec_splats((int32_t)0);
+    const vector 정수 v0 = vec_splats((int32_t)0);
     const vector unsigned char v2 = vec_splats((uint8_t)2);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
 
@@ -925,7 +925,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     vector float vsumf2 = vec_splats(0.0f);
     vector float vsumf3 = vec_splats(0.0f);
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
@@ -947,37 +947,37 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed char u3 = vec_sr(u2, v4);
 
         vector signed char u30 = u1;
-        vector signed char u31 = (vector signed char)vec_mergeh((vector signed int)vec_and(u2, lowMask), (vector signed int)u3);
+        vector signed char u31 = (vector signed char)vec_mergeh((vector signed 정수)vec_and(u2, lowMask), (vector signed 정수)u3);
 
         u1 = vec_and(u0, lowMask1);
         u2 = vec_or(u30, u31);
 
-        vector signed char utmps = (vector signed char)vec_mergeh((vector signed int)u1, (vector signed int)u2);
+        vector signed char utmps = (vector signed char)vec_mergeh((vector signed 정수)u1, (vector signed 정수)u2);
 
         vector signed short vscales = vec_unpackh(utmps);
         vector signed short q4xmins = vec_unpackl(utmps);
         vector signed short q4xmins0 = vec_mergeh(q4xmins, q4xmins);
         vector signed short q4xmins1 = vec_mergel(q4xmins, q4xmins);
 
-        vector signed int prod0 = vec_mule(q4xmins0, q8ysums0);
-        vector signed int prod1 = vec_mule(q4xmins1, q8ysums1);
-        vector signed int prod2 = vec_mulo(q4xmins0, q8ysums0);
-        vector signed int prod3 = vec_mulo(q4xmins1, q8ysums1);
+        vector signed 정수 prod0 = vec_mule(q4xmins0, q8ysums0);
+        vector signed 정수 prod1 = vec_mule(q4xmins1, q8ysums1);
+        vector signed 정수 prod2 = vec_mulo(q4xmins0, q8ysums0);
+        vector signed 정수 prod3 = vec_mulo(q4xmins1, q8ysums1);
 
         vsumf0 = vec_nmsub(vec_ctf(prod0, 0), vdmin, vsumf0);
         vsumf1 = vec_nmsub(vec_ctf(prod1, 0), vdmin, vsumf1);
         vsumf2 = vec_nmsub(vec_ctf(prod2, 0), vdmin, vsumf2);
         vsumf3 = vec_nmsub(vec_ctf(prod3, 0), vdmin, vsumf3);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
 
         const uint8_t * GGML_RESTRICT q4 = x[i].qs;
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        for (int j = 0; j < QK_K/64; j+=2) {
+        위해 (정수 j = 0; j < QK_K/64; j+=2) {
             __builtin_prefetch(q4, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
@@ -1006,20 +1006,20 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             vector signed char q8y31 = vec_xl(112, q8);
             q8 += 128;
 
-            vector signed int qv00 = vec_msum(q8y00, q4x00, v0);
-            vector signed int qv01 = vec_msum(q8y01, q4x01, v0);
-            vector signed int qv10 = vec_msum(q8y10, q4x10, v0);
-            vector signed int qv11 = vec_msum(q8y11, q4x11, v0);
-            vector signed int qv20 = vec_msum(q8y20, q4x20, v0);
-            vector signed int qv21 = vec_msum(q8y21, q4x21, v0);
-            vector signed int qv30 = vec_msum(q8y30, q4x30, v0);
-            vector signed int qv31 = vec_msum(q8y31, q4x31, v0);
+            vector signed 정수 qv00 = vec_msum(q8y00, q4x00, v0);
+            vector signed 정수 qv01 = vec_msum(q8y01, q4x01, v0);
+            vector signed 정수 qv10 = vec_msum(q8y10, q4x10, v0);
+            vector signed 정수 qv11 = vec_msum(q8y11, q4x11, v0);
+            vector signed 정수 qv20 = vec_msum(q8y20, q4x20, v0);
+            vector signed 정수 qv21 = vec_msum(q8y21, q4x21, v0);
+            vector signed 정수 qv30 = vec_msum(q8y30, q4x30, v0);
+            vector signed 정수 qv31 = vec_msum(q8y31, q4x31, v0);
 
-            vector signed int vscales_h = vec_unpackh(vscales);
-            vector signed int vs0 = vec_splat(vscales_h, 0);
-            vector signed int vs1 = vec_splat(vscales_h, 1);
-            vector signed int vs2 = vec_splat(vscales_h, 2);
-            vector signed int vs3 = vec_splat(vscales_h, 3);
+            vector signed 정수 vscales_h = vec_unpackh(vscales);
+            vector signed 정수 vs0 = vec_splat(vscales_h, 0);
+            vector signed 정수 vs1 = vec_splat(vscales_h, 1);
+            vector signed 정수 vs2 = vec_splat(vscales_h, 2);
+            vector signed 정수 vs3 = vec_splat(vscales_h, 3);
             vscales = vec_sld(vscales, vscales, 8);
 
             vsumi0 = vec_add(vec_mul(qv00, vs0), vsumi0);
@@ -1049,7 +1049,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1061,7 +1061,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
+void ggml_vec_dot_q5_K_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1072,7 +1072,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
@@ -1080,11 +1080,11 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
     const vector signed char lowMask1 = vec_splats((int8_t)0x3f);
     const vector signed char lowMask2 = vec_splats((int8_t)0x30);
-    const vector int v0 = vec_splats((int32_t)0);
+    const vector 정수 v0 = vec_splats((int32_t)0);
     const vector unsigned char v1 = vec_splats((unsigned char)0x1);
     const vector unsigned char v2 = vec_splats((unsigned char)0x2);
     const vector unsigned char v3 = vec_splats((unsigned char)0x3);
@@ -1095,7 +1095,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     vector float vsumf2 = vec_splats(0.0f);
     vector float vsumf3 = vec_splats(0.0f);
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
@@ -1114,12 +1114,12 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed char u3 = vec_sr(u2, v4);
 
         vector signed char u30 = u1;
-        vector signed char u31 = (vector signed char)vec_mergeh((vector signed int)vec_and(u2, lowMask), (vector signed int)u3);
+        vector signed char u31 = (vector signed char)vec_mergeh((vector signed 정수)vec_and(u2, lowMask), (vector signed 정수)u3);
 
         u1 = vec_and(u0, lowMask1);
         u2 = vec_or(u30, u31);
 
-        vector signed char utmps = (vector signed char)vec_mergeh((vector signed int)u1, (vector signed int)u2);
+        vector signed char utmps = (vector signed char)vec_mergeh((vector signed 정수)u1, (vector signed 정수)u2);
 
         vector signed short q8ysums0 = vec_xl( 0, y[i].bsums);
         vector signed short q8ysums1 = vec_xl(16, y[i].bsums);
@@ -1130,10 +1130,10 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed short q5xmins0 = vec_mergeh(q5xmins, q5xmins);
         vector signed short q5xmins1 = vec_mergel(q5xmins, q5xmins);
 
-        vector signed int prod0 = vec_mule(q5xmins0, q8ysums0);
-        vector signed int prod1 = vec_mule(q5xmins1, q8ysums1);
-        vector signed int prod2 = vec_mulo(q5xmins0, q8ysums0);
-        vector signed int prod3 = vec_mulo(q5xmins1, q8ysums1);
+        vector signed 정수 prod0 = vec_mule(q5xmins0, q8ysums0);
+        vector signed 정수 prod1 = vec_mule(q5xmins1, q8ysums1);
+        vector signed 정수 prod2 = vec_mulo(q5xmins0, q8ysums0);
+        vector signed 정수 prod3 = vec_mulo(q5xmins1, q8ysums1);
 
         vsumf0 = vec_nmsub(vec_ctf(prod0, 0), vdmin, vsumf0);
         vsumf1 = vec_nmsub(vec_ctf(prod1, 0), vdmin, vsumf1);
@@ -1143,15 +1143,15 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         vector signed char qxhs0 = (vector signed char)vec_xl( 0, x[i].qh);
         vector signed char qxhs1 = (vector signed char)vec_xl(16, x[i].qh);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
 
         const uint8_t * GGML_RESTRICT q5 = x[i].qs;
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        위해 (정수 j = 0; j < QK_K/64; ++j) {
             __builtin_prefetch(q5, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
@@ -1182,14 +1182,14 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             vector signed char q8y11 = vec_xl(48, q8);
             q8 += 64;
 
-            vector signed int qv00 = vec_msum(q8y00, q5x00, v0);
-            vector signed int qv01 = vec_msum(q8y01, q5x01, v0);
-            vector signed int qv10 = vec_msum(q8y10, q5x10, v0);
-            vector signed int qv11 = vec_msum(q8y11, q5x11, v0);
+            vector signed 정수 qv00 = vec_msum(q8y00, q5x00, v0);
+            vector signed 정수 qv01 = vec_msum(q8y01, q5x01, v0);
+            vector signed 정수 qv10 = vec_msum(q8y10, q5x10, v0);
+            vector signed 정수 qv11 = vec_msum(q8y11, q5x11, v0);
 
-            vector signed int vscales_h = vec_unpackh(vscales);
-            vector signed int vs0 = vec_splat(vscales_h, 0);
-            vector signed int vs1 = vec_splat(vscales_h, 1);
+            vector signed 정수 vscales_h = vec_unpackh(vscales);
+            vector signed 정수 vs0 = vec_splat(vscales_h, 0);
+            vector signed 정수 vs1 = vec_splat(vscales_h, 1);
             vscales = vec_sld(vscales, vscales, 12);
 
             vsumi0 = vec_add(vec_mul(qv00, vs0), vsumi0);
@@ -1214,7 +1214,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1226,7 +1226,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q6_K_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1237,11 +1237,11 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q6_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
-    const vector int v0 = vec_splats((int32_t)0);
+    const vector 정수 v0 = vec_splats((int32_t)0);
     const vector unsigned char v2 = vec_splats((unsigned char)0x2);
     const vector unsigned char v3 = vec_splats((unsigned char)0x3);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
@@ -1253,26 +1253,26 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     vector float vsumf2 = vec_splats(0.0f);
     vector float vsumf3 = vec_splats(0.0f);
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
-        vector signed int vsumi4 = v0;
-        vector signed int vsumi5 = v0;
-        vector signed int vsumi6 = v0;
-        vector signed int vsumi7 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
+        vector signed 정수 vsumi4 = v0;
+        vector signed 정수 vsumi5 = v0;
+        vector signed 정수 vsumi6 = v0;
+        vector signed 정수 vsumi7 = v0;
 
         const uint8_t * GGML_RESTRICT q6 = x[i].ql;
         const uint8_t * GGML_RESTRICT qh = x[i].qh;
         const int8_t  * GGML_RESTRICT qs = x[i].scales;
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        위해 (정수 j = 0; j < QK_K/128; ++j) {
             __builtin_prefetch(q6, 0, 0);
             __builtin_prefetch(qh, 0, 0);
             __builtin_prefetch(q8, 0, 0);
@@ -1376,7 +1376,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1384,7 +1384,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-#if defined (__POWER9_VECTOR__)
+#만약 defined (__POWER9_VECTOR__)
 static const int8_t keven_signs_q2xs[1024] = {
      1,  1,  1,  1,  1,  1,  1,  1, -1,  1,  1,  1,  1,  1,  1, -1,  1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1,  1,  1,
      1,  1, -1,  1,  1,  1,  1, -1, -1,  1, -1,  1,  1,  1,  1,  1,  1, -1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1, -1,
@@ -1421,7 +1421,7 @@ static const int8_t keven_signs_q2xs[1024] = {
 };
 #endif
 
-void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq2_xxs_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1432,10 +1432,10 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
     const block_iq2_xxs * GGML_RESTRICT x = vx;
     const block_q8_K    * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
-    const vector int v0 = vec_splats((int32_t)0);
+#만약 defined(__POWER9_VECTOR__)
+    const vector 정수 v0 = vec_splats((int32_t)0);
     vector float vsumf0 = vec_splats(0.0f);
     vector float vsumf1 = vec_splats(0.0f);
     vector float vsumf2 = vec_splats(0.0f);
@@ -1443,20 +1443,20 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
 
         const uint16_t * GGML_RESTRICT q2 = x[i].qs;
         const int8_t  *  GGML_RESTRICT q8 = y[i].qs;
 
-        for (int j = 0; j < QK_K/32; j += 2) {
+        위해 (정수 j = 0; j < QK_K/32; j += 2) {
             __builtin_prefetch(q2, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
@@ -1520,7 +1520,7 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.125f * vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1528,7 +1528,7 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 #endif
 }
 
-void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq2_xs_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1539,10 +1539,10 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     const block_iq2_xs * GGML_RESTRICT x = vx;
     const block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
-    const vector int v0 = vec_splats((int32_t)0);
+#만약 defined(__POWER9_VECTOR__)
+    const vector 정수 v0 = vec_splats((int32_t)0);
     vector float vsumf0 = vec_splats(0.0f);
     vector float vsumf1 = vec_splats(0.0f);
     vector float vsumf2 = vec_splats(0.0f);
@@ -1550,21 +1550,21 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
 
         const uint16_t * GGML_RESTRICT q2 = x[i].qs;
         const uint8_t  * GGML_RESTRICT sc = x[i].scales;
         const int8_t  *  GGML_RESTRICT q8 = y[i].qs;
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        위해 (정수 j = 0; j < QK_K/64; ++j) {
             __builtin_prefetch(q2, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
@@ -1628,7 +1628,7 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = 0.125f * vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1636,7 +1636,7 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 #endif
 }
 
-void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq2_s_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1647,16 +1647,16 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     const block_iq2_s * GGML_RESTRICT x = vx;
     const block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                         0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
     };
 
     static const uint8_t k_mask2[16] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,};
 
-    const vector int v0 = vec_splats((int32_t)0);
+    const vector 정수 v0 = vec_splats((int32_t)0);
 
     vector float vsumf0 = vec_splats(0.0f);
     vector float vsumf1 = vec_splats(0.0f);
@@ -1667,15 +1667,15 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     const vector unsigned char mask1 = vec_xl(16, k_mask1);
     const vector signed char mask2 = (vector signed char)vec_xl( 0, k_mask2);
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
 
         const uint8_t *  GGML_RESTRICT q2 = x[i].qs;
         const uint8_t *  GGML_RESTRICT qh = x[i].qh;
@@ -1683,7 +1683,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         const uint8_t *  GGML_RESTRICT sc = x[i].scales;
         const int8_t  *  GGML_RESTRICT q8 = y[i].qs;
 
-        for (int j = 0; j < QK_K/32; j += 2) {
+        위해 (정수 j = 0; j < QK_K/32; j += 2) {
             __builtin_prefetch(q2, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
@@ -1757,7 +1757,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = 0.125f * vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1765,7 +1765,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq3_xxs_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1776,41 +1776,41 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
     const block_iq3_xxs * GGML_RESTRICT x = vx;
     const block_q8_K    * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
 
-    const vector int v0 = vec_splats((int32_t)0);
+    const vector 정수 v0 = vec_splats((int32_t)0);
 
     vector float vsumf0 = vec_splats(0.0f);
     vector float vsumf1 = vec_splats(0.0f);
     vector float vsumf2 = vec_splats(0.0f);
     vector float vsumf3 = vec_splats(0.0f);
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
 
         const uint8_t * GGML_RESTRICT q3 = x[i].qs;
         const uint32_t * GGML_RESTRICT signs = (const uint32_t *)(x[i].qs + QK_K/4);
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
 #pragma GCC unroll 1
-        for (int j = 0; j < QK_K/32; j += 2) {
+        위해 (정수 j = 0; j < QK_K/32; j += 2) {
             __builtin_prefetch(q3, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
-            vector unsigned int aux32x4_0 = {iq3xxs_grid[q3[ 0]], iq3xxs_grid[q3[ 1]], iq3xxs_grid[q3[ 2]], iq3xxs_grid[q3[ 3]]};
-            vector unsigned int aux32x4_1 = {iq3xxs_grid[q3[ 4]], iq3xxs_grid[q3[ 5]], iq3xxs_grid[q3[ 6]], iq3xxs_grid[q3[ 7]]};
-            vector unsigned int aux32x4_2 = {iq3xxs_grid[q3[ 8]], iq3xxs_grid[q3[ 9]], iq3xxs_grid[q3[10]], iq3xxs_grid[q3[11]]};
-            vector unsigned int aux32x4_3 = {iq3xxs_grid[q3[12]], iq3xxs_grid[q3[13]], iq3xxs_grid[q3[14]], iq3xxs_grid[q3[15]]};
+            vector unsigned 정수 aux32x4_0 = {iq3xxs_grid[q3[ 0]], iq3xxs_grid[q3[ 1]], iq3xxs_grid[q3[ 2]], iq3xxs_grid[q3[ 3]]};
+            vector unsigned 정수 aux32x4_1 = {iq3xxs_grid[q3[ 4]], iq3xxs_grid[q3[ 5]], iq3xxs_grid[q3[ 6]], iq3xxs_grid[q3[ 7]]};
+            vector unsigned 정수 aux32x4_2 = {iq3xxs_grid[q3[ 8]], iq3xxs_grid[q3[ 9]], iq3xxs_grid[q3[10]], iq3xxs_grid[q3[11]]};
+            vector unsigned 정수 aux32x4_3 = {iq3xxs_grid[q3[12]], iq3xxs_grid[q3[13]], iq3xxs_grid[q3[14]], iq3xxs_grid[q3[15]]};
             q3 += 16;
 
             vector unsigned long long aux64x2_0 = {(uint64_t)(signs64[(signs[0] >>  0) & 127]), (uint64_t)(signs64[(signs[0] >>  7) & 127])};
@@ -1863,7 +1863,7 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.25f * vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1871,7 +1871,7 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 #endif
 }
 
-void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq3_s_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1882,16 +1882,16 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     const block_iq3_s * GGML_RESTRICT x = vx;
     const block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                         0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
     };
 
     static const uint8_t k_mask2[16] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,};
 
-    const vector int v0 = vec_splats((int32_t)0);
+    const vector 정수 v0 = vec_splats((int32_t)0);
 
     vector float vsumf0 = vec_splats(0.0f);
     vector float vsumf1 = vec_splats(0.0f);
@@ -1902,7 +1902,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     const vector unsigned char mask1 = vec_xl(16, k_mask1);
     const vector signed char mask2 = (vector signed char)vec_xl( 0, k_mask2);
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
@@ -1913,22 +1913,22 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         const uint8_t *  GGML_RESTRICT sc = x[i].scales;
         const int8_t  *  GGML_RESTRICT q8 = y[i].qs;
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
 
-        for (int j = 0; j < QK_K/32; j += 2) {
+        위해 (정수 j = 0; j < QK_K/32; j += 2) {
             __builtin_prefetch(q3, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
-            vector unsigned int aux32x4_0 = {iq3s_grid[q3[ 0] | ((qh[0] << 8) & 256)], iq3s_grid[q3[ 1] | ((qh[0] << 7) & 256)],
+            vector unsigned 정수 aux32x4_0 = {iq3s_grid[q3[ 0] | ((qh[0] << 8) & 256)], iq3s_grid[q3[ 1] | ((qh[0] << 7) & 256)],
                                              iq3s_grid[q3[ 2] | ((qh[0] << 6) & 256)], iq3s_grid[q3[ 3] | ((qh[0] << 5) & 256)]};
-            vector unsigned int aux32x4_1 = {iq3s_grid[q3[ 4] | ((qh[0] << 4) & 256)], iq3s_grid[q3[ 5] | ((qh[0] << 3) & 256)],
+            vector unsigned 정수 aux32x4_1 = {iq3s_grid[q3[ 4] | ((qh[0] << 4) & 256)], iq3s_grid[q3[ 5] | ((qh[0] << 3) & 256)],
                                              iq3s_grid[q3[ 6] | ((qh[0] << 2) & 256)], iq3s_grid[q3[ 7] | ((qh[0] << 1) & 256)]};
-            vector unsigned int aux32x4_2 = {iq3s_grid[q3[ 8] | ((qh[1] << 8) & 256)], iq3s_grid[q3[ 9] | ((qh[1] << 7) & 256)],
+            vector unsigned 정수 aux32x4_2 = {iq3s_grid[q3[ 8] | ((qh[1] << 8) & 256)], iq3s_grid[q3[ 9] | ((qh[1] << 7) & 256)],
                                              iq3s_grid[q3[10] | ((qh[1] << 6) & 256)], iq3s_grid[q3[11] | ((qh[1] << 5) & 256)]};
-            vector unsigned int aux32x4_3 = {iq3s_grid[q3[12] | ((qh[1] << 4) & 256)], iq3s_grid[q3[13] | ((qh[1] << 3) & 256)],
+            vector unsigned 정수 aux32x4_3 = {iq3s_grid[q3[12] | ((qh[1] << 4) & 256)], iq3s_grid[q3[13] | ((qh[1] << 3) & 256)],
                                              iq3s_grid[q3[14] | ((qh[1] << 2) & 256)], iq3s_grid[q3[15] | ((qh[1] << 1) & 256)]};
             q3 += 16;
             qh += 2;
@@ -1992,7 +1992,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -2000,7 +2000,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq1_s_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -2011,9 +2011,9 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     const block_iq1_s * GGML_RESTRICT x = vx;
     const block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector unsigned char v0 = vec_splats((unsigned char)0x0);
     const vector unsigned short vsign = vec_splats((unsigned short)0x8000);
 
@@ -2022,23 +2022,23 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     vector float vsumf2 = vec_splats(0.0f);
     vector float vsumf3 = vec_splats(0.0f);
 
-    for (int i = 0; i < nb; ++i) {
+    위해 (정수 i = 0; i < nb; ++i) {
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
         vector float vyd = vec_splats(y[i].d);
         vector float vd = vec_mul(vxd, vyd);
 
-        vector signed int vsumi0 = vec_splats((int32_t)0);
-        vector signed int vsumi1 = vec_splats((int32_t)0);
-        vector signed int vsumi2 = vec_splats((int32_t)0);
-        vector signed int vsumi3 = vec_splats((int32_t)0);
-        vector signed int vsumi8 = vec_splats((int32_t)0);
+        vector signed 정수 vsumi0 = vec_splats((int32_t)0);
+        vector signed 정수 vsumi1 = vec_splats((int32_t)0);
+        vector signed 정수 vsumi2 = vec_splats((int32_t)0);
+        vector signed 정수 vsumi3 = vec_splats((int32_t)0);
+        vector signed 정수 vsumi8 = vec_splats((int32_t)0);
 
         const uint8_t  * GGML_RESTRICT q1 = x[i].qs;
         const uint16_t * GGML_RESTRICT qh = x[i].qh;
         const int8_t   * GGML_RESTRICT q8 = y[i].qs;
         const int16_t  * GGML_RESTRICT qs = y[i].bsums;
 
-        for (int j = 0; j < QK_K/32; j += 2) {
+        위해 (정수 j = 0; j < QK_K/32; j += 2) {
             __builtin_prefetch(q1, 0, 1);
             __builtin_prefetch(qh, 0, 1);
             __builtin_prefetch(q8, 0, 1);
@@ -2108,7 +2108,7 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -2116,7 +2116,7 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq4_nl_q8_0(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -2128,14 +2128,14 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     const block_iq4_nl * GGML_RESTRICT x = vx;
     const block_q8_0   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK4_NL;
+    const 정수 nb = n / QK4_NL;
 
-    int ib = 0;
+    정수 ib = 0;
     float sumf = 0;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
-    const vector signed int v0 = vec_splats((int32_t)0);
+    const vector signed 정수 v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
 
     vector float vsumf0 = vec_splats(0.0f);
@@ -2144,7 +2144,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     const vector signed char values = vec_xl( 0, kvalues_iq4nl);
 
 #pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
+    위해 (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
@@ -2166,8 +2166,8 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
         vector signed short qv0 = vec_add(vec_mule(q4x0, q8y0), vec_mulo(q4x0, q8y0));
         vector signed short qv1 = vec_add(vec_mule(q4x1, q8y1), vec_mulo(q4x1, q8y1));
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
 
         vsumi0 = vec_sum4s(qv0, vsumi0);
         vsumi1 = vec_sum4s(qv1, vsumi1);
@@ -2184,7 +2184,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     sumf = vec_extract(vsumf0, 0);
 
     *s = sumf;
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -2194,7 +2194,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
 #endif
 }
 
-void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq4_xs_q8_K(정수 n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, 정수 nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -2205,11 +2205,11 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     const block_iq4_xs * GGML_RESTRICT x = vx;
     const block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const 정수 nb = n / QK_K;
 
-#if defined(__POWER9_VECTOR__)
+#만약 defined(__POWER9_VECTOR__)
     const vector signed char lowMask = vec_splats((signed char)0xF);
-    const vector int v0 = vec_splats((int32_t)0);
+    const vector 정수 v0 = vec_splats((int32_t)0);
     const vector unsigned char v4 = vec_splats((unsigned char)0x4);
 
     vector float vsumf0 = vec_splats(0.0f);
@@ -2219,16 +2219,16 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     const vector signed char values = vec_xl( 0, kvalues_iq4nl);
 
-    for (int ibl = 0; ibl < nb; ++ibl) {
+    위해 (정수 ibl = 0; ibl < nb; ++ibl) {
 
         vector float vxd = vec_splats(GGML_CPU_FP16_TO_FP32(x[ibl].d));
         vector float vyd = vec_splats(y[ibl].d);
         vector float vd = vec_mul(vxd, vyd);
 
-        vector signed int vsumi0 = v0;
-        vector signed int vsumi1 = v0;
-        vector signed int vsumi2 = v0;
-        vector signed int vsumi3 = v0;
+        vector signed 정수 vsumi0 = v0;
+        vector signed 정수 vsumi1 = v0;
+        vector signed 정수 vsumi2 = v0;
+        vector signed 정수 vsumi3 = v0;
 
         uint16_t h = x[ibl].scales_h;
 
@@ -2236,7 +2236,7 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
         const uint8_t * GGML_RESTRICT sc = x[ibl].scales_l;
         const int8_t  * GGML_RESTRICT q8 = y[ibl].qs;
 
-        for (int ib = 0; ib < QK_K/64; ib ++ ) {
+        위해 (정수 ib = 0; ib < QK_K/64; ib ++ ) {
             __builtin_prefetch(q4, 0, 1);
             __builtin_prefetch(q8, 0, 1);
 
@@ -2295,7 +2295,7 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = vec_extract(vsumf0, 0);
 
-#else
+#아니면
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
