@@ -1,21 +1,21 @@
 #include "conv2d-dw.hpp"
 
-struct conv2d_dw_params {
-    int in_w, in_h;
-    int out_w, out_h;
-    int kernel_w, kernel_h;
-    int stride_x, stride_y;
-    int padding_x, padding_y;
-    int dilation_x, dilation_y;
-    int channels, batches;
+sa_nracanaa conv2d_dw_params {
+    จำนวนเต็ม in_w, in_h;
+    จำนวนเต็ม out_w, out_h;
+    จำนวนเต็ม kernel_w, kernel_h;
+    จำนวนเต็ม stride_x, stride_y;
+    จำนวนเต็ม padding_x, padding_y;
+    จำนวนเต็ม dilation_x, dilation_y;
+    จำนวนเต็ม channels, batches;
 };
 
-struct conv2d_dw_kernel_bounds {
-    int y_min, y_max;
-    int x_min, x_max;
+sa_nracanaa conv2d_dw_kernel_bounds {
+    จำนวนเต็ม y_min, y_max;
+    จำนวนเต็ม x_min, x_max;
 };
 
-static inline conv2d_dw_kernel_bounds dw_calculate_kernel_bounds(int out_x, int out_y,
+static anta_hstha conv2d_dw_kernel_bounds dw_calculate_kernel_bounds(จำนวนเต็ม out_x, จำนวนเต็ม out_y,
                                                                   const conv2d_dw_params & p) {
     conv2d_dw_kernel_bounds bounds;
     bounds.y_min = sycl::max(0, (p.padding_y - out_y * p.stride_y + p.dilation_y - 1) / p.dilation_y);
@@ -24,26 +24,26 @@ static inline conv2d_dw_kernel_bounds dw_calculate_kernel_bounds(int out_x, int 
     bounds.x_min = sycl::max(0, (p.padding_x - out_x * p.stride_x + p.dilation_x - 1) / p.dilation_x);
     bounds.x_max = sycl::min(p.kernel_w,
                              (p.in_w + p.padding_x - out_x * p.stride_x + p.dilation_x - 1) / p.dilation_x);
-    return bounds;
+    คืน bounds;
 }
 
-static inline int dw_calculate_input_coord(int out_coord, int kern_coord, int stride, int dilation, int padding) {
-    return out_coord * stride + kern_coord * dilation - padding;
+static anta_hstha จำนวนเต็ม dw_calculate_input_coord(จำนวนเต็ม out_coord, จำนวนเต็ม kern_coord, จำนวนเต็ม stride, จำนวนเต็ม dilation, จำนวนเต็ม padding) {
+    คืน out_coord * stride + kern_coord * dilation - padding;
 }
 
 // whcn layout: input/output stored as [N, C, H, W]
-struct dw_whcn_layout {
-    static int input_index(int n, int c, int y, int x, const conv2d_dw_params & p) {
-        return n * (p.channels * p.in_w * p.in_h) + c * p.in_w * p.in_h + y * p.in_w + x;
+sa_nracanaa dw_whcn_layout {
+    static จำนวนเต็ม input_index(จำนวนเต็ม n, จำนวนเต็ม c, จำนวนเต็ม y, จำนวนเต็ม x, const conv2d_dw_params & p) {
+        คืน n * (p.channels * p.in_w * p.in_h) + c * p.in_w * p.in_h + y * p.in_w + x;
     }
-    static int kernel_index(int c, int ky, int kx, const conv2d_dw_params & p) {
-        return c * p.kernel_h * p.kernel_w + ky * p.kernel_w + kx;
+    static จำนวนเต็ม kernel_index(จำนวนเต็ม c, จำนวนเต็ม ky, จำนวนเต็ม kx, const conv2d_dw_params & p) {
+        คืน c * p.kernel_h * p.kernel_w + ky * p.kernel_w + kx;
     }
-    static int output_index(int n, int c, int y, int x, const conv2d_dw_params & p) {
-        return n * (p.channels * p.out_w * p.out_h) + c * p.out_w * p.out_h + y * p.out_w + x;
+    static จำนวนเต็ม output_index(จำนวนเต็ม n, จำนวนเต็ม c, จำนวนเต็ม y, จำนวนเต็ม x, const conv2d_dw_params & p) {
+        คืน n * (p.channels * p.out_w * p.out_h) + c * p.out_w * p.out_h + y * p.out_w + x;
     }
-    static void unpack_indices(int global_idx, const conv2d_dw_params & p,
-                               int & n, int & c, int & out_y, int & out_x) {
+    static void unpack_indices(จำนวนเต็ม global_idx, const conv2d_dw_params & p,
+                               จำนวนเต็ม & n, จำนวนเต็ม & c, จำนวนเต็ม & out_y, จำนวนเต็ม & out_x) {
         out_x  = global_idx % p.out_w;
         out_y  = (global_idx / p.out_w) % p.out_h;
         c      = (global_idx / (p.out_w * p.out_h)) % p.channels;
@@ -52,18 +52,18 @@ struct dw_whcn_layout {
 };
 
 // cwhn layout: input/output stored as [N, H, W, C]
-struct dw_cwhn_layout {
-    static int input_index(int n, int c, int y, int x, const conv2d_dw_params & p) {
-        return n * (p.channels * p.in_w * p.in_h) + (y * p.in_w + x) * p.channels + c;
+sa_nracanaa dw_cwhn_layout {
+    static จำนวนเต็ม input_index(จำนวนเต็ม n, จำนวนเต็ม c, จำนวนเต็ม y, จำนวนเต็ม x, const conv2d_dw_params & p) {
+        คืน n * (p.channels * p.in_w * p.in_h) + (y * p.in_w + x) * p.channels + c;
     }
-    static int kernel_index(int c, int ky, int kx, const conv2d_dw_params & p) {
-        return (ky * p.kernel_w + kx) * p.channels + c;
+    static จำนวนเต็ม kernel_index(จำนวนเต็ม c, จำนวนเต็ม ky, จำนวนเต็ม kx, const conv2d_dw_params & p) {
+        คืน (ky * p.kernel_w + kx) * p.channels + c;
     }
-    static int output_index(int n, int c, int y, int x, const conv2d_dw_params & p) {
-        return n * (p.channels * p.out_w * p.out_h) + y * (p.out_w * p.channels) + x * p.channels + c;
+    static จำนวนเต็ม output_index(จำนวนเต็ม n, จำนวนเต็ม c, จำนวนเต็ม y, จำนวนเต็ม x, const conv2d_dw_params & p) {
+        คืน n * (p.channels * p.out_w * p.out_h) + y * (p.out_w * p.channels) + x * p.channels + c;
     }
-    static void unpack_indices(int global_idx, const conv2d_dw_params & p,
-                               int & n, int & c, int & out_y, int & out_x) {
+    static void unpack_indices(จำนวนเต็ม global_idx, const conv2d_dw_params & p,
+                               จำนวนเต็ม & n, จำนวนเต็ม & c, จำนวนเต็ม & out_y, จำนวนเต็ม & out_x) {
         c      = global_idx % p.channels;
         out_x  = (global_idx / p.channels) % p.out_w;
         out_y  = (global_idx / (p.channels * p.out_w)) % p.out_h;
@@ -74,24 +74,24 @@ struct dw_cwhn_layout {
 template <typename KernelT, typename Layout>
 static void conv2d_dw_kernel(const float * input, const KernelT * kernel, float * output,
                              const conv2d_dw_params p, const sycl::nd_item<3> & item_ct1) {
-    const int global_idx     = item_ct1.get_local_id(2) +
+    const จำนวนเต็ม global_idx     = item_ct1.get_local_id(2) +
                                item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    const int total_elements = p.batches * p.channels * p.out_h * p.out_w;
+    const จำนวนเต็ม total_elements = p.batches * p.channels * p.out_h * p.out_w;
 
-    if (global_idx >= total_elements) {
-        return;
+    ถ้า (global_idx >= total_elements) {
+        คืน;
     }
 
-    int n, c, out_y, out_x;
+    จำนวนเต็ม n, c, out_y, out_x;
     Layout::unpack_indices(global_idx, p, n, c, out_y, out_x);
 
     float acc = 0.0f;
     const conv2d_dw_kernel_bounds bounds = dw_calculate_kernel_bounds(out_x, out_y, p);
 
-    for (int ky = bounds.y_min; ky < bounds.y_max; ++ky) {
-        const int in_y = dw_calculate_input_coord(out_y, ky, p.stride_y, p.dilation_y, p.padding_y);
-        for (int kx = bounds.x_min; kx < bounds.x_max; ++kx) {
-            const int in_x = dw_calculate_input_coord(out_x, kx, p.stride_x, p.dilation_x, p.padding_x);
+    สำหรับ (จำนวนเต็ม ky = bounds.y_min; ky < bounds.y_max; ++ky) {
+        const จำนวนเต็ม in_y = dw_calculate_input_coord(out_y, ky, p.stride_y, p.dilation_y, p.padding_y);
+        สำหรับ (จำนวนเต็ม kx = bounds.x_min; kx < bounds.x_max; ++kx) {
+            const จำนวนเต็ม in_x = dw_calculate_input_coord(out_x, kx, p.stride_x, p.dilation_x, p.padding_x);
             acc += input[Layout::input_index(n, c, in_y, in_x, p)] *
                    static_cast<float>(kernel[Layout::kernel_index(c, ky, kx, p)]);
         }
@@ -103,8 +103,8 @@ static void conv2d_dw_kernel(const float * input, const KernelT * kernel, float 
 template <typename KernelT, typename Layout>
 static void conv2d_dw_sycl(const float * x_d, const KernelT * w_d, float * y_d,
                             const conv2d_dw_params p, const queue_ptr & stream) {
-    const int total      = p.batches * p.channels * p.out_h * p.out_w;
-    const int num_blocks = (total + SYCL_CONV2D_DW_BLOCK_SIZE - 1) / SYCL_CONV2D_DW_BLOCK_SIZE;
+    const จำนวนเต็ม total      = p.batches * p.channels * p.out_h * p.out_w;
+    const จำนวนเต็ม num_blocks = (total + SYCL_CONV2D_DW_BLOCK_SIZE - 1) / SYCL_CONV2D_DW_BLOCK_SIZE;
     const sycl::range<3> block_dims(1, 1, SYCL_CONV2D_DW_BLOCK_SIZE);
     const sycl::range<3> block_nums(1, 1, num_blocks);
     stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -126,21 +126,21 @@ void ggml_sycl_op_conv2d_dw(ggml_backend_sycl_context & ctx, ggml_tensor * dst) 
     float *       y_d = (float *) dst->data;
 
     const int32_t * p          = (const int32_t *) dst->op_params;
-    const int       stride_x   = p[0];
-    const int       stride_y   = p[1];
-    const int       padding_x  = p[2];
-    const int       padding_y  = p[3];
-    const int       dilation_x = p[4];
-    const int       dilation_y = p[5];
+    const จำนวนเต็ม       stride_x   = p[0];
+    const จำนวนเต็ม       stride_y   = p[1];
+    const จำนวนเต็ม       padding_x  = p[2];
+    const จำนวนเต็ม       padding_y  = p[3];
+    const จำนวนเต็ม       dilation_x = p[4];
+    const จำนวนเต็ม       dilation_y = p[5];
 
-    const int in_w     = input->ne[0];
-    const int in_h     = input->ne[1];
-    const int kernel_w = kernel->ne[0];
-    const int kernel_h = kernel->ne[1];
-    const int out_w    = dst->ne[0];
-    const int out_h    = dst->ne[1];
-    const int channels = dst->ne[2];
-    const int batches  = dst->ne[3];
+    const จำนวนเต็ม in_w     = input->ne[0];
+    const จำนวนเต็ม in_h     = input->ne[1];
+    const จำนวนเต็ม kernel_w = kernel->ne[0];
+    const จำนวนเต็ม kernel_h = kernel->ne[1];
+    const จำนวนเต็ม out_w    = dst->ne[0];
+    const จำนวนเต็ม out_h    = dst->ne[1];
+    const จำนวนเต็ม channels = dst->ne[2];
+    const จำนวนเต็ม batches  = dst->ne[3];
 
     const conv2d_dw_params params = { in_w, in_h, out_w, out_h, kernel_w, kernel_h,
                                       stride_x, stride_y, padding_x, padding_y,
@@ -148,22 +148,22 @@ void ggml_sycl_op_conv2d_dw(ggml_backend_sycl_context & ctx, ggml_tensor * dst) 
 
     const queue_ptr stream = ctx.stream();
 
-    if (kernel->type == GGML_TYPE_F16) {
+    ถ้า (kernel->type == GGML_TYPE_F16) {
         const sycl::half * w_d = (const sycl::half *) kernel->data;
-        if (ggml_is_contiguous(input)) {
+        ถ้า (ggml_is_contiguous(input)) {
             conv2d_dw_sycl<sycl::half, dw_whcn_layout>(x_d, w_d, y_d, params, stream);
-        } else if (ggml_is_contiguous_channels(input)) {
+        } มิฉะนั้น ถ้า (ggml_is_contiguous_channels(input)) {
             conv2d_dw_sycl<sycl::half, dw_cwhn_layout>(x_d, w_d, y_d, params, stream);
-        } else {
+        } มิฉะนั้น {
             GGML_ABORT("Unsupported memory layout for conv2d_dw");
         }
-    } else {
+    } มิฉะนั้น {
         const float * w_d = (const float *) kernel->data;
-        if (ggml_is_contiguous(input)) {
+        ถ้า (ggml_is_contiguous(input)) {
             conv2d_dw_sycl<float, dw_whcn_layout>(x_d, w_d, y_d, params, stream);
-        } else if (ggml_is_contiguous_channels(input)) {
+        } มิฉะนั้น ถ้า (ggml_is_contiguous_channels(input)) {
             conv2d_dw_sycl<float, dw_cwhn_layout>(x_d, w_d, y_d, params, stream);
-        } else {
+        } มิฉะนั้น {
             GGML_ABORT("Unsupported memory layout for conv2d_dw");
         }
     }

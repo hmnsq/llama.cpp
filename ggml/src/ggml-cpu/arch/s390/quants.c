@@ -23,7 +23,7 @@
 
 #define UNUSED GGML_UNUSED
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
 #define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
 #define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
 #define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
@@ -47,21 +47,21 @@ static const uint8x16_t v_kperm = (const uint8x16_t){
 void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+    const จำนวนเต็ม nb = k / QK8_0;
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__VXE__) || defined(__VXE2__)
-    for (int i = 0; i < nb; i++) {
+#ถ้า defined(__VXE__) || defined(__VXE2__)
+    สำหรับ (จำนวนเต็ม i = 0; i < nb; i++) {
         float32x4_t srcv [8];
         float32x4_t asrcv[8];
         float32x4_t amaxv[8];
 
-        for (int j = 0; j < 8; j++) srcv[j] = vec_xl(0, x + i*32 + 4*j);
-        for (int j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
-        for (int j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
-        for (int j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
-        for (int j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
+        สำหรับ (จำนวนเต็ม j = 0; j < 8; j++) srcv[j] = vec_xl(0, x + i*32 + 4*j);
+        สำหรับ (จำนวนเต็ม j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
+        สำหรับ (จำนวนเต็ม j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
+        สำหรับ (จำนวนเต็ม j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
+        สำหรับ (จำนวนเต็ม j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
 
         const float amax = MAX(MAX(vec_extract(amaxv[0], 0),
                                    vec_extract(amaxv[0], 1)),
@@ -73,7 +73,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
         y[i].d = GGML_CPU_FP32_TO_FP16(d);
 
-        for (int j = 0; j < 8; j++) {
+        สำหรับ (จำนวนเต็ม j = 0; j < 8; j++) {
             const float32x4_t v = vec_mul(srcv[j], vec_splats(id));
             /* Uses non-default rounding for vec_signed or vec_round */
             const int32x4_t vi = vec_signed(__builtin_s390_vfisb(v, 4, 1));
@@ -84,7 +84,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
             y[i].qs[4*j + 3] = vec_extract(vi, 3);
         }
     }
-#else
+#มิฉะนั้น
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
@@ -93,21 +93,21 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
 void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+    const จำนวนเต็ม nb = k / QK8_1;
 
     block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__VXE__) || defined(__VXE2__)
-    for (int i = 0; i < nb; i++) {
+#ถ้า defined(__VXE__) || defined(__VXE2__)
+    สำหรับ (จำนวนเต็ม i = 0; i < nb; i++) {
         float32x4_t srcv [8];
         float32x4_t asrcv[8];
         float32x4_t amaxv[8];
 
-        for (int j = 0; j < 8; j++) srcv[j] = vec_xl(0, x + i*32 + 4*j);
-        for (int j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
-        for (int j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
-        for (int j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
-        for (int j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
+        สำหรับ (จำนวนเต็ม j = 0; j < 8; j++) srcv[j] = vec_xl(0, x + i*32 + 4*j);
+        สำหรับ (จำนวนเต็ม j = 0; j < 8; j++) asrcv[j] = vec_abs(srcv[j]);
+        สำหรับ (จำนวนเต็ม j = 0; j < 4; j++) amaxv[2*j] = vec_max(asrcv[2*j], asrcv[2*j+1]);
+        สำหรับ (จำนวนเต็ม j = 0; j < 2; j++) amaxv[4*j] = vec_max(amaxv[4*j], amaxv[4*j+2]);
+        สำหรับ (จำนวนเต็ม j = 0; j < 1; j++) amaxv[8*j] = vec_max(amaxv[8*j], amaxv[8*j+4]);
 
         const float amax = MAX(MAX(vec_extract(amaxv[0], 0),
                                    vec_extract(amaxv[0], 1)),
@@ -121,7 +121,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
         int32x4_t acc = vec_splats(0);
 
-        for (int j = 0; j < 8; j++) {
+        สำหรับ (จำนวนเต็ม j = 0; j < 8; j++) {
             const float32x4_t v = vec_mul(srcv[j], vec_splats(id));
             /* Uses non-default rounding for vec_signed or vec_round */
             const int32x4_t vi = vec_signed(__builtin_s390_vfisb(v, 4, 1));
@@ -136,7 +136,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
         y[i].s = GGML_CPU_FP32_TO_FP16(d * (acc[0] + acc[1] + acc[2] + acc[3]));
     }
-#else
+#มิฉะนั้น
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
@@ -146,9 +146,9 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
 //===================================== Dot products =================================
 
-void ggml_vec_dot_q1_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK1_0;  // 128
-    const int nb = n / qk;
+void ggml_vec_dot_q1_0_q8_0(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
+    const จำนวนเต็ม qk = QK1_0;  // 128
+    const จำนวนเต็ม nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -160,7 +160,7 @@ void ggml_vec_dot_q1_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q1_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     float32x4_t v_sumf = vec_splats(0.0f);
 
     const uint8x16_t v_zero = vec_splats((uint8_t)0x00);  // zero
@@ -170,11 +170,11 @@ void ggml_vec_dot_q1_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const uint8x16_t v_idx = (const uint8x16_t){ 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
     const uint8x16_t v_bit = (const uint8x16_t){ 1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8, 16, 32, 64, 128 };
 
-    for (int i = 0; i < nb; ++i) {
+    สำหรับ (จำนวนเต็ม i = 0; i < nb; ++i) {
         const uint8x16_t  v_x  = vec_xl(0, (const uint8_t *)x[i].qs);
         const float32x4_t v_xd = vec_splats(GGML_CPU_FP16_TO_FP32(x[i].d));
 
-        for (int k = 0; k < 4; ++k) {
+        สำหรับ (จำนวนเต็ม k = 0; k < 4; ++k) {
             // sub-block k holds elements 32k .. 32k+31
             const block_q8_0 * GGML_RESTRICT yb = &y[i*4 + k];
             const float32x4_t v_yd = vec_splats(GGML_CPU_FP16_TO_FP32(yb->d));
@@ -206,7 +206,7 @@ void ggml_vec_dot_q1_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = vec_hsum_f32x4(v_sumf);
-#else
+#มิฉะนั้น
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -214,9 +214,9 @@ void ggml_vec_dot_q1_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q4_0_q8_0(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
+    const จำนวนเต็ม qk = QK8_0;
+    const จำนวนเต็ม nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -228,16 +228,16 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    จำนวนเต็ม ib = 0;
     float sumf = 0;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     float32x4_t acc = vec_splats(0.0f);
 
     const uint8x16_t v_m = vec_splats((const uint8_t)0x0F);
     const int8x16_t  v_s = vec_splats( (const int8_t)0x08);
 
-    for (; ib < nb; ++ib) {
+    สำหรับ (; ib < nb; ++ib) {
         const uint8x16_t v_x = vec_xl(0, x[ib].qs);
         const int8x16_t v_xl = (const int8x16_t)(v_x & v_m);
         const int8x16_t v_xh = (const int8x16_t)(v_x >> 4);
@@ -263,7 +263,7 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     sumf = vec_hsum_f32x4(acc);
     *s = sumf;
-#else
+#มิฉะนั้น
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -273,9 +273,9 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+void ggml_vec_dot_q4_1_q8_1(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
+    const จำนวนเต็ม qk = QK8_1;
+    const จำนวนเต็ม nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -287,17 +287,17 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    จำนวนเต็ม ib = 0;
     float sumf = 0;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     float summs = 0;
     float32x4_t acc = vec_splats(0.0f);
 
     const uint8x16_t v_m = vec_splat_u8(0x0F);
 
 #pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
+    สำหรับ (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
@@ -320,7 +320,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     sumf = vec_hsum_f32x4(acc) + summs;
     *s = sumf;
-#else
+#มิฉะนั้น
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -330,7 +330,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_mxfp4_q8_0(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -339,23 +339,23 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
     assert(n % QK_MXFP4 == 0);
     static_assert(QK_MXFP4 == QK8_0, "QK_MXFP4 and QK8_0 must be the same");
 
-    const int qk = QK_MXFP4;
-    const int nb = n / qk;
+    const จำนวนเต็ม qk = QK_MXFP4;
+    const จำนวนเต็ม nb = n / qk;
 
     const block_mxfp4 * GGML_RESTRICT x = vx;
     const block_q8_0  * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    จำนวนเต็ม ib = 0;
     float sumf = 0.0f;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     const int8x16_t  v_k = vec_xl(0, kvalues_mxfp4);
     const uint8x16_t v_m = vec_splats((const uint8_t)0x0F);
 
     float32x4_t v_acc = vec_splats(0.0f);
 
     #pragma GCC unroll 8
-    for (; ib + 1 < nb; ib += 2) {
+    สำหรับ (; ib + 1 < nb; ib += 2) {
         const block_mxfp4 * GGML_RESTRICT x0 = &x[ib + 0];
         const block_mxfp4 * GGML_RESTRICT x1 = &x[ib + 1];
         const block_q8_0  * GGML_RESTRICT y0 = &y[ib + 0];
@@ -392,7 +392,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         v_acc = vec_madd(v_xy1f, v_d1, v_acc);
     }
 
-    for (; ib < nb; ++ib) {
+    สำหรับ (; ib < nb; ++ib) {
         const block_mxfp4 * GGML_RESTRICT x0 = &x[ib + 0];
         const block_q8_0  * GGML_RESTRICT y0 = &y[ib + 0];
 
@@ -416,7 +416,7 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     sumf = vec_hsum_f32x4(v_acc);
     *s = sumf;
-#else
+#มิฉะนั้น
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -426,9 +426,9 @@ void ggml_vec_dot_mxfp4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q5_0_q8_0(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
+    const จำนวนเต็ม qk = QK8_0;
+    const จำนวนเต็ม nb = n / qk;
 
     assert(n % qk == 0);
     assert(qk == QK5_0);
@@ -441,10 +441,10 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    จำนวนเต็ม ib = 0;
     float sumf = 0.0f;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     float32x4_t v_sum0 = vec_splats(0.0f);
     float32x4_t v_sum1 = vec_splats(0.0f);
 
@@ -454,14 +454,14 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const uint8x16_t v_m = vec_splats((uint8_t)0x0F);
 
     #pragma GCC unroll 4
-    for (; ib + 1 < nb; ib += 2) {
+    สำหรับ (; ib + 1 < nb; ib += 2) {
         const block_q5_0 * GGML_RESTRICT x0 = &x[ib + 0];
         const block_q5_0 * GGML_RESTRICT x1 = &x[ib + 1];
         const block_q8_0 * GGML_RESTRICT y0 = &y[ib + 0];
         const block_q8_0 * GGML_RESTRICT y1 = &y[ib + 1];
 
-        memcpy(&qh0, x0->qh, sizeof(qh0));
-        memcpy(&qh1, x1->qh, sizeof(qh1));
+        memcpy(&qh0, x0->qh, parimaa_na(qh0));
+        memcpy(&qh1, x1->qh, parimaa_na(qh1));
 
         tmp0[0] = table_b2b_1[(qh0 >>  0) & 0xFF];
         tmp0[1] = table_b2b_1[(qh0 >>  8) & 0xFF];
@@ -518,12 +518,12 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf += vec_hsum_f32x4(v_sum0) + vec_hsum_f32x4(v_sum1);
 
     #pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
+    สำหรับ (; ib < nb; ++ib) {
         const block_q5_0 * GGML_RESTRICT x0 = &x[ib];
         const block_q8_0 * GGML_RESTRICT y0 = &y[ib];
 
         uint32_t qh;
-        memcpy(&qh, x0->qh, sizeof(qh));
+        memcpy(&qh, x0->qh, parimaa_na(qh));
 
         uint64_t tmp[4];
         tmp[0] = table_b2b_1[(qh >>  0) & 0xFF];
@@ -558,7 +558,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = sumf;
-#else
+#มิฉะนั้น
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -568,9 +568,9 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+void ggml_vec_dot_q5_1_q8_1(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
+    const จำนวนเต็ม qk = QK8_1;
+    const จำนวนเต็ม nb = n / qk;
 
     assert(n % qk == 0);
     assert(qk == QK5_1);
@@ -583,10 +583,10 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    จำนวนเต็ม ib = 0;
     float sumf = 0.0f;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     float32x4_t v_sum0 = vec_splats(0.0f);
     float32x4_t v_sum1 = vec_splats(0.0f);
 
@@ -602,7 +602,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const uint8x16_t v_m = vec_splats((uint8_t)0x0F);
 
     #pragma GCC unroll 4
-    for (; ib + 1 < nb; ib += 2) {
+    สำหรับ (; ib + 1 < nb; ib += 2) {
         const block_q5_1 * GGML_RESTRICT x0 = &x[ib + 0];
         const block_q5_1 * GGML_RESTRICT x1 = &x[ib + 1];
         const block_q8_1 * GGML_RESTRICT y0 = &y[ib + 0];
@@ -611,8 +611,8 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         summs0 += GGML_CPU_FP16_TO_FP32(x0->m) * GGML_CPU_FP16_TO_FP32(y0->s);
         summs1 += GGML_CPU_FP16_TO_FP32(x1->m) * GGML_CPU_FP16_TO_FP32(y1->s);
 
-        memcpy(&qh0, x0->qh, sizeof(qh0));
-        memcpy(&qh1, x1->qh, sizeof(qh1));
+        memcpy(&qh0, x0->qh, parimaa_na(qh0));
+        memcpy(&qh1, x1->qh, parimaa_na(qh1));
 
         tmp0[0] = table_b2b_0[(qh0 >>  0) & 0xFF];
         tmp0[1] = table_b2b_0[(qh0 >>  8) & 0xFF];
@@ -669,14 +669,14 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf += vec_hsum_f32x4(v_sum0) + vec_hsum_f32x4(v_sum1) + summs0 + summs1;
 
     #pragma GCC unroll 4
-    for (; ib < nb; ++ib) {
+    สำหรับ (; ib < nb; ++ib) {
         const block_q5_1 * GGML_RESTRICT x0 = &x[ib];
         const block_q8_1 * GGML_RESTRICT y0 = &y[ib];
 
         float summs = GGML_CPU_FP16_TO_FP32(x0->m) * GGML_CPU_FP16_TO_FP32(y0->s);
 
         uint32_t qh;
-        memcpy(&qh, x0->qh, sizeof(qh));
+        memcpy(&qh, x0->qh, parimaa_na(qh));
 
         uint64_t tmp[4];
         tmp[0] = table_b2b_0[(qh >>  0) & 0xFF];
@@ -711,7 +711,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     }
 
     *s = sumf;
-#else
+#มิฉะนั้น
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -721,9 +721,9 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q8_0_q8_0(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
+    const จำนวนเต็ม qk = QK8_0;
+    const จำนวนเต็ม nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -735,14 +735,14 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q8_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    จำนวนเต็ม ib = 0;
     float sumf = 0;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     float32x4_t acc = vec_splats(0.0f);
 
 #pragma GCC unroll 8
-    for (; ib < nb; ++ib) {
+    สำหรับ (; ib < nb; ++ib) {
         __builtin_prefetch(x[ib].qs, 0, 1);
         __builtin_prefetch(y[ib].qs, 0, 1);
 
@@ -761,7 +761,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = vec_hsum_f32x4(acc);
 
     *s = sumf;
-#else
+#มิฉะนั้น
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -771,7 +771,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q3_K_q8_K(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -785,9 +785,9 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q3_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const จำนวนเต็ม nb = n / QK_K;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     uint32_t aux[3];
     uint32_t utmp[4];
 
@@ -807,7 +807,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     float sum = 0;
 
-    for (int i = 0; i < nb; ++i) {
+    สำหรับ (จำนวนเต็ม i = 0; i < nb; ++i) {
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
 
         const uint8_t * restrict x0l = x[i].qs;
@@ -826,9 +826,9 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         utmp[0] = (aux[0] & kmask2) | (((aux[2] >> 0) & kmask1) << 4);
 
         int8_t * scale = (int8_t *)utmp;
-        for (int j = 0; j < 16; ++j) scale[j] -= 32;
+        สำหรับ (จำนวนเต็ม j = 0; j < 16; ++j) scale[j] -= 32;
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        สำหรับ (จำนวนเต็ม j = 0; j < QK_K/128; ++j) {
             int32x4_t isum0, isum1, isum2, isum3;
 
             q3b[0] = vec_xl(0 , x0l);
@@ -889,7 +889,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
             scale += 4;
 
-            if (j == 0) {
+            ถ้า (j == 0) {
                 qhbits[0] = vec_sr(qhbits[0], 4);
                 qhbits[1] = vec_sr(qhbits[1], 4);
             }
@@ -900,7 +900,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sum;
 
-#else
+#มิฉะนั้น
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(x);
@@ -910,7 +910,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q4_K_q8_K(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -921,7 +921,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const จำนวนเต็ม nb = n / QK_K;
 
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
@@ -929,7 +929,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     const uint8x16_t v_lm = vec_splat_u8(0x0F);
     const int32x4_t v_z = vec_splat_s32(0);
 
@@ -939,7 +939,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     float sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
+    สำหรับ (จำนวนเต็ม i = 0; i < nb; ++i) {
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
         const float dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
 
@@ -969,7 +969,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         int32_t sumi1 = 0;
         int32_t sumi2 = 0;
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        สำหรับ (จำนวนเต็ม j = 0; j < QK_K/64; ++j) {
             v_x[0] = vec_xl(0 , x0);
             v_x[1] = vec_xl(16, x0);
             x0 += 32;
@@ -1000,7 +1000,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#มิฉะนั้น
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1012,7 +1012,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
+void ggml_vec_dot_q5_K_q8_K(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, จำนวนเต็ม nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1023,7 +1023,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const จำนวนเต็ม nb = n / QK_K;
 
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
@@ -1031,7 +1031,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     const uint8x16_t v_lm = vec_splat_u8(0x0F);
     const uint8x16_t v_1m = vec_splat_u8(0x01);
     const uint8x16_t v_2m = vec_splat_u8(0x02);
@@ -1052,7 +1052,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     float sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
+    สำหรับ (จำนวนเต็ม i = 0; i < nb; ++i) {
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
         const float dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
 
@@ -1084,7 +1084,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         v_xh[1] = vec_xl(16, x0h);
 
         int32_t sumi = 0;
-        for (int j = 0; j < QK_K/64; ++j) {
+        สำหรับ (จำนวนเต็ม j = 0; j < QK_K/64; ++j) {
             v_xl[0] = vec_xl(0 , x0l);
             v_xl[1] = vec_xl(16, x0l);
             x0l += 32;
@@ -1119,7 +1119,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#มิฉะนั้น
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1131,7 +1131,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q6_K_q8_K(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1142,9 +1142,9 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q6_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const จำนวนเต็ม nb = n / QK_K;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     float sum = 0;
 
     // Lower 4-bit and upper 2-bit masks
@@ -1160,7 +1160,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     uint8x16_t v_xh[2];
     int8x16_t  v_y[4];
 
-    for (int i = 0; i < nb; ++i) {
+    สำหรับ (จำนวนเต็ม i = 0; i < nb; ++i) {
         const float d_all = GGML_CPU_FP16_TO_FP32(x[i].d);
 
         const uint8_t * GGML_RESTRICT x0l = x[i].ql;
@@ -1185,7 +1185,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         const int32_t mins = vec_hsum_i32x4(v_mins);
 
         int32_t isum = 0;
-        for (int j = 0; j < QK_K/128; ++j) {
+        สำหรับ (จำนวนเต็ม j = 0; j < QK_K/128; ++j) {
             // Load model upper 2 bits
             v_xh[0] = vec_xl(0 , x0h);
             v_xh[1] = vec_xl(16, x0h);
@@ -1269,7 +1269,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sum;
 
-#else
+#มิฉะนั้น
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1411,7 +1411,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 // #endif
 // }
 
-void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq4_nl_q8_0(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -1423,16 +1423,16 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     const block_iq4_nl * GGML_RESTRICT x = vx;
     const block_q8_0   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK4_NL;
+    const จำนวนเต็ม nb = n / QK4_NL;
 
-    int ib = 0;
+    จำนวนเต็ม ib = 0;
     float sumf = 0;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     const int8x16_t v_k = vec_xl(0, kvalues_iq4nl);
     const uint8x16_t v_m = vec_splat_u8(0x0F);
 
-    for (; ib < nb; ++ib) {
+    สำหรับ (; ib < nb; ++ib) {
         const block_iq4_nl * GGML_RESTRICT x0 = &x[ib];
         const block_q8_0   * GGML_RESTRICT y0 = &y[ib];
 
@@ -1451,7 +1451,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     }
 
     *s = sumf;
-#else
+#มิฉะนั้น
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1461,7 +1461,7 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
 #endif
 }
 
-void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_iq4_xs_q8_K(จำนวนเต็ม n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, จำนวนเต็ม nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -1472,22 +1472,22 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
     const block_iq4_xs * GGML_RESTRICT x = vx;
     const block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const จำนวนเต็ม nb = n / QK_K;
 
-#if defined(__VXE__) || defined(__VXE2__)
+#ถ้า defined(__VXE__) || defined(__VXE2__)
     const int8x16_t v_k = vec_xl(0, kvalues_iq4nl);
     const uint8x16_t v_m = vec_splat_u8(0x0F);
 
     float sumf = 0;
 
-    for (int ibl = 0; ibl < nb; ++ibl) {
+    สำหรับ (จำนวนเต็ม ibl = 0; ibl < nb; ++ibl) {
         const uint8_t * GGML_RESTRICT q4 = x[ibl].qs;
         const int8_t  * GGML_RESTRICT q8 = y[ibl].qs;
 
         uint16_t h = x[ibl].scales_h;
 
-        int sumi1 = 0, sumi2 = 0;
-        for (int ib = 0; ib < QK_K/64; ++ib) {
+        จำนวนเต็ม sumi1 = 0, sumi2 = 0;
+        สำหรับ (จำนวนเต็ม ib = 0; ib < QK_K/64; ++ib) {
             const uint8x16_t v_x0 = vec_xl(0       , q4);
             const uint8x16_t v_x1 = vec_xl(QK4_NL/2, q4);
             q4 += 32;
@@ -1511,8 +1511,8 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
             int32x4_t vsumi0 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x0l, v_y0), v_x0h, v_y1);
             int32x4_t vsumi1 = ggml_vec_dot_s32(ggml_vec_dot_s32(vec_splats(0), v_x1l, v_y2), v_x1h, v_y3);
 
-            int ls1 = ((x[ibl].scales_l[ib] & 0xF) | ((h << 4) & 0x30)) - 32;
-            int ls2 = ((x[ibl].scales_l[ib] >>  4) | ((h << 2) & 0x30)) - 32;
+            จำนวนเต็ม ls1 = ((x[ibl].scales_l[ib] & 0xF) | ((h << 4) & 0x30)) - 32;
+            จำนวนเต็ม ls2 = ((x[ibl].scales_l[ib] >>  4) | ((h << 2) & 0x30)) - 32;
 
             h >>= 4;
 
@@ -1525,7 +1525,7 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = sumf;
 
-#else
+#มิฉะนั้น
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);

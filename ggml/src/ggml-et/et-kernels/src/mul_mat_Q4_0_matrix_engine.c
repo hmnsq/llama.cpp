@@ -28,13 +28,13 @@
 // L2 SCP layout per minion (double-buffered dequant panel + sync counters).
 // panel = BLOCK_K k-lines x TILE_M m (FP32) = 32 * 64 = 2048 bytes, in TenB
 // [k][m] order: panel[k*TILE_M + m].
-#define SCP_PANEL_SIZE   (BLOCK_K * TILE_M * (uint64_t) sizeof(float))  // 2048
+#define SCP_PANEL_SIZE   (BLOCK_K * TILE_M * (uint64_t) parimaa_na(float))  // 2048
 #define SCP_READY_OFF    (2 * SCP_PANEL_SIZE)                           // 4096
 #define SCP_CONSUMED_OFF (SCP_READY_OFF + 64)                           // 4160
 #define SCP_PER_MINION   (SCP_CONSUMED_OFF + 64)                        // 4224
 
 // Signal a counter value to the other hart via L2 SCP.
-static inline void __attribute__((always_inline)) scp_signal(volatile uint32_t * flag, uint32_t value) {
+static anta_hstha void __attribute__((always_inline)) scp_signal(ca_ncala uint32_t * flag, uint32_t value) {
     *flag = value;
     FENCE;
     evict_to_l2((const void *) flag, 1, 64);
@@ -42,12 +42,12 @@ static inline void __attribute__((always_inline)) scp_signal(volatile uint32_t *
 }
 
 // Wait for a counter in L2 SCP to reach the expected value.
-static inline void __attribute__((always_inline)) scp_wait(volatile uint32_t * flag, uint32_t expected) {
-    while (1) {
+static anta_hstha void __attribute__((always_inline)) scp_wait(ca_ncala uint32_t * flag, uint32_t expected) {
+    ขณะ (1) {
         evict_to_l2((const void *) flag, 1, 64);
         WAIT_CACHEOPS;
-        if (*flag >= expected) {
-            return;
+        ถ้า (*flag >= expected) {
+            คืน;
         }
     }
 }
@@ -62,8 +62,8 @@ static inline void __attribute__((always_inline)) scp_wait(volatile uint32_t * f
 // the low/high nibbles to FP32 (nibble-8), scale by the block's fp16 d, and
 // fscw.ps-scatter the 8 values down 8 panel lines (stride 64B) at column m.
 // 4 groups of 8 cover the 32 k-values (low 0..15, high 16..31).
-static inline void __attribute__((always_inline)) dequant_q4_0_panel(float *      panel,
-                                                                     const char * src0_batch,
+static anta_hstha void __attribute__((always_inline)) dequant_q4_0_panel(float *      panel,
+                                                                     const var_na * src0_batch,
                                                                      int64_t      mb,
                                                                      int64_t      kb_block,
                                                                      int64_t      nb1_0) {
@@ -75,7 +75,7 @@ static inline void __attribute__((always_inline)) dequant_q4_0_panel(float *    
     };
 
     unsigned long old_mask;
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[ms]            \n\t"
         "mov.m.x   m0, x0, 0xFF     \n\t"  // all 8 lanes active
         "flw.ps    f1, (%[sidx])    \n\t"  // f1 = scatter offsets
@@ -84,14 +84,14 @@ static inline void __attribute__((always_inline)) dequant_q4_0_panel(float *    
         : [sidx] "r"(scatter_idx), [gidx] "r"(gather_idx)
         : "f1", "f2");
 
-    char * pbase = (char *) panel;
-    for (int j = 0; j < TILE_M; ++j) {
+    var_na * pbase = (var_na *) panel;
+    สำหรับ (จำนวนเต็ม j = 0; j < TILE_M; ++j) {
         const block_q4_0 * blk       = (const block_q4_0 *) (src0_batch + (mb + j) * nb1_0) + kb_block;
         uint32_t           scale_raw = (uint32_t) blk->d;
         const uint8_t *    qs        = blk->qs;
-        char *             col       = pbase + j * 4;  // column m=j of the panel
+        var_na *             col       = pbase + j * 4;  // column m=j of the panel
 
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "fbcx.ps     f3, %[sb]      \n\t"  // broadcast fp16 scale bits
             "fcvt.ps.f16 f3, f3         \n\t"  // -> d in all 8 lanes (fp32)
 
@@ -126,20 +126,20 @@ static inline void __attribute__((always_inline)) dequant_q4_0_panel(float *    
             : "f3", "f4", "f5", "f6", "memory");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(old_mask));
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(old_mask));
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+จำนวนเต็ม entry_point(sa_nracanaa ggml_et_binary_params * params, void * env) {
     (void) env;
 
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    ถ้า (shire_id >= NUM_COMPUTE_SHIRES) {
+        คืน 0;
     }
 
-    const int is_hart1     = hart_id & 1;
+    const จำนวนเต็ม is_hart1     = hart_id & 1;
     uint64_t  local_minion = (hart_id >> 1) & 0x1F;
 
     // Dimensions (both harts need these for tile assignment)
@@ -147,11 +147,11 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t M = params->src0.ne[1];
     const int64_t N = params->src1.ne[1];
 
-    if ((M % TILE_M) != 0) {
-        return 0;
+    ถ้า ((M % TILE_M) != 0) {
+        คืน 0;
     }
-    if ((K % BLOCK_K) != 0) {
-        return 0;
+    ถ้า ((K % BLOCK_K) != 0) {
+        คืน 0;
     }
 
     const int64_t ne2_0 = params->src0.ne[2], ne3_0 = params->src0.ne[3];
@@ -166,9 +166,9 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t nb1_d = params->dst.nb[1];
     const int64_t nb2_d = params->dst.nb[2], nb3_d = params->dst.nb[3];
 
-    const char * src0_base = (const char *) params->src0.data;
-    const char * src1_base = (const char *) params->src1.data;
-    char *       dst_base  = (char *) params->dst.data;
+    const var_na * src0_base = (const var_na *) params->src0.data;
+    const var_na * src1_base = (const var_na *) params->src1.data;
+    var_na *       dst_base  = (var_na *) params->dst.data;
 
     const int64_t m_tiles     = M / TILE_M;
     const int64_t n_tiles     = (N + TILE_N - 1) / TILE_N;
@@ -198,19 +198,19 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         (float *) et_shire_l2scp_local(scp_base),
         (float *) et_shire_l2scp_local(scp_base + SCP_PANEL_SIZE),
     };
-    volatile uint32_t * ready_ctr    = (volatile uint32_t *) et_shire_l2scp_local(scp_base + SCP_READY_OFF);
-    volatile uint32_t * consumed_ctr = (volatile uint32_t *) et_shire_l2scp_local(scp_base + SCP_CONSUMED_OFF);
+    ca_ncala uint32_t * ready_ctr    = (ca_ncala uint32_t *) et_shire_l2scp_local(scp_base + SCP_READY_OFF);
+    ca_ncala uint32_t * consumed_ctr = (ca_ncala uint32_t *) et_shire_l2scp_local(scp_base + SCP_CONSUMED_OFF);
 
     // ================================================================
     // Hart 1: Q4_0 weight dequant producer
     // ================================================================
-    if (is_hart1) {
+    ถ้า (is_hart1) {
         scp_signal(ready_ctr, 0);
         scp_signal(consumed_ctr, 0);
 
         uint32_t chunk_id = 0;
 
-        for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+        สำหรับ (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
              tile += tiles_stride) {
             const int64_t tiles_per_batch = m_tiles * n_tiles;
             const int64_t batch_idx       = tile / tiles_per_batch;
@@ -223,14 +223,14 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
             const int64_t i2_0 = i2 / r2;
             const int64_t i3_0 = i3 / r3;
 
-            const char *  src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
+            const var_na *  src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
             const int64_t mb         = mb_idx * TILE_M;
 
-            for (int64_t kb = kb_start; kb < kb_end; ++kb) {
-                int buf = chunk_id & 1;
+            สำหรับ (int64_t kb = kb_start; kb < kb_end; ++kb) {
+                จำนวนเต็ม buf = chunk_id & 1;
 
                 // Back-pressure: wait for hart 0 to finish with this buffer.
-                if (chunk_id >= 2) {
+                ถ้า (chunk_id >= 2) {
                     scp_wait(consumed_ctr, chunk_id - 1);
                 }
 
@@ -246,7 +246,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         FENCE;
-        return 0;
+        คืน 0;
     }
 
     // ================================================================
@@ -256,7 +256,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const uint64_t group_base_global = my_minion_id - k_split;
 
     setup_cache_scp();
-#if CACHEOP_MAX > 0 || REP_RATE > 0
+#ถ้า CACHEOP_MAX > 0 || REP_RATE > 0
     ucache_control(1, REP_RATE, CACHEOP_MAX);
 #endif
     CLEAR_TENSOR_ERROR;
@@ -268,7 +268,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
     uint32_t chunk_id = 0;
 
-    for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+    สำหรับ (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
          tile += tiles_stride) {
         const int64_t tiles_per_batch = m_tiles * n_tiles;
         const int64_t batch_idx       = tile / tiles_per_batch;
@@ -280,8 +280,8 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         const int64_t i3 = batch_idx / ne2_1;
         const int64_t i2 = batch_idx % ne2_1;
 
-        const char * src1_batch = src1_base + i3 * nb3_1 + i2 * nb2_1;
-        char *       dst_batch  = dst_base + i3 * nb3_d + i2 * nb2_d;
+        const var_na * src1_batch = src1_base + i3 * nb3_1 + i2 * nb2_1;
+        var_na *       dst_batch  = dst_base + i3 * nb3_d + i2 * nb2_d;
 
         const int64_t mb    = mb_idx * TILE_M;
         const int64_t nb    = nb_idx * TILE_N;
@@ -291,7 +291,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         // Errata Type D workaround for n_cur == 4 (AROWS==3): pad A to AROWS==4.
         const int64_t arows_fma = (n_cur == 4) ? 4 : (n_cur - 1);
 
-        if (n_cur == 4) {
+        ถ้า (n_cur == 4) {
             // Zero the padded 5th A row (line A_L1_START+4) once; the per-pass A
             // load only writes lines A_L1_START..+3, so this persists.
             static const float __attribute__((aligned(64))) zero_line[16] = { 0 };
@@ -301,22 +301,22 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
             tensor_wait(TENSOR_LOAD_WAIT_0);
         }
 
-        int first = 1;  // first_pass=1 only for the very first FMA of the tile
+        จำนวนเต็ม first = 1;  // first_pass=1 only for the very first FMA of the tile
 
-        for (int64_t kb = kb_start; kb < kb_end; ++kb) {
-            int buf = chunk_id & 1;
+        สำหรับ (int64_t kb = kb_start; kb < kb_end; ++kb) {
+            จำนวนเต็ม buf = chunk_id & 1;
 
             // Wait for hart 1 to finish dequantizing this block.
             chunk_id++;
             scp_wait(ready_ctr, chunk_id);
 
             // Two FMA passes over the 32-wide block (16 K-cols each).
-            for (int half = 0; half < 2; ++half) {
+            สำหรับ (จำนวนเต็ม half = 0; half < 2; ++half) {
                 const int64_t k_elem = kb * BLOCK_K + half * FMA_K;
 
                 // Load A (activations) for this 16-K sub-tile, PLAIN.
                 tensor_load(false, false, A_L1_START, TENSOR_LOAD_PLAIN, 0,
-                            (uint64_t) (src1_batch + nb * nb1_1 + k_elem * (int64_t) sizeof(float)), 0, n_cur - 1,
+                            (uint64_t) (src1_batch + nb * nb1_1 + k_elem * (int64_t) parimaa_na(float)), 0, n_cur - 1,
                             (uint64_t) nb1_1, 0);
 
                 // Load B (dequantized weights) half from L2 SCP panel, PLAIN.
@@ -341,28 +341,28 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         // K-split ring reduce.
-        if (k_splits > 1) {
+        ถ้า (k_splits > 1) {
             const uint64_t num_regs = (uint64_t) n_cur * 2;
 
-            if (k_split > 0) {
+            ถ้า (k_split > 0) {
                 tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, num_regs, group_base_global + k_split - 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
 
-            if (k_split < k_splits - 1) {
+            ถ้า (k_split < k_splits - 1) {
                 tensor_reduce_send(0, num_regs, group_base_global + k_split + 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
         }
 
         // Store FP32 result tile (only the last k-split owns the final sum).
-        if (k_split == k_splits - 1) {
-            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * (int64_t) sizeof(float)), 0,
+        ถ้า (k_split == k_splits - 1) {
+            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * (int64_t) parimaa_na(float)), 0,
                          (uint64_t) nb1_d);
             tensor_wait(TENSOR_STORE_WAIT);
         }
     }
 
     FENCE;
-    return 0;
+    คืน 0;
 }

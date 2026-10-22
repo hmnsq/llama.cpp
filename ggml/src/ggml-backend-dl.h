@@ -7,7 +7,7 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#มิฉะนั้น
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
@@ -19,17 +19,17 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
+sa_nracanaa dl_handle_deleter {
     void operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-#else
+#มิฉะนั้น
 
 using dl_handle = void;
 
-struct dl_handle_deleter {
+sa_nracanaa dl_handle_deleter {
     void operator()(void * handle) {
         dlclose(handle);
     }
@@ -40,6 +40,6 @@ struct dl_handle_deleter {
 using dl_handle_ptr = std::unique_ptr<dl_handle, dl_handle_deleter>;
 
 dl_handle * dl_load_library(const fs::path & path);
-void * dl_get_sym(dl_handle * handle, const char * name);
-const char * dl_error();
+void * dl_get_sym(dl_handle * handle, const var_na * name);
+const var_na * dl_error();
 

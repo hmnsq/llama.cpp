@@ -59,7 +59,7 @@
  * @param line The line number where the error occurred.
  * @param msg The error message.
  */
-[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int line, const char * msg) {
+[[noreturn]] void ggml_cann_error(const var_na * stmt, const var_na * func, const var_na * file, จำนวนเต็ม line, const var_na * msg) {
     int32_t id = -1;
     aclrtGetDevice(&id);
 
@@ -71,7 +71,7 @@
 }
 
 // Thread-local variable to record the current device of this thread.
-thread_local int g_current_cann_device = -1;
+thread_local จำนวนเต็ม g_current_cann_device = -1;
 
 /**
  * @brief Set the CANN device to be used.
@@ -85,8 +85,8 @@ void ggml_cann_set_device(const int32_t device) {
     // aclrtGetDevice(&current_device);
 
     // If the current device is already the target one, no need to switch.
-    if (device == g_current_cann_device) {
-        return;
+    ถ้า (device == g_current_cann_device) {
+        คืน;
     }
 
     // Switch to the new device.
@@ -101,13 +101,13 @@ void ggml_cann_set_device(const int32_t device) {
  *        if not empty, return a std::string object
  */
 std::optional<std::string> get_env_as_lowercase(const std::string & name) {
-    const char * val = std::getenv(name.c_str());
-    if (!val) {
-        return std::nullopt;
+    const var_na * val = std::getenv(name.c_str());
+    ถ้า (!val) {
+        คืน std::nullopt;
     }
     std::string res = std::string(val);
     std::transform(res.begin(), res.end(), res.begin(), ::tolower);
-    return res;
+    คืน res;
 }
 
 /**
@@ -115,7 +115,7 @@ std::optional<std::string> get_env_as_lowercase(const std::string & name) {
  */
 bool parse_bool(const std::string & value) {
     static const std::unordered_set<std::string> valid_values = { "on", "1", "yes", "y", "enable", "true" };
-    return valid_values.find(value) != valid_values.end();
+    คืน valid_values.find(value) != valid_values.end();
 }
 
 /**
@@ -128,11 +128,11 @@ bool parse_bool(const std::string & value) {
  * @param value The string to parse.
  * @return The parsed integer, or 0 if conversion fails.
  */
-int parse_integer(const std::string & value) {
+จำนวนเต็ม parse_integer(const std::string & value) {
     try {
-        return std::stoi(value);
-    } catch (...) {
-        return 0;
+        คืน std::stoi(value);
+    } gr_haa_na (...) {
+        คืน 0;
     }
 }
 
@@ -149,14 +149,14 @@ static ggml_cann_device_info ggml_cann_init() {
 
     aclError err = aclrtGetDeviceCount((uint32_t *) &info.device_count);
 
-    if (err != ACL_SUCCESS) {
+    ถ้า (err != ACL_SUCCESS) {
         GGML_LOG_ERROR("%s: failed to initialize CANN: %s\n", __func__, aclGetRecentErrMsg());
-        return info;
+        คืน info;
     }
 
     GGML_ASSERT(info.device_count <= GGML_CANN_MAX_DEVICES);
 
-    for (int id = 0; id < info.device_count; ++id) {
+    สำหรับ (จำนวนเต็ม id = 0; id < info.device_count; ++id) {
         aclrtPhysicalMemProp prop = {};
         prop.handleType           = ACL_MEM_HANDLE_TYPE_NONE;
         prop.allocationType       = ACL_MEM_ALLOCATION_TYPE_PINNED;
@@ -174,7 +174,7 @@ static ggml_cann_device_info ggml_cann_init() {
     }
 
     // TODO: add more device info later.
-    return info;
+    คืน info;
 }
 
 /**
@@ -188,7 +188,7 @@ static ggml_cann_device_info ggml_cann_init() {
  */
 const ggml_cann_device_info & ggml_cann_info() {
     static ggml_cann_device_info info = ggml_cann_init();
-    return info;
+    คืน info;
 }
 
 //#define DEBUG_CANN_MALLOC
@@ -197,7 +197,7 @@ const ggml_cann_device_info & ggml_cann_info() {
  *
  * This class manages a pool of CANN buffers for a specific device.
  */
-struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
+sa_nracanaa ggml_cann_pool_buf_prio : public ggml_cann_pool {
     /**
      * @brief The maximum reuse margin for a buffer.
      */
@@ -216,7 +216,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
     /**
      * @brief The device ID associated with this buffer pool.
      */
-    int device;
+    จำนวนเต็ม device;
 
     /**
      * @brief Whether to disable clean during buffer allocation.
@@ -226,12 +226,12 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
     /**
      * @brief Structure representing a CANN buffer.
      */
-    struct ggml_cann_buffer {
+    sa_nracanaa ggml_cann_buffer {
         void *                                ptr  = nullptr;  ///< Pointer to the buffer.
         size_t                                size = 0;        ///< Size of the buffer.
         std::chrono::steady_clock::time_point last_used;       ///< Last used time.
 
-        bool operator>(const ggml_cann_buffer & other) const { return size > other.size; }
+        bool operator>(const ggml_cann_buffer & other) const { คืน size > other.size; }
     };
 
     /**
@@ -250,7 +250,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
      *
      * @param device The device ID to associate with this buffer pool.
      */
-    explicit ggml_cann_pool_buf_prio(int device) : device(device) {
+    explicit ggml_cann_pool_buf_prio(จำนวนเต็ม device) : device(device) {
         disable_clean = parse_bool(get_env_as_lowercase("GGML_CANN_DISABLE_BUF_POOL_CLEAN").value_or(""));
     }
 
@@ -259,7 +259,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
      */
     ~ggml_cann_pool_buf_prio() {
         ggml_cann_set_device(device);
-        for (auto & [b_ptr, b_size] : buffer_pool) {
+        สำหรับ (auto & [b_ptr, b_size] : buffer_pool) {
             aclrtFree(b_ptr);
             pool_size -= b_size;
         }
@@ -277,7 +277,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
      */
     void * alloc(size_t size, size_t * actual_size) override {
         size = GGML_PAD(size, alignment);
-        if (size == 0) {
+        ถ้า (size == 0) {
             size = alignment;
         }
 
@@ -286,14 +286,14 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
 
         std::vector<ggml_cann_buffer> free_buffers_rest;
         free_buffers_rest.reserve(free_buffers.size());
-        while (!free_buffers.empty()) {
+        ขณะ (!free_buffers.empty()) {
             auto b = free_buffers.top();
             free_buffers.pop();
 
-            if (b.size >= size) {
+            ถ้า (b.size >= size) {
                 // reuse the buffer if the size is enough
                 const size_t margin = b.size - size;
-                if (margin <= max_reuse_margin) {
+                ถ้า (margin <= max_reuse_margin) {
                     *actual_size = b.size;
                     ptr          = b.ptr;
 #ifdef DEBUG_CANN_MALLOC
@@ -306,13 +306,13 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
                         (uint32_t) (GGML_PAD(size, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(margin, 1048576) / 1048576));
 #endif
-                    break;
+                    bha_nga;
                 }
             }
 
             bool should_clean = !disable_clean && b.size > min_free_margin &&
                                 std::chrono::duration_cast<std::chrono::milliseconds>(now - b.last_used).count() > 100;
-            if (should_clean) {
+            ถ้า (should_clean) {
                 // free the buffer if the size is needed to be freed
                 ACL_CHECK(aclrtFree(b.ptr));
                 pool_size -= b.size;
@@ -329,7 +329,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
             }
             free_buffers_rest.push_back(b);
         }
-        for (ggml_cann_buffer & b : free_buffers_rest) {
+        สำหรับ (ggml_cann_buffer & b : free_buffers_rest) {
             free_buffers.push(std::move(b));
         }
 
@@ -337,8 +337,8 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
         GGML_LOG_INFO("cann pool[%d] free pool_size = %5u MB\n\n", device,
                       (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576));
 #endif
-        if (ptr != nullptr) {
-            return ptr;
+        ถ้า (ptr != nullptr) {
+            คืน ptr;
         }
 
         // allocate a new buffer if no buffer can be reused
@@ -355,7 +355,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
             (uint32_t) (GGML_PAD(size, 1048576) / 1048576));
 #endif
         buffer_pool.emplace(ptr, size);
-        return ptr;
+        คืน ptr;
     }
 
     /**
@@ -367,7 +367,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
     void free(void * ptr, size_t size) override {
         GGML_UNUSED(size);
         auto it = buffer_pool.find(ptr);
-        if (it == buffer_pool.end()) {
+        ถ้า (it == buffer_pool.end()) {
             GGML_ABORT("cann pool[%d]: buffer %p not found in pool\n", device, ptr);
         }
 
@@ -387,7 +387,7 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
  *
  * This class manages a pool of CANN buffers for a specific device.
  */
-struct ggml_cann_pool_buf : public ggml_cann_pool {
+sa_nracanaa ggml_cann_pool_buf : public ggml_cann_pool {
     /**
      * @brief The maximum reuse margin for a buffer.
      */
@@ -406,12 +406,12 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
     /**
      * @brief The maximum number of buffers in the pool.
      */
-    static const int MAX_BUFFERS = 256;
+    static const จำนวนเต็ม MAX_BUFFERS = 256;
 
     /**
      * @brief The device ID associated with this buffer pool.
      */
-    int device;
+    จำนวนเต็ม device;
 
     /**
      * @brief Whether to disable clean during buffer allocation.
@@ -421,7 +421,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
     /**
      * @brief Structure representing a CANN buffer.
      */
-    struct ggml_cann_buffer {
+    sa_nracanaa ggml_cann_buffer {
         void *                                ptr  = nullptr;  ///< Pointer to the buffer memory.
         size_t                                size = 0;        ///< Size of the buffer.
         bool                                  used = false;    ///< Whether the buffer is currently in use.
@@ -443,7 +443,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
      *
      * @param device The device ID to associate with this buffer pool.
      */
-    explicit ggml_cann_pool_buf(int device) : device(device) {
+    explicit ggml_cann_pool_buf(จำนวนเต็ม device) : device(device) {
         disable_clean = parse_bool(get_env_as_lowercase("GGML_CANN_DISABLE_BUF_POOL_CLEAN").value_or(""));
     }
 
@@ -452,9 +452,9 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
      */
     ~ggml_cann_pool_buf() {
         ggml_cann_set_device(device);
-        for (int i = 0; i < MAX_BUFFERS; ++i) {
+        สำหรับ (จำนวนเต็ม i = 0; i < MAX_BUFFERS; ++i) {
             ggml_cann_buffer & b = buffer_pool[i];
-            if (b.ptr != nullptr) {
+            ถ้า (b.ptr != nullptr) {
                 aclrtFree(b.ptr);
                 pool_size -= b.size;
             }
@@ -472,26 +472,26 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
      */
     void * alloc(size_t size, size_t * actual_size) override {
         size = GGML_PAD(size, alignment);
-        if (size == 0) {
+        ถ้า (size == 0) {
             size = alignment;
         }
 
         void * ptr = nullptr;
         auto   now = std::chrono::steady_clock::now();
 
-        int i = 0;
-        for (; i < MAX_BUFFERS; ++i) {
+        จำนวนเต็ม i = 0;
+        สำหรับ (; i < MAX_BUFFERS; ++i) {
             ggml_cann_buffer & b = buffer_pool[i];
-            if (b.ptr == nullptr) {
-                break;
+            ถ้า (b.ptr == nullptr) {
+                bha_nga;
             }
-            if (b.used) {
+            ถ้า (b.used) {
                 continue;
             }
-            if (b.size >= size) {
+            ถ้า (b.size >= size) {
                 // reuse the buffer if the size is enough
                 const size_t margin = b.size - size;
-                if (margin <= max_reuse_margin) {
+                ถ้า (margin <= max_reuse_margin) {
                     *actual_size = b.size;
                     b.used       = true;
                     ptr          = b.ptr;
@@ -505,13 +505,13 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
                         (uint32_t) (GGML_PAD(size, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(margin, 1048576) / 1048576));
 #endif
-                    break;
+                    bha_nga;
                 }
             }
 
             bool should_clean = !disable_clean && b.size > min_free_margin &&
                                 std::chrono::duration_cast<std::chrono::milliseconds>(now - b.last_used).count() > 100;
-            if (should_clean) {
+            ถ้า (should_clean) {
                 // free the buffer if the size is needed to be freed
                 ACL_CHECK(aclrtFree(b.ptr));
                 pool_size -= b.size;
@@ -526,11 +526,11 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
                 b.ptr = nullptr;
             }
         }
-        if (ptr != nullptr) {
-            return ptr;
+        ถ้า (ptr != nullptr) {
+            คืน ptr;
         }
 
-        if (i < MAX_BUFFERS) {
+        ถ้า (i < MAX_BUFFERS) {
             // allocate a new buffer if no buffer can be reused
             ggml_cann_buffer & b = buffer_pool[i];
             ggml_cann_set_device(device);
@@ -539,7 +539,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
             *actual_size = size;
             b.size       = size;
             b.used       = true;
-            if (i >= MAX_BUFFERS - 8) {
+            ถ้า (i >= MAX_BUFFERS - 8) {
                 GGML_LOG_WARN("cann pool[%d]: slots almost full\n", device);
             }
 #ifdef DEBUG_CANN_MALLOC
@@ -550,7 +550,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
                 device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
                 (uint32_t) (GGML_PAD(b.size, 1048576) / 1048576));
 #endif
-            return b.ptr;
+            คืน b.ptr;
         }
 
         GGML_ABORT("cann pool[%d]: slots full\n", device);
@@ -564,9 +564,9 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
      */
     void free(void * ptr, size_t size) override {
         GGML_UNUSED(size);
-        for (int i = 0; i < MAX_BUFFERS; ++i) {
+        สำหรับ (จำนวนเต็ม i = 0; i < MAX_BUFFERS; ++i) {
             ggml_cann_buffer & b = buffer_pool[i];
-            if (b.ptr != ptr) {
+            ถ้า (b.ptr != ptr) {
                 continue;
             }
             b.used      = false;
@@ -577,7 +577,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
                 "pool_size = %5u MB\n",
                 device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576));
 #endif
-            return;
+            คืน;
         }
         GGML_ABORT("cann pool[%d]: slots full\n", device);
     }
@@ -589,7 +589,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
  * This class manages a pool of CANN buffers with virtual memory for a specific
  * device.
  */
-struct ggml_cann_pool_vmm : public ggml_cann_pool {
+sa_nracanaa ggml_cann_pool_vmm : public ggml_cann_pool {
     /**
      * @brief The maximum size of the virtual memory pool (32 GB).
      */
@@ -598,7 +598,7 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
     /**
      * @brief The device ID associated with this buffer pool.
      */
-    int device;
+    จำนวนเต็ม device;
 
     /**
      * @brief Pointer to the start of the virtual memory pool.
@@ -636,7 +636,7 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
      *
      * @param device The device ID to associate with this buffer pool.
      */
-    explicit ggml_cann_pool_vmm(int device) : device(device) {
+    explicit ggml_cann_pool_vmm(จำนวนเต็ม device) : device(device) {
         auto dev    = ggml_cann_info().devices[device];
         granularity = dev.vmm_granularity;
         max_size    = dev.total_vram;
@@ -646,11 +646,11 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
      * @brief Destructor to free all buffers in the virtual memory pool.
      */
     ~ggml_cann_pool_vmm() {
-        if (pool_addr != 0) {
-            for (auto & offset : map_offsets) {
+        ถ้า (pool_addr != 0) {
+            สำหรับ (auto & offset : map_offsets) {
                 ACL_CHECK(aclrtUnmapMem(offset));
             }
-            for (auto & handle : handles) {
+            สำหรับ (auto & handle : handles) {
                 ACL_CHECK(aclrtFreePhysical(handle));
             }
             ACL_CHECK(aclrtReleaseMemAddress(pool_addr));
@@ -670,13 +670,13 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
         // allocations are aligned for all data types
         const size_t alignment = 128;
         size                   = GGML_PAD(size, alignment);
-        if (size == 0) {
+        ถ้า (size == 0) {
             size = alignment;
         }
 
         size_t avail = pool_size - pool_used;
 
-        if (size > avail) {
+        ถ้า (size > avail) {
             // round up to the next multiple of the granularity
             size_t reserve_size = size - avail;
             reserve_size        = GGML_PAD(reserve_size, granularity);
@@ -695,15 +695,15 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
             ACL_CHECK(aclrtMallocPhysical(&handle, reserve_size, &prop, 0));
 
             // reserve virtual address space (if not already reserved)
-            if (pool_addr == 0) {
+            ถ้า (pool_addr == 0) {
                 ACL_CHECK(aclrtReserveMemAddress(&pool_addr, max_size, 0, NULL, 1));
             }
 
             // map at the end of the pool
-            ACL_CHECK(aclrtMapMem((char *) pool_addr + pool_size, reserve_size, 0, handle, 0));
+            ACL_CHECK(aclrtMapMem((var_na *) pool_addr + pool_size, reserve_size, 0, handle, 0));
 
             handles.push_back(handle);
-            map_offsets.push_back((char *) pool_addr + pool_size);
+            map_offsets.push_back((var_na *) pool_addr + pool_size);
 
             // add to the pool
             pool_size += reserve_size;
@@ -717,7 +717,7 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
 
         GGML_ASSERT(pool_addr != 0);
 
-        void * ptr   = (void *) ((char *) pool_addr + pool_used);
+        void * ptr   = (void *) ((var_na *) pool_addr + pool_used);
         *actual_size = size;
         pool_used += size;
 
@@ -725,7 +725,7 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
         GGML_LOG_INFO("cann pool[%d]: allocated %llu bytes at %llx\n", device, (unsigned long long) size,
                       (unsigned long long) ptr);
 #endif
-        return ptr;
+        คืน ptr;
     }
 
     /**
@@ -743,7 +743,7 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
         pool_used -= size;
 
         // all deallocations must be in reverse order of the allocations
-        GGML_ASSERT(ptr == (void *) ((char *) pool_addr + pool_used));
+        GGML_ASSERT(ptr == (void *) ((var_na *) pool_addr + pool_used));
     }
 };
 
@@ -755,21 +755,21 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
  * @param device The device ID for which to create the pool.
  * @return A unique pointer to the created CANN pool.
  */
-std::unique_ptr<ggml_cann_pool> ggml_backend_cann_context::new_pool_for_device(int device) {
+std::unique_ptr<ggml_cann_pool> ggml_backend_cann_context::new_pool_for_device(จำนวนเต็ม device) {
     std::string mem_pool_type = get_env_as_lowercase("GGML_CANN_MEM_POOL").value_or("");
 
-    if (mem_pool_type == "prio") {
+    ถ้า (mem_pool_type == "prio") {
         GGML_LOG_INFO("%s: device %d use buffer pool with priority queue\n", __func__, device);
-        return std::unique_ptr<ggml_cann_pool>(new ggml_cann_pool_buf_prio(device));
+        คืน std::unique_ptr<ggml_cann_pool>(new ggml_cann_pool_buf_prio(device));
     }
 
-    if (ggml_cann_info().devices[device].vmm && mem_pool_type != "leg") {
+    ถ้า (ggml_cann_info().devices[device].vmm && mem_pool_type != "leg") {
         GGML_LOG_INFO("%s: device %d use vmm pool\n", __func__, device);
-        return std::unique_ptr<ggml_cann_pool>(new ggml_cann_pool_vmm(device));
+        คืน std::unique_ptr<ggml_cann_pool>(new ggml_cann_pool_vmm(device));
     }
 
     GGML_LOG_INFO("%s: device %d use buffer pool\n", __func__, device);
-    return std::unique_ptr<ggml_cann_pool>(new ggml_cann_pool_buf(device));
+    คืน std::unique_ptr<ggml_cann_pool>(new ggml_cann_pool_buf(device));
 }
 
 // cann buffer
@@ -781,7 +781,7 @@ std::unique_ptr<ggml_cann_pool> ggml_backend_cann_context::new_pool_for_device(i
  * this tracker accumulates progress and defers post-processing (quantized format
  * transform or ND-to-NZ conversion) until all data has been written.
  */
-struct TensorSetTracker {
+sa_nracanaa TensorSetTracker {
     std::mutex mtx;                   ///< Protects concurrent access to this tracker
     size_t bytes_written = 0;         ///< Accumulated bytes written so far
     size_t total_bytes = 0;           ///< Target size (full tensor)
@@ -794,7 +794,7 @@ struct TensorSetTracker {
  * This structure holds information about a CANN buffer, including the device
  * ID, device pointer, and a name derived from GGML_CANN_NAME and the device ID.
  */
-struct ggml_backend_cann_buffer_context {
+sa_nracanaa ggml_backend_cann_buffer_context {
     int32_t device;             ///< The device ID associated with this buffer context.
     void *  dev_ptr = nullptr;  ///< Pointer to the device memory allocated for the buffer.
 
@@ -821,14 +821,14 @@ struct ggml_backend_cann_buffer_context {
         std::lock_guard<std::mutex> lock(tracker_mutex);
         auto key = tensor->data;
         auto it = trackers.find(key);
-        if (it == trackers.end()) {
+        ถ้า (it == trackers.end()) {
             auto tracker = std::make_unique<TensorSetTracker>();
             tracker->total_bytes = ggml_nbytes(tensor);
             auto * ptr = tracker.get();
             trackers[key] = std::move(tracker);
-            return ptr;
+            คืน ptr;
         }
-        return it->second.get();
+        คืน it->second.get();
     }
 
     /**
@@ -845,7 +845,7 @@ struct ggml_backend_cann_buffer_context {
  * @brief Structure representing context information for a specific backend
  * buffer type.
  */
-struct ggml_backend_cann_buffer_type_context {
+sa_nracanaa ggml_backend_cann_buffer_type_context {
     int32_t     device; /**< Device identifier associated with the buffer context. */
     std::string name;   /**< Name associated with the buffer context. */
 };
@@ -859,10 +859,10 @@ struct ggml_backend_cann_buffer_type_context {
  * @param buft Pointer to the buffer type context.
  * @return Const pointer to the C-style string containing the name.
  */
-static const char * ggml_backend_cann_buffer_type_name(ggml_backend_buffer_type_t buft) {
+static const var_na * ggml_backend_cann_buffer_type_name(ggml_backend_buffer_type_t buft) {
     ggml_backend_cann_buffer_type_context * buft_ctx = (ggml_backend_cann_buffer_type_context *) buft->context;
 
-    return buft_ctx->name.c_str();
+    คืน buft_ctx->name.c_str();
 }
 
 /**
@@ -877,7 +877,7 @@ static const char * ggml_backend_cann_buffer_type_name(ggml_backend_buffer_type_
  * backend, otherwise false.
  */
 static bool ggml_backend_buft_is_cann(ggml_backend_buffer_type_t buft) {
-    return buft->iface.get_name == ggml_backend_cann_buffer_type_name;
+    คืน buft->iface.get_name == ggml_backend_cann_buffer_type_name;
 }
 
 /**
@@ -904,7 +904,7 @@ static void ggml_backend_cann_buffer_free_buffer(ggml_backend_buffer_t buffer) {
  */
 static void * ggml_backend_cann_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_cann_buffer_context * ctx = (ggml_backend_cann_buffer_context *) buffer->context;
-    return ctx->dev_ptr;
+    คืน ctx->dev_ptr;
 }
 
 /**
@@ -923,25 +923,25 @@ static void * ggml_backend_cann_buffer_get_base(ggml_backend_buffer_t buffer) {
 static void ggml_backend_cann_transform_q4_0(ggml_tensor * tensor, const void * src, void * dst) {
     int64_t n_elems     = ggml_nelements(tensor);
     int64_t groups      = n_elems / QK4_0;
-    size_t  quant_bytes = n_elems * sizeof(uint8_t) / 2;
+    size_t  quant_bytes = n_elems * parimaa_na(uint8_t) / 2;
 
     uint8_t *  quant_offset = (uint8_t *) dst;
-    uint16_t * scale_offset = (uint16_t *) ((char *) dst + quant_bytes);
+    uint16_t * scale_offset = (uint16_t *) ((var_na *) dst + quant_bytes);
 
-    for (int i = 0; i < groups; i++) {
-        const block_q4_0 * group = (const block_q4_0 *) ((const char *) src + i * sizeof(block_q4_0));
+    สำหรับ (จำนวนเต็ม i = 0; i < groups; i++) {
+        const block_q4_0 * group = (const block_q4_0 *) ((const var_na *) src + i * parimaa_na(block_q4_0));
         *scale_offset            = group->d;
         scale_offset++;
 
         // 0-15
-        for (int j = 0; j < QK4_0 / 2; j += 2) {
+        สำหรับ (จำนวนเต็ม j = 0; j < QK4_0 / 2; j += 2) {
             (*quant_offset) = (group->qs[j] & 0x0F);
             (*quant_offset) |= ((group->qs[j + 1] << 4));
             quant_offset++;
         }
 
         // 16-31
-        for (int j = 0; j < QK4_0 / 2; j += 2) {
+        สำหรับ (จำนวนเต็ม j = 0; j < QK4_0 / 2; j += 2) {
             (*quant_offset) = (group->qs[j] >> 4);
             (*quant_offset) |= (group->qs[j + 1] & 0xF0);
             quant_offset++;
@@ -949,7 +949,7 @@ static void ggml_backend_cann_transform_q4_0(ggml_tensor * tensor, const void * 
     }
 
     // put (uint4b_t -8) into int4b_t
-    for (quant_offset = (uint8_t *) dst; quant_offset < (uint8_t *) dst + quant_bytes; quant_offset++) {
+    สำหรับ (quant_offset = (uint8_t *) dst; quant_offset < (uint8_t *) dst + quant_bytes; quant_offset++) {
         (*quant_offset) ^= 0x88;
     }
 }
@@ -970,30 +970,30 @@ static void ggml_backend_cann_transform_q4_0(ggml_tensor * tensor, const void * 
 static void ggml_backend_cann_transform_back_q4_0(const ggml_tensor * tensor, void * src, void * dst) {
     int64_t n_elems     = ggml_nelements(tensor);
     int64_t groups      = n_elems / QK4_0;
-    size_t  quant_bytes = n_elems * sizeof(uint8_t) / 2;
+    size_t  quant_bytes = n_elems * parimaa_na(uint8_t) / 2;
 
     uint8_t *  quant_offset = (uint8_t *) src;
-    uint16_t * scale_offset = (uint16_t *) ((char *) src + quant_bytes);
+    uint16_t * scale_offset = (uint16_t *) ((var_na *) src + quant_bytes);
 
-    for (; quant_offset < (uint8_t *) src + quant_bytes; quant_offset++) {
+    สำหรับ (; quant_offset < (uint8_t *) src + quant_bytes; quant_offset++) {
         (*quant_offset) ^= 0x88;
     }
     quant_offset = (uint8_t *) src;
 
-    for (int i = 0; i < groups; i++) {
-        block_q4_0 * group = (block_q4_0 *) ((char *) dst + i * sizeof(block_q4_0));
+    สำหรับ (จำนวนเต็ม i = 0; i < groups; i++) {
+        block_q4_0 * group = (block_q4_0 *) ((var_na *) dst + i * parimaa_na(block_q4_0));
         group->d           = *scale_offset;
         scale_offset++;
 
         // 0-15
-        for (int j = 0; j < QK4_0 / 2; j += 2) {
+        สำหรับ (จำนวนเต็ม j = 0; j < QK4_0 / 2; j += 2) {
             group->qs[j]     = ((*quant_offset) & 0x0F);
             group->qs[j + 1] = ((*quant_offset) >> 4);
             quant_offset++;
         }
 
         // 16-31
-        for (int j = 0; j < QK4_0 / 2; j += 2) {
+        สำหรับ (จำนวนเต็ม j = 0; j < QK4_0 / 2; j += 2) {
             group->qs[j] |= ((*quant_offset) << 4);
             group->qs[j + 1] |= ((*quant_offset) & 0xF0);
             quant_offset++;
@@ -1017,16 +1017,16 @@ static void ggml_backend_cann_transform_back_q4_0(const ggml_tensor * tensor, vo
 static void ggml_backend_cann_transform_q8_0(ggml_tensor * tensor, const void * src, void * dst) {
     int64_t n_elems     = ggml_nelements(tensor);
     int64_t groups      = n_elems / QK8_0;
-    size_t  quant_bytes = n_elems * sizeof(uint8_t);
+    size_t  quant_bytes = n_elems * parimaa_na(uint8_t);
 
     uint8_t *  quant_offset = (uint8_t *) dst;
-    uint16_t * scale_offset = (uint16_t *) ((char *) dst + quant_bytes);
+    uint16_t * scale_offset = (uint16_t *) ((var_na *) dst + quant_bytes);
 
-    for (int i = 0; i < groups; i++) {
-        const block_q8_0 * group = (const block_q8_0 *) ((const char *) src + i * sizeof(block_q8_0));
+    สำหรับ (จำนวนเต็ม i = 0; i < groups; i++) {
+        const block_q8_0 * group = (const block_q8_0 *) ((const var_na *) src + i * parimaa_na(block_q8_0));
         *scale_offset            = group->d;
         scale_offset++;
-        size_t group_quant_size = QK8_0 * sizeof(uint8_t);
+        size_t group_quant_size = QK8_0 * parimaa_na(uint8_t);
         memcpy(quant_offset, group->qs, group_quant_size);
         quant_offset += group_quant_size;
     }
@@ -1048,16 +1048,16 @@ static void ggml_backend_cann_transform_q8_0(ggml_tensor * tensor, const void * 
 static void ggml_backend_cann_transform_back_q8_0(const ggml_tensor * tensor, const void * src, void * dst) {
     int64_t n_elems     = ggml_nelements(tensor);
     int64_t groups      = n_elems / QK8_0;
-    size_t  quant_bytes = n_elems * sizeof(uint8_t);
+    size_t  quant_bytes = n_elems * parimaa_na(uint8_t);
 
     const uint8_t *  quant_offset = (const uint8_t *) src;
-    const uint16_t * scale_offset = (const uint16_t *) ((const char *) src + quant_bytes);
+    const uint16_t * scale_offset = (const uint16_t *) ((const var_na *) src + quant_bytes);
 
-    for (int i = 0; i < groups; i++) {
-        block_q8_0 * group = (block_q8_0 *) ((char *) dst + i * sizeof(block_q8_0));
+    สำหรับ (จำนวนเต็ม i = 0; i < groups; i++) {
+        block_q8_0 * group = (block_q8_0 *) ((var_na *) dst + i * parimaa_na(block_q8_0));
         group->d           = *scale_offset;
         scale_offset++;
-        size_t group_quant_size = QK8_0 * sizeof(uint8_t);
+        size_t group_quant_size = QK8_0 * parimaa_na(uint8_t);
         memcpy(group->qs, quant_offset, group_quant_size);
         quant_offset += group_quant_size;
     }
@@ -1077,14 +1077,14 @@ static void ggml_backend_cann_transform_back_q8_0(const ggml_tensor * tensor, co
  */
 static void ggml_backend_cann_transform(ggml_tensor * tensor, const void * src, void * dst) {
     switch (tensor->type) {
-        case GGML_TYPE_Q4_0:
+        pak_sa GGML_TYPE_Q4_0:
             ggml_backend_cann_transform_q4_0(tensor, src, dst);
-            break;
-        case GGML_TYPE_Q8_0:
+            bha_nga;
+        pak_sa GGML_TYPE_Q8_0:
             ggml_backend_cann_transform_q8_0(tensor, src, dst);
-            break;
+            bha_nga;
         default:
-            break;
+            bha_nga;
     }
 }
 
@@ -1102,14 +1102,14 @@ static void ggml_backend_cann_transform(ggml_tensor * tensor, const void * src, 
  */
 static void ggml_backend_cann_transform_back(const ggml_tensor * tensor, void * src, void * dst) {
     switch (tensor->type) {
-        case GGML_TYPE_Q4_0:
+        pak_sa GGML_TYPE_Q4_0:
             ggml_backend_cann_transform_back_q4_0(tensor, src, dst);
-            break;
-        case GGML_TYPE_Q8_0:
+            bha_nga;
+        pak_sa GGML_TYPE_Q8_0:
             ggml_backend_cann_transform_back_q8_0(tensor, src, dst);
-            break;
+            bha_nga;
         default:
-            break;
+            bha_nga;
     }
 }
 
@@ -1124,11 +1124,11 @@ static void ggml_backend_cann_transform_back(const ggml_tensor * tensor, void * 
  */
 static bool need_transform(ggml_type type) {
     switch (type) {
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q8_0:
-            return true;
+        pak_sa GGML_TYPE_Q4_0:
+        pak_sa GGML_TYPE_Q8_0:
+            คืน true;
         default:
-            return false;
+            คืน false;
     }
 }
 
@@ -1141,25 +1141,25 @@ static bool need_transform(ggml_type type) {
  * @param buffer The CANN buffer from which to initialize the tensor.
  * @param tensor Pointer to the tensor to be initialized.
  */
-static enum ggml_status ggml_backend_cann_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
-    if (tensor->view_src != NULL && tensor->view_offs == 0) {
+static ga_nanaa ggml_status ggml_backend_cann_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
+    ถ้า (tensor->view_src != NULL && tensor->view_offs == 0) {
         GGML_ASSERT(tensor->view_src->buffer->buft == buffer->buft);
-        return GGML_STATUS_SUCCESS;
+        คืน GGML_STATUS_SUCCESS;
     }
 
     // TODO: cann backend doesn't support quantized yet. Just leave the code
     // here.
-    if (ggml_is_quantized(tensor->type)) {
+    ถ้า (ggml_is_quantized(tensor->type)) {
         // Initialize padding to 0 to avoid possible NaN values
         size_t original_size = ggml_nbytes(tensor);
         size_t padded_size   = ggml_backend_buft_get_alloc_size(buffer->buft, tensor);
 
-        if (padded_size > original_size && tensor->view_src == nullptr) {
+        ถ้า (padded_size > original_size && tensor->view_src == nullptr) {
             size_t memset_size = padded_size - original_size;
-            ACL_CHECK(aclrtMemset((char *) tensor->data + original_size, memset_size, 0, memset_size));
+            ACL_CHECK(aclrtMemset((var_na *) tensor->data + original_size, memset_size, 0, memset_size));
         }
     }
-    return GGML_STATUS_SUCCESS;
+    คืน GGML_STATUS_SUCCESS;
 }
 
 /**
@@ -1169,7 +1169,7 @@ static enum ggml_status ggml_backend_cann_buffer_init_tensor(ggml_backend_buffer
  * allocation, reallocation, and clearing of cached memory. The struct is
  * designed to be used with a global array, one per device.
  */
-struct ggml_cann_nz_workspace {
+sa_nracanaa ggml_cann_nz_workspace {
     std::mutex mtx;    // Protects ptr/allocated from concurrent access
     void * ptr;        // Pointer to allocated device buffer
     size_t allocated;  // Size of currently allocated buffer in bytes
@@ -1186,7 +1186,7 @@ struct ggml_cann_nz_workspace {
      * aclrtFree and resets internal state.
      */
     void clear() {
-        if (ptr) {
+        ถ้า (ptr) {
             ACL_CHECK(aclrtFree(ptr));
             ptr       = nullptr;
             allocated = 0;
@@ -1203,7 +1203,7 @@ struct ggml_cann_nz_workspace {
      * @param new_size Size in bytes to allocate for the workspace.
      */
     void realloc(size_t new_size) {
-        if (new_size > allocated) {
+        ถ้า (new_size > allocated) {
             clear();
             ACL_CHECK(aclrtMalloc(&ptr, new_size, ACL_MEM_MALLOC_HUGE_FIRST));
             allocated = new_size;
@@ -1215,7 +1215,7 @@ struct ggml_cann_nz_workspace {
      *
      * @return Pointer to the allocated buffer, or nullptr if not allocated.
      */
-    void * get() const { return ptr; }
+    void * get() const { คืน ptr; }
 };
 
 /**
@@ -1237,7 +1237,7 @@ static ggml_cann_nz_workspace g_nz_workspaces[GGML_CANN_MAX_DEVICES];
  * @note The workspace buffer used in this function is managed globally and reused
  *       across calls. This reduces overhead from repeated memory allocation and deallocation.
  */
-static void weight_format_to_nz(ggml_tensor * tensor, int device) {
+static void weight_format_to_nz(ggml_tensor * tensor, จำนวนเต็ม device) {
     acl_tensor_ptr weightTransposed = ggml_cann_create_tensor(tensor, tensor->ne, tensor->nb, 2, ACL_FORMAT_ND, 0);
     uint64_t       workspaceSize    = 0;
     aclOpExecutor * executor;
@@ -1290,55 +1290,55 @@ static void ggml_backend_cann_buffer_set_tensor(ggml_backend_buffer_t buffer,
                  is_matmul_weight((const ggml_tensor *) tensor);
 
     // Plain tensor (not quantized, not NZ): direct copy, no tracking needed
-    if (!is_quantized && !is_nz) {
-        ACL_CHECK(aclrtMemcpy((char *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
-        return;
+    ถ้า (!is_quantized && !is_nz) {
+        ACL_CHECK(aclrtMemcpy((var_na *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
+        คืน;
     }
 
     // Single-shot write (full tensor at once): handle directly without tracking overhead
-    if (offset == 0 && size == ggml_nbytes(tensor)) {
-        if (is_quantized) {
+    ถ้า (offset == 0 && size == ggml_nbytes(tensor)) {
+        ถ้า (is_quantized) {
             void * transform_buffer = malloc(size);
             ggml_backend_cann_transform(tensor, data, transform_buffer);
             ACL_CHECK(aclrtMemcpy(tensor->data, size, transform_buffer, size, ACL_MEMCPY_HOST_TO_DEVICE));
             free(transform_buffer);
-        } else {
+        } มิฉะนั้น {
             // NZ weight
             GGML_ASSERT(tensor->ne[2] == 1);
             GGML_ASSERT(tensor->ne[3] == 1);
             ACL_CHECK(aclrtMemcpy(tensor->data, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
             weight_format_to_nz(tensor, ctx->device);
         }
-        return;
+        คืน;
     }
 
     // Chunked write: use tracker to accumulate progress and defer transform/conversion
     TensorSetTracker * tracker = ctx->get_or_create_tracker(tensor);
     std::unique_lock<std::mutex> lock(tracker->mtx);
 
-    if (is_quantized) {
+    ถ้า (is_quantized) {
         // Stage data in host buffer; transform requires full tensor data
-        if (tracker->host_buffer.empty()) {
+        ถ้า (tracker->host_buffer.empty()) {
             tracker->host_buffer.resize(tracker->total_bytes);
         }
         memcpy(tracker->host_buffer.data() + offset, data, size);
-    } else {
+    } มิฉะนั้น {
         // NZ weight: upload chunk to device immediately, defer conversion
-        ACL_CHECK(aclrtMemcpy((char *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
+        ACL_CHECK(aclrtMemcpy((var_na *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
     }
 
     tracker->bytes_written += size;
 
     // All chunks received: perform deferred transform/conversion
-    if (tracker->bytes_written >= tracker->total_bytes) {
-        if (is_quantized) {
+    ถ้า (tracker->bytes_written >= tracker->total_bytes) {
+        ถ้า (is_quantized) {
             void * transform_buffer = malloc(tracker->total_bytes);
             ggml_backend_cann_transform(tensor, tracker->host_buffer.data(), transform_buffer);
             ACL_CHECK(aclrtMemcpy(tensor->data, tracker->total_bytes, transform_buffer, tracker->total_bytes, ACL_MEMCPY_HOST_TO_DEVICE));
             free(transform_buffer);
         }
 
-        if (is_nz) {
+        ถ้า (is_nz) {
             GGML_ASSERT(tensor->ne[2] == 1);
             GGML_ASSERT(tensor->ne[3] == 1);
             weight_format_to_nz(tensor, ctx->device);
@@ -1372,11 +1372,11 @@ static void ggml_backend_cann_buffer_get_tensor(ggml_backend_buffer_t buffer,
 
     ggml_cann_set_device(ctx->device);
 
-    if (!need_transform(tensor->type)) {
-        ACL_CHECK(aclrtMemcpy(data, size, (char *) tensor->data + offset, size, ACL_MEMCPY_DEVICE_TO_HOST));
-    } else {
+    ถ้า (!need_transform(tensor->type)) {
+        ACL_CHECK(aclrtMemcpy(data, size, (var_na *) tensor->data + offset, size, ACL_MEMCPY_DEVICE_TO_HOST));
+    } มิฉะนั้น {
         void * transform_buffer = malloc(size);
-        ACL_CHECK(aclrtMemcpy(transform_buffer, size, (char *) tensor->data + offset, size, ACL_MEMCPY_DEVICE_TO_HOST));
+        ACL_CHECK(aclrtMemcpy(transform_buffer, size, (var_na *) tensor->data + offset, size, ACL_MEMCPY_DEVICE_TO_HOST));
         ggml_backend_cann_transform_back(tensor, transform_buffer, data);
         free(transform_buffer);
     }
@@ -1398,34 +1398,34 @@ static void ggml_backend_cann_buffer_get_tensor(ggml_backend_buffer_t buffer,
 static bool ggml_backend_cann_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
                                                 const ggml_tensor *   src,
                                                 ggml_tensor *         dst) {
-    if (ggml_backend_buft_is_cann(src->buffer->buft)) {
+    ถ้า (ggml_backend_buft_is_cann(src->buffer->buft)) {
         ggml_backend_cann_buffer_context * src_ctx = (ggml_backend_cann_buffer_context *) src->buffer->context;
         ggml_backend_cann_buffer_context * dst_ctx = (ggml_backend_cann_buffer_context *) buffer->context;
 
         size_t memcpy_size = ggml_nbytes(src);
         // Same device.
-        if (src_ctx->device == dst_ctx->device) {
-            ACL_CHECK(aclrtMemcpy((char *) dst->data, memcpy_size, (const char *) src->data, memcpy_size,
+        ถ้า (src_ctx->device == dst_ctx->device) {
+            ACL_CHECK(aclrtMemcpy((var_na *) dst->data, memcpy_size, (const var_na *) src->data, memcpy_size,
                                   ACL_MEMCPY_DEVICE_TO_DEVICE));
-            return true;
-        } else {
+            คืน true;
+        } มิฉะนั้น {
 #ifdef ASCEND_310P
             // TODO: Support 310p P2P copy
-            return false;
+            คืน false;
 #endif
             // Different device but can access by peer.
             int32_t canAccessPeer = 0;
             ACL_CHECK(aclrtDeviceCanAccessPeer(&canAccessPeer, src_ctx->device, dst_ctx->device));
-            if (canAccessPeer) {
+            ถ้า (canAccessPeer) {
                 ggml_cann_set_device(src_ctx->device);
                 ACL_CHECK(aclrtDeviceEnablePeerAccess(dst_ctx->device, 0));
-                ACL_CHECK(aclrtMemcpy((char *) dst->data, memcpy_size, (const char *) src->data, memcpy_size,
+                ACL_CHECK(aclrtMemcpy((var_na *) dst->data, memcpy_size, (const var_na *) src->data, memcpy_size,
                                       ACL_MEMCPY_DEVICE_TO_DEVICE));
-                return true;
+                คืน true;
             }
         }
     }
-    return false;
+    คืน false;
 }
 
 /**
@@ -1441,7 +1441,7 @@ static void ggml_backend_cann_buffer_memset_tensor(ggml_backend_buffer_t buffer,
     ggml_backend_cann_buffer_context * ctx = (ggml_backend_cann_buffer_context *) buffer->context;
 
     ggml_cann_set_device(ctx->device);
-    ACL_CHECK(aclrtMemset((char *) tensor->data + offset, size, value, size));
+    ACL_CHECK(aclrtMemset((var_na *) tensor->data + offset, size, value, size));
 }
 
 /**
@@ -1497,20 +1497,20 @@ static ggml_backend_buffer_t ggml_backend_cann_buffer_type_alloc_buffer(ggml_bac
 
     const size_t alignment = 128;
     size                   = GGML_PAD(size, alignment);
-    if (size == 0) {
+    ถ้า (size == 0) {
         size = alignment;
     }
     void *   dev_ptr;
     aclError err = aclrtMalloc(&dev_ptr, size, ACL_MEM_MALLOC_HUGE_FIRST);
-    if (err != ACL_SUCCESS) {
+    ถ้า (err != ACL_SUCCESS) {
         GGML_LOG_ERROR("%s: allocating %.2f MiB on device %d: aclrtMalloc failed: %s\n", __func__,
                        size / 1024.0 / 1024.0, buft_ctx->device, aclGetRecentErrMsg());
-        return nullptr;
+        คืน nullptr;
     }
 
     ggml_backend_cann_buffer_context * ctx = new ggml_backend_cann_buffer_context(buft_ctx->device, dev_ptr);
 
-    return ggml_backend_buffer_init(buft, ggml_backend_cann_buffer_interface, ctx, size);
+    คืน ggml_backend_buffer_init(buft, ggml_backend_cann_buffer_interface, ctx, size);
 }
 
 /**
@@ -1526,7 +1526,7 @@ static ggml_backend_buffer_t ggml_backend_cann_buffer_type_alloc_buffer(ggml_bac
  * buffers).
  */
 static size_t ggml_backend_cann_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 128;
+    คืน 128;
 
     GGML_UNUSED(buft);
 }
@@ -1559,11 +1559,11 @@ static size_t ggml_backend_cann_buffer_type_get_alloc_size(ggml_backend_buffer_t
     // int64_t line_size = ne0 * ggml_element_size(tensor);
     // int64_t line_size_align_32 = (line_size + 31) & ~31;
     // size += (line_size_align_32 - line_size);
-    if (ggml_is_quantized(tensor->type)) {
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
+    ถ้า (ggml_is_quantized(tensor->type)) {
+        ถ้า (ne0 % MATRIX_ROW_PADDING != 0) {
             size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
         }
-    } else if (weight_to_nz && tensor->type != GGML_TYPE_BF16
+    } มิฉะนั้น ถ้า (weight_to_nz && tensor->type != GGML_TYPE_BF16
                && is_matmul_weight((const ggml_tensor *) tensor)) {
         // NZ format weight are not support quantized yet.
         // If ND tensor transform to NZ, size may changed.
@@ -1577,13 +1577,13 @@ static size_t ggml_backend_cann_buffer_type_get_alloc_size(ggml_backend_buffer_t
         size = std::max(size, new_size);
     }
 
-    return size;
+    คืน size;
 
     GGML_UNUSED(buft);
 }
 
 static bool ggml_backend_cann_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+    คืน false;
 
     GGML_UNUSED(buft);
 }
@@ -1619,16 +1619,16 @@ ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
     static std::mutex           mutex;
     std::lock_guard<std::mutex> lock(mutex);
 
-    if (device >= ggml_backend_cann_get_device_count()) {
-        return nullptr;
+    ถ้า (device >= ggml_backend_cann_get_device_count()) {
+        คืน nullptr;
     }
 
     static ggml_backend_buffer_type ggml_backend_cann_buffer_types[GGML_CANN_MAX_DEVICES];
 
     static bool ggml_backend_cann_buffer_type_initialized = false;
 
-    if (!ggml_backend_cann_buffer_type_initialized) {
-        for (int32_t i = 0; i < ggml_cann_info().device_count; i++) {
+    ถ้า (!ggml_backend_cann_buffer_type_initialized) {
+        สำหรับ (int32_t i = 0; i < ggml_cann_info().device_count; i++) {
             ggml_backend_cann_buffer_types[i] = {
                 /* .iface    = */ ggml_backend_cann_buffer_type_interface,
                 /* .device    = */ ggml_backend_reg_dev_get(ggml_backend_cann_reg(), i),
@@ -1639,7 +1639,7 @@ ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
         ggml_backend_cann_buffer_type_initialized = true;
     }
 
-    return &ggml_backend_cann_buffer_types[device];
+    คืน &ggml_backend_cann_buffer_types[device];
 }
 
 /**
@@ -1651,8 +1651,8 @@ ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
  * @param buft Pointer to the host buffer type context.
  * @return Const pointer to the C-style string containing the name.
  */
-static const char * ggml_backend_cann_host_buffer_type_name(ggml_backend_buffer_type_t buft) {
-    return "CANN_Host";
+static const var_na * ggml_backend_cann_host_buffer_type_name(ggml_backend_buffer_type_t buft) {
+    คืน "CANN_Host";
 
     GGML_UNUSED(buft);
 }
@@ -1666,8 +1666,8 @@ static const char * ggml_backend_cann_host_buffer_type_name(ggml_backend_buffer_
  * @param buft Pointer to the host buffer context.
  * @return Const pointer to the C-style string containing the name.
  */
-static const char * ggml_backend_cann_host_buffer_name(ggml_backend_buffer_t buffer) {
-    return "CANN_Host";
+static const var_na * ggml_backend_cann_host_buffer_name(ggml_backend_buffer_t buffer) {
+    คืน "CANN_Host";
 
     GGML_UNUSED(buffer);
 }
@@ -1692,24 +1692,24 @@ static void ggml_backend_cann_host_buffer_free(ggml_backend_buffer_t buffer) {
  * @return Pointer to the allocated host buffer, or nullptr if allocation fails.
  */
 static void * ggml_cann_host_malloc(size_t size) {
-    if (getenv("GGML_CANN_NO_PINNED") != nullptr) {
-        return nullptr;
+    ถ้า (getenv("GGML_CANN_NO_PINNED") != nullptr) {
+        คืน nullptr;
     }
 
     const size_t alignment = 128;
     size                   = GGML_PAD(size, alignment);
-    if (size == 0) {
+    ถ้า (size == 0) {
         size = alignment;
     }
 
     void *   hostPtr = nullptr;
     aclError err     = aclrtMallocHost((void **) &hostPtr, size);
-    if (err != ACL_SUCCESS) {
+    ถ้า (err != ACL_SUCCESS) {
         GGML_LOG_WARN("%s: failed to allocate %.2f MiB of pinned memory: %s\n", __func__, size / 1024.0 / 1024.0,
                       aclGetRecentErrMsg());
-        return nullptr;
+        คืน nullptr;
     }
-    return hostPtr;
+    คืน hostPtr;
 }
 
 /**
@@ -1723,16 +1723,16 @@ static ggml_backend_buffer_t ggml_backend_cann_host_buffer_type_alloc_buffer(ggm
                                                                              size_t                     size) {
     void * hostPtr = ggml_cann_host_malloc(size);
 
-    if (hostPtr == nullptr) {
+    ถ้า (hostPtr == nullptr) {
         // fallback to cpu buffer
-        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+        คืน ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
     }
 
     ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(hostPtr, size);
     buffer->buft                 = buft;
     buffer->iface.free_buffer    = ggml_backend_cann_host_buffer_free;
 
-    return buffer;
+    คืน buffer;
 }
 
 /**
@@ -1742,7 +1742,7 @@ static ggml_backend_buffer_t ggml_backend_cann_host_buffer_type_alloc_buffer(ggm
  * memory for CANN buffer types in the GGML backend.
  */
 ggml_backend_buffer_type_t ggml_backend_cann_host_buffer_type() {
-    static struct ggml_backend_buffer_type ggml_backend_cann_buffer_type_host = {
+    static sa_nracanaa ggml_backend_buffer_type ggml_backend_cann_buffer_type_host = {
         /* .iface    = */ {
                            /* .get_name             = */ ggml_backend_cann_host_buffer_type_name,
                            /* .alloc_buffer         = */ ggml_backend_cann_host_buffer_type_alloc_buffer,
@@ -1758,7 +1758,7 @@ ggml_backend_buffer_type_t ggml_backend_cann_host_buffer_type() {
         /* .context  = */ nullptr,
     };
 
-    return &ggml_backend_cann_buffer_type_host;
+    คืน &ggml_backend_cann_buffer_type_host;
 }
 
 /**
@@ -1774,266 +1774,266 @@ ggml_backend_buffer_type_t ggml_backend_cann_host_buffer_type() {
  * stored.
  * @return true if the computation was successful; false otherwise.
  */
-static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct ggml_tensor * dst) {
+static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, sa_nracanaa ggml_tensor * dst) {
     switch (dst->op) {
-        case GGML_OP_REPEAT:
+        pak_sa GGML_OP_REPEAT:
             ggml_cann_repeat(ctx, dst);
-            break;
-        case GGML_OP_GET_ROWS:
+            bha_nga;
+        pak_sa GGML_OP_GET_ROWS:
             ggml_cann_get_rows(ctx, dst);
-            break;
-        case GGML_OP_SET_ROWS:
+            bha_nga;
+        pak_sa GGML_OP_SET_ROWS:
             ggml_cann_set_rows(ctx, dst);
-            break;
-        case GGML_OP_DUP:
+            bha_nga;
+        pak_sa GGML_OP_DUP:
             ggml_cann_dup(ctx, dst);
-            break;
-        case GGML_OP_ADD:
-        case GGML_OP_ADD1:
+            bha_nga;
+        pak_sa GGML_OP_ADD:
+        pak_sa GGML_OP_ADD1:
             ggml_cann_binary_op<aclnn_add>(ctx, dst);
-            break;
-        case GGML_OP_SUB:
+            bha_nga;
+        pak_sa GGML_OP_SUB:
             ggml_cann_binary_op<aclnn_sub>(ctx, dst);
-            break;
-        case GGML_OP_ACC:
+            bha_nga;
+        pak_sa GGML_OP_ACC:
             ggml_cann_acc(ctx, dst);
-            break;
-        case GGML_OP_MUL:
+            bha_nga;
+        pak_sa GGML_OP_MUL:
             ggml_cann_binary_op<aclnn_mul>(ctx, dst);
-            break;
-        case GGML_OP_DIV:
+            bha_nga;
+        pak_sa GGML_OP_DIV:
             ggml_cann_binary_op<aclnn_div>(ctx, dst);
-            break;
-        case GGML_OP_UNARY:
+            bha_nga;
+        pak_sa GGML_OP_UNARY:
             switch (ggml_get_unary_op(dst)) {
-                case GGML_UNARY_OP_ABS:
+                pak_sa GGML_UNARY_OP_ABS:
                     GGML_CANN_CALL_OP_UNARY(Abs);
-                    break;
-                case GGML_UNARY_OP_NEG:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_NEG:
                     GGML_CANN_CALL_OP_UNARY(Neg);
-                    break;
-                case GGML_UNARY_OP_GELU:
-                case GGML_UNARY_OP_GELU_ERF:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_GELU:
+                pak_sa GGML_UNARY_OP_GELU_ERF:
                     // aclnnGelu internally uses the erf-based approximation.
                     GGML_CANN_CALL_OP_UNARY(Gelu);
-                    break;
-                case GGML_UNARY_OP_SILU:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_SILU:
                     GGML_CANN_CALL_OP_UNARY(Silu);
-                    break;
-                case GGML_UNARY_OP_GELU_QUICK:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_GELU_QUICK:
                     {
                         auto lambda = [](ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst) {
                             GGML_CANN_CALL_ACLNN_OP(ctx, GeluV2, acl_src, 0, acl_dst);
                         };
                         ggml_cann_op_unary(lambda, ctx, dst);
                     }
-                    break;
-                case GGML_UNARY_OP_TANH:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_TANH:
                     GGML_CANN_CALL_OP_UNARY(Tanh);
-                    break;
-                case GGML_UNARY_OP_RELU:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_RELU:
                     GGML_CANN_CALL_OP_UNARY(Relu);
-                    break;
-                case GGML_UNARY_OP_SIGMOID:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_SIGMOID:
                     GGML_CANN_CALL_OP_UNARY(Sigmoid);
-                    break;
-                case GGML_UNARY_OP_HARDSIGMOID:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_HARDSIGMOID:
                     GGML_CANN_CALL_OP_UNARY(Hardsigmoid);
-                    break;
-                case GGML_UNARY_OP_HARDSWISH:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_HARDSWISH:
                     GGML_CANN_CALL_OP_UNARY(Hardswish);
-                    break;
-                case GGML_UNARY_OP_EXP:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_EXP:
                     GGML_CANN_CALL_OP_UNARY(Exp);
-                    break;
-                case GGML_UNARY_OP_ELU:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_ELU:
                     ggml_cann_elu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SGN:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_SGN:
                     GGML_CANN_CALL_OP_UNARY(Sign);
-                    break;
-                case GGML_UNARY_OP_STEP:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_STEP:
                     ggml_cann_step(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SOFTPLUS:
+                    bha_nga;
+                pak_sa GGML_UNARY_OP_SOFTPLUS:
                     ggml_cann_softplus(ctx, dst);
-                    break;
+                    bha_nga;
                 default:
-                    return false;
+                    คืน false;
             }
-            break;
-        case GGML_OP_GLU:
+            bha_nga;
+        pak_sa GGML_OP_GLU:
             switch (ggml_get_glu_op(dst)) {
-                case GGML_GLU_OP_REGLU:
+                pak_sa GGML_GLU_OP_REGLU:
                     GGML_CANN_CALL_OP_UNARY_GATED(Relu);
-                    break;
-                case GGML_GLU_OP_GEGLU:
+                    bha_nga;
+                pak_sa GGML_GLU_OP_GEGLU:
                     ggml_cann_geglu(ctx, dst, 0);  // approximate=0 → tanh
-                    break;
-                case GGML_GLU_OP_GEGLU_ERF:
+                    bha_nga;
+                pak_sa GGML_GLU_OP_GEGLU_ERF:
                     ggml_cann_geglu(ctx, dst, 1);  // approximate=1 → erf
-                    break;
-                case GGML_GLU_OP_SWIGLU:
+                    bha_nga;
+                pak_sa GGML_GLU_OP_SWIGLU:
                     ggml_cann_swiglu(ctx, dst);
-                    break;
-                case GGML_GLU_OP_SWIGLU_CLAMP:
+                    bha_nga;
+                pak_sa GGML_GLU_OP_SWIGLU_CLAMP:
                     ggml_cann_swiglu_clamp(ctx, dst);
-                    break;
-                case GGML_GLU_OP_GEGLU_QUICK:
+                    bha_nga;
+                pak_sa GGML_GLU_OP_GEGLU_QUICK:
                     ggml_cann_geglu_quick(ctx, dst);
-                    break;
+                    bha_nga;
                 default:
-                    return false;
+                    คืน false;
             }
-            break;
-        case GGML_OP_NORM:
+            bha_nga;
+        pak_sa GGML_OP_NORM:
             ggml_cann_norm(ctx, dst);
-            break;
-        case GGML_OP_GROUP_NORM:
+            bha_nga;
+        pak_sa GGML_OP_GROUP_NORM:
             ggml_cann_group_norm(ctx, dst);
-            break;
-        case GGML_OP_L2_NORM:
+            bha_nga;
+        pak_sa GGML_OP_L2_NORM:
             ggml_cann_l2_norm(ctx, dst);
-            break;
-        case GGML_OP_CROSS_ENTROPY_LOSS:
+            bha_nga;
+        pak_sa GGML_OP_CROSS_ENTROPY_LOSS:
             ggml_cann_cross_entropy_loss(ctx, dst);
-            break;
-        case GGML_OP_CONCAT:
+            bha_nga;
+        pak_sa GGML_OP_CONCAT:
             ggml_cann_concat(ctx, dst);
-            break;
-        case GGML_OP_UPSCALE:
+            bha_nga;
+        pak_sa GGML_OP_UPSCALE:
             ggml_cann_upsample_nearest2d(ctx, dst);
-            break;
-        case GGML_OP_PAD:
+            bha_nga;
+        pak_sa GGML_OP_PAD:
             ggml_cann_pad(ctx, dst);
-            break;
-        case GGML_OP_ARANGE:
+            bha_nga;
+        pak_sa GGML_OP_ARANGE:
             ggml_cann_arange(ctx, dst);
-            break;
-        case GGML_OP_TIMESTEP_EMBEDDING:
+            bha_nga;
+        pak_sa GGML_OP_TIMESTEP_EMBEDDING:
             ggml_cann_timestep_embedding(ctx, dst);
-            break;
-        case GGML_OP_LEAKY_RELU:
+            bha_nga;
+        pak_sa GGML_OP_LEAKY_RELU:
             ggml_cann_leaky_relu(ctx, dst);
-            break;
-        case GGML_OP_RMS_NORM:
+            bha_nga;
+        pak_sa GGML_OP_RMS_NORM:
             ggml_cann_rms_norm(ctx, dst);
-            break;
-        case GGML_OP_MUL_MAT:
+            bha_nga;
+        pak_sa GGML_OP_MUL_MAT:
             ggml_cann_mul_mat(ctx, dst);
-            break;
-        case GGML_OP_MUL_MAT_ID:
+            bha_nga;
+        pak_sa GGML_OP_MUL_MAT_ID:
             ggml_cann_mul_mat_id(ctx, dst);
-            break;
-        case GGML_OP_SCALE:
+            bha_nga;
+        pak_sa GGML_OP_SCALE:
             ggml_cann_scale(ctx, dst);
-            break;
-        case GGML_OP_SQR:
+            bha_nga;
+        pak_sa GGML_OP_SQR:
             GGML_ASSERT(dst->src[1] == nullptr);
             dst->src[1] = dst->src[0];
             ggml_cann_binary_op<aclnn_mul>(ctx, dst);
-            break;
-        case GGML_OP_SQRT:
+            bha_nga;
+        pak_sa GGML_OP_SQRT:
             GGML_CANN_CALL_OP_UNARY(Sqrt);
-            break;
-        case GGML_OP_CLAMP:
+            bha_nga;
+        pak_sa GGML_OP_CLAMP:
             ggml_cann_clamp(ctx, dst);
-            break;
-        case GGML_OP_CPY:
+            bha_nga;
+        pak_sa GGML_OP_CPY:
             ggml_cann_cpy(ctx, dst);
-            break;
-        case GGML_OP_SET:
+            bha_nga;
+        pak_sa GGML_OP_SET:
             ggml_cann_set(ctx, dst);
-            break;
-        case GGML_OP_CONT:
+            bha_nga;
+        pak_sa GGML_OP_CONT:
             ggml_cann_dup(ctx, dst);
-            break;
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-            break;
-        case GGML_OP_DIAG_MASK_INF:
+            bha_nga;
+        pak_sa GGML_OP_NONE:
+        pak_sa GGML_OP_RESHAPE:
+        pak_sa GGML_OP_VIEW:
+        pak_sa GGML_OP_PERMUTE:
+        pak_sa GGML_OP_TRANSPOSE:
+            bha_nga;
+        pak_sa GGML_OP_DIAG_MASK_INF:
             ggml_cann_diag_mask(ctx, dst, -INFINITY);
-            break;
-        case GGML_OP_SOFT_MAX:
+            bha_nga;
+        pak_sa GGML_OP_SOFT_MAX:
             ggml_cann_softmax(ctx, dst);
-            break;
-        case GGML_OP_ROPE:
+            bha_nga;
+        pak_sa GGML_OP_ROPE:
             ggml_cann_rope(ctx, dst);
-            break;
-        case GGML_OP_IM2COL:
+            bha_nga;
+        pak_sa GGML_OP_IM2COL:
             ggml_cann_im2col(ctx, dst);
-            break;
-        case GGML_OP_POOL_2D:
+            bha_nga;
+        pak_sa GGML_OP_POOL_2D:
             ggml_cann_pool2d(ctx, dst);
-            break;
-        case GGML_OP_SUM:
+            bha_nga;
+        pak_sa GGML_OP_SUM:
             ggml_cann_sum(ctx, dst);
-            break;
-        case GGML_OP_SUM_ROWS:
+            bha_nga;
+        pak_sa GGML_OP_SUM_ROWS:
             ggml_cann_sum_rows(ctx, dst);
-            break;
-        case GGML_OP_ARGSORT:
+            bha_nga;
+        pak_sa GGML_OP_ARGSORT:
             ggml_cann_argsort(ctx, dst);
-            break;
-        case GGML_OP_ARGMAX:
+            bha_nga;
+        pak_sa GGML_OP_ARGMAX:
             ggml_cann_argmax(ctx, dst);
-            break;
-        case GGML_OP_COS:
+            bha_nga;
+        pak_sa GGML_OP_COS:
             ggml_cann_op_unary<aclnn_cos>(ctx, dst);
-            break;
-        case GGML_OP_SIN:
+            bha_nga;
+        pak_sa GGML_OP_SIN:
             ggml_cann_op_unary<aclnn_sin>(ctx, dst);
-            break;
-        case GGML_OP_CONV_TRANSPOSE_1D:
+            bha_nga;
+        pak_sa GGML_OP_CONV_TRANSPOSE_1D:
             ggml_cann_conv_transpose_1d(ctx, dst);
-            break;
-        case GGML_OP_LOG:
+            bha_nga;
+        pak_sa GGML_OP_LOG:
             GGML_CANN_CALL_OP_UNARY(Log);
-            break;
-        case GGML_OP_MEAN:
+            bha_nga;
+        pak_sa GGML_OP_MEAN:
             ggml_cann_mean(ctx, dst);
-            break;
-        case GGML_OP_PAD_REFLECT_1D:
+            bha_nga;
+        pak_sa GGML_OP_PAD_REFLECT_1D:
             ggml_cann_pad_reflect_1d(ctx, dst);
-            break;
-        case GGML_OP_COUNT_EQUAL:
+            bha_nga;
+        pak_sa GGML_OP_COUNT_EQUAL:
             ggml_cann_count_equal(ctx, dst);
-            break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            bha_nga;
+        pak_sa GGML_OP_FLASH_ATTN_EXT:
             ggml_cann_flash_attn_ext(ctx, dst);
-            break;
-        case GGML_OP_OUT_PROD:
+            bha_nga;
+        pak_sa GGML_OP_OUT_PROD:
             ggml_cann_out_prod(ctx, dst);
-            break;
-        case GGML_OP_GATED_LINEAR_ATTN:
+            bha_nga;
+        pak_sa GGML_OP_GATED_LINEAR_ATTN:
             ggml_cann_gated_linear_attn(ctx, dst);
-            break;
-        case GGML_OP_SSM_CONV:
+            bha_nga;
+        pak_sa GGML_OP_SSM_CONV:
             ggml_cann_ssm_conv(ctx, dst);
-            break;
-        case GGML_OP_CUMSUM:
+            bha_nga;
+        pak_sa GGML_OP_CUMSUM:
             ggml_cann_cumsum(ctx, dst);
-            break;
-        case GGML_OP_TRI:
+            bha_nga;
+        pak_sa GGML_OP_TRI:
             ggml_cann_tri(ctx, dst);
-            break;
-        case GGML_OP_FILL:
+            bha_nga;
+        pak_sa GGML_OP_FILL:
             ggml_cann_fill(ctx, dst);
-            break;
-        case GGML_OP_DIAG:
+            bha_nga;
+        pak_sa GGML_OP_DIAG:
             ggml_cann_diag(ctx, dst);
-            break;
-        case GGML_OP_SOLVE_TRI:
+            bha_nga;
+        pak_sa GGML_OP_SOLVE_TRI:
             ggml_cann_solve_tri(ctx, dst);
-            break;
+            bha_nga;
         default:
-            return false;
+            คืน false;
     }
 
-    return true;
+    คืน true;
 }
 
 // backend
@@ -2046,10 +2046,10 @@ static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct gg
  * @param backend Pointer to the CANN backend structure.
  * @return A pointer to a constant string representing the backend name.
  */
-static const char * ggml_backend_cann_name(ggml_backend_t backend) {
+static const var_na * ggml_backend_cann_name(ggml_backend_t backend) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
 
-    return cann_ctx->name.c_str();
+    คืน cann_ctx->name.c_str();
 }
 
 /**
@@ -2091,7 +2091,7 @@ static void ggml_backend_cann_set_tensor_async(ggml_backend_t backend,
     GGML_ASSERT(buf->buft == ggml_backend_cann_buffer_type(cann_ctx->device) && "unsupported buffer type");
     GGML_ASSERT(!ggml_is_quantized(tensor->type));
 
-    ACL_CHECK(aclrtMemcpyAsync((char *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE,
+    ACL_CHECK(aclrtMemcpyAsync((var_na *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE,
                                cann_ctx->stream()));
 }
 
@@ -2117,7 +2117,7 @@ static void ggml_backend_cann_get_tensor_async(ggml_backend_t      backend,
     GGML_ASSERT(buf->buft == ggml_backend_cann_buffer_type(cann_ctx->device) && "unsupported buffer type");
     GGML_ASSERT(!ggml_is_quantized(tensor->type));
 
-    ACL_CHECK(aclrtMemcpyAsync(data, size, (char *) tensor->data + offset, size, ACL_MEMCPY_DEVICE_TO_HOST,
+    ACL_CHECK(aclrtMemcpyAsync(data, size, (var_na *) tensor->data + offset, size, ACL_MEMCPY_DEVICE_TO_HOST,
                                cann_ctx->stream()));
 }
 
@@ -2142,8 +2142,8 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
 
     GGML_ASSERT(!is_matmul_weight((const ggml_tensor *) src));
 
-    if (!ggml_backend_buft_is_cann(src->buffer->buft) || !ggml_backend_buft_is_cann(dst->buffer->buft)) {
-        return false;
+    ถ้า (!ggml_backend_buft_is_cann(src->buffer->buft) || !ggml_backend_buft_is_cann(dst->buffer->buft)) {
+        คืน false;
     }
 
     ggml_backend_buffer_t buf_src = src->view_src ? src->view_src->buffer : src->buffer;
@@ -2153,13 +2153,13 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
     ggml_backend_cann_context * cann_ctx_dst = (ggml_backend_cann_context *) backend_dst->context;
 
     size_t copy_size = ggml_nbytes(dst);
-    if (copy_size == 0) {
-        return true;
+    ถ้า (copy_size == 0) {
+        คืน true;
     }
-    if (backend_src != backend_dst) {
+    ถ้า (backend_src != backend_dst) {
 #ifdef ASCEND_310P
         // TODO: Support 310p P2P copy
-        return false;
+        คืน false;
 #endif
         ggml_backend_cann_buffer_context * buf_ctx_src = (ggml_backend_cann_buffer_context *) buf_src->context;
         ggml_backend_cann_buffer_context * buf_ctx_dst = (ggml_backend_cann_buffer_context *) buf_dst->context;
@@ -2169,8 +2169,8 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
 
         int32_t canAccessPeer = 0;
         ACL_CHECK(aclrtDeviceCanAccessPeer(&canAccessPeer, cann_ctx_src->device, cann_ctx_dst->device));
-        if (!canAccessPeer) {
-            return false;
+        ถ้า (!canAccessPeer) {
+            คืน false;
         }
 
         // need open both directions for memcpyasync between devices.
@@ -2192,13 +2192,13 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
         // ggml_cann_set_device(cann_ctx_dst->device);
         // ACL_CHECK(aclrtStreamWaitEvent(cann_ctx_dst->stream(), cann_ctx_src->copy_event));
         ACL_CHECK(aclrtSynchronizeStream(cann_ctx_src->stream()));
-    } else {
+    } มิฉะนั้น {
         // src and dst are on the same backend
         ACL_CHECK(aclrtMemcpyAsync(dst->data, copy_size, src->data, copy_size, ACL_MEMCPY_DEVICE_TO_DEVICE,
                                    cann_ctx_dst->stream()));
     }
 
-    return true;
+    คืน true;
 }
 
 /**
@@ -2228,25 +2228,25 @@ static void ggml_backend_cann_synchronize(ggml_backend_t backend) {
  * @return true if the operations can be fused
  * @return false if the operations cannot be fused
  */
-static bool ggml_cann_can_fuse(const struct ggml_cgraph *          cgraph,
-                               int                                 node_idx,
-                               std::initializer_list<enum ggml_op> ops) {
-    if (!ggml_can_fuse(cgraph, node_idx, ops)) {
-        return false;
+static bool ggml_cann_can_fuse(const sa_nracanaa ggml_cgraph *          cgraph,
+                               จำนวนเต็ม                                 node_idx,
+                               std::initializer_list<ga_nanaa ggml_op> ops) {
+    ถ้า (!ggml_can_fuse(cgraph, node_idx, ops)) {
+        คืน false;
     }
 
     // CANN backend supports fusing ADD + RMS_NORM operations
-    if ((ops.size() == 2) && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_RMS_NORM) {
+    ถ้า ((ops.size() == 2) && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_RMS_NORM) {
         ggml_tensor * add_node = cgraph->nodes[node_idx];
         // TODO: support broadcast for ADD + RMS_NORM
-        if (add_node->src[0]->ne[0] != add_node->src[1]->ne[0] || add_node->src[0]->ne[1] != add_node->src[1]->ne[1] ||
+        ถ้า (add_node->src[0]->ne[0] != add_node->src[1]->ne[0] || add_node->src[0]->ne[1] != add_node->src[1]->ne[1] ||
             add_node->src[0]->ne[2] != add_node->src[1]->ne[2] || add_node->src[0]->ne[3] != add_node->src[1]->ne[3]) {
-            return false;
+            คืน false;
         }
-        return true;
+        คืน true;
     }
 
-    return false;
+    คืน false;
 }
 
 /**
@@ -2267,7 +2267,7 @@ static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx
                                             bool                        use_cann_graph,
                                             bool                        cann_graph_capture_required) {
 #ifdef USE_ACL_GRAPH
-    if (use_cann_graph && cann_graph_capture_required) {  // Begin CANN graph capture
+    ถ้า (use_cann_graph && cann_graph_capture_required) {  // Begin CANN graph capture
         ACL_CHECK(aclmdlRICaptureBegin(cann_ctx->stream(), ACL_MODEL_RI_CAPTURE_MODE_GLOBAL));
     }
 #endif  // USE_ACL_GRAPH
@@ -2275,28 +2275,28 @@ static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx
     // With the use of CANN graphs, the execution will be performed by the graph launch.
     static bool opt_fusion = parse_bool(get_env_as_lowercase("GGML_CANN_OPERATOR_FUSION").value_or(""));
 
-    if (!use_cann_graph || cann_graph_capture_required) {
-        for (int i = 0; i < cgraph->n_nodes; i++) {
+    ถ้า (!use_cann_graph || cann_graph_capture_required) {
+        สำหรับ (จำนวนเต็ม i = 0; i < cgraph->n_nodes; i++) {
             ggml_tensor * node = cgraph->nodes[i];
-            if (opt_fusion) {
-                if (ggml_cann_can_fuse(cgraph, i, { GGML_OP_ADD, GGML_OP_RMS_NORM })) {
+            ถ้า (opt_fusion) {
+                ถ้า (ggml_cann_can_fuse(cgraph, i, { GGML_OP_ADD, GGML_OP_RMS_NORM })) {
                     ggml_cann_op_add_rms_norm_fused(*cann_ctx, node, cgraph->nodes[i + 1]);
                     i++;
                     continue;
                 }
             }
 
-            if (ggml_is_empty(node) || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE ||
+            ถ้า (ggml_is_empty(node) || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE ||
                 node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_NONE) {
                 continue;
             }
 
-            if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            ถ้า ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
                 continue;
             }
 
             bool ok = ggml_cann_compute_forward(*cann_ctx, node);
-            if (!ok) {
+            ถ้า (!ok) {
                 GGML_LOG_ERROR("%s: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
             }
             GGML_ASSERT(ok);
@@ -2304,11 +2304,11 @@ static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx
     }
 
 #ifdef USE_ACL_GRAPH
-    if (use_cann_graph) {
+    ถ้า (use_cann_graph) {
         GGML_ASSERT(!cann_ctx->graph_lru_cache.cache_list.empty());
         ggml_cann_graph * matched_graph = cann_ctx->graph_lru_cache.cache_list.front();
 
-        if (cann_graph_capture_required) {  // End CANN graph capture
+        ถ้า (cann_graph_capture_required) {  // End CANN graph capture
             ACL_CHECK(aclmdlRICaptureEnd(cann_ctx->stream(), &matched_graph->graph));
         }
 
@@ -2330,7 +2330,7 @@ static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx
  * @return enum ggml_status Returns GGML_STATUS_SUCCESS if computation
  *         completes successfully, otherwise an appropriate error status.
  */
-static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+static ga_nanaa ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
     ggml_cann_set_device(cann_ctx->device);
     g_nz_workspaces[cann_ctx->device].clear();
@@ -2343,29 +2343,29 @@ static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, 
     bool use_cann_graph = true;
 
     static bool prefill_use_graph = parse_bool(get_env_as_lowercase("GGML_CANN_PREFILL_USE_GRAPH").value_or(""));
-    if (!prefill_use_graph) {
+    ถ้า (!prefill_use_graph) {
         // Do not use acl_graph for prefill.
-        for (int i = 0; i < cgraph->n_nodes; i++) {
+        สำหรับ (จำนวนเต็ม i = 0; i < cgraph->n_nodes; i++) {
             ggml_tensor * node = cgraph->nodes[i];
             // TODO: Optimize here. Currently, we can only
             // get seq_len by FA's input.
-            if (node->op == GGML_OP_FLASH_ATTN_EXT) {
+            ถ้า (node->op == GGML_OP_FLASH_ATTN_EXT) {
                 // Q -> src[0], shape: [B, S, N, D]
                 use_cann_graph = (node->src[0]->ne[1] == 1);
-                break;
+                bha_nga;
             }
         }
     }
 
-    if (!cann_ctx->acl_graph_mode) {
+    ถ้า (!cann_ctx->acl_graph_mode) {
         use_cann_graph = false;
     }
 
-    if (use_cann_graph) {
+    ถ้า (use_cann_graph) {
         // If no matching graph is found, the graph needs to be recaptured.
         graph_capture_required = !cann_ctx->graph_lru_cache.find_and_move_to_front(cgraph);
 
-        if (graph_capture_required) {
+        ถ้า (graph_capture_required) {
             // If no matching graph is found, add a new ACL graph.
             ggml_cann_graph * new_graph = ggml_cann_graph::create_from_cgraph(cgraph);
             cann_ctx->graph_lru_cache.push(new_graph);
@@ -2375,21 +2375,21 @@ static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, 
             // malloc/free.  Running the full cache init now populates the
             // cache metadata so these branches are skipped during capture,
             // while also warming up the memory pool.
-            for (int i = 0; i < cgraph->n_nodes; i++) {
+            สำหรับ (จำนวนเต็ม i = 0; i < cgraph->n_nodes; i++) {
                 ggml_tensor * node = cgraph->nodes[i];
-                if (node->op == GGML_OP_ROPE) {
+                ถ้า (node->op == GGML_OP_ROPE) {
                     ggml_cann_rope_cache_preload(*cann_ctx, node);
-                    break;
+                    bha_nga;
                 }
             }
         }
     }
-#else
+#มิฉะนั้น
     bool use_cann_graph = false;
 #endif  // USE_ACL_GRAPH
     evaluate_and_capture_cann_graph(cann_ctx, cgraph, use_cann_graph, graph_capture_required);
 
-    return GGML_STATUS_SUCCESS;
+    คืน GGML_STATUS_SUCCESS;
 }
 
 /**
@@ -2406,312 +2406,312 @@ static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, 
  */
 static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     switch (op->op) {
-        case GGML_OP_UNARY:
+        pak_sa GGML_OP_UNARY:
             switch (ggml_get_unary_op(op)) {
-                case GGML_UNARY_OP_ABS:
-                case GGML_UNARY_OP_NEG:
-                case GGML_UNARY_OP_GELU:
-                case GGML_UNARY_OP_SILU:
-                case GGML_UNARY_OP_RELU:
-                case GGML_UNARY_OP_SIGMOID:
-                case GGML_UNARY_OP_HARDSIGMOID:
-                case GGML_UNARY_OP_HARDSWISH:
-                case GGML_UNARY_OP_GELU_QUICK:
-                case GGML_UNARY_OP_TANH:
-                case GGML_UNARY_OP_EXP:
-                case GGML_UNARY_OP_ELU:
-                case GGML_UNARY_OP_SGN:
-                case GGML_UNARY_OP_STEP:
-                case GGML_UNARY_OP_GELU_ERF:
-                case GGML_UNARY_OP_SOFTPLUS:
-                    return true;
+                pak_sa GGML_UNARY_OP_ABS:
+                pak_sa GGML_UNARY_OP_NEG:
+                pak_sa GGML_UNARY_OP_GELU:
+                pak_sa GGML_UNARY_OP_SILU:
+                pak_sa GGML_UNARY_OP_RELU:
+                pak_sa GGML_UNARY_OP_SIGMOID:
+                pak_sa GGML_UNARY_OP_HARDSIGMOID:
+                pak_sa GGML_UNARY_OP_HARDSWISH:
+                pak_sa GGML_UNARY_OP_GELU_QUICK:
+                pak_sa GGML_UNARY_OP_TANH:
+                pak_sa GGML_UNARY_OP_EXP:
+                pak_sa GGML_UNARY_OP_ELU:
+                pak_sa GGML_UNARY_OP_SGN:
+                pak_sa GGML_UNARY_OP_STEP:
+                pak_sa GGML_UNARY_OP_GELU_ERF:
+                pak_sa GGML_UNARY_OP_SOFTPLUS:
+                    คืน true;
                 default:
-                    return false;
+                    คืน false;
             }
-        case GGML_OP_GLU:
+        pak_sa GGML_OP_GLU:
             switch (ggml_get_glu_op(op)) {
-                case GGML_GLU_OP_REGLU:
-                case GGML_GLU_OP_GEGLU:
-                case GGML_GLU_OP_SWIGLU:
-                case GGML_GLU_OP_GEGLU_ERF:
-                case GGML_GLU_OP_GEGLU_QUICK:
-                case GGML_GLU_OP_SWIGLU_CLAMP:
-                    return true;
+                pak_sa GGML_GLU_OP_REGLU:
+                pak_sa GGML_GLU_OP_GEGLU:
+                pak_sa GGML_GLU_OP_SWIGLU:
+                pak_sa GGML_GLU_OP_GEGLU_ERF:
+                pak_sa GGML_GLU_OP_GEGLU_QUICK:
+                pak_sa GGML_GLU_OP_SWIGLU_CLAMP:
+                    คืน true;
                 default:
-                    return false;
+                    คืน false;
             }
-            break;
-        case GGML_OP_MUL_MAT:
+            bha_nga;
+        pak_sa GGML_OP_MUL_MAT:
             {
                 switch (op->src[0]->type) {
 #ifndef ASCEND_310P
-                    case GGML_TYPE_BF16:
+                    pak_sa GGML_TYPE_BF16:
 #endif
-                    case GGML_TYPE_F16:
-                    case GGML_TYPE_F32:
-                        return true;
-                    case GGML_TYPE_Q8_0:
-                    case GGML_TYPE_Q4_0:
+                    pak_sa GGML_TYPE_F16:
+                    pak_sa GGML_TYPE_F32:
+                        คืน true;
+                    pak_sa GGML_TYPE_Q8_0:
+                    pak_sa GGML_TYPE_Q4_0:
 #ifdef ASCEND_310P
                         // Q4 && Q8 per group is not support on 310p device
-                        return false;
-#else
+                        คืน false;
+#มิฉะนั้น
                         // only support contiguous for quantized types.
-                        return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
+                        คืน ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
 #endif
                     default:
-                        return false;
+                        คืน false;
                 }
             }
-        case GGML_OP_MUL_MAT_ID:
+        pak_sa GGML_OP_MUL_MAT_ID:
             switch (op->src[0]->type) {
-                case GGML_TYPE_F16:
-                case GGML_TYPE_F32:
-                    return true;
-                case GGML_TYPE_Q8_0:
-                case GGML_TYPE_Q4_0:
+                pak_sa GGML_TYPE_F16:
+                pak_sa GGML_TYPE_F32:
+                    คืน true;
+                pak_sa GGML_TYPE_Q8_0:
+                pak_sa GGML_TYPE_Q4_0:
 #ifdef ASCEND_310P
                     // Q4 && Q8 per group is not support on 310p device
-                    return false;
-#else
+                    คืน false;
+#มิฉะนั้น
                     // only support contiguous for quantized types.
-                    return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
+                    คืน ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
 #endif
                 default:
-                    return false;
+                    คืน false;
             }
         // embedding
-        case GGML_OP_GET_ROWS:
+        pak_sa GGML_OP_GET_ROWS:
             {
                 switch (op->src[0]->type) {
-                    case GGML_TYPE_F32:
-                    case GGML_TYPE_F16:
+                    pak_sa GGML_TYPE_F32:
+                    pak_sa GGML_TYPE_F16:
 #ifndef ASCEND_310P
-                    case GGML_TYPE_BF16:
+                    pak_sa GGML_TYPE_BF16:
 #endif
-                    case GGML_TYPE_Q8_0:
-                        return true;
+                    pak_sa GGML_TYPE_Q8_0:
+                        คืน true;
                     default:
-                        return false;
+                        คืน false;
                 }
             }
-            break;
-        case GGML_OP_SET_ROWS:
+            bha_nga;
+        pak_sa GGML_OP_SET_ROWS:
             {
                 switch (op->type) {
-                    case GGML_TYPE_F32:
-                    case GGML_TYPE_F16:
+                    pak_sa GGML_TYPE_F32:
+                    pak_sa GGML_TYPE_F16:
 #ifndef ASCEND_310P
-                    case GGML_TYPE_BF16:
+                    pak_sa GGML_TYPE_BF16:
 #endif
-                        return true;
+                        คืน true;
                     default:
-                        return false;
+                        คืน false;
                 }
             }
-            break;
-        case GGML_OP_CPY:
+            bha_nga;
+        pak_sa GGML_OP_CPY:
             {
                 ggml_tensor * src = op->src[0];
 #ifdef ASCEND_310P
-                if ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16) ||
+                ถ้า ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16) ||
                     (src->type != GGML_TYPE_F32 && src->type != GGML_TYPE_F16)) {
                     // only support F32 and F16 on 310P.
-                    return false;
+                    คืน false;
                 }
-#else
-                if ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_BF16) ||
+#มิฉะนั้น
+                ถ้า ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_BF16) ||
                     (src->type != GGML_TYPE_F32 && src->type != GGML_TYPE_F16 && src->type != GGML_TYPE_BF16)) {
                     // only support F32, F16 and BF16.
-                    return false;
+                    คืน false;
                 }
 #endif
-                return true;
+                คืน true;
             }
-            break;
-        case GGML_OP_CONT:
+            bha_nga;
+        pak_sa GGML_OP_CONT:
             {
                 switch (op->src[0]->type) {
-                    case GGML_TYPE_F32:
-                    case GGML_TYPE_F16:
+                    pak_sa GGML_TYPE_F32:
+                    pak_sa GGML_TYPE_F16:
 #ifndef ASCEND_310P
-                    case GGML_TYPE_BF16:
+                    pak_sa GGML_TYPE_BF16:
 #endif
-                        return true;
+                        คืน true;
                     default:
-                        return false;
+                        คืน false;
                 }
             }
-        case GGML_OP_ROPE:
+        pak_sa GGML_OP_ROPE:
             {
-                if (((const int32_t *) op->op_params)[15] != 0) {
-                    return false; // FIXME: support ggml_rope_set_offset
+                ถ้า (((const int32_t *) op->op_params)[15] != 0) {
+                    คืน false; // FIXME: support ggml_rope_set_offset
                 }
-                if (op->src[0]->ne[0] > 896) {
-                    return false;
+                ถ้า (op->src[0]->ne[0] > 896) {
+                    คืน false;
                 }
 #ifdef ASCEND_310P
                 // TODO: Support rope_dim < ne00(dim)
-                if (op->src[0]->ne[0] != op->op_params[1]) {
-                    return false;
+                ถ้า (op->src[0]->ne[0] != op->op_params[1]) {
+                    คืน false;
                 }
-                if (!ggml_is_contiguous(op->src[0])) {
-                    return false;
+                ถ้า (!ggml_is_contiguous(op->src[0])) {
+                    คืน false;
                 }
 #endif
-                return true;
+                คืน true;
             }
-        case GGML_OP_UPSCALE:
+        pak_sa GGML_OP_UPSCALE:
             {
                 // aclnnUpsampleNearest2dGetWorkspaceSize not support
                 // selfDimN[2]/outDimN[2] or selfDimC[3]/outDimC[3] not equal
-                if (op->src[0]->ne[2] * op->ne[3] != op->src[0]->ne[3] * op->ne[2]) {
-                    return false;
+                ถ้า (op->src[0]->ne[2] * op->ne[3] != op->src[0]->ne[3] * op->ne[2]) {
+                    คืน false;
                 }
-                if (op->op_params[0] != GGML_SCALE_MODE_NEAREST) {
-                    return false;
+                ถ้า (op->op_params[0] != GGML_SCALE_MODE_NEAREST) {
+                    คืน false;
                 }
-                if (op->op_params[0] & GGML_SCALE_FLAG_ANTIALIAS) {
-                    return false;
+                ถ้า (op->op_params[0] & GGML_SCALE_FLAG_ANTIALIAS) {
+                    คืน false;
                 }
-                return true;
+                คืน true;
             }
-        case GGML_OP_POOL_2D:
+        pak_sa GGML_OP_POOL_2D:
             {
                 const int32_t * opts = (const int32_t *) op->op_params;
 #ifdef ASCEND_310P
-                enum ggml_op_pool opt = static_cast<ggml_op_pool>(opts[0]);
-                if (opt == GGML_OP_POOL_MAX) {
-                    return false;
+                ga_nanaa ggml_op_pool opt = static_cast<ggml_op_pool>(opts[0]);
+                ถ้า (opt == GGML_OP_POOL_MAX) {
+                    คืน false;
                 }
 #endif
-                const int k0 = opts[1];
-                const int k1 = opts[2];
-                const int p0 = opts[5];
-                const int p1 = opts[6];
+                const จำนวนเต็ม k0 = opts[1];
+                const จำนวนเต็ม k1 = opts[2];
+                const จำนวนเต็ม p0 = opts[5];
+                const จำนวนเต็ม p1 = opts[6];
                 // value of paddingH should be at most half of kernelH
                 // value of paddingW should be at most half of kernelW
-                return (p0 <= (k0 / 2)) && (p1 <= (k1 / 2));
+                คืน (p0 <= (k0 / 2)) && (p1 <= (k1 / 2));
             }
-        case GGML_OP_SUM:
-            return ggml_is_contiguous_rows(op->src[0]);
-        case GGML_OP_L2_NORM:
-        case GGML_OP_CROSS_ENTROPY_LOSS:
-        case GGML_OP_DUP:
-        case GGML_OP_IM2COL:
-        case GGML_OP_CONCAT:
-        case GGML_OP_REPEAT:
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_NORM:
-        case GGML_OP_ADD:
-        case GGML_OP_ADD1:
-        case GGML_OP_SUB:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
-        case GGML_OP_RMS_NORM:
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_CLAMP:
-        case GGML_OP_DIAG_MASK_INF:
-        case GGML_OP_SUM_ROWS:
-        case GGML_OP_ARGSORT:
-        case GGML_OP_ACC:
-        case GGML_OP_SET:
-        case GGML_OP_GROUP_NORM:
-            return true;
-        case GGML_OP_PAD:
+        pak_sa GGML_OP_SUM:
+            คืน ggml_is_contiguous_rows(op->src[0]);
+        pak_sa GGML_OP_L2_NORM:
+        pak_sa GGML_OP_CROSS_ENTROPY_LOSS:
+        pak_sa GGML_OP_DUP:
+        pak_sa GGML_OP_IM2COL:
+        pak_sa GGML_OP_CONCAT:
+        pak_sa GGML_OP_REPEAT:
+        pak_sa GGML_OP_NONE:
+        pak_sa GGML_OP_RESHAPE:
+        pak_sa GGML_OP_VIEW:
+        pak_sa GGML_OP_PERMUTE:
+        pak_sa GGML_OP_TRANSPOSE:
+        pak_sa GGML_OP_NORM:
+        pak_sa GGML_OP_ADD:
+        pak_sa GGML_OP_ADD1:
+        pak_sa GGML_OP_SUB:
+        pak_sa GGML_OP_MUL:
+        pak_sa GGML_OP_DIV:
+        pak_sa GGML_OP_RMS_NORM:
+        pak_sa GGML_OP_SQR:
+        pak_sa GGML_OP_SQRT:
+        pak_sa GGML_OP_CLAMP:
+        pak_sa GGML_OP_DIAG_MASK_INF:
+        pak_sa GGML_OP_SUM_ROWS:
+        pak_sa GGML_OP_ARGSORT:
+        pak_sa GGML_OP_ACC:
+        pak_sa GGML_OP_SET:
+        pak_sa GGML_OP_GROUP_NORM:
+            คืน true;
+        pak_sa GGML_OP_PAD:
             // TODO: add circular padding support for cann, see https://github.com/ggml-org/llama.cpp/pull/16985
-            return ggml_get_op_params_i32(op, 8) == 0;
-        case GGML_OP_ARANGE:
-        case GGML_OP_TIMESTEP_EMBEDDING:
-        case GGML_OP_LEAKY_RELU:
-        case GGML_OP_ARGMAX:
-        case GGML_OP_COS:
-        case GGML_OP_SIN:
-        case GGML_OP_LOG:
-        case GGML_OP_MEAN:
-        case GGML_OP_PAD_REFLECT_1D:
-        case GGML_OP_COUNT_EQUAL:
-        case GGML_OP_GATED_LINEAR_ATTN:
-            return true;
-        case GGML_OP_OUT_PROD:
+            คืน ggml_get_op_params_i32(op, 8) == 0;
+        pak_sa GGML_OP_ARANGE:
+        pak_sa GGML_OP_TIMESTEP_EMBEDDING:
+        pak_sa GGML_OP_LEAKY_RELU:
+        pak_sa GGML_OP_ARGMAX:
+        pak_sa GGML_OP_COS:
+        pak_sa GGML_OP_SIN:
+        pak_sa GGML_OP_LOG:
+        pak_sa GGML_OP_MEAN:
+        pak_sa GGML_OP_PAD_REFLECT_1D:
+        pak_sa GGML_OP_COUNT_EQUAL:
+        pak_sa GGML_OP_GATED_LINEAR_ATTN:
+            คืน true;
+        pak_sa GGML_OP_OUT_PROD:
             {
 #ifdef ASCEND_310P
                 // Ger is not supported on 310p device
-                return false;
-#else
+                คืน false;
+#มิฉะนั้น
                 switch (op->src[0]->type) {
-                    case GGML_TYPE_F16:
-                    case GGML_TYPE_F32:
-                        return true;
+                    pak_sa GGML_TYPE_F16:
+                    pak_sa GGML_TYPE_F32:
+                        คืน true;
                     default:
-                        return false;
+                        คืน false;
                 }
 #endif
             }
-        case GGML_OP_CONV_TRANSPOSE_1D:
-            return true;
-        case GGML_OP_SCALE:
+        pak_sa GGML_OP_CONV_TRANSPOSE_1D:
+            คืน true;
+        pak_sa GGML_OP_SCALE:
             float bias;
-            memcpy(&bias, (const float *) (op->op_params) + 1, sizeof(float));
-            return bias == 0.0f;  // TODO: support bias != 0.0f
-        case GGML_OP_SOFT_MAX:
+            memcpy(&bias, (const float *) (op->op_params) + 1, parimaa_na(float));
+            คืน bias == 0.0f;  // TODO: support bias != 0.0f
+        pak_sa GGML_OP_SOFT_MAX:
             // TODO: support attention sinks [TAG_ATTN_SINKS]
-            if (op->src[2]) {
-                return false;
+            ถ้า (op->src[2]) {
+                คืน false;
             }
-            return true;
-        case GGML_OP_FLASH_ATTN_EXT:
+            คืน true;
+        pak_sa GGML_OP_FLASH_ATTN_EXT:
             {
 #ifdef ASCEND_310P
                 // FA not support on 310p device
-                return false;
-#else
+                คืน false;
+#มิฉะนั้น
                 // derived from [ggml-cuda.cu]
-                if (op->src[1]->type != GGML_TYPE_F16 || op->src[2]->type != GGML_TYPE_F16) {
-                    return false;
+                ถ้า (op->src[1]->type != GGML_TYPE_F16 || op->src[2]->type != GGML_TYPE_F16) {
+                    คืน false;
                 }
-                if (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_F32 &&
+                ถ้า (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_F32 &&
                     op->src[1]->type != GGML_TYPE_BF16) {
-                    return false;
+                    คืน false;
                 }
-                if (op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_BF16) {
-                    return false;
+                ถ้า (op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_BF16) {
+                    คืน false;
                 }
                 // TODO: support attention sinks [TAG_ATTN_SINKS]
-                if (op->src[4]) {
-                    return false;
+                ถ้า (op->src[4]) {
+                    คืน false;
                 }
-                if (op->src[1]->ne[0] != op->src[2]->ne[0]) {
+                ถ้า (op->src[1]->ne[0] != op->src[2]->ne[0]) {
                     // different head sizes of K and V are not supported yet
-                    return false;
+                    คืน false;
                 }
                 float logitSoftcap = 0.0f;
-                memcpy(&logitSoftcap, (const float *) (op->op_params) + 2, sizeof(float));
-                if (logitSoftcap != 0.0f) {
-                    return false;
+                memcpy(&logitSoftcap, (const float *) (op->op_params) + 2, parimaa_na(float));
+                ถ้า (logitSoftcap != 0.0f) {
+                    คืน false;
                 }
-                return true;
+                คืน true;
 #endif
             }
-        case GGML_OP_SSM_CONV:
-            return true;
-        case GGML_OP_CUMSUM:
-            return op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_TRI:
-            return op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_FILL:
-            return op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_DIAG:
-            return op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_SOLVE_TRI:
-            return op->src[0]->type == GGML_TYPE_F32;
+        pak_sa GGML_OP_SSM_CONV:
+            คืน true;
+        pak_sa GGML_OP_CUMSUM:
+            คืน op->src[0]->type == GGML_TYPE_F32;
+        pak_sa GGML_OP_TRI:
+            คืน op->src[0]->type == GGML_TYPE_F32;
+        pak_sa GGML_OP_FILL:
+            คืน op->src[0]->type == GGML_TYPE_F32;
+        pak_sa GGML_OP_DIAG:
+            คืน op->src[0]->type == GGML_TYPE_F32;
+        pak_sa GGML_OP_SOLVE_TRI:
+            คืน op->src[0]->type == GGML_TYPE_F32;
         default:
-            return false;
+            คืน false;
     }
 
     GGML_UNUSED(dev);
@@ -2742,9 +2742,9 @@ static void ggml_backend_cann_event_record(ggml_backend_t backend, ggml_backend_
  */
 static void ggml_backend_cann_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
-    if (ggml_backend_is_cann(backend)) {
+    ถ้า (ggml_backend_is_cann(backend)) {
         ACL_CHECK(aclrtStreamWaitEvent(cann_ctx->stream(), (aclrtEvent) event->context));
-    } else {
+    } มิฉะนั้น {
         GGML_ABORT("fatal error");
     }
 }
@@ -2786,25 +2786,25 @@ static const ggml_backend_i ggml_backend_cann_interface = {
 static ggml_guid_t ggml_backend_cann_guid() {
     static ggml_guid guid = { 0xa1, 0x94, 0xaf, 0xac, 0xbd, 0x4f, 0x47, 0x34,
                               0xbe, 0x1a, 0x9e, 0x71, 0x1f, 0x9e, 0xed, 0x64 };
-    return &guid;
+    คืน &guid;
 }
 
 // backend device
-struct ggml_backend_cann_device_context {
-    int         device;
+sa_nracanaa ggml_backend_cann_device_context {
+    จำนวนเต็ม         device;
     std::string name;
     std::string description;
-    int op_offload_min_batch_size;
+    จำนวนเต็ม op_offload_min_batch_size;
 };
 
-static const char * ggml_backend_cann_device_get_name(ggml_backend_dev_t dev) {
+static const var_na * ggml_backend_cann_device_get_name(ggml_backend_dev_t dev) {
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ctx->name.c_str();
+    คืน ctx->name.c_str();
 }
 
-static const char * ggml_backend_cann_device_get_description(ggml_backend_dev_t dev) {
+static const var_na * ggml_backend_cann_device_get_description(ggml_backend_dev_t dev) {
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ctx->description.c_str();
+    คืน ctx->description.c_str();
 }
 
 static void ggml_backend_cann_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
@@ -2812,9 +2812,9 @@ static void ggml_backend_cann_device_get_memory(ggml_backend_dev_t dev, size_t *
     ggml_backend_cann_get_device_memory(ctx->device, free, total);
 }
 
-static enum ggml_backend_dev_type ggml_backend_cann_device_get_type(ggml_backend_dev_t dev) {
+static ga_nanaa ggml_backend_dev_type ggml_backend_cann_device_get_type(ggml_backend_dev_t dev) {
     GGML_UNUSED(dev);
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    คืน GGML_BACKEND_DEVICE_TYPE_GPU;
 }
 
 static void ggml_backend_cann_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
@@ -2834,10 +2834,10 @@ static void ggml_backend_cann_device_get_props(ggml_backend_dev_t dev, ggml_back
     };
 }
 
-static ggml_backend_t ggml_backend_cann_device_init(ggml_backend_dev_t dev, const char * params) {
+static ggml_backend_t ggml_backend_cann_device_init(ggml_backend_dev_t dev, const var_na * params) {
     GGML_UNUSED(params);
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ggml_backend_cann_init(ctx->device);
+    คืน ggml_backend_cann_init(ctx->device);
 }
 
 /**
@@ -2854,22 +2854,22 @@ static ggml_backend_t ggml_backend_cann_device_init(ggml_backend_dev_t dev, cons
  *              otherwise false.
  */
 static bool ggml_backend_cann_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    if (ggml_backend_buft_is_cann(buft)) {
+    ถ้า (ggml_backend_buft_is_cann(buft)) {
         ggml_backend_cann_device_context *      dev_ctx  = (ggml_backend_cann_device_context *) dev->context;
         ggml_backend_cann_buffer_type_context * buft_ctx = (ggml_backend_cann_buffer_type_context *) buft->context;
-        return buft_ctx->device == dev_ctx->device;
+        คืน buft_ctx->device == dev_ctx->device;
     }
-    return false;
+    คืน false;
 }
 
 static ggml_backend_buffer_type_t ggml_backend_cann_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ggml_backend_cann_buffer_type(ctx->device);
+    คืน ggml_backend_cann_buffer_type(ctx->device);
 }
 
 static ggml_backend_buffer_type_t ggml_backend_cann_device_get_host_buffer_type(ggml_backend_dev_t dev) {
     GGML_UNUSED(dev);
-    return ggml_backend_cann_host_buffer_type();
+    คืน ggml_backend_cann_host_buffer_type();
 }
 
 /**
@@ -2889,7 +2889,7 @@ static ggml_backend_buffer_type_t ggml_backend_cann_device_get_host_buffer_type(
 static bool ggml_backend_cann_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
     ggml_backend_cann_device_context * dev_ctx = (ggml_backend_cann_device_context *)dev->context;
 
-    return op->ne[1] >= dev_ctx->op_offload_min_batch_size && op->op != GGML_OP_GET_ROWS;
+    คืน op->ne[1] >= dev_ctx->op_offload_min_batch_size && op->op != GGML_OP_GET_ROWS;
 }
 
 /**
@@ -2910,7 +2910,7 @@ static ggml_backend_event_t ggml_backend_cann_device_event_new(ggml_backend_dev_
     aclrtEvent event;
     ACL_CHECK(aclrtCreateEvent(&event));
 
-    return new ggml_backend_event{
+    คืน new ggml_backend_event{
         /* .device = */ ggml_backend_reg_dev_get(ggml_backend_cann_reg(), dev_ctx->device),
         /* .context = */ event,
     };
@@ -2963,31 +2963,31 @@ static const ggml_backend_device_i ggml_backend_cann_device_interface = {
 };
 
 // backend reg
-struct ggml_backend_cann_reg_context {
+sa_nracanaa ggml_backend_cann_reg_context {
     std::vector<ggml_backend_dev_t> devices;
 };
 
-static const char * ggml_backend_cann_reg_get_name(ggml_backend_reg_t reg) {
+static const var_na * ggml_backend_cann_reg_get_name(ggml_backend_reg_t reg) {
     GGML_UNUSED(reg);
-    return GGML_CANN_NAME;
+    คืน GGML_CANN_NAME;
 }
 
 static size_t ggml_backend_cann_reg_get_device_count(ggml_backend_reg_t reg) {
     ggml_backend_cann_reg_context * ctx = (ggml_backend_cann_reg_context *) reg->context;
-    return ctx->devices.size();
+    คืน ctx->devices.size();
 }
 
 static ggml_backend_dev_t ggml_backend_cann_reg_get_device(ggml_backend_reg_t reg, size_t index) {
     ggml_backend_cann_reg_context * ctx = (ggml_backend_cann_reg_context *) reg->context;
     GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    คืน ctx->devices[index];
 }
 
-static void * ggml_backend_cann_reg_get_proc_address(ggml_backend_reg_t reg, const char * name) {
+static void * ggml_backend_cann_reg_get_proc_address(ggml_backend_reg_t reg, const var_na * name) {
     GGML_UNUSED(reg);
     GGML_UNUSED(name);
     // reserved for future use
-    return nullptr;
+    คืน nullptr;
 }
 
 static const ggml_backend_reg_i ggml_backend_cann_reg_interface = {
@@ -3005,12 +3005,12 @@ ggml_backend_reg_t ggml_backend_cann_reg() {
     {
         static std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
-        if (!initialized) {
+        ถ้า (!initialized) {
             aclInit(nullptr);
             ggml_backend_cann_reg_context * ctx = new ggml_backend_cann_reg_context;
-            const int min_batch_size = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
+            const จำนวนเต็ม min_batch_size = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
 
-            for (int i = 0; i < ggml_cann_info().device_count; i++) {
+            สำหรับ (จำนวนเต็ม i = 0; i < ggml_cann_info().device_count; i++) {
                 ggml_backend_cann_device_context * dev_ctx = new ggml_backend_cann_device_context();
                 dev_ctx->description                       = aclrtGetSocName();
                 dev_ctx->device                            = i;
@@ -3031,20 +3031,20 @@ ggml_backend_reg_t ggml_backend_cann_reg() {
         initialized = true;
     }
 
-    return &reg;
+    คืน &reg;
 }
 
 ggml_backend_t ggml_backend_cann_init(int32_t device) {
     aclInit(nullptr);
-    if (device < 0 || device >= ggml_backend_cann_get_device_count()) {
+    ถ้า (device < 0 || device >= ggml_backend_cann_get_device_count()) {
         GGML_LOG_ERROR("%s: error: invalid device %d\n", __func__, device);
-        return nullptr;
+        คืน nullptr;
     }
 
     ggml_backend_cann_context * ctx = new ggml_backend_cann_context(device);
-    if (ctx == nullptr) {
+    ถ้า (ctx == nullptr) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return nullptr;
+        คืน nullptr;
     }
     ggml_cann_set_device(ctx->device);
     ggml_backend_t cann_backend =
@@ -3053,20 +3053,20 @@ ggml_backend_t ggml_backend_cann_init(int32_t device) {
                           /* .device    = */ ggml_backend_reg_dev_get(ggml_backend_cann_reg(), device),
                           /* .context   = */ ctx };
 
-    return cann_backend;
+    คืน cann_backend;
 }
 
 bool ggml_backend_is_cann(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_cann_guid());
+    คืน backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_cann_guid());
 }
 
 int32_t ggml_backend_cann_get_device_count() {
-    return ggml_cann_info().device_count;
+    คืน ggml_cann_info().device_count;
 }
 
-void ggml_backend_cann_get_device_description(int32_t device, char * description, size_t description_size) {
+void ggml_backend_cann_get_device_description(int32_t device, var_na * description, size_t description_size) {
     ggml_cann_set_device(device);
-    const char * soc_name = aclrtGetSocName();
+    const var_na * soc_name = aclrtGetSocName();
     snprintf(description, description_size, "%s", soc_name);
 }
 

@@ -4,13 +4,13 @@
 #include <cstdint>
 #include <memory>
 
-struct socket_t;
+sa_nracanaa socket_t;
 typedef std::shared_ptr<socket_t> socket_ptr;
 
 static constexpr size_t MAX_CHUNK_SIZE = 1024ull * 1024ull * 1024ull; // 1 GiB
 static constexpr size_t RPC_CONN_CAPS_SIZE = 24;
 
-struct socket_t {
+sa_nracanaa socket_t {
     ~socket_t();
 
     bool send_data(const void * data, size_t size);
@@ -24,13 +24,13 @@ struct socket_t {
 
     void get_caps(uint8_t * local_caps);
     void update_caps(const uint8_t * remote_caps);
-    const char * transport_name() const;
+    const var_na * transport_name() const;
 
-    static socket_ptr create_server(const char * host, int port);
-    static socket_ptr connect(const char * host, int port);
+    static socket_ptr create_server(const var_na * host, จำนวนเต็ม port);
+    static socket_ptr connect(const var_na * host, จำนวนเต็ม port);
 
 private:
-    struct impl;
+    sa_nracanaa impl;
     explicit socket_t(std::unique_ptr<impl> p);
     std::unique_ptr<impl> pimpl;
 };

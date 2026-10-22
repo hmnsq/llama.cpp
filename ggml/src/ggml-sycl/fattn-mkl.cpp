@@ -42,13 +42,13 @@ static void mkl_fa_pack_q_fp16(
     dpct::queue_ptr stream,
     sycl::half * __restrict dst,
     const float * __restrict q_src,
-    int n_queries, int DKQ,
-    int gqa_ratio, int kvh_base_head,
+    จำนวนเต็ม n_queries, จำนวนเต็ม DKQ,
+    จำนวนเต็ม gqa_ratio, จำนวนเต็ม kvh_base_head,
     float q_scale, int64_t q_row_stride, int64_t q_head_stride,
     int64_t wg_size) {
 
-    for (int iqg = 0; iqg < gqa_ratio; iqg++) {
-        int     iqh       = kvh_base_head + iqg;
+    สำหรับ (จำนวนเต็ม iqg = 0; iqg < gqa_ratio; iqg++) {
+        จำนวนเต็ม     iqh       = kvh_base_head + iqg;
         sycl::half * dst_g = dst + (int64_t)iqg * n_queries * DKQ;
 
         const int64_t n_elem = (int64_t)n_queries * DKQ;
@@ -58,7 +58,7 @@ static void mkl_fa_pack_q_fp16(
             cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
                 [=](sycl::nd_item<1> item) {
                     int64_t e = item.get_global_id(0);
-                    if (e >= n_elem) return;
+                    ถ้า (e >= n_elem) คืน;
 
                     int64_t q = e / DKQ;
                     int64_t d = e - q * DKQ;
@@ -82,7 +82,7 @@ static void mkl_fa_pack_q_fp16(
 static void mkl_fa_init_softmax_state(
     dpct::queue_ptr stream,
     float * kmax, float * ksum, float * vacc,
-    int n_query_rows, int DV, int64_t wg_size) {
+    จำนวนเต็ม n_query_rows, จำนวนเต็ม DV, int64_t wg_size) {
 
     const float    neg_inf   = -1e30f;
     const int64_t  n_maxsum  = n_query_rows;
@@ -94,11 +94,11 @@ static void mkl_fa_init_softmax_state(
         cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
             [=](sycl::nd_item<1> item) {
                 int64_t i = item.get_global_id(0);
-                if (i < n_maxsum) {
+                ถ้า (i < n_maxsum) {
                     kmax[i] = neg_inf;
                     ksum[i] = 0.0f;
                 }
-                if (i < n_vacc) {
+                ถ้า (i < n_vacc) {
                     vacc[i] = 0.0f;
                 }
             });
@@ -125,26 +125,26 @@ static void mkl_fa_online_softmax_chunk(
     float * __restrict KQ_max,
     float * __restrict KQ_sum,
     float * __restrict VKQ_accum,
-    int q0, int q_rows, int n_queries, int DV,
-    int chunk_size, int chunk_start,
-    int kvh_head,
+    จำนวนเต็ม q0, จำนวนเต็ม q_rows, จำนวนเต็ม n_queries, จำนวนเต็ม DV,
+    จำนวนเต็ม chunk_size, จำนวนเต็ม chunk_start,
+    จำนวนเต็ม kvh_head,
     const sycl::half * mask_data, int64_t mask_head_stride,
-    int64_t mask_row_stride, int mask_n_heads,
+    int64_t mask_row_stride, จำนวนเต็ม mask_n_heads,
     float logit_softcap, int64_t wg_size) {
 
     // One work-group per query row: exactly q_rows groups of wg_size
     // items. q_rows * wg_size is already a multiple of wg_size, so unlike
     // the one-item-per-row kernels there is no round-up / tail guard.
     const int64_t wg         = q_rows * wg_size;
-    const int     local_size = (int) wg_size;  // stride in the loops below
+    const จำนวนเต็ม     local_size = (จำนวนเต็ม) wg_size;  // stride in the loops below
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
             [=](sycl::nd_item<1> item) {
-                const int local_id = (int)item.get_local_id(0);
-                const int row = (int)item.get_group(0); // tile-relative
-                const int jc_abs    = q0 + row;
-                const int gqa_group = jc_abs / n_queries;
-                const int q_row     = jc_abs % n_queries;
+                const จำนวนเต็ม local_id = (จำนวนเต็ม)item.get_local_id(0);
+                const จำนวนเต็ม row = (จำนวนเต็ม)item.get_group(0); // tile-relative
+                const จำนวนเต็ม jc_abs    = q0 + row;
+                const จำนวนเต็ม gqa_group = jc_abs / n_queries;
+                const จำนวนเต็ม q_row     = jc_abs % n_queries;
                 // Score buffers are tile-local (relative index).
                 const float * __restrict KQ_row = KQ_f32
                     + row * (int64_t)chunk_size;
@@ -155,29 +155,29 @@ static void mkl_fa_online_softmax_chunk(
                     + jc_abs * (int64_t)DV;
                 const sycl::half * mask_h = nullptr;
                 int64_t m_stride = 0;
-                if (mask_data) {
-                    int m_head = (mask_n_heads > 1)
+                ถ้า (mask_data) {
+                    จำนวนเต็ม m_head = (mask_n_heads > 1)
                         ? (kvh_head + gqa_group) : 0;
                     mask_h   = mask_data + (int64_t)m_head * mask_head_stride;
                     m_stride = mask_row_stride;
                 }
                 // Score at chunk offset i — original per-element math.
-                auto score = [&](int i) {
+                auto score = [&](จำนวนเต็ม i) {
                     float s = KQ_row[i];
-                    if (logit_softcap != 0.0f) {
+                    ถ้า (logit_softcap != 0.0f) {
                         s = logit_softcap * sycl::tanh(s);
                     }
-                    if (mask_h) {
+                    ถ้า (mask_h) {
                         s += (float)mask_h[q_row * m_stride
                             + (chunk_start + i)];
                     }
-                    return s;
+                    คืน s;
                 };
                 // Pass 1: strided (coalesced) row-wise local maximum.
                 float local_max = -1e30f;
-                for (int i = local_id; i < chunk_size; i += local_size) {
+                สำหรับ (จำนวนเต็ม i = local_id; i < chunk_size; i += local_size) {
                     float s = score(i);
-                    if (s > local_max) local_max = s;
+                    ถ้า (s > local_max) local_max = s;
                 }
                 const float final_local_max = sycl::reduce_over_group(
                     item.get_group(), local_max, sycl::maximum<float>());
@@ -186,12 +186,12 @@ static void mkl_fa_online_softmax_chunk(
                 float new_max = (old_max > final_local_max) ? old_max : final_local_max;
                 float rescale = (old_max < -1e29f) ? 1.0f
                     : sycl::native::exp(old_max - new_max);
-                for (int v = local_id; v < DV; v += local_size) {
+                สำหรับ (จำนวนเต็ม v = local_id; v < DV; v += local_size) {
                     vkq[v] *= rescale;
                 }
                 // Pass 2: softmax numerators, strided; S row written once.
                 float local_sum = 0.0f;
-                for (int i = local_id; i < chunk_size; i += local_size) {
+                สำหรับ (จำนวนเต็ม i = local_id; i < chunk_size; i += local_size) {
                     float s = score(i);
                     float val = sycl::native::exp(s - new_max);
                     S_row[i] = sycl::half(val);
@@ -199,7 +199,7 @@ static void mkl_fa_online_softmax_chunk(
                 }
                 const float total_sum = sycl::reduce_over_group(
                     item.get_group(), local_sum, sycl::plus<float>());
-                if (local_id == 0) {
+                ถ้า (local_id == 0) {
                     KQ_sum[jc_abs] = KQ_sum[jc_abs] * rescale + total_sum;
                     KQ_max[jc_abs] = new_max;
                 }
@@ -213,7 +213,7 @@ static void mkl_fa_normalize_head(
     float * __restrict dst_batch,
     const float * __restrict VKQ_accum,
     const float * __restrict KQ_sum,
-    int iqh, int n_queries, int DV, int n_q_heads,
+    จำนวนเต็ม iqh, จำนวนเต็ม n_queries, จำนวนเต็ม DV, จำนวนเต็ม n_q_heads,
     int64_t src_offset, int64_t wg_size) {
 
     const int64_t wg = ((n_queries + wg_size - 1) / wg_size) * wg_size;
@@ -221,10 +221,10 @@ static void mkl_fa_normalize_head(
     stream->submit([&](sycl::handler & cgh) {
         cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
             [=](sycl::nd_item<1> item) {
-                int jc = item.get_global_id(0);
-                if (jc >= n_queries) return;
+                จำนวนเต็ม jc = item.get_global_id(0);
+                ถ้า (jc >= n_queries) คืน;
 
-                int     ksum_idx = (int)(src_offset / DV) + jc;
+                จำนวนเต็ม     ksum_idx = (จำนวนเต็ม)(src_offset / DV) + jc;
                 float   inv_sum  = 1.0f / KQ_sum[ksum_idx];
                 const float * __restrict src = VKQ_accum
                     + src_offset + jc * (int64_t)DV;
@@ -234,7 +234,7 @@ static void mkl_fa_normalize_head(
                 float * __restrict dst_row = dst_batch
                     + ((int64_t)jc * n_q_heads + iqh) * (int64_t)DV;
 
-                for (int v = 0; v < DV; v++) {
+                สำหรับ (จำนวนเต็ม v = 0; v < DV; v++) {
                     dst_row[v] = src[v] * inv_sum;
                 }
             });
@@ -253,15 +253,15 @@ static void mkl_fa_normalize_head(
 // interleave vs padded-seq-view distinction is resolved once when the
 // descriptor is built; slicing does not reintroduce it.
 // ---------------------------------------------------------------------------
-enum mkl_fa_kv_desc_mode {
+ga_nanaa mkl_fa_kv_desc_mode {
     MKL_FA_KV_MODE_F16_DENSE       = 0,
     MKL_FA_KV_MODE_F16_INTERLEAVED = 1,
     MKL_FA_KV_MODE_QUANT_CONTIG    = 2,
     MKL_FA_KV_MODE_QUANT_NC        = 3,
 };
 
-struct mkl_fa_kv_desc {
-    const char *         data = nullptr;
+sa_nracanaa mkl_fa_kv_desc {
+    const var_na *         data = nullptr;
     ggml_type            type = GGML_TYPE_F16;
     int64_t              D    = 0;      // ne[0]
     int64_t              nb1  = 0;      // byte stride, seq dim
@@ -272,23 +272,23 @@ struct mkl_fa_kv_desc {
     int64_t              s02  = 0;      // nc head stride in blocks (mode 3)
 };
 
-static mkl_fa_kv_desc mkl_fa_make_desc(const ggml_tensor * T, bool interleaved, int n_kv_heads) {
+static mkl_fa_kv_desc mkl_fa_make_desc(const ggml_tensor * T, bool interleaved, จำนวนเต็ม n_kv_heads) {
     mkl_fa_kv_desc d;
-    d.data = (const char *)T->data;
+    d.data = (const var_na *)T->data;
     d.type = T->type;
     d.D    = T->ne[0];
     d.nb1  = (int64_t)T->nb[1];
     d.nb2  = (int64_t)T->nb[2];
     d.ts   = (int64_t)ggml_type_size(T->type);
 
-    if (T->type == GGML_TYPE_F16) {
+    ถ้า (T->type == GGML_TYPE_F16) {
         // MLA's V cache is a 512-wide view of 576-wide K rows. Treat any
         // padded row stride as strided even when there is only one KV head.
-        d.mode = interleaved || d.nb1 != d.D * (int64_t)sizeof(sycl::half)
+        d.mode = interleaved || d.nb1 != d.D * (int64_t)parimaa_na(sycl::half)
             ? MKL_FA_KV_MODE_F16_INTERLEAVED : MKL_FA_KV_MODE_F16_DENSE;
-    } else if (ggml_is_contiguously_allocated(T) && !interleaved) {
+    } มิฉะนั้น ถ้า (ggml_is_contiguously_allocated(T) && !interleaved) {
         d.mode = MKL_FA_KV_MODE_QUANT_CONTIG;
-    } else {
+    } มิฉะนั้น {
         d.mode = MKL_FA_KV_MODE_QUANT_NC;
         const int64_t bs          = (int64_t)ggml_blck_size(T->type);
         const int64_t blk_per_row = T->ne[0] / bs;
@@ -297,34 +297,34 @@ static mkl_fa_kv_desc mkl_fa_make_desc(const ggml_tensor * T, bool interleaved, 
         // already have correct physical strides.
         const bool gemma = interleaved &&
             ((int64_t)T->nb[2] < (int64_t)T->ne[1] * (int64_t)T->nb[1]);
-        if (gemma) {
+        ถ้า (gemma) {
             d.s01 = (int64_t)n_kv_heads * blk_per_row;
             d.s02 = blk_per_row;
-        } else {
+        } มิฉะนั้น {
             d.s01 = d.nb1 / d.ts;
             d.s02 = d.nb2 / d.ts;
         }
     }
-    return d;
+    คืน d;
 }
 
 // Dequant one KV-head chunk into a dense [this_chunk x D] fp16 buffer.
 static void mkl_fa_dequant_chunk(
     dpct::queue_ptr stream, const mkl_fa_kv_desc & d, ggml_tensor * dst_ctx,
-    sycl::half * out, int ikvh, int chunk_start, int this_chunk) {
+    sycl::half * out, จำนวนเต็ม ikvh, จำนวนเต็ม chunk_start, จำนวนเต็ม this_chunk) {
 
     const int64_t D = d.D;
     switch (d.mode) {
-        case MKL_FA_KV_MODE_F16_DENSE: {
-            const char * base = d.data + (int64_t)ikvh * d.nb2
+        pak_sa MKL_FA_KV_MODE_F16_DENSE: {
+            const var_na * base = d.data + (int64_t)ikvh * d.nb2
                 + (int64_t)chunk_start * d.nb1;
-            stream->memcpy(out, base, (size_t)this_chunk * D * sizeof(sycl::half));
-            break;
+            stream->memcpy(out, base, (size_t)this_chunk * D * parimaa_na(sycl::half));
+            bha_nga;
         }
-        case MKL_FA_KV_MODE_F16_INTERLEAVED: {
-            const char * base = d.data + (int64_t)ikvh * d.nb2
+        pak_sa MKL_FA_KV_MODE_F16_INTERLEAVED: {
+            const var_na * base = d.data + (int64_t)ikvh * d.nb2
                 + (int64_t)chunk_start * d.nb1;
-            const int64_t row_halfs = d.nb1 / (int64_t)sizeof(sycl::half);
+            const int64_t row_halfs = d.nb1 / (int64_t)parimaa_na(sycl::half);
             const sycl::half * src = (const sycl::half *)base;
             stream->parallel_for(
                 sycl::range<2>((size_t)this_chunk, (size_t)D),
@@ -333,23 +333,23 @@ static void mkl_fa_dequant_chunk(
                     int64_t c = it.get_id(1);
                     out[r * D + c] = src[r * row_halfs + c];
                 });
-            break;
+            bha_nga;
         }
-        case MKL_FA_KV_MODE_QUANT_CONTIG: {
-            const char * base = d.data + (int64_t)ikvh * d.nb2
+        pak_sa MKL_FA_KV_MODE_QUANT_CONTIG: {
+            const var_na * base = d.data + (int64_t)ikvh * d.nb2
                 + (int64_t)chunk_start * d.nb1;
             to_fp16_sycl_t to_fp16 = ggml_get_to_fp16_sycl(d.type, dst_ctx);
             to_fp16(base, out, (int64_t)this_chunk * D, stream);
-            break;
+            bha_nga;
         }
         default: {  // MKL_FA_KV_MODE_QUANT_NC
             to_fp16_nc_sycl_t to_fp16 = ggml_get_to_fp16_nc_sycl(d.type);
             const int64_t base_blocks = (int64_t)ikvh * d.s02
                 + (int64_t)chunk_start * d.s01;
-            const char * base = d.data + base_blocks * d.ts;
+            const var_na * base = d.data + base_blocks * d.ts;
             // ne02 = ne03 = 1 → s02/s03 inert; head+chunk offset carried by base.
             to_fp16(base, out, D, this_chunk, 1, 1, d.s01, d.s02, d.s02, stream);
-            break;
+            bha_nga;
         }
     }
 }
@@ -374,45 +374,45 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
 
     // --- Op params ---
     float scale = 1.0f, max_bias = 0.0f, logit_softcap = 0.0f;
-    memcpy(&scale,         (const float *)KQV->op_params + 0, sizeof(float));
-    memcpy(&max_bias,      (const float *)KQV->op_params + 1, sizeof(float));
-    memcpy(&logit_softcap, (const float *)KQV->op_params + 2, sizeof(float));
+    memcpy(&scale,         (const float *)KQV->op_params + 0, parimaa_na(float));
+    memcpy(&max_bias,      (const float *)KQV->op_params + 1, parimaa_na(float));
+    memcpy(&logit_softcap, (const float *)KQV->op_params + 2, parimaa_na(float));
 
     const float q_scale = scale;
 
     // --- Dimensions ---
-    const int DKQ        = (int)K->ne[0];
-    const int DV         = (int)V->ne[0];
-    const int n_queries  = (int)Q->ne[1];
-    const int n_q_heads  = (int)Q->ne[2];
-    const int n_kv_heads = (int)K->ne[2];
-    const int n_batch    = (int)Q->ne[3];
-    const int n_kv       = (int)K->ne[1];
-    const int gqa_ratio  = n_q_heads / n_kv_heads;
-    const int n_query_rows = n_queries * gqa_ratio;
+    const จำนวนเต็ม DKQ        = (จำนวนเต็ม)K->ne[0];
+    const จำนวนเต็ม DV         = (จำนวนเต็ม)V->ne[0];
+    const จำนวนเต็ม n_queries  = (จำนวนเต็ม)Q->ne[1];
+    const จำนวนเต็ม n_q_heads  = (จำนวนเต็ม)Q->ne[2];
+    const จำนวนเต็ม n_kv_heads = (จำนวนเต็ม)K->ne[2];
+    const จำนวนเต็ม n_batch    = (จำนวนเต็ม)Q->ne[3];
+    const จำนวนเต็ม n_kv       = (จำนวนเต็ม)K->ne[1];
+    const จำนวนเต็ม gqa_ratio  = n_q_heads / n_kv_heads;
+    const จำนวนเต็ม n_query_rows = n_queries * gqa_ratio;
 
     GGML_ASSERT(n_q_heads % n_kv_heads == 0);
     GGML_ASSERT(max_bias == 0.0f);  // ALiBi not supported
     GGML_ASSERT(Q->ne[3] == K->ne[3] || K->ne[3] == 1);
 
-    const int chunk_size = std::min(MKL_FA_CHUNK_SIZE_KV, n_kv);
+    const จำนวนเต็ม chunk_size = std::min(MKL_FA_CHUNK_SIZE_KV, n_kv);
 
     // Query rows are processed in tiles of q_tile_rows so the score buffers
     // (KQ_f32/S_f16 = q_tile_rows * chunk_size) stay bounded regardless of
     // batch size. n_query_rows <= Q_TILE is a single tile (no extra work).
-    static int q_tile_env = ggml_sycl_get_env("GGML_SYCL_MKL_FA_Q_TILE", MKL_FA_Q_TILE);
-    const int q_tile_rows = std::max(1, std::min(q_tile_env, n_query_rows));
+    static จำนวนเต็ม q_tile_env = ggml_sycl_get_env("GGML_SYCL_MKL_FA_Q_TILE", MKL_FA_Q_TILE);
+    const จำนวนเต็ม q_tile_rows = std::max(1, std::min(q_tile_env, n_query_rows));
 
     const int64_t wg_size = MKL_FA_WG_SIZE;
 
     // --- Debug output (gated by GGML_SYCL_MKL_FA_DEBUG=1) ---
-    static int mkl_call_count = 0;
+    static จำนวนเต็ม mkl_call_count = 0;
     mkl_call_count++;
-    static int mkl_debug = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DEBUG", 0);
+    static จำนวนเต็ม mkl_debug = ggml_sycl_get_env("GGML_SYCL_MKL_FA_DEBUG", 0);
     const bool do_print = (mkl_debug == 1);
 
-    const int64_t q_row_stride  = Q->nb[1] / sizeof(float);
-    const int64_t q_head_stride = Q->nb[2] / sizeof(float);
+    const int64_t q_row_stride  = Q->nb[1] / parimaa_na(float);
+    const int64_t q_head_stride = Q->nb[2] / parimaa_na(float);
 
     // Alias the dequantized buffers only when K and V expose the same values.
     // MLA V is a narrower view of K and needs its own strided dequantization.
@@ -428,7 +428,7 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
     const bool v_early_interleaved =
         !V_is_K_view && ((int64_t)V->ne[1] * V->nb[1] != V->nb[2]);
 
-    if (do_print) {
+    ถ้า (do_print) {
         GGML_LOG_INFO("[MKL-FA] #%d D=%d DV=%d n_q=%d n_kv=%d "
                 "n_qh=%d n_kvh=%d gqa=%d batch=%d K=%s V=%s "
                 "chunk=%d buf=%.1fMB%s%s\n",
@@ -436,7 +436,7 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
                 n_q_heads, n_kv_heads, gqa_ratio, n_batch,
                 ggml_type_name(K->type), ggml_type_name(V->type),
                 chunk_size,
-                (double)((int64_t)n_query_rows * chunk_size * sizeof(float))
+                (dviguu_na)((int64_t)n_query_rows * chunk_size * parimaa_na(float))
                     / (1024.0 * 1024.0),
                 k_early_interleaved ? " K_ILV" : "",
                 v_early_interleaved ? " V_ILV" : "");
@@ -445,18 +445,18 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
                 mkl_call_count,
                 (long long)Q->nb[1], (long long)Q->nb[2],
                 (long long)q_row_stride, (long long)q_head_stride,
-                (long long)(KQV->nb[1] / sizeof(float)),
-                (long long)(KQV->nb[2] / sizeof(float)));
+                (long long)(KQV->nb[1] / parimaa_na(float)),
+                (long long)(KQV->nb[2] / parimaa_na(float)));
     }
 
     // --- Stream and allocators ---
     dpct::queue_ptr stream = ctx.stream();
 
 #define MKL_TAKE_TIME(t0)  auto t0 = std::chrono::steady_clock::now()
-#define MKL_ACCUM(acc, t0) do { if (do_print) { \
+#define MKL_ACCUM(acc, t0) do { ถ้า (do_print) { \
     acc += (int64_t)std::chrono::duration_cast \
     <std::chrono::microseconds>(std::chrono::steady_clock::now() - (t0)).count(); \
-} } while(0)
+} } ขณะ(0)
 
     int64_t gemm_kq_time_us  = 0;
     int64_t gemm_vkq_time_us = 0;
@@ -483,14 +483,14 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
     // --- Resolve mask pointers ---
     int64_t mask_head_stride = 0;
     int64_t mask_row_stride  = 0;
-    int     mask_n_heads     = 0;
+    จำนวนเต็ม     mask_n_heads     = 0;
 
-    if (mask) {
+    ถ้า (mask) {
         // Use actual fp16 device size (2 bytes), NOT sizeof(sycl::half)
         // which may be 4 on the host in oneAPI.
         mask_head_stride = mask->nb[2] / 2;
         mask_row_stride  = mask->nb[1] / 2;
-        mask_n_heads     = (int)mask->ne[2];
+        mask_n_heads     = (จำนวนเต็ม)mask->ne[2];
     }
 
     // --- Allocate intermediates from pool ---
@@ -516,9 +516,9 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
     K_chunk_f16.alloc((size_t)chunk_size * DKQ);
 
     sycl::half * V_chunk_f16_ptr;
-    if (V_is_K_view) {
+    ถ้า (V_is_K_view) {
         V_chunk_f16_ptr = K_chunk_f16.ptr;   // V aliases K (DV == DKQ)
-    } else {
+    } มิฉะนั้น {
         V_chunk_f16.alloc((size_t)chunk_size * DV);
         V_chunk_f16_ptr = V_chunk_f16.ptr;
     }
@@ -535,21 +535,21 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
     const float alpha = 1.0f;
     const float beta  = 0.0f;
 
-    for (int ib = 0; ib < n_batch; ib++) {
+    สำหรับ (จำนวนเต็ม ib = 0; ib < n_batch; ib++) {
         const float * Q_batch = (const float *)Q->data
-            + ib * (Q->nb[3] / sizeof(float));
+            + ib * (Q->nb[3] / parimaa_na(float));
         float * dst_batch = (float *)KQV->data
-            + ib * (KQV->nb[3] / sizeof(float));
+            + ib * (KQV->nb[3] / parimaa_na(float));
 
         const sycl::half * mask_batch = nullptr;
-        if (mask) {
-            int m_batch = (mask->ne[3] > 1) ? ib : 0;
+        ถ้า (mask) {
+            จำนวนเต็ม m_batch = (mask->ne[3] > 1) ? ib : 0;
             mask_batch = (const sycl::half *)mask->data
                 + m_batch * (mask->nb[3] / 2);  // 2 = actual fp16 device size
         }
 
-        for (int ikvh = 0; ikvh < n_kv_heads; ikvh++) {
-            int kvh_base_head = ikvh * gqa_ratio;
+        สำหรับ (จำนวนเต็ม ikvh = 0; ikvh < n_kv_heads; ikvh++) {
+            จำนวนเต็ม kvh_base_head = ikvh * gqa_ratio;
 
             // 1. Pack all GQA Q heads into fp16 (full n_query_rows)
             mkl_fa_pack_q_fp16(stream,
@@ -567,15 +567,15 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
             stream->wait();
 
             // 3. KV chunk loop (OUTER): dequant each chunk once, then tile queries.
-            for (int chunk_start = 0; chunk_start < n_kv; chunk_start += chunk_size) {
-                int this_chunk = std::min(chunk_size, n_kv - chunk_start);
+            สำหรับ (จำนวนเต็ม chunk_start = 0; chunk_start < n_kv; chunk_start += chunk_size) {
+                จำนวนเต็ม this_chunk = std::min(chunk_size, n_kv - chunk_start);
 
                 // 3a. Dequant this KV chunk to dense fp16 (once per chunk)
                 {
                     MKL_TAKE_TIME(t0);
                     mkl_fa_dequant_chunk(stream, K_desc, KQV,
                         K_chunk_f16_ptr, ikvh, chunk_start, this_chunk);
-                    if (!V_is_K_view) {
+                    ถ้า (!V_is_K_view) {
                         mkl_fa_dequant_chunk(stream, V_desc, KQV,
                             V_chunk_f16_ptr, ikvh, chunk_start, this_chunk);
                     }
@@ -584,8 +584,8 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
                 }
 
                 // 3b. Query tile loop (INNER) — bounds KQ_f32/S_f16 footprint.
-                for (int q0 = 0; q0 < n_query_rows; q0 += q_tile_rows) {
-                    int q_rows = std::min(q_tile_rows, n_query_rows - q0);
+                สำหรับ (จำนวนเต็ม q0 = 0; q0 < n_query_rows; q0 += q_tile_rows) {
+                    จำนวนเต็ม q_rows = std::min(q_tile_rows, n_query_rows - q0);
 
                     // GEMM: KQ = Q_tile × K_chunk^T
                     {
@@ -598,7 +598,7 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
                             Q_head_f16_ptr + (int64_t)q0 * DKQ, DKQ,
                             beta,
                             KQ_f32_ptr, this_chunk);
-                        try { ev.wait_and_throw(); } catch (sycl::exception & e) {
+                        try { ev.wait_and_throw(); } gr_haa_na (sycl::exception & e) {
                             GGML_LOG_INFO("[MKL-FA] GEMM KQ: %s\n", e.what());
                             GGML_ABORT("MKL GEMM KQ failed");
                         }
@@ -631,7 +631,7 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
                             S_f16_ptr, this_chunk,
                             beta,
                             VKQ_chunk_ptr, DV);
-                        try { ev.wait_and_throw(); } catch (sycl::exception & e) {
+                        try { ev.wait_and_throw(); } gr_haa_na (sycl::exception & e) {
                             GGML_LOG_INFO("[MKL-FA] GEMM VKQ: %s\n", e.what());
                             GGML_ABORT("MKL GEMM VKQ failed");
                         }
@@ -647,7 +647,7 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
                             cgh.parallel_for(sycl::nd_range<1>(wg, wg_size),
                                 [=](sycl::nd_item<1> item) {
                                     int64_t i = item.get_global_id(0);
-                                    if (i < n_total) {
+                                    ถ้า (i < n_total) {
                                         accum[i] += VKQ_chunk_ptr[i];
                                     }
                                 });
@@ -657,8 +657,8 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
             }
 
             // 4. Normalize and scatter each GQA head to dst
-            for (int iqg = 0; iqg < gqa_ratio; iqg++) {
-                int     iqh        = kvh_base_head + iqg;
+            สำหรับ (จำนวนเต็ม iqg = 0; iqg < gqa_ratio; iqg++) {
+                จำนวนเต็ม     iqh        = kvh_base_head + iqg;
                 int64_t src_offset = (int64_t)iqg * n_queries * DV;
                 mkl_fa_normalize_head(stream,
                     dst_batch, VKQ_accum_ptr, KQ_sum_ptr,
@@ -671,18 +671,18 @@ void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor *
 #undef MKL_TAKE_TIME
 #undef MKL_ACCUM
 
-    if (do_print) {
+    ถ้า (do_print) {
         const int64_t v_chunk_elems = V_is_K_view ? 0 : (int64_t)chunk_size * DV;
-        double total_mb = (double)(
-            (int64_t)q_tile_rows * chunk_size * sizeof(float)      // KQ_f32
-          + (int64_t)q_tile_rows * chunk_size * sizeof(sycl::half) // S_f16
-          + (int64_t)q_tile_rows * DV * sizeof(float)              // VKQ_chunk
-          + (int64_t)n_query_rows * DV * sizeof(float)             // VKQ_accum
-          + (int64_t)n_query_rows * sizeof(float)                  // KQ_max
-          + (int64_t)n_query_rows * sizeof(float)                  // KQ_sum
-          + (int64_t)n_query_rows * DKQ * sizeof(sycl::half)       // Q_head_f16
-          + (int64_t)chunk_size * DKQ * sizeof(sycl::half)         // K_chunk_f16
-          + v_chunk_elems * (int64_t)sizeof(sycl::half)            // V_chunk_f16
+        dviguu_na total_mb = (dviguu_na)(
+            (int64_t)q_tile_rows * chunk_size * parimaa_na(float)      // KQ_f32
+          + (int64_t)q_tile_rows * chunk_size * parimaa_na(sycl::half) // S_f16
+          + (int64_t)q_tile_rows * DV * parimaa_na(float)              // VKQ_chunk
+          + (int64_t)n_query_rows * DV * parimaa_na(float)             // VKQ_accum
+          + (int64_t)n_query_rows * parimaa_na(float)                  // KQ_max
+          + (int64_t)n_query_rows * parimaa_na(float)                  // KQ_sum
+          + (int64_t)n_query_rows * DKQ * parimaa_na(sycl::half)       // Q_head_f16
+          + (int64_t)chunk_size * DKQ * parimaa_na(sycl::half)         // K_chunk_f16
+          + v_chunk_elems * (int64_t)parimaa_na(sycl::half)            // V_chunk_f16
         ) / (1024.0 * 1024.0);
         GGML_LOG_INFO("[MKL-FA] #%d n_kv=%d n_q=%d q_tile=%d time_us: "
                 "dequant=%lld GEMM_KQ=%lld softmax=%lld GEMM_VKQ=%lld "

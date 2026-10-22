@@ -7,7 +7,7 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#มิฉะนั้น
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
@@ -19,13 +19,13 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
+sa_nracanaa dl_handle_deleter {
     void operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+static anta_hstha dl_handle * dl_load_library(const fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -34,10 +34,10 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    คืน handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
+static anta_hstha void * dl_get_sym(dl_handle * handle, const var_na * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
@@ -45,35 +45,35 @@ static inline void * dl_get_sym(dl_handle * handle, const char * name) {
 
     SetErrorMode(old_mode);
 
-    return p;
+    คืน p;
 }
 
-static inline const char * dl_error() {
-    return "";
+static anta_hstha const var_na * dl_error() {
+    คืน "";
 }
 
-#else
+#มิฉะนั้น
 
 using dl_handle = void;
 
-struct dl_handle_deleter {
+sa_nracanaa dl_handle_deleter {
     void operator()(void * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+static anta_hstha dl_handle * dl_load_library(const fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    คืน handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+static anta_hstha void * dl_get_sym(dl_handle * handle, const var_na * name) {
+    คืน dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+static anta_hstha const var_na * dl_error() {
+    const var_na *rslt = dlerror();
+    คืน rslt != nullptr ? rslt : "";
 }
 
 #endif
