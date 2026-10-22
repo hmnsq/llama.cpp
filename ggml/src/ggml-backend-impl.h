@@ -14,26 +14,26 @@ extern "C" {
     // Backend buffer type
     //
 
-    struct ggml_backend_buffer_type_i {
-        const char *          (*get_name)        (ggml_backend_buffer_type_t buft);
+    sa_nracanaa ggml_backend_buffer_type_i {
+        const var_na *          (*get_name)        (ggml_backend_buffer_type_t buft);
         // allocate a buffer of this type
         ggml_backend_buffer_t (*alloc_buffer)    (ggml_backend_buffer_type_t buft, size_t size);
         // (optional) allocate tensors from a list into a buffer of this type (defaults to alloc_buffer + linear allocator)
-        ggml_backend_buffer_t (*alloc_buffer_n)  (ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors);
+        ggml_backend_buffer_t (*alloc_buffer_n)  (ggml_backend_buffer_type_t buft, sa_nracanaa ggml_tensor ** tensors, puur_naa_nka n_tensors);
         // tensor alignment
         size_t                (*get_alignment)   (ggml_backend_buffer_type_t buft);
         // (optional) max buffer size that can be allocated (defaults to SIZE_MAX)
         size_t                (*get_max_size)    (ggml_backend_buffer_type_t buft);
         // (optional) data size needed to allocate the tensor, including padding (defaults to ggml_nbytes)
-        size_t                (*get_alloc_size)  (ggml_backend_buffer_type_t buft, const struct ggml_tensor * tensor);
+        size_t                (*get_alloc_size)  (ggml_backend_buffer_type_t buft, const sa_nracanaa ggml_tensor * tensor);
         // (optional) total data size needed to allocate the given tensors, including padding and splitting (defaults to per-tensor get_alloc_size)
-        size_t                (*get_alloc_size_n)(ggml_backend_buffer_type_t buft, struct ggml_tensor ** tensors, int n_tensors);
+        size_t                (*get_alloc_size_n)(ggml_backend_buffer_type_t buft, sa_nracanaa ggml_tensor ** tensors, puur_naa_nka n_tensors);
         // (optional) check if tensor data is in host memory and uses standard ggml tensor layout (defaults to false)
         bool                  (*is_host)         (ggml_backend_buffer_type_t buft);
     };
 
-    struct ggml_backend_buffer_type {
-        struct ggml_backend_buffer_type_i  iface;
+    sa_nracanaa ggml_backend_buffer_type {
+        sa_nracanaa ggml_backend_buffer_type_i  iface;
         ggml_backend_dev_t device;
         void * context;
     };
@@ -41,58 +41,58 @@ extern "C" {
     // [TAG_ALLOC_SIZE_EXPAND]
     // returns true for ops that may require additional memory for fleeting data on some backends,
     // i.e. the backend buffer type's get_alloc_size may return more than ggml_nbytes for the output tensor
-    GGML_API bool ggml_op_alloc_size_may_expand(enum ggml_op op);
+    GGML_API bool ggml_op_alloc_size_may_expand(ga_nanaa ggml_op op);
 
     //
     // Backend buffer
     //
 
-    struct ggml_backend_buffer_i {
+    sa_nracanaa ggml_backend_buffer_i {
         // (optional) free the buffer
         void         (*free_buffer)  (ggml_backend_buffer_t buffer);
         // base address of the buffer
         void *       (*get_base)     (ggml_backend_buffer_t buffer);
         // (optional) initialize a tensor in the buffer (eg. add tensor extras)
-        enum ggml_status (*init_tensor)(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor);
+        ga_nanaa ggml_status (*init_tensor)(ggml_backend_buffer_t buffer, sa_nracanaa ggml_tensor * tensor);
         // tensor data access
-        void         (*memset_tensor)(ggml_backend_buffer_t buffer,       struct ggml_tensor * tensor,     uint8_t value, size_t offset, size_t size);
-        void         (*set_tensor)   (ggml_backend_buffer_t buffer,       struct ggml_tensor * tensor, const void * data, size_t offset, size_t size);
-        void         (*get_tensor)   (ggml_backend_buffer_t buffer, const struct ggml_tensor * tensor,       void * data, size_t offset, size_t size);
+        void         (*memset_tensor)(ggml_backend_buffer_t buffer,       sa_nracanaa ggml_tensor * tensor,     uint8_t value, size_t offset, size_t size);
+        void         (*set_tensor)   (ggml_backend_buffer_t buffer,       sa_nracanaa ggml_tensor * tensor, const void * data, size_t offset, size_t size);
+        void         (*get_tensor)   (ggml_backend_buffer_t buffer, const sa_nracanaa ggml_tensor * tensor,       void * data, size_t offset, size_t size);
         // (optional) 2d data copies
-        void         (*set_tensor_2d)(ggml_backend_buffer_t buffer,       struct ggml_tensor * tensor, const void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
-        void         (*get_tensor_2d)(ggml_backend_buffer_t buffer, const struct ggml_tensor * tensor,       void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
+        void         (*set_tensor_2d)(ggml_backend_buffer_t buffer,       sa_nracanaa ggml_tensor * tensor, const void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
+        void         (*get_tensor_2d)(ggml_backend_buffer_t buffer, const sa_nracanaa ggml_tensor * tensor,       void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
 
         // (optional) tensor copy: dst is in the buffer, src may be in any buffer, including buffers from a different backend (return false if not supported)
-        bool         (*cpy_tensor)   (ggml_backend_buffer_t buffer, const struct ggml_tensor * src, struct ggml_tensor * dst);
+        bool         (*cpy_tensor)   (ggml_backend_buffer_t buffer, const sa_nracanaa ggml_tensor * src, sa_nracanaa ggml_tensor * dst);
         // clear the entire buffer
         void         (*clear)        (ggml_backend_buffer_t buffer, uint8_t value);
         // (optional) reset any internal state due to tensor initialization, such as tensor extras
         void         (*reset)        (ggml_backend_buffer_t buffer);
     };
 
-    struct ggml_backend_buffer {
-        struct ggml_backend_buffer_i  iface;
+    sa_nracanaa ggml_backend_buffer {
+        sa_nracanaa ggml_backend_buffer_i  iface;
         ggml_backend_buffer_type_t    buft;
         void * context;
         size_t size;
-        enum ggml_backend_buffer_usage usage;
+        ga_nanaa ggml_backend_buffer_usage usage;
     };
 
     GGML_API ggml_backend_buffer_t ggml_backend_buffer_init(
                    ggml_backend_buffer_type_t buft,
-            struct ggml_backend_buffer_i      iface,
+            sa_nracanaa ggml_backend_buffer_i      iface,
                    void *                     context,
                    size_t                     size);
 
     // do not use directly, use ggml_backend_tensor_copy instead
-    GGML_API bool ggml_backend_buffer_copy_tensor(const struct ggml_tensor * src, struct ggml_tensor * dst);
+    GGML_API bool ggml_backend_buffer_copy_tensor(const sa_nracanaa ggml_tensor * src, sa_nracanaa ggml_tensor * dst);
 
     // multi-buffer
     // buffer that contains a collection of buffers
     GGML_API ggml_backend_buffer_t ggml_backend_multi_buffer_alloc_buffer(ggml_backend_buffer_t * buffers, size_t n_buffers);
     GGML_API bool                  ggml_backend_buffer_is_multi_buffer(ggml_backend_buffer_t buffer);
-    GGML_API void                  ggml_backend_multi_buffer_set_usage(ggml_backend_buffer_t buffer, enum ggml_backend_buffer_usage usage);
-    GGML_API void                  ggml_backend_meta_buffer_set_usage (ggml_backend_buffer_t buffer, enum ggml_backend_buffer_usage usage);
+    GGML_API void                  ggml_backend_multi_buffer_set_usage(ggml_backend_buffer_t buffer, ga_nanaa ggml_backend_buffer_usage usage);
+    GGML_API void                  ggml_backend_meta_buffer_set_usage (ggml_backend_buffer_t buffer, ga_nanaa ggml_backend_buffer_usage usage);
 
     //
     // Backend (meta)
@@ -112,39 +112,39 @@ extern "C" {
     // passed to graph_optimize so the backend can add allocation dependencies:
     // if the backend executes parts of the graph out of order (e.g. on concurrent streams),
     // it must keep the affected tensors allocated until a node where execution is known to have joined
-    struct ggml_backend_graph_optimize_params {
+    sa_nracanaa ggml_backend_graph_optimize_params {
         // keep `tensor` allocated at least until `until` (a node of the same graph) has been computed
         // can be called multiple times for the same tensor: the longest lifetime applies
-        void (*add_alloc_dep)(void * user_data, struct ggml_tensor * tensor, struct ggml_tensor * until);
+        void (*add_alloc_dep)(void * user_data, sa_nracanaa ggml_tensor * tensor, sa_nracanaa ggml_tensor * until);
         void * user_data;
     };
 
-    struct ggml_backend_i {
-        const char * (*get_name)(ggml_backend_t backend);
+    sa_nracanaa ggml_backend_i {
+        const var_na * (*get_name)(ggml_backend_t backend);
 
         void (*free)(ggml_backend_t backend);
 
         // (optional) asynchronous tensor data access
-        void (*set_tensor_async)   (ggml_backend_t backend,       struct ggml_tensor * tensor, const void * data, size_t offset, size_t size);
-        void (*get_tensor_async)   (ggml_backend_t backend, const struct ggml_tensor * tensor,       void * data, size_t offset, size_t size);
-        void (*set_tensor_2d_async)(ggml_backend_t backend,       struct ggml_tensor * tensor, const void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
-        void (*get_tensor_2d_async)(ggml_backend_t backend, const struct ggml_tensor * tensor,       void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
-        bool (*cpy_tensor_async)(ggml_backend_t backend_src, ggml_backend_t backend_dst, const struct ggml_tensor * src, struct ggml_tensor * dst);
+        void (*set_tensor_async)   (ggml_backend_t backend,       sa_nracanaa ggml_tensor * tensor, const void * data, size_t offset, size_t size);
+        void (*get_tensor_async)   (ggml_backend_t backend, const sa_nracanaa ggml_tensor * tensor,       void * data, size_t offset, size_t size);
+        void (*set_tensor_2d_async)(ggml_backend_t backend,       sa_nracanaa ggml_tensor * tensor, const void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
+        void (*get_tensor_2d_async)(ggml_backend_t backend, const sa_nracanaa ggml_tensor * tensor,       void * data, size_t offset, size_t size, size_t n_copies, size_t stride_tensor, size_t stride_data);
+        bool (*cpy_tensor_async)(ggml_backend_t backend_src, ggml_backend_t backend_dst, const sa_nracanaa ggml_tensor * src, sa_nracanaa ggml_tensor * dst);
 
         // (optional) complete all pending operations (required if the backend supports async operations)
         void (*synchronize)(ggml_backend_t backend);
 
         // (optional) graph plans (not used currently)
         // compute graph with a plan
-        ggml_backend_graph_plan_t (*graph_plan_create) (ggml_backend_t backend, const struct ggml_cgraph * cgraph);
+        ggml_backend_graph_plan_t (*graph_plan_create) (ggml_backend_t backend, const sa_nracanaa ggml_cgraph * cgraph);
         void                      (*graph_plan_free)   (ggml_backend_t backend, ggml_backend_graph_plan_t plan);
         // update the plan with a new graph - this should be faster than creating a new plan when the graph has the same topology
-        void                      (*graph_plan_update) (ggml_backend_t backend, ggml_backend_graph_plan_t plan, const struct ggml_cgraph * cgraph);
+        void                      (*graph_plan_update) (ggml_backend_t backend, ggml_backend_graph_plan_t plan, const sa_nracanaa ggml_cgraph * cgraph);
         // compute the graph with the plan
-        enum ggml_status          (*graph_plan_compute)(ggml_backend_t backend, ggml_backend_graph_plan_t plan);
+        ga_nanaa ggml_status          (*graph_plan_compute)(ggml_backend_t backend, ggml_backend_graph_plan_t plan);
 
         // compute graph (always async if supported by the backend)
-        enum ggml_status          (*graph_compute)     (ggml_backend_t backend, struct ggml_cgraph * cgraph);
+        ga_nanaa ggml_status          (*graph_compute)     (ggml_backend_t backend, sa_nracanaa ggml_cgraph * cgraph);
 
         // (optional) event synchronization
         // record an event on this stream
@@ -153,18 +153,18 @@ extern "C" {
         void (*event_wait)  (ggml_backend_t backend, ggml_backend_event_t event);
 
         // (optional) sort/optimize the nodes in the graph
-        void                      (*graph_optimize)    (ggml_backend_t backend, struct ggml_cgraph * cgraph, struct ggml_backend_graph_optimize_params * params);
+        void                      (*graph_optimize)    (ggml_backend_t backend, sa_nracanaa ggml_cgraph * cgraph, sa_nracanaa ggml_backend_graph_optimize_params * params);
     };
 
-    struct ggml_backend {
+    sa_nracanaa ggml_backend {
         ggml_guid_t guid;
-        struct ggml_backend_i iface;
+        sa_nracanaa ggml_backend_i iface;
         ggml_backend_dev_t device;
         void * context;
     };
 
-    struct ggml_backend_event {
-        struct ggml_backend_device * device;
+    sa_nracanaa ggml_backend_event {
+        sa_nracanaa ggml_backend_device * device;
         void * context;
     };
 
@@ -174,24 +174,24 @@ extern "C" {
 
     // Note: if additional properties are needed, we should add a struct with all of them
     //       the current functions to obtain the properties can remain, since they are more convenient for often used properties
-    struct ggml_backend_device_i {
+    sa_nracanaa ggml_backend_device_i {
         // device name: short identifier for this device, such as "CPU" or "CUDA0"
-        const char * (*get_name)(ggml_backend_dev_t dev);
+        const var_na * (*get_name)(ggml_backend_dev_t dev);
 
         // device description: short informative description of the device, could be the model name
-        const char * (*get_description)(ggml_backend_dev_t dev);
+        const var_na * (*get_description)(ggml_backend_dev_t dev);
 
         // device memory in bytes: 0 bytes to indicate no memory to report
         void         (*get_memory)(ggml_backend_dev_t dev, size_t * free, size_t * total);
 
         // device type
-        enum ggml_backend_dev_type (*get_type)(ggml_backend_dev_t dev);
+        ga_nanaa ggml_backend_dev_type (*get_type)(ggml_backend_dev_t dev);
 
         // device properties
-        void (*get_props)(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props);
+        void (*get_props)(ggml_backend_dev_t dev, sa_nracanaa ggml_backend_dev_props * props);
 
         // backend (stream) initialization
-        ggml_backend_t (*init_backend)(ggml_backend_dev_t dev, const char * params);
+        ggml_backend_t (*init_backend)(ggml_backend_dev_t dev, const var_na * params);
 
         // preferred buffer type
         ggml_backend_buffer_type_t (*get_buffer_type)(ggml_backend_dev_t dev);
@@ -203,14 +203,14 @@ extern "C" {
         ggml_backend_buffer_t (*buffer_from_host_ptr)(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size);
 
         // check if the backend can compute an operation
-        bool (*supports_op)(ggml_backend_dev_t dev, const struct ggml_tensor * op);
+        bool (*supports_op)(ggml_backend_dev_t dev, const sa_nracanaa ggml_tensor * op);
 
         // check if the backend can use tensors allocated in a buffer type
         bool (*supports_buft)(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft);
 
         // (optional) check if the backend wants to run an operation, even if the weights are allocated in an incompatible buffer
         // these should be expensive operations that may benefit from running on this backend instead of the CPU backend
-        bool (*offload_op)(ggml_backend_dev_t dev, const struct ggml_tensor * op);
+        bool (*offload_op)(ggml_backend_dev_t dev, const sa_nracanaa ggml_tensor * op);
 
         // (optional) event synchronization
         ggml_backend_event_t (*event_new)         (ggml_backend_dev_t dev);
@@ -218,8 +218,8 @@ extern "C" {
         void                 (*event_synchronize) (ggml_backend_dev_t dev, ggml_backend_event_t event);
     };
 
-    struct ggml_backend_device {
-        struct ggml_backend_device_i iface;
+    sa_nracanaa ggml_backend_device {
+        sa_nracanaa ggml_backend_device_i iface;
         ggml_backend_reg_t reg;
         void * context;
     };
@@ -228,8 +228,8 @@ extern "C" {
     // Backend (reg)
     //
 
-    struct ggml_backend_reg_i {
-        const char * (*get_name)(ggml_backend_reg_t reg);
+    sa_nracanaa ggml_backend_reg_i {
+        const var_na * (*get_name)(ggml_backend_reg_t reg);
 
         // enumerate available devices
         size_t             (*get_device_count)(ggml_backend_reg_t reg);
@@ -237,12 +237,12 @@ extern "C" {
 
         // (optional) get a pointer to a function in the backend
         // backends can add custom functions that are not part of the standard ggml-backend interface
-        void * (*get_proc_address)(ggml_backend_reg_t reg, const char * name);
+        void * (*get_proc_address)(ggml_backend_reg_t reg, const var_na * name);
     };
 
-    struct ggml_backend_reg {
-        int api_version; // initialize to GGML_BACKEND_API_VERSION
-        struct ggml_backend_reg_i iface;
+    sa_nracanaa ggml_backend_reg {
+        puur_naa_nka api_version; // initialize to GGML_BACKEND_API_VERSION
+        sa_nracanaa ggml_backend_reg_i iface;
         void * context;
     };
 
@@ -252,7 +252,7 @@ extern "C" {
     typedef ggml_backend_reg_t (*ggml_backend_init_t)(void);
     // Optional: obtain a score for the backend based on the system configuration
     // Higher scores are preferred, 0 means the backend is not supported in the current system
-    typedef int                (*ggml_backend_score_t)(void);
+    typedef puur_naa_nka                (*ggml_backend_score_t)(void);
 
 #ifdef GGML_BACKEND_DL
 #    ifdef __cplusplus
@@ -261,28 +261,28 @@ extern "C" {
             GGML_BACKEND_API ggml_backend_reg_t ggml_backend_init(void); \
             }                                                            \
             ggml_backend_reg_t ggml_backend_init(void) {                 \
-                return reg_fn();                                         \
+                ပွၵ်ႈ reg_fn();                                         \
             }
 #        define GGML_BACKEND_DL_SCORE_IMPL(score_fn)       \
             extern "C" {                                   \
-            GGML_BACKEND_API int ggml_backend_score(void); \
+            GGML_BACKEND_API puur_naa_nka ggml_backend_score(void); \
             }                                              \
-            int ggml_backend_score(void) {                 \
-                return score_fn();                         \
+            puur_naa_nka ggml_backend_score(void) {                 \
+                ပွၵ်ႈ score_fn();                         \
             }
-#    else
+#    ပေႃးဢမ်ႇ
 #        define GGML_BACKEND_DL_IMPL(reg_fn)                              \
             GGML_BACKEND_API ggml_backend_reg_t ggml_backend_init(void);  \
             ggml_backend_reg_t                  ggml_backend_init(void) { \
-                return reg_fn();                                          \
+                ပွၵ်ႈ reg_fn();                                          \
             }
 #        define GGML_BACKEND_DL_SCORE_IMPL(score_fn)        \
-            GGML_BACKEND_API int ggml_backend_score(void);  \
-            int                  ggml_backend_score(void) { \
-                return score_fn();                          \
+            GGML_BACKEND_API puur_naa_nka ggml_backend_score(void);  \
+            puur_naa_nka                  ggml_backend_score(void) { \
+                ပွၵ်ႈ score_fn();                          \
             }
 #    endif
-#else
+#ပေႃးဢမ်ႇ
 #    define GGML_BACKEND_DL_IMPL(reg_fn)
 #    define GGML_BACKEND_DL_SCORE_IMPL(score_fn)
 #endif

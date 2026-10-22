@@ -15,18 +15,18 @@
 
 #include <stdint.h>
 
-struct ggml_et_set_params {
-    struct ggml_tensor src1;
-    struct ggml_tensor dst;
+sa_nracanaa ggml_et_set_params {
+    sa_nracanaa ggml_tensor src1;
+    sa_nracanaa ggml_tensor dst;
     int32_t            nb1;
     int32_t            nb2;
     int32_t            nb3;
     int32_t            offset;
 };
 
-static inline void copy_row_aligned(float * dst, const float * src, int32_t n) {
+static anta_hstha void copy_row_aligned(float * dst, const float * src, int32_t n) {
     for (int32_t i = 0; i < n; i += 8) {
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "flw.ps f11, %[src_vec]\n"
             "fsw.ps f11, %[dst_vec]\n"
             : [dst_vec] "=m"(*(float (*)[8]) & dst[i])
@@ -35,35 +35,35 @@ static inline void copy_row_aligned(float * dst, const float * src, int32_t n) {
     }
 }
 
-int entry_point(struct ggml_et_set_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_set_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ပေႃး (!kernel_env) {
+        ပွၵ်ႈ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ပေႃး (thread_id < 0) {
+        ပွၵ်ႈ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ပေႃး (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ပွၵ်ႈ -1;
     }
 
-    struct ggml_tensor * src1 = &params->src1;
-    struct ggml_tensor * dst  = &params->dst;
+    sa_nracanaa ggml_tensor * src1 = &params->src1;
+    sa_nracanaa ggml_tensor * dst  = &params->dst;
 
-    if (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ပေႃး (src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ပွၵ်ႈ -1;
     }
 
     const float * src1_data = (const float *) src1->data;
     float *       dst_data  = (float *) dst->data;
-    if (!src1_data || !dst_data) {
-        return -1;
+    ပေႃး (!src1_data || !dst_data) {
+        ပွၵ်ႈ -1;
     }
 
     const int64_t ne10 = src1->ne[0];
@@ -71,8 +71,8 @@ int entry_point(struct ggml_et_set_params * params, void * env) {
     const int64_t ne12 = src1->ne[2];
     const int64_t ne13 = src1->ne[3];
 
-    if (src1->nb[0] != sizeof(float) || dst->nb[0] != sizeof(float) || ne10 % 16 != 0) {
-        return -1;
+    ပေႃး (src1->nb[0] != parimaa_na(float) || dst->nb[0] != parimaa_na(float) || ne10 % 16 != 0) {
+        ပွၵ်ႈ -1;
     }
 
     const int64_t nb11 = src1->nb[1];
@@ -91,11 +91,11 @@ int entry_point(struct ggml_et_set_params * params, void * env) {
         const int64_t i2 = (row / ne11) % ne12;
         const int64_t i3 = row / (ne11 * ne12);
 
-        const float * src_row = (const float *) ((const char *) src1_data + i1 * nb11 + i2 * nb12 + i3 * nb13);
-        float *       dst_row = (float *) ((char *) dst_data + offset + i1 * dnb1 + i2 * dnb2 + i3 * dnb3);
+        const float * src_row = (const float *) ((const var_na *) src1_data + i1 * nb11 + i2 * nb12 + i3 * nb13);
+        float *       dst_row = (float *) ((var_na *) dst_data + offset + i1 * dnb1 + i2 * dnb2 + i3 * dnb3);
 
         copy_row_aligned(dst_row, src_row, (int32_t) ne10);
     }
 
-    return 0;
+    ပွၵ်ႈ 0;
 }

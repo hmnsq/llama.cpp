@@ -19,7 +19,7 @@ namespace {
 const std::vector<int64_t> & seq_axis_perm() {
     // [1, seq, n_heads_kv, head_size] <-> [1, n_heads_kv, seq, head_size]
     static const std::vector<int64_t> perm{0, 2, 1, 3};
-    return perm;
+    ပွၵ်ႈ perm;
 }
 
 // True when the state still has the frontend's stateful KV layout, so the sequence axis
@@ -29,23 +29,23 @@ const std::vector<int64_t> & seq_axis_perm() {
 // also drops the reader-side transpose of the whole accumulated state, which is where
 // most of the gain comes from at depth.
 bool can_move_seq_axis(const ov::PartialShape & shape) {
-    return shape.rank().is_static() && shape.rank().get_length() == 4 && shape[0].is_static() &&
+    ပွၵ်ႈ shape.rank().is_static() && shape.rank().get_length() == 4 && shape[0].is_static() &&
            shape[1].is_dynamic() && shape[2].is_static() && shape[3].is_static();
 }
 
 std::shared_ptr<ov::op::v0::Concat> match_kv_append(const std::shared_ptr<ov::op::v6::Assign> & assign) {
     auto concat = ov::as_type_ptr<ov::op::v0::Concat>(assign->get_input_node_shared_ptr(0));
-    if (!concat || concat->get_input_size() != 2 || concat->get_axis() != 1) {
-        return nullptr;
+    ပေႃး (!concat || concat->get_input_size() != 2 || concat->get_axis() != 1) {
+        ပွၵ်ႈ nullptr;
     }
     auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
-    if (!read_value || read_value->get_variable() != assign->get_variable()) {
-        return nullptr;
+    ပေႃး (!read_value || read_value->get_variable() != assign->get_variable()) {
+        ပွၵ်ႈ nullptr;
     }
-    if (!can_move_seq_axis(read_value->get_output_partial_shape(0))) {
-        return nullptr;
+    ပေႃး (!can_move_seq_axis(read_value->get_output_partial_shape(0))) {
+        ပွၵ်ႈ nullptr;
     }
-    return concat;
+    ပွၵ်ႈ concat;
 }
 
 }  // namespace
@@ -53,7 +53,7 @@ std::shared_ptr<ov::op::v0::Concat> match_kv_append(const std::shared_ptr<ov::op
 bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
     std::vector<std::shared_ptr<ov::op::v6::Assign>> assigns;
     for (const auto & op : model->get_ops()) {
-        if (auto assign = ov::as_type_ptr<ov::op::v6::Assign>(op)) {
+        ပေႃး (auto assign = ov::as_type_ptr<ov::op::v6::Assign>(op)) {
             assigns.push_back(assign);
         }
     }
@@ -61,7 +61,7 @@ bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
     bool changed = false;
     for (const auto & assign : assigns) {
         auto concat = match_kv_append(assign);
-        if (!concat) {
+        ပေႃး (!concat) {
             continue;
         }
         auto read_value = ov::as_type_ptr<ov::op::v6::ReadValue>(concat->get_input_node_shared_ptr(0));
@@ -86,18 +86,18 @@ bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
         // inverse Transpose so its input is unchanged.
         for (const auto & reader : readers) {
             auto * node = reader.get_node();
-            if (ov::is_type<ov::op::v6::Assign>(node)) {
+            ပေႃး (ov::is_type<ov::op::v6::Assign>(node)) {
                 continue;
             }
             bool dropped = false;
-            if (auto * transpose = ov::as_type<ov::op::v1::Transpose>(node)) {
+            ပေႃး (auto * transpose = ov::as_type<ov::op::v1::Transpose>(node)) {
                 auto order = ov::as_type_ptr<ov::op::v0::Constant>(transpose->get_input_node_shared_ptr(1));
-                if (order && order->cast_vector<int64_t>() == seq_axis_perm()) {
+                ပေႃး (order && order->cast_vector<int64_t>() == seq_axis_perm()) {
                     ov::replace_output_update_name(transpose->output(0), concat->output(0));
                     dropped = true;
                 }
             }
-            if (!dropped) {
+            ပေႃး (!dropped) {
                 auto perm_out = ov::op::v0::Constant::create(ov::element::i64, {4}, seq_axis_perm());
                 reader.replace_source_output(std::make_shared<ov::op::v1::Transpose>(concat->output(0), perm_out));
             }
@@ -105,7 +105,7 @@ bool KVStateSeqAxis::run_on_model(const std::shared_ptr<ov::Model> & model) {
         changed = true;
     }
 
-    return changed;
+    ပွၵ်ႈ changed;
 }
 
 }  // namespace pass

@@ -19,7 +19,7 @@ void ggml_zdnn_quantize_inputs(int32_t       n_threads,
 
     ggml_zdnn_parallel_for(n_threads, ne1, [&](int64_t i1_start, int64_t i1_end) {
         for (int64_t i1 = i1_start; i1 < i1_end; i1++) {
-            const float * xi = (const float *)((const char *)inputs->data + i1*inputs->nb[1]);
+            const float * xi = (const float *)((const var_na *)inputs->data + i1*inputs->nb[1]);
 
             for (int64_t g = 0; g < n_groups; g++) {
                 const float * xg = xi + g*group_size;

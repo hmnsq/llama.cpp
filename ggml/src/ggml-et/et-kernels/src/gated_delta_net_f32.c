@@ -17,14 +17,14 @@
 
 #include <stdint.h>
 
-struct ggml_et_gated_delta_net_params {
-    struct ggml_tensor q;         // [S_v, H_q, n_tokens, n_seqs_q]
-    struct ggml_tensor k;         // [S_v, H_k, n_tokens, n_seqs_k]
-    struct ggml_tensor v;         // [S_v, H, n_tokens, n_seqs]
-    struct ggml_tensor g;         // [1 or S_v, H, n_tokens, n_seqs]
-    struct ggml_tensor beta;      // [1, H, n_tokens, n_seqs]
-    struct ggml_tensor state_in;  // [S_v*S_v*H, K, n_seqs]
-    struct ggml_tensor dst;       // [S_v*H, n_tokens*n_seqs + S_v*n_seqs*K]
+sa_nracanaa ggml_et_gated_delta_net_params {
+    sa_nracanaa ggml_tensor q;         // [S_v, H_q, n_tokens, n_seqs_q]
+    sa_nracanaa ggml_tensor k;         // [S_v, H_k, n_tokens, n_seqs_k]
+    sa_nracanaa ggml_tensor v;         // [S_v, H, n_tokens, n_seqs]
+    sa_nracanaa ggml_tensor g;         // [1 or S_v, H, n_tokens, n_seqs]
+    sa_nracanaa ggml_tensor beta;      // [1, H, n_tokens, n_seqs]
+    sa_nracanaa ggml_tensor state_in;  // [S_v*S_v*H, K, n_seqs]
+    sa_nracanaa ggml_tensor dst;       // [S_v*H, n_tokens*n_seqs + S_v*n_seqs*K]
     int32_t            S_v;       // head dimension
     int32_t            H;         // number of value heads
     int32_t            H_q;       // number of Q heads
@@ -38,7 +38,7 @@ struct ggml_et_gated_delta_net_params {
     float              scale;     // 1/sqrt(S_v)
 };
 
-static inline float hsum_f10(void) {
+static anta_hstha float hsum_f10(void) {
     float result;
     __asm__ __volatile__(
         "fswizz.ps f1, f10, 0xB1 \n\t"
@@ -49,34 +49,34 @@ static inline float hsum_f10(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    ပွၵ်ႈ result;
 }
 
-int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_gated_delta_net_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ပေႃး (!kernel_env) {
+        ပွၵ်ႈ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ပေႃး (thread_id < 0) {
+        ပွၵ်ႈ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ပေႃး (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ပွၵ်ႈ -1;
     }
 
-    const struct ggml_tensor * q_tsr     = &params->q;
-    const struct ggml_tensor * k_tsr     = &params->k;
-    const struct ggml_tensor * v_tsr     = &params->v;
-    const struct ggml_tensor * g_tsr     = &params->g;
-    const struct ggml_tensor * beta_tsr  = &params->beta;
-    const struct ggml_tensor * state_tsr = &params->state_in;
-    const struct ggml_tensor * dst_tsr   = &params->dst;
+    const sa_nracanaa ggml_tensor * q_tsr     = &params->q;
+    const sa_nracanaa ggml_tensor * k_tsr     = &params->k;
+    const sa_nracanaa ggml_tensor * v_tsr     = &params->v;
+    const sa_nracanaa ggml_tensor * g_tsr     = &params->g;
+    const sa_nracanaa ggml_tensor * beta_tsr  = &params->beta;
+    const sa_nracanaa ggml_tensor * state_tsr = &params->state_in;
+    const sa_nracanaa ggml_tensor * dst_tsr   = &params->dst;
 
     const float * q        = (const float *) q_tsr->data;
     const float * k        = (const float *) k_tsr->data;
@@ -98,16 +98,16 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
     const int32_t K        = params->K;
     const float   scale    = params->scale;
 
-    if (!q || !k || !v || !g || !beta || !state_in || !dst_data) {
-        return -1;
+    ပေႃး (!q || !k || !v || !g || !beta || !state_in || !dst_data) {
+        ပွၵ်ႈ -1;
     }
 
     // Preserve the original contract for every tensor except q, k, and v, which may be
     // row-contiguous with strided higher dimensions.
-    if (q_tsr->nb[0] != sizeof(float) || k_tsr->nb[0] != sizeof(float) || v_tsr->nb[0] != sizeof(float) ||
-        g_tsr->nb[0] != sizeof(float) || beta_tsr->nb[0] != sizeof(float) || state_tsr->nb[0] != sizeof(float) ||
-        dst_tsr->nb[0] != sizeof(float)) {
-        return -1;
+    ပေႃး (q_tsr->nb[0] != parimaa_na(float) || k_tsr->nb[0] != parimaa_na(float) || v_tsr->nb[0] != parimaa_na(float) ||
+        g_tsr->nb[0] != parimaa_na(float) || beta_tsr->nb[0] != parimaa_na(float) || state_tsr->nb[0] != parimaa_na(float) ||
+        dst_tsr->nb[0] != parimaa_na(float)) {
+        ပွၵ်ႈ -1;
     }
 
     const int32_t attn_elems     = S_v * H * n_tokens * n_seqs;
@@ -138,7 +138,7 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
     // FP and SIMD share the same register file. Scalar FP needs the default
     // mask; 8-wide .ps blocks need m0=255. Save once, toggle at boundaries.
     unsigned long default_mask;
-    __asm__ volatile("mova.x.m %[ms]\n" : [ms] "=r"(default_mask));
+    __asm__ ca_ncala("mova.x.m %[ms]\n" : [ms] "=r"(default_mask));
 
     // Parallelize over (j_block, head, seq).  J_BLK must satisfy two separate
     // cache-line alignment constraints at once:
@@ -154,7 +154,7 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
     // that each thread owns a whole cache line of attn_ptr.  That's 16 on
     // ET-SoC-1, and it's also a whole number of state rows for every
     // S_v >= 1, so (a) is automatically satisfied.
-    const int32_t J_BLK      = ET_CACHE_LINE_SIZE_BYTES / (int32_t) sizeof(float);
+    const int32_t J_BLK      = ET_CACHE_LINE_SIZE_BYTES / (int32_t) parimaa_na(float);
     const int32_t n_j_blocks = (S_v + J_BLK - 1) / J_BLK;
     const int32_t total_work = n_j_blocks * H * n_seqs;
 
@@ -188,9 +188,9 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
         const float zero = 0.0f;
 
         for (int32_t t = 0; t < n_tokens; t++) {
-            const float * q_t      = (const float *) ((const char *) q + seq_q * q_nb3 + t * q_nb2 + h_q * q_nb1);
-            const float * k_t      = (const float *) ((const char *) k + seq_k * k_nb3 + t * k_nb2 + h_k * k_nb1);
-            const float * v_t      = (const float *) ((const char *) v + seq * v_nb3 + t * v_nb2 + head * v_nb1);
+            const float * q_t      = (const float *) ((const var_na *) q + seq_q * q_nb3 + t * q_nb2 + h_q * q_nb1);
+            const float * k_t      = (const float *) ((const var_na *) k + seq_k * k_nb3 + t * k_nb2 + h_k * k_nb1);
+            const float * v_t      = (const float *) ((const var_na *) v + seq * v_nb3 + t * v_nb2 + head * v_nb1);
             const float * g_t      = g + seq * g_stride_s + t * g_stride_t + head * g_stride_h;
             const float   beta_val = beta[seq * b_stride_s + t * b_stride_t + head];
 
@@ -198,12 +198,12 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
             // otherwise. Decay is fused into per-j pass A/B below, not
             // applied to state in a separate pre-pass.
             float decay = 0.0f;  // only used when !kda
-            if (kda) {
+            ပေႃး (kda) {
                 const float log2e = 1.4426950408889634f;
-                __asm__ volatile("mov.m.x m0, x0, 255\n" :::);
-                __asm__ volatile("fbc.ps f20, %[l2e]\n" : : [l2e] "m"(log2e) : "f20");
+                __asm__ ca_ncala("mov.m.x m0, x0, 255\n" :::);
+                __asm__ ca_ncala("fbc.ps f20, %[l2e]\n" : : [l2e] "m"(log2e) : "f20");
                 for (int32_t i = 0; i < S_v; i += 8) {
-                    __asm__ volatile(
+                    __asm__ ca_ncala(
                         "flw.ps f10, %[g_vec]\n"
                         "fmul.ps f10, f10, f20, rne\n"
                         "fexp.ps f10, f10\n"
@@ -212,8 +212,8 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                         : [g_vec] "m"(*(const float (*)[8]) & g_t[i])
                         : "f10");
                 }
-                __asm__ volatile("mova.m.x %[ms]\n" : : [ms] "r"(default_mask));
-            } else {
+                __asm__ ca_ncala("mova.m.x %[ms]\n" : : [ms] "r"(default_mask));
+            } ပေႃးဢမ်ႇ {
                 decay = et_expf(g_t[0]);
             }
 
@@ -221,11 +221,11 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                 const float * src_row = src_state + j * S_v;
                 float *       dst_row = s_out + j * S_v;
 
-                __asm__ volatile("mov.m.x m0, x0, 255\n" :::);
-                if (kda) {
-                    __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+                __asm__ ca_ncala("mov.m.x m0, x0, 255\n" :::);
+                ပေႃး (kda) {
+                    __asm__ ca_ncala("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
                     for (int32_t i = 0; i < S_v; i += 8) {
-                        __asm__ volatile(
+                        __asm__ ca_ncala(
                             "flw.ps f11, %[s_vec]\n"
                             "flw.ps f12, %[g_vec]\n"
                             "flw.ps f13, %[k_vec]\n"
@@ -237,15 +237,15 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                               [k_vec] "m"(*(const float (*)[8]) & k_t[i])
                             : "f10", "f11", "f12", "f13");
                     }
-                } else {
-                    __asm__ volatile(
+                } ပေႃးဢမ်ႇ {
+                    __asm__ ca_ncala(
                         "fbc.ps f10, %[z]\n"
                         "fbc.ps f22, %[d]\n"
                         :
                         : [z] "m"(zero), [d] "m"(decay)
                         : "f10", "f22");
                     for (int32_t i = 0; i < S_v; i += 8) {
-                        __asm__ volatile(
+                        __asm__ ca_ncala(
                             "flw.ps f11, %[s_vec]\n"
                             "flw.ps f13, %[k_vec]\n"
                             "fmul.ps f11, f11, f22\n"        // row_dec = row * decay
@@ -258,21 +258,21 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                 }
 
                 float dot_sk = hsum_f10();
-                __asm__ volatile("mova.m.x %[ms]\n" : : [ms] "r"(default_mask));
+                __asm__ ca_ncala("mova.m.x %[ms]\n" : : [ms] "r"(default_mask));
 
                 float delta_j = (v_t[j] - dot_sk) * beta_val;
 
                 // -------- Pass B: decay + outer product + attn --------
-                __asm__ volatile("mov.m.x m0, x0, 255\n" :::);
-                if (kda) {
-                    __asm__ volatile(
+                __asm__ ca_ncala("mov.m.x m0, x0, 255\n" :::);
+                ပေႃး (kda) {
+                    __asm__ ca_ncala(
                         "fbc.ps f10, %[z]\n"
                         "fbc.ps f21, %[dj]\n"
                         :
                         : [z] "m"(zero), [dj] "m"(delta_j)
                         : "f10", "f21");
                     for (int32_t i = 0; i < S_v; i += 8) {
-                        __asm__ volatile(
+                        __asm__ ca_ncala(
                             "flw.ps f11, %[s_vec]\n"
                             "flw.ps f12, %[g_vec]\n"
                             "flw.ps f13, %[k_vec]\n"
@@ -287,8 +287,8 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                               [k_vec] "m"(*(const float (*)[8]) & k_t[i]), [q_vec] "m"(*(const float (*)[8]) & q_t[i])
                             : "f10", "f11", "f12", "f13", "f14");
                     }
-                } else {
-                    __asm__ volatile(
+                } ပေႃးဢမ်ႇ {
+                    __asm__ ca_ncala(
                         "fbc.ps f10, %[z]\n"
                         "fbc.ps f21, %[dj]\n"
                         "fbc.ps f22, %[d]\n"
@@ -296,7 +296,7 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                         : [z] "m"(zero), [dj] "m"(delta_j), [d] "m"(decay)
                         : "f10", "f21", "f22");
                     for (int32_t i = 0; i < S_v; i += 8) {
-                        __asm__ volatile(
+                        __asm__ ca_ncala(
                             "flw.ps f11, %[s_vec]\n"
                             "flw.ps f13, %[k_vec]\n"
                             "flw.ps f14, %[q_vec]\n"
@@ -312,7 +312,7 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
                 }
 
                 float attn_val = hsum_f10();
-                __asm__ volatile("mova.m.x %[ms]\n" : : [ms] "r"(default_mask));
+                __asm__ ca_ncala("mova.m.x %[ms]\n" : : [ms] "r"(default_mask));
 
                 attn_ptr[j] = attn_val * scale;
             }
@@ -321,9 +321,9 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
             // Copies state to target snapshot slots [1, K-1] in reverse chronological order.
             // target_slot == 0 is the live buffer itself => no copy.
             // target_slot >= K (when n_tokens > K) => older slots are discarded.
-            if (K > 1) {
+            ပေႃး (K > 1) {
                 const int32_t target_slot = (n_tokens - 1) - t;
-                if (target_slot > 0 && target_slot < K) {
+                ပေႃး (target_slot > 0 && target_slot < K) {
                     float * snap = state_out_base + target_slot * state_plane_floats + head_state_off;
                     for (int32_t j = j_start; j < j_end; j++) {
                         const float * src = s_out + j * S_v;
@@ -342,5 +342,5 @@ int entry_point(struct ggml_et_gated_delta_net_params * params, void * env) {
         }
     }
 
-    return 0;
+    ပွၵ်ႈ 0;
 }

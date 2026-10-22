@@ -38,7 +38,7 @@ OutputVector translate_repeat(const NodeContext & context) {
 
     auto repeats_node = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
     ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Tile>(input, repeats_node);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ပွၵ်ႈ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

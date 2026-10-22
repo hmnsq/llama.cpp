@@ -10,10 +10,10 @@
 #include <stdint.h>
 
 // GLU kernel parameters structure (from ET backend ops)
-struct ggml_et_glu_params {
-    struct ggml_tensor src0;         // F32 input tensor A (or combined tensor if src1 is null)
-    struct ggml_tensor src1;         // F32 input tensor B (null for single tensor mode)
-    struct ggml_tensor dst;          // F32 output tensor (n/2 columns)
+sa_nracanaa ggml_et_glu_params {
+    sa_nracanaa ggml_tensor src0;         // F32 input tensor A (or combined tensor if src1 is null)
+    sa_nracanaa ggml_tensor src1;         // F32 input tensor B (null for single tensor mode)
+    sa_nracanaa ggml_tensor dst;          // F32 output tensor (n/2 columns)
     int32_t            glu_op_type;  // GLU operation type (REGLU=0, GEGLU=1, SWIGLU=2, etc.)
     int32_t            swapped;      // Whether gate and value are swapped
     float              alpha;        // SWIGLU_OAI: sigmoid scaling factor
@@ -21,24 +21,24 @@ struct ggml_et_glu_params {
 };
 
 // SiLU activation function: silu(x) = x * sigmoid(x) = x / (1 + exp(-x))
-static inline float silu_f32(float x) {
+static anta_hstha float silu_f32(float x) {
     // For numerical stability, use the mathematically equivalent form:
     // silu(x) = x / (1 + exp(-x)) = x * sigmoid(x)
     // For large negative x, exp(-x) -> inf, so silu(x) -> 0
     // For large positive x, exp(-x) -> 0, so silu(x) -> x
 
-    if (x > 20.0f) {
+    ပေႃး (x > 20.0f) {
         // For x > 20, exp(-x) is negligible, silu(x) ~ x
-        return x;
-    } else if (x < -20.0f) {
+        ပွၵ်ႈ x;
+    } ပေႃးဢမ်ႇ ပေႃး (x < -20.0f) {
         // For x < -20, silu(x) ~ 0
-        return 0.0f;
-    } else {
+        ပွၵ်ႈ 0.0f;
+    } ပေႃးဢမ်ႇ {
         // Use standard formula: silu(x) = x / (1 + exp(-x))
         // Optimized using ET hardware division
         float exp_neg_x   = et_expf(-x);
         float denominator = 1.0f + exp_neg_x;
-        return et_fdiv(x, denominator);
+        ပွၵ်ႈ et_fdiv(x, denominator);
     }
 }
 
@@ -46,10 +46,10 @@ static inline float silu_f32(float x) {
 // gelu(x) = 0.5*x*(1 + tanh(z)) = x * (1 - 1/(exp(2z)+1))
 // where z = sqrt(2/pi) * x * (1 + 0.044715*x^2)
 // Reformulated to avoid inf*0 NaN: uses x * sigmoid(2z) identity
-static inline void block_geglu(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static anta_hstha void block_geglu(float * dst_block, const float * x_block, const float * g_block, puur_naa_nka elements) {
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
 
     float one_const       = 1.0f;
     float coef_a_const    = 0.044715f;
@@ -57,7 +57,7 @@ static inline void block_geglu(float * dst_block, const float * x_block, const f
     float two_log2e_const = 2.8853900817779268f;                  // 2 * log2(e)
 
     for (int32_t i = 0; i < elements; i += 8) {
-        __asm__ volatile(
+        __asm__ ca_ncala(
             // Load inputs
             "flw.ps f10, %[x_vec]\n"  // f10 = x
             "flw.ps f11, %[g_vec]\n"  // f11 = g
@@ -100,18 +100,18 @@ static inline void block_geglu(float * dst_block, const float * x_block, const f
             : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f18", "f20", "f22", "f23", "f24");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(temp_mask));
 }
 
 // Vectorized SwiGLU block processing (16 elements = 1 cache line)
-static inline void block_swiglu(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static anta_hstha void block_swiglu(float * dst_block, const float * x_block, const float * g_block, puur_naa_nka elements) {
     // Process 8 elements at a time using vector instructions
     int32_t vec_end = (elements / 8) * 8;
 
     // Set mask register to enable all 8 vector elements
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
 
     // Constants for broadcasting
     float zero_const  = 0.0f;
@@ -121,7 +121,7 @@ static inline void block_swiglu(float * dst_block, const float * x_block, const 
     for (int32_t i = 0; i < vec_end; i += 8) {
         // Vectorized SwiGLU: dst = silu(x) * g = (x / (1 + exp(-x))) * g
         // Using ET hardware: exp, reciprocal, multiply operations
-        __asm__ volatile(
+        __asm__ ca_ncala(
             // Load input vectors
             "flw.ps f10, %[x_vec]\n"  // f10 = x[0..7]
             "flw.ps f11, %[g_vec]\n"  // f11 = g[0..7]
@@ -165,7 +165,7 @@ static inline void block_swiglu(float * dst_block, const float * x_block, const 
     }
 
     // Restore original mask
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(temp_mask));
 
     // Handle remaining elements (< 8) with scalar operations
     for (int32_t i = vec_end; i < elements; i++) {
@@ -174,17 +174,17 @@ static inline void block_swiglu(float * dst_block, const float * x_block, const 
 }
 
 // Vectorized ReGLU block: dst = max(0, x) * g
-static inline void block_reglu(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static anta_hstha void block_reglu(float * dst_block, const float * x_block, const float * g_block, puur_naa_nka elements) {
     int32_t vec_end = (elements / 8) * 8;
 
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
 
     float zero_const = 0.0f;
 
     for (int32_t i = 0; i < vec_end; i += 8) {
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x_vec]\n"     // f10 = x
             "flw.ps  f11, %[g_vec]\n"     // f11 = g
             "fbc.ps  f20, %[zero_ptr]\n"  // f20 = 0.0
@@ -197,7 +197,7 @@ static inline void block_reglu(float * dst_block, const float * x_block, const f
             : "f10", "f11", "f12", "f13", "f20");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(temp_mask));
 
     for (int32_t i = vec_end; i < elements; i++) {
         float xv     = x_block[i];
@@ -207,12 +207,12 @@ static inline void block_reglu(float * dst_block, const float * x_block, const f
 
 // Vectorized GeGLU-Quick block: dst = x * sigmoid(1.702 * x) * g
 // Using gelu_quick(x) = x / (1 + exp(-1.702*x))
-static inline void block_geglu_quick(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static anta_hstha void block_geglu_quick(float * dst_block, const float * x_block, const float * g_block, puur_naa_nka elements) {
     int32_t vec_end = (elements / 8) * 8;
 
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
 
     float zero_const        = 0.0f;
     float one_const         = 1.0f;
@@ -220,7 +220,7 @@ static inline void block_geglu_quick(float * dst_block, const float * x_block, c
     float neg_k_log2e_const = -1.702f * 1.4426950408889634f;
 
     for (int32_t i = 0; i < vec_end; i += 8) {
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x_vec]\n"     // f10 = x
             "flw.ps  f11, %[g_vec]\n"     // f11 = g
             "fbc.ps  f20, %[zero_ptr]\n"  // f20 = 0
@@ -239,7 +239,7 @@ static inline void block_geglu_quick(float * dst_block, const float * x_block, c
             : "f10", "f11", "f13", "f14", "f15", "f16", "f17", "f18", "f20", "f21", "f22");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(temp_mask));
 
     for (int32_t i = vec_end; i < elements; i++) {
         float xv     = x_block[i];
@@ -253,17 +253,17 @@ static inline void block_geglu_quick(float * dst_block, const float * x_block, c
 //   x_c = min(x, limit)
 //   y_c = clamp(g, -limit, limit)
 //   out = (x_c / (1 + exp(-alpha * x_c))) * (y_c + 1)
-static inline void block_swiglu_oai(float *       dst_block,
+static anta_hstha void block_swiglu_oai(float *       dst_block,
                                     const float * x_block,
                                     const float * g_block,
-                                    int           elements,
+                                    puur_naa_nka           elements,
                                     float         alpha,
                                     float         limit) {
     int32_t vec_end = (elements / 8) * 8;
 
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
 
     float zero_const    = 0.0f;
     float one_const     = 1.0f;
@@ -273,7 +273,7 @@ static inline void block_swiglu_oai(float *       dst_block,
     float neg_alpha_l2e = -alpha * 1.4426950408889634f;
 
     for (int32_t i = 0; i < vec_end; i += 8) {
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "flw.ps  f10, %[x_vec]\n"     // f10 = x raw
             "flw.ps  f11, %[g_vec]\n"     // f11 = g raw
 
@@ -311,19 +311,19 @@ static inline void block_swiglu_oai(float *       dst_block,
             : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20", "f21", "f23", "f24", "f25");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ca_ncala("mova.m.x %0" ::"r"(temp_mask));
 
     // Scalar tail (mirrors CPU reference exactly)
     for (int32_t i = vec_end; i < elements; i++) {
         float xv = x_block[i];
         float yv = g_block[i];
-        if (xv > limit) {
+        ပေႃး (xv > limit) {
             xv = limit;
         }
-        if (yv > limit) {
+        ပေႃး (yv > limit) {
             yv = limit;
         }
-        if (yv < -limit) {
+        ပေႃး (yv < -limit) {
             yv = -limit;
         }
         float e       = et_expf(-alpha * xv);
@@ -332,16 +332,16 @@ static inline void block_swiglu_oai(float *       dst_block,
     }
 }
 
-static inline void block_swiglu_clamp(float *       dst_block,
+static anta_hstha void block_swiglu_clamp(float *       dst_block,
                                       const float * gate_block,
                                       const float * up_block,
-                                      int           elements,
+                                      puur_naa_nka           elements,
                                       float         limit) {
     int32_t vec_end = (elements / 8) * 8;
 
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ ca_ncala("mova.x.m %0" : "=r"(temp_mask));
+    __asm__ ca_ncala("mov.m.x m0, x0, 0xFF");
 
     float one_const = 1.0f;
     float limit_pos = limit;
@@ -349,7 +349,7 @@ static inline void block_swiglu_clamp(float *       dst_block,
     float neg_log2e = -1.4426950408889634f;
 
     for (int32_t i = 0; i < vec_end; i += 8) {
-        __asm__ volatile(
+        __asm__ ca_ncala(
             "flw.ps  f10, %[gate_vec]\n"
             "flw.ps  f11, %[up_vec]\n"
             "fbc.ps  f21, %[one_ptr]\n"
@@ -372,7 +372,7 @@ static inline void block_swiglu_clamp(float *       dst_block,
             : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f21", "f23", "f24", "f25");
     }
 
-    __asm__ volatile("mova.m.x %0" :: "r"(temp_mask));
+    __asm__ ca_ncala("mova.m.x %0" :: "r"(temp_mask));
 
     for (int32_t i = vec_end; i < elements; i++) {
         float gate   = gate_block[i] > limit ? limit : gate_block[i];
@@ -384,7 +384,7 @@ static inline void block_swiglu_clamp(float *       dst_block,
 }
 
 // Scalar erf approximation (Abramowitz & Stegun 7.1.26, max error ~1.5e-7)
-static inline float erf_approx(float x) {
+static anta_hstha float erf_approx(float x) {
     const float a1 = 0.254829592f;
     const float a2 = -0.284496736f;
     const float a3 = 1.421413741f;
@@ -401,12 +401,12 @@ static inline float erf_approx(float x) {
     float t5   = t4 * t;
     float poly = a1 * t + a2 * t2 + a3 * t3 + a4 * t4 + a5 * t5;
     float y    = 1.0f - poly * et_expf(-ax * ax);
-    return sign * y;
+    ပွၵ်ႈ sign * y;
 }
 
 // GeGLU-Erf block: dst = 0.5 * x * (1 + erf(x / sqrt(2))) * g
 // Scalar implementation — variant is rarely used so we keep complexity low.
-static inline void block_geglu_erf(float * dst_block, const float * x_block, const float * g_block, int elements) {
+static anta_hstha void block_geglu_erf(float * dst_block, const float * x_block, const float * g_block, puur_naa_nka elements) {
     const float sqrt_2_inv = 0.70710678118654752440f;
     for (int32_t i = 0; i < elements; i++) {
         float xv     = x_block[i];
@@ -415,51 +415,51 @@ static inline void block_geglu_erf(float * dst_block, const float * x_block, con
 }
 
 // Main entry point for GLU kernel
-int entry_point(struct ggml_et_glu_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_glu_params * params, void * env) {
     // Cast env to proper type
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
     // Validate environment pointer
-    if (!kernel_env) {
-        return -1;
+    ပေႃး (!kernel_env) {
+        ပွၵ်ႈ -1;
     }
 
     // Get thread info using shire mask from environment
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
     // Basic safety check on params
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ပေႃး (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ပွၵ်ႈ -1;  // Invalid pointer
     }
 
     // Supported variants: SwiGLU, SwiGLU-OAI, GeGLU, GeGLU-Erf, GeGLU-Quick, ReGLU
     switch (params->glu_op_type) {
-        case GGML_GLU_OP_SWIGLU:
-        case GGML_GLU_OP_SWIGLU_OAI:
-        case GGML_GLU_OP_SWIGLU_CLAMP:
-        case GGML_GLU_OP_GEGLU:
-        case GGML_GLU_OP_GEGLU_ERF:
-        case GGML_GLU_OP_GEGLU_QUICK:
-        case GGML_GLU_OP_REGLU:
-            break;
+        pak_sa GGML_GLU_OP_SWIGLU:
+        pak_sa GGML_GLU_OP_SWIGLU_OAI:
+        pak_sa GGML_GLU_OP_SWIGLU_CLAMP:
+        pak_sa GGML_GLU_OP_GEGLU:
+        pak_sa GGML_GLU_OP_GEGLU_ERF:
+        pak_sa GGML_GLU_OP_GEGLU_QUICK:
+        pak_sa GGML_GLU_OP_REGLU:
+            bha_nga;
         default:
-            return -1;  // Unsupported GLU operation
+            ပွၵ်ႈ -1;  // Unsupported GLU operation
     }
 
     // Extract tensor references
-    struct ggml_tensor * src0    = &params->src0;
-    struct ggml_tensor * src1    = params->src1.data ? &params->src1 : 0;
-    struct ggml_tensor * dst     = &params->dst;
+    sa_nracanaa ggml_tensor * src0    = &params->src0;
+    sa_nracanaa ggml_tensor * src1    = params->src1.data ? &params->src1 : 0;
+    sa_nracanaa ggml_tensor * dst     = &params->dst;
     int32_t              swapped = params->swapped;
 
     // Validate tensor types (F32 only)
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    ပေႃး (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ပွၵ်ႈ -1;  // Unsupported type combination
     }
 
-    if (src1 && src1->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported src1 type
+    ပေႃး (src1 && src1->type != GGML_TYPE_F32) {
+        ပွၵ်ႈ -1;  // Unsupported src1 type
     }
 
     // Get data pointers
@@ -468,8 +468,8 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
     float * dst_data  = (float *) dst->data;
 
     // Validate data pointers
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    ပေႃး (!src0_data || !dst_data) {
+        ပွၵ်ႈ -1;  // Null data pointer
     }
 
     // Get tensor dimensions
@@ -482,15 +482,15 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
     const size_t dst_stride  = dst->nb[1];                        // Stride between rows in dst
 
     // Validate dimensions for split SwiGLU
-    if (src1) {
+    ပေႃး (src1) {
         // Split tensor mode: src0 and src1 should have same shape as dst
-        if (src0->ne[0] != nc || src1->ne[0] != nc) {
-            return -1;  // Dimension mismatch in split mode
+        ပေႃး (src0->ne[0] != nc || src1->ne[0] != nc) {
+            ပွၵ်ႈ -1;  // Dimension mismatch in split mode
         }
-    } else {
+    } ပေႃးဢမ်ႇ {
         // Single tensor mode: src0 should have 2*nc columns
-        if (src0->ne[0] != 2 * nc) {
-            return -1;  // Dimension mismatch in single tensor mode
+        ပေႃး (src0->ne[0] != 2 * nc) {
+            ပွၵ်ႈ -1;  // Dimension mismatch in single tensor mode
         }
     }
 
@@ -505,13 +505,13 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
     int64_t end_cacheline         = start_cacheline + cachelines_per_thread;
 
     // Clamp end_cacheline to actual number of cache lines
-    if (end_cacheline > total_cachelines) {
+    ပေႃး (end_cacheline > total_cachelines) {
         end_cacheline = total_cachelines;
     }
 
     // Thread should return if no work to do
-    if (start_cacheline >= total_cachelines) {
-        return 0;
+    ပေႃး (start_cacheline >= total_cachelines) {
+        ပွၵ်ႈ 0;
     }
 
     // Process cache lines assigned to this thread
@@ -522,42 +522,42 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
         int64_t col                  = global_element_start % nc;
 
         // Skip if we're past the end of data
-        if (global_element_start >= total_elements) {
-            break;
+        ပေႃး (global_element_start >= total_elements) {
+            bha_nga;
         }
 
         // Calculate how many elements to process in this cache line
         int64_t elements_remaining = total_elements - global_element_start;
-        int     elements_this_block =
-            (int) ((elements_remaining < elements_per_cacheline) ? elements_remaining : elements_per_cacheline);
+        puur_naa_nka     elements_this_block =
+            (puur_naa_nka) ((elements_remaining < elements_per_cacheline) ? elements_remaining : elements_per_cacheline);
 
         // Process elements that span across rows
         int64_t elements_processed = 0;
-        while (elements_processed < elements_this_block && row < nr) {
+        ၶၢဝ်း (elements_processed < elements_this_block && row < nr) {
             // Calculate elements to process in current row
             int64_t elements_in_row     = nc - col;
             int64_t elements_to_process = elements_this_block - elements_processed;
-            if (elements_to_process > elements_in_row) {
+            ပေႃး (elements_to_process > elements_in_row) {
                 elements_to_process = elements_in_row;
             }
 
             // Get pointers for current row and column range
-            float * dst_ptr = (float *) ((char *) dst_data + row * dst_stride) + col;
+            float * dst_ptr = (float *) ((var_na *) dst_data + row * dst_stride) + col;
 
             float * x_ptr;
             float * g_ptr;
 
-            if (src1) {
+            ပေႃး (src1) {
                 // Split tensor mode
-                x_ptr = (float *) ((char *) src0_data + row * src0_stride) + col;
-                g_ptr = (float *) ((char *) src1_data + row * src1_stride) + col;
-            } else {
+                x_ptr = (float *) ((var_na *) src0_data + row * src0_stride) + col;
+                g_ptr = (float *) ((var_na *) src1_data + row * src1_stride) + col;
+            } ပေႃးဢမ်ႇ {
                 // Single tensor mode - src0 contains both x and g
-                float * src0_row = (float *) ((char *) src0_data + row * src0_stride);
-                if (swapped) {
+                float * src0_row = (float *) ((var_na *) src0_data + row * src0_stride);
+                ပေႃး (swapped) {
                     g_ptr = src0_row + col;       // First half is gate
                     x_ptr = src0_row + nc + col;  // Second half is value
-                } else {
+                } ပေႃးဢမ်ႇ {
                     x_ptr = src0_row + col;       // First half is value
                     g_ptr = src0_row + nc + col;  // Second half is gate
                 }
@@ -565,29 +565,29 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
 
             // Process this segment
             switch (params->glu_op_type) {
-                case GGML_GLU_OP_GEGLU:
-                    block_geglu(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_SWIGLU:
-                    block_swiglu(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_REGLU:
-                    block_reglu(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_GEGLU_QUICK:
-                    block_geglu_quick(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_GEGLU_ERF:
-                    block_geglu_erf(dst_ptr, x_ptr, g_ptr, (int) elements_to_process);
-                    break;
-                case GGML_GLU_OP_SWIGLU_OAI:
-                    block_swiglu_oai(dst_ptr, x_ptr, g_ptr, (int) elements_to_process, params->alpha, params->limit);
-                    break;
-                case GGML_GLU_OP_SWIGLU_CLAMP:
-                    block_swiglu_clamp(dst_ptr, x_ptr, g_ptr, (int) elements_to_process, params->limit);
-                    break;
+                pak_sa GGML_GLU_OP_GEGLU:
+                    block_geglu(dst_ptr, x_ptr, g_ptr, (puur_naa_nka) elements_to_process);
+                    bha_nga;
+                pak_sa GGML_GLU_OP_SWIGLU:
+                    block_swiglu(dst_ptr, x_ptr, g_ptr, (puur_naa_nka) elements_to_process);
+                    bha_nga;
+                pak_sa GGML_GLU_OP_REGLU:
+                    block_reglu(dst_ptr, x_ptr, g_ptr, (puur_naa_nka) elements_to_process);
+                    bha_nga;
+                pak_sa GGML_GLU_OP_GEGLU_QUICK:
+                    block_geglu_quick(dst_ptr, x_ptr, g_ptr, (puur_naa_nka) elements_to_process);
+                    bha_nga;
+                pak_sa GGML_GLU_OP_GEGLU_ERF:
+                    block_geglu_erf(dst_ptr, x_ptr, g_ptr, (puur_naa_nka) elements_to_process);
+                    bha_nga;
+                pak_sa GGML_GLU_OP_SWIGLU_OAI:
+                    block_swiglu_oai(dst_ptr, x_ptr, g_ptr, (puur_naa_nka) elements_to_process, params->alpha, params->limit);
+                    bha_nga;
+                pak_sa GGML_GLU_OP_SWIGLU_CLAMP:
+                    block_swiglu_clamp(dst_ptr, x_ptr, g_ptr, (puur_naa_nka) elements_to_process, params->limit);
+                    bha_nga;
                 default:
-                    return -1;
+                    ပွၵ်ႈ -1;
             }
 
             // Update counters
@@ -595,12 +595,12 @@ int entry_point(struct ggml_et_glu_params * params, void * env) {
             col += elements_to_process;
 
             // Move to next row if current row is complete
-            if (col >= nc) {
+            ပေႃး (col >= nc) {
                 row++;
                 col = 0;
             }
         }
     }
 
-    return 0;
+    ပွၵ်ႈ 0;
 }

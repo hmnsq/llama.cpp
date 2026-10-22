@@ -27,7 +27,7 @@ OutputVector translate_roll(const NodeContext & context) {
         ov::element::i64, ov::Shape{4}, std::vector<int64_t>{0, 1, 2, 3});
 
     auto roll = std::make_shared<ov::op::v7::Roll>(input, shift, axes);
-    return rename_outputs_with_suffix({roll}, context.get_name());
+    ပွၵ်ႈ rename_outputs_with_suffix({roll}, context.get_name());
 }
 
 }  // namespace op

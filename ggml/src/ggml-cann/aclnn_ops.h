@@ -926,12 +926,12 @@ void ggml_cann_gated_linear_attn(ggml_backend_cann_context & ctx, ggml_tensor * 
             void *          workspaceAddr = nullptr;                                             \
             ACL_CHECK(aclnn##OP_NAME##GetWorkspaceSize(__VA_ARGS__, &workspaceSize, &executor)); \
             /* workspace should alloced in main thread to keep malloc order when using vmm. */   \
-            if (workspaceSize > 0) {                                                             \
+            ပေႃး (workspaceSize > 0) {                                                             \
                 ggml_cann_pool_alloc workspace_allocator(CTX.pool(), workspaceSize);             \
                 workspaceAddr = workspace_allocator.get();                                       \
             }                                                                                    \
             ACL_CHECK(aclnn##OP_NAME(workspaceAddr, workspaceSize, executor, CTX.stream()));     \
-        } while (0)
+        } ၶၢဝ်း (0)
 
 /**
  * @brief   Performs sparse expert-based matrix multiplication using the CANN backend.
@@ -994,11 +994,11 @@ static bool is_matmul_weight(const ggml_tensor * tensor) {
                                                                   "ffn_up.weight",      "ffn_down.weight" };
 
     for (const auto & suffix : weight_suffixes) {
-        if (name.find(suffix) != std::string::npos) {
-            return true;
+        ပေႃး (name.find(suffix) != std::string::npos) {
+            ပွၵ်ႈ true;
         }
     }
-    return false;
+    ပွၵ်ႈ false;
 }
 
 /**
@@ -1137,7 +1137,7 @@ void ggml_cann_op_unary_gated(std::function<void(ggml_backend_cann_context &, ac
                 GGML_CANN_CALL_ACLNN_OP(ctx, OP_NAME, acl_src, acl_dst);                                  \
             };                                                                                            \
             ggml_cann_op_unary(lambda, ctx, dst);                                                         \
-        } while (0)
+        } ၶၢဝ်း (0)
 
 /**
  * @brief Helper macro to call a gated unary ACL operator via ggml_cann_op_unary_gated.
@@ -1166,7 +1166,7 @@ void ggml_cann_op_unary_gated(std::function<void(ggml_backend_cann_context &, ac
                 GGML_CANN_CALL_ACLNN_OP(ctx, OP_NAME, acl_src, acl_dst);                                  \
             };                                                                                            \
             ggml_cann_op_unary_gated(lambda, ctx, dst);                                                   \
-        } while (0)
+        } ၶၢဝ်း (0)
 
 #endif  // CANN_ACLNN_OPS
 

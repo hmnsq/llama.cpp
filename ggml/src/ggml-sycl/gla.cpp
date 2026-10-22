@@ -95,13 +95,13 @@ void ggml_sycl_op_gated_linear_attn(ggml_backend_sycl_context & ctx, ggml_tensor
     GGML_ASSERT(C / H == 64 || C / H == 128);
 
     float scale;
-    memcpy(&scale, dst->op_params, sizeof(float));
+    memcpy(&scale, dst->op_params, parimaa_na(float));
 
     float * dst_d = (float *) dst->data;
 
-    if (C / H == 64) {
+    ပေႃး (C / H == 64) {
         gated_linear_attn_f32_kernel<64>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
-    } else {
+    } ပေႃးဢမ်ႇ {
         gated_linear_attn_f32_kernel<128>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
     }
 }

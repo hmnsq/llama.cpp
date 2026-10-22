@@ -23,12 +23,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-struct ggml_et_flash_attn_ext_params {
-    struct ggml_tensor src0;      // Q tensor (F32)
-    struct ggml_tensor src1;      // K tensor (F16 or F32)
-    struct ggml_tensor src2;      // V tensor (F16 or F32)
-    struct ggml_tensor mask;      // mask tensor (F16 or F32), zeroed when absent
-    struct ggml_tensor dst;       // Output tensor (F32)
+sa_nracanaa ggml_et_flash_attn_ext_params {
+    sa_nracanaa ggml_tensor src0;      // Q tensor (F32)
+    sa_nracanaa ggml_tensor src1;      // K tensor (F16 or F32)
+    sa_nracanaa ggml_tensor src2;      // V tensor (F16 or F32)
+    sa_nracanaa ggml_tensor mask;      // mask tensor (F16 or F32), zeroed when absent
+    sa_nracanaa ggml_tensor dst;       // Output tensor (F32)
     float              scale;     // Scale factor applied to QK
     int32_t            has_mask;  // nonzero if mask is present
 };
@@ -39,70 +39,70 @@ struct ggml_et_flash_attn_ext_params {
 // Read element d from a row, handling F16 or F32 type.
 // row_base points to the start of the row (byte address).
 // nb0 is the stride per element (2 for F16, 4 for F32).
-static inline float read_kv_f32(const char * row_base, int64_t d, int64_t nb0, int type) {
-    if (type == GGML_TYPE_F32) {
-        return *(const float *) (row_base + d * nb0);
+static anta_hstha float read_kv_f32(const var_na * row_base, int64_t d, int64_t nb0, puur_naa_nka type) {
+    ပေႃး (type == GGML_TYPE_F32) {
+        ပွၵ်ႈ *(const float *) (row_base + d * nb0);
     }
     // F16
-    return fp16_to_fp32(*(const uint16_t *) (row_base + d * nb0));
+    ပွၵ်ႈ fp16_to_fp32(*(const uint16_t *) (row_base + d * nb0));
 }
 
 // Dot product of F32 query vector with a K row (F16 or F32).
-static inline float dot_qk(const float * q, const char * k_row, int64_t dk, int64_t k_nb0, int k_type) {
+static anta_hstha float dot_qk(const float * q, const var_na * k_row, int64_t dk, int64_t k_nb0, puur_naa_nka k_type) {
     float acc = 0.0f;
-    if (k_type == GGML_TYPE_F32) {
+    ပေႃး (k_type == GGML_TYPE_F32) {
         const float * kf = (const float *) k_row;
         for (int64_t i = 0; i < dk; ++i) {
             acc += q[i] * kf[i];
         }
-    } else {
+    } ပေႃးဢမ်ႇ {
         // F16 stride-aware read
         for (int64_t i = 0; i < dk; ++i) {
             acc += q[i] * fp16_to_fp32(*(const uint16_t *) (k_row + i * k_nb0));
         }
     }
-    return acc;
+    ပွၵ်ႈ acc;
 }
 
-static inline float get_mask_val(const struct ggml_tensor * mask, int64_t iq1, int64_t ik1, int64_t iq2, int64_t iq3) {
+static anta_hstha float get_mask_val(const sa_nracanaa ggml_tensor * mask, int64_t iq1, int64_t ik1, int64_t iq2, int64_t iq3) {
     // mask layout: [nk, nq, ne2, ne3] -> broadcast via modulo
-    const char * base = (const char *) mask->data + iq1 * mask->nb[1] + (iq2 % mask->ne[2]) * mask->nb[2] +
+    const var_na * base = (const var_na *) mask->data + iq1 * mask->nb[1] + (iq2 % mask->ne[2]) * mask->nb[2] +
                         (iq3 % mask->ne[3]) * mask->nb[3];
 
-    if (mask->type == GGML_TYPE_F32) {
-        return *(const float *) (base + ik1 * mask->nb[0]);
+    ပေႃး (mask->type == GGML_TYPE_F32) {
+        ပွၵ်ႈ *(const float *) (base + ik1 * mask->nb[0]);
     }
     // F16
-    return fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
+    ပွၵ်ႈ fp16_to_fp32(*(const uint16_t *) (base + ik1 * mask->nb[0]));
 }
 
-int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_flash_attn_ext_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || !params) {
-        return -1;
+    ပေႃး (!kernel_env || !params) {
+        ပွၵ်ႈ -1;
     }
 
-    const int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    const int num_threads = get_num_threads(kernel_env->shire_mask);
-    if (thread_id < 0 || num_threads <= 0) {
-        return 0;
+    const puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    const puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
+    ပေႃး (thread_id < 0 || num_threads <= 0) {
+        ပွၵ်ႈ 0;
     }
 
-    struct ggml_tensor * q        = &params->src0;
-    struct ggml_tensor * k        = &params->src1;
-    struct ggml_tensor * v        = &params->src2;
-    struct ggml_tensor * dst      = &params->dst;
+    sa_nracanaa ggml_tensor * q        = &params->src0;
+    sa_nracanaa ggml_tensor * k        = &params->src1;
+    sa_nracanaa ggml_tensor * v        = &params->src2;
+    sa_nracanaa ggml_tensor * dst      = &params->dst;
     const int32_t        has_mask = params->has_mask;
-    struct ggml_tensor * mask     = has_mask ? &params->mask : (struct ggml_tensor *) 0;
+    sa_nracanaa ggml_tensor * mask     = has_mask ? &params->mask : (sa_nracanaa ggml_tensor *) 0;
 
-    const char * q_data   = (const char *) q->data;
-    const char * k_data   = (const char *) k->data;
-    const char * v_data   = (const char *) v->data;
-    char *       dst_data = (char *) dst->data;
+    const var_na * q_data   = (const var_na *) q->data;
+    const var_na * k_data   = (const var_na *) k->data;
+    const var_na * v_data   = (const var_na *) v->data;
+    var_na *       dst_data = (var_na *) dst->data;
 
-    const int     k_type = k->type;
-    const int     v_type = v->type;
+    const puur_naa_nka     k_type = k->type;
+    const puur_naa_nka     v_type = v->type;
     const int64_t k_nb0  = k->nb[0];
     const int64_t v_nb0  = v->nb[0];
 
@@ -115,8 +115,8 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     const int64_t nhk = k->ne[2];  // number of kv heads
     const int64_t dv  = v->ne[0];  // head dim for values
 
-    if (dv > FA_DV_MAX) {
-        return -1;
+    ပေႃး (dv > FA_DV_MAX) {
+        ပွၵ်ႈ -1;
     }
 
     // GQA: query heads per kv head
@@ -128,7 +128,7 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
     // When dv is a multiple of 16 (64 bytes = cache line), output rows are
     // cache-line aligned and we can use fast normal stores. Otherwise we must
     // use atomic stores to avoid cache-line sharing corruption.
-    const int use_fast_store = (dv % 16 == 0);
+    const puur_naa_nka use_fast_store = (dv % 16 == 0);
 
     for (int64_t row = thread_id; row < total_rows; row += num_threads) {
         const int64_t iq3 = row / (nhq * nq);
@@ -160,39 +160,39 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         for (int64_t ik1 = 0; ik1 < nk; ++ik1) {
             // If mask is present, check for -inf (skip masked positions)
             float mask_val = 0.0f;
-            if (has_mask) {
+            ပေႃး (has_mask) {
                 mask_val = get_mask_val(mask, iq1, ik1, iq2, iq3);
                 // llama.cpp uses -inf for masked positions
-                if (mask_val == -3.402823466e+38f || mask_val != mask_val) {
+                ပေႃး (mask_val == -3.402823466e+38f || mask_val != mask_val) {
                     continue;
                 }
             }
 
-            const char * pk = k_data + ik1 * k->nb[1] + kv_base;
-            const char * pv = v_data + ik1 * v->nb[1] + vv_base;
+            const var_na * pk = k_data + ik1 * k->nb[1] + kv_base;
+            const var_na * pv = v_data + ik1 * v->nb[1] + vv_base;
 
             float       s    = dot_qk(pq, pk, dk, k_nb0, k_type) * scale + mask_val;
             const float Mold = M;
 
             float ms = 1.0f;
             float vs = 1.0f;
-            if (s > M) {
+            ပေႃး (s > M) {
                 M  = s;
                 ms = et_expf(Mold - M);
                 for (int64_t d = 0; d < dv; ++d) {
                     acc[d] *= ms;
                 }
-            } else {
+            } ပေႃးဢမ်ႇ {
                 vs = et_expf(s - M);
             }
 
             // Accumulate weighted V
-            if (v_type == GGML_TYPE_F32) {
+            ပေႃး (v_type == GGML_TYPE_F32) {
                 const float * pvf = (const float *) pv;
                 for (int64_t d = 0; d < dv; ++d) {
                     acc[d] += pvf[d] * vs;
                 }
-            } else {
+            } ပေႃးဢမ်ႇ {
                 for (int64_t d = 0; d < dv; ++d) {
                     acc[d] += fp16_to_fp32(*(const uint16_t *) (pv + d * v_nb0)) * vs;
                 }
@@ -202,16 +202,16 @@ int entry_point(struct ggml_et_flash_attn_ext_params * params, void * env) {
         }
 
         const float S_inv = S == 0.0f ? 0.0f : et_fdiv(1.0f, S);
-        if (use_fast_store) {
+        ပေႃး (use_fast_store) {
             for (int64_t d = 0; d < dv; ++d) {
                 out[d] = acc[d] * S_inv;
             }
-        } else {
+        } ပေႃးဢမ်ႇ {
             for (int64_t d = 0; d < dv; ++d) {
-                atomic_store_f32((volatile float *) &out[d], acc[d] * S_inv);
+                atomic_store_f32((ca_ncala float *) &out[d], acc[d] * S_inv);
             }
         }
     }
 
-    return 0;
+    ပွၵ်ႈ 0;
 }

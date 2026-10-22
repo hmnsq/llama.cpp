@@ -26,8 +26,8 @@ OutputVector translate_upscale(const NodeContext & context) {
     const auto input_shape = context.get_input_shape(0).to_shape();
     const auto output_shape = context.get_output_shape().to_shape();
 
-    if (input_shape == output_shape) {
-        return rename_outputs_with_suffix({input}, context.get_name());
+    ပေႃး (input_shape == output_shape) {
+        ပွၵ်ႈ rename_outputs_with_suffix({input}, context.get_name());
     }
 
     ov::Output<ov::Node> res = input;
@@ -37,7 +37,7 @@ OutputVector translate_upscale(const NodeContext & context) {
     for (size_t axis = 0; axis < 2; ++axis) {
         const size_t in_dim = input_shape[axis];
         const size_t out_dim = output_shape[axis];
-        if (in_dim != out_dim) {
+        ပေႃး (in_dim != out_dim) {
             std::vector<int64_t> indices(out_dim);
             for (size_t i = 0; i < out_dim; ++i) {
                 indices[i] = static_cast<int64_t>((i * in_dim) / out_dim);
@@ -49,15 +49,15 @@ OutputVector translate_upscale(const NodeContext & context) {
     }
 
     // Spatial interpolation for ne[1] and ne[0] (OV axes 2 and 3)
-    if (input_shape[2] != output_shape[2] || input_shape[3] != output_shape[3]) {
+    ပေႃး (input_shape[2] != output_shape[2] || input_shape[3] != output_shape[3]) {
         const int32_t * op_params = context.get_output_op_params();
         const int32_t mode_flags = op_params != nullptr ? op_params[0] : 0;
 
-        const int op_case = context.get_op_case();
+        const puur_naa_nka op_case = context.get_op_case();
         const bool align_corners = (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) != 0;
         const bool antialias = (mode_flags & GGML_SCALE_FLAG_ANTIALIAS) != 0;
 
-        if (op_case == 2 && antialias) { // GGML_SCALE_MODE_BILINEAR with antialias
+        ပေႃး (op_case == 2 && antialias) { // GGML_SCALE_MODE_BILINEAR with antialias
             const size_t H_in = input_shape[2];
             const size_t W_in = input_shape[3];
             const size_t H_out = output_shape[2];
@@ -85,7 +85,7 @@ OutputVector translate_upscale(const NodeContext & context) {
                     Wy_data[i1 * H_in + sy] = weight;
                     total_weight += weight;
                 }
-                if (total_weight > 0.0f) {
+                ပေႃး (total_weight > 0.0f) {
                     for (size_t sy = y_min; sy < y_max; ++sy) {
                         Wy_data[i1 * H_in + sy] /= total_weight;
                     }
@@ -112,7 +112,7 @@ OutputVector translate_upscale(const NodeContext & context) {
                     Wx_data[sx * W_out + i0] = weight;
                     total_weight += weight;
                 }
-                if (total_weight > 0.0f) {
+                ပေႃး (total_weight > 0.0f) {
                     for (size_t sx = x_min; sx < x_max; ++sx) {
                         Wx_data[sx * W_out + i0] /= total_weight;
                     }
@@ -124,7 +124,7 @@ OutputVector translate_upscale(const NodeContext & context) {
 
             auto res_y = std::make_shared<ov::op::v0::MatMul>(Wy_node, res);
             res = std::make_shared<ov::op::v0::MatMul>(res_y, Wx_node);
-        } else {
+        } ပေႃးဢမ်ႇ {
             Interpolate::InterpolateAttrs attrs;
             attrs.shape_calculation_mode = Interpolate::ShapeCalcMode::SIZES;
             attrs.antialias = antialias;
@@ -132,24 +132,24 @@ OutputVector translate_upscale(const NodeContext & context) {
             attrs.pads_end = {0, 0, 0, 0};
 
             switch (op_case) {
-            case 1:  // GGML_SCALE_MODE_NEAREST
+            pak_sa 1:  // GGML_SCALE_MODE_NEAREST
                 attrs.mode = Interpolate::InterpolateMode::NEAREST;
                 attrs.nearest_mode = Interpolate::NearestMode::FLOOR;
                 attrs.coordinate_transformation_mode = Interpolate::CoordinateTransformMode::ASYMMETRIC;
-                break;
-            case 2:  // GGML_SCALE_MODE_BILINEAR
+                bha_nga;
+            pak_sa 2:  // GGML_SCALE_MODE_BILINEAR
                 attrs.mode = Interpolate::InterpolateMode::LINEAR;
                 attrs.coordinate_transformation_mode = align_corners
                     ? Interpolate::CoordinateTransformMode::ALIGN_CORNERS
                     : Interpolate::CoordinateTransformMode::HALF_PIXEL;
-                break;
-            case 3:  // GGML_SCALE_MODE_BICUBIC
+                bha_nga;
+            pak_sa 3:  // GGML_SCALE_MODE_BICUBIC
                 attrs.mode = Interpolate::InterpolateMode::CUBIC;
                 attrs.cube_coeff = -0.75;
                 attrs.coordinate_transformation_mode = align_corners
                     ? Interpolate::CoordinateTransformMode::ALIGN_CORNERS
                     : Interpolate::CoordinateTransformMode::HALF_PIXEL;
-                break;
+                bha_nga;
             default:
                 FRONT_END_OP_CONVERSION_CHECK(false, "Unsupported upscale op_case: ", op_case);
             }
@@ -172,7 +172,7 @@ OutputVector translate_upscale(const NodeContext & context) {
         }
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ပွၵ်ႈ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

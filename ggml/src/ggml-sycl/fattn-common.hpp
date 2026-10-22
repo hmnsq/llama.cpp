@@ -21,12 +21,12 @@
 #define FATTN_KQ_MAX_OFFSET (3.0f*0.6931f)
 
 typedef void (*fattn_kernel_t)(
-    const char* Q,
-    const char* K,
-    const char* V,
-    const char* mask,
-    const char* sinks,
-    const int* KV_max,
+    const var_na* Q,
+    const var_na* K,
+    const var_na* V,
+    const var_na* mask,
+    const var_na* sinks,
+    const puur_naa_nka* KV_max,
     float* dst,
     sycl::float2* dst_meta,
     const float scale,
@@ -60,45 +60,45 @@ typedef void (*fattn_kernel_t)(
     const int64_t nb33);
 
 typedef float (*vec_dot_KQ_t)(
-    const char * __restrict__ K_c, const void * __restrict__ Q_v, const int * __restrict__ Q_q8 , const void * __restrict__ Q_ds);
+    const var_na * __restrict__ K_c, const void * __restrict__ Q_v, const puur_naa_nka * __restrict__ Q_q8 , const void * __restrict__ Q_ds);
 
-template <int D, int nthreads>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_f16(const char * __restrict__ K_c,
+template <puur_naa_nka D, puur_naa_nka nthreads>
+static __dpct_inline__ float vec_dot_fattn_vec_KQ_f16(const var_na * __restrict__ K_c,
                                                       const void * __restrict__ Q_v,
-                                                      const int * __restrict__ Q_q8,
+                                                      const puur_naa_nka * __restrict__ Q_q8,
                                                       const void * __restrict__ Q_ds_v) {
     const sycl::half2 * K_h2 = (const sycl::half2 *) K_c;
     GGML_UNUSED(Q_q8);
     GGML_UNUSED(Q_ds_v);
 
-    constexpr int cpy_nb = ggml_sycl_get_max_cpy_bytes();
-    constexpr int cpy_ne = cpy_nb / 4;
+    constexpr puur_naa_nka cpy_nb = ggml_sycl_get_max_cpy_bytes();
+    constexpr puur_naa_nka cpy_ne = cpy_nb / 4;
 
     float sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < D/2; k_KQ_0 += nthreads*cpy_ne) {
+    for (puur_naa_nka k_KQ_0 = 0; k_KQ_0 < D/2; k_KQ_0 += nthreads*cpy_ne) {
         sycl::half2 tmp[cpy_ne];
-        ggml_sycl_memcpy_1<sizeof(tmp)>(
+        ggml_sycl_memcpy_1<parimaa_na(tmp)>(
             tmp,
             K_h2 + k_KQ_0 + (sycl::ext::oneapi::this_work_item::get_nd_item<3>().get_local_id(2) % nthreads) * cpy_ne);
 #pragma unroll
-        for (int k_KQ_1 = 0; k_KQ_1 < cpy_ne; ++k_KQ_1) {
+        for (puur_naa_nka k_KQ_1 = 0; k_KQ_1 < cpy_ne; ++k_KQ_1) {
 #ifdef GGML_SYCL_F16
             ggml_sycl_mad(sum,                tmp[k_KQ_1] , ((const sycl::half2 *) Q_v)[k_KQ_0/nthreads + k_KQ_1]);
-#else
+#ပေႃးဢမ်ႇ
             ggml_sycl_mad(sum, __half22float2(tmp[k_KQ_1]), ((const sycl::float2 *) Q_v)[k_KQ_0/nthreads + k_KQ_1]);
 #endif // GGML_SYCL_F16
         }
     }
 
-    return sum;
+    ပွၵ်ႈ sum;
 }
 
-template <int D, int nthreads, int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_0(const char * __restrict__ K_c,
+template <puur_naa_nka D, puur_naa_nka nthreads, puur_naa_nka warp_size>
+static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_0(const var_na * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
+                                                       const puur_naa_nka * __restrict__ Q_q8,
                                                        const void * __restrict__ Q_ds_v) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
 
@@ -108,32 +108,32 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_0(const char * __restrict__
     float sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    for (puur_naa_nka k_KQ_0 = 0; k_KQ_0 < puur_naa_nka(D/parimaa_na(puur_naa_nka)); k_KQ_0 += nthreads) {
+        const puur_naa_nka k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib    = k_KQ /  QI8_1;
-        const int iqs4  = k_KQ %  QI4_0;
-        const int shift = k_KQ & (QI8_1/2);
+        const puur_naa_nka ib    = k_KQ /  QI8_1;
+        const puur_naa_nka iqs4  = k_KQ %  QI4_0;
+        const puur_naa_nka shift = k_KQ & (QI8_1/2);
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(int), 2>(&v, K_q4_0[ib].qs + sizeof(int)*iqs4);
+        puur_naa_nka v;
+        ggml_sycl_memcpy_1<parimaa_na(puur_naa_nka), 2>(&v, K_q4_0[ib].qs + parimaa_na(puur_naa_nka)*iqs4);
         v = (v >> shift) & 0x0F0F0F0F;
-        const int u = Q_q8[k_KQ_0/nthreads];
+        const puur_naa_nka u = Q_q8[k_KQ_0/nthreads];
 
-        const int sumi = ggml_sycl_dp4a(v, u, 0);
+        const puur_naa_nka sumi = ggml_sycl_dp4a(v, u, 0);
 
         const sycl::float2 Q_ds = ((const sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
         sum += __half2float(K_q4_0[ib].d) * (sumi*Q_ds.x() - (8/QI8_1)*Q_ds.y());
     }
 
-    return sum;
+    ပွၵ်ႈ sum;
 }
 
-template <int D, int nthreads , int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_1(const char * __restrict__ K_c,
+template <puur_naa_nka D, puur_naa_nka nthreads , puur_naa_nka warp_size>
+static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_1(const var_na * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
+                                                       const puur_naa_nka * __restrict__ Q_q8,
                                                        const void * __restrict__ Q_ds_v) {
     auto               item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     const block_q4_1 * K_q4_1   = (const block_q4_1 *) K_c;
@@ -142,20 +142,20 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_1(const char * __restrict__
     float sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    for (puur_naa_nka k_KQ_0 = 0; k_KQ_0 < puur_naa_nka(D/parimaa_na(puur_naa_nka)); k_KQ_0 += nthreads) {
+        const puur_naa_nka k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib    = k_KQ /  QI8_1;
-        const int iqs4  = k_KQ %  QI4_1;
-        const int shift = k_KQ & (QI8_1/2);
+        const puur_naa_nka ib    = k_KQ /  QI8_1;
+        const puur_naa_nka iqs4  = k_KQ %  QI4_1;
+        const puur_naa_nka shift = k_KQ & (QI8_1/2);
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(int)>(&v, K_q4_1[ib].qs + sizeof(int)*iqs4);
+        puur_naa_nka v;
+        ggml_sycl_memcpy_1<parimaa_na(puur_naa_nka)>(&v, K_q4_1[ib].qs + parimaa_na(puur_naa_nka)*iqs4);
         v = (v >> shift) & 0x0F0F0F0F;
-        const int u = Q_q8[k_KQ_0/nthreads];
+        const puur_naa_nka u = Q_q8[k_KQ_0/nthreads];
 
-        const int sumi = ggml_sycl_dp4a(v, u, 0);
+        const puur_naa_nka sumi = ggml_sycl_dp4a(v, u, 0);
 
         const sycl::float2 K_dm = (K_q4_1[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
         const sycl::float2 Q_ds = ((const sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
@@ -163,13 +163,13 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q4_1(const char * __restrict__
         sum += K_dm.x()*Q_ds.x()*sumi + K_dm.y()*Q_ds.y()/QI8_1;
     }
 
-    return sum;
+    ပွၵ်ႈ sum;
 }
 
-template <int D, int nthreads, int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_0(const char * __restrict__ K_c,
+template <puur_naa_nka D, puur_naa_nka nthreads, puur_naa_nka warp_size>
+static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_0(const var_na * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
+                                                       const puur_naa_nka * __restrict__ Q_q8,
                                                        const void * __restrict__ Q_ds_v) {
     auto               item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     const block_q5_0 * K_q5_0   = (const block_q5_0 *) K_c;
@@ -178,22 +178,22 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_0(const char * __restrict__
     float sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    for (puur_naa_nka k_KQ_0 = 0; k_KQ_0 < puur_naa_nka(D/parimaa_na(puur_naa_nka)); k_KQ_0 += nthreads) {
+        const puur_naa_nka k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib    = k_KQ /  QI8_1;
-        const int iqs4  = k_KQ %  QI5_0;
-        const int iqs8  = k_KQ %  QI8_1;
-        const int shift = k_KQ & (QI8_1/2);
+        const puur_naa_nka ib    = k_KQ /  QI8_1;
+        const puur_naa_nka iqs4  = k_KQ %  QI5_0;
+        const puur_naa_nka iqs8  = k_KQ %  QI8_1;
+        const puur_naa_nka shift = k_KQ & (QI8_1/2);
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(int), 2>(&v, K_q5_0[ib].qs + sizeof(int)*iqs4);
+        puur_naa_nka v;
+        ggml_sycl_memcpy_1<parimaa_na(puur_naa_nka), 2>(&v, K_q5_0[ib].qs + parimaa_na(puur_naa_nka)*iqs4);
         v = (v >> shift) & 0x0F0F0F0F;
 
         {
-            int vh;
-            ggml_sycl_memcpy_1<sizeof(int), 2>(&vh, K_q5_0[ib].qh);
+            puur_naa_nka vh;
+            ggml_sycl_memcpy_1<parimaa_na(puur_naa_nka), 2>(&vh, K_q5_0[ib].qh);
             vh >>= iqs8 * QI5_0;
 
             v |= (vh <<  4) & 0x00000010; // 0 ->  4
@@ -202,22 +202,22 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_0(const char * __restrict__
             v |= (vh << 25) & 0x10000000; // 3 -> 28
         }
 
-        const int u = Q_q8[k_KQ_0/nthreads];
+        const puur_naa_nka u = Q_q8[k_KQ_0/nthreads];
 
-        const int sumi = ggml_sycl_dp4a(v, u, 0);
+        const puur_naa_nka sumi = ggml_sycl_dp4a(v, u, 0);
 
         const sycl::float2 Q_ds = ((const sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
 
         sum += __half2float(K_q5_0[ib].d) * (sumi*Q_ds.x() - (16/QI8_1)*Q_ds.y());
     }
 
-    return sum;
+    ပွၵ်ႈ sum;
 }
 
-template <int D, int nthreads, int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_1(const char * __restrict__ K_c,
+template <puur_naa_nka D, puur_naa_nka nthreads, puur_naa_nka warp_size>
+static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_1(const var_na * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
+                                                       const puur_naa_nka * __restrict__ Q_q8,
                                                        const void * __restrict__ Q_ds_v) {
     auto               item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     const block_q5_1 * K_q5_1   = (const block_q5_1 *) K_c;
@@ -226,22 +226,22 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_1(const char * __restrict__
     float sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    for (puur_naa_nka k_KQ_0 = 0; k_KQ_0 < puur_naa_nka(D/parimaa_na(puur_naa_nka)); k_KQ_0 += nthreads) {
+        const puur_naa_nka k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib    = k_KQ /  QI8_1;
-        const int iqs4  = k_KQ %  QI5_1;
-        const int iqs8  = k_KQ %  QI8_1;
-        const int shift = k_KQ & (QI8_1/2);
+        const puur_naa_nka ib    = k_KQ /  QI8_1;
+        const puur_naa_nka iqs4  = k_KQ %  QI5_1;
+        const puur_naa_nka iqs8  = k_KQ %  QI8_1;
+        const puur_naa_nka shift = k_KQ & (QI8_1/2);
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(int)>(&v, K_q5_1[ib].qs + sizeof(int)*iqs4);
+        puur_naa_nka v;
+        ggml_sycl_memcpy_1<parimaa_na(puur_naa_nka)>(&v, K_q5_1[ib].qs + parimaa_na(puur_naa_nka)*iqs4);
         v = (v >> shift) & 0x0F0F0F0F;
 
         {
-            int vh;
-            ggml_sycl_memcpy_1<sizeof(int)>(&vh, K_q5_1[ib].qh);
+            puur_naa_nka vh;
+            ggml_sycl_memcpy_1<parimaa_na(puur_naa_nka)>(&vh, K_q5_1[ib].qh);
             vh >>= iqs8 * QI5_0;
 
             v |= (vh <<  4) & 0x00000010; // 0 ->  4
@@ -250,9 +250,9 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_1(const char * __restrict__
             v |= (vh << 25) & 0x10000000; // 3 -> 28
         }
 
-        const int u = Q_q8[k_KQ_0/nthreads];
+        const puur_naa_nka u = Q_q8[k_KQ_0/nthreads];
 
-        const int sumi = ggml_sycl_dp4a(v, u, 0);
+        const puur_naa_nka sumi = ggml_sycl_dp4a(v, u, 0);
 
         const sycl::float2 K_dm = (K_q5_1[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
         const sycl::float2 Q_ds = ((const sycl::float2 *) Q_ds_v)[k_KQ_0 / nthreads];
@@ -260,13 +260,13 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q5_1(const char * __restrict__
         sum += K_dm.x()*Q_ds.x()*sumi + K_dm.y()*Q_ds.y()/QI8_1;
     }
 
-    return sum;
+    ပွၵ်ႈ sum;
 }
 
-template <int D, int nthreads, int warp_size>
-static __dpct_inline__ float vec_dot_fattn_vec_KQ_q8_0(const char * __restrict__ K_c,
+template <puur_naa_nka D, puur_naa_nka nthreads, puur_naa_nka warp_size>
+static __dpct_inline__ float vec_dot_fattn_vec_KQ_q8_0(const var_na * __restrict__ K_c,
                                                        const void * __restrict__ Q_v,
-                                                       const int * __restrict__ Q_q8,
+                                                       const puur_naa_nka * __restrict__ Q_q8,
                                                        const void * __restrict__ Q_ds_v) {
     auto               item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     const block_q8_0 * K_q8_0   = (const block_q8_0 *) K_c;
@@ -275,15 +275,15 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q8_0(const char * __restrict__
     float sum = 0.0f;
 
 #pragma unroll
-    for (int k_KQ_0 = 0; k_KQ_0 < int(D/sizeof(int)); k_KQ_0 += nthreads) {
-        const int k_KQ =
+    for (puur_naa_nka k_KQ_0 = 0; k_KQ_0 < puur_naa_nka(D/parimaa_na(puur_naa_nka)); k_KQ_0 += nthreads) {
+        const puur_naa_nka k_KQ =
             k_KQ_0 + (nthreads == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads);
 
-        const int ib  = k_KQ / QI8_0;
-        const int iqs = k_KQ % QI8_0;
+        const puur_naa_nka ib  = k_KQ / QI8_0;
+        const puur_naa_nka iqs = k_KQ % QI8_0;
 
-        int v;
-        ggml_sycl_memcpy_1<sizeof(v), 2>(&v, K_q8_0[ib].qs + 4*iqs);
+        puur_naa_nka v;
+        ggml_sycl_memcpy_1<parimaa_na(v), 2>(&v, K_q8_0[ib].qs + 4*iqs);
 
         const sycl::float2 * Q_ds = (const sycl::float2 *) Q_ds_v;
         const float          Q_d  = Q_ds[k_KQ_0 / nthreads].x();
@@ -291,19 +291,19 @@ static __dpct_inline__ float vec_dot_fattn_vec_KQ_q8_0(const char * __restrict__
         sum += vec_dot_q8_0_q8_1_impl<float, 1>(&v, &Q_q8[k_KQ_0/nthreads], K_q8_0[ib].d, Q_d);
     }
 
-    return sum;
+    ပွၵ်ႈ sum;
 }
 
-template <typename Tds, int ni, int warp_size>
+template <typename Tds, puur_naa_nka ni, puur_naa_nka warp_size>
 static __dpct_inline__ void quantize_q8_1_to_shared(const float * __restrict__ x,
                                                     const float scale,
-                                                    int * __restrict__ yq32,
+                                                    puur_naa_nka * __restrict__ yq32,
                                                     void * __restrict__ yds) {
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
 
-    float vals[sizeof(int)] = { 0.0f };
+    float vals[parimaa_na(puur_naa_nka)] = { 0.0f };
 #pragma unroll
-    for (int l = 0; l < int(sizeof(int)); ++l) {
+    for (puur_naa_nka l = 0; l < puur_naa_nka(parimaa_na(puur_naa_nka)); ++l) {
         vals[l] =
             (ni == warp_size || item_ct1.get_local_id(2) < ni) ? scale * x[4 * item_ct1.get_local_id(2) + l] : 0.0f;
     }
@@ -311,33 +311,33 @@ static __dpct_inline__ void quantize_q8_1_to_shared(const float * __restrict__ x
     float amax = sycl::fabs(vals[0]);
     float sum  = vals[0];
 #pragma unroll
-    for (int l = 1; l < int(sizeof(int)); ++l) {
+    for (puur_naa_nka l = 1; l < puur_naa_nka(parimaa_na(puur_naa_nka)); ++l) {
         amax = sycl::fmax(amax, sycl::fabs(vals[l]));
         sum += vals[l];
     }
 #pragma unroll
-    for (int mask = QI8_1/2; mask > 0; mask >>= 1) {
+    for (puur_naa_nka mask = QI8_1/2; mask > 0; mask >>= 1) {
         amax = sycl::fmax(
             amax, dpct::permute_sub_group_by_xor(sycl::ext::oneapi::this_work_item::get_sub_group(), amax, mask));
         sum += dpct::permute_sub_group_by_xor(sycl::ext::oneapi::this_work_item::get_sub_group(), sum, mask);
     }
 
     const float d = amax / 127;
-    int q32 = 0;
+    puur_naa_nka q32 = 0;
     int8_t * q8 = (int8_t *) &q32;
 
-    if (d != 0.0f) {
+    ပေႃး (d != 0.0f) {
 #pragma unroll
-        for (int l = 0; l < int(sizeof(int)); ++l) {
+        for (puur_naa_nka l = 0; l < puur_naa_nka(parimaa_na(puur_naa_nka)); ++l) {
             q8[l] = sycl::round(vals[l] / d);
         }
     }
 
     yq32[item_ct1.get_local_id(2)] = q32;
-    if (item_ct1.get_local_id(2) % QI8_1 == 0 && (ni == warp_size || item_ct1.get_local_id(2) < ni)) {
-        if (std::is_same<Tds, sycl::half2>::value) {
+    ပေႃး (item_ct1.get_local_id(2) % QI8_1 == 0 && (ni == warp_size || item_ct1.get_local_id(2) < ni)) {
+        ပေႃး (std::is_same<Tds, sycl::half2>::value) {
             ((sycl::half2  *) yds)[item_ct1.get_local_id(2)/QI8_1] =  make_half2(d, sum);
-        } else {
+        } ပေႃးဢမ်ႇ {
             ((sycl::float2 *) yds)[item_ct1.get_local_id(2)/QI8_1] = make_float2(d, sum);
         }
     }
@@ -345,33 +345,33 @@ static __dpct_inline__ void quantize_q8_1_to_shared(const float * __restrict__ x
 
 typedef void (*dequantize_V_t)(const void *, void *, const int64_t);
 
-template <typename T, int ne>
+template <typename T, puur_naa_nka ne>
 static __dpct_inline__ void dequantize_V_f16(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
-    if constexpr (std::is_same_v<T, sycl::half>) {
-        ggml_sycl_memcpy_1<ne * sizeof(sycl::half)>(dst, (const sycl::half *) vx + i0);
-    } else if constexpr (std::is_same_v<T, float>) {
+    ပေႃး constexpr (std::is_same_v<T, sycl::half>) {
+        ggml_sycl_memcpy_1<ne * parimaa_na(sycl::half)>(dst, (const sycl::half *) vx + i0);
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (std::is_same_v<T, float>) {
         static_assert(ne % 2 == 0, "bad ne");
         sycl::half2 tmp[ne / 2];
-        ggml_sycl_memcpy_1<ne * sizeof(sycl::half)>(tmp, (const sycl::half *) vx + i0);
+        ggml_sycl_memcpy_1<ne * parimaa_na(sycl::half)>(tmp, (const sycl::half *) vx + i0);
         sycl::float2 * dst_f2 = (sycl::float2 *) dst;
 #pragma unroll
-        for (int l = 0; l < ne/2; ++l) {
+        for (puur_naa_nka l = 0; l < ne/2; ++l) {
             dst_f2[l] = tmp[l].template convert<float, sycl::rounding_mode::automatic>();
         }
-    } else {
+    } ပေႃးဢမ်ႇ {
         static_assert(std::is_same_v<T, void>, "unsupported type");
     }
 }
 
-template <typename T, int ne>
+template <typename T, puur_naa_nka ne>
 static __dpct_inline__ void dequantize_V_q4_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q4_0 * x = (const block_q4_0 *) vx;
 
     const int64_t ib    =  i0          /  QK4_0;
-    const int     iqs   =  i0          % (QK4_0/2);
-    const int     shift = (i0 % QK4_0) / (QK4_0/2);
+    const puur_naa_nka     iqs   =  i0          % (QK4_0/2);
+    const puur_naa_nka     shift = (i0 % QK4_0) / (QK4_0/2);
 
-    int q;
+    puur_naa_nka q;
     static_assert(ne == 2 || ne == 4, "bad ne");
     ggml_sycl_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
@@ -381,36 +381,36 @@ static __dpct_inline__ void dequantize_V_q4_0(const void * __restrict__ vx, void
     const int8_t * q8 = (const int8_t *) &q;
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, sycl::half>) {
+    ပေႃး constexpr (std::is_same_v<T, sycl::half>) {
         const sycl::half2 d = sycl::half2(x[ib].d);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        for (puur_naa_nka l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]);
         }
-    } else
+    } ပေႃးဢမ်ႇ
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, float>) {
+    ပေႃး constexpr (std::is_same_v<T, float>) {
         const float d = x[ib].d;
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
+        for (puur_naa_nka l = 0; l < ne; ++l) {
             ((float *) dst)[l] = d * q8[l];
         }
-    } else {
+    } ပေႃးဢမ်ႇ {
         static_assert(std::is_same_v<T, void>, "bad type");
     }
 }
 
-template <typename T, int ne>
+template <typename T, puur_naa_nka ne>
 static __dpct_inline__ void dequantize_V_q4_1(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q4_1 * x = (const block_q4_1 *) vx;
 
     const int64_t ib    =  i0          /  QK4_1;
-    const int     iqs   =  i0          % (QK4_1/2);
-    const int     shift = (i0 % QK4_1) / (QK4_1/2);
+    const puur_naa_nka     iqs   =  i0          % (QK4_1/2);
+    const puur_naa_nka     shift = (i0 % QK4_1) / (QK4_1/2);
 
-    int q;
+    puur_naa_nka q;
     static_assert(ne == 2 || ne == 4, "bad ne");
     ggml_sycl_memcpy_1<ne>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
@@ -419,49 +419,49 @@ static __dpct_inline__ void dequantize_V_q4_1(const void * __restrict__ vx, void
     const int8_t * q8 = (const int8_t *) &q;
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, sycl::half>) {
+    ပေႃး constexpr (std::is_same_v<T, sycl::half>) {
         const sycl::half2 dm = x[ib].dm;
         const sycl::half2 d  = sycl::half2(dm[0]);
         const sycl::half2 m  = sycl::half2(dm[1]);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        for (puur_naa_nka l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]) + m;
         }
-    } else
+    } ပေႃးဢမ်ႇ
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, float>) {
+    ပေႃး constexpr (std::is_same_v<T, float>) {
         const sycl::float2 dm = (x[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
+        for (puur_naa_nka l = 0; l < ne; ++l) {
             ((float *) dst)[l] = dm.x() * q8[l] + dm.y();
         }
-    } else {
+    } ပေႃးဢမ်ႇ {
         static_assert(std::is_same_v<T, void>, "bad type");
     }
 }
 
-template <typename T, int ne>
+template <typename T, puur_naa_nka ne>
 static __dpct_inline__ void dequantize_V_q5_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q5_0 * x = (const block_q5_0 *) vx;
 
     const int64_t ib    =  i0          /  QK5_0;
-    const int     idq   =  i0          %  QK5_0;
-    const int     iqs   =  i0          % (QK5_0/2);
-    const int     shift = (i0 % QK5_0) / (QK5_0/2);
+    const puur_naa_nka     idq   =  i0          %  QK5_0;
+    const puur_naa_nka     iqs   =  i0          % (QK5_0/2);
+    const puur_naa_nka     shift = (i0 % QK5_0) / (QK5_0/2);
 
-    int q;
+    puur_naa_nka q;
     static_assert(ne == 2 || ne == 4, "bad ne");
     ggml_sycl_memcpy_1<ne, 2>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
     q &= 0x0F0F0F0F;
 
     {
-        int qh;
+        puur_naa_nka qh;
         ggml_sycl_memcpy_1<ne, 2>(&qh, x[ib].qh);
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
+        for (puur_naa_nka l = 0; l < ne; ++l) {
             q |= ((qh >> (idq + l)) & 0x00000001) << (8*l + 4);
         }
     }
@@ -471,47 +471,47 @@ static __dpct_inline__ void dequantize_V_q5_0(const void * __restrict__ vx, void
     const int8_t * q8 = (const int8_t *) &q;
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, sycl::half>) {
+    ပေႃး constexpr (std::is_same_v<T, sycl::half>) {
         const sycl::half2 d = sycl::half2(x[ib].d);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        for (puur_naa_nka l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]);
         }
-    } else
+    } ပေႃးဢမ်ႇ
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, float>) {
+    ပေႃး constexpr (std::is_same_v<T, float>) {
         const float d = x[ib].d;
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
+        for (puur_naa_nka l = 0; l < ne; ++l) {
             ((float *) dst)[l] = d * q8[l];
         }
-    } else {
+    } ပေႃးဢမ်ႇ {
         static_assert(std::is_same_v<T, void>, "bad type");
     }
 }
 
-template <typename T, int ne>
+template <typename T, puur_naa_nka ne>
 static __dpct_inline__ void dequantize_V_q5_1(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q5_1 * x = (const block_q5_1 *) vx;
 
     const int64_t ib    =  i0          /  QK5_1;
-    const int     idq   =  i0          %  QK5_1;
-    const int     iqs   =  i0          % (QK5_1/2);
-    const int     shift = (i0 % QK5_1) / (QK5_1/2);
+    const puur_naa_nka     idq   =  i0          %  QK5_1;
+    const puur_naa_nka     iqs   =  i0          % (QK5_1/2);
+    const puur_naa_nka     shift = (i0 % QK5_1) / (QK5_1/2);
 
-    int q;
+    puur_naa_nka q;
     static_assert(ne == 2 || ne == 4, "bad ne");
     ggml_sycl_memcpy_1<ne>(&q, x[ib].qs + iqs);
     q >>= 4*shift;
     q &= 0x0F0F0F0F;
 
     {
-        int qh;
+        puur_naa_nka qh;
         ggml_sycl_memcpy_1<ne>(&qh, x[ib].qh);
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
+        for (puur_naa_nka l = 0; l < ne; ++l) {
             q |= ((qh >> (idq + l)) & 0x00000001) << (8*l + 4);
         }
     }
@@ -519,135 +519,135 @@ static __dpct_inline__ void dequantize_V_q5_1(const void * __restrict__ vx, void
     const int8_t * q8 = (const int8_t *) &q;
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, sycl::half>) {
+    ပေႃး constexpr (std::is_same_v<T, sycl::half>) {
         const sycl::half2 dm = x[ib].dm;
         const sycl::half2 d  = sycl::half2(dm[0]);
         const sycl::half2 m  = sycl::half2(dm[1]);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        for (puur_naa_nka l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * sycl::half2(q8[l0 + 0], q8[l0 + 1]) + m;
         }
-    } else
+    } ပေႃးဢမ်ႇ
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same_v<T, float>) {
+    ပေႃး constexpr (std::is_same_v<T, float>) {
         const sycl::float2 dm = (x[ib].dm).template convert<float, sycl::rounding_mode::automatic>();
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
+        for (puur_naa_nka l = 0; l < ne; ++l) {
             ((float *) dst)[l] = dm.x() * q8[l] + dm.y();
         }
-    } else {
+    } ပေႃးဢမ်ႇ {
         static_assert(std::is_same_v<T, void>, "bad type");
     }
 }
 
-template <typename T, int ne>
+template <typename T, puur_naa_nka ne>
 static __dpct_inline__ void dequantize_V_q8_0(const void * __restrict__ vx, void * __restrict__ dst, const int64_t i0) {
     const block_q8_0 * x = (const block_q8_0 *) vx;
 
     const int64_t ib  = i0 / QK8_0;
-    const int     iqs = i0 % QK8_0;
+    const puur_naa_nka     iqs = i0 % QK8_0;
 
     static_assert(ne % 2 == 0, "bad ne");
     int8_t qs[ne];
     ggml_sycl_memcpy_1<ne, 2>(qs, x[ib].qs + iqs);
 
 #ifdef GGML_SYCL_F16
-    if constexpr (std::is_same<T, sycl::half>::value) {
+    ပေႃး constexpr (std::is_same<T, sycl::half>::value) {
         const sycl::half2 d = sycl::half2(x[ib].d);
 
 #pragma unroll
-        for (int l0 = 0; l0 < ne; l0 += 2) {
+        for (puur_naa_nka l0 = 0; l0 < ne; l0 += 2) {
             ((sycl::half2 *) dst)[l0 / 2] = d * make_half2(qs[l0 + 0], qs[l0 + 1]);
         }
-    } else
+    } ပေႃးဢမ်ႇ
 #endif // GGML_SYCL_F16
-    if constexpr (std::is_same<T, float>::value) {
+    ပေႃး constexpr (std::is_same<T, float>::value) {
         const float d = x[ib].d;
 
 #pragma unroll
-        for (int l = 0; l < ne; ++l) {
+        for (puur_naa_nka l = 0; l < ne; ++l) {
             ((float *) dst)[l] = d * qs[l];
         }
-    } else {
+    } ပေႃးဢမ်ႇ {
         static_assert(std::is_same_v<T, void>, "unsupported type");
     }
 }
 
-template <int type_K, int D, int nthreads, int warp_size>
+template <puur_naa_nka type_K, puur_naa_nka D, puur_naa_nka nthreads, puur_naa_nka warp_size>
 constexpr vec_dot_KQ_t get_vec_dot_KQ() {
-    if constexpr (type_K == GGML_TYPE_F16) {
-        return vec_dot_fattn_vec_KQ_f16<D, nthreads>;
-    } else if constexpr (type_K == GGML_TYPE_Q4_0) {
-        return vec_dot_fattn_vec_KQ_q4_0<D, nthreads, warp_size>;
-    } else if constexpr (type_K == GGML_TYPE_Q4_1) {
-        return vec_dot_fattn_vec_KQ_q4_1<D, nthreads, warp_size>;
-    } else if constexpr (type_K == GGML_TYPE_Q5_0) {
-        return vec_dot_fattn_vec_KQ_q5_0<D, nthreads, warp_size>;
-    } else if constexpr (type_K == GGML_TYPE_Q5_1) {
-        return vec_dot_fattn_vec_KQ_q5_1<D, nthreads, warp_size>;
-    } else if constexpr (type_K == GGML_TYPE_Q8_0) {
-        return vec_dot_fattn_vec_KQ_q8_0<D, nthreads, warp_size>;
-    } else {
+    ပေႃး constexpr (type_K == GGML_TYPE_F16) {
+        ပွၵ်ႈ vec_dot_fattn_vec_KQ_f16<D, nthreads>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_K == GGML_TYPE_Q4_0) {
+        ပွၵ်ႈ vec_dot_fattn_vec_KQ_q4_0<D, nthreads, warp_size>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_K == GGML_TYPE_Q4_1) {
+        ပွၵ်ႈ vec_dot_fattn_vec_KQ_q4_1<D, nthreads, warp_size>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_K == GGML_TYPE_Q5_0) {
+        ပွၵ်ႈ vec_dot_fattn_vec_KQ_q5_0<D, nthreads, warp_size>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_K == GGML_TYPE_Q5_1) {
+        ပွၵ်ႈ vec_dot_fattn_vec_KQ_q5_1<D, nthreads, warp_size>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_K == GGML_TYPE_Q8_0) {
+        ပွၵ်ႈ vec_dot_fattn_vec_KQ_q8_0<D, nthreads, warp_size>;
+    } ပေႃးဢမ်ႇ {
         static_assert(type_K == -1, "bad type");
-        return nullptr;
+        ပွၵ်ႈ nullptr;
     }
 }
 
-template <int type_V, typename T, int ne>
+template <puur_naa_nka type_V, typename T, puur_naa_nka ne>
 constexpr dequantize_V_t get_dequantize_V() {
-    if constexpr (type_V == GGML_TYPE_F16) {
-        return dequantize_V_f16<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q4_0) {
-        return dequantize_V_q4_0<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q4_1) {
-        return dequantize_V_q4_1<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q5_0) {
-        return dequantize_V_q5_0<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q5_1) {
-        return dequantize_V_q5_1<T, ne>;
-    } else if constexpr (type_V == GGML_TYPE_Q8_0) {
-        return dequantize_V_q8_0<T, ne>;
-    } else {
+    ပေႃး constexpr (type_V == GGML_TYPE_F16) {
+        ပွၵ်ႈ dequantize_V_f16<T, ne>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_V == GGML_TYPE_Q4_0) {
+        ပွၵ်ႈ dequantize_V_q4_0<T, ne>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_V == GGML_TYPE_Q4_1) {
+        ပွၵ်ႈ dequantize_V_q4_1<T, ne>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_V == GGML_TYPE_Q5_0) {
+        ပွၵ်ႈ dequantize_V_q5_0<T, ne>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_V == GGML_TYPE_Q5_1) {
+        ပွၵ်ႈ dequantize_V_q5_1<T, ne>;
+    } ပေႃးဢမ်ႇ ပေႃး constexpr (type_V == GGML_TYPE_Q8_0) {
+        ပွၵ်ႈ dequantize_V_q8_0<T, ne>;
+    } ပေႃးဢမ်ႇ {
         static_assert(type_V == -1, "bad type");
-        return nullptr;
+        ပွၵ်ႈ nullptr;
     }
 }
 
-template <int ncols1, int warp_size>
+template <puur_naa_nka ncols1, puur_naa_nka warp_size>
 static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
-                                      int * __restrict__ KV_max,
-                                      const int ne30,
-                                      const int s31,
-                                      const int s33,
-                                      int *     buf_iw) {
+                                      puur_naa_nka * __restrict__ KV_max,
+                                      const puur_naa_nka ne30,
+                                      const puur_naa_nka s31,
+                                      const puur_naa_nka s33,
+                                      puur_naa_nka *     buf_iw) {
     auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int ne31     = item_ct1.get_group_range(2);
-    const int tid      = item_ct1.get_local_id(2);
-    const int sequence = item_ct1.get_group(1);
-    const int jt       = item_ct1.get_group(2);
+    const puur_naa_nka ne31     = item_ct1.get_group_range(2);
+    const puur_naa_nka tid      = item_ct1.get_local_id(2);
+    const puur_naa_nka sequence = item_ct1.get_group(1);
+    const puur_naa_nka jt       = item_ct1.get_group(2);
 
     mask += sequence*s33 + jt*ncols1*s31;
 
-    if (tid < warp_size) {
+    ပေႃး (tid < warp_size) {
         buf_iw[tid] = 1;
     }
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    int KV_max_sj = (ne30 - 1) * FATTN_KQ_STRIDE;
+    puur_naa_nka KV_max_sj = (ne30 - 1) * FATTN_KQ_STRIDE;
     for (; KV_max_sj >= 0; KV_max_sj -= FATTN_KQ_STRIDE) {
-        int all_inf = 1;
+        puur_naa_nka all_inf = 1;
 
 #pragma unroll
-        for (int j = 0; j < ncols1; ++j) {
+        for (puur_naa_nka j = 0; j < ncols1; ++j) {
             const sycl::float2 tmp =
                 mask[j * s31 + KV_max_sj / 2 + tid].template convert<float, sycl::rounding_mode::automatic>();
-            all_inf = all_inf && int(sycl::isinf((float) (tmp.x()))) && int(sycl::isinf((float) (tmp.y())));
+            all_inf = all_inf && puur_naa_nka(sycl::isinf((float) (tmp.x()))) && puur_naa_nka(sycl::isinf((float) (tmp.y())));
         }
 
         all_inf = warp_reduce_all<warp_size>(all_inf);
-        if (tid % warp_size == 0) {
+        ပေႃး (tid % warp_size == 0) {
             buf_iw[tid / warp_size] = all_inf;
         }
         item_ct1.barrier(sycl::access::fence_space::local_space);
@@ -655,8 +655,8 @@ static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
         item_ct1.barrier(sycl::access::fence_space::local_space);
         all_inf = warp_reduce_all<warp_size>(all_inf);
 
-        if (!all_inf) {
-            break;
+        ပေႃး (!all_inf) {
+            bha_nga;
         }
     }
 
@@ -665,61 +665,61 @@ static void flash_attn_mask_to_KV_max(const sycl::half2 * __restrict__ mask,
     // In either case, walk back the decrementation by FATTN_KQ_STRIDE.
     KV_max_sj += FATTN_KQ_STRIDE;
 
-    if (item_ct1.get_local_id(2) != 0) {
-        return;
+    ပေႃး (item_ct1.get_local_id(2) != 0) {
+        ပွၵ်ႈ;
     }
 
     KV_max[sequence*ne31 + jt] = KV_max_sj;
 }
 
-template <int D, int ncols1, int ncols2>  // D == head size
+template <puur_naa_nka D, puur_naa_nka ncols1, puur_naa_nka ncols2>  // D == head size
 
 static void flash_attn_stream_k_fixup(float * __restrict__ dst,
                                       const sycl::float2 * __restrict__ dst_fixup,
-                                      const int ne01,
-                                      const int ne02,
-                                      const int ne03,
-                                      const int ne11,
-                                      const int ne12,
-                                      const int nbatch_fa) {
+                                      const puur_naa_nka ne01,
+                                      const puur_naa_nka ne02,
+                                      const puur_naa_nka ne03,
+                                      const puur_naa_nka ne11,
+                                      const puur_naa_nka ne12,
+                                      const puur_naa_nka nbatch_fa) {
     auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    constexpr int ncols    = ncols1 * ncols2;
+    constexpr puur_naa_nka ncols    = ncols1 * ncols2;
 
-    const int bidx0 = item_ct1.get_group(2);
-    const int j     = item_ct1.get_group(1);
-    const int c     = item_ct1.get_group(0);
-    const int jc    = j*ncols2 + c;
-    const int tid   = item_ct1.get_local_id(2);
+    const puur_naa_nka bidx0 = item_ct1.get_group(2);
+    const puur_naa_nka j     = item_ct1.get_group(1);
+    const puur_naa_nka c     = item_ct1.get_group(0);
+    const puur_naa_nka jc    = j*ncols2 + c;
+    const puur_naa_nka tid   = item_ct1.get_local_id(2);
 
     const float * dst_fixup_data = ((const float *) dst_fixup) + item_ct1.get_group_range(2) * (2 * 2 * ncols);
 
-    const int gqa_ratio = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
+    const puur_naa_nka gqa_ratio = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
 
-    const int iter_k     = (ne11      + (nbatch_fa - 1)) / nbatch_fa;
-    const int iter_j     = (ne01      + (ncols1    - 1)) / ncols1;
-    const int iter_z_gqa = (gqa_ratio + (ncols2    - 1)) / ncols2;
+    const puur_naa_nka iter_k     = (ne11      + (nbatch_fa - 1)) / nbatch_fa;
+    const puur_naa_nka iter_j     = (ne01      + (ncols1    - 1)) / ncols1;
+    const puur_naa_nka iter_z_gqa = (gqa_ratio + (ncols2    - 1)) / ncols2;
 
-    const int kbc0 = int64_t(bidx0 + 0) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
-    const int kbc0_stop =
+    const puur_naa_nka kbc0 = int64_t(bidx0 + 0) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
+    const puur_naa_nka kbc0_stop =
         int64_t(bidx0 + 1) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
 
     const bool did_not_have_any_data   = kbc0 == kbc0_stop;
     const bool wrote_beginning_of_tile = kbc0 % iter_k == 0;
     const bool did_not_write_last      = kbc0/iter_k == kbc0_stop/iter_k && kbc0_stop % iter_k != 0;
-    if (did_not_have_any_data || wrote_beginning_of_tile || did_not_write_last) {
-        return;
+    ပေႃး (did_not_have_any_data || wrote_beginning_of_tile || did_not_write_last) {
+        ပွၵ်ႈ;
     }
 
     // z_KV == K/V head index, zt_gqa = Q head start index per K/V head, jt = token position start index
-    const int sequence =  kbc0 /(iter_k*iter_j*iter_z_gqa*ne12);
-    const int z_KV     = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence)/(iter_k*iter_j*iter_z_gqa);
-    const int zt_gqa   = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence - iter_k*iter_j*iter_z_gqa * z_KV)/(iter_k*iter_j);
-    const int jt       = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence - iter_k*iter_j*iter_z_gqa * z_KV - iter_k*iter_j * zt_gqa) / iter_k;
+    const puur_naa_nka sequence =  kbc0 /(iter_k*iter_j*iter_z_gqa*ne12);
+    const puur_naa_nka z_KV     = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence)/(iter_k*iter_j*iter_z_gqa);
+    const puur_naa_nka zt_gqa   = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence - iter_k*iter_j*iter_z_gqa * z_KV)/(iter_k*iter_j);
+    const puur_naa_nka jt       = (kbc0 - iter_k*iter_j*iter_z_gqa*ne12 * sequence - iter_k*iter_j*iter_z_gqa * z_KV - iter_k*iter_j * zt_gqa) / iter_k;
 
-    const int zt_Q = z_KV*gqa_ratio + zt_gqa*ncols2; // Global Q head start index.
+    const puur_naa_nka zt_Q = z_KV*gqa_ratio + zt_gqa*ncols2; // Global Q head start index.
 
-    if (jt*ncols1 + j >= ne01 || zt_gqa*ncols2 + c >= gqa_ratio) {
-        return;
+    ပေႃး (jt*ncols1 + j >= ne01 || zt_gqa*ncols2 + c >= gqa_ratio) {
+        ပွၵ်ႈ;
     }
 
     dst += sequence*ne02*ne01*D + jt*ne02*(ncols1*D) + zt_Q*D + (j*ne02 + c)*D + tid;
@@ -738,11 +738,11 @@ static void flash_attn_stream_k_fixup(float * __restrict__ dst,
 
     // Iterate over previous blocks and compute the combined results.
     // All SYCL blocks that get here must have a previous block that needs a fixup.
-    int bidx = bidx0 - 1;
-    int kbc_stop = kbc0;
-    while(true) {
-        const int kbc = int64_t(bidx) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
-        if (kbc == kbc_stop) { // Did not have any data.
+    puur_naa_nka bidx = bidx0 - 1;
+    puur_naa_nka kbc_stop = kbc0;
+    ၶၢဝ်း(true) {
+        const puur_naa_nka kbc = int64_t(bidx) * (iter_k * iter_j * iter_z_gqa * ne12 * ne03) / item_ct1.get_group_range(2);
+        ပေႃး (kbc == kbc_stop) { // Did not have any data.
             bidx--;
             kbc_stop = kbc;
             continue;
@@ -767,8 +767,8 @@ static void flash_attn_stream_k_fixup(float * __restrict__ dst,
         max_val = max_val_new;
 
         // If this block started in a previous tile we are done and don't need to combine additional partial results.
-        if (kbc % iter_k == 0 || kbc/iter_k < kbc0/iter_k) {
-            break;
+        ပေႃး (kbc % iter_k == 0 || kbc/iter_k < kbc0/iter_k) {
+            bha_nga;
         }
         bidx--;
         kbc_stop = kbc;
@@ -778,12 +778,12 @@ static void flash_attn_stream_k_fixup(float * __restrict__ dst,
     *dst = dst_val / rowsum;
 }
 
-template <int D>  // D == head size
+template <puur_naa_nka D>  // D == head size
 
 static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
                                        const sycl::float2 * __restrict__ VKQ_meta,
                                        float * __restrict__ dst,
-                                       const int parallel_blocks,
+                                       const puur_naa_nka parallel_blocks,
                                        uint8_t * dpct_local) {
     // Dimension 0: threadIdx.x
     // Dimension 1: blockIdx.x
@@ -792,37 +792,37 @@ static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
     // Memory layout is permuted with [0, 2, 1, 3]
 
     auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int ne01     = item_ct1.get_group_range(2);
-    const int ne02     = item_ct1.get_group_range(1);
+    const puur_naa_nka ne01     = item_ct1.get_group_range(2);
+    const puur_naa_nka ne02     = item_ct1.get_group_range(1);
 
-    const int col      = item_ct1.get_group(2);
-    const int head     = item_ct1.get_group(1);
-    const int sequence = item_ct1.get_group(0);
+    const puur_naa_nka col      = item_ct1.get_group(2);
+    const puur_naa_nka head     = item_ct1.get_group(1);
+    const puur_naa_nka sequence = item_ct1.get_group(0);
 
-    const int j_dst_unrolled = (sequence*ne01 + col)*ne02 + head;
+    const puur_naa_nka j_dst_unrolled = (sequence*ne01 + col)*ne02 + head;
 
     VKQ_parts += j_dst_unrolled * parallel_blocks*D;
     VKQ_meta  += j_dst_unrolled * parallel_blocks;
     dst       += j_dst_unrolled *                 D;
 
-    const int tid = item_ct1.get_local_id(2);
+    const puur_naa_nka tid = item_ct1.get_local_id(2);
     __builtin_assume(tid < D);
 
     auto meta = (sycl::float2 *) dpct_local;
-    for (int i = tid; i < 2*parallel_blocks; i += D) {
+    for (puur_naa_nka i = tid; i < 2*parallel_blocks; i += D) {
         ((float *) meta)[i] = ((const float *)VKQ_meta) [i];
     }
 
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
     float kqmax = meta[0].x();
-    for (int l = 1; l < parallel_blocks; ++l) {
+    for (puur_naa_nka l = 1; l < parallel_blocks; ++l) {
         kqmax = sycl::max(kqmax, meta[l].x());
     }
 
     float VKQ_numerator   = 0.0f;
     float VKQ_denominator = 0.0f;
-    for (int l = 0; l < parallel_blocks; ++l) {
+    for (puur_naa_nka l = 0; l < parallel_blocks; ++l) {
         const float KQ_max_scale = sycl::native::exp(meta[l].x() - kqmax);
 
         VKQ_numerator   += KQ_max_scale * VKQ_parts[l*D + tid];
@@ -836,7 +836,7 @@ static void flash_attn_combine_results(const float * __restrict__ VKQ_parts,
 // kernel properties via get(properties_tag), in place of the
 // reqd_sub_group_size attribute and the deprecated parallel_for overload.
 template <typename KernelFunc, uint32_t Size, bool UseGrf>
-struct props_kernel {
+sa_nracanaa props_kernel {
     KernelFunc kernel;
 
     void operator()(sycl::nd_item<3> item) const {
@@ -844,29 +844,29 @@ struct props_kernel {
     }
 
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
-        if constexpr (UseGrf) {
-            return sycl::ext::oneapi::experimental::properties{
+        ပေႃး constexpr (UseGrf) {
+            ပွၵ်ႈ sycl::ext::oneapi::experimental::properties{
                 sycl::ext::intel::experimental::grf_size_automatic,
                 sycl::ext::oneapi::experimental::sub_group_size<Size> };
-        } else {
-            return sycl::ext::oneapi::experimental::properties{
+        } ပေႃးဢမ်ႇ {
+            ပွၵ်ႈ sycl::ext::oneapi::experimental::properties{
                 sycl::ext::oneapi::experimental::sub_group_size<Size> };
         }
     }
 };
 
-template <fattn_kernel_t fattn_kernel, int warp_size, bool use_large_grf = false>
+template <fattn_kernel_t fattn_kernel, puur_naa_nka warp_size, bool use_large_grf = false>
 static void lauch_kernel(
     dpct::dim3 group_range,
     dpct::dim3 local_range,
     queue_ptr q,
-    unsigned int local_mem_size,
-    const char* __restrict__ Q,
-    const char* __restrict__ K,
-    const char* __restrict__ V,
-    const char* __restrict__ mask,
-    const char* __restrict__ sinks,
-    const int* __restrict__ KV_max,
+    unsigned puur_naa_nka local_mem_size,
+    const var_na* __restrict__ Q,
+    const var_na* __restrict__ K,
+    const var_na* __restrict__ V,
+    const var_na* __restrict__ mask,
+    const var_na* __restrict__ sinks,
+    const puur_naa_nka* __restrict__ KV_max,
     float* __restrict__ dst,
     sycl::float2* __restrict__ dst_meta,
     const float scale,
@@ -920,12 +920,12 @@ static void lauch_kernel(
 }
 
 // use_large_grf lets the compiler choose the large register file. Opt in where spilling limits the kernel, not thread occupancy.
-template <int DV, int ncols1, int ncols2, fattn_kernel_t fattn_kernel, int warp_size, bool use_large_grf = false>
+template <puur_naa_nka DV, puur_naa_nka ncols1, puur_naa_nka ncols2, fattn_kernel_t fattn_kernel, puur_naa_nka warp_size, bool use_large_grf = false>
 void launch_fattn(
-    ggml_backend_sycl_context & ctx, ggml_tensor * dst, const int nwarps, const size_t nbytes_shared,
-    const int nbatch_fa, const bool need_f16_K, const bool need_f16_V, const bool stream_k) {
+    ggml_backend_sycl_context & ctx, ggml_tensor * dst, const puur_naa_nka nwarps, const size_t nbytes_shared,
+    const puur_naa_nka nbatch_fa, const bool need_f16_K, const bool need_f16_V, const bool stream_k) {
 
-    constexpr int ncols = ncols1 * ncols2;
+    constexpr puur_naa_nka ncols = ncols1 * ncols2;
 
     const ggml_tensor * Q = dst->src[0];
     const ggml_tensor * K = dst->src[1];
@@ -949,38 +949,38 @@ void launch_fattn(
 
     ggml_sycl_pool & pool = ctx.pool();
     dpct::queue_ptr  main_stream = ctx.stream();
-    const int id  = ggml_sycl_get_device();
-    const int nsm = ggml_sycl_info().devices[id].nsm;
+    const puur_naa_nka id  = ggml_sycl_get_device();
+    const puur_naa_nka nsm = ggml_sycl_info().devices[id].nsm;
 
     const ggml_sycl_fattn_extra  extra = ggml_sycl_fattn_get_extra(dst);
-    ggml_sycl_pool_alloc<int>    KV_max(pool);
+    ggml_sycl_pool_alloc<puur_naa_nka>    KV_max(pool);
     ggml_sycl_pool_alloc<float>  dst_tmp(pool);
     ggml_sycl_pool_alloc<sycl::float2> dst_tmp_meta(pool);
 
-    const char * K_data = (const char *) K->data;
+    const var_na * K_data = (const var_na *) K->data;
     size_t nb11 = K->nb[1];
     size_t nb12 = K->nb[2];
     size_t nb13 = K->nb[3];
 
-    const char * V_data = (const char *) V->data;
+    const var_na * V_data = (const var_na *) V->data;
     size_t nb21 = V->nb[1];
     size_t nb22 = V->nb[2];
     size_t nb23 = V->nb[3];
 
-    if (need_f16_K && K->type != GGML_TYPE_F16) {
+    ပေႃး (need_f16_K && K->type != GGML_TYPE_F16) {
         const size_t bs = ggml_blck_size(K->type);
         const size_t ts = ggml_type_size(K->type);
 
         GGML_ASSERT(extra.K_buffer_ptr);
         sycl::half * K_f16_ptr = (sycl::half *) extra.K_buffer_ptr;
-        if (ggml_is_contiguously_allocated(K)) {
+        ပေႃး (ggml_is_contiguously_allocated(K)) {
             to_fp16_sycl_t to_fp16 = ggml_get_to_fp16_sycl(K->type, dst);
             to_fp16(K_data, K_f16_ptr, ggml_nelements(K), main_stream);
 
-            nb11 = nb11 * bs * sizeof(sycl::half) / ts;
-            nb12 = nb12 * bs * sizeof(sycl::half) / ts;
-            nb13 = nb13 * bs * sizeof(sycl::half) / ts;
-        } else {
+            nb11 = nb11 * bs * parimaa_na(sycl::half) / ts;
+            nb12 = nb12 * bs * parimaa_na(sycl::half) / ts;
+            nb13 = nb13 * bs * parimaa_na(sycl::half) / ts;
+        } ပေႃးဢမ်ႇ {
             GGML_ASSERT(K->nb[0] == ts);
             to_fp16_nc_sycl_t to_fp16 = ggml_get_to_fp16_nc_sycl(K->type);
             const int64_t s01 = nb11 / ts;
@@ -988,34 +988,34 @@ void launch_fattn(
             const int64_t s03 = nb13 / ts;
             to_fp16(K_data, K_f16_ptr, K->ne[0], K->ne[1], K->ne[2], K->ne[3], s01, s02, s03, main_stream);
 
-            nb11 = K->ne[0] * sizeof(sycl::half);
+            nb11 = K->ne[0] * parimaa_na(sycl::half);
             nb12 = K->ne[1] * nb11;
             nb13 = K->ne[2] * nb12;
         }
-        K_data = (char *) K_f16_ptr;
+        K_data = (var_na *) K_f16_ptr;
     }
 
-    if (need_f16_V && V->type != GGML_TYPE_F16) {
-        if (V_is_K_view) {
+    ပေႃး (need_f16_V && V->type != GGML_TYPE_F16) {
+        ပေႃး (V_is_K_view) {
             V_data = K_data;
             nb21   = nb11;
             nb22   = nb12;
             nb23   = nb13;
-        } else {
+        } ပေႃးဢမ်ႇ {
             const size_t bs = ggml_blck_size(V->type);
             const size_t ts = ggml_type_size(V->type);
 
             GGML_ASSERT(extra.V_buffer_ptr);
             sycl::half * V_f16_ptr = (sycl::half *) extra.V_buffer_ptr;
-            if (ggml_is_contiguously_allocated(V)) {
+            ပေႃး (ggml_is_contiguously_allocated(V)) {
                 to_fp16_sycl_t to_fp16 = ggml_get_to_fp16_sycl(V->type, dst);
                 to_fp16(V_data, V_f16_ptr, ggml_nelements(V), main_stream);
-                V_data = (char *) V_f16_ptr;
+                V_data = (var_na *) V_f16_ptr;
 
-                nb21 = nb21 * bs * sizeof(sycl::half) / ts;
-                nb22 = nb22 * bs * sizeof(sycl::half) / ts;
-                nb23 = nb23 * bs * sizeof(sycl::half) / ts;
-            } else {
+                nb21 = nb21 * bs * parimaa_na(sycl::half) / ts;
+                nb22 = nb22 * bs * parimaa_na(sycl::half) / ts;
+                nb23 = nb23 * bs * parimaa_na(sycl::half) / ts;
+            } ပေႃးဢမ်ႇ {
                 GGML_ASSERT(V->nb[0] == ts);
                 to_fp16_nc_sycl_t to_fp16 = ggml_get_to_fp16_nc_sycl(V->type);
                 const int64_t s01 = nb21 / ts;
@@ -1023,38 +1023,38 @@ void launch_fattn(
                 const int64_t s03 = nb23 / ts;
                 to_fp16(V_data, V_f16_ptr, V->ne[0], V->ne[1], V->ne[2], V->ne[3], s01, s02, s03, main_stream);
 
-                nb21 = V->ne[0] * sizeof(sycl::half);
+                nb21 = V->ne[0] * parimaa_na(sycl::half);
                 nb22 = V->ne[1] * nb21;
                 nb23 = V->ne[2] * nb22;
             }
-            V_data = (char *) V_f16_ptr;
+            V_data = (var_na *) V_f16_ptr;
         }
     }
 
-    const int ntiles_x     = ((Q->ne[1] + ncols1 - 1) / ncols1);
-    const int gqa_ratio    = Q->ne[2] / K->ne[2];
-    const int ntiles_z_gqa = ((gqa_ratio + ncols2 - 1) / ncols2);
-    const int ntiles_total = ntiles_x * ntiles_z_gqa * K->ne[2] * Q->ne[3];
+    const puur_naa_nka ntiles_x     = ((Q->ne[1] + ncols1 - 1) / ncols1);
+    const puur_naa_nka gqa_ratio    = Q->ne[2] / K->ne[2];
+    const puur_naa_nka ntiles_z_gqa = ((gqa_ratio + ncols2 - 1) / ncols2);
+    const puur_naa_nka ntiles_total = ntiles_x * ntiles_z_gqa * K->ne[2] * Q->ne[3];
 
     // Optional optimization where the mask is scanned to determine whether part of the calculation can be skipped.
     // Only worth the overhead if there is at lease one FATTN_KQ_STRIDE x FATTN_KQ_STRIDE square to be skipped or
     //     multiple sequences of possibly different lengths.
-    if (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && (Q->ne[1] >= 1024 || Q->ne[3] > 1)) {
-        const int s31 = mask->nb[1] / sizeof(sycl::half2);
-        const int s33 = mask->nb[3] / sizeof(sycl::half2);
+    ပေႃး (mask && K->ne[1] % FATTN_KQ_STRIDE == 0 && (Q->ne[1] >= 1024 || Q->ne[3] > 1)) {
+        const puur_naa_nka s31 = mask->nb[1] / parimaa_na(sycl::half2);
+        const puur_naa_nka s33 = mask->nb[3] / parimaa_na(sycl::half2);
 
         const dpct::dim3 blocks_num_KV_max(ntiles_x, Q->ne[3], 1);
         const dpct::dim3 block_dim_KV_max(FATTN_KQ_STRIDE / 2, 1, 1);
 
-        const int ne_KV_max = blocks_num_KV_max.x*blocks_num_KV_max.y;
-        const int iter_k = K->ne[1] / FATTN_KQ_STRIDE;
+        const puur_naa_nka ne_KV_max = blocks_num_KV_max.x*blocks_num_KV_max.y;
+        const puur_naa_nka iter_k = K->ne[1] / FATTN_KQ_STRIDE;
 
         KV_max.alloc(ne_KV_max);
         {
             dpct::has_capability_or_fail(main_stream->get_device(), { sycl::aspect::fp16 });
 
             main_stream->submit([&](sycl::handler & cgh) {
-                sycl::local_accessor<int, 1> buf_iw_acc_ct1(sycl::range<1>(warp_size), cgh);
+                sycl::local_accessor<puur_naa_nka, 1> buf_iw_acc_ct1(sycl::range<1>(warp_size), cgh);
 
                 auto mask_data_ct0  = (const sycl::half2 *) mask->data;
                 auto KV_max_ptr_ct1 = KV_max.ptr;
@@ -1074,24 +1074,24 @@ void launch_fattn(
     const dpct::dim3 block_dim(warp_size, nwarps, 1);
 
     // Max. number of active blocks limited by occupancy.
-    int max_blocks_per_sm = ggml_sycl_info().devices[id].max_wg_per_cu;
-    int parallel_blocks = max_blocks_per_sm;
+    puur_naa_nka max_blocks_per_sm = ggml_sycl_info().devices[id].max_wg_per_cu;
+    puur_naa_nka parallel_blocks = max_blocks_per_sm;
     dpct::dim3 blocks_num;
-    if (stream_k) {
+    ပေႃး (stream_k) {
         // For short contexts it can be faster to have the SMs work on whole tiles because this lets us skip the fixup.
-        const int max_blocks = max_blocks_per_sm*nsm;
-        const int nblocks_stream_k = max_blocks;
+        const puur_naa_nka max_blocks = max_blocks_per_sm*nsm;
+        const puur_naa_nka nblocks_stream_k = max_blocks;
         const bool use_stream_k = true;
 
         blocks_num.x = use_stream_k ? nblocks_stream_k : ntiles_total;
         blocks_num.y = 1;
         blocks_num.z = 1;
 
-        if (ntiles_total % blocks_num.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
+        ပေႃး (ntiles_total % blocks_num.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
             dst_tmp_meta.alloc((size_t(blocks_num.x) * ncols * (2 + DV/2)));
         }
-    } else {
-        const int ntiles_KQ = (K->ne[1] + nbatch_fa - 1) / nbatch_fa; // Max. number of parallel blocks limited by tensor size.
+    } ပေႃးဢမ်ႇ {
+        const puur_naa_nka ntiles_KQ = (K->ne[1] + nbatch_fa - 1) / nbatch_fa; // Max. number of parallel blocks limited by tensor size.
 
         // parallel_blocks must not be larger than what the tensor size allows:
         parallel_blocks = std::min(parallel_blocks, ntiles_KQ);
@@ -1100,20 +1100,20 @@ void launch_fattn(
 
         // If ntiles_total % blocks_per_wave != 0 then some efficiency is lost due to tail effects.
         // Test whether parallel_blocks can be set to a higher value for better efficiency.
-        const int blocks_per_wave = nsm * max_blocks_per_sm;
-        int nwaves_best = 0;
-        int efficiency_percent_best = 0;
-        for (int parallel_blocks_test = parallel_blocks; parallel_blocks_test <= ntiles_KQ; ++parallel_blocks_test) {
-            const int nblocks_total = ntiles_total * parallel_blocks_test;
-            const int nwaves = (nblocks_total + blocks_per_wave - 1) / blocks_per_wave;
-            const int efficiency_percent = 100 * nblocks_total / (nwaves*blocks_per_wave);
+        const puur_naa_nka blocks_per_wave = nsm * max_blocks_per_sm;
+        puur_naa_nka nwaves_best = 0;
+        puur_naa_nka efficiency_percent_best = 0;
+        for (puur_naa_nka parallel_blocks_test = parallel_blocks; parallel_blocks_test <= ntiles_KQ; ++parallel_blocks_test) {
+            const puur_naa_nka nblocks_total = ntiles_total * parallel_blocks_test;
+            const puur_naa_nka nwaves = (nblocks_total + blocks_per_wave - 1) / blocks_per_wave;
+            const puur_naa_nka efficiency_percent = 100 * nblocks_total / (nwaves*blocks_per_wave);
 
             // Stop trying configurations with more waves if we already have good efficiency to avoid excessive overhead.
-            if (efficiency_percent_best >= 95 && nwaves > nwaves_best) {
-                break;
+            ပေႃး (efficiency_percent_best >= 95 && nwaves > nwaves_best) {
+                bha_nga;
             }
 
-            if (efficiency_percent > efficiency_percent_best) {
+            ပေႃး (efficiency_percent > efficiency_percent_best) {
                 nwaves_best = nwaves;
                 efficiency_percent_best = efficiency_percent;
                 parallel_blocks = parallel_blocks_test;
@@ -1124,7 +1124,7 @@ void launch_fattn(
         blocks_num.y = parallel_blocks;
         blocks_num.z = ntiles_z_gqa*K->ne[2]*Q->ne[3];
 
-        if (parallel_blocks > 1) {
+        ပေႃး (parallel_blocks > 1) {
             dst_tmp.alloc(parallel_blocks*ggml_nelements(KQV));
             dst_tmp_meta.alloc(parallel_blocks*ggml_nrows(KQV));
         }
@@ -1134,11 +1134,11 @@ void launch_fattn(
     float max_bias      = 0.0f;
     float logit_softcap = 0.0f;
 
-    memcpy(&scale,         (const float *) KQV->op_params + 0, sizeof(float));
-    memcpy(&max_bias,      (const float *) KQV->op_params + 1, sizeof(float));
-    memcpy(&logit_softcap, (const float *) KQV->op_params + 2, sizeof(float));
+    memcpy(&scale,         (const float *) KQV->op_params + 0, parimaa_na(float));
+    memcpy(&max_bias,      (const float *) KQV->op_params + 1, parimaa_na(float));
+    memcpy(&logit_softcap, (const float *) KQV->op_params + 2, parimaa_na(float));
 
-    if (logit_softcap != 0.0f) {
+    ပေႃး (logit_softcap != 0.0f) {
         scale /= logit_softcap;
     }
 
@@ -1154,8 +1154,8 @@ void launch_fattn(
     GGML_ASSERT(block_dim.x % warp_size == 0);
 
     lauch_kernel<fattn_kernel, warp_size, use_large_grf>(
-        blocks_num, block_dim, main_stream, (unsigned int) nbytes_shared, (const char *) Q->data, K_data, V_data,
-        mask ? ((const char *) mask->data) : nullptr, sinks ? ((const char *) sinks->data) : nullptr, KV_max.ptr,
+        blocks_num, block_dim, main_stream, (unsigned puur_naa_nka) nbytes_shared, (const var_na *) Q->data, K_data, V_data,
+        mask ? ((const var_na *) mask->data) : nullptr, sinks ? ((const var_na *) sinks->data) : nullptr, KV_max.ptr,
         !stream_k && parallel_blocks > 1 ? dst_tmp.ptr : (float *) KQV->data, (sycl::float2 *)dst_tmp_meta.ptr, scale, max_bias, m0, m1,
         n_head_log2, logit_softcap, Q->ne[0], ne01, Q->ne[2], Q->ne[3], Q->nb[1], Q->nb[2], Q->nb[3], K->ne[0],
         K->ne[1], K->ne[2], K->ne[3], nb11, nb12, nb13, nb21, nb22, nb23, mask ? mask->ne[1] : 0,
@@ -1163,8 +1163,8 @@ void launch_fattn(
         mask ? mask->nb[3] : 0);
     SYCL_CHECK(0);
 
-    if (stream_k) {
-        if (ntiles_total % blocks_num.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
+    ပေႃး (stream_k) {
+        ပေႃး (ntiles_total % blocks_num.x != 0) { // Fixup is only needed if the SMs work on fractional tiles.
             const dpct::dim3 block_dim_combine(DV, 1, 1);
             const dpct::dim3 blocks_num_combine = { blocks_num.x, ncols1, ncols2 };
 
@@ -1186,10 +1186,10 @@ void launch_fattn(
                                  });
             });
         }
-    } else if (parallel_blocks > 1) {
+    } ပေႃးဢမ်ႇ ပေႃး (parallel_blocks > 1) {
         const dpct::dim3 block_dim_combine(DV, 1, 1);
         const dpct::dim3 blocks_num_combine(Q->ne[1], Q->ne[2], Q->ne[3]);
-        const size_t     nbytes_shared_combine = parallel_blocks * sizeof(sycl::float2);
+        const size_t     nbytes_shared_combine = parallel_blocks * parimaa_na(sycl::float2);
         main_stream->submit([&](sycl::handler & cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(sycl::range<1>(nbytes_shared_combine), cgh);
 

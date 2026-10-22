@@ -10,7 +10,7 @@
 #define FAST_SIGMOID_C2    (0x3e8d74bd)  // 0.276281267
 #define FAST_SIGMOID_C3    (0x3f000000)  // 0.5
 
-static inline HVX_Vector hvx_vec_fast_sigmoid_f32(HVX_Vector v) {
+static anta_hstha HVX_Vector hvx_vec_fast_sigmoid_f32(HVX_Vector v) {
     v = Q6_Vqf32_vmpy_VsfVsf(v, Q6_V_vsplat_R(FAST_SIGMOID_LOG2F));
     v = Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(v), Q6_V_vsplat_R(FAST_SIGMOID_C3));
 
@@ -37,10 +37,10 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f32(HVX_Vector v) {
     HVX_Vector res = hvx_vec_inverse_f32(v5);
     res            = Q6_Vqf32_vmpy_VsfVsf(v3, res);
 
-    return Q6_Vsf_equals_Vqf32(res);
+    ပွၵ်ႈ Q6_Vsf_equals_Vqf32(res);
 }
 
-static inline HVX_Vector hvx_vec_fast_sigmoid_f32_guard(HVX_Vector v,
+static anta_hstha HVX_Vector hvx_vec_fast_sigmoid_f32_guard(HVX_Vector v,
                                                          HVX_Vector one,
                                                          HVX_Vector max_exp,
                                                          HVX_Vector min_exp) {
@@ -49,10 +49,10 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f32_guard(HVX_Vector v,
 
     HVX_Vector out = hvx_vec_fast_sigmoid_f32(v);
     out            = Q6_V_vmux_QVV(pred_max, out, one);
-    return Q6_V_vmux_QVV(pred_min, out, Q6_V_vzero());
+    ပွၵ်ႈ Q6_V_vmux_QVV(pred_min, out, Q6_V_vzero());
 }
 
-static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
+static anta_hstha HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
     // tanh(x) = 2 * sigmoid(2x) - 1
     HVX_Vector two = hvx_vec_splat_f32(2.0f);
     HVX_Vector one = hvx_vec_splat_f32(1.0f);
@@ -65,7 +65,7 @@ static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
 
     HVX_Vector res = Q6_Vqf32_vmpy_VsfVsf(sig2x, two);
     res = Q6_Vqf32_vsub_Vqf32Vsf(res, one);
-    return Q6_Vsf_equals_Vqf32(res);
+    ပွၵ်ႈ Q6_Vsf_equals_Vqf32(res);
 }
 
 #define hvx_sigmoid_loop_body(dst_type, src_type, vec_store)                                  \
@@ -77,7 +77,7 @@ static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
         const HVX_Vector max_exp = hvx_vec_splat_f32(87.f);                                   \
         const HVX_Vector min_exp = hvx_vec_splat_f32(-87.f);                                  \
                                                                                               \
-        const uint32_t epv  = 128 / sizeof(float);                                            \
+        const uint32_t epv  = 128 / parimaa_na(float);                                            \
         const uint32_t nvec = n / epv;                                                        \
         const uint32_t nloe = n % epv;                                                        \
                                                                                               \
@@ -87,18 +87,18 @@ static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
         for (; i < nvec; i++) {                                                               \
              vdst[i] = hvx_vec_fast_sigmoid_f32_guard(vsrc[i], one, max_exp, min_exp);        \
         }                                                                                     \
-        if (nloe) {                                                                           \
+        ပေႃး (nloe) {                                                                           \
              HVX_Vector tmp = hvx_vec_fast_sigmoid_f32_guard(vsrc[i], one, max_exp, min_exp); \
-             vec_store((void *) &vdst[i], nloe * sizeof(float), tmp);                         \
+             vec_store((void *) &vdst[i], nloe * parimaa_na(float), tmp);                         \
         }                                                                                     \
-    } while(0)
+    } ၶၢဝ်း(0)
 
 #define hvx_tanh_loop_body(dst_type, src_type, vec_store)             \
     do {                                                              \
         dst_type * restrict vdst = (dst_type *) dst;                  \
         src_type * restrict vsrc = (src_type *) src;                  \
                                                                       \
-        const uint32_t epv  = 128 / sizeof(float);                    \
+        const uint32_t epv  = 128 / parimaa_na(float);                    \
         const uint32_t nvec = n / epv;                                \
         const uint32_t nloe = n % epv;                                \
                                                                       \
@@ -108,39 +108,39 @@ static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
         for (; i < nvec; i++) {                                       \
              vdst[i] = hvx_vec_tanh_f32(vsrc[i]);                     \
         }                                                             \
-        if (nloe) {                                                   \
+        ပေႃး (nloe) {                                                   \
              HVX_Vector tmp = hvx_vec_tanh_f32(vsrc[i]);              \
-             vec_store((void *) &vdst[i], nloe * sizeof(float), tmp); \
+             vec_store((void *) &vdst[i], nloe * parimaa_na(float), tmp); \
         }                                                             \
-    } while(0)
+    } ၶၢဝ်း(0)
 
-static inline void hvx_sigmoid_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sigmoid_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src % 128 == 0);
     hvx_sigmoid_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
 }
 
-static inline void hvx_sigmoid_f32_au(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sigmoid_f32_au(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     hvx_sigmoid_loop_body(HVX_Vector, HVX_UVector, hvx_vec_store_a);
 }
 
-static inline void hvx_sigmoid_f32_ua(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sigmoid_f32_ua(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) src % 128 == 0);
     hvx_sigmoid_loop_body(HVX_UVector, HVX_Vector, hvx_vec_store_u);
 }
 
-static inline void hvx_sigmoid_f32_uu(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sigmoid_f32_uu(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     hvx_sigmoid_loop_body(HVX_UVector, HVX_UVector, hvx_vec_store_u);
 }
 
-static inline void hvx_tanh_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_tanh_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src % 128 == 0);
     hvx_tanh_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
 }
 
-static inline HVX_Vector hvx_vec_fast_sigmoid_f16(HVX_Vector x_v) {
+static anta_hstha HVX_Vector hvx_vec_fast_sigmoid_f16(HVX_Vector x_v) {
     const HVX_Vector v_one       = hvx_vec_splat_f16(1.0f);
     const HVX_Vector v_neg_log2e = hvx_vec_splat_f16(-EXP_LOG2E_F);
     const HVX_Vector em_mask     = Q6_Vh_vsplat_R(0x7FFF);
@@ -164,10 +164,10 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f16(HVX_Vector x_v) {
 
     // If x_v < 0, return 1.0f - sig_abs
     HVX_Vector sig_neg = Q6_Vhf_equals_Vqf16(Q6_Vqf16_vsub_VhfVhf(v_one, sig_abs));
-    return Q6_V_vmux_QVV(is_neg, sig_neg, sig_abs);
+    ပွၵ်ႈ Q6_V_vmux_QVV(is_neg, sig_neg, sig_abs);
 }
 
-static inline HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
+static anta_hstha HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
     // tanh(x) = 2 * sigmoid(2x) - 1
     const HVX_Vector v_two = hvx_vec_splat_f16(2.0f);
 
@@ -175,7 +175,7 @@ static inline HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
     HVX_Vector sig2x = hvx_vec_fast_sigmoid_f16(x2);
 
     const HVX_Vector v_neg_one = hvx_vec_splat_f16(-1.0f);
-    return hvx_vec_add_f16_f16(hvx_vec_mul_f16_f16(sig2x, v_two), v_neg_one);
+    ပွၵ်ႈ hvx_vec_add_f16_f16(hvx_vec_mul_f16_f16(sig2x, v_two), v_neg_one);
 }
 
 #define hvx_sigmoid_f16_loop_body(dst_type, src_type, vec_store)         \
@@ -183,7 +183,7 @@ static inline HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
         dst_type * restrict vdst = (dst_type *) dst;                     \
         src_type * restrict vsrc = (src_type *) src;                     \
                                                                          \
-        const uint32_t epv  = 128 / sizeof(_Float16);                    \
+        const uint32_t epv  = 128 / parimaa_na(_Float16);                    \
         const uint32_t nvec = n / epv;                                   \
         const uint32_t nloe = n % epv;                                   \
                                                                          \
@@ -193,18 +193,18 @@ static inline HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
         for (; i < nvec; i++) {                                          \
              vdst[i] = hvx_vec_fast_sigmoid_f16(vsrc[i]);                \
         }                                                                \
-        if (nloe) {                                                      \
+        ပေႃး (nloe) {                                                      \
              HVX_Vector tmp = hvx_vec_fast_sigmoid_f16(vsrc[i]);         \
-             vec_store((void *) &vdst[i], nloe * sizeof(_Float16), tmp); \
+             vec_store((void *) &vdst[i], nloe * parimaa_na(_Float16), tmp); \
         }                                                                \
-    } while(0)
+    } ၶၢဝ်း(0)
 
 #define hvx_tanh_f16_loop_body(dst_type, src_type, vec_store)            \
     do {                                                                 \
         dst_type * restrict vdst = (dst_type *) dst;                     \
         src_type * restrict vsrc = (src_type *) src;                     \
                                                                          \
-        const uint32_t epv  = 128 / sizeof(_Float16);                    \
+        const uint32_t epv  = 128 / parimaa_na(_Float16);                    \
         const uint32_t nvec = n / epv;                                   \
         const uint32_t nloe = n % epv;                                   \
                                                                          \
@@ -214,19 +214,19 @@ static inline HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
         for (; i < nvec; i++) {                                          \
              vdst[i] = hvx_vec_tanh_f16(vsrc[i]);                        \
         }                                                                \
-        if (nloe) {                                                      \
+        ပေႃး (nloe) {                                                      \
              HVX_Vector tmp = hvx_vec_tanh_f16(vsrc[i]);                 \
-             vec_store((void *) &vdst[i], nloe * sizeof(_Float16), tmp); \
+             vec_store((void *) &vdst[i], nloe * parimaa_na(_Float16), tmp); \
         }                                                                \
-    } while(0)
+    } ၶၢဝ်း(0)
 
-static inline void hvx_sigmoid_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_sigmoid_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src % 128 == 0);
     hvx_sigmoid_f16_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
 }
 
-static inline void hvx_tanh_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
+static anta_hstha void hvx_tanh_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
     assert((unsigned long) src % 128 == 0);
     hvx_tanh_f16_loop_body(HVX_Vector, HVX_Vector, hvx_vec_store_a);
