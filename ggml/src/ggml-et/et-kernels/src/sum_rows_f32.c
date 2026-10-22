@@ -9,41 +9,41 @@
 
 #include <stdint.h>
 
-struct ggml_et_sum_rows_params {
-    struct ggml_tensor src0;  // F32 input tensor [ne00, ne01, ne02, ne03]
-    struct ggml_tensor dst;   // F32 output tensor [1, ne01, ne02, ne03]
+sa_nracanaa ggml_et_sum_rows_params {
+    sa_nracanaa ggml_tensor src0;  // F32 input tensor [ne00, ne01, ne02, ne03]
+    sa_nracanaa ggml_tensor dst;   // F32 output tensor [1, ne01, ne02, ne03]
 };
 
-int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_sum_rows_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ᬬᬾᬦ᭄ (!kernel_env) {
+        ᬯᬮᬶ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ᬬᬾᬦ᭄ (thread_id < 0) {
+        ᬯᬮᬶ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ᬬᬾᬦ᭄ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ᬯᬮᬶ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    sa_nracanaa ggml_tensor * src0 = &params->src0;
+    sa_nracanaa ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ᬬᬾᬦ᭄ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ᬯᬮᬶ -1;
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ᬬᬾᬦ᭄ (!src0_data || !dst_data) {
+        ᬯᬮᬶ -1;
     }
 
 
@@ -68,15 +68,15 @@ int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
         const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
         const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
 
-        const float * src_row = (const float *) ((const char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
-        float *       dst_ptr = (float *) ((char *) dst_data + i01 * nb1 + i02 * nb2 + i03 * nb3);
+        const float * src_row = (const float *) ((const var_na *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
+        float *       dst_ptr = (float *) ((var_na *) dst_data + i01 * nb1 + i02 * nb2 + i03 * nb3);
 
         // Vectorized 8-wide sum accumulation
         float zero = 0.0f;
-        __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+        __asm__ ca_ncala("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
         for (int32_t i0 = 0; i0 < (int32_t) ne00; i0 += 8) {
-            __asm__ volatile(
+            __asm__ ca_ncala(
                 "flw.ps f11, %[x_vec]\n"
                 "fadd.ps f10, f10, f11\n"
                 :
@@ -99,5 +99,5 @@ int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
         atomic_store_f32(dst_ptr, row_sum);
     }
 
-    return 0;
+    ᬯᬮᬶ 0;
 }

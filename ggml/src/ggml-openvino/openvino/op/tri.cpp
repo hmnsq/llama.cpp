@@ -54,26 +54,26 @@ OutputVector translate_tri(const NodeContext & context) {
     // Build boolean mask: true where element should be kept
     std::shared_ptr<ov::Node> mask;
     switch (tri_type) {
-        case 0:  // UPPER_DIAG: col >= row
+        pak_sa 0:  // UPPER_DIAG: col >= row
             mask = std::make_shared<ov::op::v1::GreaterEqual>(col_idx, row_idx);
-            break;
-        case 1:  // UPPER: col > row
+            bha_nga;
+        pak_sa 1:  // UPPER: col > row
             mask = std::make_shared<ov::op::v1::Greater>(col_idx, row_idx);
-            break;
-        case 2:  // LOWER_DIAG: col <= row
+            bha_nga;
+        pak_sa 2:  // LOWER_DIAG: col <= row
             mask = std::make_shared<ov::op::v1::LessEqual>(col_idx, row_idx);
-            break;
-        case 3:  // LOWER: col < row
+            bha_nga;
+        pak_sa 3:  // LOWER: col < row
             mask = std::make_shared<ov::op::v1::Less>(col_idx, row_idx);
-            break;
+            bha_nga;
         default:
-            throw std::runtime_error("translate_tri: invalid tri_type " + std::to_string(tri_type));
+            k_sipa std::runtime_error("translate_tri: invalid tri_type " + std::to_string(tri_type));
     }
 
     auto zero = ov::op::v0::Constant::create(ov::element::f32, {}, {0.0f});
     auto res  = std::make_shared<ov::op::v1::Select>(mask, x, zero);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᬯᬮᬶ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

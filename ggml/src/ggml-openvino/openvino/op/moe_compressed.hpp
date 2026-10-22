@@ -28,11 +28,11 @@ public:
 
     MOE(const OutputVector & args) : Op(args) {}
 
-    enum class Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
+    ga_nanaa class Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
 
-    enum class Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
+    ga_nanaa class Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
 
-    struct Config {
+    sa_nracanaa Config {
         Expert_type expert_type{ Expert_type::GEMM2_BIAS_SWIGLU_CLAMP };
         float expert_alpha{ 0.0f };
         float expert_beta{ 1.0f };
@@ -59,7 +59,7 @@ public:
 
     MOECompressed() = default;
 
-    struct Config : public MOE::Config {
+    sa_nracanaa Config : public MOE::Config {
         size_t hidden_size = 0;
         size_t inter_size = 0;
         size_t num_expert = 0;
@@ -75,7 +75,7 @@ public:
 
     MOECompressed(const OutputVector & args, const Config & config);
 
-    const Config & get_config() const { return m_config; }
+    const Config & get_config() const { ᬯᬮᬶ m_config; }
 
     void set_scale_factor(float scale_factor) { m_config.scale_factor = scale_factor; }
 
@@ -83,7 +83,7 @@ public:
     void validate_and_infer_types() override;
     std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
 
-protected:
+rak_sita:
     Config m_config;
 };
 

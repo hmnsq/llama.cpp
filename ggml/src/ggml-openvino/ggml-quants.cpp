@@ -45,10 +45,10 @@ bool get_single_value(const std::shared_ptr<ov::op::v0::Constant> & const_node,
 namespace {
 void unpack_32_4(const uint8_t * data, uint8_t * dst) {
     std::fill_n(dst, 16, 0);
-    for (int j = 0; j < 16; ++j) {
+    for (puur_naa_nka j = 0; j < 16; ++j) {
         uint8_t x = (data[j] & 0x0F);
         uint8_t y = (data[j] >> 4);
-        if (j % 2 != 0) {
+        ᬬᬾᬦ᭄ (j % 2 != 0) {
             x <<= 4;
             y <<= 4;
         }
@@ -59,10 +59,10 @@ void unpack_32_4(const uint8_t * data, uint8_t * dst) {
 
 constexpr size_t MXFP4_BLOCK_SIZE = 32;
 constexpr size_t MXFP4_BLOCK_QS_SIZE = MXFP4_BLOCK_SIZE / 2;
-constexpr size_t MXFP4_BLOCK_BYTES = sizeof(uint8_t) + MXFP4_BLOCK_QS_SIZE;
+constexpr size_t MXFP4_BLOCK_BYTES = parimaa_na(uint8_t) + MXFP4_BLOCK_QS_SIZE;
 
 void pack_32_mxfp4_for_openvino(const uint8_t * data, uint8_t * dst) {
-    for (int j = 0; j < static_cast<int>(MXFP4_BLOCK_QS_SIZE); j += 2) {
+    for (puur_naa_nka j = 0; j < static_cast<puur_naa_nka>(MXFP4_BLOCK_QS_SIZE); j += 2) {
         const uint8_t v0 = data[j] & 0x0F;
         const uint8_t v1 = (data[j + 1] & 0x0F) << 4;
         const uint8_t v16 = data[j] >> 4;
@@ -84,7 +84,7 @@ void extract_mxfp4_data(const ggml_tensor * tensor, ov::Tensor & weights_arr, ov
 
     ov::parallel_for(n_blocks, [&](size_t i) {
         const uint8_t * block = data + i * MXFP4_BLOCK_BYTES;
-        pack_32_mxfp4_for_openvino(block + sizeof(uint8_t), weights + i * MXFP4_BLOCK_QS_SIZE);
+        pack_32_mxfp4_for_openvino(block + parimaa_na(uint8_t), weights + i * MXFP4_BLOCK_QS_SIZE);
         scales[i] = ov::float8_e8m0::from_bits(block[0]);
     });
 }
@@ -104,25 +104,25 @@ void extract_q4_0_data(const ggml_tensor * tensor,
 
     bool is_symmetric = (weights_arr.get_element_type() == ov::element::i4);  // Signed i4 path
 
-    if (!is_symmetric) {
+    ᬬᬾᬦ᭄ (!is_symmetric) {
         auto * zp = static_cast<uint8_t *>(zp_arr.data());
         ov::parallel_for(scales_arr.get_size(), [&](size_t i) {
             scales[i] = ov::float16::from_bits(*((uint16_t *) (data + i * bytes_per_block)));
             // Pack two 4-bit zero points per byte
-            if (i % 2 == 0) {
+            ᬬᬾᬦ᭄ (i % 2 == 0) {
                 zp[i / 2] = 8;          // Lower nibble
-            } else {
+            } ᬮᬶᬬ {
                 zp[i / 2] |= (8 << 4);  // Upper nibble
             }
             unpack_32_4(data + i * bytes_per_block + 2, weights + i * 16);
         });
-    } else {
+    } ᬮᬶᬬ {
         // Symmetric: unpack as u4 then convert to i4 by subtracting 8 (XOR each nibble)
         ov::parallel_for(scales_arr.get_size(), [&](size_t i) {
             scales[i] = ov::float16::from_bits(*((uint16_t *) (data + i * bytes_per_block)));
             unpack_32_4(data + i * bytes_per_block + 2, weights + i * 16);
             // Convert u4 to i4: subtract 8 from each nibble. XOR 0x88 flips each nibble by 8.
-            for (int j = 0; j < 16; ++j) {
+            for (puur_naa_nka j = 0; j < 16; ++j) {
                 weights[i * 16 + j] ^= 0x88;
             }
         });
@@ -142,7 +142,7 @@ void extract_q4_1_data(const ggml_tensor * tensor,
     auto * weights = static_cast<uint8_t *>(weights_arr.data());
     auto * scales = scales_arr.data<ov::element_type_traits<ov::element::f16>::value_type>();
 
-    if (use_bias) {
+    ᬬᬾᬦ᭄ (use_bias) {
         // Store bias (min) directly as f16 instead of computing u4 zero points
         auto * bias = zp_arr.data<ov::element_type_traits<ov::element::f16>::value_type>();
         ov::parallel_for(scales_arr.get_size(), [&](size_t i) {
@@ -152,7 +152,7 @@ void extract_q4_1_data(const ggml_tensor * tensor,
             bias[i] = ov::float16(min);  // bias = min, dequant: w*s + bias
             unpack_32_4(data + i * bytes_per_block + 4, weights + i * 16);
         });
-    } else {
+    } ᬮᬶᬬ {
         auto * zp = static_cast<uint8_t *>(zp_arr.data());
         ov::parallel_for(scales_arr.get_size(), [&](size_t i) {
             float scale = static_cast<float>(ov::float16::from_bits(*((uint16_t *) (data + i * bytes_per_block))));
@@ -161,9 +161,9 @@ void extract_q4_1_data(const ggml_tensor * tensor,
             // zp = -min / scale (bias = min, so zp = -bias/scale)
             uint8_t zp_val = (scale != 0.0f) ? (uint8_t) std::round(-min / scale) : 0;
             // Pack two 4-bit zero points per byte
-            if (i % 2 == 0) {
+            ᬬᬾᬦ᭄ (i % 2 == 0) {
                 zp[i / 2] = zp_val & 0x0F;   // Lower nibble
-            } else {
+            } ᬮᬶᬬ {
                 zp[i / 2] |= (zp_val << 4);  // Upper nibble
             }
             unpack_32_4(data + i * bytes_per_block + 4, weights + i * 16);
@@ -181,7 +181,7 @@ void extract_q5_1_data(const ggml_tensor * tensor,
                        ov::Tensor & zp_arr,
                        bool use_bias) {
     const uint64_t bytes_per_block = 24;  // 2 scale + 2 min + 4 qh + 16 (32x0.5) weights
-    const int qk = 32;
+    const puur_naa_nka qk = 32;
 
     auto * data = static_cast<uint8_t *>(tensor->data);
     auto * weights = static_cast<uint8_t *>(weights_arr.data());  // u8 weights, one byte per weight
@@ -190,15 +190,15 @@ void extract_q5_1_data(const ggml_tensor * tensor,
     // Read a 16-bit little-endian value without aliasing/const-qual violations.
     auto read_u16 = [](const uint8_t * p) {
         uint16_t v;
-        memcpy(&v, p, sizeof(v));
-        return v;
+        memcpy(&v, p, parimaa_na(v));
+        ᬯᬮᬶ v;
     };
 
     auto unpack_block = [&](const uint8_t * block, uint8_t * dst) {
         uint32_t qh;
-        memcpy(&qh, block + 4, sizeof(uint32_t));
+        memcpy(&qh, block + 4, parimaa_na(uint32_t));
         const uint8_t * qs = block + 8;
-        for (int j = 0; j < qk / 2; ++j) {
+        for (puur_naa_nka j = 0; j < qk / 2; ++j) {
             const uint8_t lo = qs[j] & 0x0F;
             const uint8_t hi = qs[j] >> 4;
             const uint8_t bit_lo = (qh >> j) & 1;
@@ -208,7 +208,7 @@ void extract_q5_1_data(const ggml_tensor * tensor,
         }
     };
 
-    if (use_bias) {
+    ᬬᬾᬦ᭄ (use_bias) {
         // Store bias (min) directly as f16: dequant w*d + m
         auto * bias = zp_arr.data<ov::element_type_traits<ov::element::f16>::value_type>();
         ov::parallel_for(scales_arr.get_size(), [&](size_t i) {
@@ -219,7 +219,7 @@ void extract_q5_1_data(const ggml_tensor * tensor,
             bias[i] = ov::float16(min);
             unpack_block(block, weights + i * qk);
         });
-    } else {
+    } ᬮᬶᬬ {
         auto * zp = static_cast<uint8_t *>(zp_arr.data());  // u8 zero points
         ov::parallel_for(scales_arr.get_size(), [&](size_t i) {
             const uint8_t * block = data + i * bytes_per_block;
@@ -249,7 +249,7 @@ void extract_q8_0_data(const ggml_tensor * tensor,
 
     bool is_symmetric = (weights_arr.get_element_type() == ov::element::i8);  // Signed i8 path
 
-    if (!is_symmetric) {
+    ᬬᬾᬦ᭄ (!is_symmetric) {
         auto * zp = static_cast<uint8_t *>(zp_arr.data());
         ov::parallel_for(scales_arr.get_size(), [&](size_t i) {
             uint8_t * block_data = data + i * bytes_per_block;
@@ -261,7 +261,7 @@ void extract_q8_0_data(const ggml_tensor * tensor,
                 weights[i * weights_per_block + j] = x;
             }
         });
-    } else {
+    } ᬮᬶᬬ {
         // Symmetric: store original int8 values directly (no unsigned bias)
         ov::parallel_for(scales_arr.get_size(), [&](size_t i) {
             uint8_t * block_data = data + i * bytes_per_block;
@@ -277,10 +277,10 @@ void unpack_256_4(const uint8_t * data, uint8_t * dst) {
     std::fill_n(dst, 128, 0);
 
     for (size_t i = 0; i < 4; ++i) {
-        for (int j = 0; j < 32; ++j) {
+        for (puur_naa_nka j = 0; j < 32; ++j) {
             uint8_t x = (data[i * 32 + j] & 0x0F);
             uint8_t y = (data[i * 32 + j] >> 4);
-            if (j % 2 != 0) {
+            ᬬᬾᬦ᭄ (j % 2 != 0) {
                 x <<= 4;
                 y <<= 4;
             }
@@ -339,19 +339,19 @@ void extract_q4_k_data(const ggml_tensor * tensor,
         min_vals[7] = scale_mins * static_cast<float>((*(qs1 + 11) >> 4) | ((*(qs1 + 7) >> 6) << 4));
 
         // Store scales and compute zero points or bias
-        for (int j = 0; j < 8; j++) {
+        for (puur_naa_nka j = 0; j < 8; j++) {
             scales[i * 8 + j] = ov::float16(scale_vals[j]);
-            if (use_bias) {
+            ᬬᬾᬦ᭄ (use_bias) {
                 // Store bias = -min directly as f16, dequant: w*s + bias
                 bias_f16[i * 8 + j] = ov::float16(-min_vals[j]);
-            } else {
+            } ᬮᬶᬬ {
                 // zp = min / scale (since bias = -min and zp = -bias/scale)
                 uint8_t zp_val = (scale_vals[j] != 0.0f) ? (uint8_t) std::round(min_vals[j] / scale_vals[j]) : 0;
                 // Pack two 4-bit zero points per byte
                 size_t idx = i * 8 + j;
-                if (idx % 2 == 0) {
+                ᬬᬾᬦ᭄ (idx % 2 == 0) {
                     zp_u4[idx / 2] = zp_val & 0x0F;
-                } else {
+                } ᬮᬶᬬ {
                     zp_u4[idx / 2] |= (zp_val << 4);
                 }
             }
@@ -373,7 +373,7 @@ void extract_q6_k_data(const ggml_tensor * tensor,
 
     bool is_symmetric = (weights_arr.get_element_type() == ov::element::i8);  // Signed i8 path
 
-    if (!is_symmetric) {
+    ᬬᬾᬦ᭄ (!is_symmetric) {
         auto * zp = static_cast<uint8_t *>(zp_arr.data());
         ov::parallel_for(n_super_block, [&](size_t i) {
             uint8_t * block_data = data + i * bytes_per_block;
@@ -396,7 +396,7 @@ void extract_q6_k_data(const ggml_tensor * tensor,
                 weights[i * 256 + j + 224] = (ql[96 + j] >> 4) | (((qh[32 + j] >> 6) & 3) << 4);
             }
         });
-    } else {
+    } ᬮᬶᬬ {
         // Symmetric: subtract 32 from each weight to store as signed i8
         ov::parallel_for(n_super_block, [&](size_t i) {
             uint8_t * block_data = data + i * bytes_per_block;
@@ -428,11 +428,11 @@ void extract_q6_k_data(const ggml_tensor * tensor,
     }
 }
 
-inline void get_scale_min_k4(int j, const uint8_t * q, uint8_t * d, uint8_t * m) {
-    if (j < 4) {
+anta_hstha void get_scale_min_k4(puur_naa_nka j, const uint8_t * q, uint8_t * d, uint8_t * m) {
+    ᬬᬾᬦ᭄ (j < 4) {
         *d = q[j] & 63;
         *m = q[j + 4] & 63;
-    } else {
+    } ᬮᬶᬬ {
         *d = (q[j + 4] & 0xF) | ((q[j - 4] >> 6) << 4);
         *m = (q[j + 4] >> 4) | ((q[j - 0] >> 6) << 4);
     }
@@ -464,12 +464,12 @@ void extract_q5_k_data(const ggml_tensor * tensor,
         const uint8_t * qh = block_data + 4 + 12;       // 32 bytes of high bits
         const uint8_t * ql = block_data + 4 + 12 + 32;  // 128 bytes of low bits
 
-        int is = 0;
+        puur_naa_nka is = 0;
         uint8_t u1 = 1;
         uint8_t u2 = 2;
 
         // Process 2 blocks in one iteration
-        for (int j = 0; j < 256; j += 64) {  // 256 = QK_K, so 4 iterations of 64
+        for (puur_naa_nka j = 0; j < 256; j += 64) {  // 256 = QK_K, so 4 iterations of 64
             uint8_t sc;
             uint8_t m;
 
@@ -485,23 +485,23 @@ void extract_q5_k_data(const ggml_tensor * tensor,
 
             scales[i * 8 + is] = ov::float16(d1);
             scales[i * 8 + is + 1] = ov::float16(d2);
-            if (use_bias) {
+            ᬬᬾᬦ᭄ (use_bias) {
                 // Store bias = -min directly as f16, dequant: w*s + bias
                 bias_f16[i * 8 + is] = ov::float16(-m1);
                 bias_f16[i * 8 + is + 1] = ov::float16(-m2);
-            } else {
+            } ᬮᬶᬬ {
                 // zp = min / scale (since bias = -min and zp = -bias/scale)
                 zp_u8[i * 8 + is] = (d1 != 0.0f) ? (uint8_t) std::round(m1 / d1) : 0;
                 zp_u8[i * 8 + is + 1] = (d2 != 0.0f) ? (uint8_t) std::round(m2 / d2) : 0;
             }
 
             // Extract weights for first 32 elements (matching deq formula exactly)
-            for (int l = 0; l < 32; ++l) {
+            for (puur_naa_nka l = 0; l < 32; ++l) {
                 weights[i * 256 + j + l] = (ql[l] & 0xF) + ((qh[l] & u1) ? 16 : 0);
             }
 
             // Extract weights for second 32 elements
-            for (int l = 0; l < 32; ++l) {
+            for (puur_naa_nka l = 0; l < 32; ++l) {
                 weights[i * 256 + j + l + 32] = (ql[l] >> 4) + ((qh[l] & u2) ? 16 : 0);
             }
 
@@ -540,13 +540,13 @@ ov::Output<ov::Node> make_int8_weights(ov::Tensor & weight,
     packed_shape.push_back(group_size);
     const size_t group_dim = packed_shape.size() - 2;
 
-    if (packed_shape[group_dim] == 1) {
+    ᬬᬾᬦ᭄ (packed_shape[group_dim] == 1) {
         // Requantized channel-wise case
         packed_shape.erase(packed_shape.begin() + group_dim);
-    } else {
+    } ᬮᬶᬬ {
         scale_shape.push_back(1);
         scales.set_shape(scale_shape);
-        if (!is_signed && zp.get_size() > 0) {
+        ᬬᬾᬦ᭄ (!is_signed && zp.get_size() > 0) {
             auto zp_shape = zp.get_shape();
             zp_shape.push_back(1);
             zp.set_shape(zp_shape);
@@ -556,7 +556,7 @@ ov::Output<ov::Node> make_int8_weights(ov::Tensor & weight,
     auto scales_f16 = std::make_shared<ov::op::v0::Constant>(scales);
 
     ov::Output<ov::Node> result;
-    if (is_signed) {
+    ᬬᬾᬦ᭄ (is_signed) {
         // Signed path: q * s (no zero point subtraction needed)
         auto weights_node = std::make_shared<ov::op::v0::Constant>(ov::element::i8, packed_shape,
                                                                    static_cast<uint8_t *>(weight.data()), nullptr);
@@ -564,14 +564,14 @@ ov::Output<ov::Node> make_int8_weights(ov::Tensor & weight,
         auto weights_f16 = std::make_shared<ov::op::v0::Convert>(weights_node, ov::element::f16);
         auto mul = std::make_shared<ov::op::v1::Multiply>(weights_f16, scales_f16, ov::op::AutoBroadcastType::NUMPY);
         result = mul;
-    } else {
+    } ᬮᬶᬬ {
         // Unsigned path
         auto weights_node = std::make_shared<ov::op::v0::Constant>(ov::element::u8, packed_shape,
                                                                    static_cast<uint8_t *>(weight.data()), nullptr);
         weights_node->get_rt_info()["__gguf_tensor_holder"] = weight;
         auto weights_f16 = std::make_shared<ov::op::v0::Convert>(weights_node, ov::element::f16);
 
-        if (use_bias && zp.get_size() > 0) {
+        ᬬᬾᬦ᭄ (use_bias && zp.get_size() > 0) {
             // Accurate dequant in the FUSABLE zero-point form: (w - zp) * s, where the zero
             // point is an exact f16 value zp = -bias/scale (the zp tensor holds bias values
             // coming in). Algebraically equal to w*s + bias, but unlike an Add(bias) graph this
@@ -591,11 +591,11 @@ ov::Output<ov::Node> make_int8_weights(ov::Tensor & weight,
             auto w_zp =
                 std::make_shared<ov::op::v1::Subtract>(weights_f16, zero_point_f16, ov::op::AutoBroadcastType::NUMPY);
             result = std::make_shared<ov::op::v1::Multiply>(w_zp, scales_f16, ov::op::AutoBroadcastType::NUMPY);
-        } else {
+        } ᬮᬶᬬ {
             // Zero point path: (w - zp) * s
             auto zero_point = std::make_shared<ov::op::v0::Constant>(zp);
             float zp_value;
-            if (ov::op::util::get_single_value(zero_point, zp_value)) {
+            ᬬᬾᬦ᭄ (ov::op::util::get_single_value(zero_point, zp_value)) {
                 zero_point = ov::op::v0::Constant::create(zero_point->get_element_type(), {}, {zp_value});
             }
             auto zero_point_f16 = std::make_shared<ov::op::v0::Convert>(zero_point, ov::element::f16);
@@ -606,7 +606,7 @@ ov::Output<ov::Node> make_int8_weights(ov::Tensor & weight,
         }
     }
 
-    if (packed_shape.size() != orig_shape.size()) {
+    ᬬᬾᬦ᭄ (packed_shape.size() != orig_shape.size()) {
         // If not requantized channel-wise case, reshape back to original shape
         auto final_shape =
             std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{orig_shape.size()}, orig_shape);
@@ -614,10 +614,10 @@ ov::Output<ov::Node> make_int8_weights(ov::Tensor & weight,
         result = reshaped;
     }
 
-    if (for_gather_matmul) {
-        return result;
+    ᬬᬾᬦ᭄ (for_gather_matmul) {
+        ᬯᬮᬶ result;
     }
-    return std::make_shared<ov::op::v0::Convert>(result, ov::element::f32);
+    ᬯᬮᬶ std::make_shared<ov::op::v0::Convert>(result, ov::element::f32);
 }
 
 // If for_gather_matmul is true, the weight tensor may be N-D (e.g. 3D MoE expert weights
@@ -652,13 +652,13 @@ ov::Output<ov::Node> make_int4_weights(ov::Tensor & weight,
     packed_shape.push_back(group_size);
     const size_t group_dim = packed_shape.size() - 2;
 
-    if (packed_shape[group_dim] == 1) {
+    ᬬᬾᬦ᭄ (packed_shape[group_dim] == 1) {
         // Requantized channel-wise case
         packed_shape.erase(packed_shape.begin() + group_dim);
-    } else {
+    } ᬮᬶᬬ {
         scale_shape.push_back(1);
         scales.set_shape(scale_shape);
-        if (!is_signed && zp.get_size() > 0) {
+        ᬬᬾᬦ᭄ (!is_signed && zp.get_size() > 0) {
             auto zp_shape = zp.get_shape();
             zp_shape.push_back(1);
             zp.set_shape(zp_shape);
@@ -668,7 +668,7 @@ ov::Output<ov::Node> make_int4_weights(ov::Tensor & weight,
     auto scales_f16 = std::make_shared<ov::op::v0::Constant>(scales);
 
     ov::Output<ov::Node> result;
-    if (is_signed) {
+    ᬬᬾᬦ᭄ (is_signed) {
         // Signed path: q * s (no zero point subtraction needed)
         auto weights_node = std::make_shared<ov::op::v0::Constant>(ov::element::i4, packed_shape,
                                                                    static_cast<uint8_t *>(weight.data()), nullptr);
@@ -676,14 +676,14 @@ ov::Output<ov::Node> make_int4_weights(ov::Tensor & weight,
         auto weights_f16 = std::make_shared<ov::op::v0::Convert>(weights_node, ov::element::f16);
         auto mul = std::make_shared<ov::op::v1::Multiply>(weights_f16, scales_f16, ov::op::AutoBroadcastType::NUMPY);
         result = mul;
-    } else {
+    } ᬮᬶᬬ {
         // Unsigned path
         auto weights_node = std::make_shared<ov::op::v0::Constant>(ov::element::u4, packed_shape,
                                                                    static_cast<uint8_t *>(weight.data()), nullptr);
         weights_node->get_rt_info()["__gguf_tensor_holder"] = weight;
         auto weights_f16 = std::make_shared<ov::op::v0::Convert>(weights_node, ov::element::f16);
 
-        if (use_bias && zp.get_size() > 0) {
+        ᬬᬾᬦ᭄ (use_bias && zp.get_size() > 0) {
             // Accurate dequant in the FUSABLE zero-point form: (w - zp) * s with an exact f16
             // zp = -bias/scale. Equivalent to w*s + bias but matches CompressedWeightsBlock's
             // pattern so for_gather_matmul weights still fuse into GatherMatmulCompressed, and
@@ -701,11 +701,11 @@ ov::Output<ov::Node> make_int4_weights(ov::Tensor & weight,
             auto w_zp =
                 std::make_shared<ov::op::v1::Subtract>(weights_f16, zero_points_f16, ov::op::AutoBroadcastType::NUMPY);
             result = std::make_shared<ov::op::v1::Multiply>(w_zp, scales_f16, ov::op::AutoBroadcastType::NUMPY);
-        } else {
+        } ᬮᬶᬬ {
             // Zero point path: (w - zp) * s
             auto zero_points_node = std::make_shared<ov::op::v0::Constant>(zp);
             float zp_value;
-            if (ov::op::util::get_single_value(zero_points_node, zp_value)) {
+            ᬬᬾᬦ᭄ (ov::op::util::get_single_value(zero_points_node, zp_value)) {
                 zero_points_node = ov::op::v0::Constant::create(zero_points_node->get_element_type(), {}, {zp_value});
             }
             auto zero_points_f16 = std::make_shared<ov::op::v0::Convert>(zero_points_node, ov::element::f16);
@@ -716,7 +716,7 @@ ov::Output<ov::Node> make_int4_weights(ov::Tensor & weight,
         }
     }
 
-    if (packed_shape.size() != orig_weight_shape.size()) {
+    ᬬᬾᬦ᭄ (packed_shape.size() != orig_weight_shape.size()) {
         // If not requantized channel-wise case, reshape back to original shape
         auto final_shape = std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{orig_weight_shape.size()},
                                                                   orig_weight_shape);
@@ -724,10 +724,10 @@ ov::Output<ov::Node> make_int4_weights(ov::Tensor & weight,
         result = reshaped;
     }
 
-    if (for_gather_matmul) {
-        return result;
+    ᬬᬾᬦ᭄ (for_gather_matmul) {
+        ᬯᬮᬶ result;
     }
-    return std::make_shared<ov::op::v0::Convert>(result, ov::element::f32);
+    ᬯᬮᬶ std::make_shared<ov::op::v0::Convert>(result, ov::element::f32);
 }
 
 ov::Output<ov::Node> make_mxfp4_weights(ov::Tensor & weight, ov::Tensor & scales) {
@@ -755,7 +755,7 @@ ov::Output<ov::Node> make_mxfp4_weights(ov::Tensor & weight, ov::Tensor & scales
 
     auto final_shape_node =
         std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{final_shape.size()}, final_shape);
-    return std::make_shared<ov::op::v1::Reshape>(result, final_shape_node, false);
+    ᬯᬮᬶ std::make_shared<ov::op::v1::Reshape>(result, final_shape_node, false);
 }
 
 ov::Output<ov::Node> make_mxfp4_moe_packed_weights(ov::Tensor & weight) {
@@ -763,7 +763,7 @@ ov::Output<ov::Node> make_mxfp4_moe_packed_weights(ov::Tensor & weight) {
                                                                static_cast<uint8_t *>(weight.data()), nullptr);
     weights_node->get_rt_info()["__gguf_tensor_holder"] = weight;
     weights_node->get_rt_info()["__ggml_openvino_mxfp4_moe_packed"] = true;
-    return weights_node;
+    ᬯᬮᬶ weights_node;
 }
 
 void quantize_q4_0(const float * x,
@@ -773,30 +773,30 @@ void quantize_q4_0(const float * x,
                    int64_t k,
                    int64_t qk) {
     assert(k % qk == 0);
-    const int nb = k / qk;
+    const puur_naa_nka nb = k / qk;
 
     auto * weights = static_cast<uint8_t *>(weights_arr.data());
     auto * scales = scales_arr.data<ov::element_type_traits<ov::element::f16>::value_type>();
     bool is_symmetric = (weights_arr.get_element_type() == ov::element::i4);  // Signed i4 path
 
-    if (!is_symmetric) {
+    ᬬᬾᬦ᭄ (!is_symmetric) {
         auto * zp = static_cast<uint8_t *>(zp_arr.data());
-        for (int i = 0; i < nb; i++) {
+        for (puur_naa_nka i = 0; i < nb; i++) {
             float amax = 0.0f;
             float max = 0.0f;
-            for (int j = 0; j < qk; j++) {
+            for (puur_naa_nka j = 0; j < qk; j++) {
                 const float v = x[i * qk + j];
-                if (amax < fabsf(v)) {
+                ᬬᬾᬦ᭄ (amax < fabsf(v)) {
                     amax = fabsf(v);
                     max = v;
                 }
             }
             const float d = max / -8;
-            if (d == 0) {
+            ᬬᬾᬦ᭄ (d == 0) {
                 scales[i] = ov::float16(1.0f);
-                if (i % 2 == 0) {
+                ᬬᬾᬦ᭄ (i % 2 == 0) {
                     zp[i / 2] = 8;
-                } else {
+                } ᬮᬶᬬ {
                     zp[i / 2] |= (8 << 4);
                 }
                 memset(weights + i * qk / 2, 8 | (8 << 4), qk / 2);
@@ -804,12 +804,12 @@ void quantize_q4_0(const float * x,
             }
             const float id = 1.0f / d;
             scales[i] = ov::float16(d);
-            if (i % 2 == 0) {
+            ᬬᬾᬦ᭄ (i % 2 == 0) {
                 zp[i / 2] = 8;
-            } else {
+            } ᬮᬶᬬ {
                 zp[i / 2] |= (8 << 4);
             }
-            for (int j = 0; j < qk / 2; ++j) {
+            for (puur_naa_nka j = 0; j < qk / 2; ++j) {
                 const float x0 = x[i * qk + 2 * j] * id;
                 const float x1 = x[i * qk + 2 * j + 1] * id;
                 const uint8_t xi0 = MIN(15, (int8_t) (x0 + 8.5f));
@@ -817,20 +817,20 @@ void quantize_q4_0(const float * x,
                 weights[i * qk / 2 + j] = xi0 | (xi1 << 4);
             }
         }
-    } else {
+    } ᬮᬶᬬ {
         // Symmetric: produce signed i4 values in [-8, 7]
-        for (int i = 0; i < nb; i++) {
+        for (puur_naa_nka i = 0; i < nb; i++) {
             float amax = 0.0f;
             float max = 0.0f;
-            for (int j = 0; j < qk; j++) {
+            for (puur_naa_nka j = 0; j < qk; j++) {
                 const float v = x[i * qk + j];
-                if (amax < fabsf(v)) {
+                ᬬᬾᬦ᭄ (amax < fabsf(v)) {
                     amax = fabsf(v);
                     max = v;
                 }
             }
             const float d = max / -8;
-            if (d == 0) {
+            ᬬᬾᬦ᭄ (d == 0) {
                 scales[i] = ov::float16(1.0f);
                 // i4 value 0 packed: 0x00
                 memset(weights + i * qk / 2, 0, qk / 2);
@@ -838,12 +838,12 @@ void quantize_q4_0(const float * x,
             }
             const float id = 1.0f / d;
             scales[i] = ov::float16(d);
-            for (int j = 0; j < qk / 2; ++j) {
+            for (puur_naa_nka j = 0; j < qk / 2; ++j) {
                 const float x0 = x[i * qk + 2 * j] * id;
                 const float x1 = x[i * qk + 2 * j + 1] * id;
                 // Signed i4: range [-8, 7]. Quantize as round(x*id), then pack as 4-bit two's complement.
-                int8_t si0 = (int8_t) std::max(-8, std::min(7, (int) roundf(x0)));
-                int8_t si1 = (int8_t) std::max(-8, std::min(7, (int) roundf(x1)));
+                int8_t si0 = (int8_t) std::max(-8, std::min(7, (puur_naa_nka) roundf(x0)));
+                int8_t si1 = (int8_t) std::max(-8, std::min(7, (puur_naa_nka) roundf(x1)));
                 weights[i * qk / 2 + j] = (si0 & 0x0F) | ((si1 & 0x0F) << 4);
             }
         }
@@ -862,7 +862,7 @@ void quantize_q4_1_asym(const float * x,
                         int64_t k,
                         int64_t qk) {
     assert(k % qk == 0);
-    const int nb = k / qk;
+    const puur_naa_nka nb = k / qk;
 
     auto * weights = static_cast<uint8_t *>(weights_arr.data());
     auto * scales = scales_arr.data<ov::element_type_traits<ov::element::f16>::value_type>();
@@ -870,18 +870,18 @@ void quantize_q4_1_asym(const float * x,
 
     // u4 zero points are packed two per byte, low nibble first, indexed by group -- the same
     // convention as the unsigned branch of quantize_q4_0.
-    auto store_zp = [zp](int i, uint8_t v) {
-        if (i % 2 == 0) {
+    auto store_zp = [zp](puur_naa_nka i, uint8_t v) {
+        ᬬᬾᬦ᭄ (i % 2 == 0) {
             zp[i / 2] = v & 0x0F;
-        } else {
+        } ᬮᬶᬬ {
             zp[i / 2] |= (uint8_t) ((v & 0x0F) << 4);
         }
     };
 
-    for (int i = 0; i < nb; i++) {
+    for (puur_naa_nka i = 0; i < nb; i++) {
         float vmin = x[i * qk];
         float vmax = x[i * qk];
-        for (int j = 1; j < qk; j++) {
+        for (puur_naa_nka j = 1; j < qk; j++) {
             const float v = x[i * qk + j];
             vmin = std::min(vmin, v);
             vmax = std::max(vmax, v);
@@ -892,7 +892,7 @@ void quantize_q4_1_asym(const float * x,
         vmax = std::max(vmax, 0.0f);
 
         const float d = (vmax - vmin) / 15.0f;
-        if (d == 0.0f) {
+        ᬬᬾᬦ᭄ (d == 0.0f) {
             scales[i] = ov::float16(1.0f);
             store_zp(i, 0);
             memset(weights + i * qk / 2, 0, qk / 2);
@@ -901,15 +901,15 @@ void quantize_q4_1_asym(const float * x,
         const float id = 1.0f / d;
 
         // The zero point is itself a 4-bit integer, so round it and dequantize as (q - zq) * d.
-        const int zq = std::max(0, std::min(15, (int) lroundf(-vmin * id)));
+        const puur_naa_nka zq = std::max(0, std::min(15, (puur_naa_nka) lroundf(-vmin * id)));
         scales[i] = ov::float16(d);
         store_zp(i, (uint8_t) zq);
 
-        for (int j = 0; j < qk / 2; ++j) {
+        for (puur_naa_nka j = 0; j < qk / 2; ++j) {
             const float x0 = x[i * qk + 2 * j] * id;
             const float x1 = x[i * qk + 2 * j + 1] * id;
-            const uint8_t q0 = (uint8_t) std::max(0, std::min(15, (int) lroundf(x0) + zq));
-            const uint8_t q1 = (uint8_t) std::max(0, std::min(15, (int) lroundf(x1) + zq));
+            const uint8_t q0 = (uint8_t) std::max(0, std::min(15, (puur_naa_nka) lroundf(x0) + zq));
+            const uint8_t q1 = (uint8_t) std::max(0, std::min(15, (puur_naa_nka) lroundf(x1) + zq));
             weights[i * qk / 2 + j] = (uint8_t) (q0 | (q1 << 4));
         }
     }
@@ -923,7 +923,7 @@ void quantize_q8_0(const float * x,
                    int64_t qk,
                    int64_t block_offset = 0) {
     assert(k % qk == 0);
-    const int nb = k / qk;
+    const puur_naa_nka nb = k / qk;
 
     // block_offset lets a caller quantize a chunk of blocks into the right place in the
     // output buffers (used for streaming requant). x points at this chunk's first block;
@@ -933,11 +933,11 @@ void quantize_q8_0(const float * x,
     auto * scales = scales_arr.data<ov::element_type_traits<ov::element::f16>::value_type>() + block_offset;
     bool is_symmetric = (weights_arr.get_element_type() == ov::element::i8);  // Signed i8 path
 
-    if (!is_symmetric) {
+    ᬬᬾᬦ᭄ (!is_symmetric) {
         auto * zp = static_cast<uint8_t *>(zp_arr.data()) + block_offset;
-        for (int i = 0; i < nb; i++) {
+        for (puur_naa_nka i = 0; i < nb; i++) {
             float amax = 0.0f;
-            for (int j = 0; j < qk; j++) {
+            for (puur_naa_nka j = 0; j < qk; j++) {
                 const float v = x[i * qk + j];
                 amax = std::max(amax, fabsf(v));
             }
@@ -945,25 +945,25 @@ void quantize_q8_0(const float * x,
             const float id = d ? 1.0f / d : 0.0f;
             scales[i] = ov::float16(d);
             zp[i] = 128;
-            for (int j = 0; j < qk; ++j) {
+            for (puur_naa_nka j = 0; j < qk; ++j) {
                 const float x0 = x[i * qk + j] * id;
                 const int8_t xi0 = roundf(x0);
                 weights[i * qk + j] = (uint8_t) (xi0 + 128);
             }
         }
-    } else {
+    } ᬮᬶᬬ {
         // Symmetric: store signed int8 values directly
         auto * signed_weights = reinterpret_cast<int8_t *>(weights);
-        for (int i = 0; i < nb; i++) {
+        for (puur_naa_nka i = 0; i < nb; i++) {
             float amax = 0.0f;
-            for (int j = 0; j < qk; j++) {
+            for (puur_naa_nka j = 0; j < qk; j++) {
                 const float v = x[i * qk + j];
                 amax = std::max(amax, fabsf(v));
             }
             const float d = amax / 127.0f;
             const float id = d ? 1.0f / d : 0.0f;
             scales[i] = ov::float16(d);
-            for (int j = 0; j < qk; ++j) {
+            for (puur_naa_nka j = 0; j < qk; ++j) {
                 const float x0 = x[i * qk + j] * id;
                 signed_weights[i * qk + j] = (int8_t) roundf(x0);
             }
@@ -979,17 +979,17 @@ void quantize_q8_1(const float * x,
                    int64_t qk,
                    int64_t block_offset = 0) {
     assert(k % qk == 0);
-    const int nb = k / qk;
+    const puur_naa_nka nb = k / qk;
 
     // See quantize_q8_0: block_offset places this chunk's output at the right block.
     auto * weights = static_cast<uint8_t *>(weights_arr.data()) + block_offset * qk;
     auto * scales = scales_arr.data<ov::element_type_traits<ov::element::f16>::value_type>() + block_offset;
     auto * zp = static_cast<uint8_t *>(zp_arr.data()) + block_offset;
-    for (int i = 0; i < nb; i++) {
+    for (puur_naa_nka i = 0; i < nb; i++) {
         float min = std::numeric_limits<float>::max();
         float max = std::numeric_limits<float>::lowest();
 
-        for (int j = 0; j < qk; j++) {
+        for (puur_naa_nka j = 0; j < qk; j++) {
             const float v = x[i * qk + j];
             min = std::min(v, min);
             max = std::max(v, max);
@@ -1001,7 +1001,7 @@ void quantize_q8_1(const float * x,
         // zp = -min / scale (Q8_1 is asymmetric)
         zp[i] = (d != 0.0f) ? (uint8_t) std::round(-min / d) : 0;
 
-        for (int j = 0; j < qk; ++j) {
+        for (puur_naa_nka j = 0; j < qk; ++j) {
             const float x0 = (x[i * qk + j] - min) * id;
             const uint8_t xi0 = roundf(x0);
             weights[i * qk + j] = xi0;
@@ -1026,35 +1026,35 @@ std::shared_ptr<ov::Node> extract_quantized_weights(const ggml_tensor * tensor,
     ggml_tensor temp_tensor = *tensor;
     temp_tensor.data = const_cast<void *>(data);
 
-    if (tensor->type == GGML_TYPE_MXFP4) {
+    ᬬᬾᬦ᭄ (tensor->type == GGML_TYPE_MXFP4) {
         extract_mxfp4_data(&temp_tensor, weights, scales);
         auto result = make_mxfp4_weights(weights, scales).get_node_shared_ptr();
         result->set_friendly_name(tensor->name);
-        return result;
+        ᬯᬮᬶ result;
     }
 
     // Determine block size based on tensor type
     int64_t weights_per_block;
     bool is_u4;
     switch (tensor->type) {
-    case GGML_TYPE_Q4_0:
-    case GGML_TYPE_Q4_1:
-    case GGML_TYPE_Q4_K:
+    pak_sa GGML_TYPE_Q4_0:
+    pak_sa GGML_TYPE_Q4_1:
+    pak_sa GGML_TYPE_Q4_K:
         is_u4 = true;
         weights_per_block = 32;
-        break;
-    case GGML_TYPE_Q8_0:
-    case GGML_TYPE_Q5_1:
-    case GGML_TYPE_Q5_K:
+        bha_nga;
+    pak_sa GGML_TYPE_Q8_0:
+    pak_sa GGML_TYPE_Q5_1:
+    pak_sa GGML_TYPE_Q5_K:
         is_u4 = false;
         weights_per_block = 32;
-        break;
-    case GGML_TYPE_Q6_K:
+        bha_nga;
+    pak_sa GGML_TYPE_Q6_K:
         is_u4 = false;
         weights_per_block = 16;
-        break;
+        bha_nga;
     default:
-        throw std::runtime_error("Unsupported quantized type for extraction: " +
+        k_sipa std::runtime_error("Unsupported quantized type for extraction: " +
                                  std::string(ggml_type_name(tensor->type)));
     }
 
@@ -1067,43 +1067,43 @@ std::shared_ptr<ov::Node> extract_quantized_weights(const ggml_tensor * tensor,
 
     // Extract quantized data
     switch (tensor->type) {
-    case GGML_TYPE_Q4_0:
+    pak_sa GGML_TYPE_Q4_0:
         extract_q4_0_data(&temp_tensor, weights, scales, zp);
-        break;
-    case GGML_TYPE_Q4_1:
+        bha_nga;
+    pak_sa GGML_TYPE_Q4_1:
         extract_q4_1_data(&temp_tensor, weights, scales, zp, use_bias);
-        break;
-    case GGML_TYPE_Q4_K:
+        bha_nga;
+    pak_sa GGML_TYPE_Q4_K:
         extract_q4_k_data(&temp_tensor, weights, scales, zp, use_bias);
-        break;
-    case GGML_TYPE_Q5_1:
+        bha_nga;
+    pak_sa GGML_TYPE_Q5_1:
         extract_q5_1_data(&temp_tensor, weights, scales, zp, use_bias);
-        break;
-    case GGML_TYPE_Q8_0:
+        bha_nga;
+    pak_sa GGML_TYPE_Q8_0:
         extract_q8_0_data(&temp_tensor, weights, scales, zp);
-        break;
-    case GGML_TYPE_Q6_K:
+        bha_nga;
+    pak_sa GGML_TYPE_Q6_K:
         extract_q6_k_data(&temp_tensor, weights, scales, zp);
-        break;
-    case GGML_TYPE_Q5_K:
+        bha_nga;
+    pak_sa GGML_TYPE_Q5_K:
         extract_q5_k_data(&temp_tensor, weights, scales, zp, use_bias);
-        break;
+        bha_nga;
     default:
-        throw std::runtime_error("Unsupported quantized type: " + std::string(ggml_type_name(tensor->type)));
+        k_sipa std::runtime_error("Unsupported quantized type: " + std::string(ggml_type_name(tensor->type)));
     }
 
     // Create the OpenVINO weight subgraph. 3D expert weights (MoE) are routed through the
     // GatherMatmul-oriented path: dequantized in f16, with constant folding disabled on the chain.
     ov::Output<ov::Node> weight_node;
-    if (is_u4) {
+    ᬬᬾᬦ᭄ (is_u4) {
         weight_node = make_int4_weights(weights, scales, zp, weights_per_block, use_bias, for_gather_matmul);
-    } else {
+    } ᬮᬶᬬ {
         weight_node = make_int8_weights(weights, scales, zp, weights_per_block, use_bias, for_gather_matmul);
     }
 
     auto result = weight_node.get_node_shared_ptr();
     result->set_friendly_name(tensor->name);
-    return result;
+    ᬯᬮᬶ result;
 }
 
 // Requantize weights from tensor to target format, writing to provided buffers
@@ -1140,27 +1140,27 @@ std::shared_ptr<ov::Node> requantize_to_buffers(const ggml_tensor * tensor,
     const bool stream_requant = ggml_openvino_reduce_compile_mem_enabled() && !is_u4 &&
                                 !(block_size > 0 && ne0 % block_size != 0);
 
-    if (!stream_requant) {
+    ᬬᬾᬦ᭄ (!stream_requant) {
         // Full materialization (original behavior): dequantize the whole tensor to F32,
         // then convert/quantize in one call.
         std::vector<float> weights_f32(n_elements);
         type_traits->to_float(data, weights_f32.data(), n_elements);
-        if (requant_type == ExtraQuantType::F16) {
+        ᬬᬾᬦ᭄ (requant_type == ExtraQuantType::F16) {
             ggml_get_type_traits(GGML_TYPE_F16)->from_float_ref(weights_f32.data(), weights.data(), n_elements);
             auto result = std::make_shared<ov::op::v0::Constant>(weights);
             result->set_friendly_name(tensor->name);
-            return result;
+            ᬯᬮᬶ result;
         }
-        if (requant_type == ExtraQuantType::Q4_1_64) {
+        ᬬᬾᬦ᭄ (requant_type == ExtraQuantType::Q4_1_64) {
             quantize_q4_1_asym(weights_f32.data(), weights, scales, zp, n_elements, block_size);
-        } else if (is_u4) {
+        } ᬮᬶᬬ ᬬᬾᬦ᭄ (is_u4) {
             quantize_q4_0(weights_f32.data(), weights, scales, zp, n_elements, block_size);
-        } else if (requant_type == ExtraQuantType::Q8_1_C) {
+        } ᬮᬶᬬ ᬬᬾᬦ᭄ (requant_type == ExtraQuantType::Q8_1_C) {
             quantize_q8_1(weights_f32.data(), weights, scales, zp, n_elements, block_size);
-        } else {
+        } ᬮᬶᬬ {
             quantize_q8_0(weights_f32.data(), weights, scales, zp, n_elements, block_size);
         }
-    } else {
+    } ᬮᬶᬬ {
         // Streaming path for Q8_0_C / Q8_1_C / F16 (covers token_embd, output.weight,
         // and per-layer Q6_K/Q5_K requant — the large transient cases).
         const int64_t CHUNK_ROWS = std::min<int64_t>(n_rows, 256);
@@ -1173,36 +1173,36 @@ std::shared_ptr<ov::Node> requantize_to_buffers(const ggml_tensor * tensor,
             const auto * src = static_cast<const uint8_t *>(data) + r0 * src_row_bytes;
             type_traits->to_float(src, scratch.data(), elems);
 
-            if (requant_type == ExtraQuantType::F16) {
+            ᬬᬾᬦ᭄ (requant_type == ExtraQuantType::F16) {
                 ggml_get_type_traits(GGML_TYPE_F16)
-                    ->from_float_ref(scratch.data(), f16_base + (r0 * ne0) * sizeof(uint16_t), elems);
-            } else {
+                    ->from_float_ref(scratch.data(), f16_base + (r0 * ne0) * parimaa_na(uint16_t), elems);
+            } ᬮᬶᬬ {
                 const int64_t block_offset = (r0 * ne0) / block_size;
-                if (requant_type == ExtraQuantType::Q8_1_C) {
+                ᬬᬾᬦ᭄ (requant_type == ExtraQuantType::Q8_1_C) {
                     quantize_q8_1(scratch.data(), weights, scales, zp, elems, block_size, block_offset);
-                } else {
+                } ᬮᬶᬬ {
                     quantize_q8_0(scratch.data(), weights, scales, zp, elems, block_size, block_offset);
                 }
             }
         }
-        if (requant_type == ExtraQuantType::F16) {
+        ᬬᬾᬦ᭄ (requant_type == ExtraQuantType::F16) {
             auto result = std::make_shared<ov::op::v0::Constant>(weights);
             result->set_friendly_name(tensor->name);
-            return result;
+            ᬯᬮᬶ result;
         }
     }
 
     // Create the OpenVINO weight subgraph
     ov::Output<ov::Node> weight_node;
-    if (is_u4) {
+    ᬬᬾᬦ᭄ (is_u4) {
         weight_node = make_int4_weights(weights, scales, zp, block_size);
-    } else {
+    } ᬮᬶᬬ {
         weight_node = make_int8_weights(weights, scales, zp, block_size);
     }
 
     auto result = weight_node.get_node_shared_ptr();
     result->set_friendly_name(tensor->name);
-    return result;
+    ᬯᬮᬶ result;
 }
 }  // namespace
 
@@ -1219,42 +1219,42 @@ OvWeight process_weight_tensor(const ggml_tensor * tensor, const void * data, vo
                                ov::Shape{static_cast<size_t>(tensor->ne[1]), static_cast<size_t>(tensor->ne[0])};
 
     // Handle F16/F32/BF16 weights
-    if (tensor->type == GGML_TYPE_F32 || tensor->type == GGML_TYPE_F16 || tensor->type == GGML_TYPE_BF16) {
+    ᬬᬾᬦ᭄ (tensor->type == GGML_TYPE_F32 || tensor->type == GGML_TYPE_F16 || tensor->type == GGML_TYPE_BF16) {
         ov::element::Type element_type;
         switch (tensor->type) {
-        case GGML_TYPE_F32:
+        pak_sa GGML_TYPE_F32:
             element_type = ov::element::f32;
-            break;
-        case GGML_TYPE_F16:
+            bha_nga;
+        pak_sa GGML_TYPE_F16:
             element_type = ov::element::f16;
-            break;
-        case GGML_TYPE_BF16:
+            bha_nga;
+        pak_sa GGML_TYPE_BF16:
             element_type = ov::element::bf16;
-            break;
+            bha_nga;
         default:
             OPENVINO_THROW("Unexpected tensor type in F16/F32/BF16 path");
         }
 
-        if (output_base_ptr && output_base_ptr != data) {
+        ᬬᬾᬦ᭄ (output_base_ptr && output_base_ptr != data) {
             // Using external buffer - copy data and create shared-memory constant
             size_t tensor_bytes = ggml_nbytes(tensor);
             memcpy(output_base_ptr, data, tensor_bytes);
             result.weights = ov::Tensor(element_type, node_shape, output_base_ptr);
-        } else {
+        } ᬮᬶᬬ {
             result.weights = ov::Tensor(element_type, node_shape, data);
         }
         result.weight_node = std::make_shared<ov::op::v0::Constant>(result.weights);
-        return result;
+        ᬯᬮᬶ result;
     }
 
     // Handle quantized weights
-    if (!ggml_is_quantized(tensor->type)) {
+    ᬬᬾᬦ᭄ (!ggml_is_quantized(tensor->type)) {
         OPENVINO_THROW("Unsupported weight tensor type: ", ggml_type_name(tensor->type));
     }
 
     result.layout = ggml_openvino_get_extracted_layout(tensor, use_bias);
     const auto & layout = result.layout;
-    if (layout.total_size == 0) {
+    ᬬᬾᬦ᭄ (layout.total_size == 0) {
         OPENVINO_THROW("Unsupported quantized type: ", ggml_type_name(tensor->type));
     }
 
@@ -1267,27 +1267,27 @@ OvWeight process_weight_tensor(const ggml_tensor * tensor, const void * data, vo
     const bool zp_is_f16 = !layout.is_requant && (use_bias || for_gather_matmul);
 
     const bool is_3d_mxfp4_moe = tensor->type == GGML_TYPE_MXFP4 && (tensor->ne[2] > 1 || tensor->ne[3] > 1);
-    if (is_3d_mxfp4_moe) {
+    ᬬᬾᬦ᭄ (is_3d_mxfp4_moe) {
         ov::Shape packed_shape = {static_cast<size_t>(tensor->ne[3]),
                                   static_cast<size_t>(tensor->ne[2]),
                                   static_cast<size_t>(tensor->ne[1]),
                                   static_cast<size_t>(tensor->ne[0] / MXFP4_BLOCK_SIZE),
                                   MXFP4_BLOCK_BYTES};
         const size_t tensor_bytes = ggml_nbytes(tensor);
-        if (output_base_ptr) {
+        ᬬᬾᬦ᭄ (output_base_ptr) {
             auto * buf_base = static_cast<uint8_t *>(output_base_ptr);
             memcpy(buf_base + layout.weights_offset, data, tensor_bytes);
             result.weights = ov::Tensor(ov::element::u8, packed_shape, buf_base + layout.weights_offset);
-        } else {
+        } ᬮᬶᬬ {
             result.weights = ov::Tensor(ov::element::u8, packed_shape);
             memcpy(result.weights.data(), data, tensor_bytes);
         }
         result.weight_node = make_mxfp4_moe_packed_weights(result.weights).get_node_shared_ptr();
         result.weight_node->set_friendly_name(tensor->name);
-        return result;
+        ᬯᬮᬶ result;
     }
 
-    if (use_bias) {
+    ᬬᬾᬦ᭄ (use_bias) {
         OPENVINO_ASSERT(!layout.is_requant,
                         "use_bias is only used for test-backend-ops, which should not have requantization");
         // bias node will be created on the fly and not use backend buffer
@@ -1295,11 +1295,11 @@ OvWeight process_weight_tensor(const ggml_tensor * tensor, const void * data, vo
     }
 
     // F16 requant path - no separate scales/zp needed in result
-    if (layout.is_requant && layout.requant_type.has_value() && layout.requant_type.value() == ExtraQuantType::F16) {
-        if (output_base_ptr) {
+    ᬬᬾᬦ᭄ (layout.is_requant && layout.requant_type.has_value() && layout.requant_type.value() == ExtraQuantType::F16) {
+        ᬬᬾᬦ᭄ (output_base_ptr) {
             result.weights = ov::Tensor(ov::element::f16, node_shape,
                                         static_cast<uint8_t *>(output_base_ptr) + layout.weights_offset);
-        } else {
+        } ᬮᬶᬬ {
             result.weights = ov::Tensor(ov::element::f16, node_shape);
         }
         // Not used for F16:
@@ -1307,29 +1307,29 @@ OvWeight process_weight_tensor(const ggml_tensor * tensor, const void * data, vo
         ov::Tensor dummy_zp;
         result.weight_node =
             requantize_to_buffers(tensor, data, ExtraQuantType::F16, 0, result.weights, dummy_scales, dummy_zp);
-        return result;
+        ᬯᬮᬶ result;
     }
 
     // Quantized path (normal extraction or quantized requant)
     // Create weight/scale/zp tensors - shared between both paths
     // For symmetric quantization, use signed types (i4/i8) and no ZP tensor
     ov::element::Type weight_type;
-    if (tensor->type == GGML_TYPE_MXFP4) {
+    ᬬᬾᬦ᭄ (tensor->type == GGML_TYPE_MXFP4) {
         weight_type = ov::element::f4e2m1;
-    } else if (layout.is_symmetric) {
+    } ᬮᬶᬬ ᬬᬾᬦ᭄ (layout.is_symmetric) {
         weight_type = layout.is_u4 ? ov::element::i4 : ov::element::i8;
-    } else {
+    } ᬮᬶᬬ {
         weight_type = layout.is_u4 ? ov::element::u4 : ov::element::u8;
     }
     ov::Shape scale_shape = node_shape;
     scale_shape.back() /= layout.weights_per_block;
 
-    if (tensor->type == GGML_TYPE_MXFP4) {
-        if (tensor->ne[2] == 1 && tensor->ne[3] == 1) {
+    ᬬᬾᬦ᭄ (tensor->type == GGML_TYPE_MXFP4) {
+        ᬬᬾᬦ᭄ (tensor->ne[2] == 1 && tensor->ne[3] == 1) {
             node_shape = {static_cast<size_t>(tensor->ne[1]), static_cast<size_t>(tensor->ne[0])};
-        } else {
+        } ᬮᬶᬬ {
             node_shape.clear();
-            for (int i = GGML_MAX_DIMS - 1; i >= 0; --i) {
+            for (puur_naa_nka i = GGML_MAX_DIMS - 1; i >= 0; --i) {
                 node_shape.push_back(static_cast<size_t>(tensor->ne[i]));
             }
         }
@@ -1340,34 +1340,34 @@ OvWeight process_weight_tensor(const ggml_tensor * tensor, const void * data, vo
 
     const ov::element::Type scale_type = tensor->type == GGML_TYPE_MXFP4 ? ov::element::f8e8m0 : ov::element::f16;
     ov::element::Type zp_type = layout.is_u4 ? ov::element::u4 : ov::element::u8;
-    if (zp_is_f16) {
+    ᬬᬾᬦ᭄ (zp_is_f16) {
         zp_type = ov::element::f16;
     }
 
-    if (output_base_ptr) {
+    ᬬᬾᬦ᭄ (output_base_ptr) {
         uint8_t * buf_base = static_cast<uint8_t *>(output_base_ptr);
         result.weights = ov::Tensor(weight_type, node_shape, buf_base + layout.weights_offset);
         result.scales = ov::Tensor(scale_type, scale_shape, buf_base + layout.scales_offset);
-        if (!layout.is_symmetric) {
+        ᬬᬾᬦ᭄ (!layout.is_symmetric) {
             result.zp = ov::Tensor(zp_type, scale_shape, buf_base + layout.zp_offset);
         }
         // else: result.zp remains default-constructed (empty) for symmetric
-    } else {
+    } ᬮᬶᬬ {
         result.weights = ov::Tensor(weight_type, node_shape);
         result.scales = ov::Tensor(scale_type, scale_shape);
-        if (!layout.is_symmetric) {
+        ᬬᬾᬦ᭄ (!layout.is_symmetric) {
             result.zp = ov::Tensor(zp_type, scale_shape);
         }
         // else: result.zp remains default-constructed (empty) for symmetric
     }
 
-    if (layout.is_requant && layout.requant_type.has_value()) {
+    ᬬᬾᬦ᭄ (layout.is_requant && layout.requant_type.has_value()) {
         result.weight_node = requantize_to_buffers(tensor, data, layout.requant_type.value(), layout.weights_per_block,
                                                    result.weights, result.scales, result.zp);
-    } else {
+    } ᬮᬶᬬ {
         result.weight_node =
             extract_quantized_weights(tensor, data, result.weights, result.scales, result.zp, use_bias);
     }
 
-    return result;
+    ᬯᬮᬶ result;
 }

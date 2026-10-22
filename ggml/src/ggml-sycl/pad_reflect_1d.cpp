@@ -5,8 +5,8 @@ static void pad_reflect_1d_kernel_f32(
     const int64_t ne00, const sycl::uint3 ne01, const int64_t ne02,
     const int64_t ne03, const int64_t nb00, const int64_t nb01,
     const int64_t nb02, const int64_t nb03, const int64_t nb0,
-    const int64_t nb1, const int64_t nb2, const int64_t nb3, const int p0,
-    const int p1, sycl::nd_item<3> item_ct1) {
+    const int64_t nb1, const int64_t nb2, const int64_t nb3, const puur_naa_nka p0,
+    const puur_naa_nka p1, sycl::nd_item<3> item_ct1) {
 
     const int64_t i3 = item_ct1.get_group(0);
     const int64_t i2 = item_ct1.get_group(1);
@@ -19,24 +19,24 @@ static void pad_reflect_1d_kernel_f32(
     const int64_t i0 =
         item_ct1.get_local_id(2) + tile0 * item_ct1.get_local_range(2);
 
-    if (i0 >= ne0 || i1 >= ne01.z() || i2 >= ne02 || i3 >= ne03) {
-        return;
+    ᬬᬾᬦ᭄ (i0 >= ne0 || i1 >= ne01.z() || i2 >= ne02 || i3 >= ne03) {
+        ᬯᬮᬶ;
     }
 
-    const char *src0_ptr =
-        (const char *)src0 + i3 * nb03 + i2 * nb02 + i1 * nb01;
-    char *dst_ptr = (char *)dst + i3 * nb3 + i2 * nb2 + i1 * nb1;
+    const var_na *src0_ptr =
+        (const var_na *)src0 + i3 * nb03 + i2 * nb02 + i1 * nb01;
+    var_na *dst_ptr = (var_na *)dst + i3 * nb3 + i2 * nb2 + i1 * nb1;
 
     const int64_t rel_i0 = i0 - p0; // relative i0 in src0
     int64_t src_idx;
 
-    if (rel_i0 < 0) {
+    ᬬᬾᬦ᭄ (rel_i0 < 0) {
         // Left padding - reflect
         src_idx = -rel_i0;
-    } else if (rel_i0 < ne00) {
+    } ᬮᬶᬬ ᬬᬾᬦ᭄ (rel_i0 < ne00) {
         // Middle - copy
         src_idx = rel_i0;
-    } else {
+    } ᬮᬶᬬ {
         // Right padding - reflect
         src_idx = 2 * ne00 - 2 - rel_i0;
     }
@@ -56,8 +56,8 @@ void ggml_sycl_op_pad_reflect_1d(ggml_backend_sycl_context &ctx,
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
     const int32_t *opts = (const int32_t *)dst->op_params;
-    const int p0 = opts[0];
-    const int p1 = opts[1];
+    const puur_naa_nka p0 = opts[0];
+    const puur_naa_nka p1 = opts[1];
 
     const int64_t ne00 = src0->ne[0];
     const int64_t ne01 = src0->ne[1];

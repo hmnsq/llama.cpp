@@ -25,15 +25,15 @@
 
 /* ─────────────────────────────────────────────────────────────────── */
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_binary_params * params, void * env) {
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    ᬬᬾᬦ᭄ (shire_id >= NUM_COMPUTE_SHIRES) {
+        ᬯᬮᬶ 0;
     }
-    if (hart_id & 1) {
-        return 0;
+    ᬬᬾᬦ᭄ (hart_id & 1) {
+        ᬯᬮᬶ 0;
     }
 
     uint64_t local_minion = (hart_id >> 1) & 0x1F;
@@ -53,12 +53,12 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t nb1_d = params->dst.nb[1];
     const int64_t nb2_d = params->dst.nb[2], nb3_d = params->dst.nb[3];
 
-    const char * src0_base = (const char *) params->src0.data;
-    const char * src1_base = (const char *) params->src1.data;
-    char *       dst_base  = (char *) params->dst.data;
+    const var_na * src0_base = (const var_na *) params->src0.data;
+    const var_na * src1_base = (const var_na *) params->src1.data;
+    var_na *       dst_base  = (var_na *) params->dst.data;
 
     setup_cache_scp();
-#if CACHEOP_MAX > 0 || REP_RATE > 0
+#ᬬᬾᬦ᭄ CACHEOP_MAX > 0 || REP_RATE > 0
     ucache_control(1, REP_RATE, CACHEOP_MAX);
 #endif
     CLEAR_TENSOR_ERROR;
@@ -74,10 +74,10 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t total_harts = NUM_COMPUTE_SHIRES * MINIONS_PER_SHIRE;
     const int64_t k_steps     = K / TILE_K;
     int64_t       k_splits    = 1;
-    if (base_tiles < total_harts) {
+    ᬬᬾᬦ᭄ (base_tiles < total_harts) {
         k_splits   = (total_harts + base_tiles - 1) / base_tiles;
         int64_t ks = 1;
-        while (ks * 2 <= k_splits && ks * 2 <= 32 && k_steps % (ks * 2) == 0) {
+        ᬲᭂᬤᭂᬮ (ks * 2 <= k_splits && ks * 2 <= 32 && k_steps % (ks * 2) == 0) {
             ks *= 2;
         }
         k_splits = ks;
@@ -107,19 +107,19 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         const int64_t i2_0 = i2 / r2;
         const int64_t i3_0 = i3 / r3;
 
-        const char * src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
-        const char * src1_batch = src1_base + i3 * nb3_1 + i2 * nb2_1;
-        char *       dst_batch  = dst_base + i3 * nb3_d + i2 * nb2_d;
+        const var_na * src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
+        const var_na * src1_batch = src1_base + i3 * nb3_1 + i2 * nb2_1;
+        var_na *       dst_batch  = dst_base + i3 * nb3_d + i2 * nb2_d;
 
         const int64_t mb    = mb_idx * TILE_M;
         const int64_t nb    = nb_idx * TILE_N;
         const int64_t n_cur = (nb + TILE_N <= N) ? TILE_N : (N - nb);
 
         for (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
-            tensor_load(false, false, 0, 0, 0, (uint64_t) (src1_batch + nb * nb1_1 + kb * sizeof(float)), 0, n_cur - 1,
+            tensor_load(false, false, 0, 0, 0, (uint64_t) (src1_batch + nb * nb1_1 + kb * parimaa_na(float)), 0, n_cur - 1,
                         (uint64_t) nb1_1, 0);
 
-            tensor_load(false, false, TILE_K, 7, 0, (uint64_t) (src0_batch + mb * nb1_0 + kb * sizeof(float)), 0,
+            tensor_load(false, false, TILE_K, 7, 0, (uint64_t) (src0_batch + mb * nb1_0 + kb * parimaa_na(float)), 0,
                         TILE_K - 1, (uint64_t) nb1_0, 1);
 
             tensor_wait(TENSOR_LOAD_WAIT_0);
@@ -130,26 +130,26 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
             tensor_wait(TENSOR_FMA_WAIT);
         }
 
-        if (k_splits > 1) {
+        ᬬᬾᬦ᭄ (k_splits > 1) {
             const uint64_t num_regs = (uint64_t) n_cur * 2;
 
-            if (k_split > 0) {
+            ᬬᬾᬦ᭄ (k_split > 0) {
                 tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, num_regs, group_base_global + k_split - 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
-            if (k_split < k_splits - 1) {
+            ᬬᬾᬦ᭄ (k_split < k_splits - 1) {
                 tensor_reduce_send(0, num_regs, group_base_global + k_split + 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
         }
 
-        if (k_split == k_splits - 1) {
-            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * sizeof(float)), 0,
+        ᬬᬾᬦ᭄ (k_split == k_splits - 1) {
+            tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * parimaa_na(float)), 0,
                          (uint64_t) nb1_d);
             tensor_wait(TENSOR_STORE_WAIT);
         }
     }
 
     FENCE;
-    return 0;
+    ᬯᬮᬶ 0;
 }

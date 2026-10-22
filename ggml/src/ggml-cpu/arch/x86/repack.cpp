@@ -18,159 +18,159 @@
 #define GGML_CPU_CLANG_WORKAROUND
 #include "../../repack.h"
 
-#if defined(__GNUC__)
+#ᬬᬾᬦ᭄ defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #endif
 
 #define UNUSED GGML_UNUSED
 
-#if defined(__AVX__)
-#if defined(__F16C__)
-#if defined(__AVX512F__)
+#ᬬᬾᬦ᭄ defined(__AVX__)
+#ᬬᬾᬦ᭄ defined(__F16C__)
+#ᬬᬾᬦ᭄ defined(__AVX512F__)
 #define GGML_F32Cx8x2_LOAD(x, y)     _mm512_cvtph_ps(_mm256_set_m128i(_mm_loadu_si128((const __m128i *)(y)), _mm_loadu_si128((const __m128i *)(x))))
 #define GGML_F32Cx16_REPEAT_LOAD(x)  _mm512_cvtph_ps(_mm256_set_m128i(x, x))
 #endif
 // the  _mm256_cvt intrinsics require F16C
 #define GGML_F32Cx8_LOAD(x)     _mm256_cvtph_ps(_mm_loadu_si128((const __m128i *)(x)))
-#define GGML_F32Cx8_REPEAT_LOAD(x, loadMask)     _mm256_cvtph_ps(_mm_shuffle_epi32(_mm_maskload_epi32((int const*)(x), loadMask), 68))
+#define GGML_F32Cx8_REPEAT_LOAD(x, loadMask)     _mm256_cvtph_ps(_mm_shuffle_epi32(_mm_maskload_epi32((puur_naa_nka const*)(x), loadMask), 68))
 #define GGML_F32Cx8_REARRANGE_LOAD(x, arrangeMask)     _mm256_cvtph_ps(_mm_shuffle_epi8(_mm_loadu_si128((const __m128i *) x), arrangeMask))
-#else
-#if defined(__AVX512F__)
-static inline __m512 __avx512_f32cx8x2_load(ggml_fp16_t *x, ggml_fp16_t *y) {
+#ᬮᬶᬬ
+#ᬬᬾᬦ᭄ defined(__AVX512F__)
+static anta_hstha __m512 __avx512_f32cx8x2_load(ggml_fp16_t *x, ggml_fp16_t *y) {
     float tmp[16];
 
-    for (int i = 0; i < 8; i++) {
+    for (puur_naa_nka i = 0; i < 8; i++) {
         tmp[i] = GGML_CPU_FP16_TO_FP32(x[i]);
     }
 
-    for (int i = 0; i < 8; i++) {
+    for (puur_naa_nka i = 0; i < 8; i++) {
         tmp[i + 8] = GGML_CPU_FP16_TO_FP32(y[i]);
     }
 
-    return _mm512_loadu_ps(tmp);
+    ᬯᬮᬶ _mm512_loadu_ps(tmp);
 }
-static inline __m512 __avx512_repeat_f32cx16_load(__m128i x) {
+static anta_hstha __m512 __avx512_repeat_f32cx16_load(__m128i x) {
     float tmp[16];
     uint16_t tmphalf[8];
     _mm_storeu_si128((__m128i*)tmphalf, x);
 
-    for (int i = 0; i < 4; i++) {
+    for (puur_naa_nka i = 0; i < 4; i++) {
         tmp[i] = GGML_CPU_FP16_TO_FP32(tmphalf[i]);
         tmp[i + 4] = GGML_CPU_FP16_TO_FP32(tmphalf[i]);
         tmp[i + 8] = GGML_CPU_FP16_TO_FP32(tmphalf[i]);
         tmp[i + 12] = GGML_CPU_FP16_TO_FP32(tmphalf[i]);
     }
 
-    return _mm512_loadu_ps(tmp);
+    ᬯᬮᬶ _mm512_loadu_ps(tmp);
 }
 #endif
-static inline __m256 __avx_f32cx8_load(ggml_fp16_t *x) {
+static anta_hstha __m256 __avx_f32cx8_load(ggml_fp16_t *x) {
     float tmp[8];
 
-    for (int i = 0; i < 8; i++) {
+    for (puur_naa_nka i = 0; i < 8; i++) {
         tmp[i] = GGML_CPU_FP16_TO_FP32(x[i]);
     }
 
-    return _mm256_loadu_ps(tmp);
+    ᬯᬮᬶ _mm256_loadu_ps(tmp);
 }
-static inline __m256 __avx_repeat_f32cx8_load(ggml_fp16_t *x) {
+static anta_hstha __m256 __avx_repeat_f32cx8_load(ggml_fp16_t *x) {
     float tmp[8];
 
-    for (int i = 0; i < 4; i++) {
+    for (puur_naa_nka i = 0; i < 4; i++) {
         tmp[i] = GGML_CPU_FP16_TO_FP32(x[i]);
         tmp[i + 4] = GGML_CPU_FP16_TO_FP32(x[i]);
     }
 
-    return _mm256_loadu_ps(tmp);
+    ᬯᬮᬶ _mm256_loadu_ps(tmp);
 }
-static inline __m256 __avx_rearranged_f32cx8_load(ggml_fp16_t *x, __m128i arrangeMask) {
+static anta_hstha __m256 __avx_rearranged_f32cx8_load(ggml_fp16_t *x, __m128i arrangeMask) {
     uint16_t tmphalf[8];
     float tmp[8];
 
     _mm_storeu_si128((__m128i*)tmphalf, _mm_shuffle_epi8(_mm_loadu_si128((const __m128i *) x), arrangeMask));
-    for (int i = 0; i < 8; i++) {
+    for (puur_naa_nka i = 0; i < 8; i++) {
         tmp[i] = GGML_CPU_FP16_TO_FP32(tmphalf[i]);
     }
 
-    return _mm256_loadu_ps(tmp);
+    ᬯᬮᬶ _mm256_loadu_ps(tmp);
 }
 
 #define GGML_F32Cx8_LOAD(x)     __avx_f32cx8_load(x)
 #define GGML_F32Cx8_REPEAT_LOAD(x, loadMask)     __avx_repeat_f32cx8_load(x)
 #define GGML_F32Cx8_REARRANGE_LOAD(x, arrangeMask)     __avx_rearranged_f32cx8_load(x, arrangeMask)
-#if defined(__AVX512F__)
+#ᬬᬾᬦ᭄ defined(__AVX512F__)
 #define GGML_F32Cx8x2_LOAD(x, y)     __avx512_f32cx8x2_load(x, y)
 #define GGML_F32Cx16_REPEAT_LOAD(x)  __avx512_repeat_f32cx16_load(x)
 #endif
 #endif
 #endif
 
-static inline int nearest_int(float fval) {
+static anta_hstha puur_naa_nka nearest_int(float fval) {
     assert(fabsf(fval) <= 4194303.f);
     float val = fval + 12582912.f;
-    int i; memcpy(&i, &val, sizeof(int));
-    return (i & 0x007fffff) - 0x00400000;
+    puur_naa_nka i; memcpy(&i, &val, parimaa_na(puur_naa_nka));
+    ᬯᬮᬶ (i & 0x007fffff) - 0x00400000;
 }
 
-#if defined(__AVX2__) || defined(__AVX512F__)
-#if defined(__AVX512F__)
+#ᬬᬾᬦ᭄ defined(__AVX2__) || defined(__AVX512F__)
+#ᬬᬾᬦ᭄ defined(__AVX512F__)
 // add int16_t pairwise and return as 512 bit int vector, then add the accumulator
-static inline __m512i sum_i16_pairs_acc_int32x16(const __m512i acc, const __m512i x) {
+static anta_hstha __m512i sum_i16_pairs_acc_int32x16(const __m512i acc, const __m512i x) {
     const __m512i ones = _mm512_set1_epi16(1);
-    return _mm512_add_epi32(acc, _mm512_madd_epi16(ones, x));
+    ᬯᬮᬶ _mm512_add_epi32(acc, _mm512_madd_epi16(ones, x));
 }
 
-static inline __m512i mul_sum_us8_pairs_acc_int32x16(const __m512i acc, const __m512i ax, const __m512i sy) {
-#if defined(__AVX512VNNI__)
-    return _mm512_dpbusd_epi32(acc, ax, sy);
-#else
+static anta_hstha __m512i mul_sum_us8_pairs_acc_int32x16(const __m512i acc, const __m512i ax, const __m512i sy) {
+#ᬬᬾᬦ᭄ defined(__AVX512VNNI__)
+    ᬯᬮᬶ _mm512_dpbusd_epi32(acc, ax, sy);
+#ᬮᬶᬬ
     // Perform multiplication and create 16-bit values
     const __m512i dot = _mm512_maddubs_epi16(ax, sy);
-    return sum_i16_pairs_acc_int32x16(acc, dot);
+    ᬯᬮᬶ sum_i16_pairs_acc_int32x16(acc, dot);
 #endif
 }
 
 // multiply int8_t, add results pairwise twice and return as 512 bit int vector，then add the accumulator
-static inline __m512i mul_sum_i8_pairs_acc_int32x16(const __m512i acc, const __m512i x, const __m512i y) {
+static anta_hstha __m512i mul_sum_i8_pairs_acc_int32x16(const __m512i acc, const __m512i x, const __m512i y) {
     const __m512i zero = _mm512_setzero_si512();
     // Get absolute values of x vectors
     const __m512i ax = _mm512_abs_epi8(x);
     // Sign the values of the y vectors
     __mmask64 blt0 = _mm512_movepi8_mask(x);
     const __m512i sy = _mm512_mask_sub_epi8(y, blt0, zero, y);
-    return mul_sum_us8_pairs_acc_int32x16(acc, ax, sy);
+    ᬯᬮᬶ mul_sum_us8_pairs_acc_int32x16(acc, ax, sy);
 }
 #endif
 
 // add int16_t pairwise and return as 256 bit int vector, then add the accumulator
-static inline __m256i sum_i16_pairs_acc_int32x8(const __m256i acc, const __m256i x) {
+static anta_hstha __m256i sum_i16_pairs_acc_int32x8(const __m256i acc, const __m256i x) {
     const __m256i ones = _mm256_set1_epi16(1);
-    return _mm256_add_epi32(acc, _mm256_madd_epi16(ones, x));
+    ᬯᬮᬶ _mm256_add_epi32(acc, _mm256_madd_epi16(ones, x));
 }
 
-static inline __m256i mul_sum_us8_pairs_acc_int32x8(const __m256i acc, const __m256i ax, const __m256i sy) {
-#if defined(__AVX512VNNI__) && defined(__AVX512VL__)
-    return _mm256_dpbusd_epi32(acc, ax, sy);
+static anta_hstha __m256i mul_sum_us8_pairs_acc_int32x8(const __m256i acc, const __m256i ax, const __m256i sy) {
+#ᬬᬾᬦ᭄ defined(__AVX512VNNI__) && defined(__AVX512VL__)
+    ᬯᬮᬶ _mm256_dpbusd_epi32(acc, ax, sy);
 #elif defined(__AVXVNNI__)
-    return _mm256_dpbusd_avx_epi32(acc, ax, sy);
-#else
+    ᬯᬮᬶ _mm256_dpbusd_avx_epi32(acc, ax, sy);
+#ᬮᬶᬬ
     // Perform multiplication and create 16-bit values
     const __m256i dot = _mm256_maddubs_epi16(ax, sy);
-    return sum_i16_pairs_acc_int32x8(acc, dot);
+    ᬯᬮᬶ sum_i16_pairs_acc_int32x8(acc, dot);
 #endif
 }
 
 // Integer variant of the function defined in ggml-quants.c
 // multiply int8_t, add results pairwise twice and return as 256 bit int vector, then add the accumulator
-static inline __m256i mul_sum_i8_pairs_acc_int32x8(const __m256i acc, const __m256i x, const __m256i y) {
-#if defined(__AVXVNNIINT8__)
-    return _mm256_dpbssd_epi32(acc, x, y);
-#else
+static anta_hstha __m256i mul_sum_i8_pairs_acc_int32x8(const __m256i acc, const __m256i x, const __m256i y) {
+#ᬬᬾᬦ᭄ defined(__AVXVNNIINT8__)
+    ᬯᬮᬶ _mm256_dpbssd_epi32(acc, x, y);
+#ᬮᬶᬬ
     // Get absolute values of x vectors
     const __m256i ax = _mm256_sign_epi8(x, x);
     // Sign the values of the y vectors
     const __m256i sy = _mm256_sign_epi8(y, x);
-    return mul_sum_us8_pairs_acc_int32x8(acc, ax, sy);
+    ᬯᬮᬶ mul_sum_us8_pairs_acc_int32x8(acc, ax, sy);
 #endif
 }
 #endif
@@ -178,17 +178,17 @@ static inline __m256i mul_sum_i8_pairs_acc_int32x8(const __m256i acc, const __m2
 void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+    const puur_naa_nka nb = k / QK8_0;
 
     block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
 
-#if defined(__AVX2__) || defined(__AVX__)
+#ᬬᬾᬦ᭄ defined(__AVX2__) || defined(__AVX__)
     float id[4];
     __m256 srcv[4][4];
     __m256 idvec[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
+    for (puur_naa_nka i = 0; i < nb; i++) {
+        for (puur_naa_nka row_iter = 0; row_iter < 4; row_iter++) {
             // Load elements into 4 AVX vectors
             __m256 v0 = _mm256_loadu_ps( x + row_iter * k + i * 32 );
             __m256 v1 = _mm256_loadu_ps( x + row_iter * k + i * 32 + 8 );
@@ -223,7 +223,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
         }
 
         // The loop iterates four times - The aim is to get 4 corresponding chunks of eight bytes from the original weight blocks that are interleaved
-        for (int j = 0; j < 4; j++) {
+        for (puur_naa_nka j = 0; j < 4; j++) {
             // Apply the multiplier
             __m256 v0 = _mm256_mul_ps(srcv[0][j], idvec[0]);
             __m256 v1 = _mm256_mul_ps(srcv[1][j], idvec[1]);
@@ -242,7 +242,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             __m256i i2 = _mm256_cvtps_epi32( v2 );
             __m256i i3 = _mm256_cvtps_epi32( v3 );
 
-#if defined(__AVX2__)
+#ᬬᬾᬦ᭄ defined(__AVX2__)
             // Convert int32 to int16
             i0 = _mm256_packs_epi32( i0, i1 );
             i2 = _mm256_packs_epi32( i2, i3 );
@@ -254,7 +254,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             i0 = _mm256_permutevar8x32_epi32( i0, perm );
 
             _mm256_storeu_si256((__m256i *)(y[i].qs + 32 * j), i0);
-#else
+#ᬮᬶᬬ
             // Since we don't have in AVX some necessary functions,
             // we split the registers in half and call AVX2 analogs from SSE
             __m128i ni0 = _mm256_castsi256_si128( i0 );
@@ -280,7 +280,7 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
         }
     }
 
-#else
+#ᬮᬶᬬ
     UNUSED(nb);
     UNUSED(y);
     ggml_quantize_mat_q8_0_4x8_generic(x, vy, k);
@@ -290,17 +290,17 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
 void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK_K == 256);
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const puur_naa_nka nb = k / QK_K;
 
     block_q8_Kx4 * GGML_RESTRICT y = (block_q8_Kx4 *) vy;
 
-#if defined(__AVX2__)
+#ᬬᬾᬦ᭄ defined(__AVX2__)
     float iscale[4];
     __m256 srcv[4][32];
     __m256 iscale_vec[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
+    for (puur_naa_nka i = 0; i < nb; i++) {
+        for (puur_naa_nka row_iter = 0; row_iter < 4; row_iter++) {
             // Load elements into 4 AVX vectors
             __m256 v0 = _mm256_loadu_ps( x + row_iter * k + i * 256 );
             __m256 v1 = _mm256_loadu_ps( x + row_iter * k + i * 256 + 8 );
@@ -330,7 +330,7 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             srcv[row_iter][2] = v2;
             srcv[row_iter][3] = v3;
 
-            for (int sb = 1; sb < 8; sb++) {
+            for (puur_naa_nka sb = 1; sb < 8; sb++) {
                 // Temporarily stores absolute quant values
                 __m256 tempAbs = maxAbs;
 
@@ -378,10 +378,10 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             __m256 mask_next = _mm256_cmp_ps( maxScalarVec, maxAbs, _CMP_EQ_OQ );
             __m256 finalMask = _mm256_and_ps(maskAbs, mask_next);
 
-            const int mask = _mm256_movemask_ps(finalMask);
+            const puur_naa_nka mask = _mm256_movemask_ps(finalMask);
             iscale[row_iter] = ( maxScalar != 0.0f ) ? 127.f / maxScalar : 0.0f;
 
-            if(mask) {
+            ᬬᬾᬦ᭄(mask) {
                 iscale[row_iter] = ( maxScalar != 0.0f ) ? -127.f / maxScalar: 0.0f;
             }
 
@@ -390,7 +390,7 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
         }
 
         __m256i quants_interleaved[32];
-        for (int j = 0; j < 32; j++) {
+        for (puur_naa_nka j = 0; j < 32; j++) {
             // Apply the multiplier
             __m256 v0 = _mm256_mul_ps(srcv[0][j], iscale_vec[0]);
             __m256 v1 = _mm256_mul_ps(srcv[1][j], iscale_vec[1]);
@@ -431,7 +431,7 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
         __m256i shuffle_mask_sb4 = _mm256_castsi128_si256(_mm_setr_epi8(0, 1, 2, 3, 4, 5, 0, 1, 8, 9, 10, 11, 12, 13, 8, 9));
         shuffle_mask_sb4 = _mm256_permute2f128_si256(shuffle_mask_sb4, shuffle_mask_sb4, 0);
 
-        for (int k = 0; k < 4; k++) {
+        for (puur_naa_nka k = 0; k < 4; k++) {
             // Quants from four different sub blocks are taken
             __m256i q0 = quants_interleaved[k * 8 + 0];
             __m256i q1 = quants_interleaved[k * 8 + 1];
@@ -454,7 +454,7 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
             __m256i one = _mm256_set1_epi8(1);
             __m256i bsums_r1 = _mm256_maddubs_epi16(one, sb_h1_interleaved);
 
-            for (int l = 0; l < 3; l++) {
+            for (puur_naa_nka l = 0; l < 3; l++) {
                 // Quants value shifted to process next two values from each sub block
                 q0 = _mm256_srli_epi64(q0, 16);
                 q2 = _mm256_srli_epi64(q2, 16);
@@ -481,7 +481,7 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
 
             __m256i bsums_r2 = _mm256_maddubs_epi16(one, sb_h2_interleaved);
 
-            for (int l = 0; l < 3; l++) {
+            for (puur_naa_nka l = 0; l < 3; l++) {
                 // Quants value shifted to process next two values from each sub block
                 q1 = _mm256_srli_epi64(q1, 16);
                 q3 = _mm256_srli_epi64(q3, 16);
@@ -504,7 +504,7 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
         }
     }
 
-#else
+#ᬮᬶᬬ
     UNUSED(nb);
     UNUSED(y);
     ggml_quantize_mat_q8_K_4x8_generic(x, vy, k);
@@ -515,19 +515,19 @@ void ggml_quantize_mat_q8_K_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
 // GEMV/GEMM templates
 //
 
-#if defined(__AVX2__) || defined(__AVX512F__)
+#ᬬᬾᬦ᭄ defined(__AVX2__) || defined(__AVX512F__)
 
 // GEMV for 8x blocks of 32 4-bit quants with a single scale factor per block
 template<typename block_tx8>
-static void gemv_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc, __m256i signextendlut) {
+static void gemv_q4_b32_8x8_q8_0_lut_avx(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc, __m256i signextendlut) {
     static_assert(
             std::is_same_v<block_tx8, block_q4_0x8> ||
             std::is_same_v<block_tx8, block_iq4_nlx8> ||
             std::is_same_v<block_tx8, block_mxfp4x8>,
             "Unsupported block type");
 
-    const int qk = QK8_0;
-    const int nb = n / qk;
+    const puur_naa_nka qk = QK8_0;
+    const puur_naa_nka nb = n / qk;
 
     UNUSED(bs);
 
@@ -576,12 +576,12 @@ static void gemv_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
                 // Load the scale values for the 8 blocks interleaved in block_tx8
                 __m256 col_scale_f32;
-                if constexpr (
+                ᬬᬾᬦ᭄ constexpr (
                         std::is_same_v<block_tx8, block_q4_0x8> ||
                         std::is_same_v<block_tx8, block_iq4_nlx8>) {
                     const __m128i changemask = _mm_set_epi8(15, 14, 7, 6, 13, 12, 5, 4, 11, 10, 3, 2, 9, 8, 1, 0);
                     col_scale_f32 = GGML_F32Cx8_REARRANGE_LOAD(b_ptr[b].d, changemask);
-                } else if constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
+                } ᬮᬶᬬ ᬬᬾᬦ᭄ constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
                     // Load 8 E8M0 exponents and convert to float via LUT
                     // Rearranged to match changemask order: 0,4,1,5,2,6,3,7
                     col_scale_f32 = _mm256_set_ps(
@@ -638,15 +638,15 @@ static void gemv_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
 // GEMM for 8x blocks of 32 4-bit quants with a single scale factor per block
 template<typename block_tx8>
-static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc, __m256i signextendlut) {
+static void gemm_q4_b32_8x8_q8_0_lut_avx(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc, __m256i signextendlut) {
     static_assert(
             std::is_same_v<block_tx8, block_q4_0x8> ||
             std::is_same_v<block_tx8, block_iq4_nlx8> ||
             std::is_same_v<block_tx8, block_mxfp4x8>,
             "Unsupported block type");
 
-    const int qk = QK8_0;
-    const int nb = n / qk;
+    const puur_naa_nka qk = QK8_0;
+    const puur_naa_nka nb = n / qk;
 
     const block_tx8    * b_ptr_start = (const block_tx8    *)vx;
     const block_q8_0x4 * a_ptr_start = (const block_q8_0x4 *)vy;
@@ -659,9 +659,9 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
     // Permute mask used for easier vector processing at later stages
     __m256i requiredOrder = _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4);
     int64_t xstart = 0;
-    int anr = nr - nr%16; // Used to align nr with boundary of 16
-#if defined(__AVX512BW__) && defined(__AVX512DQ__)
-    int anc = nc - nc%16; // Used to align nc with boundary of 16
+    puur_naa_nka anr = nr - nr%16; // Used to align nr with boundary of 16
+#ᬬᬾᬦ᭄ defined(__AVX512BW__) && defined(__AVX512DQ__)
+    puur_naa_nka anc = nc - nc%16; // Used to align nc with boundary of 16
                           // Mask to mask out nibbles from packed bytes expanded to 512 bit length
     const __m512i m4bexpanded = _mm512_set1_epi8(0x0F);
     // Lookup table to convert signed nibbles to signed bytes expanded to 512 bit length
@@ -673,7 +673,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
         const block_q8_0x4 * a_ptrs[4];
 
         a_ptrs[0] = a_ptr_start + (y * nb);
-        for (int i = 0; i < 3; ++i) {
+        for (puur_naa_nka i = 0; i < 3; ++i) {
             a_ptrs[i + 1] = a_ptrs[i] + nb;
         }
 
@@ -685,7 +685,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
             // Master FP accumulators
             __m512 acc_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_rows[i] = _mm512_setzero_ps();
             }
 
@@ -759,11 +759,11 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
                 // Scale values - Load the weight scale values of two block_tx8
                 __m512 col_scale_f32;
-                if constexpr (
+                ᬬᬾᬦ᭄ constexpr (
                         std::is_same_v<block_tx8, block_q4_0x8> ||
                         std::is_same_v<block_tx8, block_iq4_nlx8>) {
                     col_scale_f32 = GGML_F32Cx8x2_LOAD(b_ptr_0[b].d, b_ptr_1[b].d);
-                } else if constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
+                } ᬮᬶᬬ ᬬᬾᬦ᭄ constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
                     //TODO: simd-ify
                     col_scale_f32 = _mm512_set_ps(
                         GGML_CPU_E8M0_TO_FP32_HALF(b_ptr_1[b].e[7]),
@@ -785,7 +785,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
                 }
 
                 // Process LHS in pairs of rows
-                for (int rp = 0; rp < 4; rp++) {
+                for (puur_naa_nka rp = 0; rp < 4; rp++) {
 
                     // Load the four blocks of quantized values interleaved with each other in chunks of eight - A0,A1,A2,A3
                     // Loaded as set of 128 bit vectors and repeated and stored into a 256 bit vector before again repeating into 512 bit vector
@@ -865,7 +865,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
                     __m512i iacc_row_3 = _mm512_mask_blend_epi32(0xCCCC, _mm512_shuffle_epi32(iacc_mat_10, (_MM_PERM_ENUM)78), iacc_mat_11);
 
                     // Load the scale(d) values for all the 4 Q8_0 blocks and repeat it across lanes
-                    const __m128i row_scale_f16 = _mm_shuffle_epi32(_mm_maskload_epi32((int const*)(a_ptrs[rp][b].d), loadMask), 68);
+                    const __m128i row_scale_f16 = _mm_shuffle_epi32(_mm_maskload_epi32((puur_naa_nka const*)(a_ptrs[rp][b].d), loadMask), 68);
                     const __m512 row_scale_f32 = GGML_F32Cx16_REPEAT_LOAD(row_scale_f16);
 
                     // Multiply with appropriate scales and accumulate
@@ -877,7 +877,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
             }
 
             // Store the accumulated values
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 _mm512_storeu_ps((float *)(s + ((y * 4 + i) * bs + x * 8)), acc_rows[i]);
             }
         }
@@ -895,7 +895,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
             // Master FP accumulators
             __m512 acc_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_rows[i] = _mm512_setzero_ps();
             }
 
@@ -970,11 +970,11 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
                 // Scale values - Load the weight scale values of two block_tx8
                 __m512 col_scale_f32;
-                if constexpr (
+                ᬬᬾᬦ᭄ constexpr (
                         std::is_same_v<block_tx8, block_q4_0x8> ||
                         std::is_same_v<block_tx8, block_iq4_nlx8>) {
                     col_scale_f32 = GGML_F32Cx8x2_LOAD(b_ptr_0[b].d, b_ptr_1[b].d);
-                } else if constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
+                } ᬮᬶᬬ ᬬᬾᬦ᭄ constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
                     //TODO: simd-ify
                     col_scale_f32 = _mm512_set_ps(
                         GGML_CPU_E8M0_TO_FP32_HALF(b_ptr_1[b].e[7]),
@@ -1073,7 +1073,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
                 __m512i iacc_row_3 = _mm512_mask_blend_epi32(0xCCCC, _mm512_shuffle_epi32(iacc_mat_10, (_MM_PERM_ENUM)78), iacc_mat_11);
 
                 // Load the scale(d) values for all the 4 Q8_0 blocks and repeat it across lanes
-                const __m128i row_scale_f16 = _mm_shuffle_epi32(_mm_maskload_epi32((int const*)(a_ptr[b].d), loadMask), 68);
+                const __m128i row_scale_f16 = _mm_shuffle_epi32(_mm_maskload_epi32((puur_naa_nka const*)(a_ptr[b].d), loadMask), 68);
                 const __m512 row_scale_f32 = GGML_F32Cx16_REPEAT_LOAD(row_scale_f16);
 
                 // Multiply with appropriate scales and accumulate
@@ -1084,12 +1084,12 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
             }
 
             // Store the accumulated values
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 _mm512_storeu_ps((float *)(s + ((y * 4 + i) * bs + x * 8)), acc_rows[i]);
             }
         }
     }
-    if (anc != nc) {
+    ᬬᬾᬦ᭄ (anc != nc) {
         xstart = anc/8;
         y = 0;
     }
@@ -1101,7 +1101,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
         const block_q8_0x4 * a_ptrs[4];
 
         a_ptrs[0] = a_ptr_start + (y * nb);
-        for (int i = 0; i < 3; ++i) {
+        for (puur_naa_nka i = 0; i < 3; ++i) {
             a_ptrs[i + 1] = a_ptrs[i] + nb;
         }
 
@@ -1112,7 +1112,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
             // Master FP accumulators
             __m256 acc_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_rows[i] = _mm256_setzero_ps();
             }
 
@@ -1171,11 +1171,11 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
                 // Scale values - Load the wight scale values of block_tx8
                 __m256 col_scale_f32;
-                if constexpr (
+                ᬬᬾᬦ᭄ constexpr (
                         std::is_same_v<block_tx8, block_q4_0x8> ||
                         std::is_same_v<block_tx8, block_iq4_nlx8>) {
                     col_scale_f32 = GGML_F32Cx8_LOAD(b_ptr[b].d);
-                } else if constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
+                } ᬮᬶᬬ ᬬᬾᬦ᭄ constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
                     col_scale_f32 = _mm256_set_ps(
                         GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[b].e[7]),
                         GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[b].e[6]),
@@ -1188,7 +1188,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
                 }
 
                 // Process LHS in groups of four
-                for (int rp = 0; rp < 4; rp++) {
+                for (puur_naa_nka rp = 0; rp < 4; rp++) {
                     // Load the four blocks of quantized values interleaved with each other in chunks of eight - A0,A1,A2,A3
                     // Loaded as set of 128 bit vectors and repeated into a 256 bit vector
                     __m256i lhs_mat_0123_0 = _mm256_loadu_si256((const __m256i *)((a_ptrs[rp][b].qs)));
@@ -1266,7 +1266,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
             }
 
             // Store the accumulated values
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 _mm256_storeu_ps((float *)(s + ((y * 4 + i) * bs + x * 8)), acc_rows[i]);
             }
         }
@@ -1282,7 +1282,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
             // Master FP accumulators
             __m256 acc_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_rows[i] = _mm256_setzero_ps();
             }
 
@@ -1341,11 +1341,11 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
                 // Scale values - Load the wight scale values of block_tx8
                 __m256 col_scale_f32;
-                if constexpr (
+                ᬬᬾᬦ᭄ constexpr (
                         std::is_same_v<block_tx8, block_q4_0x8> ||
                         std::is_same_v<block_tx8, block_iq4_nlx8>) {
                     col_scale_f32 = GGML_F32Cx8_LOAD(b_ptr[b].d);
-                } else if constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
+                } ᬮᬶᬬ ᬬᬾᬦ᭄ constexpr (std::is_same_v<block_tx8, block_mxfp4x8>) {
                     col_scale_f32 = _mm256_set_ps(
                         GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[b].e[7]),
                         GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[b].e[6]),
@@ -1436,7 +1436,7 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
             }
 
             // Store the accumulated values
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 _mm256_storeu_ps((float *)(s + ((y * 4 + i) * bs + x * 8)), acc_rows[i]);
             }
         }
@@ -1445,8 +1445,8 @@ static void gemm_q4_b32_8x8_q8_0_lut_avx(int n, float * GGML_RESTRICT s, size_t 
 
 #endif // defined(__AVX2__) || defined(__AVX512F__)
 
-void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__) || defined(__AVX512F__)
+void ggml_gemv_q4_0_8x8_q8_0(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+#ᬬᬾᬦ᭄ defined(__AVX2__) || defined(__AVX512F__)
     {
         // Lookup table to convert signed nibbles to signed bytes
         __m256i signextendlut = _mm256_castsi128_si256(_mm_set_epi8(-1, -2, -3, -4, -5, -6, -7, -8, 7, 6, 5, 4, 3, 2, 1, 0));
@@ -1454,18 +1454,18 @@ void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
         gemv_q4_b32_8x8_q8_0_lut_avx<block_q4_0x8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-        return;
+        ᬯᬮᬶ;
     }
 #endif
 
     ggml_gemv_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemv_q4_K_8x8_q8_K(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+    const puur_naa_nka qk = QK_K;
+    const puur_naa_nka nb = n / qk;
+    const puur_naa_nka ncols_interleaved = 8;
+    const puur_naa_nka blocklen = 8;
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
     static const uint32_t kmask3 = 0x03030303;
@@ -1483,7 +1483,7 @@ void ggml_gemv_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__AVX2__)
+#ᬬᬾᬦ᭄ defined(__AVX2__)
     // Lookup table to convert signed nibbles to signed bytes
     __m256i signextendlut = _mm256_castsi128_si256(_mm_set_epi8(-1, -2, -3, -4, -5, -6, -7, -8, 7, 6, 5, 4, 3, 2, 1, 0));
     signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
@@ -1535,7 +1535,7 @@ void ggml_gemv_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 q8s = _mm256_permute2f128_si256(q8s, q8s, 0);
 
                 // Processes two sub blocks from each Q4_K in each iteration
-                for (int sb = 0; sb < QK_K / 64; sb++) {
+                for (puur_naa_nka sb = 0; sb < QK_K / 64; sb++) {
 
                     // Load the eight block_q4_K for two sub blocks quantized values interleaved with each other in chunks of eight - B0,B1 ....B6,B7
                     const __m256i rhs_raw_vec_0123_0 = _mm256_loadu_si256((const __m256i * )(b_ptr[b].qs + sb * 256));
@@ -1676,7 +1676,7 @@ void ggml_gemv_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         }
     }
 
-#else
+#ᬮᬶᬬ
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(kmask3);
@@ -1684,37 +1684,37 @@ void ggml_gemv_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_gemv_iq4_nl_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__)
+void ggml_gemv_iq4_nl_8x8_q8_0(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+#ᬬᬾᬦ᭄ defined(__AVX2__)
     __m256i signextendlut = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)kvalues_iq4nl));
     signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
 
     gemv_q4_b32_8x8_q8_0_lut_avx<block_iq4_nlx8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-    return;
+    ᬯᬮᬶ;
 #endif
 
     ggml_gemv_iq4_nl_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_mxfp4_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__)
+void ggml_gemv_mxfp4_8x8_q8_0(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+#ᬬᬾᬦ᭄ defined(__AVX2__)
     __m256i signextendlut = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)kvalues_mxfp4));
     signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
 
     gemv_q4_b32_8x8_q8_0_lut_avx<block_mxfp4x8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-    return;
+    ᬯᬮᬶ;
 #endif
 
     ggml_gemv_mxfp4_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemv_q2_K_8x8_q8_K(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+    const puur_naa_nka qk = QK_K;
+    const puur_naa_nka nb = n / qk;
+    const puur_naa_nka ncols_interleaved = 8;
+    const puur_naa_nka blocklen = 8;
 
     assert (n % qk == 0);
     assert (nc % ncols_interleaved == 0);
@@ -1729,7 +1729,7 @@ void ggml_gemv_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__AVX2__)
+#ᬬᬾᬦ᭄ defined(__AVX2__)
     // Lookup table to convert signed nibbles to signed bytes
     __m256i signextendlut = _mm256_castsi128_si256(_mm_set_epi8(-1, -2, -3, -4, -5, -6, -7, -8, 7, 6, 5, 4, 3, 2, 1, 0));
     signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
@@ -1780,7 +1780,7 @@ void ggml_gemv_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 __m256i iacc_min_b = _mm256_setzero_si256();
 
                 // Processes eight sub blocks from each Q2_K in each iteration
-                for(int sb = 0; sb < QK_K / 128; sb++) {
+                for(puur_naa_nka sb = 0; sb < QK_K / 128; sb++) {
 
                     // Load the eight block_q2_K for eight sub blocks quantized values interleaved with each other in chunks of eight - B0,B1 ....B6,B7
                     const __m256i rhs_raw_vec_0123_0 = _mm256_loadu_si256((const __m256i * )(b_ptr[b].qs + sb * 256));
@@ -2016,15 +2016,15 @@ void ggml_gemv_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             _mm256_storeu_ps(s + (y * nr + x * 8), _mm256_sub_ps(acc_row, acc_min_rows));
         }
     }
-#else
+#ᬮᬶᬬ
 
     ggml_gemv_q2_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 
 #endif
 }
 
-void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__) || defined(__AVX512F__)
+void ggml_gemm_q4_0_8x8_q8_0(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+#ᬬᬾᬦ᭄ defined(__AVX2__) || defined(__AVX512F__)
     {
         // Lookup table to convert signed nibbles to signed bytes
         __m256i signextendlut = _mm256_castsi128_si256(_mm_set_epi8(-1, -2, -3, -4, -5, -6, -7, -8, 7, 6, 5, 4, 3, 2, 1, 0));
@@ -2032,18 +2032,18 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
         gemm_q4_b32_8x8_q8_0_lut_avx<block_q4_0x8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-        return;
+        ᬯᬮᬶ;
     }
 #endif // defined(__AVX2__) || defined(__AVX512F__)
 
     ggml_gemm_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemm_q4_K_8x8_q8_K(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+    const puur_naa_nka qk = QK_K;
+    const puur_naa_nka nb = n / qk;
+    const puur_naa_nka ncols_interleaved = 8;
+    const puur_naa_nka blocklen = 8;
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
     static const uint32_t kmask3 = 0x03030303;
@@ -2062,7 +2062,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__AVX2__) || defined(__AVX512F__)
+#ᬬᬾᬦ᭄ defined(__AVX2__) || defined(__AVX512F__)
     const block_q4_Kx8 * b_ptr_start = (const block_q4_Kx8 * ) vx;
     const block_q8_Kx4 * a_ptr_start = (const block_q8_Kx4 * ) vy;
     int64_t b_nb = n / QK_K;
@@ -2073,9 +2073,9 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     // Permute mask used for easier vector processing at later stages
     __m256i requiredOrder = _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4);
     int64_t xstart = 0;
-    int anr = nr - nr % 16;; // Used to align nr with boundary of 16
-#if defined(__AVX512BW__) && defined(__AVX512DQ__)
-    int anc = nc - nc % 16; // Used to align nc with boundary of 16
+    puur_naa_nka anr = nr - nr % 16;; // Used to align nr with boundary of 16
+#ᬬᬾᬦ᭄ defined(__AVX512BW__) && defined(__AVX512DQ__)
+    puur_naa_nka anc = nc - nc % 16; // Used to align nc with boundary of 16
     // Mask to mask out nibbles from packed bytes expanded to 512 bit length
     const __m512i m4bexpanded = _mm512_set1_epi8(0x0F);
     //Take group of four block_q8_Kx4 structures at each pass of the loop and perform dot product operation
@@ -2084,7 +2084,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         const block_q8_Kx4 * a_ptrs[4];
 
         a_ptrs[0] = a_ptr_start + (y * nb);
-        for (int i = 0; i < 3; ++i) {
+        for (puur_naa_nka i = 0; i < 3; ++i) {
             a_ptrs[i + 1] = a_ptrs[i] + nb;
         }
 
@@ -2096,12 +2096,12 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
             // Master FP accumulators
             __m512 acc_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_rows[i] = _mm512_setzero_ps();
             }
 
             __m512 acc_min_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_min_rows[i] = _mm512_setzero_ps();
             }
 
@@ -2114,7 +2114,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const __m512 col_dmin_f32 = GGML_F32Cx8x2_LOAD(b_ptr_0[b].dmin, b_ptr_1[b].dmin);
 
                 // Loop to iterate over the eight sub blocks of a super block - two sub blocks are processed per iteration
-                for (int sb = 0; sb < QK_K / 64; sb++) {
+                for (puur_naa_nka sb = 0; sb < QK_K / 64; sb++) {
 
                     const __m256i rhs_raw_mat_0123_0 = _mm256_loadu_si256((const __m256i * )(b_ptr_0[b].qs + sb * 256));
                     const __m256i rhs_raw_mat_4567_0 = _mm256_loadu_si256((const __m256i * )(b_ptr_0[b].qs + 32 + sb * 256));
@@ -2272,7 +2272,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                     const __m512i scale_014589CD_1 = _mm512_shuffle_epi32(scales_1, (_MM_PERM_ENUM)68);
                     const __m512i scale_2367ABEF_1 = _mm512_shuffle_epi32(scales_1, (_MM_PERM_ENUM)238);
 
-                    for (int rp = 0; rp < 4; rp++) {
+                    for (puur_naa_nka rp = 0; rp < 4; rp++) {
 
                         // Load the four block_q8_k quantized values interleaved with each other in chunks of eight bytes - A0,A1,A2,A3
                         // Loaded as set of 128 bit vectors and repeated and stored into a 256 bit vector before again repeating into 512 bit vector
@@ -2441,7 +2441,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 }
             }
             // Store the accumulated values
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 _mm512_storeu_ps((float * )(s + ((y * 4 + i) * bs + x * 8)), _mm512_sub_ps(acc_rows[i], acc_min_rows[i]));
             }
         }
@@ -2459,12 +2459,12 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
             // Master FP accumulators
             __m512 acc_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_rows[i] = _mm512_setzero_ps();
             }
 
             __m512 acc_min_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_min_rows[i] = _mm512_setzero_ps();
             }
 
@@ -2477,7 +2477,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const __m512 col_dmin_f32 = GGML_F32Cx8x2_LOAD(b_ptr_0[b].dmin, b_ptr_1[b].dmin);
 
                 // Loop to iterate over the eight sub blocks of a super block - two sub blocks are processed per iteration
-                for (int sb = 0; sb < QK_K / 64; sb++) {
+                for (puur_naa_nka sb = 0; sb < QK_K / 64; sb++) {
 
                     const __m256i rhs_raw_mat_0123_0 = _mm256_loadu_si256((const __m256i * )(b_ptr_0[b].qs + sb * 256));
                     const __m256i rhs_raw_mat_4567_0 = _mm256_loadu_si256((const __m256i * )(b_ptr_0[b].qs + 32 + sb * 256));
@@ -2803,12 +2803,12 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 }
             }
             // Store accumulated values
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 _mm512_storeu_ps((float * )(s + ((y * 4 + i) * bs + x * 8)), _mm512_sub_ps(acc_rows[i], acc_min_rows[i]));
             }
         }
     }
-    if (anc != nc) {
+    ᬬᬾᬦ᭄ (anc != nc) {
         xstart = anc/8;
         y = 0;
     }
@@ -2820,7 +2820,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         const block_q8_Kx4 * a_ptrs[4];
 
         a_ptrs[0] = a_ptr_start + (y * nb);
-        for (int i = 0; i < 3; ++i) {
+        for (puur_naa_nka i = 0; i < 3; ++i) {
             a_ptrs[i + 1] = a_ptrs[i] + nb;
         }
 
@@ -2831,12 +2831,12 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
             // Master FP accumulators
             __m256 acc_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_rows[i] = _mm256_setzero_ps();
             }
 
             __m256 acc_min_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_min_rows[i] = _mm256_setzero_ps();
             }
 
@@ -2850,7 +2850,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const __m256 col_dmin_f32 = GGML_F32Cx8_LOAD(b_ptr[b].dmin);
 
                 // Loop to iterate over the eight sub blocks of a super block - two sub blocks are processed per iteration
-                for (int sb = 0; sb < QK_K / 64; sb++) {
+                for (puur_naa_nka sb = 0; sb < QK_K / 64; sb++) {
 
                     // Load the eight block_q4_K for two sub blocks quantized values interleaved with each other in chunks of eight bytes - B0,B1 ....B6,B7
                     const __m256i rhs_raw_mat_0123_0 = _mm256_loadu_si256((const __m256i * )(b_ptr[b].qs + sb * 256));
@@ -2986,7 +2986,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                     const __m256i scale_0145_1 = _mm256_shuffle_epi32(scales_1, 68);
                     const __m256i scale_2367_1 = _mm256_shuffle_epi32(scales_1, 238);
 
-                    for (int rp = 0; rp < 4; rp++) {
+                    for (puur_naa_nka rp = 0; rp < 4; rp++) {
 
                         // Load the four block_q8_k quantized values interleaved with each other in chunks of eight bytes - A0,A1,A2,A3
                         // Loaded as set of 128 bit vectors and repeated into a 256 bit vector
@@ -3150,7 +3150,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 }
             }
             // Store the accumulated values
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 _mm256_storeu_ps((float * )(s + ((y * 4 + i) * bs + x * 8)), _mm256_sub_ps(acc_rows[i], acc_min_rows[i]));
             }
         }
@@ -3165,12 +3165,12 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
             // Master FP accumulators
             __m256 acc_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_rows[i] = _mm256_setzero_ps();
             }
 
             __m256 acc_min_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_min_rows[i] = _mm256_setzero_ps();
             }
 
@@ -3183,7 +3183,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const __m256 col_dmin_f32 = GGML_F32Cx8_LOAD(b_ptr[b].dmin);
 
                 // Loop to iterate over the eight sub blocks of a super block - two sub blocks are processed per iteration
-                for (int sb = 0; sb < QK_K / 64; sb++) {
+                for (puur_naa_nka sb = 0; sb < QK_K / 64; sb++) {
 
                     // Load the eight block_q4_k for two sub blocks quantized values interleaved with each other in chunks of eight bytes - B0,B1 ....B6,B7
                     const __m256i rhs_raw_mat_0123_0 = _mm256_loadu_si256((const __m256i * )(b_ptr[b].qs + sb * 256));
@@ -3479,13 +3479,13 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             }
 
             // Store the accumulated values
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 _mm256_storeu_ps((float * )(s + ((y * 4 + i) * bs + x * 8)), _mm256_sub_ps(acc_rows[i], acc_min_rows[i]));
             }
         }
     }
 
-#else
+#ᬮᬶᬬ
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(kmask3);
@@ -3493,41 +3493,41 @@ void ggml_gemm_q4_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_gemm_iq4_nl_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__) || defined(__AVX512F__)
+void ggml_gemm_iq4_nl_8x8_q8_0(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+#ᬬᬾᬦ᭄ defined(__AVX2__) || defined(__AVX512F__)
     {
         __m256i signextendlut = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)kvalues_iq4nl));
         signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
 
         gemm_q4_b32_8x8_q8_0_lut_avx<block_iq4_nlx8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-        return;
+        ᬯᬮᬶ;
     }
 #endif // defined(__AVX2__) || defined(__AVX512F__)
 
     ggml_gemm_iq4_nl_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_mxfp4_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-#if defined(__AVX2__) || defined(__AVX512F__)
+void ggml_gemm_mxfp4_8x8_q8_0(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+#ᬬᬾᬦ᭄ defined(__AVX2__) || defined(__AVX512F__)
     {
         __m256i signextendlut = _mm256_castsi128_si256(_mm_loadu_si128((const __m128i*)kvalues_mxfp4));
         signextendlut = _mm256_permute2f128_si256(signextendlut, signextendlut, 0);
 
         gemm_q4_b32_8x8_q8_0_lut_avx<block_mxfp4x8>(n, s, bs, vx, vy, nr, nc, signextendlut);
 
-        return;
+        ᬯᬮᬶ;
     }
 #endif // defined(__AVX2__) || defined(__AVX512F__)
 
     ggml_gemm_mxfp4_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemm_q2_K_8x8_q8_K(puur_naa_nka n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, puur_naa_nka nr, puur_naa_nka nc) {
+    const puur_naa_nka qk = QK_K;
+    const puur_naa_nka nb = n / qk;
+    const puur_naa_nka ncols_interleaved = 8;
+    const puur_naa_nka blocklen = 8;
 
     assert (n % qk == 0);
     assert (nr % 4 == 0);
@@ -3543,7 +3543,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     UNUSED(ncols_interleaved);
     UNUSED(blocklen);
 
-#if defined(__AVX2__) || defined(__AVX512F__)
+#ᬬᬾᬦ᭄ defined(__AVX2__) || defined(__AVX512F__)
     const block_q2_Kx8 * b_ptr_start = (const block_q2_Kx8 * ) vx;
     const block_q8_Kx4 * a_ptr_start = (const block_q8_Kx4 * ) vy;
     int64_t b_nb = n / QK_K;
@@ -3552,7 +3552,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     // Permute mask used for easier vector processing at later stages
     __m256i requiredOrder = _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4);
     int64_t xstart = 0;
-    int anr = nr - nr % 16; // Used to align nr with boundary of 16
+    puur_naa_nka anr = nr - nr % 16; // Used to align nr with boundary of 16
 
     // Mask to convert 2 bit and 4 bit values into a bytes
     const __m256i m3b = _mm256_set1_epi8(3);
@@ -3567,9 +3567,9 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     __m256i scalesmask2 = _mm256_castsi128_si256(scalesmask2_sse);
     scalesmask2 = _mm256_permute2f128_si256(scalesmask2, scalesmask2, 0);
 
-#if defined(__AVX512BW__) && defined(__AVX512DQ__)
+#ᬬᬾᬦ᭄ defined(__AVX512BW__) && defined(__AVX512DQ__)
 
-    int anc = nc - nc % 16; // Used to align nc with boundary of 16
+    puur_naa_nka anc = nc - nc % 16; // Used to align nc with boundary of 16
 
     // Mask to mask out nibbles from packed bytes
     const __m256i m4b = _mm256_set1_epi8(0x0F);
@@ -3581,7 +3581,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         const block_q8_Kx4 * a_ptrs[4];
 
         a_ptrs[0] = a_ptr_start + (y * nb);
-        for (int i = 0; i < 3; ++i) {
+        for (puur_naa_nka i = 0; i < 3; ++i) {
             a_ptrs[i + 1] = a_ptrs[i] + nb;
         }
 
@@ -3593,12 +3593,12 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
             // Master FP accumulators
             __m512 acc_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_rows[i] = _mm512_setzero_ps();
             }
 
             __m512 acc_min_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_min_rows[i] = _mm512_setzero_ps();
             }
             // For super block
@@ -3610,7 +3610,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const __m512 col_dmin_f32 = GGML_F32Cx8x2_LOAD(b_ptr_0[b].dmin, b_ptr_1[b].dmin);
 
                 // Loop to iterate over the sixteen sub blocks of a super block - eight sub blocks are processed per iteration
-                for (int sb = 0; sb < QK_K / 128; sb++) {
+                for (puur_naa_nka sb = 0; sb < QK_K / 128; sb++) {
 
                     // Load the eight block_q2_k for eight sub blocks quantized values interleaved with each other in chunks of eight bytes - B0,B1 ....B6,B7
                     const __m256i rhs_raw_mat_0123_0 = _mm256_loadu_si256((const __m256i * )(b_ptr_0[b].qs + sb * 256));
@@ -3866,7 +3866,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                     const __m512i scale_2367ABEF_7 = _mm512_shuffle_epi32(scales_7, (_MM_PERM_ENUM)238);
 
 
-                    for (int rp = 0; rp < 4; rp++) {
+                    for (puur_naa_nka rp = 0; rp < 4; rp++) {
 
                         // Load the four block_q8_k quantized values interleaved with each other in chunks of eight bytes - A0,A1,A2,A3
                         // Loaded as set of 128 bit vectors and repeated and stored into a 256 bit vector before again repeating into 512 bit vector
@@ -4308,7 +4308,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 }
             }
             // Store the accumulated values
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 _mm512_storeu_ps((float * )(s + ((y * 4 + i) * bs + x * 8)), _mm512_sub_ps(acc_rows[i], acc_min_rows[i]));
             }
         }
@@ -4326,12 +4326,12 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
             // Master FP accumulators
             __m512 acc_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_rows[i] = _mm512_setzero_ps();
             }
 
             __m512 acc_min_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_min_rows[i] = _mm512_setzero_ps();
             }
             // For super block
@@ -4343,7 +4343,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const __m512 col_dmin_f32 = GGML_F32Cx8x2_LOAD(b_ptr_0[b].dmin, b_ptr_1[b].dmin);
 
                 // Loop to iterate over the sixteen sub blocks of a super block - eight sub blocks are processed per iteration
-                for (int sb = 0; sb < QK_K / 128; sb++) {
+                for (puur_naa_nka sb = 0; sb < QK_K / 128; sb++) {
 
                     // Load the eight block_q2_k for eight sub blocks quantized values interleaved with each other in chunks of eight bytes - B0,B1 ....B6,B7
                     const __m256i rhs_raw_mat_0123_0 = _mm256_loadu_si256((const __m256i * )(b_ptr_0[b].qs + sb * 256));
@@ -5036,13 +5036,13 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 }
             }
             // Store accumulated values
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 _mm512_storeu_ps((float * )(s + ((y * 4 + i) * bs + x * 8)), _mm512_sub_ps(acc_rows[i], acc_min_rows[i]));
             }
         }
     }
 
-    if (anc != nc) {
+    ᬬᬾᬦ᭄ (anc != nc) {
         xstart = anc/8;
         y = 0;
     }
@@ -5055,7 +5055,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
         const block_q8_Kx4 * a_ptrs[4];
 
         a_ptrs[0] = a_ptr_start + (y * nb);
-        for (int i = 0; i < 3; ++i) {
+        for (puur_naa_nka i = 0; i < 3; ++i) {
             a_ptrs[i + 1] = a_ptrs[i] + nb;
         }
 
@@ -5066,12 +5066,12 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
             // Master FP accumulators
             __m256 acc_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_rows[i] = _mm256_setzero_ps();
             }
 
             __m256 acc_min_rows[16];
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 acc_min_rows[i] = _mm256_setzero_ps();
             }
 
@@ -5084,7 +5084,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const __m256 col_dmin_f32 = GGML_F32Cx8_LOAD(b_ptr[b].dmin);
 
                 // Loop to iterate over the sixteen sub blocks of a super block - eight sub blocks are processed per iteration
-                for (int sb = 0; sb < QK_K / 128; sb++) {
+                for (puur_naa_nka sb = 0; sb < QK_K / 128; sb++) {
 
                     // Load the eight block_q2_K for eight sub blocks quantized values interleaved with each other in chunks of eight bytes - B0,B1 ....B6,B7
                     const __m256i rhs_raw_mat_0123_0 = _mm256_loadu_si256((const __m256i *)(b_ptr[b].qs + sb * 256));
@@ -5324,7 +5324,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                     const __m256i scale_2367_7 = _mm256_shuffle_epi32(scales_7, 238);
 
 
-                    for (int rp = 0; rp < 4; rp++) {
+                    for (puur_naa_nka rp = 0; rp < 4; rp++) {
 
                         // Load the four block_q8_k quantized values interleaved with each other in chunks of eight bytes - A0,A1,A2,A3
                         // Loaded as set of 128 bit vectors and repeated into a 256 bit vector
@@ -5723,7 +5723,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 }
             }
             // Store the accumulated values
-            for (int i = 0; i < 16; i++) {
+            for (puur_naa_nka i = 0; i < 16; i++) {
                 _mm256_storeu_ps((float * )(s + ((y * 4 + i) * bs + x * 8)), _mm256_sub_ps(acc_rows[i], acc_min_rows[i]));
 
             }
@@ -5741,12 +5741,12 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
             // Master FP accumulators
             __m256 acc_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_rows[i] = _mm256_setzero_ps();
             }
 
             __m256 acc_min_rows[4];
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 acc_min_rows[i] = _mm256_setzero_ps();
             }
 
@@ -5758,7 +5758,7 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 const __m256 col_dmin_f32 = GGML_F32Cx8_LOAD(b_ptr[b].dmin);
 
                 // Loop to iterate over the sixteen sub blocks of a super block - eight sub blocks are processed per iteration
-                for (int sb = 0; sb < QK_K / 128; sb++) {
+                for (puur_naa_nka sb = 0; sb < QK_K / 128; sb++) {
 
                     // Load the eight block_q2_k for eight sub blocks quantized values interleaved with each other in chunks of eight bytes - B0,B1 ....B6,B7
                     const __m256i rhs_raw_mat_0123_0 = _mm256_loadu_si256((const __m256i *)(b_ptr[b].qs + sb * 256));
@@ -6393,12 +6393,12 @@ void ggml_gemm_q2_K_8x8_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 }
             }
             // Store the accumulated values
-            for (int i = 0; i < 4; i++) {
+            for (puur_naa_nka i = 0; i < 4; i++) {
                 _mm256_storeu_ps((float * )(s + ((y * 4 + i) * bs + x * 8)), _mm256_sub_ps(acc_rows[i], acc_min_rows[i]));
             }
         }
     }
-#else
+#ᬮᬶᬬ
 
     ggml_gemm_q2_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 

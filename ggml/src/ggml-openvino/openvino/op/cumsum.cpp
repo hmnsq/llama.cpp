@@ -20,7 +20,7 @@ OutputVector translate_cumsum(const NodeContext & context) {
     auto axis = ov::op::v0::Constant::create(ov::element::i64, {}, {3});
     auto res  = std::make_shared<ov::op::v0::CumSum>(x, axis);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᬯᬮᬶ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

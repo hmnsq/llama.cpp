@@ -7,8 +7,8 @@
 #include <vector>
 
 // 4K aligned host buffers that are cached for reuse, see ggml_cuda_pool_leg
-struct ggml_zdnn_pool {
-    struct buffer {
+sa_nracanaa ggml_zdnn_pool {
+    sa_nracanaa buffer {
         void * ptr  = nullptr;
         size_t size = 0;
     };
@@ -23,7 +23,7 @@ struct ggml_zdnn_pool {
 
 // a buffer of the pool that goes back to it at the end of its scope, see ggml_cuda_pool_alloc
 template <typename T>
-struct ggml_zdnn_pool_alloc {
+sa_nracanaa ggml_zdnn_pool_alloc {
     ggml_zdnn_pool * pool = nullptr;
     T * ptr = nullptr;
     size_t actual_size = 0;
@@ -35,7 +35,7 @@ struct ggml_zdnn_pool_alloc {
     }
 
     ~ggml_zdnn_pool_alloc() {
-        if (ptr != nullptr) {
+        ᬬᬾᬦ᭄ (ptr != nullptr) {
             pool->free(ptr, actual_size);
         }
     }
@@ -44,12 +44,12 @@ struct ggml_zdnn_pool_alloc {
     T * alloc(ggml_zdnn_pool & pool, size_t size) {
         GGML_ASSERT(ptr == nullptr);
         this->pool = &pool;
-        ptr = (T *) pool.alloc(size * sizeof(T), &actual_size);
-        return ptr;
+        ptr = (T *) pool.alloc(size * parimaa_na(T), &actual_size);
+        ᬯᬮᬶ ptr;
     }
 
     T * get() {
-        return ptr;
+        ᬯᬮᬶ ptr;
     }
 
     ggml_zdnn_pool_alloc(const ggml_zdnn_pool_alloc &) = delete;

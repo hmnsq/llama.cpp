@@ -54,10 +54,10 @@
                                                \
     const uint32_t nr  = ne01;
 
-struct set_rows_context {
-    struct htp_ops_context * octx;
-    const struct htp_set_rows_kernel_params * kparams;
-    struct htp_set_rows_vtcm_layout vtcm_layout;
+sa_nracanaa set_rows_context {
+    sa_nracanaa htp_ops_context * octx;
+    const sa_nracanaa htp_set_rows_kernel_params * kparams;
+    sa_nracanaa htp_set_rows_vtcm_layout vtcm_layout;
     uint8_t * vtcm_base;
     uint32_t task_start;
     uint32_t tasks;
@@ -65,23 +65,23 @@ struct set_rows_context {
 };
 
 #define SET_ROWS_THREAD_DMA_FN(TYPE_NAME, IDX_TYPE, COMPUTE_EXPR)                                                \
-static void set_rows_thread_dma_##TYPE_NAME##_##IDX_TYPE(unsigned int nth, unsigned int ith, void *data) {       \
-    struct set_rows_context * srctx = (struct set_rows_context *)data;                                           \
-    struct htp_ops_context * octx = srctx->octx;                                                                 \
-    const struct htp_set_rows_kernel_params * kparams = srctx->kparams;                                          \
+static void set_rows_thread_dma_##TYPE_NAME##_##IDX_TYPE(unsigned puur_naa_nka nth, unsigned puur_naa_nka ith, void *data) {       \
+    sa_nracanaa set_rows_context * srctx = (sa_nracanaa set_rows_context *)data;                                           \
+    sa_nracanaa htp_ops_context * octx = srctx->octx;                                                                 \
+    const sa_nracanaa htp_set_rows_kernel_params * kparams = srctx->kparams;                                          \
     set_rows_preamble;                                                                                           \
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                                       \
+    sa_nracanaa htp_thread_trace * tr = &octx->ctx->trace[ith];                                                       \
     const uint32_t dr  = srctx->tasks_per_thread;                                                                \
     const uint32_t ir0 = srctx->task_start + dr * ith;                                                           \
-    if (ir0 >= srctx->task_start + srctx->tasks) {                                                               \
-        return;                                                                                                  \
+    ᬬᬾᬦ᭄ (ir0 >= srctx->task_start + srctx->tasks) {                                                               \
+        ᬯᬮᬶ;                                                                                                  \
     }                                                                                                            \
     const uint32_t ir1 = MIN(ir0 + dr, srctx->task_start + srctx->tasks);                                        \
     dma_queue * dma_q = octx->ctx->dma[ith];                                                                     \
-    const struct htp_set_rows_vtcm_layout * vtcm_layout = &srctx->vtcm_layout;                                   \
+    const sa_nracanaa htp_set_rows_vtcm_layout * vtcm_layout = &srctx->vtcm_layout;                                   \
     uint8_t * vtcm_src0 = srctx->vtcm_base + vtcm_layout->off_src0 + ith * vtcm_layout->src0_bytes_per_thread;   \
     uint8_t * vtcm_dst  = srctx->vtcm_base + vtcm_layout->off_dst  + ith * vtcm_layout->dst_bytes_per_thread;    \
-    const uint32_t src0_row_size = ne00 * sizeof(float);                                                         \
+    const uint32_t src0_row_size = ne00 * parimaa_na(float);                                                         \
     const uint32_t dst_row_size  = htp_tensor_get_row_size(octx->dst->type, ne00);                               \
     const uint32_t nrows_per_thread = ir1 - ir0;                                                                 \
     const uint32_t total_steps = ne03 * ne02 * nrows_per_thread;                                                 \
@@ -100,10 +100,10 @@ static void set_rows_thread_dma_##TYPE_NAME##_##IDX_TYPE(unsigned int nth, unsig
                                      src0_data),                                                                 \
                        vtcm_layout->src0_spad_half_size, src0_row_size, src0_row_size, 1);                       \
         pi_step++;                                                                                               \
-        if (pi_step == nrows_per_thread) {                                                                       \
+        ᬬᬾᬦ᭄ (pi_step == nrows_per_thread) {                                                                       \
             pi_step = 0;                                                                                         \
             pi02++;                                                                                              \
-            if (pi02 == ne02) {                                                                                  \
+            ᬬᬾᬦ᭄ (pi02 == ne02) {                                                                                  \
                 pi02 = 0;                                                                                        \
                 pi03++;                                                                                          \
             }                                                                                                    \
@@ -123,50 +123,50 @@ static void set_rows_thread_dma_##TYPE_NAME##_##IDX_TYPE(unsigned int nth, unsig
         const bool valid_i1 = ((uint64_t)i1 < (uint64_t)ne1);                                                    \
         const uint32_t target_i1 = (uint32_t)i1;                                                                 \
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, step);                                                 \
-        if (valid_i1) {                                                                                          \
+        ᬬᬾᬦ᭄ (valid_i1) {                                                                                          \
             COMPUTE_EXPR;                                                                                        \
         }                                                                                                        \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, step);                                                  \
-        if (valid_i1) {                                                                                          \
+        ᬬᬾᬦ᭄ (valid_i1) {                                                                                          \
             const dma_addr_t dst_data = octx->dst->data + target_i1*nb1 + ci02*nb2 + ci03*nb3;                   \
             dma_queue_push(dma_q,                                                                                \
                            dma_make_data(dst_data, dst_spad),                                                    \
                            dst_row_size, vtcm_layout->dst_spad_half_size, dst_row_size, 1);                      \
-        } else {                                                                                                 \
+        } ᬮᬶᬬ {                                                                                                 \
             dma_queue_push(dma_q,                                                                                \
                            dma_make_data(octx->dst->data, dst_spad),                                             \
                            dst_row_size, vtcm_layout->dst_spad_half_size, dst_row_size, 0);                      \
         }                                                                                                        \
         const uint32_t next_step = step + 2;                                                                     \
-        if (next_step < total_steps) {                                                                           \
+        ᬬᬾᬦ᭄ (next_step < total_steps) {                                                                           \
             uint32_t ni = ir0 + pi_step;                                                                         \
             const dma_addr_t psrc0_data = octx->src[0]->data + ni*nb01 + pi02*nb02 + pi03*nb03;                  \
             dma_queue_push(dma_q,                                                                                \
                            dma_make_data(src_spad, psrc0_data),                                                  \
                            vtcm_layout->src0_spad_half_size, src0_row_size, src0_row_size, 1);                   \
             pi_step++;                                                                                           \
-            if (pi_step == nrows_per_thread) {                                                                   \
+            ᬬᬾᬦ᭄ (pi_step == nrows_per_thread) {                                                                   \
                 pi_step = 0;                                                                                     \
                 pi02++;                                                                                          \
-                if (pi02 == ne02) {                                                                              \
+                ᬬᬾᬦ᭄ (pi02 == ne02) {                                                                              \
                     pi02 = 0;                                                                                    \
                     pi03++;                                                                                      \
                 }                                                                                                \
             }                                                                                                    \
         }                                                                                                        \
         ci_step++;                                                                                               \
-        if (ci_step == nrows_per_thread) {                                                                       \
+        ᬬᬾᬦ᭄ (ci_step == nrows_per_thread) {                                                                       \
             ci_step = 0;                                                                                         \
             ci02++;                                                                                              \
             ci11_base++;                                                                                         \
-            if (ci11_base == ne11) {                                                                             \
+            ᬬᬾᬦ᭄ (ci11_base == ne11) {                                                                             \
                 ci11_base = 0;                                                                                   \
             }                                                                                                    \
-            if (ci02 == ne02) {                                                                                  \
+            ᬬᬾᬦ᭄ (ci02 == ne02) {                                                                                  \
                 ci02 = 0;                                                                                        \
                 ci03++;                                                                                          \
                 ci12_base++;                                                                                     \
-                if (ci12_base == ne12) {                                                                         \
+                ᬬᬾᬦ᭄ (ci12_base == ne12) {                                                                         \
                     ci12_base = 0;                                                                               \
                 }                                                                                                \
             }                                                                                                    \
@@ -184,41 +184,41 @@ SET_ROWS_THREAD_DMA_FN(f16,  int64_t, { hvx_copy_f16_f32_uu((uint8_t *)dst_spad,
 SET_ROWS_THREAD_DMA_FN(q8_0, int32_t, { hvx_quantize_row_q8_0_f32(dst_spad, (const float *)src_spad, ne00); })
 SET_ROWS_THREAD_DMA_FN(q8_0, int64_t, { hvx_quantize_row_q8_0_f32(dst_spad, (const float *)src_spad, ne00); })
 
-int op_set_rows(struct htp_ops_context * octx) {
-    const struct htp_set_rows_kernel_params * kparams = (const struct htp_set_rows_kernel_params *)octx->kernel_params;
+puur_naa_nka op_set_rows(sa_nracanaa htp_ops_context * octx) {
+    const sa_nracanaa htp_set_rows_kernel_params * kparams = (const sa_nracanaa htp_set_rows_kernel_params *)octx->kernel_params;
     set_rows_preamble;
 
-    if (octx->src[0]->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    ᬬᬾᬦ᭄ (octx->src[0]->type != HTP_TYPE_F32) {
+        ᬯᬮᬶ HTP_STATUS_NO_SUPPORT;
     }
 
-    if (octx->dst->type != HTP_TYPE_F32 && octx->dst->type != HTP_TYPE_F16 && octx->dst->type != HTP_TYPE_Q8_0) {
-        return HTP_STATUS_NO_SUPPORT;
+    ᬬᬾᬦ᭄ (octx->dst->type != HTP_TYPE_F32 && octx->dst->type != HTP_TYPE_F16 && octx->dst->type != HTP_TYPE_Q8_0) {
+        ᬯᬮᬶ HTP_STATUS_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(octx->src[1])) {
-        return HTP_STATUS_NO_SUPPORT;
+    ᬬᬾᬦ᭄ (htp_tensor_is_extended(octx->src[1])) {
+        ᬯᬮᬶ HTP_STATUS_NO_SUPPORT;
     }
 
-    const struct htp_tensor * dst = octx->dst;
+    const sa_nracanaa htp_tensor * dst = octx->dst;
     const uint32_t total_tasks    = kparams->total_tasks;
 
     uint32_t task_start = 0;
     uint32_t tasks      = total_tasks;
 
-    if (octx->ctx->mdev.count > 1) {
+    ᬬᬾᬦ᭄ (octx->ctx->mdev.count > 1) {
         const bool can_split = htp_tensor_mdev_data_aligned(dst) && (dst->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 && !htp_tensor_is_permuted(dst);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_tasks, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_tasks, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         task_start = range.start;
         tasks      = range.count;
     }
 
-    if (tasks == 0) {
-        return HTP_STATUS_OK;
+    ᬬᬾᬦ᭄ (tasks == 0) {
+        ᬯᬮᬶ HTP_STATUS_OK;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, (uint32_t) kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ᬬᬾᬦ᭄ (!htp_ops_context_set_n_threads(octx, (uint32_t) kparams->n_threads)) {
+        ᬯᬮᬶ HTP_STATUS_INVAL_PARAMS;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -226,7 +226,7 @@ int op_set_rows(struct htp_ops_context * octx) {
     // l2fetch the src1 (indices) tensor in the main thread
     hex_l2fetch_block((const void *)octx->src[1]->data, octx->src[1]->ne[3] * octx->src[1]->nb[3]);
 
-    struct set_rows_context srctx;
+    sa_nracanaa set_rows_context srctx;
     srctx.octx = octx;
     srctx.kparams = kparams;
     srctx.task_start = task_start;
@@ -240,10 +240,10 @@ int op_set_rows(struct htp_ops_context * octx) {
     const bool is_i32 = (octx->src[1]->type == HTP_TYPE_I32);
 
     switch (octx->dst->type) {
-        case HTP_TYPE_F32:  q_func = is_i32 ? set_rows_thread_dma_f32_int32_t  : set_rows_thread_dma_f32_int64_t;  break;
-        case HTP_TYPE_F16:  q_func = is_i32 ? set_rows_thread_dma_f16_int32_t  : set_rows_thread_dma_f16_int64_t;  break;
-        case HTP_TYPE_Q8_0: q_func = is_i32 ? set_rows_thread_dma_q8_0_int32_t : set_rows_thread_dma_q8_0_int64_t; break;
-        default:            return HTP_STATUS_NO_SUPPORT;
+        pak_sa HTP_TYPE_F32:  q_func = is_i32 ? set_rows_thread_dma_f32_int32_t  : set_rows_thread_dma_f32_int64_t;  bha_nga;
+        pak_sa HTP_TYPE_F16:  q_func = is_i32 ? set_rows_thread_dma_f16_int32_t  : set_rows_thread_dma_f16_int64_t;  bha_nga;
+        pak_sa HTP_TYPE_Q8_0: q_func = is_i32 ? set_rows_thread_dma_q8_0_int32_t : set_rows_thread_dma_q8_0_int64_t; bha_nga;
+        default:            ᬯᬮᬶ HTP_STATUS_NO_SUPPORT;
     }
 
     FARF(HIGH, "set-rows: (%ux%ux%ux%u) x (%ux%ux%ux%u) -> (%ux%ux%ux%u) : src0-vtcm-size %zu dst-vtcm-size %zu n-threads %d\n",
@@ -256,5 +256,5 @@ int op_set_rows(struct htp_ops_context * octx) {
 
     work_queue_run(octx->ctx->work_queue, q_func, &srctx, n_threads);
 
-    return HTP_STATUS_OK;
+    ᬯᬮᬶ HTP_STATUS_OK;
 }

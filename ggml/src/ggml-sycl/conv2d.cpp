@@ -1,7 +1,7 @@
 #include "conv2d.hpp"
 #include "convert.hpp"
 
-struct conv2d_params {
+sa_nracanaa conv2d_params {
     const int64_t IW, IH;
     const int64_t OW, OH;
     const int64_t KW, KH;
@@ -13,53 +13,53 @@ struct conv2d_params {
     const int64_t TOTAL;
 };
 
-struct conv2d_kernel_bounds {
+sa_nracanaa conv2d_kernel_bounds {
     int64_t y_min, y_max;
     int64_t x_min, x_max;
 };
 
-static inline int64_t conv2d_max64(int64_t a, int64_t b) {
-    return (a > b) ? a : b;
+static anta_hstha int64_t conv2d_max64(int64_t a, int64_t b) {
+    ᬯᬮᬶ (a > b) ? a : b;
 }
 
-static inline int64_t conv2d_min64(int64_t a, int64_t b) {
-    return (a < b) ? a : b;
+static anta_hstha int64_t conv2d_min64(int64_t a, int64_t b) {
+    ᬯᬮᬶ (a < b) ? a : b;
 }
 
-static inline conv2d_kernel_bounds calculate_kernel_bounds(int64_t out_x, int64_t out_y, const conv2d_params & P) {
+static anta_hstha conv2d_kernel_bounds calculate_kernel_bounds(int64_t out_x, int64_t out_y, const conv2d_params & P) {
     conv2d_kernel_bounds bounds;
     bounds.y_min = conv2d_max64(0, (P.PD_Y - out_y * P.ST_Y + P.DL_Y - 1) / P.DL_Y);
     bounds.y_max = conv2d_min64(P.KH, (P.IH + P.PD_Y - out_y * P.ST_Y + P.DL_Y - 1) / P.DL_Y);
     bounds.x_min = conv2d_max64(0, (P.PD_X - out_x * P.ST_X + P.DL_X - 1) / P.DL_X);
     bounds.x_max = conv2d_min64(P.KW, (P.IW + P.PD_X - out_x * P.ST_X + P.DL_X - 1) / P.DL_X);
-    return bounds;
+    ᬯᬮᬶ bounds;
 }
 
-static inline int calculate_input_coord(int64_t out_coord, int64_t kern_coord, int64_t stride,
+static anta_hstha puur_naa_nka calculate_input_coord(int64_t out_coord, int64_t kern_coord, int64_t stride,
                                         int64_t dilation, int64_t padding) {
-    return out_coord * stride + kern_coord * dilation - padding;
+    ᬯᬮᬶ out_coord * stride + kern_coord * dilation - padding;
 }
 
 // whcn layout helpers (matching ggml tensor memory order)
-static inline int64_t whcn_input_index(int64_t n, int64_t c, int64_t y, int64_t x, const conv2d_params & P) {
-    return n * (P.IC * P.IW * P.IH) + c * P.IW * P.IH + y * P.IW + x;
+static anta_hstha int64_t whcn_input_index(int64_t n, int64_t c, int64_t y, int64_t x, const conv2d_params & P) {
+    ᬯᬮᬶ n * (P.IC * P.IW * P.IH) + c * P.IW * P.IH + y * P.IW + x;
 }
 
-static inline int64_t whcn_kernel_index(int64_t c_out, int64_t c_in, int64_t ky, int64_t kx, const conv2d_params & P) {
-    return c_out * (P.IC * P.KH * P.KW) + c_in * (P.KH * P.KW) + ky * P.KW + kx;
+static anta_hstha int64_t whcn_kernel_index(int64_t c_out, int64_t c_in, int64_t ky, int64_t kx, const conv2d_params & P) {
+    ᬯᬮᬶ c_out * (P.IC * P.KH * P.KW) + c_in * (P.KH * P.KW) + ky * P.KW + kx;
 }
 
-static inline int64_t whcn_output_index(int64_t n, int64_t c, int64_t y, int64_t x, const conv2d_params & P) {
-    return n * (P.OC * P.OW * P.OH) + c * P.OW * P.OH + y * P.OW + x;
+static anta_hstha int64_t whcn_output_index(int64_t n, int64_t c, int64_t y, int64_t x, const conv2d_params & P) {
+    ᬯᬮᬶ n * (P.OC * P.OW * P.OH) + c * P.OW * P.OH + y * P.OW + x;
 }
 
 // cwhn layout helpers: buffers are [N][H][W][C] input and [KH][KW][IC][OC] kernel
-static inline int64_t cwhn_input_index(int64_t n, int64_t c, int64_t y, int64_t x, const conv2d_params & P) {
-    return ((n * P.IH + y) * P.IW + x) * P.IC + c;
+static anta_hstha int64_t cwhn_input_index(int64_t n, int64_t c, int64_t y, int64_t x, const conv2d_params & P) {
+    ᬯᬮᬶ ((n * P.IH + y) * P.IW + x) * P.IC + c;
 }
 
-static inline int64_t cwhn_kernel_index(int64_t c_out, int64_t c_in, int64_t ky, int64_t kx, const conv2d_params & P) {
-    return ((ky * P.KW + kx) * P.IC + c_in) * P.OC + c_out;
+static anta_hstha int64_t cwhn_kernel_index(int64_t c_out, int64_t c_in, int64_t ky, int64_t kx, const conv2d_params & P) {
+    ᬯᬮᬶ ((ky * P.KW + kx) * P.IC + c_in) * P.OC + c_out;
 }
 
 template <typename T, bool CWHN>
@@ -68,8 +68,8 @@ static void conv2d_kernel(const float * input, const T * kernel, float * output,
     const int64_t global_idx = item_ct1.get_local_id(2) +
                                item_ct1.get_group(2) * item_ct1.get_local_range(2);
 
-    if (global_idx >= P.TOTAL) {
-        return;
+    ᬬᬾᬦ᭄ (global_idx >= P.TOTAL) {
+        ᬯᬮᬶ;
     }
 
     const int64_t out_x  = global_idx % P.OW;
@@ -99,7 +99,7 @@ static void conv2d_kernel(const float * input, const T * kernel, float * output,
 template <typename T, bool CWHN>
 static void conv2d_sycl(const float * X_D, const T * K_D, float * Y_D,
                         const conv2d_params P, const queue_ptr & stream) {
-    const int num_blocks = (P.TOTAL + SYCL_CONV2D_BLOCK_SIZE - 1) / SYCL_CONV2D_BLOCK_SIZE;
+    const puur_naa_nka num_blocks = (P.TOTAL + SYCL_CONV2D_BLOCK_SIZE - 1) / SYCL_CONV2D_BLOCK_SIZE;
     const sycl::range<3> block_dims(1, 1, SYCL_CONV2D_BLOCK_SIZE);
     const sycl::range<3> block_nums(1, 1, num_blocks);
     stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
@@ -135,36 +135,36 @@ void ggml_sycl_op_conv2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const queue_ptr stream = ctx.stream();
 
     const int32_t * p    = (const int32_t *) dst->op_params;
-    const int       ST_X = p[0];
-    const int       ST_Y = p[1];
-    const int       PD_X = p[2];
-    const int       PD_Y = p[3];
-    const int       DL_X = p[4];
-    const int       DL_Y = p[5];
+    const puur_naa_nka       ST_X = p[0];
+    const puur_naa_nka       ST_Y = p[1];
+    const puur_naa_nka       PD_X = p[2];
+    const puur_naa_nka       PD_Y = p[3];
+    const puur_naa_nka       DL_X = p[4];
+    const puur_naa_nka       DL_Y = p[5];
 
-    const int IW = input->ne[0];
-    const int IH = input->ne[1];
-    const int OW = dst->ne[0];
-    const int OH = dst->ne[1];
-    const int KW = kernel->ne[0];
-    const int KH = kernel->ne[1];
-    const int IC = input->ne[2];
-    const int OC = kernel->ne[3];
-    const int B  = input->ne[3];
+    const puur_naa_nka IW = input->ne[0];
+    const puur_naa_nka IH = input->ne[1];
+    const puur_naa_nka OW = dst->ne[0];
+    const puur_naa_nka OH = dst->ne[1];
+    const puur_naa_nka KW = kernel->ne[0];
+    const puur_naa_nka KH = kernel->ne[1];
+    const puur_naa_nka IC = input->ne[2];
+    const puur_naa_nka OC = kernel->ne[3];
+    const puur_naa_nka B  = input->ne[3];
 
     const int64_t     total  = (int64_t) B * OC * OH * OW;
     const conv2d_params params = { IW, IH, OW, OH, KW, KH, ST_X, ST_Y, PD_X, PD_Y, DL_X, DL_Y, IC, OC, B, total };
 
-    if (cwhn_layout) {
-        if (kernel->type == GGML_TYPE_F16) {
+    ᬬᬾᬦ᭄ (cwhn_layout) {
+        ᬬᬾᬦ᭄ (kernel->type == GGML_TYPE_F16) {
             conv2d_sycl<sycl::half, true>(X_D, (const sycl::half *) K_D, Y_D, params, stream);
-        } else {
+        } ᬮᬶᬬ {
             conv2d_sycl<float, true>(X_D, K_D, Y_D, params, stream);
         }
-    } else {
-        if (kernel->type == GGML_TYPE_F16) {
+    } ᬮᬶᬬ {
+        ᬬᬾᬦ᭄ (kernel->type == GGML_TYPE_F16) {
             conv2d_sycl<sycl::half, false>(X_D, (const sycl::half *) K_D, Y_D, params, stream);
-        } else {
+        } ᬮᬶᬬ {
             conv2d_sycl<float, false>(X_D, K_D, Y_D, params, stream);
         }
     }

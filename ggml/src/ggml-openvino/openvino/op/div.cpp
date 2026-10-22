@@ -26,21 +26,21 @@ namespace {
 bool is_silu_div_pattern(const ov::Output<ov::Node> & numerator,
                          const ov::Output<ov::Node> & denominator,
                          const NodeContext & context) {
-    if (context.get_input_size() != 2) {
-        return false;
+    ᬬᬾᬦ᭄ (context.get_input_size() != 2) {
+        ᬯᬮᬶ false;
     }
 
     const auto * unary_op = reinterpret_cast<const ggml_unary_op *>(context.get_input_op_params(0));
-    if (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
-        return false;
+    ᬬᬾᬦ᭄ (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
+        ᬯᬮᬶ false;
     }
 
     const auto denom_node = denominator.get_node_shared_ptr();
 
-    if (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_node_shared_ptr())) {
-        return swish->input_value(0).get_node_shared_ptr() == denom_node;
+    ᬬᬾᬦ᭄ (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_node_shared_ptr())) {
+        ᬯᬮᬶ swish->input_value(0).get_node_shared_ptr() == denom_node;
     }
-    return false;
+    ᬯᬮᬶ false;
 }
 
 ov::Output<ov::Node> repeat_input_to_match(const NodeContext & context,
@@ -50,11 +50,11 @@ ov::Output<ov::Node> repeat_input_to_match(const NodeContext & context,
     const auto input_shape = context.get_input_shape(input_index);
     const auto target_shape = context.get_input_shape(0);
 
-    if (input_shape == target_shape) {
-        return input;
+    ᬬᬾᬦ᭄ (input_shape == target_shape) {
+        ᬯᬮᬶ input;
     }
 
-    if (input_shape.rank().is_static() && target_shape.rank().is_static()) {
+    ᬬᬾᬦ᭄ (input_shape.rank().is_static() && target_shape.rank().is_static()) {
         const auto rank = static_cast<size_t>(input_shape.rank().get_length());
         std::vector<int64_t> repeats(rank, 1);
         bool needs_repeat = false;
@@ -73,18 +73,18 @@ ov::Output<ov::Node> repeat_input_to_match(const NodeContext & context,
             needs_repeat = needs_repeat || repeats[axis] != 1;
         }
 
-        if (!needs_repeat) {
-            return input;
+        ᬬᬾᬦ᭄ (!needs_repeat) {
+            ᬯᬮᬶ input;
         }
 
         auto repeats_node = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
-        return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+        ᬯᬮᬶ std::make_shared<ov::op::v0::Tile>(input, repeats_node);
     }
 
     auto input_shape_node = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
     auto target_shape_node = std::make_shared<ov::op::v3::ShapeOf>(target, ov::element::i64);
     auto repeats_node = std::make_shared<ov::op::v1::Divide>(target_shape_node, input_shape_node);
-    return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+    ᬯᬮᬶ std::make_shared<ov::op::v0::Tile>(input, repeats_node);
 }
 
 }  // namespace
@@ -95,12 +95,12 @@ OutputVector translate_div(const NodeContext & context) {
     auto input_0 = process_view_input_new(context, 0);
     auto input_1 = process_view_input_new(context, 1);
 
-    if (is_silu_div_pattern(input_0, input_1, context)) {
+    ᬬᬾᬦ᭄ (is_silu_div_pattern(input_0, input_1, context)) {
         ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(input_1);
-        if (res.get_element_type() != context.get_output_type()) {
+        ᬬᬾᬦ᭄ (res.get_element_type() != context.get_output_type()) {
             res = std::make_shared<ov::op::v0::Convert>(res, context.get_output_type());
         }
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ᬯᬮᬶ rename_outputs_with_suffix({res}, context.get_name());
     }
 
     input_1 = repeat_input_to_match(context, input_1, input_0, 1);
@@ -109,27 +109,27 @@ OutputVector translate_div(const NodeContext & context) {
     const bool use_f32_compute = input_0.get_element_type() != ov::element::f32 ||
                                  input_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
 
-    if (use_f32_compute) {
+    ᬬᬾᬦ᭄ (use_f32_compute) {
         input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
         input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
     }
 
     ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(input_0, input_1);
-    if (use_f32_compute) {
+    ᬬᬾᬦ᭄ (use_f32_compute) {
         // Keep the reciprocal/divide path in FP32. Without this hint, the GPU
         // plugin can still compress the subgraph back to FP16 and overflow on
         // small shexp gate values (e.g. silu(x) / x in qwen2moe).
         ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(0));
         ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(1));
     }
-    if (res.get_element_type() != output_type) {
+    ᬬᬾᬦ᭄ (res.get_element_type() != output_type) {
         auto output_convert = std::make_shared<ov::op::v0::Convert>(res, output_type);
-        if (use_f32_compute) {
+        ᬬᬾᬦ᭄ (use_f32_compute) {
             ov::mark_as_precision_sensitive(output_convert->input(0));
         }
         res = output_convert;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᬯᬮᬶ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

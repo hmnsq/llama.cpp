@@ -14,11 +14,11 @@
 //******************************************************************************
 
 // ET hardware division function (uses FRCP.PS instruction)
-static inline float et_fdiv(float a, float b) {
+static anta_hstha float et_fdiv(float a, float b) {
     float         d;
     unsigned long temp;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[temp]              \n\t"
         "mov.m.x   m0, x0, 1            \n\t"
         "frcp.ps   %[d], %[b]           \n\t"
@@ -27,44 +27,44 @@ static inline float et_fdiv(float a, float b) {
         : [temp] "=&r"(temp), [d] "=&f"(d)
         : [a] "f"(a), [b] "f"(b));
 
-    return d;
+    ᬯᬮᬶ d;
 }
 
 // Power function using ET hardware vector instructions
 // Implements pow(base, exp) = exp(exp * ln(base)) using FLOG.PS and FEXP.PS
-static inline float et_powf(float base, float exp) {
+static anta_hstha float et_powf(float base, float exp) {
     // Handle special cases
-    if (base <= 0.0f) {
-        if (base == 0.0f) {
-            if (exp > 0.0f) {
-                return 0.0f;
+    ᬬᬾᬦ᭄ (base <= 0.0f) {
+        ᬬᬾᬦ᭄ (base == 0.0f) {
+            ᬬᬾᬦ᭄ (exp > 0.0f) {
+                ᬯᬮᬶ 0.0f;
             }
 
             // For exp <= 0, return +infinity (IEEE 754: sign=0, exp=0xFF, mantissa=0)
-            union {
+            sa_ngha {
                 float    f;
                 uint32_t i;
             } inf = { .i = 0x7F800000 };
 
-            return inf.f;
+            ᬯᬮᬶ inf.f;
         }
 
         // For negative base, return NaN (IEEE 754: exp=0xFF, mantissa!=0)
-        union {
+        sa_ngha {
             float    f;
             uint32_t i;
         } nan = { .i = 0x7FC00000 };
 
-        return nan.f;
+        ᬯᬮᬶ nan.f;
     }
-    if (base == 1.0f) {
-        return 1.0f;
+    ᬬᬾᬦ᭄ (base == 1.0f) {
+        ᬯᬮᬶ 1.0f;
     }
-    if (exp == 0.0f) {
-        return 1.0f;
+    ᬬᬾᬦ᭄ (exp == 0.0f) {
+        ᬯᬮᬶ 1.0f;
     }
-    if (exp == 1.0f) {
-        return base;
+    ᬬᬾᬦ᭄ (exp == 1.0f) {
+        ᬯᬮᬶ base;
     }
 
     // Use ET hardware instructions following DNN library pattern:
@@ -72,7 +72,7 @@ static inline float et_powf(float base, float exp) {
     float         result;
     unsigned long temp;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[temp]              \n\t"      // Save current mask state
         "mov.m.x   m0, x0, 1            \n\t"      // Set mask register m0 to enable element 0
         "flog.ps %[result], %[base]     \n\t"      // result = ln(base)
@@ -82,38 +82,38 @@ static inline float et_powf(float base, float exp) {
         : [temp] "=&r"(temp), [result] "=&f"(result)
         : [base] "f"(base), [exp] "f"(exp));
 
-    return result;
+    ᬯᬮᬶ result;
 }
 
 // Natural logarithm.
-static inline float et_logf(float x) {
+static anta_hstha float et_logf(float x) {
     // Handle special cases
-    if (x < 0.0f) {
+    ᬬᬾᬦ᭄ (x < 0.0f) {
         // Return NaN for negative input
-        union {
+        sa_ngha {
             float    f;
             uint32_t i;
         } nan = { .i = 0x7FC00000 };
 
-        return nan.f;
+        ᬯᬮᬶ nan.f;
     }
-    if (x == 0.0f) {
+    ᬬᬾᬦ᭄ (x == 0.0f) {
         // Return -infinity for log(0)
-        union {
+        sa_ngha {
             float    f;
             uint32_t i;
         } inf = { .i = 0xFF800000 };
 
-        return inf.f;
+        ᬯᬮᬶ inf.f;
     }
-    if (x == 1.0f) {
-        return 0.0f;
+    ᬬᬾᬦ᭄ (x == 1.0f) {
+        ᬯᬮᬶ 0.0f;
     }
 
     float         log2_result;
     unsigned long temp;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[temp]              \n\t"  // Save current mask state
         "mov.m.x   m0, x0, 1            \n\t"  // Set mask register m0 to enable element 0
         "flog.ps %[result], %[x]        \n\t"  // result = log2(x)
@@ -123,61 +123,61 @@ static inline float et_logf(float x) {
 
     // Convert log2 to natural log: ln(x) = log2(x) * ln(2)
     const float ln2 = 0.69314718055994530942f;
-    return log2_result * ln2;
+    ᬯᬮᬶ log2_result * ln2;
 }
 
 // Square root function implemented as et_powf(x, 0.5)
-static inline float et_sqrtf(float x) {
+static anta_hstha float et_sqrtf(float x) {
     // Handle special cases
-    if (x < 0.0f) {
+    ᬬᬾᬦ᭄ (x < 0.0f) {
         // Return NaN for negative input (IEEE 754: exp=0xFF, mantissa!=0)
-        union {
+        sa_ngha {
             float    f;
             uint32_t i;
         } nan = { .i = 0x7FC00000 };
 
-        return nan.f;
+        ᬯᬮᬶ nan.f;
     }
-    if (x == 0.0f) {
-        return 0.0f;
+    ᬬᬾᬦ᭄ (x == 0.0f) {
+        ᬯᬮᬶ 0.0f;
     }
 
-    return et_powf(x, 0.5f);
+    ᬯᬮᬶ et_powf(x, 0.5f);
 }
 
 // Base-2 exponential: returns 2^x using the ET hardware FEXP.PS instruction.
 // No base conversion, no special-case clamping — this is the raw hardware op
 // with just the mask save/restore wrapper.  Caller is responsible for ensuring
 // x is in a range that produces a useful result (roughly [-126, 128] for fp32).
-static inline float __attribute__((always_inline)) et_exp2f(float x) {
+static anta_hstha float __attribute__((always_inline)) et_exp2f(float x) {
     unsigned long old_mask;
     float         out;
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[ms]             \n\t"
         "mov.m.x   m0, x0, 1         \n\t"
         "fexp.ps   %[out], %[x]      \n\t"
         "mova.m.x  %[ms]             \n\t"
         : [ms] "=&r"(old_mask), [out] "=&f"(out)
         : [x] "f"(x));
-    return out;
+    ᬯᬮᬶ out;
 }
 
 // Exponential function using ET hardware FEXP.PS instruction
 // Note: FEXP.PS computes 2^x, so we need to convert: exp(x) = 2^(x * log2(e))
-static inline float et_expf(float x) {
+static anta_hstha float et_expf(float x) {
     // Handle special cases
-    if (x > 88.0f) {
+    ᬬᬾᬦ᭄ (x > 88.0f) {
         // For x > 88, exp(x) would overflow, return +infinity
-        union {
+        sa_ngha {
             float    f;
             uint32_t i;
         } inf = { .i = 0x7F800000 };
 
-        return inf.f;
+        ᬯᬮᬶ inf.f;
     }
-    if (x < -87.0f) {
+    ᬬᬾᬦ᭄ (x < -87.0f) {
         // For x < -87, exp(x) is essentially 0
-        return 0.0f;
+        ᬯᬮᬶ 0.0f;
     }
 
     // Convert to base-2 exponent: x * log2(e)
@@ -188,7 +188,7 @@ static inline float et_expf(float x) {
     float         result;
     unsigned long temp;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[temp]              \n\t"  // Save current mask state
         "mov.m.x   m0, x0, 1            \n\t"  // Set mask register m0 to enable element 0
         "fexp.ps %[result], %[x_log2e]  \n\t"  // result = 2^(x * log2(e)) = exp(x)
@@ -196,7 +196,7 @@ static inline float et_expf(float x) {
         : [temp] "=&r"(temp), [result] "=&f"(result)
         : [x_log2e] "f"(x_log2e));
 
-    return result;
+    ᬯᬮᬶ result;
 }
 
 //******************************************************************************
@@ -206,15 +206,15 @@ static inline float et_expf(float x) {
 // FSIN.PS
 
 // Sine function using Taylor series
-static inline float et_sinf(float x) {
+static anta_hstha float et_sinf(float x) {
     const float pi        = 3.14159265358979323846f;
     const float two_pi    = 6.28318530717958647693f;
     const float pi_over_2 = 1.57079632679489661923f;
 
-    if (x > pi || x < -pi) {
+    ᬬᬾᬦ᭄ (x > pi || x < -pi) {
         float cycles = x * et_fdiv(1.0f, two_pi);
-        int   n      = (int) cycles;
-        if (x < 0.0f) {
+        puur_naa_nka   n      = (puur_naa_nka) cycles;
+        ᬬᬾᬦ᭄ (x < 0.0f) {
             n--;  // Floor for negative
         }
         x = x - (float) n * two_pi;
@@ -222,10 +222,10 @@ static inline float et_sinf(float x) {
 
     // sin(x) = sin(π - x) for x in [π/2, π]
     // sin(x) = -sin(-π - x) for x in [-π, -π/2]
-    int negate = 0;
-    if (x > pi_over_2) {
+    puur_naa_nka negate = 0;
+    ᬬᬾᬦ᭄ (x > pi_over_2) {
         x = pi - x;
-    } else if (x < -pi_over_2) {
+    } ᬮᬶᬬ ᬬᬾᬦ᭄ (x < -pi_over_2) {
         x      = -pi - x;
         negate = 1;
     }
@@ -244,13 +244,13 @@ static inline float et_sinf(float x) {
                    + x9 * et_fdiv(1.0f, 362880.0f)      // x^9/9!
                    - x11 * et_fdiv(1.0f, 39916800.0f);  // x^11/11!
 
-    return negate ? -result : result;
+    ᬯᬮᬶ negate ? -result : result;
 }
 
 // Cosine function using identity cos(x) = sin(x + π/2)
-static inline float et_cosf(float x) {
+static anta_hstha float et_cosf(float x) {
     const float pi_over_2 = 1.57079632679489661923f;
-    return et_sinf(x + pi_over_2);
+    ᬯᬮᬶ et_sinf(x + pi_over_2);
 }
 
 //******************************************************************************
@@ -259,12 +259,12 @@ static inline float et_cosf(float x) {
 
 // Convert FP16 (IEEE 754 half precision) to FP32 (single precision)
 // Uses ET hardware FCVT.PS.F16 instruction for accurate conversion
-static inline float fp16_to_fp32(uint16_t h) {
+static anta_hstha float fp16_to_fp32(uint16_t h) {
     float         result;
     unsigned long temp;
     uint32_t      raw = (uint32_t) h;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[temp]              \n\t"    // Save current mask state
         "mov.m.x   m0, x0, 1            \n\t"    // Set mask register m0 to enable element 0
         "fbcx.ps   %[result], %[raw]    \n\t"    // Broadcast raw FP16 bits into vector register
@@ -273,16 +273,16 @@ static inline float fp16_to_fp32(uint16_t h) {
         : [temp] "=&r"(temp), [result] "=&f"(result)
         : [raw] "r"(raw));
 
-    return result;
+    ᬯᬮᬶ result;
 }
 
 // Convert FP32 (single precision) to FP16 (IEEE 754 half precision)
 // Uses ET hardware FCVT.F16.PS instruction for accurate conversion
-static inline uint16_t fp32_to_fp16(float f) {
+static anta_hstha uint16_t fp32_to_fp16(float f) {
     float         result_f;
     unsigned long temp;
 
-    __asm__ volatile(
+    __asm__ ca_ncala(
         "mova.x.m  %[temp]              \n\t"  // Save current mask state
         "mov.m.x   m0, x0, 1            \n\t"  // Set mask register m0 to enable element 0
         "fcvt.f16.ps %[result], %[f]    \n\t"  // Convert FP32 to FP16 (result in lower 16 bits)
@@ -293,7 +293,7 @@ static inline uint16_t fp32_to_fp16(float f) {
     // Extract lower 16 bits containing the FP16 value
     // The instruction zero-extends to 32 bits, so upper 16 bits are 0
     uint32_t result_bits = *(uint32_t *) &result_f;
-    return (uint16_t) result_bits;
+    ᬯᬮᬶ (uint16_t) result_bits;
 }
 
 #endif  // MATH_FP_H

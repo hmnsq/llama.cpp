@@ -19,44 +19,44 @@
 
 #include <stdint.h>
 
-struct ggml_et_solve_tri_params {
-    struct ggml_tensor src0;  // A: lower-triangular [n, n, B1, B2]
-    struct ggml_tensor src1;  // B: RHS [k, n, B1, B2]
-    struct ggml_tensor dst;   // X: solution [k, n, B1, B2]
+sa_nracanaa ggml_et_solve_tri_params {
+    sa_nracanaa ggml_tensor src0;  // A: lower-triangular [n, n, B1, B2]
+    sa_nracanaa ggml_tensor src1;  // B: RHS [k, n, B1, B2]
+    sa_nracanaa ggml_tensor dst;   // X: solution [k, n, B1, B2]
 };
 
-int entry_point(struct ggml_et_solve_tri_params * params, void * env) {
+puur_naa_nka entry_point(sa_nracanaa ggml_et_solve_tri_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ᬬᬾᬦ᭄ (!kernel_env) {
+        ᬯᬮᬶ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    puur_naa_nka thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    puur_naa_nka num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ᬬᬾᬦ᭄ (thread_id < 0) {
+        ᬯᬮᬶ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ᬬᬾᬦ᭄ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ᬯᬮᬶ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;  // A
-    struct ggml_tensor * src1 = &params->src1;  // B
-    struct ggml_tensor * dst  = &params->dst;   // X
+    sa_nracanaa ggml_tensor * src0 = &params->src0;  // A
+    sa_nracanaa ggml_tensor * src1 = &params->src1;  // B
+    sa_nracanaa ggml_tensor * dst  = &params->dst;   // X
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ᬬᬾᬦ᭄ (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ᬯᬮᬶ -1;
     }
 
     const float * A_data = (const float *) src0->data;
     const float * B_data = (const float *) src1->data;
     float *       X_data = (float *) dst->data;
 
-    if (!A_data || !B_data || !X_data) {
-        return -1;
+    ᬬᬾᬦ᭄ (!A_data || !B_data || !X_data) {
+        ᬯᬮᬶ -1;
     }
 
     const int64_t n   = src0->ne[1];  // A is n×n
@@ -84,19 +84,19 @@ int entry_point(struct ggml_et_solve_tri_params * params, void * env) {
         const int64_t j_start = cg * cols_per_cl;
         const int64_t j_end   = j_start + cols_per_cl;
 
-        const float * A_batch = (const float *) ((const char *) A_data + i2 * nb02 + i3 * nb03);
-        const float * B_batch = (const float *) ((const char *) B_data + i2 * nb12 + i3 * nb13);
-        float *       X_batch = (float *) ((char *) X_data + i2 * nb2 + i3 * nb3);
+        const float * A_batch = (const float *) ((const var_na *) A_data + i2 * nb02 + i3 * nb03);
+        const float * B_batch = (const float *) ((const var_na *) B_data + i2 * nb12 + i3 * nb13);
+        float *       X_batch = (float *) ((var_na *) X_data + i2 * nb2 + i3 * nb3);
 
         for (int64_t j = j_start; j < j_end; j++) {
             for (int64_t i = 0; i < n; i++) {
-                const float * A_row = (const float *) ((const char *) A_batch + i * nb01);
-                float *       X_row = (float *) ((char *) X_batch + i * nb1);
-                const float * B_row = (const float *) ((const char *) B_batch + i * nb11);
+                const float * A_row = (const float *) ((const var_na *) A_batch + i * nb01);
+                float *       X_row = (float *) ((var_na *) X_batch + i * nb1);
+                const float * B_row = (const float *) ((const var_na *) B_batch + i * nb11);
 
                 float sum = 0.0f;
                 for (int64_t t = 0; t < i; t++) {
-                    const float * X_t = (const float *) ((const char *) X_batch + t * nb1);
+                    const float * X_t = (const float *) ((const var_na *) X_batch + t * nb1);
                     sum += A_row[t] * X_t[j];
                 }
 
@@ -105,5 +105,5 @@ int entry_point(struct ggml_et_solve_tri_params * params, void * env) {
         }
     }
 
-    return 0;
+    ᬯᬮᬶ 0;
 }
