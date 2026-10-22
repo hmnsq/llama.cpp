@@ -1,0 +1,617 @@
+# What is still missing
+
+76 languages. Each line says in how many languages it is missing.
+
+## Files in languages BURP cannot read yet
+
+- `.sh`: 2 files
+- `.m`: 2 files
+
+## Keywords with no word in a language's table
+
+- shraeni:get: 75
+- shraeni:cerr: 75
+- shraeni:clear: 75
+- shraeni:ws: 75
+- shraeni:dec: 75
+- shraeni:__FILE__: 75
+- shraeni:setw: 75
+- shraeni:ios: 75
+- shraeni:outs: 75
+- shraeni:ofstream: 75
+- shraeni:ifstream: 75
+- shraeni:getline: 75
+- shraeni:flush: 75
+- soochee:args: 75
+- shraeni:trunc: 75
+- shraeni:bad: 75
+- shraeni:binary: 75
+- shraeni:seekg: 75
+- soochee:join: 75
+- shraeni:hex: 75
+- shraeni:ins: 75
+- shraeni:good: 75
+- guru:__FILE__: 75
+- soochee:replace: 75
+- shraeni:eof: 75
+- shraeni:ate: 75
+- shraeni:setbase: 75
+- shraeni:showbase: 75
+- soochee:run: 75
+- shraeni:_exit: 75
+- shraeni:fixed: 75
+- shraeni:setprecision: 75
+- shraeni:istream: 75
+- soochee:out: 74
+- shraeni:size_t: 71
+- guru:size_t: 71
+- shraeni:getenv: 71
+- shraeni:atoi: 71
+- shraeni:fprintf: 71
+- shraeni:stderr: 71
+- guru:asm: 71
+- shraeni:INFINITY: 71
+- guru:fprintf: 71
+- shraeni:NDEBUG: 71
+- shraeni:fabs: 71
+- shraeni:errno: 71
+- guru:stderr: 71
+- shraeni:ptrdiff_t: 71
+- guru:INFINITY: 71
+- shraeni:close: 71
+- shraeni:FLT_MAX: 71
+- shraeni:floor: 71
+- shraeni:asm: 71
+- shraeni:FILE: 71
+- guru:FLT_MAX: 71
+- shraeni:strerror: 71
+- guru:pause: 71
+- guru:fabs: 71
+- shraeni:realloc: 71
+- guru:abort: 71
+- shraeni:fclose: 71
+- shraeni:abort: 71
+- shraeni:ceil: 71
+- shraeni:fflush: 71
+- guru:time: 71
+- guru:NDEBUG: 71
+- shraeni:fopen: 71
+- shraeni:remove: 71
+- guru:close: 71
+- shraeni:memcmp: 71
+- guru:FILE: 71
+- shraeni:RAND_MAX: 71
+- shraeni:tolower: 71
+- guru:strerror: 71
+- guru:getenv: 71
+- shraeni:strtoul: 71
+- guru:tm: 71
+- shraeni:time: 71
+- shraeni:SEEK_SET: 71
+- guru:va_list: 71
+- guru:wchar_t: 71
+- guru:memcmp: 71
+- guru:fclose: 71
+- shraeni:isfinite: 71
+- shraeni:NAN: 71
+- guru:va_end: 71
+- shraeni:isprint: 71
+- guru:realloc: 71
+- guru:fopen: 71
+- guru:errno: 71
+- shraeni:offsetof: 71
+- guru:offsetof: 71
+- soochee:close: 71
+- shraeni:rename: 71
+- shraeni:EXIT_FAILURE: 71
+- guru:va_start: 71
+- shraeni:wchar_t: 71
+- guru:remove: 71
+- shraeni:fgets: 71
+- shraeni:strchr: 71
+- shraeni:atexit: 71
+- shraeni:mkdir: 71
+- shraeni:fseek: 71
+- shraeni:SEEK_END: 71
+- shraeni:fread: 71
+- shraeni:fwrite: 71
+- guru:fflush: 71
+- shraeni:sprintf: 71
+- guru:fgets: 71
+- guru:atoi: 71
+- shraeni:DIR: 71
+- shraeni:opendir: 71
+- shraeni:readdir: 71
+- shraeni:closedir: 71
+- shraeni:strtol: 71
+- shraeni:strtod: 71
+- shraeni:INT_MIN: 71
+- shraeni:fork: 71
+- shraeni:ftell: 71
+- shraeni:EXIT_SUCCESS: 71
+- shraeni:strncpy: 71
+- guru:fork: 71
+- guru:stdout: 71
+- guru:fputs: 71
+- guru:clock: 71
+- shraeni:fputc: 71
+- shraeni:memset: 70
+- shraeni:strcmp: 70
+- guru:memset: 70
+- shraeni:wait: 70
+- shraeni:div: 70
+- shraeni:rand: 70
+- guru:qsort: 70
+- shraeni:open: 70
+- guru:strcmp: 70
+- shraeni:strcpy: 70
+- shraeni:nullptr: 67
+- guru:restrict: 67
+- shraeni:typename: 67
+- shraeni:using: 67
+- shraeni:exp: 67
+- soochee:def: 67
+- guru:exp: 67
+- shraeni:explicit: 67
+- soochee:with: 67
+- soochee:None: 67
+- shraeni:log: 67
+- soochee:len: 67
+- shraeni:cos: 67
+- shraeni:sin: 67
+- soochee:is: 67
+- soochee:range: 67
+- shraeni:mutable: 67
+- guru:#define: 66
+- shraeni:#endif: 66
+- guru:#endif: 66
+- shraeni:#ifdef: 66
+- shraeni:#define: 66
+- shraeni:#pragma: 66
+- guru:#pragma: 66
+- shraeni:endl: 66
+- guru:#ifdef: 66
+- shraeni:#ifndef: 66
+- shraeni:delete: 66
+- guru:#ifndef: 66
+- guru:#undef: 66
+- shraeni:#undef: 66
+- shraeni:cout: 66
+- shraeni:right: 66
+- shraeni:#error: 66
+- shraeni:left: 66
+- guru:#error: 66
+- shraeni:cin: 66
+- shraeni:auto: 62
+- shraeni:template: 62
+- guru:unsigned: 62
+- guru:signed: 62
+- shraeni:memcpy: 62
+- shraeni:unsigned: 62
+- guru:long: 62
+- shraeni:long: 62
+- guru:memcpy: 62
+- guru:short: 62
+- shraeni:operator: 62
+- guru:template: 62
+- shraeni:printf: 62
+- shraeni:strstr: 62
+- shraeni:exit: 62
+- shraeni:malloc: 62
+- shraeni:signed: 62
+- shraeni:short: 62
+- guru:auto: 62
+- shraeni:pow: 62
+- shraeni:strlen: 62
+- guru:operator: 62
+- guru:printf: 62
+- guru:malloc: 62
+- shraeni:sqrt: 62
+- shraeni:INT_MAX: 62
+- shraeni:strncmp: 62
+
+## Names with no dictionary entry (the most common first)
+
+- `i`: 76
+- `dst`: 76
+- `ctx`: 76
+- `src`: 76
+- `ne`: 76
+- `ggml_tensor`: 76
+- `j`: 76
+- `src0`: 76
+- `x`: 76
+- `nb`: 76
+- `CL_CHECK`: 76
+- `uint8_t`: 76
+- `n`: 76
+- `sycl`: 76
+- `kernel`: 76
+- `GGML_ASSERT`: 76
+- `src1`: 76
+- `backend_ctx`: 76
+- `k`: 76
+- `d`: 76
+- `tensor`: 76
+- `device`: 76
+- `y`: 76
+- `ov`: 76
+- `params`: 76
+- `GGML_RESTRICT`: 76
+- `s`: 76
+- `qs`: 76
+- `l`: 76
+- `context`: 76
+- `GGML_TYPE_F32`: 76
+- `v`: 76
+- `t`: 76
+- `vx`: 76
+- `m`: 76
+- `ib`: 76
+- `vl`: 76
+- `cl_mem`: 76
+- `p`: 76
+- `err`: 76
+- `ne00`: 76
+- `octx`: 76
+- `vy`: 76
+- `q`: 76
+- `kparams`: 76
+- `QK_K`: 76
+- `cl_ulong`: 76
+- `defined`: 76
+- `ne01`: 76
+- `c`: 76
+- `r`: 76
+- `a`: 76
+- `extra`: 76
+- `val`: 76
+- `qh`: 76
+- `nrows`: 76
+- `ne02`: 76
+- `cgraph`: 76
+- `v0`: 76
+- `scales`: 76
+- `nth`: 76
+- `idx`: 76
+- `bs`: 76
+- `scale`: 76
+- `op_params`: 76
+- `res`: 76
+- `GGML_TYPE_F16`: 76
+- `nc`: 76
+- `ne0`: 76
+- `ith`: 76
+- `i0`: 76
+- `b`: 76
+- `T`: 76
+- `qk`: 76
+- `nr`: 76
+- `ne1`: 76
+- `ncols`: 76
+- `i1`: 76
+- `ne11`: 76
+- `N`: 76
+- `K`: 76
+- `type`: 76
+- `ne10`: 76
+- `pipeline`: 76
+- `q8`: 76
+- `ne12`: 76
+- `enc`: 76
+- `sumf`: 76
+- `i2`: 76
+- `nrc`: 76
+- `nb01`: 76
+- `dev`: 76
+- `ir`: 76
+- `L`: 76
+- `h`: 76
+- `backend`: 76
+- `acc`: 76
+- `i3`: 76
+- `nb02`: 76
+- `nodes`: 76
+- `tmp`: 76
+- `dpct`: 76
+- `it`: 76
+- `f`: 76
+- `nb03`: 76
+- `nb1`: 76
+- `sb`: 76
+- `g`: 76
+- `std`: 76
+- `region`: 76
+- `cl_kernel`: 76
+- `bx`: 76
+- `src2`: 76
+- `by`: 76
+- `ggml_is_contiguous`: 76
+- `ne2`: 76
+- `ncols_interleaved`: 76
+- `ggml_fp16_t`: 76
+- `b_ptr`: 76
+- `nb11`: 76
+- `a_ptr`: 76
+- `buft`: 76
+- `nb2`: 76
+- `_MM_PERM_ENUM`: 76
+- `nb12`: 76
+- `i02`: 76
+- `e`: 76
+- `GGML_TYPE_Q8_0`: 76
+- `vk`: 76
+- `unroll`: 76
+- `subctx`: 76
+- `int8x16_t`: 76
+- `kernel_src`: 76
+- `sumi`: 76
+- `dma_q`: 76
+- `half`: 76
+- `lib`: 76
+- `prog`: 76
+- `M`: 76
+- `GGML_TENSOR_LOCALS`: 76
+- `buf`: 76
+- `ptr`: 76
+- `ii`: 76
+- `ggml_tensor_extra_cl`: 76
+- `clCreateKernel`: 76
+- `dev_ctx`: 76
+- `sess`: 76
+- `sc`: 76
+- `nb3`: 76
+- `GGML_ABORT`: 76
+- `nb00`: 76
+- `w`: 76
+- `_mm256_maddubs_epi16`: 76
+- `i03`: 76
+- `state`: 76
+- `ne03`: 76
+- `dst_ptr`: 76
+- `GGML_TYPE_Q4_0`: 76
+- `dk`: 76
+- `s1`: 76
+- `u`: 76
+- `s0`: 76
+- `factx`: 76
+- `GGML_LOG_ERROR`: 76
+- `ggml_compute_params`: 76
+- `blocklen`: 76
+- `Constant`: 76
+- `i01`: 76
+- `op`: 76
+- `MIN`: 76
+- `S_v`: 76
+- `nb13`: 76
+- `sched`: 76
+- `mmctx`: 76
+- `ggml_nelements`: 76
+- `img_desc`: 76
+- `Q6_V_lo_W`: 76
+- `ir0`: 76
+- `C`: 76
+- `sumi1`: 76
+- `D`: 76
+- `clReleaseMemObject`: 76
+- `layout`: 76
+- `p0`: 76
+- `utmp`: 76
+- `il`: 76
+- `ldc`: 76
+- `reg`: 76
+- `tr`: 76
+- `p1`: 76
+- `_mm256_loadu_si256`: 76
+- `i64`: 76
+- `nb10`: 76
+- `get_local_id`: 76
+- `_Float16`: 76
+- `request`: 76
+- `ggml_backend_sycl_context`: 76
+- `GGML_MAX_DIMS`: 76
+- `ggml_backend_t`: 76
+- `iqs`: 76
+- `ggml_vk_create_pipeline`: 76
+- `parallel_for`: 76
+- `B`: 76
+- `GGML_TYPE_Q4_1`: 76
+- `_mm512_maddubs_epi16`: 76
+- `jj`: 76
+- `P`: 76
+- `V`: 76
+- `cgh`: 76
+- `ir1`: 76
+- `view_offs`: 76
+- `float32x4_t`: 76
+- `DV`: 76
+- `info`: 76
+- `ne13`: 76
+- `GGML_TYPE_Q5_0`: 76
+- `ggml_type`: 76
+- `view_src`: 76
+- `ne3`: 76
+- `GGML_TYPE_Q5_1`: 76
+- `is`: 76
+- `n_nodes`: 76
+- `ggml_context`: 76
+- `htp_tensor`: 76
+- `i12`: 76
+- `nb0`: 76
+- `cl_int`: 76
+- `A`: 76
+- `bsums`: 76
+- `QK8_0`: 76
+- `lda`: 76
+- `extrad`: 76
+- `tile`: 76
+- `nd_range`: 76
+- `ggml_nbytes`: 76
+- `ggml_backend_vk_context`: 76
+- `ggml_cgraph`: 76
+- `ggml_backend_dev_t`: 76
+- `v1`: 76
+- `nloe`: 76
+- `Q6_V_vzero`: 76
+- `weights`: 76
+- `gpu`: 76
+- `ib32`: 76
+- `vec_splats`: 76
+- `tid`: 76
+- `GGML_TYPE_BF16`: 76
+- `zero`: 76
+- `nvec`: 76
+- `half2`: 76
+- `Q6_V_hi_W`: 76
+- `S`: 76
+- `vec_xl`: 76
+- `eps`: 76
+- `ids`: 76
+- `ggml_type_name`: 76
+- `dma_addr_t`: 76
+- `bctx`: 76
+- `m0`: 76
+- `chunk`: 76
+- `hvx_vec_mul_f32_f32`: 76
+- `uint8x16_t`: 76
+- `i11`: 76
+- `nblocks`: 76
+- `vk_pipeline`: 76
+- `vsumf0`: 76
+- `off`: 76
+- `dmin`: 76
+- `fa`: 76
+- `hvx_vmem`: 76
+- `_mm_loadu_si128`: 76
+- `dst_t`: 76
+- `mi`: 76
+- `ictx`: 76
+- `opt_ctx`: 76
+- `ret`: 76
+- `signs`: 76
+- `m4b`: 76
+- `ggml_cann_create_tensor`: 76
+- `KW`: 76
+- `acl_tensor_ptr`: 76
+- `x0`: 76
+- `ggml_backend_opencl_context`: 76
+- `_mm256_and_si256`: 76
+- `H`: 76
+- `ci`: 76
+- `KH`: 76
+- `dr`: 76
+- `variant`: 76
+- `vk_context`: 76
+- `offsetd`: 76
+- `d0`: 76
+- `axis`: 76
+- `d1`: 76
+- `ggml_get_op_params_i32`: 76
+- `xb`: 76
+- `ql`: 76
+- `cp`: 76
+- `dv`: 76
+- `blk_len`: 76
+
+## Comments with no translation
+
+- num_src=: 76
+- namespace ov: 76
+- namespace ggml: 76
+- namespace frontend: 76
+- row range for this thread: 76
+- rows per thread: 76
+- GGML_OPENCL_USE_ADRENO_KERNELS: 76
+- namespace op: 76
+- This file has been autogenerated by generate_cu_files.py, do not edit manually.: 76
+- .packed_size_ex        =: 76
+- .pack_func_ex          =: 76
+- .context =: 76
+- GGML_SYCL_F16: 76
+- NDEBUG: 76
+- .device  =: 76
+- .get_m_step            =: 76
+- .get_n_step            =: 76
+- .get_mr                =: 76
+- .get_nr                =: 76
+- .get_kr                =: 76
+- .get_sr                =: 76
+- .get_dst_offset        =: 76
+- .get_lhs_offset_ex     =: 76
+- .get_rhs_packed_offset_ex =: 76
+- .run_kernel_ex         =: 76
+- .get_offset            =: 76
+- .get_packed_offset_ex  =: 76
+- scalar_only =: 76
+- NOLINT: 76
+- .iface   =: 76
+- F32 output tensor: 76
+- .enabled =: 76
+- .use_cpu_result =: 76
+- .log_differences =: 76
+- .tolerance =: 76
+- .max_log_elements =: 76
+- .mem_buffer =: 76
+- .mem_size   =: 76
+- .no_alloc   =: 76
+- scalar: 76
+- .get_name            =: 76
+- .alloc_buffer        =: 76
+- .alloc_buffer_n      =: 76
+- .get_alignment       =: 76
+- .get_max_size        =: 76
+- .get_alloc_size      =: 76
+- .get_alloc_size_n    =: 76
+- .is_host             =: 76
+- F32 input tensor: 76
+- GGML_OPENCL_SOA_Q: 76
+- sum up partial sums and write back result: 76
+- namespace: 76
+- dst cannot be transposed or permuted: 76
+- TODO: 76
+- .free_buffer     =: 76
+- .get_base        =: 76
+- .init_tensor     =: 76
+- .memset_tensor   =: 76
+- .set_tensor      =: 76
+- .get_tensor      =: 76
+- .set_tensor_2d   =: 76
+- .get_tensor_2d   =: 76
+- .cpy_tensor      =: 76
+- .clear           =: 76
+- .reset           =: 76
+- absolute max: 76
+- .iface       =: 76
+- .context     =: 76
+- namespace pass: 76
+- .get_name                =: 76
+- image for activations: 76
+- subbuffer for activations: 76
+- .get_name             =: 76
+- .buffer_from_host_ptr =: 76
+- .api_version =: 76
+- 4-bit -> 8-bit: 76
+- load y: 76
+- leftovers: 76
+- Phase 2: Execute CPU computation and compare with ET result (after ET kernel): 76
+- set thread grid: 76
+- Set kernel args: 76
+- .free                    =: 76
+- .set_tensor_async        =: 76
+- .get_tensor_async        =: 76
+- .set_tensor_2d_async     =: 76
+- .get_tensor_2d_async     =: 76
+- .cpy_tensor_async        =: 76
+- .synchronize             =: 76
+- .graph_plan_create       =: 76
+- .graph_plan_free         =: 76
+- .graph_plan_update       =: 76
+- .graph_plan_compute      =: 76
+- .graph_compute           =: 76
+- .event_record            =: 76
+- .event_wait              =: 76
+- .graph_optimize          =: 76
+- .required_cpu       =: 76
+- .lhs_type           =: 76
+- .rhs_type           =: 76
+- .op_type            =: 76
