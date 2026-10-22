@@ -4,107 +4,107 @@
 // Source may have arbitrary strides; destination must be contiguous.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ಅನ್ತರ್ಭಾವ "ggml_tensor.h"
+#ಅನ್ತರ್ಭಾವ "math_fp.h"
+#ಅನ್ತರ್ಭಾವ "platform.h"
 
-#include <stdbool.h>
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-struct ggml_et_cont_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+ರಚನೆ ggml_et_cont_params {
+    ರಚನೆ ggml_tensor src0;
+    ರಚನೆ ggml_tensor dst;
 };
 
-int entry_point(struct ggml_et_cont_params * params, void * env) {
+ಪೂರ್ಣಾಂಕ ನಮೂದು_ಬಿಂದು(ರಚನೆ ggml_et_cont_params * params, ಶೂನ್ಯ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env || !params) {
-        return -1;
+    ಆದರೆ (!kernel_env || !params) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ಪೂರ್ಣಾಂಕ thread_id   = get_relative_thread_id(kernel_env->shire_ಮುಖವಾಡ);
+    ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಎಳೆಗಳು = get_ಅಂಕೆ_ಎಳೆಗಳು(kernel_env->shire_ಮುಖವಾಡ);
 
-    if (thread_id < 0) {
-        return 0;
+    ಆದರೆ (thread_id < 0) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ರಚನೆ ggml_tensor * src0 = &params->src0;
+    ರಚನೆ ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
-        return -1;
+    ಆದರೆ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F16) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    const char * src_data = (const char *) src0->data;
-    uint16_t *   dst_data = (uint16_t *) dst->data;
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * src_ದತ್ತಾಂಶ = (ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src0->ದತ್ತಾಂಶ;
+    uint16_t *   dst_ದತ್ತಾಂಶ = (uint16_t *) dst->ದತ್ತಾಂಶ;
 
-    if (!src_data || !dst_data) {
-        return -1;
+    ಆದರೆ (!src_ದತ್ತಾಂಶ || !dst_ದತ್ತಾಂಶ) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ಸ್ಥಿರಾಂಕ int64_t ne00 = src0->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t ne01 = src0->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t ne02 = src0->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t ne03 = src0->ne[3];
 
-    const int64_t nb00 = src0->nb[0];
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
+    ಸ್ಥಿರಾಂಕ int64_t nb00 = src0->nb[0];
+    ಸ್ಥಿರಾಂಕ int64_t nb01 = src0->nb[1];
+    ಸ್ಥಿರಾಂಕ int64_t nb02 = src0->nb[2];
+    ಸ್ಥಿರಾಂಕ int64_t nb03 = src0->nb[3];
 
-    const int64_t total_elements = ne00 * ne01 * ne02 * ne03;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_elements = ne00 * ne01 * ne02 * ne03;
 
-    if (total_elements == 0) {
-        return 0;
+    ಆದರೆ (ಒಟ್ಟು_elements == 0) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
     // Check if src is contiguous F32
-    const bool src_contiguous =
+    ಸ್ಥಿರಾಂಕ bool src_contiguous =
         (nb00 == 4 && nb01 == ne00 * 4 && nb02 == ne00 * ne01 * 4 && nb03 == ne00 * ne01 * ne02 * 4);
 
     // Distribute by cache lines (16 F16 elements = 32 bytes = half cache line)
     // Use 32 elements per chunk to keep output cache-line aligned
-    const int64_t elems_per_cl = 32;
-    const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    ಸ್ಥಿರಾಂಕ int64_t elems_ಪ್ರತಿ_cl = 32;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_cl     = (ಒಟ್ಟು_elements + elems_ಪ್ರತಿ_cl - 1) / elems_ಪ್ರತಿ_cl;
 
-    const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-    const int64_t cl_start      = thread_id * cl_per_thread;
-    int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
-        cl_end = total_cl;
+    ಸ್ಥಿರಾಂಕ int64_t cl_ಪ್ರತಿ_thread = (ಒಟ್ಟು_cl + ಅಂಕೆ_ಎಳೆಗಳು - 1) / ಅಂಕೆ_ಎಳೆಗಳು;
+    ಸ್ಥಿರಾಂಕ int64_t cl_ಆರಂಭ      = thread_id * cl_ಪ್ರತಿ_thread;
+    int64_t       cl_ಕೊನೆ        = cl_ಆರಂಭ + cl_ಪ್ರತಿ_thread;
+    ಆದರೆ (cl_ಕೊನೆ > ಒಟ್ಟು_cl) {
+        cl_ಕೊನೆ = ಒಟ್ಟು_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
-    }
-
-    const int64_t es = cl_start * elems_per_cl;
-    int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
-        ee = total_elements;
+    ಆದರೆ (cl_ಆರಂಭ >= ಒಟ್ಟು_cl) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    if (src_contiguous) {
+    ಸ್ಥಿರಾಂಕ int64_t es = cl_ಆರಂಭ * elems_ಪ್ರತಿ_cl;
+    int64_t       ee = cl_ಕೊನೆ * elems_ಪ್ರತಿ_cl;
+    ಆದರೆ (ee > ಒಟ್ಟು_elements) {
+        ee = ಒಟ್ಟು_elements;
+    }
+
+    ಆದರೆ (src_contiguous) {
         // Fast path: src is contiguous F32
-        const float * src_f32 = (const float *) src_data;
-        for (int64_t i = es; i < ee; ++i) {
-            dst_data[i] = fp32_to_fp16(src_f32[i]);
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_f32 = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src_ದತ್ತಾಂಶ;
+        ಗಾಗಿ (int64_t i = es; i < ee; ++i) {
+            dst_ದತ್ತಾಂಶ[i] = fp32_ಗಮ್ಯ_fp16(src_f32[i]);
         }
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         // General path: stride-aware read
-        for (int64_t idx = es; idx < ee; ++idx) {
-            const int64_t i00  = idx % ne00;
-            const int64_t rem1 = idx / ne00;
-            const int64_t i01  = rem1 % ne01;
-            const int64_t rem2 = rem1 / ne01;
-            const int64_t i02  = rem2 % ne02;
-            const int64_t i03  = rem2 / ne02;
+        ಗಾಗಿ (int64_t idx = es; idx < ee; ++idx) {
+            ಸ್ಥಿರಾಂಕ int64_t i00  = idx % ne00;
+            ಸ್ಥಿರಾಂಕ int64_t rem1 = idx / ne00;
+            ಸ್ಥಿರಾಂಕ int64_t i01  = rem1 % ne01;
+            ಸ್ಥಿರಾಂಕ int64_t rem2 = rem1 / ne01;
+            ಸ್ಥಿರಾಂಕ int64_t i02  = rem2 % ne02;
+            ಸ್ಥಿರಾಂಕ int64_t i03  = rem2 / ne02;
 
-            const float val = *(const float *) (src_data + i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03);
-            dst_data[idx]   = fp32_to_fp16(val);
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ val = *(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) (src_ದತ್ತಾಂಶ + i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03);
+            dst_ದತ್ತಾಂಶ[idx]   = fp32_ಗಮ್ಯ_fp16(val);
         }
     }
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }

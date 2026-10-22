@@ -1,48 +1,48 @@
-#include "ggml-backend-dl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-dl.h"
 
-#ifdef _WIN32
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ _WIN32
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_ತುಂಬು_library(ಸ್ಥಿರಾಂಕ fs::path & path) {
     // suppress error dialogs for missing DLLs
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+    DWORD old_ಬಹುಲಕ = ಗಣ_Error_ಬಹುಲಕ(SEM_FAILCRITICALERRORS);
+    ಗಣ_Error_ಬಹುಲಕ(old_ಬಹುಲಕ | SEM_FAILCRITICALERRORS);
 
-    HMODULE handle = LoadLibraryW(path.wstring().c_str());
+    HMODULE handle = ತುಂಬು_Library_W(path.wstring().c_str());
 
-    SetErrorMode(old_mode);
+    ಗಣ_Error_ಬಹುಲಕ(old_ಬಹುಲಕ);
 
-    return handle;
+    ಹಿಂತಿರುಗಿ handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+ಶೂನ್ಯ * dl_get_sym(dl_handle * handle, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * name) {
+    DWORD old_ಬಹುಲಕ = ಗಣ_Error_ಬಹುಲಕ(SEM_FAILCRITICALERRORS);
+    ಗಣ_Error_ಬಹುಲಕ(old_ಬಹುಲಕ | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    ಶೂನ್ಯ * p = (ಶೂನ್ಯ *) Get_Proc_ವಿಳಾಸ(handle, name);
 
-    SetErrorMode(old_mode);
+    ಗಣ_Error_ಬಹುಲಕ(old_ಬಹುಲಕ);
 
-    return p;
+    ಹಿಂತಿರುಗಿ p;
 }
 
-const char * dl_error() {
-    return "";
+ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * dl_error() {
+    ಹಿಂತಿರುಗಿ "";
 }
 
-#else
+#ಇಲ್ಲದಿದ್ದರೆ
 
-dl_handle * dl_load_library(const fs::path & path) {
+dl_handle * dl_ತುಂಬು_library(ಸ್ಥಿರಾಂಕ fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    ಹಿಂತಿರುಗಿ handle;
 }
 
-void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ಶೂನ್ಯ * dl_get_sym(dl_handle * handle, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * name) {
+    ಹಿಂತಿರುಗಿ dlsym(handle, name);
 }
 
-const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * dl_error() {
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *rslt = dlerror();
+    ಹಿಂತಿರುಗಿ rslt != ಶೂನ್ಯಸೂಚಕ ? rslt : "";
 }
 
-#endif
+#ಆದರೆ_ಅಂತ್ಯ

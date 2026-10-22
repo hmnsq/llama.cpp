@@ -1,4 +1,4 @@
-#include "openvino/pass/pass.hpp"
+#ಅನ್ತರ್ಭಾವ "openvino/pass/pass.hpp"
 
 namespace ov {
 namespace frontend {
@@ -12,10 +12,10 @@ namespace pass {
 // whole accumulated state every token (that cost grows with context length, so it is the
 // larger win at depth for a model with several KV heads). Only rewrites states that still
 // match the frontend layout, so it no-ops if that layout ever changes.
-class KVStateSeqAxis : public ov::pass::ModelPass {
-public:
+class KVStateSeqAxis : ಸಾರ್ವಜನಿಕ ov::pass::ModelPass {
+ಸಾರ್ವಜನಿಕ:
     OPENVINO_MODEL_PASS_RTTI("ov::frontend::ggml::pass::KVStateSeqAxis")
-    bool run_on_model(const std::shared_ptr<ov::Model> & model) override;
+    bool ಸತತ_on_model(ಸ್ಥಿರಾಂಕ std::shared_ptr<ov::Model> & model) override;
 };
 
 }  // namespace pass

@@ -1,16 +1,16 @@
-#ifndef GGML_SYCL_MEM_HPP
-#define GGML_SYCL_MEM_HPP
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ GGML_SYCL_MEM_HPP
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_SYCL_MEM_HPP
 
-#include <sycl/sycl.hpp>
+#ಅನ್ತರ್ಭಾವ <sycl/sycl.hpp>
 
-enum MemoryAPIType {
-    MEMORY_API_TYPE_LEVEL_ZERO = 0,
-    MEMORY_API_TYPE_SYCL = 1,
+ಎಣಿಕೆ ಸ್ಮರಣೆ_APIType {
+    ಸ್ಮರಣೆ_API_TYPE_LEVEL_ZERO = 0,
+    ಸ್ಮರಣೆ_API_TYPE_SYCL = 1,
 };
 
-const char* mem_api_int2str(int mem_api);
+ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ* mem_api_int2str(ಪೂರ್ಣಾಂಕ mem_api);
 
-bool get_memory_size(sycl::device dev, size_t & free_bytes, size_t & total_bytes,
-    MemoryAPIType api_type);
+ತಾರ್ಕಿಕ get_ಸ್ಮರಣೆ_ಗಾತ್ರ(sycl::device dev, size_t & free_ಬೈಟುಗಳು, size_t & ಒಟ್ಟು_ಬೈಟುಗಳು,
+    ಸ್ಮರಣೆ_APIType api_type);
 
-#endif  // GGML_SYCL_MEM_HPP
+#ಆದರೆ_ಅಂತ್ಯ  // GGML_SYCL_MEM_HPP

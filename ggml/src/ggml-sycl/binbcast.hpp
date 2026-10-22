@@ -1,69 +1,69 @@
-#ifndef GGML_SYCL_BINBCAST_HPP
-#define GGML_SYCL_BINBCAST_HPP
-#include "common.hpp"
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ GGML_SYCL_BINBCAST_HPP
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_SYCL_BINBCAST_HPP
+#ಅನ್ತರ್ಭಾವ "common.hpp"
 
 
-static __dpct_inline__ float op_repeat(const float a, const float b) {
-    return b;
-    GGML_UNUSED(a);
+ಸ್ಥಿರ __dpct_inline__ ದಶಮಾಂಶ op_repeat(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ a, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ b) {
+    ಹಿಂತಿರುಗಿ b;
+    GGML_ಬಳಸದ(a);
 }
 
-static __dpct_inline__ float op_add(const float a, const float b) {
-    return a + b;
+ಸ್ಥಿರ __dpct_inline__ ದಶಮಾಂಶ op_ಕೂಡಿಸು(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ a, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ b) {
+    ಹಿಂತಿರುಗಿ a + b;
 }
 
-static __dpct_inline__ float op_sub(const float a, const float b) {
-    return a - b;
+ಸ್ಥಿರ __dpct_inline__ ದಶಮಾಂಶ op_sub(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ a, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ b) {
+    ಹಿಂತಿರುಗಿ a - b;
 }
 
-static __dpct_inline__ float op_mul(const float a, const float b) {
-    return a * b;
+ಸ್ಥಿರ __dpct_inline__ ದಶಮಾಂಶ op_mul(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ a, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ b) {
+    ಹಿಂತಿರುಗಿ a * b;
 }
 
-static __dpct_inline__ float op_div(const float a, const float b) {
-    return a / b;
+ಸ್ಥಿರ __dpct_inline__ ದಶಮಾಂಶ op_div(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ a, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ b) {
+    ಹಿಂತಿರುಗಿ a / b;
 }
 
-void ggml_sycl_add(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ಶೂನ್ಯ ggml_sycl_ಕೂಡಿಸು(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ಶೂನ್ಯ ggml_sycl_sub(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ಶೂನ್ಯ ggml_sycl_mul(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ಶೂನ್ಯ ggml_sycl_div(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ಶೂನ್ಯ ggml_sycl_repeat(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-void ggml_sycl_op_add_add_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1);
+ಶೂನ್ಯ ggml_sycl_op_ಕೂಡಿಸು_ಕೂಡಿಸು_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add0, ggml_tensor * add1);
 
 // Type combinations the standalone SYCL add() kernel can run. Fused ADD+ADD
 // uses the same set; anything else falls back to two add() launches.
-inline bool ggml_sycl_add_kernel_supports(enum ggml_type src0, enum ggml_type src1, enum ggml_type dst) {
-    if (src0 == GGML_TYPE_F32 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F32) {
-        return true;
+ಸಾಲೊಳಗೆ ತಾರ್ಕಿಕ ggml_sycl_ಕೂಡಿಸು_kernel_supports(ಎಣಿಕೆ ggml_type src0, ಎಣಿಕೆ ggml_type src1, ಎಣಿಕೆ ggml_type dst) {
+    ಆದರೆ (src0 == GGML_TYPE_F32 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F32) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-    if (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F16 && dst == GGML_TYPE_F16) {
-        return true;
+    ಆದರೆ (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F16 && dst == GGML_TYPE_F16) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-    if (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F16) {
-        return true;
+    ಆದರೆ (src0 == GGML_TYPE_F16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_F16) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-    if (src0 == GGML_TYPE_I32 && src1 == GGML_TYPE_I32 && dst == GGML_TYPE_I32) {
-        return true;
+    ಆದರೆ (src0 == GGML_TYPE_I32 && src1 == GGML_TYPE_I32 && dst == GGML_TYPE_I32) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-    if (src0 == GGML_TYPE_I16 && src1 == GGML_TYPE_I16 && dst == GGML_TYPE_I16) {
-        return true;
+    ಆದರೆ (src0 == GGML_TYPE_I16 && src1 == GGML_TYPE_I16 && dst == GGML_TYPE_I16) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-#ifdef GGML_SYCL_HAS_BF16
-    if (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_BF16 && dst == GGML_TYPE_BF16) {
-        return true;
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_SYCL_HAS_BF16
+    ಆದರೆ (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_BF16 && dst == GGML_TYPE_BF16) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-    if (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_BF16) {
-        return true;
+    ಆದರೆ (src0 == GGML_TYPE_BF16 && src1 == GGML_TYPE_F32 && dst == GGML_TYPE_BF16) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-#endif
-    return false;
+#ಆದರೆ_ಅಂತ್ಯ
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }
 
-#endif //GGML_SYCL_BINBCAST_HPP
+#ಆದರೆ_ಅಂತ್ಯ //GGML_SYCL_BINBCAST_HPP
 

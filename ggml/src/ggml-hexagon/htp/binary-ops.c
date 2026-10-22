@@ -1,154 +1,154 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ಸೂಚನೆ clang diagnostic ignored "-Wunused-variable"
+#ಸೂಚನೆ clang diagnostic ignored "-Wunused-function"
+#ಸೂಚನೆ clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#ಅನ್ತರ್ಭಾವ <HAP_farf.h>
+#ಅನ್ತರ್ಭಾವ <HAP_perf.h>
 
-#include <math.h>
-#include <string.h>
+#ಅನ್ತರ್ಭಾವ <math.h>
+#ಅನ್ತರ್ಭಾವ <string.h>
 
-#include "dma-queue.h"
-#include "hvx-utils.h"
+#ಅನ್ತರ್ಭಾವ "dma-queue.h"
+#ಅನ್ತರ್ಭಾವ "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "binary-ops.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_COMMON_DECL_C
+#ಅನ್ತರ್ಭಾವ "ggml-common.h"
+#ಅನ್ತರ್ಭಾವ "hex-common.h"
+#ಅನ್ತರ್ಭಾವ "hex-profile.h"
+#ಅನ್ತರ್ಭಾವ "binary-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp-ctx.h"
+#ಅನ್ತರ್ಭಾವ "htp-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp-tensor.h"
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ MIN
+#ವ್ಯಾಖ್ಯಾನಿಸು MIN(a, b) ((a) < (b) ? (a) : (b))
+#ಆದರೆ_ಅಂತ್ಯ
 
 // Context for binary operations
-struct htp_binary_context {
-    struct htp_ops_context * octx;
-    struct htp_binary_vtcm_layout vtcm_layout;
-    uint8_t * vtcm_base;
+ರಚನೆ htp_ದ್ವಿಮಾನ_context {
+    ರಚನೆ htp_ops_context * octx;
+    ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout vtcm_layout;
+    uint8_t * vtcm_ತಳ;
 
-    struct fastdiv_values src0_dim1_div; // ne01
-    struct fastdiv_values src0_dim2_div; // ne02
-    struct fastdiv_values src0_dim12_div;// ne03
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು src0_dim1_div; // ne01
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು src0_dim2_div; // ne02
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು src0_dim12_div;// ne03
 
-    struct fastdiv_values src1_dim1_div; // ne11
-    struct fastdiv_values src1_dim2_div; // ne12
-    struct fastdiv_values src1_dim3_div; // ne13
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು src1_dim1_div; // ne11
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು src1_dim2_div; // ne12
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು src1_dim3_div; // ne13
 
-    uint32_t block_max;
-    uint32_t nrows_per_thread;
-    uint32_t total_rows;
-    uint32_t row_start;
-    size_t   src0_row_size_aligned;
-    size_t   src1_row_size_aligned;
-    size_t   dst_row_size_aligned;
-    size_t   row_size_bytes;
+    uint32_t ಖಂಡ_max;
+    uint32_t nrows_ಪ್ರತಿ_thread;
+    uint32_t ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು;
+    uint32_t ಅಡ್ಡಸಾಲು_ಆರಂಭ;
+    size_t   src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    size_t   src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    size_t   dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    size_t   ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು;
 
-    bool split_at_ne01;
-    bool split_at_ne02;
+    bool ವಿಭಜಿಸು_at_ne01;
+    bool ವಿಭಜಿಸು_at_ne02;
 
-    void * compute;
+    ಶೂನ್ಯ * compute;
 };
 
-#define htp_binary_preamble                        \
-    const struct htp_tensor * src0 = octx->src[0]; \
-    const struct htp_tensor * src1 = octx->src[1]; \
-    const struct htp_tensor * dst  = octx->dst;    \
+#ವ್ಯಾಖ್ಯಾನಿಸು htp_ದ್ವಿಮಾನ_preamble                        \
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src0 = octx->src[0]; \
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src1 = octx->src[1]; \
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * dst  = octx->dst;    \
                                                    \
-    const uint32_t ne00 = src0->ne[0];             \
-    const uint32_t ne01 = src0->ne[1];             \
-    const uint32_t ne02 = src0->ne[2];             \
-    const uint32_t ne03 = src0->ne[3];             \
+    ಸ್ಥಿರಾಂಕ uint32_t ne00 = src0->ne[0];             \
+    ಸ್ಥಿರಾಂಕ uint32_t ne01 = src0->ne[1];             \
+    ಸ್ಥಿರಾಂಕ uint32_t ne02 = src0->ne[2];             \
+    ಸ್ಥಿರಾಂಕ uint32_t ne03 = src0->ne[3];             \
                                                    \
-    const uint32_t ne10 = src1->ne[0];             \
-    const uint32_t ne11 = src1->ne[1];             \
-    const uint32_t ne12 = src1->ne[2];             \
-    const uint32_t ne13 = src1->ne[3];             \
+    ಸ್ಥಿರಾಂಕ uint32_t ne10 = src1->ne[0];             \
+    ಸ್ಥಿರಾಂಕ uint32_t ne11 = src1->ne[1];             \
+    ಸ್ಥಿರಾಂಕ uint32_t ne12 = src1->ne[2];             \
+    ಸ್ಥಿರಾಂಕ uint32_t ne13 = src1->ne[3];             \
                                                    \
-    const uint32_t nb01 = src0->nb[1];             \
-    const uint32_t nb02 = src0->nb[2];             \
-    const uint32_t nb03 = src0->nb[3];             \
+    ಸ್ಥಿರಾಂಕ uint32_t nb01 = src0->nb[1];             \
+    ಸ್ಥಿರಾಂಕ uint32_t nb02 = src0->nb[2];             \
+    ಸ್ಥಿರಾಂಕ uint32_t nb03 = src0->nb[3];             \
                                                    \
-    const uint32_t nb11 = src1->nb[1];             \
-    const uint32_t nb12 = src1->nb[2];             \
-    const uint32_t nb13 = src1->nb[3];             \
+    ಸ್ಥಿರಾಂಕ uint32_t nb11 = src1->nb[1];             \
+    ಸ್ಥಿರಾಂಕ uint32_t nb12 = src1->nb[2];             \
+    ಸ್ಥಿರಾಂಕ uint32_t nb13 = src1->nb[3];             \
                                                    \
-    const uint32_t nb1 = dst->nb[1];               \
-    const uint32_t nb2 = dst->nb[2];               \
-    const uint32_t nb3 = dst->nb[3];
+    ಸ್ಥಿರಾಂಕ uint32_t nb1 = dst->nb[1];               \
+    ಸ್ಥಿರಾಂಕ uint32_t nb2 = dst->nb[2];               \
+    ಸ್ಥಿರಾಂಕ uint32_t nb3 = dst->nb[3];
 
-static inline uint32_t calc_block_size(struct htp_binary_context * bctx, uint32_t ir, uint32_t end_row, uint32_t ne01, uint32_t ne02) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint32_t calc_ಖಂಡ_ಗಾತ್ರ(ರಚನೆ htp_ದ್ವಿಮಾನ_context * bctx, uint32_t ir, uint32_t ಕೊನೆ_ಅಡ್ಡಸಾಲು, uint32_t ne01, uint32_t ne02) {
     uint32_t i03, i02, i01, rem;
     i03 = fastdiv(ir, &bctx->src0_dim12_div);
     rem = ir - i03 * (ne02 * ne01);
     i02 = fastdiv(rem, &bctx->src0_dim1_div);
     i01 = rem - i02 * ne01;
 
-    uint32_t rows_left = end_row - ir;
-    uint32_t block_limit = rows_left;
+    uint32_t ಅಡ್ಡಸಾಲುಗಳು_ಎಡ = ಕೊನೆ_ಅಡ್ಡಸಾಲು - ir;
+    uint32_t ಖಂಡ_ಎಲ್ಲೆ = ಅಡ್ಡಸಾಲುಗಳು_ಎಡ;
 
-    if (bctx->split_at_ne01) {
-        block_limit = MIN(block_limit, ne01 - i01);
+    ಆದರೆ (bctx->ವಿಭಜಿಸು_at_ne01) {
+        ಖಂಡ_ಎಲ್ಲೆ = MIN(ಖಂಡ_ಎಲ್ಲೆ, ne01 - i01);
     }
-    if (bctx->split_at_ne02) {
-         uint32_t rows_in_plane = (ne02 * ne01) - rem;
-         block_limit = MIN(block_limit, rows_in_plane);
+    ಆದರೆ (bctx->ವಿಭಜಿಸು_at_ne02) {
+         uint32_t ಅಡ್ಡಸಾಲುಗಳು_ಒಳ_plane = (ne02 * ne01) - rem;
+         ಖಂಡ_ಎಲ್ಲೆ = MIN(ಖಂಡ_ಎಲ್ಲೆ, ಅಡ್ಡಸಾಲುಗಳು_ಒಳ_plane);
     }
 
-    return MIN(bctx->block_max, block_limit);
+    ಹಿಂತಿರುಗಿ MIN(bctx->ಖಂಡ_max, ಖಂಡ_ಎಲ್ಲೆ);
 }
 
 // Out-of-line compute micro-kernels
 
-typedef void (*compute_scalar_t)(
-    uint8_t * dst, const uint8_t * src0, const void * s1_table,
-    uint32_t cur_i11, uint32_t ne11, uint32_t n_rows,
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*compute_scalar_t)(
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * s1_ಕೋಷ್ಟಕ,
+    uint32_t cur_i11, uint32_t ne11, uint32_t n_ಅಡ್ಡಸಾಲುಗಳು,
     size_t dst_stride, size_t src0_stride, uint32_t ne00);
 
-#define DEFINE_COMPUTE_SCALAR(NAME, TYPE, HVX_STMT)             \
-static void compute_scalar_##NAME(                              \
-    uint8_t * dst, const uint8_t * src0, const void * s1_table, \
-    uint32_t cur_i11, uint32_t ne11, uint32_t n_rows,           \
+#ವ್ಯಾಖ್ಯಾನಿಸು DEFINE_COMPUTE_SCALAR(NAME, TYPE, HVX_STMT)             \
+ಸ್ಥಿರ ಶೂನ್ಯ compute_scalar_##NAME(                              \
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * s1_ಕೋಷ್ಟಕ, \
+    uint32_t cur_i11, uint32_t ne11, uint32_t n_ಅಡ್ಡಸಾಲುಗಳು,           \
     size_t dst_stride, size_t src0_stride, uint32_t ne00) {     \
-    const TYPE * table = (const TYPE *) s1_table;               \
-    for (uint32_t r = 0; r < n_rows; r++) {                     \
+    ಸ್ಥಿರಾಂಕ TYPE * ಕೋಷ್ಟಕ = (ಸ್ಥಿರಾಂಕ TYPE *) s1_ಕೋಷ್ಟಕ;               \
+    ಗಾಗಿ (uint32_t r = 0; r < n_ಅಡ್ಡಸಾಲುಗಳು; r++) {                     \
         uint8_t * r_dst = dst + r * dst_stride;                 \
-        const uint8_t * r_src0 = src0 + r * src0_stride;        \
-        TYPE val = table[cur_i11];                              \
+        ಸ್ಥಿರಾಂಕ uint8_t * r_src0 = src0 + r * src0_stride;        \
+        TYPE val = ಕೋಷ್ಟಕ[cur_i11];                              \
         HVX_STMT;                                               \
-        if (ne11 > 1 && ++cur_i11 == ne11) {                    \
+        ಆದರೆ (ne11 > 1 && ++cur_i11 == ne11) {                    \
             cur_i11 = 0;                                        \
         }                                                       \
     }                                                           \
 }
 
-DEFINE_COMPUTE_SCALAR(add_f32, float,    hvx_add_scalar_f32_aa(r_dst, r_src0, val, ne00))
-DEFINE_COMPUTE_SCALAR(add_f16, _Float16, hvx_add_scalar_f16_aa(r_dst, r_src0, val, ne00))
-DEFINE_COMPUTE_SCALAR(sub_f32, float,    hvx_sub_scalar_f32_aa(r_dst, r_src0, val, ne00))
+DEFINE_COMPUTE_SCALAR(ಕೂಡಿಸು_f32, ದಶಮಾಂಶ,    hvx_ಕೂಡಿಸು_scalar_f32_aa(r_dst, r_src0, val, ne00))
+DEFINE_COMPUTE_SCALAR(ಕೂಡಿಸು_f16, _Float16, hvx_ಕೂಡಿಸು_scalar_f16_aa(r_dst, r_src0, val, ne00))
+DEFINE_COMPUTE_SCALAR(sub_f32, ದಶಮಾಂಶ,    hvx_sub_scalar_f32_aa(r_dst, r_src0, val, ne00))
 DEFINE_COMPUTE_SCALAR(sub_f16, _Float16, hvx_sub_scalar_f16_aa(r_dst, r_src0, val, ne00))
-DEFINE_COMPUTE_SCALAR(mul_f32, float,    hvx_mul_scalar_f32_aa(r_dst, r_src0, val, ne00))
+DEFINE_COMPUTE_SCALAR(mul_f32, ದಶಮಾಂಶ,    hvx_mul_scalar_f32_aa(r_dst, r_src0, val, ne00))
 DEFINE_COMPUTE_SCALAR(mul_f16, _Float16, hvx_mul_scalar_f16_aa(r_dst, r_src0, val, ne00))
-DEFINE_COMPUTE_SCALAR(div_f32, float,    hvx_mul_scalar_f32_aa(r_dst, r_src0, 1.0f / (val), ne00))
+DEFINE_COMPUTE_SCALAR(div_f32, ದಶಮಾಂಶ,    hvx_mul_scalar_f32_aa(r_dst, r_src0, 1.0f / (val), ne00))
 DEFINE_COMPUTE_SCALAR(div_f16, _Float16, hvx_div_scalar_f16_aa(r_dst, r_src0, val, ne00))
 
-typedef void (*compute_same_shape_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1,
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, size_t src1_stride, uint32_t ne00);
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*compute_same_shape_t)(
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1,
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, size_t src1_stride, uint32_t ne00);
 
-#define DEFINE_COMPUTE_SAME_SHAPE(NAME, HVX_FN)                                                  \
-static void compute_same_shape_##NAME(                                                           \
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1,                                   \
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, size_t src1_stride, uint32_t ne00) { \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                      \
+#ವ್ಯಾಖ್ಯಾನಿಸು DEFINE_COMPUTE_SAME_SHAPE(NAME, HVX_FN)                                                  \
+ಸ್ಥಿರ ಶೂನ್ಯ compute_same_shape_##NAME(                                                           \
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1,                                   \
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, size_t src1_stride, uint32_t ne00) { \
+    ಗಾಗಿ (uint32_t r = 0; r < n_ಅಡ್ಡಸಾಲುಗಳು; r++) {                                                      \
         HVX_FN(dst + r * dst_stride, src0 + r * src0_stride, src1 + r * src1_stride, ne00);      \
     }                                                                                            \
 }
 
-DEFINE_COMPUTE_SAME_SHAPE(add_f32, hvx_add_f32_aaa)
-DEFINE_COMPUTE_SAME_SHAPE(add_f16, hvx_add_f16_aaa)
+DEFINE_COMPUTE_SAME_SHAPE(ಕೂಡಿಸು_f32, hvx_ಕೂಡಿಸು_f32_aaa)
+DEFINE_COMPUTE_SAME_SHAPE(ಕೂಡಿಸು_f16, hvx_ಕೂಡಿಸು_f16_aaa)
 DEFINE_COMPUTE_SAME_SHAPE(sub_f32, hvx_sub_f32_aaa)
 DEFINE_COMPUTE_SAME_SHAPE(sub_f16, hvx_sub_f16_aaa)
 DEFINE_COMPUTE_SAME_SHAPE(mul_f32, hvx_mul_f32_aaa)
@@ -156,47 +156,47 @@ DEFINE_COMPUTE_SAME_SHAPE(mul_f16, hvx_mul_f16_aaa)
 DEFINE_COMPUTE_SAME_SHAPE(div_f32, hvx_div_f32_aaa)
 DEFINE_COMPUTE_SAME_SHAPE(div_f16, hvx_div_f16_aaa)
 
-typedef void (*compute_row_bcast_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1,
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00);
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*compute_ಅಡ್ಡಸಾಲು_bcast_t)(
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1,
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, uint32_t ne00);
 
-#define DEFINE_COMPUTE_ROW_BCAST(NAME, HVX_FN)                                               \
-static void compute_row_bcast_##NAME(                                                        \
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1,                               \
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00) {                 \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                  \
+#ವ್ಯಾಖ್ಯಾನಿಸು DEFINE_COMPUTE_ಅಡ್ಡಸಾಲು_BCAST(NAME, HVX_FN)                                               \
+ಸ್ಥಿರ ಶೂನ್ಯ compute_ಅಡ್ಡಸಾಲು_bcast##NAME(                                                        \
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1,                               \
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, uint32_t ne00) {                 \
+    ಗಾಗಿ (uint32_t r = 0; r < n_ಅಡ್ಡಸಾಲುಗಳು; r++) {                                                  \
         HVX_FN(dst + r * dst_stride, src0 + r * src0_stride, src1, ne00);                    \
     }                                                                                        \
 }
 
-DEFINE_COMPUTE_ROW_BCAST(add_f32, hvx_add_f32_aaa)
-DEFINE_COMPUTE_ROW_BCAST(add_f16, hvx_add_f16_aaa)
-DEFINE_COMPUTE_ROW_BCAST(sub_f32, hvx_sub_f32_aaa)
-DEFINE_COMPUTE_ROW_BCAST(sub_f16, hvx_sub_f16_aaa)
-DEFINE_COMPUTE_ROW_BCAST(mul_f32, hvx_mul_f32_aaa)
-DEFINE_COMPUTE_ROW_BCAST(mul_f16, hvx_mul_f16_aaa)
-DEFINE_COMPUTE_ROW_BCAST(div_f32, hvx_div_f32_aaa)
-DEFINE_COMPUTE_ROW_BCAST(div_f16, hvx_div_f16_aaa)
+DEFINE_COMPUTE_ಅಡ್ಡಸಾಲು_BCAST(ಕೂಡಿಸು_f32, hvx_ಕೂಡಿಸು_f32_aaa)
+DEFINE_COMPUTE_ಅಡ್ಡಸಾಲು_BCAST(ಕೂಡಿಸು_f16, hvx_ಕೂಡಿಸು_f16_aaa)
+DEFINE_COMPUTE_ಅಡ್ಡಸಾಲು_BCAST(sub_f32, hvx_sub_f32_aaa)
+DEFINE_COMPUTE_ಅಡ್ಡಸಾಲು_BCAST(sub_f16, hvx_sub_f16_aaa)
+DEFINE_COMPUTE_ಅಡ್ಡಸಾಲು_BCAST(mul_f32, hvx_mul_f32_aaa)
+DEFINE_COMPUTE_ಅಡ್ಡಸಾಲು_BCAST(mul_f16, hvx_mul_f16_aaa)
+DEFINE_COMPUTE_ಅಡ್ಡಸಾಲು_BCAST(div_f32, hvx_div_f32_aaa)
+DEFINE_COMPUTE_ಅಡ್ಡಸಾಲು_BCAST(div_f16, hvx_div_f16_aaa)
 
-typedef void (*compute_complex_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,
-    uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00);
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*compute_complex_t)(
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1_plane,
+    uint32_t i01, uint32_t ne11, ಸ್ಥಿರಾಂಕ ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು * div11, uint32_t src1_stride,
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, uint32_t ne00);
 
-#define DEFINE_COMPUTE_COMPLEX(NAME, HVX_FN)                                                 \
-static void compute_complex_##NAME(                                                          \
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,                         \
-    uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,  \
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00) {                 \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                  \
+#ವ್ಯಾಖ್ಯಾನಿಸು DEFINE_COMPUTE_COMPLEX(NAME, HVX_FN)                                                 \
+ಸ್ಥಿರ ಶೂನ್ಯ compute_complex_##NAME(                                                          \
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1_plane,                         \
+    uint32_t i01, uint32_t ne11, ಸ್ಥಿರಾಂಕ ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು * div11, uint32_t src1_stride,  \
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, uint32_t ne00) {                 \
+    ಗಾಗಿ (uint32_t r = 0; r < n_ಅಡ್ಡಸಾಲುಗಳು; r++) {                                                  \
         uint32_t i11 = fastmodulo(i01 + r, ne11, div11);                                     \
-        const uint8_t * r_src1 = src1_plane + i11 * src1_stride;                             \
+        ಸ್ಥಿರಾಂಕ uint8_t * r_src1 = src1_plane + i11 * src1_stride;                             \
         HVX_FN(dst + r * dst_stride, src0 + r * src0_stride, r_src1, ne00);                  \
     }                                                                                        \
 }
 
-DEFINE_COMPUTE_COMPLEX(add_f32, hvx_add_f32_aau)
-DEFINE_COMPUTE_COMPLEX(add_f16, hvx_add_f16_aau)
+DEFINE_COMPUTE_COMPLEX(ಕೂಡಿಸು_f32, hvx_ಕೂಡಿಸು_f32_aau)
+DEFINE_COMPUTE_COMPLEX(ಕೂಡಿಸು_f16, hvx_ಕೂಡಿಸು_f16_aau)
 DEFINE_COMPUTE_COMPLEX(sub_f32, hvx_sub_f32_aau)
 DEFINE_COMPUTE_COMPLEX(sub_f16, hvx_sub_f16_aau)
 DEFINE_COMPUTE_COMPLEX(mul_f32, hvx_mul_f32_aau)
@@ -204,118 +204,118 @@ DEFINE_COMPUTE_COMPLEX(mul_f16, hvx_mul_f16_aau)
 DEFINE_COMPUTE_COMPLEX(div_f32, hvx_div_f32_aau)
 DEFINE_COMPUTE_COMPLEX(div_f16, hvx_div_f16_aau)
 
-typedef void (*compute_repeat_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,
-    uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00, uint32_t ne10);
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*compute_repeat_t)(
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1_plane,
+    uint32_t i01, uint32_t ne11, ಸ್ಥಿರಾಂಕ ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು * div11, uint32_t src1_stride,
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, uint32_t ne00, uint32_t ne10);
 
-#define DEFINE_COMPUTE_REPEAT(NAME, TYPE, HVX_FN)                                            \
-static void compute_repeat_##NAME(                                                           \
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_plane,                         \
-    uint32_t i01, uint32_t ne11, const struct fastdiv_values * div11, uint32_t src1_stride,  \
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00, uint32_t ne10) {  \
-    for (uint32_t r = 0; r < n_rows; r++) {                                                  \
+#ವ್ಯಾಖ್ಯಾನಿಸು DEFINE_COMPUTE_REPEAT(NAME, TYPE, HVX_FN)                                            \
+ಸ್ಥಿರ ಶೂನ್ಯ compute_repeat_##NAME(                                                           \
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1_plane,                         \
+    uint32_t i01, uint32_t ne11, ಸ್ಥಿರಾಂಕ ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು * div11, uint32_t src1_stride,  \
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, uint32_t ne00, uint32_t ne10) {  \
+    ಗಾಗಿ (uint32_t r = 0; r < n_ಅಡ್ಡಸಾಲುಗಳು; r++) {                                                  \
         uint32_t i11 = fastmodulo(i01 + r, ne11, div11);                                     \
-        const uint8_t * r_src1_row = src1_plane + i11 * src1_stride;                         \
+        ಸ್ಥಿರಾಂಕ uint8_t * r_src1_ಅಡ್ಡಸಾಲು = src1_plane + i11 * src1_stride;                         \
         uint8_t * r_dst = dst + r * dst_stride;                                              \
-        const uint8_t * r_src0 = src0 + r * src0_stride;                                     \
-        for (uint32_t c = 0; c < ne00; c += ne10) {                                          \
+        ಸ್ಥಿರಾಂಕ uint8_t * r_src0 = src0 + r * src0_stride;                                     \
+        ಗಾಗಿ (uint32_t c = 0; c < ne00; c += ne10) {                                          \
             uint32_t len = MIN(ne10, ne00 - c);                                              \
-            HVX_FN(r_dst + c * sizeof(TYPE), r_src0 + c * sizeof(TYPE), r_src1_row, len);    \
+            HVX_FN(r_dst + c * ಗಾತ್ರ(TYPE), r_src0 + c * ಗಾತ್ರ(TYPE), r_src1_ಅಡ್ಡಸಾಲು, len);    \
         }                                                                                    \
     }                                                                                        \
 }
 
-DEFINE_COMPUTE_REPEAT(add_f32, float,    hvx_add_f32_uuu)
-DEFINE_COMPUTE_REPEAT(add_f16, _Float16, hvx_add_f16_uuu)
-DEFINE_COMPUTE_REPEAT(sub_f32, float,    hvx_sub_f32_uuu)
+DEFINE_COMPUTE_REPEAT(ಕೂಡಿಸು_f32, ದಶಮಾಂಶ,    hvx_ಕೂಡಿಸು_f32_uuu)
+DEFINE_COMPUTE_REPEAT(ಕೂಡಿಸು_f16, _Float16, hvx_ಕೂಡಿಸು_f16_uuu)
+DEFINE_COMPUTE_REPEAT(sub_f32, ದಶಮಾಂಶ,    hvx_sub_f32_uuu)
 DEFINE_COMPUTE_REPEAT(sub_f16, _Float16, hvx_sub_f16_uuu)
-DEFINE_COMPUTE_REPEAT(mul_f32, float,    hvx_mul_f32_uuu)
+DEFINE_COMPUTE_REPEAT(mul_f32, ದಶಮಾಂಶ,    hvx_mul_f32_uuu)
 DEFINE_COMPUTE_REPEAT(mul_f16, _Float16, hvx_mul_f16_uuu)
-DEFINE_COMPUTE_REPEAT(div_f32, float,    hvx_div_f32_uuu)
+DEFINE_COMPUTE_REPEAT(div_f32, ದಶಮಾಂಶ,    hvx_div_f32_uuu)
 DEFINE_COMPUTE_REPEAT(div_f16, _Float16, hvx_div_f16_uuu)
 
-typedef void (*compute_add_id_t)(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_data, const int32_t * src2_ids,
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*compute_ಕೂಡಿಸು_id_t)(
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1_ದತ್ತಾಂಶ, ಸ್ಥಿರಾಂಕ int32_t * src2_ids,
     uint32_t i01, uint32_t i02, uint32_t ne01, uint32_t src1_stride,
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00);
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, uint32_t ne00);
 
-static void compute_add_id_f32(
-    uint8_t * dst, const uint8_t * src0, const uint8_t * src1_data, const int32_t * src2_ids,
+ಸ್ಥಿರ ಶೂನ್ಯ compute_ಕೂಡಿಸು_id_f32(
+    uint8_t * dst, ಸ್ಥಿರಾಂಕ uint8_t * src0, ಸ್ಥಿರಾಂಕ uint8_t * src1_ದತ್ತಾಂಶ, ಸ್ಥಿರಾಂಕ int32_t * src2_ids,
     uint32_t i01, uint32_t i02, uint32_t ne01, uint32_t src1_stride,
-    uint32_t n_rows, size_t dst_stride, size_t src0_stride, uint32_t ne00) {
-    for (uint32_t r = 0; r < n_rows; r++) {
+    uint32_t n_ಅಡ್ಡಸಾಲುಗಳು, size_t dst_stride, size_t src0_stride, uint32_t ne00) {
+    ಗಾಗಿ (uint32_t r = 0; r < n_ಅಡ್ಡಸಾಲುಗಳು; r++) {
         uint32_t r_i01 = i01 + r;
-        const int32_t idx = src2_ids[i02 * ne01 + r_i01];
-        if (idx < 0) {
-            memcpy(dst + r * dst_stride, src0 + r * src0_stride, ne00 * sizeof(float));
-            continue;
+        ಸ್ಥಿರಾಂಕ int32_t idx = src2_ids[i02 * ne01 + r_i01];
+        ಆದರೆ (idx < 0) {
+            ಸ್ಮರಣೆ_ನಕಲು(dst + r * dst_stride, src0 + r * src0_stride, ne00 * ಗಾತ್ರ(ದಶಮಾಂಶ));
+            ಮುಂದುವರಿ;
         }
-        const uint8_t * r_src1 = src1_data + idx * src1_stride;
-        const uint8_t * r_src0 = src0 + r * src0_stride;
+        ಸ್ಥಿರಾಂಕ uint8_t * r_src1 = src1_ದತ್ತಾಂಶ + idx * src1_stride;
+        ಸ್ಥಿರಾಂಕ uint8_t * r_src0 = src0 + r * src0_stride;
         uint8_t * r_dst = dst + r * dst_stride;
-        hvx_add_f32_aaa(r_dst, r_src0, r_src1, ne00);
+        hvx_ಕೂಡಿಸು_f32_aaa(r_dst, r_src0, r_src1, ne00);
     }
 }
 
 // 1. Scalar src1 in VTCM via DMA (ne10 == 1)
-static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+ಸ್ಥಿರ ಶೂನ್ಯ ದ್ವಿಮಾನ_thread_scalar(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    ರಚನೆ htp_ದ್ವಿಮಾನ_context * bctx = (ರಚನೆ htp_ದ್ವಿಮಾನ_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context * octx = bctx->octx;
+    htp_ದ್ವಿಮಾನ_preamble;
 
-    const uint32_t elem_size = (src0->type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const size_t plane_stride = (size_t) ne12 * ne11 * elem_size;
-    const size_t row_stride   = (size_t) ne11 * elem_size;
+    ಸ್ಥಿರಾಂಕ uint32_t elem_ಗಾತ್ರ = (src0->type == HTP_TYPE_F32) ? ಗಾತ್ರ(ದಶಮಾಂಶ) : ಗಾತ್ರ(_Float16);
+    ಸ್ಥಿರಾಂಕ size_t plane_stride = (size_t) ne12 * ne11 * elem_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ size_t ಅಡ್ಡಸಾಲು_stride   = (size_t) ne11 * elem_ಗಾತ್ರ;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು = bctx->ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು;
+    ಸ್ಥಿರಾಂಕ uint32_t ಆರಂಭ_ಅಡ್ಡಸಾಲು = bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->nrows_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಕೊನೆ_ಅಡ್ಡಸಾಲು   = MIN(ಆರಂಭ_ಅಡ್ಡಸಾಲು + bctx->nrows_ಪ್ರತಿ_thread, bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು);
+    ಆದರೆ (ಆರಂಭ_ಅಡ್ಡಸಾಲು >= ಕೊನೆ_ಅಡ್ಡಸಾಲು) ಹಿಂತಿರುಗಿ;
 
-    FARF(HIGH, "binary-scalar: %d/%d (%u:%u) row-size %u (%u)",
-         ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
+    FARF(ಮೇಲಿನ_2, "binary-scalar: %d/%d (%u:%u) row-size %u (%u)",
+         ith, nth, ಆರಂಭ_ಅಡ್ಡಸಾಲು, ಕೊನೆ_ಅಡ್ಡಸಾಲು, nb01, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned);
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
-    uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
-    uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
-    size_t src0_spad_half    = layout->src0_spad_half_size;
-    size_t dst_spad_half     = layout->dst_spad_half_size;
-    const void * s1_table    = VTCM_LAYOUT_PTR(const void, bctx->vtcm_base, layout->off_src1);
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout * layout = &bctx->vtcm_layout;
+    uint8_t * src0_spad_ತಳ = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_src0) + (ith * layout->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    uint8_t * dst_spad_ತಳ  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_dst)  + (ith * layout->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    size_t src0_spad_half    = layout->src0_spad_half_ಗಾತ್ರ;
+    size_t dst_spad_half     = layout->dst_spad_half_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * s1_ಕೋಷ್ಟಕ    = VTCM_LAYOUT_PTR(ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ, bctx->vtcm_ತಳ, layout->off_src1);
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
-    uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    dma_ಸರತಿ * dma_q = octx->ctx->dma[ith];
+    uint32_t ir_prefetch = ಆರಂಭ_ಅಡ್ಡಸಾಲು;
+    ಪೂರ್ಣಾಂಕ spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
-        uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 2 && ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು; k++) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
         uint32_t i03, i02, i01, rem;
         i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         rem = ir_prefetch - i03 * (ne02 * ne01);
         i02 = fastdiv(rem, &bctx->src0_dim1_div);
         i01 = rem - i02 * ne01;
 
-        dma_addr_t src0_curr = src0->data + i03 * nb03 + i02 * nb02 + i01 * nb01;
-        dma_addr_t dst_curr  = dst->data  + i03 * nb3  + i02 * nb2  + i01 * nb1;
+        dma_addr_t src0_curr = src0->ದತ್ತಾಂಶ + i03 * nb03 + i02 * nb02 + i01 * nb01;
+        dma_addr_t dst_curr  = dst->ದತ್ತಾಂಶ  + i03 * nb3  + i02 * nb2  + i01 * nb1;
 
-        uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
-        uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
+        uint8_t * s0_spad = src0_spad_ತಳ + spad_idx * src0_spad_half;
+        uint8_t * d_spad  = dst_spad_ತಳ  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes,
-                                                             current_block_size);
-        ir_prefetch += current_block_size;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, 0);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, src0_curr), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು,
+                                                             current_ಖಂಡ_ಗಾತ್ರ);
+        ir_prefetch += current_ಖಂಡ_ಗಾತ್ರ;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ರಚನೆ htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_scalar_t compute = (compute_scalar_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
-        uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
+    ಗಾಗಿ (uint32_t ir = ಆರಂಭ_ಅಡ್ಡಸಾಲು; ir < ಕೊನೆ_ಅಡ್ಡಸಾಲು; ) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
 
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+        uint8_t * d_spad  = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).dst;
 
         uint32_t i03, i02, i01, rem;
         i03 = fastdiv(ir, &bctx->src0_dim12_div);
@@ -326,65 +326,65 @@ static void binary_thread_scalar(unsigned int nth, unsigned int ith, void * data
         uint32_t i13 = fastmodulo(i03, ne13, &bctx->src1_dim3_div);
         uint32_t i12 = fastmodulo(i02, ne12, &bctx->src1_dim2_div);
         uint32_t i11 = fastmodulo(i01, ne11, &bctx->src1_dim1_div);
-        const uint8_t * scalar_table = (const uint8_t *) s1_table +
-            i13 * plane_stride + i12 * row_stride;
+        ಸ್ಥಿರಾಂಕ uint8_t * scalar_ಕೋಷ್ಟಕ = (ಸ್ಥಿರಾಂಕ uint8_t *) s1_ಕೋಷ್ಟಕ +
+            i13 * plane_stride + i12 * ಅಡ್ಡಸಾಲು_stride;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        compute(d_spad, s0_spad, scalar_table, i11, ne11, current_block_size,
-                bctx->dst_row_size_aligned, bctx->src0_row_size_aligned, ne00);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        compute(d_spad, s0_spad, scalar_ಕೋಷ್ಟಕ, i11, ne11, current_ಖಂಡ_ಗಾತ್ರ,
+                bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ne00);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
-        dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes,
-                                                                current_block_size);
+        dma_addr_t dst_curr = dst->ದತ್ತಾಂಶ + i03 * nb3 + i02 * nb2 + i01 * nb1;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು,
+                                                                current_ಖಂಡ_ಗಾತ್ರ);
 
-        if (ir_prefetch < end_row) {
-            uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+        ಆದರೆ (ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು) {
+            uint32_t ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
             prem = ir_prefetch - p03 * (ne02 * ne01);
             p02 = fastdiv(prem, &bctx->src0_dim1_div);
             p01 = prem - p02 * ne01;
-            dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes,
-                                                               next_block_size);
-            ir_prefetch += next_block_size;
+            dma_addr_t s0_ಮುಂದಿನ = src0->ದತ್ತಾಂಶ + p03 * nb03 + p02 * nb02 + p01 * nb01;
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, s0_ಮುಂದಿನ), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು,
+                                                               ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ);
+            ir_prefetch += ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ;
         }
-        ir += current_block_size;
+        ir += current_ಖಂಡ_ಗಾತ್ರ;
     }
 
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
 // 2. Vector Same Shape (ne1x == ne0x) or Simple Broadcast
-static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+ಸ್ಥಿರ ಶೂನ್ಯ ದ್ವಿಮಾನ_thread_ಸದಿಶ_same_shape(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    ರಚನೆ htp_ದ್ವಿಮಾನ_context * bctx = (ರಚನೆ htp_ದ್ವಿಮಾನ_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context * octx = bctx->octx;
+    htp_ದ್ವಿಮಾನ_preamble;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು = bctx->ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು;
+    ಸ್ಥಿರಾಂಕ uint32_t ಆರಂಭ_ಅಡ್ಡಸಾಲು = bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->nrows_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಕೊನೆ_ಅಡ್ಡಸಾಲು   = MIN(ಆರಂಭ_ಅಡ್ಡಸಾಲು + bctx->nrows_ಪ್ರತಿ_thread, bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು);
+    ಆದರೆ (ಆರಂಭ_ಅಡ್ಡಸಾಲು >= ಕೊನೆ_ಅಡ್ಡಸಾಲು) ಹಿಂತಿರುಗಿ;
 
-    FARF(HIGH, "binary-same-shape: %d/%d (%u:%u) row-size %u (%u)",
-         ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
+    FARF(ಮೇಲಿನ_2, "binary-same-shape: %d/%d (%u:%u) row-size %u (%u)",
+         ith, nth, ಆರಂಭ_ಅಡ್ಡಸಾಲು, ಕೊನೆ_ಅಡ್ಡಸಾಲು, nb01, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned);
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
-    uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
-    uint8_t * src1_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src1) + (ith * layout->src1_bytes_per_thread);
-    uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout * layout = &bctx->vtcm_layout;
+    uint8_t * src0_spad_ತಳ = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_src0) + (ith * layout->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    uint8_t * src1_spad_ತಳ = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_src1) + (ith * layout->src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    uint8_t * dst_spad_ತಳ  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_dst)  + (ith * layout->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
 
-    size_t src0_spad_half = layout->src0_spad_half_size;
-    size_t src1_spad_half = layout->src1_spad_half_size;
-    size_t dst_spad_half  = layout->dst_spad_half_size;
+    size_t src0_spad_half = layout->src0_spad_half_ಗಾತ್ರ;
+    size_t src1_spad_half = layout->src1_spad_half_ಗಾತ್ರ;
+    size_t dst_spad_half  = layout->dst_spad_half_ಗಾತ್ರ;
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
-    uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    dma_ಸರತಿ * dma_q = octx->ctx->dma[ith];
+    uint32_t ir_prefetch = ಆರಂಭ_ಅಡ್ಡಸಾಲು;
+    ಪೂರ್ಣಾಂಕ spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
-        uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 2 && ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು; k++) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
         uint32_t i03, i02, i01, rem;
         i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         rem = ir_prefetch - i03 * (ne02 * ne01);
@@ -395,33 +395,33 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
         uint32_t i12 = (ne12 == 1) ? 0 : i02;
         uint32_t i11 = (ne11 == 1) ? 0 : i01;
 
-        dma_addr_t src0_curr = src0->data + i03 * nb03 + i02 * nb02 + i01 * nb01;
-        dma_addr_t src1_curr = src1->data + i13 * nb13 + i12 * nb12 + i11 * nb11;
-        dma_addr_t dst_curr  = dst->data  + i03 * nb3  + i02 * nb2  + i01 * nb1;
+        dma_addr_t src0_curr = src0->ದತ್ತಾಂಶ + i03 * nb03 + i02 * nb02 + i01 * nb01;
+        dma_addr_t src1_curr = src1->ದತ್ತಾಂಶ + i13 * nb13 + i12 * nb12 + i11 * nb11;
+        dma_addr_t dst_curr  = dst->ದತ್ತಾಂಶ  + i03 * nb3  + i02 * nb2  + i01 * nb1;
 
-        uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
-        uint8_t * s1_spad = src1_spad_base + spad_idx * src1_spad_half;
-        uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
+        uint8_t * s0_spad = src0_spad_ತಳ + spad_idx * src0_spad_half;
+        uint8_t * s1_spad = src1_spad_ತಳ + spad_idx * src1_spad_half;
+        uint8_t * d_spad  = dst_spad_ತಳ  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
-        dma_queue_push(dma_q, dma_make_data(s1_spad, src1_curr), bctx->src1_row_size_aligned, nb11, row_size_bytes, current_block_size);
-        ir_prefetch += current_block_size;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, 0);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, src0_curr), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s1_spad, src1_curr), bctx->src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb11, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
+        ir_prefetch += current_ಖಂಡ_ಗಾತ್ರ;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ರಚನೆ htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_same_shape_t compute = (compute_same_shape_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
-        uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
-        uint8_t * s1_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+    ಗಾಗಿ (uint32_t ir = ಆರಂಭ_ಅಡ್ಡಸಾಲು; ir < ಕೊನೆ_ಅಡ್ಡಸಾಲು; ) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
+        uint8_t * d_spad  = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).dst;
+        uint8_t * s1_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).dst;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        compute(d_spad, s0_spad, s1_spad, current_block_size,
-                bctx->dst_row_size_aligned, bctx->src0_row_size_aligned, bctx->src1_row_size_aligned, ne00);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        compute(d_spad, s0_spad, s1_spad, current_ಖಂಡ_ಗಾತ್ರ,
+                bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, bctx->src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ne00);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
         uint32_t i03, i02, i01, rem;
@@ -429,11 +429,11 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
         rem = ir - i03 * (ne02 * ne01);
         i02 = fastdiv(rem, &bctx->src0_dim1_div);
         i01 = rem - i02 * ne01;
-        dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_addr_t dst_curr = dst->ದತ್ತಾಂಶ + i03 * nb3 + i02 * nb2 + i01 * nb1;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
 
-        if (ir_prefetch < end_row) {
-            uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+        ಆದರೆ (ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು) {
+            uint32_t ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
             prem = ir_prefetch - p03 * (ne02 * ne01);
@@ -444,159 +444,159 @@ static void binary_thread_vector_same_shape(unsigned int nth, unsigned int ith, 
             uint32_t p12 = (ne12 == 1) ? 0 : p02;
             uint32_t p11 = (ne11 == 1) ? 0 : p01;
 
-            dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-            dma_addr_t s1_next = src1->data + p13 * nb13 + p12 * nb12 + p11 * nb11;
+            dma_addr_t s0_ಮುಂದಿನ = src0->ದತ್ತಾಂಶ + p03 * nb03 + p02 * nb02 + p01 * nb01;
+            dma_addr_t s1_ಮುಂದಿನ = src1->ದತ್ತಾಂಶ + p13 * nb13 + p12 * nb12 + p11 * nb11;
 
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
-            dma_queue_push(dma_q, dma_make_data(s1_spad, s1_next), bctx->src1_row_size_aligned, nb11, row_size_bytes, next_block_size);
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, s0_ಮುಂದಿನ), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ);
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s1_spad, s1_ಮುಂದಿನ), bctx->src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb11, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ);
 
-            ir_prefetch += next_block_size;
+            ir_prefetch += ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ;
         }
-        ir += current_block_size;
+        ir += current_ಖಂಡ_ಗಾತ್ರ;
     }
 
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
 // 3. Row Broadcast (ne11 == 1, ne12 == 1, single row src1)
-static void binary_thread_vector_row_broadcast(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+ಸ್ಥಿರ ಶೂನ್ಯ ದ್ವಿಮಾನ_thread_ಸದಿಶ_ಅಡ್ಡಸಾಲು_ಪ್ರಸಾರ(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    ರಚನೆ htp_ದ್ವಿಮಾನ_context * bctx = (ರಚನೆ htp_ದ್ವಿಮಾನ_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context * octx = bctx->octx;
+    htp_ದ್ವಿಮಾನ_preamble;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು = bctx->ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು;
+    ಸ್ಥಿರಾಂಕ uint32_t ಆರಂಭ_ಅಡ್ಡಸಾಲು  = bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->nrows_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಕೊನೆ_ಅಡ್ಡಸಾಲು    = MIN(ಆರಂಭ_ಅಡ್ಡಸಾಲು + bctx->nrows_ಪ್ರತಿ_thread, bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು);
+    ಆದರೆ (ಆರಂಭ_ಅಡ್ಡಸಾಲು >= ಕೊನೆ_ಅಡ್ಡಸಾಲು) ಹಿಂತಿರುಗಿ;
 
-    FARF(HIGH, "binary-row-bcast: %d/%d (%u:%u) row-size %u (%u)",
-         ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
+    FARF(ಮೇಲಿನ_2, "binary-row-bcast: %d/%d (%u:%u) row-size %u (%u)",
+         ith, nth, ಆರಂಭ_ಅಡ್ಡಸಾಲು, ಕೊನೆ_ಅಡ್ಡಸಾಲು, nb01, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned);
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
-    uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
-    uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout * layout = &bctx->vtcm_layout;
+    uint8_t * src0_spad_ತಳ = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_src0) + (ith * layout->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    uint8_t * dst_spad_ತಳ  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_dst)  + (ith * layout->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
 
-    size_t src0_spad_half = layout->src0_spad_half_size;
-    size_t dst_spad_half  = layout->dst_spad_half_size;
+    size_t src0_spad_half = layout->src0_spad_half_ಗಾತ್ರ;
+    size_t dst_spad_half  = layout->dst_spad_half_ಗಾತ್ರ;
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
-    uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    dma_ಸರತಿ * dma_q = octx->ctx->dma[ith];
+    uint32_t ir_prefetch = ಆರಂಭ_ಅಡ್ಡಸಾಲು;
+    ಪೂರ್ಣಾಂಕ spad_idx = 0;
 
-    void * s1_ptr = VTCM_LAYOUT_PTR(void, bctx->vtcm_base, layout->off_src1);
+    ಶೂನ್ಯ * s1_ptr = VTCM_LAYOUT_PTR(ಶೂನ್ಯ, bctx->vtcm_ತಳ, layout->off_src1);
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
-        uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 2 && ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು; k++) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
         uint32_t i02 = fastdiv(rem, &bctx->src0_dim1_div);
         uint32_t i01 = rem - i02 * ne01;
 
-        dma_addr_t src0_curr = src0->data + i03 * nb03 + i02 * nb02 + i01 * nb01;
-        dma_addr_t dst_curr  = dst->data  + i03 * nb3  + i02 * nb2  + i01 * nb1;
+        dma_addr_t src0_curr = src0->ದತ್ತಾಂಶ + i03 * nb03 + i02 * nb02 + i01 * nb01;
+        dma_addr_t dst_curr  = dst->ದತ್ತಾಂಶ  + i03 * nb3  + i02 * nb2  + i01 * nb1;
 
-        uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
-        uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
+        uint8_t * s0_spad = src0_spad_ತಳ + spad_idx * src0_spad_half;
+        uint8_t * d_spad  = dst_spad_ತಳ  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
-        ir_prefetch += current_block_size;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, 0);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, src0_curr), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
+        ir_prefetch += current_ಖಂಡ_ಗಾತ್ರ;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    compute_row_bcast_t compute = (compute_row_bcast_t) bctx->compute;
+    ರಚನೆ htp_thread_trace * tr = &octx->ctx->trace[ith];
+    compute_ಅಡ್ಡಸಾಲು_bcast_t compute = (compute_ಅಡ್ಡಸಾಲು_bcast_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
-        uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+    ಗಾಗಿ (uint32_t ir = ಆರಂಭ_ಅಡ್ಡಸಾಲು; ir < ಕೊನೆ_ಅಡ್ಡಸಾಲು; ) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
+        uint8_t * d_spad  = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).dst;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        compute(d_spad, s0_spad, (const uint8_t *)s1_ptr, current_block_size,
-                bctx->dst_row_size_aligned, bctx->src0_row_size_aligned, ne00);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        compute(d_spad, s0_spad, (ಸ್ಥಿರಾಂಕ uint8_t *)s1_ptr, current_ಖಂಡ_ಗಾತ್ರ,
+                bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ne00);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
         uint32_t i03 = fastdiv(ir, &bctx->src0_dim12_div);
         uint32_t rem = ir - i03 * (ne02 * ne01);
         uint32_t i02 = fastdiv(rem, &bctx->src0_dim1_div);
         uint32_t i01 = rem - i02 * ne01;
-        dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_addr_t dst_curr = dst->ದತ್ತಾಂಶ + i03 * nb3 + i02 * nb2 + i01 * nb1;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
 
-        if (ir_prefetch < end_row) {
-            uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+        ಆದರೆ (ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು) {
+            uint32_t ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
             prem = ir_prefetch - p03 * (ne02 * ne01);
             p02  = fastdiv(prem, &bctx->src0_dim1_div);
             p01  = prem - p02 * ne01;
-            dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
-            ir_prefetch += next_block_size;
+            dma_addr_t s0_ಮುಂದಿನ = src0->ದತ್ತಾಂಶ + p03 * nb03 + p02 * nb02 + p01 * nb01;
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, s0_ಮುಂದಿನ), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ);
+            ir_prefetch += ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ;
         }
-        ir += current_block_size;
+        ir += current_ಖಂಡ_ಗಾತ್ರ;
     }
 
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
 // 4. Vector Complex (ne10 == ne00, complex broadcast)
-static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+ಸ್ಥಿರ ಶೂನ್ಯ ದ್ವಿಮಾನ_thread_ಸದಿಶ_complex(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    ರಚನೆ htp_ದ್ವಿಮಾನ_context * bctx = (ರಚನೆ htp_ದ್ವಿಮಾನ_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context * octx = bctx->octx;
+    htp_ದ್ವಿಮಾನ_preamble;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು = bctx->ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು;
+    ಸ್ಥಿರಾಂಕ uint32_t ಆರಂಭ_ಅಡ್ಡಸಾಲು  = bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->nrows_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಕೊನೆ_ಅಡ್ಡಸಾಲು    = MIN(ಆರಂಭ_ಅಡ್ಡಸಾಲು + bctx->nrows_ಪ್ರತಿ_thread, bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು);
+    ಆದರೆ (ಆರಂಭ_ಅಡ್ಡಸಾಲು >= ಕೊನೆ_ಅಡ್ಡಸಾಲು) ಹಿಂತಿರುಗಿ;
 
-    FARF(HIGH, "binary-complex: %d/%d (%u:%u) row-size %u (%u)",
-         ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
+    FARF(ಮೇಲಿನ_2, "binary-complex: %d/%d (%u:%u) row-size %u (%u)",
+         ith, nth, ಆರಂಭ_ಅಡ್ಡಸಾಲು, ಕೊನೆ_ಅಡ್ಡಸಾಲು, nb01, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned);
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
-    uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
-    uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
-    size_t src0_spad_half    = layout->src0_spad_half_size;
-    size_t dst_spad_half     = layout->dst_spad_half_size;
-    const uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(const uint8_t, bctx->vtcm_base, layout->off_src1);
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout * layout = &bctx->vtcm_layout;
+    uint8_t * src0_spad_ತಳ = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_src0) + (ith * layout->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    uint8_t * dst_spad_ತಳ  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_dst)  + (ith * layout->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    size_t src0_spad_half    = layout->src0_spad_half_ಗಾತ್ರ;
+    size_t dst_spad_half     = layout->dst_spad_half_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(ಸ್ಥಿರಾಂಕ uint8_t, bctx->vtcm_ತಳ, layout->off_src1);
 
-    const uint32_t elem_size = (src0->type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const size_t vtcm_row_stride   = (size_t) ne10 * elem_size;
-    const size_t vtcm_plane_stride = (size_t) ne11 * vtcm_row_stride;
-    const size_t vtcm_vol_stride   = (size_t) ne12 * vtcm_plane_stride;
+    ಸ್ಥಿರಾಂಕ uint32_t elem_ಗಾತ್ರ = (src0->type == HTP_TYPE_F32) ? ಗಾತ್ರ(ದಶಮಾಂಶ) : ಗಾತ್ರ(_Float16);
+    ಸ್ಥಿರಾಂಕ size_t vtcm_ಅಡ್ಡಸಾಲು_stride   = (size_t) ne10 * elem_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ size_t vtcm_plane_stride = (size_t) ne11 * vtcm_ಅಡ್ಡಸಾಲು_stride;
+    ಸ್ಥಿರಾಂಕ size_t vtcm_vol_stride   = (size_t) ne12 * vtcm_plane_stride;
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
-    uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    dma_ಸರತಿ * dma_q = octx->ctx->dma[ith];
+    uint32_t ir_prefetch = ಆರಂಭ_ಅಡ್ಡಸಾಲು;
+    ಪೂರ್ಣಾಂಕ spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
-        uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 2 && ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು; k++) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
         uint32_t i02 = fastdiv(rem, &bctx->src0_dim1_div);
         uint32_t i01 = rem - i02 * ne01;
 
-        dma_addr_t src0_curr = src0->data + i03 * nb03 + i02 * nb02 + i01 * nb01;
-        dma_addr_t dst_curr  = dst->data  + i03 * nb3  + i02 * nb2  + i01 * nb1;
+        dma_addr_t src0_curr = src0->ದತ್ತಾಂಶ + i03 * nb03 + i02 * nb02 + i01 * nb01;
+        dma_addr_t dst_curr  = dst->ದತ್ತಾಂಶ  + i03 * nb3  + i02 * nb2  + i01 * nb1;
 
-        uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
-        uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
+        uint8_t * s0_spad = src0_spad_ತಳ + spad_idx * src0_spad_half;
+        uint8_t * d_spad  = dst_spad_ತಳ  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
-        ir_prefetch += current_block_size;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, 0);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, src0_curr), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
+        ir_prefetch += current_ಖಂಡ_ಗಾತ್ರ;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ರಚನೆ htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_complex_t compute = (compute_complex_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
-        uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+    ಗಾಗಿ (uint32_t ir = ಆರಂಭ_ಅಡ್ಡಸಾಲು; ir < ಕೊನೆ_ಅಡ್ಡಸಾಲು; ) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
+        uint8_t * d_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).dst;
 
         uint32_t i03 = fastdiv(ir, &bctx->src0_dim12_div);
         uint32_t rem = ir - i03 * (ne02 * ne01);
@@ -605,89 +605,89 @@ static void binary_thread_vector_complex(unsigned int nth, unsigned int ith, voi
 
         uint32_t i13 = fastmodulo(i03, ne13, &bctx->src1_dim3_div);
         uint32_t i12 = fastmodulo(i02, ne12, &bctx->src1_dim2_div);
-        const uint8_t * src1_plane = vtcm_src1 + i13 * vtcm_vol_stride + i12 * vtcm_plane_stride;
+        ಸ್ಥಿರಾಂಕ uint8_t * src1_plane = vtcm_src1 + i13 * vtcm_vol_stride + i12 * vtcm_plane_stride;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        compute(d_spad, s0_spad, src1_plane, i01, ne11, &bctx->src1_dim1_div, vtcm_row_stride,
-                current_block_size, bctx->dst_row_size_aligned, bctx->src0_row_size_aligned, ne00);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        compute(d_spad, s0_spad, src1_plane, i01, ne11, &bctx->src1_dim1_div, vtcm_ಅಡ್ಡಸಾಲು_stride,
+                current_ಖಂಡ_ಗಾತ್ರ, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ne00);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
-        dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_addr_t dst_curr = dst->ದತ್ತಾಂಶ + i03 * nb3 + i02 * nb2 + i01 * nb1;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
 
-        if (ir_prefetch < end_row) {
-            uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+        ಆದರೆ (ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು) {
+            uint32_t ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
             prem = ir_prefetch - p03 * (ne02 * ne01);
             p02  = fastdiv(prem, &bctx->src0_dim1_div);
             p01  = prem - p02 * ne01;
-            dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
-            ir_prefetch += next_block_size;
+            dma_addr_t s0_ಮುಂದಿನ = src0->ದತ್ತಾಂಶ + p03 * nb03 + p02 * nb02 + p01 * nb01;
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, s0_ಮುಂದಿನ), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ);
+            ir_prefetch += ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ;
         }
-        ir += current_block_size;
+        ir += current_ಖಂಡ_ಗಾತ್ರ;
     }
 
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
 // 5. Element Repeat (ne10 != ne00)
-static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
-    htp_binary_preamble;
+ಸ್ಥಿರ ಶೂನ್ಯ ದ್ವಿಮಾನ_thread_element_repeat(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    ರಚನೆ htp_ದ್ವಿಮಾನ_context * bctx = (ರಚನೆ htp_ದ್ವಿಮಾನ_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context * octx = bctx->octx;
+    htp_ದ್ವಿಮಾನ_preamble;
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row  = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row    = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು = bctx->ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು;
+    ಸ್ಥಿರಾಂಕ uint32_t ಆರಂಭ_ಅಡ್ಡಸಾಲು  = bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->nrows_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಕೊನೆ_ಅಡ್ಡಸಾಲು    = MIN(ಆರಂಭ_ಅಡ್ಡಸಾಲು + bctx->nrows_ಪ್ರತಿ_thread, bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು);
+    ಆದರೆ (ಆರಂಭ_ಅಡ್ಡಸಾಲು >= ಕೊನೆ_ಅಡ್ಡಸಾಲು) ಹಿಂತಿರುಗಿ;
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
-    uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
-    uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
-    size_t src0_spad_half    = layout->src0_spad_half_size;
-    size_t dst_spad_half     = layout->dst_spad_half_size;
-    const uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(const uint8_t, bctx->vtcm_base, layout->off_src1);
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout * layout = &bctx->vtcm_layout;
+    uint8_t * src0_spad_ತಳ = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_src0) + (ith * layout->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    uint8_t * dst_spad_ತಳ  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_dst)  + (ith * layout->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    size_t src0_spad_half    = layout->src0_spad_half_ಗಾತ್ರ;
+    size_t dst_spad_half     = layout->dst_spad_half_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(ಸ್ಥಿರಾಂಕ uint8_t, bctx->vtcm_ತಳ, layout->off_src1);
 
-    const uint32_t elem_size = (src0->type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const size_t vtcm_row_stride   = (size_t) ne10 * elem_size;
-    const size_t vtcm_plane_stride = (size_t) ne11 * vtcm_row_stride;
-    const size_t vtcm_vol_stride   = (size_t) ne12 * vtcm_plane_stride;
+    ಸ್ಥಿರಾಂಕ uint32_t elem_ಗಾತ್ರ = (src0->type == HTP_TYPE_F32) ? ಗಾತ್ರ(ದಶಮಾಂಶ) : ಗಾತ್ರ(_Float16);
+    ಸ್ಥಿರಾಂಕ size_t vtcm_ಅಡ್ಡಸಾಲು_stride   = (size_t) ne10 * elem_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ size_t vtcm_plane_stride = (size_t) ne11 * vtcm_ಅಡ್ಡಸಾಲು_stride;
+    ಸ್ಥಿರಾಂಕ size_t vtcm_vol_stride   = (size_t) ne12 * vtcm_plane_stride;
 
-    FARF(HIGH, "binary-repeat: %d/%d (%u:%u) row-size %u (%u)",
-         ith, nth, start_row, end_row, nb01, bctx->dst_row_size_aligned);
+    FARF(ಮೇಲಿನ_2, "binary-repeat: %d/%d (%u:%u) row-size %u (%u)",
+         ith, nth, ಆರಂಭ_ಅಡ್ಡಸಾಲು, ಕೊನೆ_ಅಡ್ಡಸಾಲು, nb01, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned);
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
-    uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    dma_ಸರತಿ * dma_q = octx->ctx->dma[ith];
+    uint32_t ir_prefetch = ಆರಂಭ_ಅಡ್ಡಸಾಲು;
+    ಪೂರ್ಣಾಂಕ spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
-        uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 2 && ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು; k++) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
         uint32_t i02 = fastdiv(rem, &bctx->src0_dim1_div);
         uint32_t i01 = rem - i02 * ne01;
 
-        dma_addr_t src0_curr = src0->data + i03 * nb03 + i02 * nb02 + i01 * nb01;
-        dma_addr_t dst_curr  = dst->data  + i03 * nb3  + i02 * nb2  + i01 * nb1;
+        dma_addr_t src0_curr = src0->ದತ್ತಾಂಶ + i03 * nb03 + i02 * nb02 + i01 * nb01;
+        dma_addr_t dst_curr  = dst->ದತ್ತಾಂಶ  + i03 * nb3  + i02 * nb2  + i01 * nb1;
 
-        uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
-        uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
+        uint8_t * s0_spad = src0_spad_ತಳ + spad_idx * src0_spad_half;
+        uint8_t * d_spad  = dst_spad_ತಳ  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
-        ir_prefetch += current_block_size;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, 0);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, src0_curr), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
+        ir_prefetch += current_ಖಂಡ_ಗಾತ್ರ;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ರಚನೆ htp_thread_trace * tr = &octx->ctx->trace[ith];
     compute_repeat_t compute = (compute_repeat_t) bctx->compute;
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
-        uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+    ಗಾಗಿ (uint32_t ir = ಆರಂಭ_ಅಡ್ಡಸಾಲು; ir < ಕೊನೆ_ಅಡ್ಡಸಾಲು; ) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
+        uint8_t * d_spad  = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).dst;
 
         uint32_t i03 = fastdiv(ir, &bctx->src0_dim12_div);
         uint32_t rem = ir - i03 * (ne02 * ne01);
@@ -696,411 +696,411 @@ static void binary_thread_element_repeat(unsigned int nth, unsigned int ith, voi
 
         uint32_t i13 = fastmodulo(i03, ne13, &bctx->src1_dim3_div);
         uint32_t i12 = fastmodulo(i02, ne12, &bctx->src1_dim2_div);
-        const uint8_t * src1_plane = vtcm_src1 + i13 * vtcm_vol_stride + i12 * vtcm_plane_stride;
+        ಸ್ಥಿರಾಂಕ uint8_t * src1_plane = vtcm_src1 + i13 * vtcm_vol_stride + i12 * vtcm_plane_stride;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        compute(d_spad, s0_spad, src1_plane, i01, ne11, &bctx->src1_dim1_div, vtcm_row_stride,
-                current_block_size, bctx->dst_row_size_aligned, bctx->src0_row_size_aligned, ne00, ne10);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        compute(d_spad, s0_spad, src1_plane, i01, ne11, &bctx->src1_dim1_div, vtcm_ಅಡ್ಡಸಾಲು_stride,
+                current_ಖಂಡ_ಗಾತ್ರ, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ne00, ne10);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
-        dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_addr_t dst_curr = dst->ದತ್ತಾಂಶ + i03 * nb3 + i02 * nb2 + i01 * nb1;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
 
-        if (ir_prefetch < end_row) {
-            uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+        ಆದರೆ (ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು) {
+            uint32_t ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
             uint32_t p03, p02, p01, prem;
             p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
             prem = ir_prefetch - p03 * (ne02 * ne01);
             p02  = fastdiv(prem, &bctx->src0_dim1_div);
             p01  = prem - p02 * ne01;
-            dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
-            ir_prefetch += next_block_size;
+            dma_addr_t s0_ಮುಂದಿನ = src0->ದತ್ತಾಂಶ + p03 * nb03 + p02 * nb02 + p01 * nb01;
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, s0_ಮುಂದಿನ), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ);
+            ir_prefetch += ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ;
         }
-        ir += current_block_size;
+        ir += current_ಖಂಡ_ಗಾತ್ರ;
     }
 
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
 // 6. ADD_ID (src1 gathered via src2 indices)
-static void binary_thread_add_id_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_binary_context * bctx = (struct htp_binary_context *) data;
-    struct htp_ops_context * octx = bctx->octx;
+ಸ್ಥಿರ ಶೂನ್ಯ ದ್ವಿಮಾನ_thread_ಕೂಡಿಸು_id_f32(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    ರಚನೆ htp_ದ್ವಿಮಾನ_context * bctx = (ರಚನೆ htp_ದ್ವಿಮಾನ_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context * octx = bctx->octx;
 
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * src1 = octx->src[1];
-    const struct htp_tensor * dst  = octx->dst;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src0 = octx->src[0];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src1 = octx->src[1];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * dst  = octx->dst;
 
-    const uint32_t ne00 = src0->ne[0];
-    const uint32_t ne01 = src0->ne[1];
-    const uint32_t ne02 = src0->ne[2];
-    const uint32_t ne03 = src0->ne[3];
+    ಸ್ಥಿರಾಂಕ uint32_t ne00 = src0->ne[0];
+    ಸ್ಥಿರಾಂಕ uint32_t ne01 = src0->ne[1];
+    ಸ್ಥಿರಾಂಕ uint32_t ne02 = src0->ne[2];
+    ಸ್ಥಿರಾಂಕ uint32_t ne03 = src0->ne[3];
 
-    const uint32_t nb01 = src0->nb[1];
-    const uint32_t nb02 = src0->nb[2];
-    const uint32_t nb03 = src0->nb[3];
-    const uint32_t src1_stride = bctx->src1_row_size_aligned;
+    ಸ್ಥಿರಾಂಕ uint32_t nb01 = src0->nb[1];
+    ಸ್ಥಿರಾಂಕ uint32_t nb02 = src0->nb[2];
+    ಸ್ಥಿರಾಂಕ uint32_t nb03 = src0->nb[3];
+    ಸ್ಥಿರಾಂಕ uint32_t src1_stride = bctx->src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
 
-    const uint32_t nb1 = dst->nb[1];
-    const uint32_t nb2 = dst->nb[2];
-    const uint32_t nb3 = dst->nb[3];
+    ಸ್ಥಿರಾಂಕ uint32_t nb1 = dst->nb[1];
+    ಸ್ಥಿರಾಂಕ uint32_t nb2 = dst->nb[2];
+    ಸ್ಥಿರಾಂಕ uint32_t nb3 = dst->nb[3];
 
-    const uint32_t row_size_bytes = bctx->row_size_bytes;
-    const uint32_t start_row = bctx->row_start + bctx->nrows_per_thread * ith;
-    const uint32_t end_row   = MIN(start_row + bctx->nrows_per_thread, bctx->row_start + bctx->total_rows);
-    if (start_row >= end_row) return;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು = bctx->ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು;
+    ಸ್ಥಿರಾಂಕ uint32_t ಆರಂಭ_ಅಡ್ಡಸಾಲು = bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->nrows_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಕೊನೆ_ಅಡ್ಡಸಾಲು   = MIN(ಆರಂಭ_ಅಡ್ಡಸಾಲು + bctx->nrows_ಪ್ರತಿ_thread, bctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + bctx->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು);
+    ಆದರೆ (ಆರಂಭ_ಅಡ್ಡಸಾಲು >= ಕೊನೆ_ಅಡ್ಡಸಾಲು) ಹಿಂತಿರುಗಿ;
 
-    const struct htp_binary_vtcm_layout * layout = &bctx->vtcm_layout;
-    uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
-    uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
-    const uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(const uint8_t, bctx->vtcm_base, layout->off_src1);
-    const int32_t * vtcm_src2 = VTCM_LAYOUT_PTR(const int32_t, bctx->vtcm_base, layout->off_src2);
-    size_t src0_spad_half    = layout->src0_spad_half_size;
-    size_t dst_spad_half     = layout->dst_spad_half_size;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout * layout = &bctx->vtcm_layout;
+    uint8_t * src0_spad_ತಳ = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_src0) + (ith * layout->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    uint8_t * dst_spad_ತಳ  = VTCM_LAYOUT_PTR(uint8_t, bctx->vtcm_ತಳ, layout->off_dst)  + (ith * layout->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    ಸ್ಥಿರಾಂಕ uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(ಸ್ಥಿರಾಂಕ uint8_t, bctx->vtcm_ತಳ, layout->off_src1);
+    ಸ್ಥಿರಾಂಕ int32_t * vtcm_src2 = VTCM_LAYOUT_PTR(ಸ್ಥಿರಾಂಕ int32_t, bctx->vtcm_ತಳ, layout->off_src2);
+    size_t src0_spad_half    = layout->src0_spad_half_ಗಾತ್ರ;
+    size_t dst_spad_half     = layout->dst_spad_half_ಗಾತ್ರ;
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
-    uint32_t ir_prefetch = start_row;
-    int spad_idx = 0;
+    dma_ಸರತಿ * dma_q = octx->ctx->dma[ith];
+    uint32_t ir_prefetch = ಆರಂಭ_ಅಡ್ಡಸಾಲು;
+    ಪೂರ್ಣಾಂಕ spad_idx = 0;
 
-    for (int k = 0; k < 2 && ir_prefetch < end_row; k++) {
-        uint32_t current_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 2 && ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು; k++) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
         uint32_t i03 = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
         uint32_t rem = ir_prefetch - i03 * (ne02 * ne01);
         uint32_t i02 = fastdiv(rem, &bctx->src0_dim1_div);
         uint32_t i01 = rem - i02 * ne01;
 
-        dma_addr_t src0_curr = src0->data + i03 * nb03 + i02 * nb02 + i01 * nb01;
-        dma_addr_t dst_curr  = dst->data  + i03 * nb3  + i02 * nb2  + i01 * nb1;
+        dma_addr_t src0_curr = src0->ದತ್ತಾಂಶ + i03 * nb03 + i02 * nb02 + i01 * nb01;
+        dma_addr_t dst_curr  = dst->ದತ್ತಾಂಶ  + i03 * nb3  + i02 * nb2  + i01 * nb1;
 
-        uint8_t * s0_spad = src0_spad_base + spad_idx * src0_spad_half;
-        uint8_t * d_spad  = dst_spad_base  + spad_idx * dst_spad_half;
+        uint8_t * s0_spad = src0_spad_ತಳ + spad_idx * src0_spad_half;
+        uint8_t * d_spad  = dst_spad_ತಳ  + spad_idx * dst_spad_half;
 
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, src0_curr), bctx->src0_row_size_aligned, nb01, row_size_bytes, current_block_size);
-        ir_prefetch += current_block_size;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, 0);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, src0_curr), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
+        ir_prefetch += current_ಖಂಡ_ಗಾತ್ರ;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ರಚನೆ htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = start_row; ir < end_row; ) {
-        uint32_t current_block_size = calc_block_size(bctx, ir, end_row, ne01, ne02);
-        uint8_t * d_spad = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
+    ಗಾಗಿ (uint32_t ir = ಆರಂಭ_ಅಡ್ಡಸಾಲು; ir < ಕೊನೆ_ಅಡ್ಡಸಾಲು; ) {
+        uint32_t current_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
+        uint8_t * d_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).dst;
 
         uint32_t i03 = fastdiv(ir, &bctx->src0_dim12_div);
         uint32_t rem = ir - i03 * (ne02 * ne01);
         uint32_t i02 = fastdiv(rem, &bctx->src0_dim1_div);
         uint32_t i01 = rem - i02 * ne01;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
-        compute_add_id_t compute = (compute_add_id_t) bctx->compute;
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
+        compute_ಕೂಡಿಸು_id_t compute = (compute_ಕೂಡಿಸು_id_t) bctx->compute;
         compute(d_spad, s0_spad, vtcm_src1, vtcm_src2,
                 i01, i02, ne01, src1_stride,
-                current_block_size, bctx->dst_row_size_aligned, bctx->src0_row_size_aligned, ne00);
+                current_ಖಂಡ_ಗಾತ್ರ, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ne00);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);
 
-        dma_addr_t dst_curr = dst->data + i03 * nb3 + i02 * nb2 + i01 * nb1;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), nb1, bctx->dst_row_size_aligned, row_size_bytes, current_block_size);
+        dma_addr_t dst_curr = dst->ದತ್ತಾಂಶ + i03 * nb3 + i02 * nb2 + i01 * nb1;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), nb1, bctx->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, current_ಖಂಡ_ಗಾತ್ರ);
 
-        if (ir_prefetch < end_row) {
-             uint32_t next_block_size = calc_block_size(bctx, ir_prefetch, end_row, ne01, ne02);
+        ಆದರೆ (ir_prefetch < ಕೊನೆ_ಅಡ್ಡಸಾಲು) {
+             uint32_t ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ = calc_ಖಂಡ_ಗಾತ್ರ(bctx, ir_prefetch, ಕೊನೆ_ಅಡ್ಡಸಾಲು, ne01, ne02);
              uint32_t p03, p02, p01, prem;
              p03  = fastdiv(ir_prefetch, &bctx->src0_dim12_div);
              prem = ir_prefetch - p03 * (ne02 * ne01);
              p02  = fastdiv(prem, &bctx->src0_dim1_div);
              p01  = prem - p02 * ne01;
-             dma_addr_t s0_next = src0->data + p03 * nb03 + p02 * nb02 + p01 * nb01;
-             dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), bctx->src0_row_size_aligned, nb01, row_size_bytes, next_block_size);
-             ir_prefetch += next_block_size;
+             dma_addr_t s0_ಮುಂದಿನ = src0->ದತ್ತಾಂಶ + p03 * nb03 + p02 * nb02 + p01 * nb01;
+             dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, s0_ಮುಂದಿನ), bctx->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, nb01, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು, ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ);
+             ir_prefetch += ಮುಂದಿನ_ಖಂಡ_ಗಾತ್ರ;
         }
-        ir += current_block_size;
+        ir += current_ಖಂಡ_ಗಾತ್ರ;
     }
 
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
-static inline void hvx_div_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const uint32_t num_elems) {
-    hvx_mul_scalar_f32(dst, src, 1.0f / val, num_elems);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hvx_div_scalar_f32(uint8_t * ಸೀಮಿತ dst, ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ src, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ val, ಸ್ಥಿರಾಂಕ uint32_t ಅಂಕೆ_elems) {
+    hvx_mul_scalar_f32(dst, src, 1.0f / val, ಅಂಕೆ_elems);
 }
 
-static inline void hvx_div_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 val, const uint32_t num_elems) {
-    hvx_div_scalar_f16_aa(dst, src, val, num_elems);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hvx_div_scalar_f16(uint8_t * ಸೀಮಿತ dst, ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ src, ಸ್ಥಿರಾಂಕ _Float16 val, ಸ್ಥಿರಾಂಕ uint32_t ಅಂಕೆ_elems) {
+    hvx_div_scalar_f16_aa(dst, src, val, ಅಂಕೆ_elems);
 }
 
-typedef void (*compute_binary_chunked_t)(
-    uint8_t * restrict dst,
-    const uint8_t * restrict src0,
-    const uint8_t * restrict src1,
-    const uint32_t num_elems
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*compute_ದ್ವಿಮಾನ_chunked_t)(
+    uint8_t * ಸೀಮಿತ dst,
+    ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ src0,
+    ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ src1,
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಂಕೆ_elems
 );
 
-typedef void (*compute_binary_scalar_chunked_f32_t)(
-    uint8_t * restrict dst,
-    const uint8_t * restrict src0,
-    const float val,
-    const uint32_t num_elems
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*compute_ದ್ವಿಮಾನ_scalar_chunked_f32_t)(
+    uint8_t * ಸೀಮಿತ dst,
+    ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ src0,
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ val,
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಂಕೆ_elems
 );
 
-typedef void (*compute_binary_scalar_chunked_f16_t)(
-    uint8_t * restrict dst,
-    const uint8_t * restrict src0,
-    const _Float16 val,
-    const uint32_t num_elems
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*compute_ದ್ವಿಮಾನ_scalar_chunked_f16_t)(
+    uint8_t * ಸೀಮಿತ dst,
+    ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ src0,
+    ಸ್ಥಿರಾಂಕ _Float16 val,
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಂಕೆ_elems
 );
 
-struct binary_chunked_context {
-    struct htp_ops_context * octx;
-    struct htp_binary_vtcm_layout vtcm_layout;
-    uint8_t *                vtcm_base;
-    uint32_t                 elem_start;
+ರಚನೆ ದ್ವಿಮಾನ_chunked_context {
+    ರಚನೆ htp_ops_context * octx;
+    ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout vtcm_layout;
+    uint8_t *                vtcm_ತಳ;
+    uint32_t                 elem_ಆರಂಭ;
     uint32_t                 nelem;
-    uint32_t                 chunk_size;
-    uint32_t                 chunks_per_thread;
-    uint32_t                 total_chunks;
+    uint32_t                 chunk_ಗಾತ್ರ;
+    uint32_t                 chunks_ಪ್ರತಿ_thread;
+    uint32_t                 ಒಟ್ಟು_chunks;
     bool                     is_scalar;
-    float                    scalar_f32;
+    ದಶಮಾಂಶ                    scalar_f32;
     _Float16                 scalar_f16;
-    compute_binary_chunked_t compute;
-    compute_binary_scalar_chunked_f32_t compute_scalar_f32;
-    compute_binary_scalar_chunked_f16_t compute_scalar_f16;
+    compute_ದ್ವಿಮಾನ_chunked_t compute;
+    compute_ದ್ವಿಮಾನ_scalar_chunked_f32_t compute_scalar_f32;
+    compute_ದ್ವಿಮಾನ_scalar_chunked_f16_t compute_scalar_f16;
 };
 
-static void binary_thread_chunked(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    struct binary_chunked_context * ctx = (struct binary_chunked_context *) data;
-    struct htp_ops_context * octx = ctx->octx;
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * src1 = octx->src[1];
-    const struct htp_tensor * dst  = octx->dst;
+ಸ್ಥಿರ ಶೂನ್ಯ ದ್ವಿಮಾನ_thread_chunked(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    (ಶೂನ್ಯ) nth;
+    ರಚನೆ ದ್ವಿಮಾನ_chunked_context * ctx = (ರಚನೆ ದ್ವಿಮಾನ_chunked_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context * octx = ctx->octx;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src0 = octx->src[0];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src1 = octx->src[1];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * dst  = octx->dst;
 
-    const uint32_t start_chunk = ctx->chunks_per_thread * ith;
-    const uint32_t end_chunk   = MIN(start_chunk + ctx->chunks_per_thread, ctx->total_chunks);
-    if (start_chunk >= end_chunk) {
-        return;
+    ಸ್ಥಿರಾಂಕ uint32_t ಆರಂಭ_chunk = ctx->chunks_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಕೊನೆ_chunk   = MIN(ಆರಂಭ_chunk + ctx->chunks_ಪ್ರತಿ_thread, ctx->ಒಟ್ಟು_chunks);
+    ಆದರೆ (ಆರಂಭ_chunk >= ಕೊನೆ_chunk) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const uint32_t src0_type   = src0->type;
-    const size_t   elem_size   = (src0_type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const uint32_t chunk_size  = ctx->chunk_size;
-    const size_t   chunk_bytes = ctx->vtcm_layout.src0_spad_half_size;
+    ಸ್ಥಿರಾಂಕ uint32_t src0_type   = src0->type;
+    ಸ್ಥಿರಾಂಕ size_t   elem_ಗಾತ್ರ   = (src0_type == HTP_TYPE_F32) ? ಗಾತ್ರ(ದಶಮಾಂಶ) : ಗಾತ್ರ(_Float16);
+    ಸ್ಥಿರಾಂಕ uint32_t chunk_ಗಾತ್ರ  = ctx->chunk_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ size_t   chunk_ಬೈಟುಗಳು = ctx->vtcm_layout.src0_spad_half_ಗಾತ್ರ;
 
-    FARF(HIGH, "binary-chunked: %d/%d (%u:%u) chunks %u elems %u",
-         ith, nth, start_chunk, end_chunk, ctx->total_chunks, ctx->nelem);
+    FARF(ಮೇಲಿನ_2, "binary-chunked: %d/%d (%u:%u) chunks %u elems %u",
+         ith, nth, ಆರಂಭ_chunk, ಕೊನೆ_chunk, ctx->ಒಟ್ಟು_chunks, ctx->nelem);
 
-    const struct htp_binary_vtcm_layout * layout = &ctx->vtcm_layout;
-    uint8_t * src0_spad_base = VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_base, layout->off_src0) + (ith * layout->src0_bytes_per_thread);
-    uint8_t * src1_spad_base = ctx->is_scalar ? NULL : (VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_base, layout->off_src1) + (ith * layout->src1_bytes_per_thread));
-    uint8_t * dst_spad_base  = VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_base, layout->off_dst)  + (ith * layout->dst_bytes_per_thread);
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout * layout = &ctx->vtcm_layout;
+    uint8_t * src0_spad_ತಳ = VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_ತಳ, layout->off_src0) + (ith * layout->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+    uint8_t * src1_spad_ತಳ = ctx->is_scalar ? ಖಾಲಿ : (VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_ತಳ, layout->off_src1) + (ith * layout->src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread));
+    uint8_t * dst_spad_ತಳ  = VTCM_LAYOUT_PTR(uint8_t, ctx->vtcm_ತಳ, layout->off_dst)  + (ith * layout->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
 
-    dma_queue * dma_q = octx->ctx->dma[ith];
-    uint32_t prefetch_chunk = start_chunk;
-    int spad_idx = 0;
+    dma_ಸರತಿ * dma_q = octx->ctx->dma[ith];
+    uint32_t prefetch_chunk = ಆರಂಭ_chunk;
+    ಪೂರ್ಣಾಂಕ spad_idx = 0;
 
-    for (int k = 0; k < 2 && prefetch_chunk < end_chunk; k++) {
-        const uint32_t c_start   = ctx->elem_start + prefetch_chunk * chunk_size;
-        const uint32_t c_end     = MIN(c_start + chunk_size, ctx->elem_start + ctx->nelem);
-        const uint32_t cur_elems = c_end - c_start;
-        const uint32_t cur_bytes = cur_elems * elem_size;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 2 && prefetch_chunk < ಕೊನೆ_chunk; k++) {
+        ಸ್ಥಿರಾಂಕ uint32_t c_ಆರಂಭ   = ctx->elem_ಆರಂಭ + prefetch_chunk * chunk_ಗಾತ್ರ;
+        ಸ್ಥಿರಾಂಕ uint32_t c_ಕೊನೆ     = MIN(c_ಆರಂಭ + chunk_ಗಾತ್ರ, ctx->elem_ಆರಂಭ + ctx->nelem);
+        ಸ್ಥಿರಾಂಕ uint32_t cur_elems = c_ಕೊನೆ - c_ಆರಂಭ;
+        ಸ್ಥಿರಾಂಕ uint32_t cur_ಬೈಟುಗಳು = cur_elems * elem_ಗಾತ್ರ;
 
-        dma_addr_t s0_curr = src0->data + (size_t) c_start * elem_size;
-        dma_addr_t d_curr  = dst->data  + (size_t) c_start * elem_size;
+        dma_addr_t s0_curr = src0->ದತ್ತಾಂಶ + (size_t) c_ಆರಂಭ * elem_ಗಾತ್ರ;
+        dma_addr_t d_curr  = dst->ದತ್ತಾಂಶ  + (size_t) c_ಆರಂಭ * elem_ಗಾತ್ರ;
 
-        uint8_t * s0_spad = src0_spad_base + spad_idx * chunk_bytes;
-        uint8_t * d_spad  = dst_spad_base  + spad_idx * chunk_bytes;
+        uint8_t * s0_spad = src0_spad_ತಳ + spad_idx * chunk_ಬೈಟುಗಳು;
+        uint8_t * d_spad  = dst_spad_ತಳ  + spad_idx * chunk_ಬೈಟುಗಳು;
 
-        dma_queue_push(dma_q, dma_make_data(d_curr, d_spad), chunk_bytes, chunk_bytes, cur_bytes, 0);
-        dma_queue_push(dma_q, dma_make_data(s0_spad, s0_curr), chunk_bytes, chunk_bytes, cur_bytes, 1);
-        if (!ctx->is_scalar) {
-            dma_addr_t s1_curr = src1->data + (size_t) c_start * elem_size;
-            uint8_t * s1_spad = src1_spad_base + spad_idx * chunk_bytes;
-            dma_queue_push(dma_q, dma_make_data(s1_spad, s1_curr), chunk_bytes, chunk_bytes, cur_bytes, 1);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(d_curr, d_spad), chunk_ಬೈಟುಗಳು, chunk_ಬೈಟುಗಳು, cur_ಬೈಟುಗಳು, 0);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, s0_curr), chunk_ಬೈಟುಗಳು, chunk_ಬೈಟುಗಳು, cur_ಬೈಟುಗಳು, 1);
+        ಆದರೆ (!ctx->is_scalar) {
+            dma_addr_t s1_curr = src1->ದತ್ತಾಂಶ + (size_t) c_ಆರಂಭ * elem_ಗಾತ್ರ;
+            uint8_t * s1_spad = src1_spad_ತಳ + spad_idx * chunk_ಬೈಟುಗಳು;
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s1_spad, s1_curr), chunk_ಬೈಟುಗಳು, chunk_ಬೈಟುಗಳು, cur_ಬೈಟುಗಳು, 1);
         }
 
         prefetch_chunk++;
         spad_idx ^= 1;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    ರಚನೆ htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t c = start_chunk; c < end_chunk; c++) {
-        const uint32_t c_start   = ctx->elem_start + c * chunk_size;
-        const uint32_t c_end     = MIN(c_start + chunk_size, ctx->elem_start + ctx->nelem);
-        const uint32_t cur_elems = c_end - c_start;
-        const uint32_t cur_bytes = cur_elems * elem_size;
+    ಗಾಗಿ (uint32_t c = ಆರಂಭ_chunk; c < ಕೊನೆ_chunk; c++) {
+        ಸ್ಥಿರಾಂಕ uint32_t c_ಆರಂಭ   = ctx->elem_ಆರಂಭ + c * chunk_ಗಾತ್ರ;
+        ಸ್ಥಿರಾಂಕ uint32_t c_ಕೊನೆ     = MIN(c_ಆರಂಭ + chunk_ಗಾತ್ರ, ctx->elem_ಆರಂಭ + ctx->nelem);
+        ಸ್ಥಿರಾಂಕ uint32_t cur_elems = c_ಕೊನೆ - c_ಆರಂಭ;
+        ಸ್ಥಿರಾಂಕ uint32_t cur_ಬೈಟುಗಳು = cur_elems * elem_ಗಾತ್ರ;
 
-        uint8_t * d_spad  = (uint8_t *) dma_queue_pop(dma_q).src;
-        uint8_t * s0_spad = (uint8_t *) dma_queue_pop(dma_q).dst;
-        uint8_t * s1_spad = ctx->is_scalar ? NULL : (uint8_t *) dma_queue_pop(dma_q).dst;
+        uint8_t * d_spad  = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).src;
+        uint8_t * s0_spad = (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).dst;
+        uint8_t * s1_spad = ctx->is_scalar ? ಖಾಲಿ : (uint8_t *) dma_ಸರತಿ_ತೆಗೆ(dma_q).dst;
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) c);
-        if (ctx->is_scalar) {
-            if (src0_type == HTP_TYPE_F32) {
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) c);
+        ಆದರೆ (ctx->is_scalar) {
+            ಆದರೆ (src0_type == HTP_TYPE_F32) {
                 ctx->compute_scalar_f32(d_spad, s0_spad, ctx->scalar_f32, cur_elems);
-            } else {
+            } ಇಲ್ಲದಿದ್ದರೆ {
                 ctx->compute_scalar_f16(d_spad, s0_spad, ctx->scalar_f16, cur_elems);
             }
-        } else {
+        } ಇಲ್ಲದಿದ್ದರೆ {
             ctx->compute(d_spad, s0_spad, s1_spad, cur_elems);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) c);
 
-        dma_addr_t dst_curr = dst->data + (size_t) c_start * elem_size;
-        dma_queue_push(dma_q, dma_make_data(dst_curr, d_spad), chunk_bytes, chunk_bytes, cur_bytes, 1);
+        dma_addr_t dst_curr = dst->ದತ್ತಾಂಶ + (size_t) c_ಆರಂಭ * elem_ಗಾತ್ರ;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_curr, d_spad), chunk_ಬೈಟುಗಳು, chunk_ಬೈಟುಗಳು, cur_ಬೈಟುಗಳು, 1);
 
-        if (prefetch_chunk < end_chunk) {
-            const uint32_t pc_start  = ctx->elem_start + prefetch_chunk * chunk_size;
-            const uint32_t pc_end    = MIN(pc_start + chunk_size, ctx->elem_start + ctx->nelem);
-            const uint32_t p_elems   = pc_end - pc_start;
-            const uint32_t p_bytes   = p_elems * elem_size;
+        ಆದರೆ (prefetch_chunk < ಕೊನೆ_chunk) {
+            ಸ್ಥಿರಾಂಕ uint32_t pc_ಆರಂಭ  = ctx->elem_ಆರಂಭ + prefetch_chunk * chunk_ಗಾತ್ರ;
+            ಸ್ಥಿರಾಂಕ uint32_t pc_ಕೊನೆ    = MIN(pc_ಆರಂಭ + chunk_ಗಾತ್ರ, ctx->elem_ಆರಂಭ + ctx->nelem);
+            ಸ್ಥಿರಾಂಕ uint32_t p_elems   = pc_ಕೊನೆ - pc_ಆರಂಭ;
+            ಸ್ಥಿರಾಂಕ uint32_t p_ಬೈಟುಗಳು   = p_elems * elem_ಗಾತ್ರ;
 
-            dma_addr_t s0_next = src0->data + (size_t) pc_start * elem_size;
-            dma_queue_push(dma_q, dma_make_data(s0_spad, s0_next), chunk_bytes, chunk_bytes, p_bytes, 1);
-            if (!ctx->is_scalar) {
-                dma_addr_t s1_next = src1->data + (size_t) pc_start * elem_size;
-                dma_queue_push(dma_q, dma_make_data(s1_spad, s1_next), chunk_bytes, chunk_bytes, p_bytes, 1);
+            dma_addr_t s0_ಮುಂದಿನ = src0->ದತ್ತಾಂಶ + (size_t) pc_ಆರಂಭ * elem_ಗಾತ್ರ;
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s0_spad, s0_ಮುಂದಿನ), chunk_ಬೈಟುಗಳು, chunk_ಬೈಟುಗಳು, p_ಬೈಟುಗಳು, 1);
+            ಆದರೆ (!ctx->is_scalar) {
+                dma_addr_t s1_ಮುಂದಿನ = src1->ದತ್ತಾಂಶ + (size_t) pc_ಆರಂಭ * elem_ಗಾತ್ರ;
+                dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(s1_spad, s1_ಮುಂದಿನ), chunk_ಬೈಟುಗಳು, chunk_ಬೈಟುಗಳು, p_ಬೈಟುಗಳು, 1);
             }
 
             prefetch_chunk++;
         }
     }
 
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
-static int execute_op_binary(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * src1 = octx->src[1];
-    const struct htp_tensor * dst  = octx->dst;
-    const struct htp_binary_kernel_params * kparams = (const struct htp_binary_kernel_params *) octx->kernel_params;
+ಸ್ಥಿರ ಪೂರ್ಣಾಂಕ execute_op_ದ್ವಿಮಾನ(ರಚನೆ htp_ops_context * octx) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src0 = octx->src[0];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src1 = octx->src[1];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * dst  = octx->dst;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_kernel_params * kparams = (ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_kernel_params *) octx->kernel_params;
 
-    const uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ಸ್ಥಿರಾಂಕ uint32_t src0_nrows = src0->ne[1] * src0->ne[2] * src0->ne[3];
 
     // Use packed row sizes for VTCM allocation and alignment
-    const uint32_t src0_type = octx->src[0]->type;
-    const size_t elem_size = (src0_type == HTP_TYPE_F32) ? sizeof(float) : sizeof(_Float16);
-    const size_t src0_row_size = src0->ne[0] * elem_size;
-    const size_t src1_row_size = src1->ne[0] * elem_size;
-    const size_t dst_row_size  = dst->ne[0]  * elem_size;
+    ಸ್ಥಿರಾಂಕ uint32_t src0_type = octx->src[0]->type;
+    ಸ್ಥಿರಾಂಕ size_t elem_ಗಾತ್ರ = (src0_type == HTP_TYPE_F32) ? ಗಾತ್ರ(ದಶಮಾಂಶ) : ಗಾತ್ರ(_Float16);
+    ಸ್ಥಿರಾಂಕ size_t src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = src0->ne[0] * elem_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ size_t src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = src1->ne[0] * elem_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ size_t dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ  = dst->ne[0]  * elem_ಗಾತ್ರ;
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
-        const bool is_scalar = kparams->is_scalar || (src1->ne[0] == 1 && src1->ne[1] == 1 && src1->ne[2] == 1 && src1->ne[3] == 1);
+    ಆದರೆ (kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_CHUNKED) {
+        ಸ್ಥಿರಾಂಕ bool is_scalar = kparams->is_scalar || (src1->ne[0] == 1 && src1->ne[1] == 1 && src1->ne[2] == 1 && src1->ne[3] == 1);
 
-        compute_binary_chunked_t compute = NULL;
-        compute_binary_scalar_chunked_f32_t compute_scalar_f32 = NULL;
-        compute_binary_scalar_chunked_f16_t compute_scalar_f16 = NULL;
+        compute_ದ್ವಿಮಾನ_chunked_t compute = ಖಾಲಿ;
+        compute_ದ್ವಿಮಾನ_scalar_chunked_f32_t compute_scalar_f32 = ಖಾಲಿ;
+        compute_ದ್ವಿಮಾನ_scalar_chunked_f16_t compute_scalar_f16 = ಖಾಲಿ;
 
-        if (is_scalar) {
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_scalar_f32 = hvx_add_scalar_f32; break;
-                    case HTP_OP_SUB: compute_scalar_f32 = hvx_sub_scalar_f32; break;
-                    case HTP_OP_MUL: compute_scalar_f32 = hvx_mul_scalar_f32; break;
-                    case HTP_OP_DIV: compute_scalar_f32 = hvx_div_scalar_f32; break;
-                    default: break;
+        ಆದರೆ (is_scalar) {
+            ಆದರೆ (src0_type == HTP_TYPE_F32) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_scalar_f32 = hvx_ಕೂಡಿಸು_scalar_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_scalar_f32 = hvx_sub_scalar_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_scalar_f32 = hvx_mul_scalar_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_scalar_f32 = hvx_div_scalar_f32; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_scalar_f16 = hvx_add_scalar_f16; break;
-                    case HTP_OP_SUB: compute_scalar_f16 = hvx_sub_scalar_f16; break;
-                    case HTP_OP_MUL: compute_scalar_f16 = hvx_mul_scalar_f16; break;
-                    case HTP_OP_DIV: compute_scalar_f16 = hvx_div_scalar_f16; break;
-                    default: break;
-                }
-            }
-            if (!compute_scalar_f32 && !compute_scalar_f16) {
-                return HTP_STATUS_NO_SUPPORT;
-            }
-        } else {
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute = hvx_add_f32; break;
-                    case HTP_OP_SUB: compute = hvx_sub_f32; break;
-                    case HTP_OP_MUL: compute = hvx_mul_f32; break;
-                    case HTP_OP_DIV: compute = hvx_div_f32; break;
-                    default: break;
-                }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute = hvx_add_f16; break;
-                    case HTP_OP_SUB: compute = hvx_sub_f16; break;
-                    case HTP_OP_MUL: compute = hvx_mul_f16; break;
-                    case HTP_OP_DIV: compute = hvx_div_f16; break;
-                    default: break;
+            } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (src0_type == HTP_TYPE_F16) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_scalar_f16 = hvx_ಕೂಡಿಸು_scalar_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_scalar_f16 = hvx_sub_scalar_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_scalar_f16 = hvx_mul_scalar_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_scalar_f16 = hvx_div_scalar_f16; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
                 }
             }
-            if (!compute) {
-                return HTP_STATUS_NO_SUPPORT;
+            ಆದರೆ (!compute_scalar_f32 && !compute_scalar_f16) {
+                ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
+            }
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            ಆದರೆ (src0_type == HTP_TYPE_F32) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute = hvx_ಕೂಡಿಸು_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute = hvx_sub_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute = hvx_mul_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute = hvx_div_f32; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
+                }
+            } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (src0_type == HTP_TYPE_F16) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute = hvx_ಕೂಡಿಸು_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute = hvx_sub_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute = hvx_mul_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute = hvx_div_f16; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
+                }
+            }
+            ಆದರೆ (!compute) {
+                ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
             }
         }
 
-        const uint32_t total_elems = (uint32_t) (src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3]);
-        if (total_elems == 0) {
-            return HTP_STATUS_OK;
+        ಸ್ಥಿರಾಂಕ uint32_t ಒಟ್ಟು_elems = (uint32_t) (src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3]);
+        ಆದರೆ (ಒಟ್ಟು_elems == 0) {
+            ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
         }
 
-        uint32_t elem_start = 0;
-        uint32_t nelem      = total_elems;
-        const uint32_t elems_per_line = (src0_type == HTP_TYPE_F32) ? 32 : 64;
+        uint32_t elem_ಆರಂಭ = 0;
+        uint32_t nelem      = ಒಟ್ಟು_elems;
+        ಸ್ಥಿರಾಂಕ uint32_t elems_ಪ್ರತಿ_ಸಾಲು = (src0_type == HTP_TYPE_F32) ? 32 : 64;
 
-        if (octx->ctx->mdev.count > 1) {
-            const bool can_split = htp_tensor_mdev_data_aligned(dst) &&
-                                   htp_tensor_mdev_data_aligned(src0) &&
-                                   (is_scalar || htp_tensor_mdev_data_aligned(src1)) &&
-                                   htp_tensor_is_contiguous(dst, elem_size) &&
-                                   htp_tensor_is_contiguous(src0, elem_size) &&
-                                   (is_scalar || htp_tensor_is_contiguous(src1, elem_size));
-            const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-                total_elems, can_split ? elems_per_line : 0,
-                octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-            elem_start = range.start;
-            nelem      = range.count;
+        ಆದರೆ (octx->ctx->mdev.ಎಣಿಕೆ_2 > 1) {
+            ಸ್ಥಿರಾಂಕ bool can_ವಿಭಜಿಸು = htp_tensor_mdev_ದತ್ತಾಂಶ_aligned(dst) &&
+                                   htp_tensor_mdev_ದತ್ತಾಂಶ_aligned(src0) &&
+                                   (is_scalar || htp_tensor_mdev_ದತ್ತಾಂಶ_aligned(src1)) &&
+                                   htp_tensor_is_contiguous(dst, elem_ಗಾತ್ರ) &&
+                                   htp_tensor_is_contiguous(src0, elem_ಗಾತ್ರ) &&
+                                   (is_scalar || htp_tensor_is_contiguous(src1, elem_ಗಾತ್ರ));
+            ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor_mdev_range range = htp_tensor_mdev_ವಿಭಜನೆ(
+                ಒಟ್ಟು_elems, can_ವಿಭಜಿಸು ? elems_ಪ್ರತಿ_ಸಾಲು : 0,
+                octx->ctx->mdev.idx, octx->ctx->mdev.ಎಣಿಕೆ_2, &octx->ctx->mdev.ಎಣಿಕೆ_div);
+            elem_ಆರಂಭ = range.ಆರಂಭ;
+            nelem      = range.ಎಣಿಕೆ_2;
         }
 
-        if (nelem == 0) {
-            return HTP_STATUS_OK;
+        ಆದರೆ (nelem == 0) {
+            ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
         }
 
-        if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-            return HTP_STATUS_INVAL_PARAMS;
+        ಆದರೆ (!htp_ops_context_ಗಣ_n_ಎಳೆಗಳು(octx, kparams->n_ಎಳೆಗಳು)) {
+            ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_INVAL_PARAMS;
         }
 
-        struct htp_binary_vtcm_layout vtcm_layout;
-        htp_binary_vtcm_layout_build(&vtcm_layout, kparams, octx->ctx->vtcm_size);
-        if (vtcm_layout.total_bytes == 0 || vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
-            return HTP_STATUS_VTCM_TOO_SMALL;
+        ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout vtcm_layout;
+        htp_ದ್ವಿಮಾನ_vtcm_layout_build(&vtcm_layout, kparams, octx->ctx->vtcm_ಗಾತ್ರ);
+        ಆದರೆ (vtcm_layout.ಒಟ್ಟು_ಬೈಟುಗಳು == 0 || vtcm_layout.ಒಟ್ಟು_ಬೈಟುಗಳು > octx->ctx->vtcm_ಗಾತ್ರ) {
+            ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_VTCM_TOO_SMALL;
         }
 
-        const uint32_t chunk_size = kparams->chunk_size > 0 ? kparams->chunk_size : (32768 / elem_size);
-        const uint32_t total_chunks = (nelem + chunk_size - 1) / chunk_size;
-        const uint32_t n_threads = (total_chunks >= 2) ? MIN(octx->n_threads, total_chunks) : 1;
-        const uint32_t chunks_per_thread = (total_chunks + n_threads - 1) / n_threads;
+        ಸ್ಥಿರಾಂಕ uint32_t chunk_ಗಾತ್ರ = kparams->chunk_ಗಾತ್ರ > 0 ? kparams->chunk_ಗಾತ್ರ : (32768 / elem_ಗಾತ್ರ);
+        ಸ್ಥಿರಾಂಕ uint32_t ಒಟ್ಟು_chunks = (nelem + chunk_ಗಾತ್ರ - 1) / chunk_ಗಾತ್ರ;
+        ಸ್ಥಿರಾಂಕ uint32_t n_ಎಳೆಗಳು = (ಒಟ್ಟು_chunks >= 2) ? MIN(octx->n_ಎಳೆಗಳು, ಒಟ್ಟು_chunks) : 1;
+        ಸ್ಥಿರಾಂಕ uint32_t chunks_ಪ್ರತಿ_thread = (ಒಟ್ಟು_chunks + n_ಎಳೆಗಳು - 1) / n_ಎಳೆಗಳು;
 
-        float scalar_f32 = 0.0f;
+        ದಶಮಾಂಶ scalar_f32 = 0.0f;
         _Float16 scalar_f16 = 0;
-        if (is_scalar) {
-            uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, octx->ctx->vtcm_base, vtcm_layout.off_src1);
-            dma_queue * dma_q = octx->ctx->dma[0];
-            dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data), 128, 0, elem_size, 1);
-            dma_queue_pop(dma_q);
+        ಆದರೆ (is_scalar) {
+            uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, octx->ctx->vtcm_ತಳ, vtcm_layout.off_src1);
+            dma_ಸರತಿ * dma_q = octx->ctx->dma[0];
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(vtcm_src1, src1->ದತ್ತಾಂಶ), 128, 0, elem_ಗಾತ್ರ, 1);
+            dma_ಸರತಿ_ತೆಗೆ(dma_q);
 
-            if (src0_type == HTP_TYPE_F32) {
-                scalar_f32 = ((const float *) vtcm_src1)[0];
-            } else {
-                scalar_f16 = ((const _Float16 *) vtcm_src1)[0];
+            ಆದರೆ (src0_type == HTP_TYPE_F32) {
+                scalar_f32 = ((ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) vtcm_src1)[0];
+            } ಇಲ್ಲದಿದ್ದರೆ {
+                scalar_f16 = ((ಸ್ಥಿರಾಂಕ _Float16 *) vtcm_src1)[0];
             }
         }
 
-        struct binary_chunked_context cctx = {
+        ರಚನೆ ದ್ವಿಮಾನ_chunked_context cctx = {
             .octx                = octx,
             .vtcm_layout         = vtcm_layout,
-            .vtcm_base           = (uint8_t *) octx->ctx->vtcm_base,
-            .elem_start          = elem_start,
+            .vtcm_ತಳ           = (uint8_t *) octx->ctx->vtcm_ತಳ,
+            .elem_ಆರಂಭ          = elem_ಆರಂಭ,
             .nelem               = nelem,
-            .chunk_size          = chunk_size,
-            .chunks_per_thread   = chunks_per_thread,
-            .total_chunks        = total_chunks,
+            .chunk_ಗಾತ್ರ          = chunk_ಗಾತ್ರ,
+            .chunks_ಪ್ರತಿ_thread   = chunks_ಪ್ರತಿ_thread,
+            .ಒಟ್ಟು_chunks        = ಒಟ್ಟು_chunks,
             .is_scalar           = is_scalar,
             .scalar_f32          = scalar_f32,
             .scalar_f16          = scalar_f16,
@@ -1109,239 +1109,239 @@ static int execute_op_binary(struct htp_ops_context * octx) {
             .compute_scalar_f16  = compute_scalar_f16,
         };
 
-        work_queue_run(octx->ctx->work_queue, binary_thread_chunked, &cctx, n_threads);
-        return HTP_STATUS_OK;
+        work_ಸರತಿ_ಸತತ(octx->ctx->work_ಸರತಿ, ದ್ವಿಮಾನ_thread_chunked, &cctx, n_ಎಳೆಗಳು);
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
     }
 
-    uint32_t row_start = 0;
+    uint32_t ಅಡ್ಡಸಾಲು_ಆರಂಭ = 0;
     uint32_t nrows     = src0_nrows;
 
-    if (octx->ctx->mdev.count > 1) {
-        uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, (uint32_t) elem_size, (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(src0_nrows, rows_per_chunk,
-                                                       octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    ಆದರೆ (octx->ctx->mdev.ಎಣಿಕೆ_2 > 1) {
+        uint32_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk = 0;
+        htp_tensor_mdev_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk(dst, (uint32_t) elem_ಗಾತ್ರ, (uint32_t) dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, &ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk);
+        ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor_mdev_range range = htp_tensor_mdev_ವಿಭಜನೆ(src0_nrows, ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk,
+                                                       octx->ctx->mdev.idx, octx->ctx->mdev.ಎಣಿಕೆ_2, &octx->ctx->mdev.ಎಣಿಕೆ_div);
+        ಅಡ್ಡಸಾಲು_ಆರಂಭ = range.ಆರಂಭ;
+        nrows     = range.ಎಣಿಕೆ_2;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ಆದರೆ (nrows == 0) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ಆದರೆ (!htp_ops_context_ಗಣ_n_ಎಳೆಗಳು(octx, kparams->n_ಎಳೆಗಳು)) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_INVAL_PARAMS;
     }
 
-    const uint32_t n_threads = octx->n_threads;
-    const size_t src0_row_size_aligned = kparams->src0_row_size_aligned;
-    const size_t src1_row_size_aligned = kparams->src1_row_size_aligned;
-    const size_t dst_row_size_aligned  = kparams->dst_row_size_aligned;
+    ಸ್ಥಿರಾಂಕ uint32_t n_ಎಳೆಗಳು = octx->n_ಎಳೆಗಳು;
+    ಸ್ಥಿರಾಂಕ size_t src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned = kparams->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    ಸ್ಥಿರಾಂಕ size_t src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned = kparams->src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    ಸ್ಥಿರಾಂಕ size_t dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned  = kparams->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
 
-    struct htp_binary_context bctx;
-    bctx.vtcm_base = (uint8_t *) octx->ctx->vtcm_base;
-    htp_binary_vtcm_layout_build(&bctx.vtcm_layout, kparams, octx->ctx->vtcm_size);
+    ರಚನೆ htp_ದ್ವಿಮಾನ_context bctx;
+    bctx.vtcm_ತಳ = (uint8_t *) octx->ctx->vtcm_ತಳ;
+    htp_ದ್ವಿಮಾನ_vtcm_layout_build(&bctx.vtcm_layout, kparams, octx->ctx->vtcm_ಗಾತ್ರ);
 
-    if (bctx.vtcm_layout.rows_per_buffer == 0 || bctx.vtcm_layout.total_bytes > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    ಆದರೆ (bctx.vtcm_layout.ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್ == 0 || bctx.vtcm_layout.ಒಟ್ಟು_ಬೈಟುಗಳು > octx->ctx->vtcm_ಗಾತ್ರ) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_VTCM_TOO_SMALL;
     }
 
-    dma_queue * dma_q = octx->ctx->dma[0];
-    uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, bctx.vtcm_base, bctx.vtcm_layout.off_src1);
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_ROW_BCAST) {
-        dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data), bctx.vtcm_layout.src1_size, 0, src1->ne[0] * elem_size, 1);
-    } else if (kparams->kernel_type == HTP_BINARY_KERNEL_SCALAR ||
-               kparams->kernel_type == HTP_BINARY_KERNEL_REPEAT ||
-               kparams->kernel_type == HTP_BINARY_KERNEL_COMPLEX) {
-        if (!kparams->src1_strided) {
-            const size_t src1_bytes = (size_t) src1->ne[0] * src1->ne[1] * src1->ne[2] * src1->ne[3] * elem_size;
-            dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data), bctx.vtcm_layout.src1_size, 0, src1_bytes, 1);
-        } else {
-            const uint32_t ne11 = src1->ne[1];
-            const uint32_t ne12 = src1->ne[2];
-            const uint32_t ne13 = src1->ne[3];
-            const size_t row_bytes = src1->ne[0] * elem_size;
-            for (uint32_t i13 = 0; i13 < ne13; i13++) {
-                for (uint32_t i12 = 0; i12 < ne12; i12++) {
-                    dma_addr_t src_addr = src1->data + i13 * src1->nb[3] + i12 * src1->nb[2];
-                    uint8_t * dst_ptr = vtcm_src1 + (i13 * ne12 * ne11 + i12 * ne11) * row_bytes;
-                    while (!dma_queue_push(dma_q, dma_make_data(dst_ptr, src_addr),
-                                           row_bytes, src1->nb[1], row_bytes, ne11)) {
-                        dma_queue_pop(dma_q);
+    dma_ಸರತಿ * dma_q = octx->ctx->dma[0];
+    uint8_t * vtcm_src1 = VTCM_LAYOUT_PTR(uint8_t, bctx.vtcm_ತಳ, bctx.vtcm_layout.off_src1);
+    ಆದರೆ (kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_ಅಡ್ಡಸಾಲು_BCAST) {
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(vtcm_src1, src1->ದತ್ತಾಂಶ), bctx.vtcm_layout.src1_ಗಾತ್ರ, 0, src1->ne[0] * elem_ಗಾತ್ರ, 1);
+    } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_SCALAR ||
+               kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_REPEAT ||
+               kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_COMPLEX) {
+        ಆದರೆ (!kparams->src1_strided) {
+            ಸ್ಥಿರಾಂಕ size_t src1_ಬೈಟುಗಳು = (size_t) src1->ne[0] * src1->ne[1] * src1->ne[2] * src1->ne[3] * elem_ಗಾತ್ರ;
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(vtcm_src1, src1->ದತ್ತಾಂಶ), bctx.vtcm_layout.src1_ಗಾತ್ರ, 0, src1_ಬೈಟುಗಳು, 1);
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            ಸ್ಥಿರಾಂಕ uint32_t ne11 = src1->ne[1];
+            ಸ್ಥಿರಾಂಕ uint32_t ne12 = src1->ne[2];
+            ಸ್ಥಿರಾಂಕ uint32_t ne13 = src1->ne[3];
+            ಸ್ಥಿರಾಂಕ size_t ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು = src1->ne[0] * elem_ಗಾತ್ರ;
+            ಗಾಗಿ (uint32_t i13 = 0; i13 < ne13; i13++) {
+                ಗಾಗಿ (uint32_t i12 = 0; i12 < ne12; i12++) {
+                    dma_addr_t src_addr = src1->ದತ್ತಾಂಶ + i13 * src1->nb[3] + i12 * src1->nb[2];
+                    uint8_t * dst_ptr = vtcm_src1 + (i13 * ne12 * ne11 + i12 * ne11) * ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು;
+                    ಆಗ (!dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_ptr, src_addr),
+                                           ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು, src1->nb[1], ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು, ne11)) {
+                        dma_ಸರತಿ_ತೆಗೆ(dma_q);
                     }
                 }
             }
         }
-    } else if (kparams->kernel_type == HTP_BINARY_KERNEL_ADD_ID) {
-        const struct htp_tensor * src2 = octx->src[2];
-        uint8_t * vtcm_src2 = VTCM_LAYOUT_PTR(uint8_t, bctx.vtcm_base, bctx.vtcm_layout.off_src2);
-        dma_queue_push(dma_q, dma_make_data(vtcm_src1, src1->data),
-                       kparams->src1_row_size_aligned, src1->nb[1],
-                       src1->ne[0] * elem_size, src1->ne[1]);
-        const size_t src2_row_bytes = src2->ne[0] * sizeof(int32_t);
-        dma_queue_push(dma_q, dma_make_data(vtcm_src2, src2->data),
-                       src2_row_bytes, src2->nb[1],
-                       src2_row_bytes, src2->ne[1]);
+    } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_ಕೂಡಿಸು_ID) {
+        ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src2 = octx->src[2];
+        uint8_t * vtcm_src2 = VTCM_LAYOUT_PTR(uint8_t, bctx.vtcm_ತಳ, bctx.vtcm_layout.off_src2);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(vtcm_src1, src1->ದತ್ತಾಂಶ),
+                       kparams->src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned, src1->nb[1],
+                       src1->ne[0] * elem_ಗಾತ್ರ, src1->ne[1]);
+        ಸ್ಥಿರಾಂಕ size_t src2_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು = src2->ne[0] * ಗಾತ್ರ(int32_t);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(vtcm_src2, src2->ದತ್ತಾಂಶ),
+                       src2_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು, src2->nb[1],
+                       src2_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು, src2->ne[1]);
     }
 
     bctx.octx                  = octx;
-    bctx.nrows_per_thread      = fastdiv(nrows + n_threads - 1, &octx->n_threads_div);
-    bctx.total_rows            = nrows;
-    bctx.row_start             = row_start;
-    bctx.block_max             = bctx.vtcm_layout.rows_per_buffer;
-    bctx.src0_row_size_aligned = src0_row_size_aligned;
-    bctx.src1_row_size_aligned = src1_row_size_aligned;
-    bctx.dst_row_size_aligned  = dst_row_size_aligned;
-    bctx.row_size_bytes        = src0_row_size;
+    bctx.nrows_ಪ್ರತಿ_thread      = fastdiv(nrows + n_ಎಳೆಗಳು - 1, &octx->n_ಎಳೆಗಳು_div);
+    bctx.ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು            = nrows;
+    bctx.ಅಡ್ಡಸಾಲು_ಆರಂಭ             = ಅಡ್ಡಸಾಲು_ಆರಂಭ;
+    bctx.ಖಂಡ_max             = bctx.vtcm_layout.ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್;
+    bctx.src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned = src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    bctx.src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned = src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    bctx.dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned  = dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    bctx.ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು        = src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ;
 
-    bctx.src0_dim1_div  = init_fastdiv_values(src0->ne[1]);
-    bctx.src0_dim2_div  = init_fastdiv_values(src0->ne[2]);
-    bctx.src0_dim12_div = init_fastdiv_values(src0->ne[1] * src0->ne[2]);
+    bctx.src0_dim1_div  = init_fastdiv_ಮೌಲ್ಯಗಳು(src0->ne[1]);
+    bctx.src0_dim2_div  = init_fastdiv_ಮೌಲ್ಯಗಳು(src0->ne[2]);
+    bctx.src0_dim12_div = init_fastdiv_ಮೌಲ್ಯಗಳು(src0->ne[1] * src0->ne[2]);
 
-    bctx.src1_dim1_div  = init_fastdiv_values(src1->ne[1]);
-    bctx.src1_dim2_div  = init_fastdiv_values(src1->ne[2]);
-    bctx.src1_dim3_div  = init_fastdiv_values(src1->ne[3]);
+    bctx.src1_dim1_div  = init_fastdiv_ಮೌಲ್ಯಗಳು(src1->ne[1]);
+    bctx.src1_dim2_div  = init_fastdiv_ಮೌಲ್ಯಗಳು(src1->ne[2]);
+    bctx.src1_dim3_div  = init_fastdiv_ಮೌಲ್ಯಗಳು(src1->ne[3]);
 
-    bctx.split_at_ne01  = kparams->split_at_ne01;
-    bctx.split_at_ne02  = kparams->split_at_ne02;
+    bctx.ವಿಭಜಿಸು_at_ne01  = kparams->ವಿಭಜಿಸು_at_ne01;
+    bctx.ವಿಭಜಿಸು_at_ne02  = kparams->ವಿಭಜಿಸು_at_ne02;
 
-    worker_callback_t worker_func = NULL;
-    void * compute_func = NULL;
+    ಕೆಲಸಗಾರ_callback_t ಕೆಲಸಗಾರ_func = ಖಾಲಿ;
+    ಶೂನ್ಯ * compute_func = ಖಾಲಿ;
 
-    switch (kparams->kernel_type) {
-        case HTP_BINARY_KERNEL_SAME_SHAPE:
-            worker_func = binary_thread_vector_same_shape;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_same_shape_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_same_shape_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_same_shape_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_same_shape_div_f32; break;
-                    default: break;
+    ಆಯ್ಕೆ (kparams->kernel_type) {
+        ಸ್ಥಿತಿ HTP_ದ್ವಿಮಾನ_KERNEL_SAME_SHAPE:
+            ಕೆಲಸಗಾರ_func = ದ್ವಿಮಾನ_thread_ಸದಿಶ_same_shape;
+            ಆದರೆ (src0_type == HTP_TYPE_F32) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_same_shape_ಕೂಡಿಸು_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_same_shape_sub_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_same_shape_mul_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_same_shape_div_f32; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_same_shape_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_same_shape_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_same_shape_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_same_shape_div_f16; break;
-                    default: break;
-                }
-            }
-            break;
-        case HTP_BINARY_KERNEL_ROW_BCAST:
-            worker_func = binary_thread_vector_row_broadcast;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_row_bcast_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_row_bcast_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_row_bcast_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_row_bcast_div_f32; break;
-                    default: break;
-                }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_row_bcast_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_row_bcast_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_row_bcast_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_row_bcast_div_f16; break;
-                    default: break;
+            } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (src0_type == HTP_TYPE_F16) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_same_shape_ಕೂಡಿಸು_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_same_shape_sub_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_same_shape_mul_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_same_shape_div_f16; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
                 }
             }
-            break;
-        case HTP_BINARY_KERNEL_SCALAR:
-            worker_func = binary_thread_scalar;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_scalar_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_scalar_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_scalar_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_scalar_div_f32; break;
-                    default: break;
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ HTP_ದ್ವಿಮಾನ_KERNEL_ಅಡ್ಡಸಾಲು_BCAST:
+            ಕೆಲಸಗಾರ_func = ದ್ವಿಮಾನ_thread_ಸದಿಶ_ಅಡ್ಡಸಾಲು_ಪ್ರಸಾರ;
+            ಆದರೆ (src0_type == HTP_TYPE_F32) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_ಅಡ್ಡಸಾಲು_bcast_ಕೂಡಿಸು_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_ಅಡ್ಡಸಾಲು_bcast_sub_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_ಅಡ್ಡಸಾಲು_bcast_mul_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_ಅಡ್ಡಸಾಲು_bcast_div_f32; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_scalar_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_scalar_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_scalar_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_scalar_div_f16; break;
-                    default: break;
-                }
-            }
-            break;
-        case HTP_BINARY_KERNEL_COMPLEX:
-            worker_func = binary_thread_vector_complex;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_complex_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_complex_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_complex_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_complex_div_f32; break;
-                    default: break;
-                }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_complex_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_complex_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_complex_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_complex_div_f16; break;
-                    default: break;
+            } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (src0_type == HTP_TYPE_F16) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_ಅಡ್ಡಸಾಲು_bcast_ಕೂಡಿಸು_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_ಅಡ್ಡಸಾಲು_bcast_sub_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_ಅಡ್ಡಸಾಲು_bcast_mul_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_ಅಡ್ಡಸಾಲು_bcast_div_f16; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
                 }
             }
-            break;
-        case HTP_BINARY_KERNEL_REPEAT:
-            worker_func = binary_thread_element_repeat;
-            if (src0_type == HTP_TYPE_F32) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_repeat_add_f32; break;
-                    case HTP_OP_SUB: compute_func = compute_repeat_sub_f32; break;
-                    case HTP_OP_MUL: compute_func = compute_repeat_mul_f32; break;
-                    case HTP_OP_DIV: compute_func = compute_repeat_div_f32; break;
-                    default: break;
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ HTP_ದ್ವಿಮಾನ_KERNEL_SCALAR:
+            ಕೆಲಸಗಾರ_func = ದ್ವಿಮಾನ_thread_scalar;
+            ಆದರೆ (src0_type == HTP_TYPE_F32) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_scalar_ಕೂಡಿಸು_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_scalar_sub_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_scalar_mul_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_scalar_div_f32; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
                 }
-            } else if (src0_type == HTP_TYPE_F16) {
-                switch (octx->op) {
-                    case HTP_OP_ADD: compute_func = compute_repeat_add_f16; break;
-                    case HTP_OP_SUB: compute_func = compute_repeat_sub_f16; break;
-                    case HTP_OP_MUL: compute_func = compute_repeat_mul_f16; break;
-                    case HTP_OP_DIV: compute_func = compute_repeat_div_f16; break;
-                    default: break;
+            } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (src0_type == HTP_TYPE_F16) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_scalar_ಕೂಡಿಸು_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_scalar_sub_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_scalar_mul_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_scalar_div_f16; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
                 }
             }
-            break;
-        case HTP_BINARY_KERNEL_ADD_ID:
-            if (octx->op == HTP_OP_ADD_ID && src0_type == HTP_TYPE_F32) {
-                worker_func = binary_thread_add_id_f32;
-                compute_func = (void *) compute_add_id_f32;
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ HTP_ದ್ವಿಮಾನ_KERNEL_COMPLEX:
+            ಕೆಲಸಗಾರ_func = ದ್ವಿಮಾನ_thread_ಸದಿಶ_complex;
+            ಆದರೆ (src0_type == HTP_TYPE_F32) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_complex_ಕೂಡಿಸು_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_complex_sub_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_complex_mul_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_complex_div_f32; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
+                }
+            } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (src0_type == HTP_TYPE_F16) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_complex_ಕೂಡಿಸು_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_complex_sub_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_complex_mul_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_complex_div_f16; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
+                }
             }
-            break;
-        default: break;
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ HTP_ದ್ವಿಮಾನ_KERNEL_REPEAT:
+            ಕೆಲಸಗಾರ_func = ದ್ವಿಮಾನ_thread_element_repeat;
+            ಆದರೆ (src0_type == HTP_TYPE_F32) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_repeat_ಕೂಡಿಸು_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_repeat_sub_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_repeat_mul_f32; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_repeat_div_f32; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
+                }
+            } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (src0_type == HTP_TYPE_F16) {
+                ಆಯ್ಕೆ (octx->op) {
+                    ಸ್ಥಿತಿ HTP_OP_ಕೂಡಿಸು: compute_func = compute_repeat_ಕೂಡಿಸು_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_SUB: compute_func = compute_repeat_sub_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_MUL: compute_func = compute_repeat_mul_f16; ನಿಲ್ಲಿಸು;
+                    ಸ್ಥಿತಿ HTP_OP_DIV: compute_func = compute_repeat_div_f16; ನಿಲ್ಲಿಸು;
+                    ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
+                }
+            }
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ HTP_ದ್ವಿಮಾನ_KERNEL_ಕೂಡಿಸು_ID:
+            ಆದರೆ (octx->op == HTP_OP_ಕೂಡಿಸು_ID && src0_type == HTP_TYPE_F32) {
+                ಕೆಲಸಗಾರ_func = ದ್ವಿಮಾನ_thread_ಕೂಡಿಸು_id_f32;
+                compute_func = (ಶೂನ್ಯ *) compute_ಕೂಡಿಸು_id_f32;
+            }
+            ನಿಲ್ಲಿಸು;
+        ಪೂರ್ವನಿಯೋಜಿತ: ನಿಲ್ಲಿಸು;
     }
 
-    if (!worker_func || !compute_func) {
-        return HTP_STATUS_NO_SUPPORT;
+    ಆದರೆ (!ಕೆಲಸಗಾರ_func || !compute_func) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
     }
 
     bctx.compute = compute_func;
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_ROW_BCAST ||
-        kparams->kernel_type == HTP_BINARY_KERNEL_SCALAR ||
-        kparams->kernel_type == HTP_BINARY_KERNEL_REPEAT ||
-        kparams->kernel_type == HTP_BINARY_KERNEL_COMPLEX ||
-        kparams->kernel_type == HTP_BINARY_KERNEL_ADD_ID) {
-        dma_queue_flush(dma_q);
+    ಆದರೆ (kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_ಅಡ್ಡಸಾಲು_BCAST ||
+        kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_SCALAR ||
+        kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_REPEAT ||
+        kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_COMPLEX ||
+        kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_ಕೂಡಿಸು_ID) {
+        dma_ಸರತಿ_flush(dma_q);
     }
 
-    work_queue_run(octx->ctx->work_queue, worker_func, &bctx, n_threads);
+    work_ಸರತಿ_ಸತತ(octx->ctx->work_ಸರತಿ, ಕೆಲಸಗಾರ_func, &bctx, n_ಎಳೆಗಳು);
 
-    return HTP_STATUS_OK;
+    ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
 }
 
-int op_binary(struct htp_ops_context * octx) {
-    const uint32_t src0_type = octx->src[0]->type;
-    if ((src0_type == HTP_TYPE_F32) || (src0_type == HTP_TYPE_F16)) {
-        return execute_op_binary(octx);
+ಪೂರ್ಣಾಂಕ op_ದ್ವಿಮಾನ(ರಚನೆ htp_ops_context * octx) {
+    ಸ್ಥಿರಾಂಕ uint32_t src0_type = octx->src[0]->type;
+    ಆದರೆ ((src0_type == HTP_TYPE_F32) || (src0_type == HTP_TYPE_F16)) {
+        ಹಿಂತಿರುಗಿ execute_op_ದ್ವಿಮಾನ(octx);
     }
 
-    return HTP_STATUS_NO_SUPPORT;
+    ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
 }

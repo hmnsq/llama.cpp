@@ -1,147 +1,147 @@
-#include "cross_entropy_loss.hpp"
+#ಅನ್ತರ್ಭಾವ "cross_entropy_loss.hpp"
 
-#include <cstdint>
-#include <cmath>
+#ಅನ್ತರ್ಭಾವ <cstdint>
+#ಅನ್ತರ್ಭಾವ <cmath>
 
-template <bool has_shared>
-static __dpct_inline__ void cross_entropy_loss_f32_kernel(
-        const float * __restrict__ logits,
-        const float * __restrict__ labels,
-        float * __restrict__ row_loss,
-        const int nclasses,
-        const int nrows,
-        float * __restrict__ smem,
-        const sycl::nd_item<3> & item) {
+ಮಾದರಿ <ತಾರ್ಕಿಕ has_shared>
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ cross_entropy_loss_f32_kernel(
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * __restrict__ logits,
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * __restrict__ labels,
+        ದಶಮಾಂಶ * __restrict__ ಅಡ್ಡಸಾಲು_loss,
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nclasses,
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nrows,
+        ದಶಮಾಂಶ * __restrict__ smem,
+        ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<3> & ಅಂಶ) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = ಅಂಶ.get_ಗುಂಪು(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ tid = ಅಂಶ.get_local_id(2);
 
-    logits += (int64_t) row * nclasses;
-    labels += (int64_t) row * nclasses;
+    logits += (int64_t) ಅಡ್ಡಸಾಲು * nclasses;
+    labels += (int64_t) ಅಡ್ಡಸಾಲು * nclasses;
 
-    float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = logits[i];
+    ದಶಮಾಂಶ max_logit = -INFINITY;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = tid; i < nclasses; i += WARP_ಗಾತ್ರ) {
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        ಆದರೆ (has_shared) {
             smem[i] = v;
         }
     }
-    max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
+    max_logit = warp_reduce_max<WARP_ಗಾತ್ರ>(max_logit);
 
-    float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = has_shared ? smem[i] : logits[i];
-        sum_exp += sycl::exp(v - max_logit);
+    ದಶಮಾಂಶ ಮೊತ್ತ_exp = 0.0f;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = tid; i < nclasses; i += WARP_ಗಾತ್ರ) {
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ v = has_shared ? smem[i] : logits[i];
+        ಮೊತ್ತ_exp += sycl::ಘಾತಾಂಕ(v - max_logit);
     }
-    sum_exp = warp_reduce_sum<WARP_SIZE>(sum_exp);
-    const float log_sum = sycl::log(sum_exp);
+    ಮೊತ್ತ_exp = warp_reduce_ಮೊತ್ತ<WARP_ಗಾತ್ರ>(ಮೊತ್ತ_exp);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ log_ಮೊತ್ತ = sycl::ಲಘುಗಣಕ(ಮೊತ್ತ_exp);
 
-    float loss = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = has_shared ? smem[i] : logits[i];
-        loss += (v - max_logit - log_sum) * labels[i];
+    ದಶಮಾಂಶ loss = 0.0f;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = tid; i < nclasses; i += WARP_ಗಾತ್ರ) {
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ v = has_shared ? smem[i] : logits[i];
+        loss += (v - max_logit - log_ಮೊತ್ತ) * labels[i];
     }
-    loss = -warp_reduce_sum<WARP_SIZE>(loss) / (float) nrows;
+    loss = -warp_reduce_ಮೊತ್ತ<WARP_ಗಾತ್ರ>(loss) / (ದಶಮಾಂಶ) nrows;
 
-    if (tid == 0) {
-        row_loss[row] = loss;
+    ಆದರೆ (tid == 0) {
+        ಅಡ್ಡಸಾಲು_loss[ಅಡ್ಡಸಾಲು] = loss;
     }
 }
 
-template <bool has_shared>
-static __dpct_inline__ void cross_entropy_loss_back_f32_kernel(
-        const float * __restrict__ grad,
-        const float * __restrict__ logits,
-        const float * __restrict__ labels,
-        float * __restrict__ dst,
-        const int nclasses,
-        const int nrows,
-        float * __restrict__ smem,
-        const sycl::nd_item<3> & item) {
+ಮಾದರಿ <ತಾರ್ಕಿಕ has_shared>
+ಸ್ಥಿರ __dpct_inline__ ಶೂನ್ಯ cross_entropy_loss_ಹಿಂಭಾಗ_f32_kernel(
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * __restrict__ grad,
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * __restrict__ logits,
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * __restrict__ labels,
+        ದಶಮಾಂಶ * __restrict__ dst,
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nclasses,
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nrows,
+        ದಶಮಾಂಶ * __restrict__ smem,
+        ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<3> & ಅಂಶ) {
 
-    const int row = item.get_group(2);
-    const int tid = item.get_local_id(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = ಅಂಶ.get_ಗುಂಪು(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ tid = ಅಂಶ.get_local_id(2);
 
-    logits += (int64_t) row * nclasses;
-    labels += (int64_t) row * nclasses;
-    dst    += (int64_t) row * nclasses;
+    logits += (int64_t) ಅಡ್ಡಸಾಲು * nclasses;
+    labels += (int64_t) ಅಡ್ಡಸಾಲು * nclasses;
+    dst    += (int64_t) ಅಡ್ಡಸಾಲು * nclasses;
 
-    float max_logit = -INFINITY;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = logits[i];
+    ದಶಮಾಂಶ max_logit = -INFINITY;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = tid; i < nclasses; i += WARP_ಗಾತ್ರ) {
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ v = logits[i];
         max_logit = sycl::fmax(max_logit, v);
-        if (has_shared) {
+        ಆದರೆ (has_shared) {
             smem[i] = v;
         }
     }
-    max_logit = warp_reduce_max<WARP_SIZE>(max_logit);
+    max_logit = warp_reduce_max<WARP_ಗಾತ್ರ>(max_logit);
 
-    float sum_exp = 0.0f;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float v = sycl::exp((has_shared ? smem[i] : logits[i]) - max_logit);
-        sum_exp += v;
-        if (has_shared) {
+    ದಶಮಾಂಶ ಮೊತ್ತ_exp = 0.0f;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = tid; i < nclasses; i += WARP_ಗಾತ್ರ) {
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ v = sycl::ಘಾತಾಂಕ((has_shared ? smem[i] : logits[i]) - max_logit);
+        ಮೊತ್ತ_exp += v;
+        ಆದರೆ (has_shared) {
             smem[i] = v;
-        } else {
+        } ಇಲ್ಲದಿದ್ದರೆ {
             dst[i] = v;
         }
     }
-    sum_exp = warp_reduce_sum<WARP_SIZE>(sum_exp);
-    const float inv_sum = 1.0f / sum_exp;
+    ಮೊತ್ತ_exp = warp_reduce_ಮೊತ್ತ<WARP_ಗಾತ್ರ>(ಮೊತ್ತ_exp);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ inv_ಮೊತ್ತ = 1.0f / ಮೊತ್ತ_exp;
 
-    const float d_by_nrows = grad[0] / (float) nrows;
-    for (int i = tid; i < nclasses; i += WARP_SIZE) {
-        const float sm_num = has_shared ? smem[i] : dst[i];
-        dst[i] = (sm_num * inv_sum - labels[i]) * d_by_nrows;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ d_by_nrows = grad[0] / (ದಶಮಾಂಶ) nrows;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = tid; i < nclasses; i += WARP_ಗಾತ್ರ) {
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ sm_ಅಂಕೆ = has_shared ? smem[i] : dst[i];
+        dst[i] = (sm_ಅಂಕೆ * inv_ಮೊತ್ತ - labels[i]) * d_by_nrows;
     }
 }
 
-static void cross_entropy_reduce_rows(
+ಸ್ಥಿರ ಶೂನ್ಯ cross_entropy_reduce_ಅಡ್ಡಸಾಲುಗಳು(
         ggml_backend_sycl_context & ctx,
-        const float * row_loss,
-        float * dst,
-        const int64_t nrows) {
-    if (nrows == 1) {
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಅಡ್ಡಸಾಲು_loss,
+        ದಶಮಾಂಶ * dst,
+        ಸ್ಥಿರಾಂಕ int64_t nrows) {
+    ಆದರೆ (nrows == 1) {
         SYCL_CHECK(CHECK_TRY_ERROR(
-            ctx.stream()->memcpy(dst, row_loss, sizeof(float))));
-        return;
+            ctx.stream()->ಸ್ಮರಣೆ_ನಕಲು(dst, ಅಡ್ಡಸಾಲು_loss, ಗಾತ್ರ(ದಶಮಾಂಶ))));
+        ಹಿಂತಿರುಗಿ;
     }
 
-    ggml_sycl_pool_alloc<float> tmp_alloc(ctx.pool(), nrows);
-    float * tmp = tmp_alloc.get();
+    ggml_sycl_pool_alloc<ದಶಮಾಂಶ> tmp_alloc(ctx.pool(), nrows);
+    ದಶಮಾಂಶ * tmp = tmp_alloc.get();
     SYCL_CHECK(CHECK_TRY_ERROR(
-        ctx.stream()->memcpy(tmp, row_loss, nrows * sizeof(float))));
+        ctx.stream()->ಸ್ಮರಣೆ_ನಕಲು(tmp, ಅಡ್ಡಸಾಲು_loss, nrows * ಗಾತ್ರ(ದಶಮಾಂಶ))));
 
     int64_t cur = nrows;
-    while (cur > 1) {
-        const int64_t out = (cur + WARP_SIZE - 1) / WARP_SIZE;
-        const sycl::range<3> block(1, 1, WARP_SIZE);
-        const sycl::range<3> grid(1, 1, out);
+    ಆಗ (cur > 1) {
+        ಸ್ಥಿರಾಂಕ int64_t ಹೊರಹೋಗು = (cur + WARP_ಗಾತ್ರ - 1) / WARP_ಗಾತ್ರ;
+        ಸ್ಥಿರಾಂಕ sycl::range<3> ಖಂಡ(1, 1, WARP_ಗಾತ್ರ);
+        ಸ್ಥಿರಾಂಕ sycl::range<3> grid(1, 1, ಹೊರಹೋಗು);
         ctx.stream()->parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                const int row = item.get_group(2);
-                const int tid = item.get_local_id(2);
-                const int64_t i = (int64_t) row * WARP_SIZE + tid;
-                float v = i < cur ? tmp[i] : 0.0f;
-                v = warp_reduce_sum<WARP_SIZE>(v);
-                if (tid == 0) {
-                    tmp[row] = v;
+            sycl::nd_range<3>(grid * ಖಂಡ, ಖಂಡ),
+            [=](sycl::nd_ಅಂಶ<3> ಅಂಶ) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = ಅಂಶ.get_ಗುಂಪು(2);
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ tid = ಅಂಶ.get_local_id(2);
+                ಸ್ಥಿರಾಂಕ int64_t i = (int64_t) ಅಡ್ಡಸಾಲು * WARP_ಗಾತ್ರ + tid;
+                ದಶಮಾಂಶ v = i < cur ? tmp[i] : 0.0f;
+                v = warp_reduce_ಮೊತ್ತ<WARP_ಗಾತ್ರ>(v);
+                ಆದರೆ (tid == 0) {
+                    tmp[ಅಡ್ಡಸಾಲು] = v;
                 }
             });
-        cur = out;
+        cur = ಹೊರಹೋಗು;
     }
 
     SYCL_CHECK(CHECK_TRY_ERROR(
-        ctx.stream()->memcpy(dst, tmp, sizeof(float))));
+        ctx.stream()->ಸ್ಮರಣೆ_ನಕಲು(dst, tmp, ಗಾತ್ರ(ದಶಮಾಂಶ))));
 }
 
-void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0 = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
@@ -152,55 +152,55 @@ void ggml_sycl_cross_entropy_loss(ggml_backend_sycl_context & ctx, ggml_tensor *
     GGML_ASSERT(ggml_are_same_shape(src0, src1));
     GGML_ASSERT(ggml_is_scalar(dst));
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    SYCL_CHECK(ggml_sycl_ಗಣ_device(ctx.device));
 
-    const int64_t nclasses = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    ಸ್ಥಿರಾಂಕ int64_t nclasses = src0->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t nrows = ggml_nrows(src0);
 
-    const float * logits_d = (const float *) src0->data;
-    const float * labels_d = (const float *) src1->data;
-    float * dst_d = (float *) dst->data;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * logits_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src0->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * labels_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src1->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ * dst_d = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
 
-    ggml_sycl_pool_alloc<float> row_loss_alloc(ctx.pool(), nrows);
-    float * row_loss = row_loss_alloc.get();
+    ggml_sycl_pool_alloc<ದಶಮಾಂಶ> ಅಡ್ಡಸಾಲು_loss_alloc(ctx.pool(), nrows);
+    ದಶಮಾಂಶ * ಅಡ್ಡಸಾಲು_loss = ಅಡ್ಡಸಾಲು_loss_alloc.get();
 
-    const sycl::range<3> block(1, 1, WARP_SIZE);
-    const sycl::range<3> grid(1, 1, nrows);
-    const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
-    const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
+    ಸ್ಥಿರಾಂಕ sycl::range<3> ಖಂಡ(1, 1, WARP_ಗಾತ್ರ);
+    ಸ್ಥಿರಾಂಕ sycl::range<3> grid(1, 1, nrows);
+    ಸ್ಥಿರಾಂಕ size_t nbytes_shared = (size_t) nclasses * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    ಆದರೆ (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
+            sycl::local_accessor<ದಶಮಾಂಶ, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(grid * block, block),
-                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    cross_entropy_loss_f32_kernel<true>(
-                        logits_d, labels_d, row_loss,
-                        (int) nclasses, (int) nrows,
-                        get_pointer(smem), item);
+                sycl::nd_range<3>(grid * ಖಂಡ, ಖಂಡ),
+                [=](sycl::nd_ಅಂಶ<3> ಅಂಶ) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    cross_entropy_loss_f32_kernel<ನಿಜ>(
+                        logits_d, labels_d, ಅಡ್ಡಸಾಲು_loss,
+                        (ಪೂರ್ಣಾಂಕ) nclasses, (ಪೂರ್ಣಾಂಕ) nrows,
+                        get_ಸೂಚಕ(smem), ಅಂಶ);
                 });
         });
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         ctx.stream()->parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                cross_entropy_loss_f32_kernel<false>(
-                    logits_d, labels_d, row_loss,
-                    (int) nclasses, (int) nrows,
-                    nullptr, item);
+            sycl::nd_range<3>(grid * ಖಂಡ, ಖಂಡ),
+            [=](sycl::nd_ಅಂಶ<3> ಅಂಶ) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                cross_entropy_loss_f32_kernel<ಸುಳ್ಳು>(
+                    logits_d, labels_d, ಅಡ್ಡಸಾಲು_loss,
+                    (ಪೂರ್ಣಾಂಕ) nclasses, (ಪೂರ್ಣಾಂಕ) nrows,
+                    ಶೂನ್ಯಸೂಚಕ, ಅಂಶ);
             });
     }
 
-    cross_entropy_reduce_rows(ctx, row_loss, dst_d, nrows);
+    cross_entropy_reduce_ಅಡ್ಡಸಾಲುಗಳು(ctx, ಅಡ್ಡಸಾಲು_loss, dst_d, nrows);
 }
 
-void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_cross_entropy_loss_ಹಿಂಭಾಗ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
 
-    const ggml_tensor * grad  = dst->src[0];
-    const ggml_tensor * src0f = dst->src[1];
-    const ggml_tensor * src1f = dst->src[2];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * grad  = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0f = dst->src[1];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src1f = dst->src[2];
 
     GGML_ASSERT(grad->type == GGML_TYPE_F32);
     GGML_ASSERT(src0f->type == GGML_TYPE_F32);
@@ -215,41 +215,41 @@ void ggml_sycl_cross_entropy_loss_back(ggml_backend_sycl_context & ctx, ggml_ten
     GGML_ASSERT(ggml_are_same_shape(src0f, src1f));
     GGML_ASSERT(ggml_are_same_shape(src0f, dst));
 
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    SYCL_CHECK(ggml_sycl_ಗಣ_device(ctx.device));
 
-    const int64_t nclasses = src0f->ne[0];
-    const int64_t nrows = ggml_nrows(src0f);
+    ಸ್ಥಿರಾಂಕ int64_t nclasses = src0f->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t nrows = ggml_nrows(src0f);
 
-    const float * grad_d  = (const float *) grad->data;
-    const float * logits_d = (const float *) src0f->data;
-    const float * labels_d = (const float *) src1f->data;
-    float * dst_d = (float *) dst->data;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * grad_d  = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) grad->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * logits_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src0f->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * labels_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src1f->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ * dst_d = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
 
-    const sycl::range<3> block(1, 1, WARP_SIZE);
-    const sycl::range<3> grid(1, 1, nrows);
-    const size_t nbytes_shared = (size_t) nclasses * sizeof(float);
-    const size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
+    ಸ್ಥಿರಾಂಕ sycl::range<3> ಖಂಡ(1, 1, WARP_ಗಾತ್ರ);
+    ಸ್ಥಿರಾಂಕ sycl::range<3> grid(1, 1, nrows);
+    ಸ್ಥಿರಾಂಕ size_t nbytes_shared = (size_t) nclasses * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ size_t smpbo = ggml_sycl_info().devices[ctx.device].smpbo;
 
-    if (nbytes_shared <= smpbo) {
+    ಆದರೆ (nbytes_shared <= smpbo) {
         ctx.stream()->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem(sycl::range<1>(nclasses), cgh);
+            sycl::local_accessor<ದಶಮಾಂಶ, 1> smem(sycl::range<1>(nclasses), cgh);
             cgh.parallel_for(
-                sycl::nd_range<3>(grid * block, block),
-                [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    cross_entropy_loss_back_f32_kernel<true>(
+                sycl::nd_range<3>(grid * ಖಂಡ, ಖಂಡ),
+                [=](sycl::nd_ಅಂಶ<3> ಅಂಶ) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    cross_entropy_loss_ಹಿಂಭಾಗ_f32_kernel<ನಿಜ>(
                         grad_d, logits_d, labels_d, dst_d,
-                        (int) nclasses, (int) nrows,
-                        get_pointer(smem), item);
+                        (ಪೂರ್ಣಾಂಕ) nclasses, (ಪೂರ್ಣಾಂಕ) nrows,
+                        get_ಸೂಚಕ(smem), ಅಂಶ);
                 });
         });
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         ctx.stream()->parallel_for(
-            sycl::nd_range<3>(grid * block, block),
-            [=](sycl::nd_item<3> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                cross_entropy_loss_back_f32_kernel<false>(
+            sycl::nd_range<3>(grid * ಖಂಡ, ಖಂಡ),
+            [=](sycl::nd_ಅಂಶ<3> ಅಂಶ) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                cross_entropy_loss_ಹಿಂಭಾಗ_f32_kernel<ಸುಳ್ಳು>(
                     grad_d, logits_d, labels_d, dst_d,
-                    (int) nclasses, (int) nrows,
-                    nullptr, item);
+                    (ಪೂರ್ಣಾಂಕ) nclasses, (ಪೂರ್ಣಾಂಕ) nrows,
+                    ಶೂನ್ಯಸೂಚಕ, ಅಂಶ);
             });
     }
 }

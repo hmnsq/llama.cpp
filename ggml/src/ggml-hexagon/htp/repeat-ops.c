@@ -1,169 +1,169 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ಸೂಚನೆ clang diagnostic ignored "-Wunused-variable"
+#ಸೂಚನೆ clang diagnostic ignored "-Wunused-function"
+#ಸೂಚನೆ clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#ಅನ್ತರ್ಭಾವ <HAP_farf.h>
+#ಅನ್ತರ್ಭಾವ <HAP_perf.h>
 
-#include <string.h>
+#ಅನ್ತರ್ಭಾವ <string.h>
 
-#include "hvx-utils.h"
+#ಅನ್ತರ್ಭಾವ "hvx-utils.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_COMMON_DECL_C
+#ಅನ್ತರ್ಭಾವ "ggml-common.h"
+#ಅನ್ತರ್ಭಾವ "htp-ctx.h"
+#ಅನ್ತರ್ಭಾವ "hex-common.h"
+#ಅನ್ತರ್ಭಾವ "hex-profile.h"
+#ಅನ್ತರ್ಭಾವ "htp-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp-tensor.h"
 
-struct htp_repeat_context {
-    struct htp_ops_context * octx;
+ರಚನೆ htp_repeat_context {
+    ರಚನೆ htp_ops_context * octx;
 
     uint32_t nr0;
     uint32_t nr1;
     uint32_t nr2;
     uint32_t nr3;
 
-    uint32_t nrows_per_thread;
-    uint32_t total_dst_rows;  // ne1 * ne2 * ne3
-    uint32_t row_start;
+    uint32_t nrows_ಪ್ರತಿ_thread;
+    uint32_t ಒಟ್ಟು_dst_ಅಡ್ಡಸಾಲುಗಳು;  // ne1 * ne2 * ne3
+    uint32_t ಅಡ್ಡಸಾಲು_ಆರಂಭ;
 
-    size_t   type_size;
+    size_t   type_ಗಾತ್ರ;
 };
 
-static void repeat_job_per_thread(unsigned int nth, unsigned int ith, void * data) {
-    const struct htp_repeat_context * rctx = (const struct htp_repeat_context *) data;
-    struct htp_ops_context * octx = rctx->octx;
-    const struct htp_tensor * src = octx->src[0];
-    const struct htp_tensor * dst = octx->dst;
+ಸ್ಥಿರ ಶೂನ್ಯ repeat_ಕೆಲಸ_ಪ್ರತಿ_thread(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_repeat_context * rctx = (ಸ್ಥಿರಾಂಕ ರಚನೆ htp_repeat_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context * octx = rctx->octx;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src = octx->src[0];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * dst = octx->dst;
 
-    const uint32_t ne00 = src->ne[0];
-    const uint32_t ne01 = src->ne[1];
-    const uint32_t ne02 = src->ne[2];
-    const uint32_t ne03 = src->ne[3];
+    ಸ್ಥಿರಾಂಕ uint32_t ne00 = src->ne[0];
+    ಸ್ಥಿರಾಂಕ uint32_t ne01 = src->ne[1];
+    ಸ್ಥಿರಾಂಕ uint32_t ne02 = src->ne[2];
+    ಸ್ಥಿರಾಂಕ uint32_t ne03 = src->ne[3];
 
-    const uint32_t nb00 = src->nb[0];
-    const uint32_t nb01 = src->nb[1];
-    const uint32_t nb02 = src->nb[2];
-    const uint32_t nb03 = src->nb[3];
+    ಸ್ಥಿರಾಂಕ uint32_t nb00 = src->nb[0];
+    ಸ್ಥಿರಾಂಕ uint32_t nb01 = src->nb[1];
+    ಸ್ಥಿರಾಂಕ uint32_t nb02 = src->nb[2];
+    ಸ್ಥಿರಾಂಕ uint32_t nb03 = src->nb[3];
 
-    const uint32_t ne0 = dst->ne[0];
-    const uint32_t ne1 = dst->ne[1];
-    const uint32_t ne2 = dst->ne[2];
-    const uint32_t ne3 = dst->ne[3];
+    ಸ್ಥಿರಾಂಕ uint32_t ne0 = dst->ne[0];
+    ಸ್ಥಿರಾಂಕ uint32_t ne1 = dst->ne[1];
+    ಸ್ಥಿರಾಂಕ uint32_t ne2 = dst->ne[2];
+    ಸ್ಥಿರಾಂಕ uint32_t ne3 = dst->ne[3];
 
-    const uint32_t nb0 = dst->nb[0];
-    const uint32_t nb1 = dst->nb[1];
-    const uint32_t nb2 = dst->nb[2];
-    const uint32_t nb3 = dst->nb[3];
+    ಸ್ಥಿರಾಂಕ uint32_t nb0 = dst->nb[0];
+    ಸ್ಥಿರಾಂಕ uint32_t nb1 = dst->nb[1];
+    ಸ್ಥಿರಾಂಕ uint32_t nb2 = dst->nb[2];
+    ಸ್ಥಿರಾಂಕ uint32_t nb3 = dst->nb[3];
 
-    const uint32_t nr0 = rctx->nr0;
-    const uint32_t nr1 = rctx->nr1;
-    const uint32_t nr2 = rctx->nr2;
-    const uint32_t nr3 = rctx->nr3;
+    ಸ್ಥಿರಾಂಕ uint32_t nr0 = rctx->nr0;
+    ಸ್ಥಿರಾಂಕ uint32_t nr1 = rctx->nr1;
+    ಸ್ಥಿರಾಂಕ uint32_t nr2 = rctx->nr2;
+    ಸ್ಥಿರಾಂಕ uint32_t nr3 = rctx->nr3;
 
-    const size_t row_bytes = ne00 * rctx->type_size;
+    ಸ್ಥಿರಾಂಕ size_t ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು = ne00 * rctx->type_ಗಾತ್ರ;
 
-    const uint32_t row_start = rctx->row_start + rctx->nrows_per_thread * ith;
-    const uint32_t row_end   = MIN(row_start + rctx->nrows_per_thread, rctx->row_start + rctx->total_dst_rows);
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಆರಂಭ = rctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + rctx->nrows_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಕೊನೆ   = MIN(ಅಡ್ಡಸಾಲು_ಆರಂಭ + rctx->nrows_ಪ್ರತಿ_thread, rctx->ಅಡ್ಡಸಾಲು_ಆರಂಭ + rctx->ಒಟ್ಟು_dst_ಅಡ್ಡಸಾಲುಗಳು);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    ರಚನೆ htp_thread_trace * tr = &octx->ctx->trace[ith];
+    htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, ಅಡ್ಡಸಾಲು_ಆರಂಭ);
 
-    for (uint32_t dst_row = row_start; dst_row < row_end; dst_row++) {
+    ಗಾಗಿ (uint32_t dst_ಅಡ್ಡಸಾಲು = ಅಡ್ಡಸಾಲು_ಆರಂಭ; dst_ಅಡ್ಡಸಾಲು < ಅಡ್ಡಸಾಲು_ಕೊನೆ; dst_ಅಡ್ಡಸಾಲು++) {
         // Decompose flat dst row index into (i1, i2, i3)
-        const uint32_t i1 = dst_row % ne1;
-        const uint32_t i2 = (dst_row / ne1) % ne2;
-        const uint32_t i3 = dst_row / (ne1 * ne2);
+        ಸ್ಥಿರಾಂಕ uint32_t i1 = dst_ಅಡ್ಡಸಾಲು % ne1;
+        ಸ್ಥಿರಾಂಕ uint32_t i2 = (dst_ಅಡ್ಡಸಾಲು / ne1) % ne2;
+        ಸ್ಥಿರಾಂಕ uint32_t i3 = dst_ಅಡ್ಡಸಾಲು / (ne1 * ne2);
 
         // Map to source indices (tiling)
-        const uint32_t k1 = i1 % ne01;
-        const uint32_t k2 = i2 % ne02;
-        const uint32_t k3 = i3 % ne03;
+        ಸ್ಥಿರಾಂಕ uint32_t k1 = i1 % ne01;
+        ಸ್ಥಿರಾಂಕ uint32_t k2 = i2 % ne02;
+        ಸ್ಥಿರಾಂಕ uint32_t k3 = i3 % ne03;
 
-        const uint8_t * src_row = (const uint8_t *) src->data + k1 * nb01 + k2 * nb02 + k3 * nb03;
-        uint8_t * dst_base      = (uint8_t *) dst->data + i1 * nb1 + i2 * nb2 + i3 * nb3;
+        ಸ್ಥಿರಾಂಕ uint8_t * src_ಅಡ್ಡಸಾಲು = (ಸ್ಥಿರಾಂಕ uint8_t *) src->ದತ್ತಾಂಶ + k1 * nb01 + k2 * nb02 + k3 * nb03;
+        uint8_t * dst_ತಳ      = (uint8_t *) dst->ದತ್ತಾಂಶ + i1 * nb1 + i2 * nb2 + i3 * nb3;
 
         // Tile along dimension 0
-        for (uint32_t i0 = 0; i0 < nr0; i0++) {
-            uint8_t * dst_ptr = dst_base + i0 * ne00 * nb0;
-            memcpy(dst_ptr, src_row, row_bytes);
+        ಗಾಗಿ (uint32_t i0 = 0; i0 < nr0; i0++) {
+            uint8_t * dst_ptr = dst_ತಳ + i0 * ne00 * nb0;
+            ಸ್ಮರಣೆ_ನಕಲು(dst_ptr, src_ಅಡ್ಡಸಾಲು, ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು);
         }
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, ಅಡ್ಡಸಾಲು_ಆರಂಭ);
 
-    FARF(HIGH, "repeat %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
+    FARF(ಮೇಲಿನ_2, "repeat %d/%d: (%ux%ux%ux%u) -> (%ux%ux%ux%u) rows %u:%u\n",
          ith, nth, src->ne[0], src->ne[1], src->ne[2], src->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
-         row_start, row_end);
+         ಅಡ್ಡಸಾಲು_ಆರಂಭ, ಅಡ್ಡಸಾಲು_ಕೊನೆ);
 }
 
-int op_repeat(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+ಪೂರ್ಣಾಂಕ op_repeat(ರಚನೆ htp_ops_context * octx) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src0 = octx->src[0];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * dst  = octx->dst;
 
     // Validate that dst dims are multiples of src dims
-    if (dst->ne[0] % src0->ne[0] != 0 ||
+    ಆದರೆ (dst->ne[0] % src0->ne[0] != 0 ||
         dst->ne[1] % src0->ne[1] != 0 ||
         dst->ne[2] % src0->ne[2] != 0 ||
         dst->ne[3] % src0->ne[3] != 0) {
         FARF(ERROR, "repeat: dst dims must be multiples of src dims\n");
-        return HTP_STATUS_INVAL_PARAMS;
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_INVAL_PARAMS;
     }
 
-    size_t type_size;
-    switch (src0->type) {
-        case HTP_TYPE_F32: type_size = 4; break;
-        case HTP_TYPE_F16: type_size = 2; break;
-        default:
+    size_t type_ಗಾತ್ರ;
+    ಆಯ್ಕೆ (src0->type) {
+        ಸ್ಥಿತಿ HTP_TYPE_F32: type_ಗಾತ್ರ = 4; ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ HTP_TYPE_F16: type_ಗಾತ್ರ = 2; ನಿಲ್ಲಿಸು;
+        ಪೂರ್ವನಿಯೋಜಿತ:
             FARF(ERROR, "repeat: unsupported type %u\n", src0->type);
-            return HTP_STATUS_NO_SUPPORT;
+            ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    ಆದರೆ (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
     }
 
-    const uint32_t total_dst_rows  = dst->ne[1] * dst->ne[2] * dst->ne[3];
-    const size_t dst_row_size = dst->ne[0] * type_size;
+    ಸ್ಥಿರಾಂಕ uint32_t ಒಟ್ಟು_dst_ಅಡ್ಡಸಾಲುಗಳು  = dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ಸ್ಥಿರಾಂಕ size_t dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = dst->ne[0] * type_ಗಾತ್ರ;
 
-    uint32_t row_start = 0;
-    uint32_t nrows     = total_dst_rows;
+    uint32_t ಅಡ್ಡಸಾಲು_ಆರಂಭ = 0;
+    uint32_t nrows     = ಒಟ್ಟು_dst_ಅಡ್ಡಸಾಲುಗಳು;
 
-    if (octx->ctx->mdev.count > 1) {
-        uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, type_size, (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_dst_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_start = range.start;
-        nrows     = range.count;
+    ಆದರೆ (octx->ctx->mdev.ಎಣಿಕೆ_2 > 1) {
+        uint32_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk = 0;
+        htp_tensor_mdev_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk(dst, type_ಗಾತ್ರ, (uint32_t) dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, &ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk);
+        ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor_mdev_range range = htp_tensor_mdev_ವಿಭಜನೆ(ಒಟ್ಟು_dst_ಅಡ್ಡಸಾಲುಗಳು, ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.ಎಣಿಕೆ_2, &octx->ctx->mdev.ಎಣಿಕೆ_div);
+        ಅಡ್ಡಸಾಲು_ಆರಂಭ = range.ಆರಂಭ;
+        nrows     = range.ಎಣಿಕೆ_2;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ಆದರೆ (nrows == 0) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
     }
 
-    const uint32_t n_threads = octx->n_threads;
+    ಸ್ಥಿರಾಂಕ uint32_t n_ಎಳೆಗಳು = octx->n_ಎಳೆಗಳು;
 
-    struct htp_repeat_context rctx = {
+    ರಚನೆ htp_repeat_context rctx = {
         .octx             = octx,
         .nr0              = dst->ne[0] / src0->ne[0],
         .nr1              = dst->ne[1] / src0->ne[1],
         .nr2              = dst->ne[2] / src0->ne[2],
         .nr3              = dst->ne[3] / src0->ne[3],
-        .nrows_per_thread = fastdiv(nrows + n_threads - 1, &octx->n_threads_div),
-        .total_dst_rows   = nrows,
-        .row_start        = row_start,
-        .type_size        = type_size,
+        .nrows_ಪ್ರತಿ_thread = fastdiv(nrows + n_ಎಳೆಗಳು - 1, &octx->n_ಎಳೆಗಳು_div),
+        .ಒಟ್ಟು_dst_ಅಡ್ಡಸಾಲುಗಳು   = nrows,
+        .ಅಡ್ಡಸಾಲು_ಆರಂಭ        = ಅಡ್ಡಸಾಲು_ಆರಂಭ,
+        .type_ಗಾತ್ರ        = type_ಗಾತ್ರ,
     };
 
-    FARF(HIGH, "repeat: (%ux%ux%ux%u) -> (%ux%ux%ux%u) nr=(%u,%u,%u,%u)\n",
+    FARF(ಮೇಲಿನ_2, "repeat: (%ux%ux%ux%u) -> (%ux%ux%ux%u) nr=(%u,%u,%u,%u)\n",
          src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3],
          rctx.nr0, rctx.nr1, rctx.nr2, rctx.nr3);
 
-    work_queue_run(octx->ctx->work_queue, repeat_job_per_thread, &rctx, n_threads);
+    work_ಸರತಿ_ಸತತ(octx->ctx->work_ಸರತಿ, repeat_ಕೆಲಸ_ಪ್ರತಿ_thread, &rctx, n_ಎಳೆಗಳು);
 
-    return HTP_STATUS_OK;
+    ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
 }

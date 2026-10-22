@@ -1,22 +1,22 @@
-#include <sycl/sycl.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "ggml.h"
-#include "gated_delta_net.hpp"
-#include <cmath>
+#ಅನ್ತರ್ಭಾವ <sycl/sycl.hpp>
+#ಅನ್ತರ್ಭಾವ "dpct/helper.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
+#ಅನ್ತರ್ಭಾವ "ggml.h"
+#ಅನ್ತರ್ಭಾವ "gated_delta_net.hpp"
+#ಅನ್ತರ್ಭಾವ <cmath>
 
 
-template <int S_v, bool KDA, bool keep_rs_t>
-void gated_delta_net_sycl(const float *     q,
-                          const float *     k,
-                          const float *     v,
-                          const float *     g,
-                          const float *     beta,
-                          const float *     curr_state,
-                          float *           dst,
-                          float *           state,
+ಮಾದರಿ <ಪೂರ್ಣಾಂಕ S_v, ತಾರ್ಕಿಕ KDA, ತಾರ್ಕಿಕ keep_rs_t>
+ಶೂನ್ಯ gated_delta_net_sycl(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *     q,
+                          ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *     k,
+                          ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *     v,
+                          ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *     g,
+                          ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *     beta,
+                          ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *     curr_state,
+                          ದಶಮಾಂಶ *           dst,
+                          ದಶಮಾಂಶ *           state,
                           int64_t           H,
-                          int64_t           n_tokens,
+                          int64_t           n_ಟೋಕನುಗಳು,
                           int64_t           sq1,
                           int64_t           sq2,
                           int64_t           sq3,
@@ -26,154 +26,154 @@ void gated_delta_net_sycl(const float *     q,
                           int64_t           sb1,
                           int64_t           sb2,
                           int64_t           sb3,
-                          const sycl::uint3 neqk1_magic,
-                          const sycl::uint3 rq3_magic,
-                          float             scale,
-                          int64_t           state_slot_stride,
-                          int               K) {
-    auto           item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const uint32_t h_idx    = item_ct1.get_group(2);
-    const uint32_t sequence = item_ct1.get_group(1);
+                          ಸ್ಥಿರಾಂಕ sycl::uint3 neqk1_magic,
+                          ಸ್ಥಿರಾಂಕ sycl::uint3 rq3_magic,
+                          ದಶಮಾಂಶ             scale,
+                          int64_t           state_ಸ್ಥಾನ_stride,
+                          ಪೂರ್ಣಾಂಕ               K) {
+    ಸ್ವಯಂಚಾಲಿತ           ಅಂಶ_ct1 = sycl::ext::oneapi::this_work_ಅಂಶ::get_nd_ಅಂಶ<3>();
+    ಸ್ಥಿರಾಂಕ uint32_t h_idx    = ಅಂಶ_ct1.get_ಗುಂಪು(2);
+    ಸ್ಥಿರಾಂಕ uint32_t sequence = ಅಂಶ_ct1.get_ಗುಂಪು(1);
     // each warp owns one column, using warp-level primitives to reduce across rows
-    const int      lane     = item_ct1.get_local_id(2);
-    const int      col      = item_ct1.get_group(0) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ      lane     = ಅಂಶ_ct1.get_local_id(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ      ಲಂಬಸಾಲು      = ಅಂಶ_ct1.get_ಗುಂಪು(0) * ಅಂಶ_ct1.get_local_range(1) + ಅಂಶ_ct1.get_local_id(1);
 
-    const uint32_t iq1 = fastmodulo(h_idx, neqk1_magic);
-    const uint32_t iq3 = fastdiv(sequence, rq3_magic);
+    ಸ್ಥಿರಾಂಕ uint32_t iq1 = fastmodulo(h_idx, neqk1_magic);
+    ಸ್ಥಿರಾಂಕ uint32_t iq3 = fastdiv(sequence, rq3_magic);
 
-    float *       attn_data        = dst;
+    ದಶಮಾಂಶ *       attn_ದತ್ತಾಂಶ        = dst;
 
     // input state holds s0 only [S_v, S_v, H, n_seqs] — seq stride is D = H * S_v * S_v.
     // output state layout (per-slot D * n_seqs) — same per-(seq,head) offset as before.
-    const int64_t state_in_offset      = sequence * H * S_v * S_v + h_idx * S_v * S_v;
-    const int64_t state_out_offset     = (sequence * H + h_idx) * S_v * S_v;
-    state += state_out_offset;
-    curr_state += state_in_offset + col * S_v;
-    attn_data += (sequence * n_tokens * H + h_idx) * S_v;
+    ಸ್ಥಿರಾಂಕ int64_t state_ಒಳ_ಸ್ಥಾನಾಂತರ      = sequence * H * S_v * S_v + h_idx * S_v * S_v;
+    ಸ್ಥಿರಾಂಕ int64_t state_ಹೊರಹೋಗು_ಸ್ಥಾನಾಂತರ     = (sequence * H + h_idx) * S_v * S_v;
+    state += state_ಹೊರಹೋಗು_ಸ್ಥಾನಾಂತರ;
+    curr_state += state_ಒಳ_ಸ್ಥಾನಾಂತರ + ಲಂಬಸಾಲು * S_v;
+    attn_ದತ್ತಾಂಶ += (sequence * n_ಟೋಕನುಗಳು * H + h_idx) * S_v;
 
-    constexpr int warp_size = ggml_sycl_get_physical_warp_size() < S_v ? ggml_sycl_get_physical_warp_size() : S_v;
-    static_assert(S_v % warp_size == 0, "S_v must be a multiple of warp_size");
-    constexpr int rows_per_lane = (S_v + warp_size - 1) / warp_size;
-    float         s_shard[rows_per_lane];
-#pragma unroll
-    for (int r = 0; r < rows_per_lane; r++) {
-        const int i = r * warp_size + lane;
+    constexpr ಪೂರ್ಣಾಂಕ warp_ಗಾತ್ರ = ggml_sycl_get_physical_warp_ಗಾತ್ರ() < S_v ? ggml_sycl_get_physical_warp_ಗಾತ್ರ() : S_v;
+    static_assert(S_v % warp_ಗಾತ್ರ == 0, "S_v must be a multiple of warp_size");
+    constexpr ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_lane = (S_v + warp_ಗಾತ್ರ - 1) / warp_ಗಾತ್ರ;
+    ದಶಮಾಂಶ         s_shard[ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_lane];
+#ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ r = 0; r < ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_lane; r++) {
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ i = r * warp_ಗಾತ್ರ + lane;
         s_shard[r]  = curr_state[i];
     }
 
     // snapshot slot mapping: slot 0 = most recent state, slot s = s tokens back.
     // When n_tokens < K only slots 0..n_tokens-1 are written; older slots are caller-owned.
 
-    for (int t = 0; t < n_tokens; t++) {
-        const float * q_t = q + iq3 * sq3 + t * sq2 + iq1 * sq1;
-        const float * k_t = k + iq3 * sq3 + t * sq2 + iq1 * sq1;
-        const float * v_t = v + sequence * sv3 + t * sv2 + h_idx * sv1;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ t = 0; t < n_ಟೋಕನುಗಳು; t++) {
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * q_t = q + iq3 * sq3 + t * sq2 + iq1 * sq1;
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * k_t = k + iq3 * sq3 + t * sq2 + iq1 * sq1;
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * v_t = v + sequence * sv3 + t * sv2 + h_idx * sv1;
 
-        const int64_t gb_offset = sequence * sb3 + t * sb2 + h_idx * sb1;
-        const float * beta_t = beta + gb_offset;
-        const float * g_t    = g    + gb_offset * (KDA ? S_v : 1);
+        ಸ್ಥಿರಾಂಕ int64_t gb_ಸ್ಥಾನಾಂತರ = sequence * sb3 + t * sb2 + h_idx * sb1;
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * beta_t = beta + gb_ಸ್ಥಾನಾಂತರ;
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * g_t    = g    + gb_ಸ್ಥಾನಾಂತರ * (KDA ? S_v : 1);
 
-        const float beta_val = *beta_t;
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ beta_val = *beta_t;
 
-        if constexpr (!KDA) {
-            const float g_val = sycl::native::exp(*g_t);
+        ಆದರೆ constexpr (!KDA) {
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ g_val = sycl::native::ಘಾತಾಂಕ(*g_t);
 
             // kv[col] = (S^T @ k)[col] = sum_i S[i][col] * k[i]
-            float kv_shard = 0.0f;
-#pragma unroll
-            for (int r = 0; r < rows_per_lane; r++) {
-                const int i = r * warp_size + lane;
+            ದಶಮಾಂಶ kv_shard = 0.0f;
+#ಸೂಚನೆ unroll
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ r = 0; r < ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_lane; r++) {
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ i = r * warp_ಗಾತ್ರ + lane;
                 kv_shard += s_shard[r] * k_t[i];
             }
-            float kv_col = warp_reduce_sum<warp_size>(kv_shard);
+            ದಶಮಾಂಶ kv_ಲಂಬಸಾಲು = warp_reduce_ಮೊತ್ತ<warp_ಗಾತ್ರ>(kv_shard);
 
             // delta[col] = (v[col] - g * kv[col]) * beta
-            float delta_col = (v_t[col] - g_val * kv_col) * beta_val;
+            ದಶಮಾಂಶ delta_ಲಂಬಸಾಲು = (v_t[ಲಂಬಸಾಲು] - g_val * kv_ಲಂಬಸಾಲು) * beta_val;
 
             // fused: S[i][col] = g * S[i][col] + k[i] * delta[col]
             // attn[col] = (S^T @ q)[col] = sum_i S[i][col] * q[i]
-            float attn_partial = 0.0f;
-#pragma unroll
-            for (int r = 0; r < rows_per_lane; r++) {
-                const int i = r * warp_size + lane;
-                s_shard[r]  = g_val * s_shard[r] + k_t[i] * delta_col;
+            ದಶಮಾಂಶ attn_partial = 0.0f;
+#ಸೂಚನೆ unroll
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ r = 0; r < ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_lane; r++) {
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ i = r * warp_ಗಾತ್ರ + lane;
+                s_shard[r]  = g_val * s_shard[r] + k_t[i] * delta_ಲಂಬಸಾಲು;
                 attn_partial += s_shard[r] * q_t[i];
             }
 
-            float attn_col = warp_reduce_sum<warp_size>(attn_partial);
+            ದಶಮಾಂಶ attn_ಲಂಬಸಾಲು = warp_reduce_ಮೊತ್ತ<warp_ಗಾತ್ರ>(attn_partial);
 
-            if (lane == 0) {
-                attn_data[col] = attn_col * scale;
+            ಆದರೆ (lane == 0) {
+                attn_ದತ್ತಾಂಶ[ಲಂಬಸಾಲು] = attn_ಲಂಬಸಾಲು * scale;
             }
-        } else {
+        } ಇಲ್ಲದಿದ್ದರೆ {
             // kv[col] = sum_i g[i] * S[i][col] * k[i]
-            float kv_shard = 0.0f;
-#pragma unroll
-            for (int r = 0; r < rows_per_lane; r++) {
-                const int i = r * warp_size + lane;
-                kv_shard += sycl::native::exp(g_t[i]) * s_shard[r] * k_t[i];
+            ದಶಮಾಂಶ kv_shard = 0.0f;
+#ಸೂಚನೆ unroll
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ r = 0; r < ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_lane; r++) {
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ i = r * warp_ಗಾತ್ರ + lane;
+                kv_shard += sycl::native::ಘಾತಾಂಕ(g_t[i]) * s_shard[r] * k_t[i];
             }
 
-            float kv_col = warp_reduce_sum<warp_size>(kv_shard);
+            ದಶಮಾಂಶ kv_ಲಂಬಸಾಲು = warp_reduce_ಮೊತ್ತ<warp_ಗಾತ್ರ>(kv_shard);
 
             // delta[col] = (v[col] - kv[col]) * beta
-            float delta_col = (v_t[col] - kv_col) * beta_val;
+            ದಶಮಾಂಶ delta_ಲಂಬಸಾಲು = (v_t[ಲಂಬಸಾಲು] - kv_ಲಂಬಸಾಲು) * beta_val;
 
             // fused: S[i][col] = g[i] * S[i][col] + k[i] * delta[col]
             // attn[col] = (S^T @ q)[col] = sum_i S[i][col] * q[i]
-            float attn_partial = 0.0f;
-#pragma unroll
-            for (int r = 0; r < rows_per_lane; r++) {
-                const int i = r * warp_size + lane;
-                s_shard[r]  = sycl::native::exp(g_t[i]) * s_shard[r] + k_t[i] * delta_col;
+            ದಶಮಾಂಶ attn_partial = 0.0f;
+#ಸೂಚನೆ unroll
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ r = 0; r < ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_lane; r++) {
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ i = r * warp_ಗಾತ್ರ + lane;
+                s_shard[r]  = sycl::native::ಘಾತಾಂಕ(g_t[i]) * s_shard[r] + k_t[i] * delta_ಲಂಬಸಾಲು;
                 attn_partial += s_shard[r] * q_t[i];
             }
 
-            float attn_col = warp_reduce_sum<warp_size>(attn_partial);
+            ದಶಮಾಂಶ attn_ಲಂಬಸಾಲು = warp_reduce_ಮೊತ್ತ<warp_ಗಾತ್ರ>(attn_partial);
 
-            if (lane == 0) {
-                attn_data[col] = attn_col * scale;
+            ಆದರೆ (lane == 0) {
+                attn_ದತ್ತಾಂಶ[ಲಂಬಸಾಲು] = attn_ಲಂಬಸಾಲು * scale;
             }
         }
 
-        attn_data += S_v * H;
+        attn_ದತ್ತಾಂಶ += S_v * H;
 
 
     // Write state back to global memory
-        if constexpr (keep_rs_t) {
-            const int target_slot = (int) n_tokens - 1 - t;
-            if (target_slot >= 0 && target_slot < K) {
-                float * curr_state = state + target_slot * state_slot_stride;
-#pragma unroll
-                for (int r = 0; r < rows_per_lane; r++) {
-                    const int i = r * warp_size + lane;
-                    curr_state[col * S_v + i] = s_shard[r];
+        ಆದರೆ constexpr (keep_rs_t) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಗುರಿ_ಸ್ಥಾನ = (ಪೂರ್ಣಾಂಕ) n_ಟೋಕನುಗಳು - 1 - t;
+            ಆದರೆ (ಗುರಿ_ಸ್ಥಾನ >= 0 && ಗುರಿ_ಸ್ಥಾನ < K) {
+                ದಶಮಾಂಶ * curr_state = state + ಗುರಿ_ಸ್ಥಾನ * state_ಸ್ಥಾನ_stride;
+#ಸೂಚನೆ unroll
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ r = 0; r < ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_lane; r++) {
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ i = r * warp_ಗಾತ್ರ + lane;
+                    curr_state[ಲಂಬಸಾಲು * S_v + i] = s_shard[r];
                 }
             }
         }
     }
 
-    if constexpr (!keep_rs_t) {
-#pragma unroll
-        for (int r = 0; r < rows_per_lane; r++) {
-            const int i          = r * warp_size + lane;
-            state[col * S_v + i] = s_shard[r];
+    ಆದರೆ constexpr (!keep_rs_t) {
+#ಸೂಚನೆ unroll
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ r = 0; r < ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_lane; r++) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ i          = r * warp_ಗಾತ್ರ + lane;
+            state[ಲಂಬಸಾಲು * S_v + i] = s_shard[r];
         }
     }
 }
 
-template <bool KDA, bool keep_rs_t>
-static void launch_gated_delta_net(const float *   q_d,
-                                   const float *   k_d,
-                                   const float *   v_d,
-                                   const float *   g_d,
-                                   const float *   b_d,
-                                   const float *   s_d,
-                                   float *         dst_d,
-                                   float *         state_d,
+ಮಾದರಿ <ತಾರ್ಕಿಕ KDA, ತಾರ್ಕಿಕ keep_rs_t>
+ಸ್ಥಿರ ಶೂನ್ಯ launch_gated_delta_net(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *   q_d,
+                                   ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *   k_d,
+                                   ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *   v_d,
+                                   ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *   g_d,
+                                   ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *   b_d,
+                                   ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *   s_d,
+                                   ದಶಮಾಂಶ *         dst_d,
+                                   ದಶಮಾಂಶ *         state_d,
                                    int64_t         S_v,
                                    int64_t         H,
-                                   int64_t         n_tokens,
+                                   int64_t         n_ಟೋಕನುಗಳು,
                                    int64_t         n_seqs,
                                    int64_t         sq1,
                                    int64_t         sq2,
@@ -186,75 +186,75 @@ static void launch_gated_delta_net(const float *   q_d,
                                    int64_t         sb3,
                                    int64_t         neqk1,
                                    int64_t         rq3,
-                                   float           scale,
-                                   int64_t         state_slot_stride,
-                                   int             K,
-                                   dpct::queue_ptr stream) {
+                                   ದಶಮಾಂಶ           scale,
+                                   int64_t         state_ಸ್ಥಾನ_stride,
+                                   ಪೂರ್ಣಾಂಕ             K,
+                                   dpct::ಸರತಿ_ptr stream) {
     //TODO: Add chunked kernel for even faster pre-fill
-    const int warp_size = ggml_sycl_info().devices[ggml_sycl_get_device()].warp_size;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ warp_ಗಾತ್ರ = ggml_sycl_info().devices[ggml_sycl_get_device()].warp_ಗಾತ್ರ;
 
-    const int num_warps = 4;
-    dpct::dim3 grid_dims(H, n_seqs, (S_v + num_warps - 1) / num_warps);
-    dpct::dim3 block_dims(warp_size <= S_v ? warp_size : S_v, num_warps, 1);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_warps = 4;
+    dpct::dim3 grid_dims(H, n_seqs, (S_v + ಅಂಕೆ_warps - 1) / ಅಂಕೆ_warps);
+    dpct::dim3 ಖಂಡ_dims(warp_ಗಾತ್ರ <= S_v ? warp_ಗಾತ್ರ : S_v, ಅಂಕೆ_warps, 1);
 
-    const sycl::uint3 neqk1_magic = init_fastdiv_values(neqk1);
-    const sycl::uint3 rq3_magic   = init_fastdiv_values(rq3);
+    ಸ್ಥಿರಾಂಕ sycl::uint3 neqk1_magic = init_fastdiv_ಮೌಲ್ಯಗಳು(neqk1);
+    ಸ್ಥಿರಾಂಕ sycl::uint3 rq3_magic   = init_fastdiv_ಮೌಲ್ಯಗಳು(rq3);
 
-    switch (S_v) {
-        case 16:
+    ಆಯ್ಕೆ (S_v) {
+        ಸ್ಥಿತಿ 16:
             {
-                constexpr int sv = 16;
-                stream->parallel_for(sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                                     [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                                         gated_delta_net_sycl<sv, KDA, keep_rs_t>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_tokens,
+                constexpr ಪೂರ್ಣಾಂಕ sv = 16;
+                stream->parallel_for(sycl::nd_range<3>(grid_dims * ಖಂಡ_dims, ಖಂಡ_dims),
+                                     [=](sycl::nd_ಅಂಶ<3> /*item_ct1*/) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                                         gated_delta_net_sycl<sv, KDA, keep_rs_t>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_ಟೋಕನುಗಳು,
                                                                        sq1, sq2, sq3, sv1, sv2, sv3, sb1, sb2,
-                                                                       sb3, neqk1_magic, rq3_magic, scale, state_slot_stride, K);
+                                                                       sb3, neqk1_magic, rq3_magic, scale, state_ಸ್ಥಾನ_stride, K);
                                      });
             }
-            break;
-        case 32:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ 32:
             {
-                constexpr int sv = 32;
-                stream->parallel_for(sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                                     [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                                         gated_delta_net_sycl<sv, KDA, keep_rs_t>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_tokens,
+                constexpr ಪೂರ್ಣಾಂಕ sv = 32;
+                stream->parallel_for(sycl::nd_range<3>(grid_dims * ಖಂಡ_dims, ಖಂಡ_dims),
+                                     [=](sycl::nd_ಅಂಶ<3> /*item_ct1*/) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                                         gated_delta_net_sycl<sv, KDA, keep_rs_t>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_ಟೋಕನುಗಳು,
                                                                        sq1, sq2, sq3, sv1, sv2, sv3, sb1, sb2,
-                                                                       sb3, neqk1_magic, rq3_magic, scale, state_slot_stride, K);
+                                                                       sb3, neqk1_magic, rq3_magic, scale, state_ಸ್ಥಾನ_stride, K);
                                      });
             }
-            break;
-        case 64: {
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ 64: {
             {
-                constexpr int sv = 64;
-                stream->parallel_for(sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                                        [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                constexpr ಪೂರ್ಣಾಂಕ sv = 64;
+                stream->parallel_for(sycl::nd_range<3>(grid_dims * ಖಂಡ_dims, ಖಂಡ_dims),
+                                        [=](sycl::nd_ಅಂಶ<3> /*item_ct1*/) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
                                             gated_delta_net_sycl<sv, KDA, keep_rs_t>(
-                                                q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_tokens, sq1, sq2,
-                                                sq3, sv1, sv2, sv3, sb1, sb2, sb3, neqk1_magic, rq3_magic, scale, state_slot_stride, K);
+                                                q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_ಟೋಕನುಗಳು, sq1, sq2,
+                                                sq3, sv1, sv2, sv3, sb1, sb2, sb3, neqk1_magic, rq3_magic, scale, state_ಸ್ಥಾನ_stride, K);
                                         });
             }
-            break;
+            ನಿಲ್ಲಿಸು;
         }
-        case 128: {
+        ಸ್ಥಿತಿ 128: {
             {
-                constexpr int sv = 128;
-                stream->parallel_for(sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                                        [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                constexpr ಪೂರ್ಣಾಂಕ sv = 128;
+                stream->parallel_for(sycl::nd_range<3>(grid_dims * ಖಂಡ_dims, ಖಂಡ_dims),
+                                        [=](sycl::nd_ಅಂಶ<3> /*item_ct1*/) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
                                             gated_delta_net_sycl<sv, KDA, keep_rs_t>(
-                                                q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_tokens, sq1, sq2,
-                                                sq3, sv1, sv2, sv3, sb1, sb2, sb3, neqk1_magic, rq3_magic, scale, state_slot_stride, K);
+                                                q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_ಟೋಕನುಗಳು, sq1, sq2,
+                                                sq3, sv1, sv2, sv3, sb1, sb2, sb3, neqk1_magic, rq3_magic, scale, state_ಸ್ಥಾನ_stride, K);
                                         });
             }
-            break;
+            ನಿಲ್ಲಿಸು;
         }
-        default:
+        ಪೂರ್ವನಿಯೋಜಿತ:
             GGML_ABORT("fatal error");
-            break;
+            ನಿಲ್ಲಿಸು;
     }
 }
 
-static void ggml_sycl_op_gated_delta_net_impl(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
-                                              const ggml_sycl_gated_delta_net_fused_cache * cache) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_sycl_op_gated_delta_net_impl(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
+                                              ಸ್ಥಿರಾಂಕ ggml_sycl_gated_delta_net_fused_cache * cache) {
     ggml_tensor * src_q     = dst->src[0];
     ggml_tensor * src_k     = dst->src[1];
     ggml_tensor * src_v     = dst->src[2];
@@ -270,30 +270,30 @@ static void ggml_sycl_op_gated_delta_net_impl(ggml_backend_sycl_context & ctx, g
     GGML_TENSOR_LOCALS(size_t,  nbv, src_v, nb);
     GGML_TENSOR_LOCALS(size_t,  nbb, src_beta, nb);
 
-    const int64_t S_v      = nev0;
-    const int64_t H        = nev1;
-    const int64_t n_tokens = nev2;
-    const int64_t n_seqs   = nev3;
+    ಸ್ಥಿರಾಂಕ int64_t S_v      = nev0;
+    ಸ್ಥಿರಾಂಕ int64_t H        = nev1;
+    ಸ್ಥಿರಾಂಕ int64_t n_ಟೋಕನುಗಳು = nev2;
+    ಸ್ಥಿರಾಂಕ int64_t n_seqs   = nev3;
 
-    const bool kda = (src_g->ne[0] == S_v);
+    ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ kda = (src_g->ne[0] == S_v);
 
     GGML_ASSERT(neq1 == nek1);
-    const int64_t neqk1 = neq1;
+    ಸ್ಥಿರಾಂಕ int64_t neqk1 = neq1;
 
-    const int64_t rq3 = nev3 / neq3;
+    ಸ್ಥಿರಾಂಕ int64_t rq3 = nev3 / neq3;
 
-    const float * q_d = (const float *) src_q->data;
-    const float * k_d = (const float *) src_k->data;
-    const float * v_d = (const float *) src_v->data;
-    const float * g_d = (const float *) src_g->data;
-    const float * b_d = (const float *) src_beta->data;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * q_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src_q->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * k_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src_k->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * v_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src_v->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * g_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src_g->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * b_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src_beta->ದತ್ತಾಂಶ;
 
-    const float * s_d   = (const float *) src_state->data;
-    float *       dst_d = (float *) dst->data;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * s_d   = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src_state->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ *       dst_d = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
 
-    GGML_ASSERT(ggml_is_contiguous_rows(src_q));
-    GGML_ASSERT(ggml_is_contiguous_rows(src_k));
-    GGML_ASSERT(ggml_is_contiguous_rows(src_v));
+    GGML_ASSERT(ggml_is_contiguous_ಅಡ್ಡಸಾಲುಗಳು(src_q));
+    GGML_ASSERT(ggml_is_contiguous_ಅಡ್ಡಸಾಲುಗಳು(src_k));
+    GGML_ASSERT(ggml_is_contiguous_ಅಡ್ಡಸಾಲುಗಳು(src_v));
     GGML_ASSERT(ggml_are_same_stride(src_q, src_k));
     GGML_ASSERT(src_g->ne[0] == 1 || kda);
     GGML_ASSERT(ggml_is_contiguous(src_g));
@@ -301,65 +301,65 @@ static void ggml_sycl_op_gated_delta_net_impl(ggml_backend_sycl_context & ctx, g
     GGML_ASSERT(ggml_is_contiguous(src_state));
 
     // strides in floats (beta strides used for both g and beta offset computation)
-    const int64_t sq1 = nbq1 / sizeof(float);
-    const int64_t sq2 = nbq2 / sizeof(float);
-    const int64_t sq3 = nbq3 / sizeof(float);
-    const int64_t sv1 = nbv1 / sizeof(float);
-    const int64_t sv2 = nbv2 / sizeof(float);
-    const int64_t sv3 = nbv3 / sizeof(float);
-    const int64_t sb1 = nbb1 / sizeof(float);
-    const int64_t sb2 = nbb2 / sizeof(float);
-    const int64_t sb3 = nbb3 / sizeof(float);
+    ಸ್ಥಿರಾಂಕ int64_t sq1 = nbq1 / ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t sq2 = nbq2 / ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t sq3 = nbq3 / ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t sv1 = nbv1 / ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t sv2 = nbv2 / ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t sv3 = nbv3 / ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t sb1 = nbb1 / ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t sb2 = nbb2 / ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t sb3 = nbb3 / ಗಾತ್ರ(ದಶಮಾಂಶ);
 
-    const float scale = 1.0f / sqrtf((float) S_v);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ scale = 1.0f / sqrtf((ದಶಮಾಂಶ) S_v);
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
 
     // K (snapshot slot count) is an op param; state holds s0 only [S_v, S_v, H, n_seqs].
-    const int K = ggml_get_op_params_i32(dst, 0);
-    const bool keep_rs = K > 1;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ K = ggml_get_op_params_i32(dst, 0);
+    ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ keep_rs = K > 1;
 
     // recurrent state -> dst tail (after attention scores), or the cache when fusing
-    float * state_d           = dst_d + S_v * H * n_tokens * n_seqs;
-    int64_t state_slot_stride = S_v * S_v * H * n_seqs;
-    if (cache != nullptr) {
-        state_d           = cache->data;
-        state_slot_stride = cache->slot_stride;
+    ದಶಮಾಂಶ * state_d           = dst_d + S_v * H * n_ಟೋಕನುಗಳು * n_seqs;
+    int64_t state_ಸ್ಥಾನ_stride = S_v * S_v * H * n_seqs;
+    ಆದರೆ (cache != ಶೂನ್ಯಸೂಚಕ) {
+        state_d           = cache->ದತ್ತಾಂಶ;
+        state_ಸ್ಥಾನ_stride = cache->ಸ್ಥಾನ_stride;
     }
 
-    if (kda) {
-        if (keep_rs) {
-            launch_gated_delta_net<true, true>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
-                S_v, H, n_tokens, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
-                sb1, sb2, sb3, neqk1, rq3, scale, state_slot_stride, K, stream);
-        } else {
-            launch_gated_delta_net<true, false>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
-                S_v, H, n_tokens, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
-                sb1, sb2, sb3, neqk1, rq3, scale, state_slot_stride, K, stream);
+    ಆದರೆ (kda) {
+        ಆದರೆ (keep_rs) {
+            launch_gated_delta_net<ನಿಜ, ನಿಜ>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
+                S_v, H, n_ಟೋಕನುಗಳು, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
+                sb1, sb2, sb3, neqk1, rq3, scale, state_ಸ್ಥಾನ_stride, K, stream);
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            launch_gated_delta_net<ನಿಜ, ಸುಳ್ಳು>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
+                S_v, H, n_ಟೋಕನುಗಳು, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
+                sb1, sb2, sb3, neqk1, rq3, scale, state_ಸ್ಥಾನ_stride, K, stream);
         }
-    } else {
-        if (keep_rs) {
-            launch_gated_delta_net<false, true>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
-                S_v, H, n_tokens, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
-                sb1, sb2, sb3, neqk1, rq3, scale, state_slot_stride, K, stream);
-        } else {
-            launch_gated_delta_net<false, false>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
-                S_v, H, n_tokens, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
-                sb1, sb2, sb3, neqk1, rq3, scale, state_slot_stride, K, stream);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಆದರೆ (keep_rs) {
+            launch_gated_delta_net<ಸುಳ್ಳು, ನಿಜ>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
+                S_v, H, n_ಟೋಕನುಗಳು, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
+                sb1, sb2, sb3, neqk1, rq3, scale, state_ಸ್ಥಾನ_stride, K, stream);
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            launch_gated_delta_net<ಸುಳ್ಳು, ಸುಳ್ಳು>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
+                S_v, H, n_ಟೋಕನುಗಳು, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
+                sb1, sb2, sb3, neqk1, rq3, scale, state_ಸ್ಥಾನ_stride, K, stream);
         }
     }
 }
 
-void ggml_sycl_op_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_op_gated_delta_net_impl(ctx, dst, nullptr);
+ಶೂನ್ಯ ggml_sycl_op_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_op_gated_delta_net_impl(ctx, dst, ಶೂನ್ಯಸೂಚಕ);
 }
 
-void ggml_sycl_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
     ggml_sycl_op_gated_delta_net(ctx, dst);
 }
 
-void ggml_sycl_op_gated_delta_net_fused_cache(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
+ಶೂನ್ಯ ggml_sycl_op_gated_delta_net_fused_cache(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
                                               ggml_sycl_gated_delta_net_fused_cache cache) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
     ggml_sycl_op_gated_delta_net_impl(ctx, dst, &cache);

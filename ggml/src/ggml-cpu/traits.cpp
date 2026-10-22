@@ -1,36 +1,36 @@
-#include "traits.h"
+#ಅನ್ತರ್ಭಾವ "traits.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend.h"
 
-namespace ggml::cpu {
+ನಾಮಾಕಾಶ ggml::cpu {
 tensor_traits::~tensor_traits() {}
 
-extra_buffer_type::~extra_buffer_type() {}
+extra_ಬಫರ್_type::~extra_ಬಫರ್_type() {}
 }  // namespace ggml::cpu
 
-bool ggml_cpu_extra_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->compute_forward(params, op)) {
-                return true;
+ತಾರ್ಕಿಕ ggml_cpu_extra_compute_forward(ರಚನೆ ggml_compute_params * params, ರಚನೆ ggml_tensor * op) {
+    ಗಾಗಿ (ಸ್ವಯಂಚಾಲಿತ extra : ggml_backend_cpu_get_extra_ಬಫರ್_types()) {
+        ಆದರೆ (extra && extra->context) {
+            ಸ್ವಯಂಚಾಲಿತ buf_extra     = (ggml::cpu::extra_ಬಫರ್_type *) extra->context;
+            ಸ್ವಯಂಚಾಲಿತ tensor_traits = buf_extra->get_tensor_traits(op);
+            ಆದರೆ (tensor_traits && tensor_traits->compute_forward(params, op)) {
+                ಹಿಂತಿರುಗಿ ನಿಜ;
             }
         }
     }
-    return false;
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }
 
-bool ggml_cpu_extra_work_size(int n_threads, const struct ggml_tensor * op, size_t * size) {
-    for (auto extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra && extra->context) {
-            auto buf_extra     = (ggml::cpu::extra_buffer_type *) extra->context;
-            auto tensor_traits = buf_extra->get_tensor_traits(op);
-            if (tensor_traits && tensor_traits->work_size(n_threads, op, *size)) {
-                return true;
+ತಾರ್ಕಿಕ ggml_cpu_extra_work_ಗಾತ್ರ(ಪೂರ್ಣಾಂಕ n_ಎಳೆಗಳು, ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * op, size_t * size) {
+    ಗಾಗಿ (ಸ್ವಯಂಚಾಲಿತ extra : ggml_backend_cpu_get_extra_ಬಫರ್_types()) {
+        ಆದರೆ (extra && extra->context) {
+            ಸ್ವಯಂಚಾಲಿತ buf_extra     = (ggml::cpu::extra_ಬಫರ್_type *) extra->context;
+            ಸ್ವಯಂಚಾಲಿತ tensor_traits = buf_extra->get_tensor_traits(op);
+            ಆದರೆ (tensor_traits && tensor_traits->work_ಗಾತ್ರ(n_ಎಳೆಗಳು, op, *size)) {
+                ಹಿಂತಿರುಗಿ ನಿಜ;
             }
         }
     }
-    return false;
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }

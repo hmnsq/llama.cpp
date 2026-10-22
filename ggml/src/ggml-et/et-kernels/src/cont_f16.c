@@ -5,103 +5,103 @@
 // Note: F16 is represented as uint16_t (IEEE 754 binary16 format)
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ಅನ್ತರ್ಭಾವ "ggml_tensor.h"
+#ಅನ್ತರ್ಭಾವ "platform.h"
 
-#include <assert.h>
-#include <stdbool.h>
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <assert.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-struct ggml_et_cont_params {
-    struct ggml_tensor src0;  // F16 input tensor (non-contiguous)
-    struct ggml_tensor dst;   // F16 output tensor (contiguous)
+ರಚನೆ ggml_et_cont_params {
+    ರಚನೆ ggml_tensor src0;  // F16 input tensor (non-contiguous)
+    ರಚನೆ ggml_tensor dst;   // F16 output tensor (contiguous)
 };
 
-int entry_point(struct ggml_et_cont_params * params, void * env) {
+ಪೂರ್ಣಾಂಕ ನಮೂದು_ಬಿಂದು(ರಚನೆ ggml_et_cont_params * params, ಶೂನ್ಯ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ಆದರೆ (!kernel_env) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = 2048;  //get_num_threads(kernel_env->shire_mask);
+    ಪೂರ್ಣಾಂಕ thread_id   = get_relative_thread_id(kernel_env->shire_ಮುಖವಾಡ);
+    ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಎಳೆಗಳು = 2048;  //get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ಆದರೆ (thread_id < 0) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ಆದರೆ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ಹಿಂತಿರುಗಿ -1;  // Invalid pointer
     }
 
-    struct ggml_tensor * src0 = &params->src0;  // Non-contiguous input
-    struct ggml_tensor * dst  = &params->dst;   // Contiguous output
+    ರಚನೆ ggml_tensor * src0 = &params->src0;  // Non-contiguous input
+    ರಚನೆ ggml_tensor * dst  = &params->dst;   // Contiguous output
 
-    if (src0->type != GGML_TYPE_F16 || dst->type != GGML_TYPE_F16) {
-        return -1;  // Unsupported type combination
+    ಆದರೆ (src0->type != GGML_TYPE_F16 || dst->type != GGML_TYPE_F16) {
+        ಹಿಂತಿರುಗಿ -1;  // Unsupported type combination
     }
 
-    uint16_t * src0_data = (uint16_t *) src0->data;
-    uint16_t * dst_data  = (uint16_t *) dst->data;
+    uint16_t * src0_ದತ್ತಾಂಶ = (uint16_t *) src0->ದತ್ತಾಂಶ;
+    uint16_t * dst_ದತ್ತಾಂಶ  = (uint16_t *) dst->ದತ್ತಾಂಶ;
 
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    ಆದರೆ (!src0_ದತ್ತಾಂಶ || !dst_ದತ್ತಾಂಶ) {
+        ಹಿಂತಿರುಗಿ -1;  // Null data pointer
     }
 
-    const int64_t src_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
-    const int64_t dst_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
-    if (src_elements != dst_elements) {
-        return -1;  // Element count mismatch
+    ಸ್ಥಿರಾಂಕ int64_t src_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ಸ್ಥಿರಾಂಕ int64_t dst_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ಆದರೆ (src_elements != dst_elements) {
+        ಹಿಂತಿರುಗಿ -1;  // Element count mismatch
     }
 
     // Source tensor dimensions and strides
-    const int64_t ne00 = src0->ne[0];
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ಸ್ಥಿರಾಂಕ int64_t ne00 = src0->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t ne01 = src0->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t ne02 = src0->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t ne03 = src0->ne[3];
 
-    const int64_t nb00 = src0->nb[0];
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
+    ಸ್ಥಿರಾಂಕ int64_t nb00 = src0->nb[0];
+    ಸ್ಥಿರಾಂಕ int64_t nb01 = src0->nb[1];
+    ಸ್ಥಿರಾಂಕ int64_t nb02 = src0->nb[2];
+    ಸ್ಥಿರಾಂಕ int64_t nb03 = src0->nb[3];
 
     // Parallelize by rows (dimension 1)
-    const int64_t total_rows      = ne01;
-    const int64_t rows_per_thread = (total_rows + num_threads - 1) / num_threads;
-    const int64_t start_row       = thread_id * rows_per_thread;
-    const int64_t end_row = (start_row + rows_per_thread < total_rows) ? (start_row + rows_per_thread) : total_rows;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು      = ne01;
+    ಸ್ಥಿರಾಂಕ int64_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread = (ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು + ಅಂಕೆ_ಎಳೆಗಳು - 1) / ಅಂಕೆ_ಎಳೆಗಳು;
+    ಸ್ಥಿರಾಂಕ int64_t ಆರಂಭ_ಅಡ್ಡಸಾಲು       = thread_id * ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread;
+    ಸ್ಥಿರಾಂಕ int64_t ಕೊನೆ_ಅಡ್ಡಸಾಲು = (ಆರಂಭ_ಅಡ್ಡಸಾಲು + ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread < ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು) ? (ಆರಂಭ_ಅಡ್ಡಸಾಲು + ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread) : ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು;
 
-    if (start_row >= total_rows) {
-        return 0;
+    ಆದರೆ (ಆರಂಭ_ಅಡ್ಡಸಾಲು >= ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
     // Iterate over source tensor dimensions
-    for (int64_t i03 = 0; i03 < ne03; i03++) {
-        for (int64_t i02 = 0; i02 < ne02; i02++) {
+    ಗಾಗಿ (int64_t i03 = 0; i03 < ne03; i03++) {
+        ಗಾಗಿ (int64_t i02 = 0; i02 < ne02; i02++) {
             // Calculate base linear index for this (i03, i02) slice in destination
-            const int64_t dst_linear_base = i03 * ne02 * ne01 * ne00 + i02 * ne01 * ne00;
+            ಸ್ಥಿರಾಂಕ int64_t dst_ರೇಖೀಯ_ತಳ = i03 * ne02 * ne01 * ne00 + i02 * ne01 * ne00;
 
             // Process this thread's assigned rows
-            for (int64_t i01 = start_row; i01 < end_row; i01++) {
+            ಗಾಗಿ (int64_t i01 = ಆರಂಭ_ಅಡ್ಡಸಾಲು; i01 < ಕೊನೆ_ಅಡ್ಡಸಾಲು; i01++) {
                 // Linear index for start of this row in destination
-                const int64_t dst_linear_row_base = dst_linear_base + i01 * ne00;
+                ಸ್ಥಿರಾಂಕ int64_t dst_ರೇಖೀಯ_ಅಡ್ಡಸಾಲು_ತಳ = dst_ರೇಖೀಯ_ತಳ + i01 * ne00;
 
                 // Inner loop over dimension 0
-                for (int64_t i00 = 0; i00 < ne00; i00++) {
+                ಗಾಗಿ (int64_t i00 = 0; i00 < ne00; i00++) {
                     // Source offset using non-contiguous strides
-                    const int64_t    src_offset_bytes = i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
-                    const uint16_t * src_ptr = (const uint16_t *) ((const char *) src0_data + src_offset_bytes);
+                    ಸ್ಥಿರಾಂಕ int64_t    src_ಸ್ಥಾನಾಂತರ_ಬೈಟುಗಳು = i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03;
+                    ಸ್ಥಿರಾಂಕ uint16_t * src_ptr = (ಸ್ಥಿರಾಂಕ uint16_t *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src0_ದತ್ತಾಂಶ + src_ಸ್ಥಾನಾಂತರ_ಬೈಟುಗಳು);
 
                     // Destination linear index (contiguous layout)
-                    const int64_t dst_linear_idx = dst_linear_row_base + i00;
+                    ಸ್ಥಿರಾಂಕ int64_t dst_ರೇಖೀಯ_idx = dst_ರೇಖೀಯ_ಅಡ್ಡಸಾಲು_ತಳ + i00;
 
                     // Use atomic store for thread safety
-                    atomic_store_f16((volatile uint16_t *) &dst_data[dst_linear_idx], *src_ptr);
+                    atomic_store_f16((ಅಸ್ಥಿರ uint16_t *) &dst_ದತ್ತಾಂಶ[dst_ರೇಖೀಯ_idx], *src_ptr);
                 }
             }
         }
     }
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }

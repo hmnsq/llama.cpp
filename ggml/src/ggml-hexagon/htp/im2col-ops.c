@@ -1,39 +1,39 @@
-#pragma clang diagnostic ignored "-Wunused-variable"
-#pragma clang diagnostic ignored "-Wunused-function"
-#pragma clang diagnostic ignored "-Wunused-but-set-variable"
+#ಸೂಚನೆ clang diagnostic ignored "-Wunused-variable"
+#ಸೂಚನೆ clang diagnostic ignored "-Wunused-function"
+#ಸೂಚನೆ clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <hexagon_protos.h>
-#include <hexagon_types.h>
-#include <string.h>
+#ಅನ್ತರ್ಭಾವ <HAP_farf.h>
+#ಅನ್ತರ್ಭಾವ <hexagon_protos.h>
+#ಅನ್ತರ್ಭಾವ <hexagon_types.h>
+#ಅನ್ತರ್ಭಾವ <string.h>
 
-#include "hex-common.h"
+#ಅನ್ತರ್ಭಾವ "hex-common.h"
 
-#define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "hvx-utils.h"
-#include "dma-queue.h"
-#include "hex-profile.h"
-#include "htp-vtcm.h"
-#include "htp-tensor.h"
-#include "im2col-ops.h"
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_COMMON_DECL_C
+#ಅನ್ತರ್ಭಾವ "ggml-common.h"
+#ಅನ್ತರ್ಭಾವ "htp-ctx.h"
+#ಅನ್ತರ್ಭಾವ "htp-ops.h"
+#ಅನ್ತರ್ಭಾವ "hvx-utils.h"
+#ಅನ್ತರ್ಭಾವ "dma-queue.h"
+#ಅನ್ತರ್ಭಾವ "hex-profile.h"
+#ಅನ್ತರ್ಭಾವ "htp-vtcm.h"
+#ಅನ್ತರ್ಭಾವ "htp-tensor.h"
+#ಅನ್ತರ್ಭಾವ "im2col-ops.h"
 
-struct htp_im2col_context {
-    struct htp_ops_context * octx;
+ರಚನೆ htp_im2col_context {
+    ರಚನೆ htp_ops_context * octx;
 
-    uint32_t pe_row_base;                          // first output row index assigned to this dev (DMA path)
+    uint32_t pe_ಅಡ್ಡಸಾಲು_ತಳ;                          // first output row index assigned to this dev (DMA path)
     uint32_t pe_nrows;                             // number of output rows assigned to this dev (DMA path)
-    uint32_t pe_rows_per_thread;                   // output rows per worker
-    uint32_t pe_src_row_bytes;                     // one output row's source, rounded 256
-    uint32_t pe_dst_row_bytes;                     // one output row's dst: OW*patch_stride*2, rounded 256
+    uint32_t pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread;                   // output rows per worker
+    uint32_t pe_src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು;                     // one output row's source, rounded 256
+    uint32_t pe_dst_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು;                     // one output row's dst: OW*patch_stride*2, rounded 256
 
     // Patch-embed DMA path VTCM ping-pong.
     uint8_t * pe_vtcm_src;                         // base of the 2x src buffers region
     uint8_t * pe_vtcm_dst;                         // base of the 2x dst buffers region
-    uint32_t  pe_src_size_per_thread;              // 2 * pe_src_row_bytes
-    uint32_t  pe_dst_size_per_thread;              // 2 * pe_dst_row_bytes
+    uint32_t  pe_src_ಗಾತ್ರ_ಪ್ರತಿ_thread;              // 2 * pe_src_row_bytes
+    uint32_t  pe_dst_ಗಾತ್ರ_ಪ್ರತಿ_thread;              // 2 * pe_dst_row_bytes
 
     uint32_t pe_owb;                               // output-col block size
     uint32_t pe_wb;                                // staged source window width
@@ -48,505 +48,505 @@ struct htp_im2col_context {
     uint32_t patch_stride;
 
     // Per-thread initial coordinates (removes division from thread prologue)
-    uint32_t thread_in[HTP_MAX_NTHREADS];
+    uint32_t thread_ಒಳ[HTP_MAX_NTHREADS];
     uint32_t thread_iod[HTP_MAX_NTHREADS];
     uint32_t thread_ioh[HTP_MAX_NTHREADS];
 
-    void * compute;
+    ಶೂನ್ಯ * compute;
     uint32_t dst_elem;
 };
 
-typedef void (*im2col_blocked_compute_fn_t)(
-    const struct htp_im2col_context * ictx,
-    void * restrict dstb, const float * restrict srcb,
-    float * restrict scratch,
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*im2col_blocked_compute_fn_t)(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,
+    ಶೂನ್ಯ * ಸೀಮಿತ dstb, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb,
+    ದಶಮಾಂಶ * ಸೀಮಿತ scratch,
     uint32_t nb, uint32_t c0, uint32_t ioh);
 
-typedef void (*im2col_patchembed_compute_fn_t)(
-    const struct htp_im2col_context * ictx,
-    void * restrict dstb, const float * restrict srcb, uint32_t ioh);
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*im2col_patchembed_compute_fn_t)(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,
+    ಶೂನ್ಯ * ಸೀಮಿತ dstb, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb, uint32_t ioh);
 
-typedef void (*im2col_3d_blocked_compute_fn_t)(
-    const struct htp_im2col_context * ictx,
-    void * restrict dstb, const float * restrict srcb,
-    float * restrict scratch,
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*im2col_3d_blocked_compute_fn_t)(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,
+    ಶೂನ್ಯ * ಸೀಮಿತ dstb, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb,
+    ದಶಮಾಂಶ * ಸೀಮಿತ scratch,
     uint32_t nb, uint32_t c0, uint32_t iod, uint32_t ioh);
 
-typedef void (*im2col_3d_patchembed_compute_fn_t)(
-    const struct htp_im2col_context * ictx,
-    void * restrict dstb, const float * restrict srcb);
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*im2col_3d_patchembed_compute_fn_t)(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,
+    ಶೂನ್ಯ * ಸೀಮಿತ dstb, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb);
 
-struct im2col_cursor {
+ರಚನೆ im2col_cursor {
     uint32_t r;
-    uint32_t in;
+    uint32_t ಒಳ;
     uint32_t iod;
     uint32_t ioh;
     uint32_t c0;
 };
 
-static inline void im2col_step_row(struct im2col_cursor * c, const struct htp_im2col_context * ictx) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ im2col_ಹೆಜ್ಜೆ_ಅಡ್ಡಸಾಲು(ರಚನೆ im2col_cursor * c, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx) {
     c->r++;
     c->ioh++;
-    if (c->ioh >= ictx->OH) {
+    ಆದರೆ (c->ioh >= ictx->OH) {
         c->ioh = 0;
-        c->in++;
+        c->ಒಳ++;
     }
 }
 
-static inline void im2col_step_block(struct im2col_cursor * c, const struct htp_im2col_context * ictx) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ im2col_ಹೆಜ್ಜೆ_ಖಂಡ(ರಚನೆ im2col_cursor * c, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx) {
     c->c0 += ictx->pe_owb;
-    if (c->c0 >= ictx->OW) {
+    ಆದರೆ (c->c0 >= ictx->OW) {
         c->c0 = 0;
         c->r++;
         c->ioh++;
-        if (c->ioh >= ictx->OH) {
+        ಆದರೆ (c->ioh >= ictx->OH) {
             c->ioh = 0;
-            c->in++;
+            c->ಒಳ++;
         }
     }
 }
 
-static void im2col_blocked_dma_stage(struct htp_im2col_context * ictx, dma_queue * dma_q,
-                                     float * srcb, const struct im2col_cursor * c) {
-    const uint32_t in = c->in, ioh = c->ioh, c0 = c->c0;
-    const struct htp_ops_context * octx = ictx->octx;
-    const struct htp_tensor * src1 = octx->src[1];
-    const int32_t s0 = octx->op_params[0], s1 = octx->op_params[1];
-    const int32_t p0 = octx->op_params[2], p1 = octx->op_params[3];
-    const int32_t d1 = octx->op_params[5];
-    const bool is_2D = (octx->op_params[6] == 1);
-    const uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;
-    const uint32_t KH = ictx->KH;
-    const uint32_t Wb = ictx->pe_wb;
-    const dma_addr_t src_data = src1->data;
-    const int32_t win0 = (int32_t) c0 * s0 - p0;
-    const size_t src_channel_stride = is_2D ? src1->nb[2] : src1->nb[1];
-    const size_t batch_offset        = is_2D ? (size_t) in * src1->nb[3] : (size_t) in * src1->nb[2];
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_blocked_dma_stage(ರಚನೆ htp_im2col_context * ictx, dma_ಸರತಿ * dma_q,
+                                     ದಶಮಾಂಶ * srcb, ಸ್ಥಿರಾಂಕ ರಚನೆ im2col_cursor * c) {
+    ಸ್ಥಿರಾಂಕ uint32_t ಒಳ = c->ಒಳ, ioh = c->ioh, c0 = c->c0;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ops_context * octx = ictx->octx;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src1 = octx->src[1];
+    ಸ್ಥಿರಾಂಕ int32_t s0 = octx->op_params[0], s1 = octx->op_params[1];
+    ಸ್ಥಿರಾಂಕ int32_t p0 = octx->op_params[2], p1 = octx->op_params[3];
+    ಸ್ಥಿರಾಂಕ int32_t d1 = octx->op_params[5];
+    ಸ್ಥಿರಾಂಕ bool is_2D = (octx->op_params[6] == 1);
+    ಸ್ಥಿರಾಂಕ uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;
+    ಸ್ಥಿರಾಂಕ uint32_t KH = ictx->KH;
+    ಸ್ಥಿರಾಂಕ uint32_t Wb = ictx->pe_wb;
+    ಸ್ಥಿರಾಂಕ dma_addr_t src_ದತ್ತಾಂಶ = src1->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ int32_t win0 = (int32_t) c0 * s0 - p0;
+    ಸ್ಥಿರಾಂಕ size_t src_channel_stride = is_2D ? src1->nb[2] : src1->nb[1];
+    ಸ್ಥಿರಾಂಕ size_t batch_ಸ್ಥಾನಾಂತರ        = is_2D ? (size_t) ಒಳ * src1->nb[3] : (size_t) ಒಳ * src1->nb[2];
 
-    for (uint32_t ikh = 0; ikh < KH; ikh++) {
-        const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;
-        if (iih < 0 || iih >= (int32_t) IH) {
-            dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
-            continue;
+    ಗಾಗಿ (uint32_t ikh = 0; ikh < KH; ikh++) {
+        ಸ್ಥಿರಾಂಕ int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;
+        ಆದರೆ (iih < 0 || iih >= (int32_t) IH) {
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(srcb, 0), 0, 0, 0, 0);
+            ಮುಂದುವರಿ;
         }
-        const int32_t lo = win0 < 0 ? -win0 : 0;
+        ಸ್ಥಿರಾಂಕ int32_t lo = win0 < 0 ? -win0 : 0;
         int32_t hi = (int32_t) IW - win0;
-        if (hi > (int32_t) Wb) {
+        ಆದರೆ (hi > (int32_t) Wb) {
             hi = (int32_t) Wb;
         }
-        if (hi <= lo) {
-            dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
-            continue;
+        ಆದರೆ (hi <= lo) {
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(srcb, 0), 0, 0, 0, 0);
+            ಮುಂದುವರಿ;
         }
-        const uint32_t cpw = (uint32_t) (hi - lo);
-        float * vdst = srcb + (size_t) ikh * Wb + lo;
-        const dma_addr_t vsrc = src_data + batch_offset + (size_t) iih * src1->nb[1] + (size_t) (win0 + lo) * src1->nb[0];
-        dma_queue_push(dma_q, dma_make_data(vdst, vsrc),
-                       (size_t) KH * Wb * sizeof(float), src_channel_stride,
-                       cpw * sizeof(float), IC);
+        ಸ್ಥಿರಾಂಕ uint32_t cpw = (uint32_t) (hi - lo);
+        ದಶಮಾಂಶ * vdst = srcb + (size_t) ikh * Wb + lo;
+        ಸ್ಥಿರಾಂಕ dma_addr_t vsrc = src_ದತ್ತಾಂಶ + batch_ಸ್ಥಾನಾಂತರ + (size_t) iih * src1->nb[1] + (size_t) (win0 + lo) * src1->nb[0];
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(vdst, vsrc),
+                       (size_t) KH * Wb * ಗಾತ್ರ(ದಶಮಾಂಶ), src_channel_stride,
+                       cpw * ಗಾತ್ರ(ದಶಮಾಂಶ), IC);
     }
 }
 
-#define IM2COL_BLOCKED_COMPUTE_BODY(FNAME, DST_CTYPE, COPY_FN, SPLAT_FN)                         \
-static void FNAME(                                                                               \
-    const struct htp_im2col_context * ictx,                                                      \
-    void * restrict dstb_raw, const float * restrict srcb,                                       \
-    float * restrict scratch,                                                                    \
+#ವ್ಯಾಖ್ಯಾನಿಸು IM2_ಲಂಬಸಾಲು_BLOCKED_COMPUTE_BODY(FNAME, DST_CTYPE, COPY_FN, SPLAT_FN)                         \
+ಸ್ಥಿರ ಶೂನ್ಯ FNAME(                                                                               \
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,                                                      \
+    ಶೂನ್ಯ * ಸೀಮಿತ dstb_raw, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb,                                       \
+    ದಶಮಾಂಶ * ಸೀಮಿತ scratch,                                                                    \
     uint32_t nb, uint32_t c0, uint32_t ioh) {                                                    \
-    DST_CTYPE * restrict dstb = (DST_CTYPE *) dstb_raw;                                          \
-    const struct htp_ops_context * octx = ictx->octx;                                            \
-    const int32_t  s0 = octx->op_params[0], s1 = octx->op_params[1];                             \
-    const int32_t  p0 = octx->op_params[2], p1 = octx->op_params[3];                             \
-    const int32_t  d0 = octx->op_params[4], d1 = octx->op_params[5];                             \
-    const uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;                                  \
-    const uint32_t KH = ictx->KH, KW = ictx->KW;                                                 \
-    const uint32_t Wb = ictx->pe_wb;                                                             \
-    const uint32_t patch_stride = ictx->patch_stride;                                            \
-    const int32_t  win0 = (int32_t) c0 * s0 - p0;                                                \
+    DST_CTYPE * ಸೀಮಿತ dstb = (DST_CTYPE *) dstb_raw;                                          \
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ops_context * octx = ictx->octx;                                            \
+    ಸ್ಥಿರಾಂಕ int32_t  s0 = octx->op_params[0], s1 = octx->op_params[1];                             \
+    ಸ್ಥಿರಾಂಕ int32_t  p0 = octx->op_params[2], p1 = octx->op_params[3];                             \
+    ಸ್ಥಿರಾಂಕ int32_t  d0 = octx->op_params[4], d1 = octx->op_params[5];                             \
+    ಸ್ಥಿರಾಂಕ uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;                                  \
+    ಸ್ಥಿರಾಂಕ uint32_t KH = ictx->KH, KW = ictx->KW;                                                 \
+    ಸ್ಥಿರಾಂಕ uint32_t Wb = ictx->pe_wb;                                                             \
+    ಸ್ಥಿರಾಂಕ uint32_t patch_stride = ictx->patch_stride;                                            \
+    ಸ್ಥಿರಾಂಕ int32_t  win0 = (int32_t) c0 * s0 - p0;                                                \
                                                                                                  \
-    for (uint32_t j = 0; j < nb; j++) {                                                          \
-        const uint32_t iow       = c0 + j;                                                       \
+    ಗಾಗಿ (uint32_t j = 0; j < nb; j++) {                                                          \
+        ಸ್ಥಿರಾಂಕ uint32_t iow       = c0 + j;                                                       \
         DST_CTYPE *    dst_patch = dstb + (size_t) j * patch_stride;                             \
-        const int32_t  iiw0      = (int32_t) iow * s0 - p0;                                      \
-        for (uint32_t ikh = 0; ikh < KH; ikh++) {                                                \
-            const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;                    \
-            const int     okh = (iih >= 0 && iih < (int32_t) IH);                                \
-            for (uint32_t iic = 0; iic < IC; iic++) {                                            \
-                DST_CTYPE * out_run = dst_patch + (size_t) (iic * KH + ikh) * KW;                \
-                if (!okh) {                                                                      \
-                    SPLAT_FN(out_run, 0, KW);                                                    \
-                    continue;                                                                    \
+        ಸ್ಥಿರಾಂಕ int32_t  iiw0      = (int32_t) iow * s0 - p0;                                      \
+        ಗಾಗಿ (uint32_t ikh = 0; ikh < KH; ikh++) {                                                \
+            ಸ್ಥಿರಾಂಕ int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;                    \
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     okh = (iih >= 0 && iih < (int32_t) IH);                                \
+            ಗಾಗಿ (uint32_t iic = 0; iic < IC; iic++) {                                            \
+                DST_CTYPE * ಹೊರಹೋಗು_ಸತತ = dst_patch + (size_t) (iic * KH + ikh) * KW;                \
+                ಆದರೆ (!okh) {                                                                      \
+                    SPLAT_FN(ಹೊರಹೋಗು_ಸತತ, 0, KW);                                                    \
+                    ಮುಂದುವರಿ;                                                                    \
                 }                                                                                \
-                const float * vrow = srcb + (size_t) (iic * KH + ikh) * Wb;                      \
-                if (d0 == 1) {                                                                   \
-                    const int32_t lo = iiw0 < 0 ? -iiw0 : 0;                                     \
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * vrow = srcb + (size_t) (iic * KH + ikh) * Wb;                      \
+                ಆದರೆ (d0 == 1) {                                                                   \
+                    ಸ್ಥಿರಾಂಕ int32_t lo = iiw0 < 0 ? -iiw0 : 0;                                     \
                     int32_t       hi = (int32_t) IW - iiw0;                                      \
-                    if (hi > (int32_t) KW) {                                                     \
+                    ಆದರೆ (hi > (int32_t) KW) {                                                     \
                         hi = (int32_t) KW;                                                       \
                     }                                                                            \
-                    if (hi <= lo) {                                                              \
-                        SPLAT_FN(out_run, 0, KW);                                                \
-                    } else {                                                                     \
-                        if (lo > 0) {                                                            \
-                            SPLAT_FN(out_run, 0, (uint32_t) lo);                                 \
+                    ಆದರೆ (hi <= lo) {                                                              \
+                        SPLAT_FN(ಹೊರಹೋಗು_ಸತತ, 0, KW);                                                \
+                    } ಇಲ್ಲದಿದ್ದರೆ {                                                                     \
+                        ಆದರೆ (lo > 0) {                                                            \
+                            SPLAT_FN(ಹೊರಹೋಗು_ಸತತ, 0, (uint32_t) lo);                                 \
                         }                                                                        \
-                        COPY_FN((uint8_t *) (out_run + lo),                                      \
-                                (const uint8_t *) (vrow + (iiw0 + lo - win0)),                   \
+                        COPY_FN((uint8_t *) (ಹೊರಹೋಗು_ಸತತ + lo),                                      \
+                                (ಸ್ಥಿರಾಂಕ uint8_t *) (vrow + (iiw0 + lo - win0)),                   \
                                 (uint32_t) (hi - lo));                                           \
-                        if (hi < (int32_t) KW) {                                                 \
-                            SPLAT_FN(out_run + hi, 0, (uint32_t) (KW - hi));                     \
+                        ಆದರೆ (hi < (int32_t) KW) {                                                 \
+                            SPLAT_FN(ಹೊರಹೋಗು_ಸತತ + hi, 0, (uint32_t) (KW - hi));                     \
                         }                                                                        \
                     }                                                                            \
-                    continue;                                                                    \
+                    ಮುಂದುವರಿ;                                                                    \
                 }                                                                                \
-                for (uint32_t ikw = 0; ikw < KW; ikw += 64) {                                    \
-                    const uint32_t chunk = MIN(KW - ikw, 64);                                    \
-                    for (uint32_t c = 0; c < chunk; c++) {                                       \
-                        const int32_t iiw = iiw0 + (int32_t) (ikw + c) * d0;                     \
+                ಗಾಗಿ (uint32_t ikw = 0; ikw < KW; ikw += 64) {                                    \
+                    ಸ್ಥಿರಾಂಕ uint32_t chunk = MIN(KW - ikw, 64);                                    \
+                    ಗಾಗಿ (uint32_t c = 0; c < chunk; c++) {                                       \
+                        ಸ್ಥಿರಾಂಕ int32_t iiw = iiw0 + (int32_t) (ikw + c) * d0;                     \
                         scratch[c] = (iiw < 0 || iiw >= (int32_t) IW) ? 0.0f : vrow[iiw - win0]; \
                     }                                                                            \
-                    COPY_FN((uint8_t *) (out_run + ikw), (const uint8_t *) scratch, chunk);      \
+                    COPY_FN((uint8_t *) (ಹೊರಹೋಗು_ಸತತ + ikw), (ಸ್ಥಿರಾಂಕ uint8_t *) scratch, chunk);      \
                 }                                                                                \
             }                                                                                    \
         }                                                                                        \
     }                                                                                            \
 }
 
-IM2COL_BLOCKED_COMPUTE_BODY(im2col_blocked_compute_f16, uint16_t, hvx_copy_f16_f32_uu, hvx_splat_u16_u)
-IM2COL_BLOCKED_COMPUTE_BODY(im2col_blocked_compute_f32, float,    hvx_copy_f32_uu,     hvx_splat_f32_u)
+IM2_ಲಂಬಸಾಲು_BLOCKED_COMPUTE_BODY(im2col_blocked_compute_f16, uint16_t, hvx_copy_f16_f32_uu, hvx_splat_u16_u)
+IM2_ಲಂಬಸಾಲು_BLOCKED_COMPUTE_BODY(im2col_blocked_compute_f32, ದಶಮಾಂಶ,    hvx_copy_f32_uu,     hvx_splat_f32_u)
 
-static void im2col_blocked_dma_thread(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    struct htp_im2col_context * ictx      = (struct htp_im2col_context *) data;
-    struct htp_ops_context *    octx      = ictx->octx;
-    struct htp_thread_trace * restrict tr = &octx->ctx->trace[ith];
-    const uint32_t OW                     = ictx->OW;
-    const uint32_t KH                     = ictx->KH;
-    const uint32_t owb                    = ictx->pe_owb;
-    const uint32_t nbpr                   = ictx->pe_nbpr;
-    const uint32_t patch_stride           = ictx->patch_stride;
-    const uint32_t dst_elem               = ictx->dst_elem;
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_blocked_dma_thread(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    (ಶೂನ್ಯ) nth;
+    ರಚನೆ htp_im2col_context * ictx      = (ರಚನೆ htp_im2col_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context *    octx      = ictx->octx;
+    ರಚನೆ htp_thread_trace * ಸೀಮಿತ tr = &octx->ctx->trace[ith];
+    ಸ್ಥಿರಾಂಕ uint32_t OW                     = ictx->OW;
+    ಸ್ಥಿರಾಂಕ uint32_t KH                     = ictx->KH;
+    ಸ್ಥಿರಾಂಕ uint32_t owb                    = ictx->pe_owb;
+    ಸ್ಥಿರಾಂಕ uint32_t nbpr                   = ictx->pe_nbpr;
+    ಸ್ಥಿರಾಂಕ uint32_t patch_stride           = ictx->patch_stride;
+    ಸ್ಥಿರಾಂಕ uint32_t dst_elem               = ictx->dst_elem;
     im2col_blocked_compute_fn_t compute   = (im2col_blocked_compute_fn_t) ictx->compute;
-    const dma_addr_t dst_data             = octx->dst->data;
-    dma_queue *    dma_q                  = octx->ctx->dma[ith];
-    uint8_t *      srcb_base              = ictx->pe_vtcm_src + ith * ictx->pe_src_size_per_thread;
-    uint8_t *      dstb_base              = ictx->pe_vtcm_dst + ith * ictx->pe_dst_size_per_thread;
-    float *        srcb2[2]               = { (float *) srcb_base, (float *) (srcb_base + ictx->pe_src_row_bytes) };
-    void *         dstb2[2]               = { dstb_base, dstb_base + ictx->pe_dst_row_bytes };
-    float *        scratch                = (float *) (srcb_base + 2 * ictx->pe_src_row_bytes);
-    const uint32_t row_end_max            = ictx->pe_row_base + ictx->pe_nrows;
-    const uint32_t row_start              = ictx->pe_row_base + ictx->pe_rows_per_thread * ith;
-    const uint32_t row_end                = MIN(row_start + ictx->pe_rows_per_thread, row_end_max);
-    if (row_start >= row_end) {
-        return;
+    ಸ್ಥಿರಾಂಕ dma_addr_t dst_ದತ್ತಾಂಶ             = octx->dst->ದತ್ತಾಂಶ;
+    dma_ಸರತಿ *    dma_q                  = octx->ctx->dma[ith];
+    uint8_t *      srcb_ತಳ              = ictx->pe_vtcm_src + ith * ictx->pe_src_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    uint8_t *      dstb_ತಳ              = ictx->pe_vtcm_dst + ith * ictx->pe_dst_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    ದಶಮಾಂಶ *        srcb2[2]               = { (ದಶಮಾಂಶ *) srcb_ತಳ, (ದಶಮಾಂಶ *) (srcb_ತಳ + ictx->pe_src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು) };
+    ಶೂನ್ಯ *         dstb2[2]               = { dstb_ತಳ, dstb_ತಳ + ictx->pe_dst_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು };
+    ದಶಮಾಂಶ *        scratch                = (ದಶಮಾಂಶ *) (srcb_ತಳ + 2 * ictx->pe_src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು);
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಕೊನೆ_max            = ictx->pe_ಅಡ್ಡಸಾಲು_ತಳ + ictx->pe_nrows;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಆರಂಭ              = ictx->pe_ಅಡ್ಡಸಾಲು_ತಳ + ictx->pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಕೊನೆ                = MIN(ಅಡ್ಡಸಾಲು_ಆರಂಭ + ictx->pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread, ಅಡ್ಡಸಾಲು_ಕೊನೆ_max);
+    ಆದರೆ (ಅಡ್ಡಸಾಲು_ಆರಂಭ >= ಅಡ್ಡಸಾಲು_ಕೊನೆ) {
+        ಹಿಂತಿರುಗಿ;
     }
-    const uint32_t nrows_local  = row_end - row_start;
-    const uint32_t total_blocks = nrows_local * nbpr;
-    if (total_blocks == 0) {
-        return;
+    ಸ್ಥಿರಾಂಕ uint32_t nrows_local  = ಅಡ್ಡಸಾಲು_ಕೊನೆ - ಅಡ್ಡಸಾಲು_ಆರಂಭ;
+    ಸ್ಥಿರಾಂಕ uint32_t ಒಟ್ಟು_ಖಂಡಗಳು = nrows_local * nbpr;
+    ಆದರೆ (ಒಟ್ಟು_ಖಂಡಗಳು == 0) {
+        ಹಿಂತಿರುಗಿ;
     }
-    struct im2col_cursor cur = {
-        .r   = row_start,
-        .in  = ictx->thread_in[ith],
+    ರಚನೆ im2col_cursor cur = {
+        .r   = ಅಡ್ಡಸಾಲು_ಆರಂಭ,
+        .ಒಳ  = ictx->thread_ಒಳ[ith],
         .iod = 0,
         .ioh = ictx->thread_ioh[ith],
         .c0  = 0,
     };
-    struct im2col_cursor stage = cur;
-    for (uint32_t i = 0; i < total_blocks && i < 2; i++) {
-        dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
+    ರಚನೆ im2col_cursor stage = cur;
+    ಗಾಗಿ (uint32_t i = 0; i < ಒಟ್ಟು_ಖಂಡಗಳು && i < 2; i++) {
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_ದತ್ತಾಂಶ, dstb2[i]), 0, 0, 0, 0);
         im2col_blocked_dma_stage(ictx, dma_q, srcb2[i], &stage);
-        im2col_step_block(&stage, ictx);
+        im2col_ಹೆಜ್ಜೆ_ಖಂಡ(&stage, ictx);
     }
-    for (uint32_t bi = 0; bi < total_blocks; bi++) {
-        const uint32_t buf = bi & 1u;
-        float * srcb = srcb2[buf];
-        void *  dstb = dstb2[buf];
-        const uint32_t nb = MIN(owb, OW - cur.c0);
-        dma_queue_pop(dma_q);
-        for (uint32_t k = 0; k < KH; k++) {
-            dma_queue_pop(dma_q);
+    ಗಾಗಿ (uint32_t bi = 0; bi < ಒಟ್ಟು_ಖಂಡಗಳು; bi++) {
+        ಸ್ಥಿರಾಂಕ uint32_t buf = bi & 1u;
+        ದಶಮಾಂಶ * srcb = srcb2[buf];
+        ಶೂನ್ಯ *  dstb = dstb2[buf];
+        ಸ್ಥಿರಾಂಕ uint32_t nb = MIN(owb, OW - cur.c0);
+        dma_ಸರತಿ_ತೆಗೆ(dma_q);
+        ಗಾಗಿ (uint32_t k = 0; k < KH; k++) {
+            dma_ಸರತಿ_ತೆಗೆ(dma_q);
         }
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         compute(ictx, dstb, srcb, scratch, nb, cur.c0, cur.ioh);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
-        const dma_addr_t ddr = dst_data + (size_t) (cur.r * OW + cur.c0) * patch_stride * dst_elem;
-        dma_queue_push(dma_q, dma_make_data(ddr, dstb),
+        ಸ್ಥಿರಾಂಕ dma_addr_t ddr = dst_ದತ್ತಾಂಶ + (size_t) (cur.r * OW + cur.c0) * patch_stride * dst_elem;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(ddr, dstb),
                        nb * patch_stride * dst_elem, nb * patch_stride * dst_elem,
                        nb * patch_stride * dst_elem, 1);
-        if (bi + 2 < total_blocks) {
+        ಆದರೆ (bi + 2 < ಒಟ್ಟು_ಖಂಡಗಳು) {
             im2col_blocked_dma_stage(ictx, dma_q, srcb, &stage);
-            im2col_step_block(&stage, ictx);
+            im2col_ಹೆಜ್ಜೆ_ಖಂಡ(&stage, ictx);
         }
-        im2col_step_block(&cur, ictx);
+        im2col_ಹೆಜ್ಜೆ_ಖಂಡ(&cur, ictx);
     }
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
-static void im2col_patchembed_dma_stage(struct htp_im2col_context * ictx, dma_queue * dma_q,
-                                        float * srcb, const struct im2col_cursor * c) {
-    const struct htp_ops_context * octx = ictx->octx;
-    const uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;
-    const uint32_t KH = ictx->KH;
-    const uint32_t in = c->in, ioh = c->ioh;
-    const size_t src_channel_stride  = (size_t) IH * IW * sizeof(float);
-    const size_t vtcm_channel_stride = (size_t) KH * IW * sizeof(float);
-    const dma_addr_t src_data        = octx->src[1]->data;
-    const dma_addr_t vsrc            = src_data + (size_t) (((in * IC) * IH + ioh * KH) * IW) * sizeof(float);
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_patchembed_dma_stage(ರಚನೆ htp_im2col_context * ictx, dma_ಸರತಿ * dma_q,
+                                        ದಶಮಾಂಶ * srcb, ಸ್ಥಿರಾಂಕ ರಚನೆ im2col_cursor * c) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ops_context * octx = ictx->octx;
+    ಸ್ಥಿರಾಂಕ uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;
+    ಸ್ಥಿರಾಂಕ uint32_t KH = ictx->KH;
+    ಸ್ಥಿರಾಂಕ uint32_t ಒಳ = c->ಒಳ, ioh = c->ioh;
+    ಸ್ಥಿರಾಂಕ size_t src_channel_stride  = (size_t) IH * IW * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ size_t vtcm_channel_stride = (size_t) KH * IW * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ dma_addr_t src_ದತ್ತಾಂಶ        = octx->src[1]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ dma_addr_t vsrc            = src_ದತ್ತಾಂಶ + (size_t) (((ಒಳ * IC) * IH + ioh * KH) * IW) * ಗಾತ್ರ(ದಶಮಾಂಶ);
 
-    dma_queue_push(dma_q, dma_make_data(srcb, vsrc),
+    dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(srcb, vsrc),
                    vtcm_channel_stride, src_channel_stride,
                    vtcm_channel_stride, IC);
 }
 
-static void im2col_patchembed_compute_f16(
-    const struct htp_im2col_context * ictx,
-    void * restrict dstb_raw, const float * restrict srcb, uint32_t ioh) {
-    uint16_t * restrict dstb = (uint16_t *) dstb_raw;
-    const uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;
-    const uint32_t KH = ictx->KH, KW = ictx->KW;
-    const uint32_t OW = ictx->OW, patch_stride = ictx->patch_stride;
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_patchembed_compute_f16(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,
+    ಶೂನ್ಯ * ಸೀಮಿತ dstb_raw, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb, uint32_t ioh) {
+    uint16_t * ಸೀಮಿತ dstb = (uint16_t *) dstb_raw;
+    ಸ್ಥಿರಾಂಕ uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;
+    ಸ್ಥಿರಾಂಕ uint32_t KH = ictx->KH, KW = ictx->KW;
+    ಸ್ಥಿರಾಂಕ uint32_t OW = ictx->OW, patch_stride = ictx->patch_stride;
 
-    for (uint32_t iow = 0; iow < OW; iow++) {
+    ಗಾಗಿ (uint32_t iow = 0; iow < OW; iow++) {
         uint16_t * dst_patch = dstb + (size_t) iow * patch_stride;
-        for (uint32_t ikh = 0; ikh < KH; ikh++) {
-            const int32_t iih = (int32_t) ioh * (int32_t) KH + (int32_t) ikh;
-            for (uint32_t iic = 0; iic < IC; iic++) {
-                uint16_t * out_run = dst_patch + (size_t) (iic * KH + ikh) * KW;
-                if (iih < 0 || iih >= (int32_t) IH) {
-                    hvx_splat_u16_u(out_run, 0, KW);
-                    continue;
+        ಗಾಗಿ (uint32_t ikh = 0; ikh < KH; ikh++) {
+            ಸ್ಥಿರಾಂಕ int32_t iih = (int32_t) ioh * (int32_t) KH + (int32_t) ikh;
+            ಗಾಗಿ (uint32_t iic = 0; iic < IC; iic++) {
+                uint16_t * ಹೊರಹೋಗು_ಸತತ = dst_patch + (size_t) (iic * KH + ikh) * KW;
+                ಆದರೆ (iih < 0 || iih >= (int32_t) IH) {
+                    hvx_splat_u16_u(ಹೊರಹೋಗು_ಸತತ, 0, KW);
+                    ಮುಂದುವರಿ;
                 }
-                const float * src_run = srcb + (size_t) (iic * KH + ikh) * IW + (size_t) iow * KW;
-                hvx_copy_f16_f32_uu((uint8_t *) out_run, (const uint8_t *) src_run, KW);
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಸತತ = srcb + (size_t) (iic * KH + ikh) * IW + (size_t) iow * KW;
+                hvx_copy_f16_f32_uu((uint8_t *) ಹೊರಹೋಗು_ಸತತ, (ಸ್ಥಿರಾಂಕ uint8_t *) src_ಸತತ, KW);
             }
         }
     }
 }
 
-static void im2col_patchembed_compute_f32(
-    const struct htp_im2col_context * ictx,
-    void * restrict dstb_raw, const float * restrict srcb, uint32_t ioh) {
-    float * restrict dstb = (float *) dstb_raw;
-    const uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;
-    const uint32_t KH = ictx->KH, KW = ictx->KW;
-    const uint32_t OW = ictx->OW, patch_stride = ictx->patch_stride;
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_patchembed_compute_f32(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,
+    ಶೂನ್ಯ * ಸೀಮಿತ dstb_raw, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb, uint32_t ioh) {
+    ದಶಮಾಂಶ * ಸೀಮಿತ dstb = (ದಶಮಾಂಶ *) dstb_raw;
+    ಸ್ಥಿರಾಂಕ uint32_t IC = ictx->IC, IH = ictx->IH, IW = ictx->IW;
+    ಸ್ಥಿರಾಂಕ uint32_t KH = ictx->KH, KW = ictx->KW;
+    ಸ್ಥಿರಾಂಕ uint32_t OW = ictx->OW, patch_stride = ictx->patch_stride;
 
-    for (uint32_t iow = 0; iow < OW; iow++) {
-        float * dst_patch = dstb + (size_t) iow * patch_stride;
-        for (uint32_t ikh = 0; ikh < KH; ikh++) {
-            const int32_t iih = (int32_t) ioh * (int32_t) KH + (int32_t) ikh;
-            for (uint32_t iic = 0; iic < IC; iic++) {
-                float * out_run = dst_patch + (size_t) (iic * KH + ikh) * KW;
-                if (iih < 0 || iih >= (int32_t) IH) {
-                    hvx_splat_f32_u(out_run, 0, KW);
-                    continue;
+    ಗಾಗಿ (uint32_t iow = 0; iow < OW; iow++) {
+        ದಶಮಾಂಶ * dst_patch = dstb + (size_t) iow * patch_stride;
+        ಗಾಗಿ (uint32_t ikh = 0; ikh < KH; ikh++) {
+            ಸ್ಥಿರಾಂಕ int32_t iih = (int32_t) ioh * (int32_t) KH + (int32_t) ikh;
+            ಗಾಗಿ (uint32_t iic = 0; iic < IC; iic++) {
+                ದಶಮಾಂಶ * ಹೊರಹೋಗು_ಸತತ = dst_patch + (size_t) (iic * KH + ikh) * KW;
+                ಆದರೆ (iih < 0 || iih >= (int32_t) IH) {
+                    hvx_splat_f32_u(ಹೊರಹೋಗು_ಸತತ, 0, KW);
+                    ಮುಂದುವರಿ;
                 }
-                const float * src_run = srcb + (size_t) (iic * KH + ikh) * IW + (size_t) iow * KW;
-                hvx_copy_f32_uu((uint8_t *) out_run, (const uint8_t *) src_run, KW);
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಸತತ = srcb + (size_t) (iic * KH + ikh) * IW + (size_t) iow * KW;
+                hvx_copy_f32_uu((uint8_t *) ಹೊರಹೋಗು_ಸತತ, (ಸ್ಥಿರಾಂಕ uint8_t *) src_ಸತತ, KW);
             }
         }
     }
 }
 
-static void im2col_patchembed_dma_thread(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    struct htp_im2col_context * ictx        = (struct htp_im2col_context *) data;
-    struct htp_ops_context *    octx        = ictx->octx;
-    struct htp_thread_trace * restrict tr   = &octx->ctx->trace[ith];
-    const uint32_t OW                       = ictx->OW;
-    const uint32_t patch_stride             = ictx->patch_stride;
-    const uint32_t dst_elem                 = ictx->dst_elem;
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_patchembed_dma_thread(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    (ಶೂನ್ಯ) nth;
+    ರಚನೆ htp_im2col_context * ictx        = (ರಚನೆ htp_im2col_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context *    octx        = ictx->octx;
+    ರಚನೆ htp_thread_trace * ಸೀಮಿತ tr   = &octx->ctx->trace[ith];
+    ಸ್ಥಿರಾಂಕ uint32_t OW                       = ictx->OW;
+    ಸ್ಥಿರಾಂಕ uint32_t patch_stride             = ictx->patch_stride;
+    ಸ್ಥಿರಾಂಕ uint32_t dst_elem                 = ictx->dst_elem;
     im2col_patchembed_compute_fn_t compute  = (im2col_patchembed_compute_fn_t) ictx->compute;
-    const dma_addr_t dst_data               = octx->dst->data;
-    dma_queue *    dma_q                    = octx->ctx->dma[ith];
-    uint8_t *      srcb_base                = ictx->pe_vtcm_src + ith * ictx->pe_src_size_per_thread;
-    uint8_t *      dstb_base                = ictx->pe_vtcm_dst + ith * ictx->pe_dst_size_per_thread;
-    float *        srcb2[2]                 = { (float *) srcb_base, (float *) (srcb_base + ictx->pe_src_row_bytes) };
-    void *         dstb2[2]                 = { dstb_base, dstb_base + ictx->pe_dst_row_bytes };
-    const uint32_t row_end_max              = ictx->pe_row_base + ictx->pe_nrows;
-    const uint32_t row_start                = ictx->pe_row_base + ictx->pe_rows_per_thread * ith;
-    const uint32_t row_end                  = MIN(row_start + ictx->pe_rows_per_thread, row_end_max);
-    if (row_start >= row_end) {
-        return;
+    ಸ್ಥಿರಾಂಕ dma_addr_t dst_ದತ್ತಾಂಶ               = octx->dst->ದತ್ತಾಂಶ;
+    dma_ಸರತಿ *    dma_q                    = octx->ctx->dma[ith];
+    uint8_t *      srcb_ತಳ                = ictx->pe_vtcm_src + ith * ictx->pe_src_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    uint8_t *      dstb_ತಳ                = ictx->pe_vtcm_dst + ith * ictx->pe_dst_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    ದಶಮಾಂಶ *        srcb2[2]                 = { (ದಶಮಾಂಶ *) srcb_ತಳ, (ದಶಮಾಂಶ *) (srcb_ತಳ + ictx->pe_src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು) };
+    ಶೂನ್ಯ *         dstb2[2]                 = { dstb_ತಳ, dstb_ತಳ + ictx->pe_dst_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು };
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಕೊನೆ_max              = ictx->pe_ಅಡ್ಡಸಾಲು_ತಳ + ictx->pe_nrows;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಆರಂಭ                = ictx->pe_ಅಡ್ಡಸಾಲು_ತಳ + ictx->pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಕೊನೆ                  = MIN(ಅಡ್ಡಸಾಲು_ಆರಂಭ + ictx->pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread, ಅಡ್ಡಸಾಲು_ಕೊನೆ_max);
+    ಆದರೆ (ಅಡ್ಡಸಾಲು_ಆರಂಭ >= ಅಡ್ಡಸಾಲು_ಕೊನೆ) {
+        ಹಿಂತಿರುಗಿ;
     }
-    const uint32_t total_rows = row_end - row_start;
-    if (total_rows == 0) {
-        return;
+    ಸ್ಥಿರಾಂಕ uint32_t ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು = ಅಡ್ಡಸಾಲು_ಕೊನೆ - ಅಡ್ಡಸಾಲು_ಆರಂಭ;
+    ಆದರೆ (ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು == 0) {
+        ಹಿಂತಿರುಗಿ;
     }
-    struct im2col_cursor cur = {
-        .r   = row_start,
-        .in  = ictx->thread_in[ith],
+    ರಚನೆ im2col_cursor cur = {
+        .r   = ಅಡ್ಡಸಾಲು_ಆರಂಭ,
+        .ಒಳ  = ictx->thread_ಒಳ[ith],
         .iod = 0,
         .ioh = ictx->thread_ioh[ith],
         .c0  = 0,
     };
-    struct im2col_cursor stage = cur;
-    for (uint32_t i = 0; i < total_rows && i < 2; i++) {
-        dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
+    ರಚನೆ im2col_cursor stage = cur;
+    ಗಾಗಿ (uint32_t i = 0; i < ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು && i < 2; i++) {
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_ದತ್ತಾಂಶ, dstb2[i]), 0, 0, 0, 0);
         im2col_patchembed_dma_stage(ictx, dma_q, srcb2[i], &stage);
-        im2col_step_row(&stage, ictx);
+        im2col_ಹೆಜ್ಜೆ_ಅಡ್ಡಸಾಲು(&stage, ictx);
     }
-    for (uint32_t ri = 0; ri < total_rows; ri++) {
-        const uint32_t buf = ri & 1u;
-        float * srcb = srcb2[buf];
-        void *  dstb = dstb2[buf];
-        dma_queue_pop(dma_q);
-        dma_queue_pop(dma_q);
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
+    ಗಾಗಿ (uint32_t ri = 0; ri < ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು; ri++) {
+        ಸ್ಥಿರಾಂಕ uint32_t buf = ri & 1u;
+        ದಶಮಾಂಶ * srcb = srcb2[buf];
+        ಶೂನ್ಯ *  dstb = dstb2[buf];
+        dma_ಸರತಿ_ತೆಗೆ(dma_q);
+        dma_ಸರತಿ_ತೆಗೆ(dma_q);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         compute(ictx, dstb, srcb, cur.ioh);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
-        const dma_addr_t ddr_row = dst_data + (size_t) cur.r * OW * patch_stride * dst_elem;
-        dma_queue_push(dma_q, dma_make_data(ddr_row, dstb),
+        ಸ್ಥಿರಾಂಕ dma_addr_t ddr_ಅಡ್ಡಸಾಲು = dst_ದತ್ತಾಂಶ + (size_t) cur.r * OW * patch_stride * dst_elem;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(ddr_ಅಡ್ಡಸಾಲು, dstb),
                        OW * patch_stride * dst_elem, OW * patch_stride * dst_elem,
                        OW * patch_stride * dst_elem, 1);
-        if (ri + 2 < total_rows) {
+        ಆದರೆ (ri + 2 < ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು) {
             im2col_patchembed_dma_stage(ictx, dma_q, srcb, &stage);
-            im2col_step_row(&stage, ictx);
+            im2col_ಹೆಜ್ಜೆ_ಅಡ್ಡಸಾಲು(&stage, ictx);
         }
-        im2col_step_row(&cur, ictx);
+        im2col_ಹೆಜ್ಜೆ_ಅಡ್ಡಸಾಲು(&cur, ictx);
     }
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
-static inline void im2col_3d_step_row(struct im2col_cursor * c, const struct htp_im2col_context * ictx) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ im2col_3d_ಹೆಜ್ಜೆ_ಅಡ್ಡಸಾಲು(ರಚನೆ im2col_cursor * c, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx) {
     c->r++;
     c->ioh++;
-    if (c->ioh >= ictx->OH) {
+    ಆದರೆ (c->ioh >= ictx->OH) {
         c->ioh = 0;
         c->iod++;
-        if (c->iod >= ictx->OD) {
+        ಆದರೆ (c->iod >= ictx->OD) {
             c->iod = 0;
-            c->in++;
+            c->ಒಳ++;
         }
     }
 }
 
-static inline void im2col_3d_step_block(struct im2col_cursor * c, const struct htp_im2col_context * ictx) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ im2col_3d_ಹೆಜ್ಜೆ_ಖಂಡ(ರಚನೆ im2col_cursor * c, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx) {
     c->c0 += ictx->pe_owb;
-    if (c->c0 >= ictx->OW) {
+    ಆದರೆ (c->c0 >= ictx->OW) {
         c->c0 = 0;
         c->r++;
         c->ioh++;
-        if (c->ioh >= ictx->OH) {
+        ಆದರೆ (c->ioh >= ictx->OH) {
             c->ioh = 0;
             c->iod++;
-            if (c->iod >= ictx->OD) {
+            ಆದರೆ (c->iod >= ictx->OD) {
                 c->iod = 0;
-                c->in++;
+                c->ಒಳ++;
             }
         }
     }
 }
 
-static void im2col_3d_blocked_dma_stage(struct htp_im2col_context * ictx, dma_queue * dma_q,
-                                        float * srcb, const struct im2col_cursor * c) {
-    const uint32_t in = c->in, iod = c->iod, ioh = c->ioh, c0 = c->c0;
-    const struct htp_ops_context * octx = ictx->octx;
-    const struct htp_tensor * src1 = octx->src[1];
-    const int32_t s0 = octx->op_params[0], s1 = octx->op_params[1], s2 = octx->op_params[2];
-    const int32_t p0 = octx->op_params[3], p1 = octx->op_params[4], p2 = octx->op_params[5];
-    const int32_t d1 = octx->op_params[7], d2 = octx->op_params[8];
-    const uint32_t IC = ictx->IC;
-    const uint32_t ID = ictx->ID, IH = ictx->IH, IW = ictx->IW;
-    const uint32_t KD = ictx->KD, KH = ictx->KH;
-    const uint32_t Wb = ictx->pe_wb;
-    const int32_t win0 = (int32_t) c0 * s0 - p0;
-    const dma_addr_t src_data = src1->data;
-    const size_t src_channel_stride = src1->nb[3];
-    const size_t vtcm_channel_stride = (size_t) KD * KH * Wb * sizeof(float);
-    const size_t batch_offset        = (size_t) (in * IC) * src1->nb[3];
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_3d_blocked_dma_stage(ರಚನೆ htp_im2col_context * ictx, dma_ಸರತಿ * dma_q,
+                                        ದಶಮಾಂಶ * srcb, ಸ್ಥಿರಾಂಕ ರಚನೆ im2col_cursor * c) {
+    ಸ್ಥಿರಾಂಕ uint32_t ಒಳ = c->ಒಳ, iod = c->iod, ioh = c->ioh, c0 = c->c0;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ops_context * octx = ictx->octx;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * src1 = octx->src[1];
+    ಸ್ಥಿರಾಂಕ int32_t s0 = octx->op_params[0], s1 = octx->op_params[1], s2 = octx->op_params[2];
+    ಸ್ಥಿರಾಂಕ int32_t p0 = octx->op_params[3], p1 = octx->op_params[4], p2 = octx->op_params[5];
+    ಸ್ಥಿರಾಂಕ int32_t d1 = octx->op_params[7], d2 = octx->op_params[8];
+    ಸ್ಥಿರಾಂಕ uint32_t IC = ictx->IC;
+    ಸ್ಥಿರಾಂಕ uint32_t ID = ictx->ID, IH = ictx->IH, IW = ictx->IW;
+    ಸ್ಥಿರಾಂಕ uint32_t KD = ictx->KD, KH = ictx->KH;
+    ಸ್ಥಿರಾಂಕ uint32_t Wb = ictx->pe_wb;
+    ಸ್ಥಿರಾಂಕ int32_t win0 = (int32_t) c0 * s0 - p0;
+    ಸ್ಥಿರಾಂಕ dma_addr_t src_ದತ್ತಾಂಶ = src1->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ size_t src_channel_stride = src1->nb[3];
+    ಸ್ಥಿರಾಂಕ size_t vtcm_channel_stride = (size_t) KD * KH * Wb * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ size_t batch_ಸ್ಥಾನಾಂತರ        = (size_t) (ಒಳ * IC) * src1->nb[3];
 
-    for (uint32_t ikd = 0; ikd < KD; ikd++) {
-        const int32_t iid = (int32_t) iod * s2 + (int32_t) ikd * d2 - p2;
-        const bool valid_d = (iid >= 0 && iid < (int32_t) ID);
-        for (uint32_t ikh = 0; ikh < KH; ikh++) {
-            const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;
-            if (!valid_d || iih < 0 || iih >= (int32_t) IH) {
-                dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
-                continue;
+    ಗಾಗಿ (uint32_t ikd = 0; ikd < KD; ikd++) {
+        ಸ್ಥಿರಾಂಕ int32_t iid = (int32_t) iod * s2 + (int32_t) ikd * d2 - p2;
+        ಸ್ಥಿರಾಂಕ bool valid_d = (iid >= 0 && iid < (int32_t) ID);
+        ಗಾಗಿ (uint32_t ikh = 0; ikh < KH; ikh++) {
+            ಸ್ಥಿರಾಂಕ int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;
+            ಆದರೆ (!valid_d || iih < 0 || iih >= (int32_t) IH) {
+                dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(srcb, 0), 0, 0, 0, 0);
+                ಮುಂದುವರಿ;
             }
-            const int32_t lo = win0 < 0 ? -win0 : 0;
+            ಸ್ಥಿರಾಂಕ int32_t lo = win0 < 0 ? -win0 : 0;
             int32_t hi = (int32_t) IW - win0;
-            if (hi > (int32_t) Wb) {
+            ಆದರೆ (hi > (int32_t) Wb) {
                 hi = (int32_t) Wb;
             }
-            if (hi <= lo) {
-                dma_queue_push(dma_q, dma_make_data(srcb, 0), 0, 0, 0, 0);
-                continue;
+            ಆದರೆ (hi <= lo) {
+                dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(srcb, 0), 0, 0, 0, 0);
+                ಮುಂದುವರಿ;
             }
-            float * vdst = srcb + (size_t) (ikd * KH + ikh) * Wb + lo;
-            const dma_addr_t vsrc = src_data + batch_offset +
+            ದಶಮಾಂಶ * vdst = srcb + (size_t) (ikd * KH + ikh) * Wb + lo;
+            ಸ್ಥಿರಾಂಕ dma_addr_t vsrc = src_ದತ್ತಾಂಶ + batch_ಸ್ಥಾನಾಂತರ +
                 (size_t) iid * src1->nb[2] +
                 (size_t) iih * src1->nb[1] +
                 (size_t) (win0 + lo) * src1->nb[0];
-            dma_queue_push(dma_q, dma_make_data(vdst, vsrc),
+            dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(vdst, vsrc),
                            vtcm_channel_stride, src_channel_stride,
-                           (size_t) (hi - lo) * sizeof(float), IC);
+                           (size_t) (hi - lo) * ಗಾತ್ರ(ದಶಮಾಂಶ), IC);
         }
     }
 }
 
-#define IM2COL_3D_BLOCKED_COMPUTE_BODY(FNAME, DST_CTYPE, COPY_FN, SPLAT_FN)                          \
-static void FNAME(const struct htp_im2col_context * ictx,                                            \
-                  void * restrict dstb_raw, const float * restrict srcb,                             \
-                  float * restrict scratch,                                                          \
+#ವ್ಯಾಖ್ಯಾನಿಸು IM2_ಲಂಬಸಾಲು_3_D_BLOCKED_COMPUTE_BODY(FNAME, DST_CTYPE, COPY_FN, SPLAT_FN)                          \
+ಸ್ಥಿರ ಶೂನ್ಯ FNAME(ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,                                            \
+                  ಶೂನ್ಯ * ಸೀಮಿತ dstb_raw, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb,                             \
+                  ದಶಮಾಂಶ * ಸೀಮಿತ scratch,                                                          \
                   uint32_t nb, uint32_t c0, uint32_t iod, uint32_t ioh) {                            \
-    DST_CTYPE * restrict dstb = (DST_CTYPE *) dstb_raw;                                              \
-    const struct htp_ops_context * octx = ictx->octx;                                                \
-    const int32_t s0 = octx->op_params[0], s1 = octx->op_params[1], s2 = octx->op_params[2];         \
-    const int32_t p0 = octx->op_params[3], p1 = octx->op_params[4], p2 = octx->op_params[5];         \
-    const int32_t d0 = octx->op_params[6], d1 = octx->op_params[7], d2 = octx->op_params[8];         \
-    const uint32_t IC = ictx->IC;                                                                    \
-    const uint32_t ID = ictx->ID, IH = ictx->IH, IW = ictx->IW;                                      \
-    const uint32_t KD = ictx->KD, KH = ictx->KH, KW = ictx->KW;                                      \
-    const uint32_t patch_stride = ictx->patch_stride;                                                \
-    const uint32_t Wb = ictx->pe_wb;                                                                 \
-    const int32_t win0 = (int32_t) c0 * s0 - p0;                                                     \
-    for (uint32_t j = 0; j < nb; j++) {                                                              \
-        const uint32_t iow = c0 + j;                                                                 \
-        const int32_t iiw0 = (int32_t) iow * s0 - p0;                                                \
+    DST_CTYPE * ಸೀಮಿತ dstb = (DST_CTYPE *) dstb_raw;                                              \
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ops_context * octx = ictx->octx;                                                \
+    ಸ್ಥಿರಾಂಕ int32_t s0 = octx->op_params[0], s1 = octx->op_params[1], s2 = octx->op_params[2];         \
+    ಸ್ಥಿರಾಂಕ int32_t p0 = octx->op_params[3], p1 = octx->op_params[4], p2 = octx->op_params[5];         \
+    ಸ್ಥಿರಾಂಕ int32_t d0 = octx->op_params[6], d1 = octx->op_params[7], d2 = octx->op_params[8];         \
+    ಸ್ಥಿರಾಂಕ uint32_t IC = ictx->IC;                                                                    \
+    ಸ್ಥಿರಾಂಕ uint32_t ID = ictx->ID, IH = ictx->IH, IW = ictx->IW;                                      \
+    ಸ್ಥಿರಾಂಕ uint32_t KD = ictx->KD, KH = ictx->KH, KW = ictx->KW;                                      \
+    ಸ್ಥಿರಾಂಕ uint32_t patch_stride = ictx->patch_stride;                                                \
+    ಸ್ಥಿರಾಂಕ uint32_t Wb = ictx->pe_wb;                                                                 \
+    ಸ್ಥಿರಾಂಕ int32_t win0 = (int32_t) c0 * s0 - p0;                                                     \
+    ಗಾಗಿ (uint32_t j = 0; j < nb; j++) {                                                              \
+        ಸ್ಥಿರಾಂಕ uint32_t iow = c0 + j;                                                                 \
+        ಸ್ಥಿರಾಂಕ int32_t iiw0 = (int32_t) iow * s0 - p0;                                                \
         DST_CTYPE * dst_patch = dstb + (size_t) j * patch_stride;                                    \
-        for (uint32_t iic = 0; iic < IC; iic++) {                                                    \
-            for (uint32_t ikd = 0; ikd < KD; ikd++) {                                                \
-                const int32_t iid = (int32_t) iod * s2 + (int32_t) ikd * d2 - p2;                    \
-                for (uint32_t ikh = 0; ikh < KH; ikh++) {                                            \
-                    const int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;                \
-                    DST_CTYPE * out_run = dst_patch +                                                \
+        ಗಾಗಿ (uint32_t iic = 0; iic < IC; iic++) {                                                    \
+            ಗಾಗಿ (uint32_t ikd = 0; ikd < KD; ikd++) {                                                \
+                ಸ್ಥಿರಾಂಕ int32_t iid = (int32_t) iod * s2 + (int32_t) ikd * d2 - p2;                    \
+                ಗಾಗಿ (uint32_t ikh = 0; ikh < KH; ikh++) {                                            \
+                    ಸ್ಥಿರಾಂಕ int32_t iih = (int32_t) ioh * s1 + (int32_t) ikh * d1 - p1;                \
+                    DST_CTYPE * ಹೊರಹೋಗು_ಸತತ = dst_patch +                                                \
                         (size_t) (iic * KD * KH + ikd * KH + ikh) * KW;                              \
-                    if (iid < 0 || iid >= (int32_t) ID || iih < 0 || iih >= (int32_t) IH) {          \
-                        SPLAT_FN(out_run, 0, KW);                                                    \
-                        continue;                                                                    \
+                    ಆದರೆ (iid < 0 || iid >= (int32_t) ID || iih < 0 || iih >= (int32_t) IH) {          \
+                        SPLAT_FN(ಹೊರಹೋಗು_ಸತತ, 0, KW);                                                    \
+                        ಮುಂದುವರಿ;                                                                    \
                     }                                                                                \
-                    const float * vrow = srcb + (size_t) (iic * KD * KH + ikd * KH + ikh) * Wb;      \
-                    if (d0 == 1) {                                                                   \
-                        const int32_t lo = iiw0 < 0 ? -iiw0 : 0;                                     \
+                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * vrow = srcb + (size_t) (iic * KD * KH + ikd * KH + ikh) * Wb;      \
+                    ಆದರೆ (d0 == 1) {                                                                   \
+                        ಸ್ಥಿರಾಂಕ int32_t lo = iiw0 < 0 ? -iiw0 : 0;                                     \
                         int32_t hi = (int32_t) IW - iiw0;                                            \
-                        if (hi > (int32_t) KW) {                                                     \
+                        ಆದರೆ (hi > (int32_t) KW) {                                                     \
                             hi = (int32_t) KW;                                                       \
                         }                                                                            \
-                        if (hi <= lo) {                                                              \
-                            SPLAT_FN(out_run, 0, KW);                                                \
-                        } else {                                                                     \
-                            if (lo > 0) {                                                            \
-                                SPLAT_FN(out_run, 0, (uint32_t) lo);                                 \
+                        ಆದರೆ (hi <= lo) {                                                              \
+                            SPLAT_FN(ಹೊರಹೋಗು_ಸತತ, 0, KW);                                                \
+                        } ಇಲ್ಲದಿದ್ದರೆ {                                                                     \
+                            ಆದರೆ (lo > 0) {                                                            \
+                                SPLAT_FN(ಹೊರಹೋಗು_ಸತತ, 0, (uint32_t) lo);                                 \
                             }                                                                        \
-                            COPY_FN((uint8_t *) (out_run + lo),                                      \
-                                    (const uint8_t *) (vrow + (iiw0 + lo - win0)),                   \
+                            COPY_FN((uint8_t *) (ಹೊರಹೋಗು_ಸತತ + lo),                                      \
+                                    (ಸ್ಥಿರಾಂಕ uint8_t *) (vrow + (iiw0 + lo - win0)),                   \
                                     (uint32_t) (hi - lo));                                           \
-                            if (hi < (int32_t) KW) {                                                 \
-                                SPLAT_FN(out_run + hi, 0, (uint32_t) (KW - hi));                     \
+                            ಆದರೆ (hi < (int32_t) KW) {                                                 \
+                                SPLAT_FN(ಹೊರಹೋಗು_ಸತತ + hi, 0, (uint32_t) (KW - hi));                     \
                             }                                                                        \
                         }                                                                            \
-                        continue;                                                                    \
+                        ಮುಂದುವರಿ;                                                                    \
                     }                                                                                \
-                    for (uint32_t ikw = 0; ikw < KW; ikw += 64) {                                    \
-                        const uint32_t chunk = MIN(KW - ikw, 64);                                    \
-                        for (uint32_t c = 0; c < chunk; c++) {                                       \
-                            const int32_t iiw = iiw0 + (int32_t) (ikw + c) * d0;                     \
+                    ಗಾಗಿ (uint32_t ikw = 0; ikw < KW; ikw += 64) {                                    \
+                        ಸ್ಥಿರಾಂಕ uint32_t chunk = MIN(KW - ikw, 64);                                    \
+                        ಗಾಗಿ (uint32_t c = 0; c < chunk; c++) {                                       \
+                            ಸ್ಥಿರಾಂಕ int32_t iiw = iiw0 + (int32_t) (ikw + c) * d0;                     \
                             scratch[c] = (iiw < 0 || iiw >= (int32_t) IW) ? 0.0f : vrow[iiw - win0]; \
                         }                                                                            \
-                        COPY_FN((uint8_t *) (out_run + ikw), (const uint8_t *) scratch, chunk);      \
+                        COPY_FN((uint8_t *) (ಹೊರಹೋಗು_ಸತತ + ikw), (ಸ್ಥಿರಾಂಕ uint8_t *) scratch, chunk);      \
                     }                                                                                \
                 }                                                                                    \
             }                                                                                        \
@@ -554,256 +554,256 @@ static void FNAME(const struct htp_im2col_context * ictx,                       
     }                                                                                                \
 }
 
-IM2COL_3D_BLOCKED_COMPUTE_BODY(im2col_3d_blocked_compute_f16, uint16_t, hvx_copy_f16_f32_uu, hvx_splat_u16_u)
-IM2COL_3D_BLOCKED_COMPUTE_BODY(im2col_3d_blocked_compute_f32, float,    hvx_copy_f32_uu,     hvx_splat_f32_u)
+IM2_ಲಂಬಸಾಲು_3_D_BLOCKED_COMPUTE_BODY(im2col_3d_blocked_compute_f16, uint16_t, hvx_copy_f16_f32_uu, hvx_splat_u16_u)
+IM2_ಲಂಬಸಾಲು_3_D_BLOCKED_COMPUTE_BODY(im2col_3d_blocked_compute_f32, ದಶಮಾಂಶ,    hvx_copy_f32_uu,     hvx_splat_f32_u)
 
-static void im2col_3d_blocked_dma_thread(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    struct htp_im2col_context * ictx        = (struct htp_im2col_context *) data;
-    struct htp_ops_context *    octx        = ictx->octx;
-    struct htp_thread_trace * restrict tr   = &octx->ctx->trace[ith];
-    const struct htp_tensor * restrict dst  = octx->dst;
-    const uint32_t OW           = ictx->OW;
-    const uint32_t KD = ictx->KD, KH = ictx->KH;
-    const uint32_t kd_kh        = KD * KH;
-    const uint32_t patch_stride = ictx->patch_stride;
-    const uint32_t owb          = ictx->pe_owb;
-    const uint32_t nbpr         = ictx->pe_nbpr;
-    const uint32_t dst_elem     = ictx->dst_elem;
-    const dma_addr_t dst_data   = dst->data;
-    dma_queue * dma_q           = octx->ctx->dma[ith];
-    uint8_t * srcb_base         = ictx->pe_vtcm_src + ith * ictx->pe_src_size_per_thread;
-    uint8_t * dstb_base         = ictx->pe_vtcm_dst + ith * ictx->pe_dst_size_per_thread;
-    float * srcb2[2]            = { (float *) srcb_base, (float *) (srcb_base + ictx->pe_src_row_bytes) };
-    void * dstb2[2]             = { dstb_base, dstb_base + ictx->pe_dst_row_bytes };
-    float * scratch             = (float *) (srcb_base + 2 * ictx->pe_src_row_bytes);
-    const uint32_t row_end_max  = ictx->pe_row_base + ictx->pe_nrows;
-    const uint32_t row_start    = ictx->pe_row_base + ictx->pe_rows_per_thread * ith;
-    const uint32_t row_end      = MIN(row_start + ictx->pe_rows_per_thread, row_end_max);
-    if (row_start >= row_end) {
-        return;
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_3d_blocked_dma_thread(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    (ಶೂನ್ಯ) nth;
+    ರಚನೆ htp_im2col_context * ictx        = (ರಚನೆ htp_im2col_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context *    octx        = ictx->octx;
+    ರಚನೆ htp_thread_trace * ಸೀಮಿತ tr   = &octx->ctx->trace[ith];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * ಸೀಮಿತ dst  = octx->dst;
+    ಸ್ಥಿರಾಂಕ uint32_t OW           = ictx->OW;
+    ಸ್ಥಿರಾಂಕ uint32_t KD = ictx->KD, KH = ictx->KH;
+    ಸ್ಥಿರಾಂಕ uint32_t kd_kh        = KD * KH;
+    ಸ್ಥಿರಾಂಕ uint32_t patch_stride = ictx->patch_stride;
+    ಸ್ಥಿರಾಂಕ uint32_t owb          = ictx->pe_owb;
+    ಸ್ಥಿರಾಂಕ uint32_t nbpr         = ictx->pe_nbpr;
+    ಸ್ಥಿರಾಂಕ uint32_t dst_elem     = ictx->dst_elem;
+    ಸ್ಥಿರಾಂಕ dma_addr_t dst_ದತ್ತಾಂಶ   = dst->ದತ್ತಾಂಶ;
+    dma_ಸರತಿ * dma_q           = octx->ctx->dma[ith];
+    uint8_t * srcb_ತಳ         = ictx->pe_vtcm_src + ith * ictx->pe_src_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    uint8_t * dstb_ತಳ         = ictx->pe_vtcm_dst + ith * ictx->pe_dst_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    ದಶಮಾಂಶ * srcb2[2]            = { (ದಶಮಾಂಶ *) srcb_ತಳ, (ದಶಮಾಂಶ *) (srcb_ತಳ + ictx->pe_src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು) };
+    ಶೂನ್ಯ * dstb2[2]             = { dstb_ತಳ, dstb_ತಳ + ictx->pe_dst_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು };
+    ದಶಮಾಂಶ * scratch             = (ದಶಮಾಂಶ *) (srcb_ತಳ + 2 * ictx->pe_src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು);
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಕೊನೆ_max  = ictx->pe_ಅಡ್ಡಸಾಲು_ತಳ + ictx->pe_nrows;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಆರಂಭ    = ictx->pe_ಅಡ್ಡಸಾಲು_ತಳ + ictx->pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಕೊನೆ      = MIN(ಅಡ್ಡಸಾಲು_ಆರಂಭ + ictx->pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread, ಅಡ್ಡಸಾಲು_ಕೊನೆ_max);
+    ಆದರೆ (ಅಡ್ಡಸಾಲು_ಆರಂಭ >= ಅಡ್ಡಸಾಲು_ಕೊನೆ) {
+        ಹಿಂತಿರುಗಿ;
     }
-    const uint32_t nrows_local  = row_end - row_start;
-    const uint32_t total_blocks = nrows_local * nbpr;
-    if (total_blocks == 0) {
-        return;
+    ಸ್ಥಿರಾಂಕ uint32_t nrows_local  = ಅಡ್ಡಸಾಲು_ಕೊನೆ - ಅಡ್ಡಸಾಲು_ಆರಂಭ;
+    ಸ್ಥಿರಾಂಕ uint32_t ಒಟ್ಟು_ಖಂಡಗಳು = nrows_local * nbpr;
+    ಆದರೆ (ಒಟ್ಟು_ಖಂಡಗಳು == 0) {
+        ಹಿಂತಿರುಗಿ;
     }
-    struct im2col_cursor cur = {
-        .r   = row_start,
-        .in  = ictx->thread_in[ith],
+    ರಚನೆ im2col_cursor cur = {
+        .r   = ಅಡ್ಡಸಾಲು_ಆರಂಭ,
+        .ಒಳ  = ictx->thread_ಒಳ[ith],
         .iod = ictx->thread_iod[ith],
         .ioh = ictx->thread_ioh[ith],
         .c0  = 0,
     };
-    struct im2col_cursor stage = cur;
-    for (uint32_t i = 0; i < total_blocks && i < 2; i++) {
-        dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
+    ರಚನೆ im2col_cursor stage = cur;
+    ಗಾಗಿ (uint32_t i = 0; i < ಒಟ್ಟು_ಖಂಡಗಳು && i < 2; i++) {
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_ದತ್ತಾಂಶ, dstb2[i]), 0, 0, 0, 0);
         im2col_3d_blocked_dma_stage(ictx, dma_q, srcb2[i], &stage);
-        im2col_3d_step_block(&stage, ictx);
+        im2col_3d_ಹೆಜ್ಜೆ_ಖಂಡ(&stage, ictx);
     }
 
     im2col_3d_blocked_compute_fn_t compute = (im2col_3d_blocked_compute_fn_t) ictx->compute;
-    for (uint32_t bi = 0; bi < total_blocks; bi++) {
-        const uint32_t buf = bi & 1u;
-        float * srcb = srcb2[buf];
-        void *  dstb = dstb2[buf];
-        const uint32_t nb  = MIN(owb, OW - cur.c0);
-        dma_queue_pop(dma_q);
-        for (uint32_t p = 0; p < kd_kh; p++) {
-            dma_queue_pop(dma_q);
+    ಗಾಗಿ (uint32_t bi = 0; bi < ಒಟ್ಟು_ಖಂಡಗಳು; bi++) {
+        ಸ್ಥಿರಾಂಕ uint32_t buf = bi & 1u;
+        ದಶಮಾಂಶ * srcb = srcb2[buf];
+        ಶೂನ್ಯ *  dstb = dstb2[buf];
+        ಸ್ಥಿರಾಂಕ uint32_t nb  = MIN(owb, OW - cur.c0);
+        dma_ಸರತಿ_ತೆಗೆ(dma_q);
+        ಗಾಗಿ (uint32_t p = 0; p < kd_kh; p++) {
+            dma_ಸರತಿ_ತೆಗೆ(dma_q);
         }
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         compute(ictx, dstb, srcb, scratch, nb, cur.c0, cur.iod, cur.ioh);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
-        const dma_addr_t ddr = dst_data + (size_t) (cur.r * OW + cur.c0) * patch_stride * dst_elem;
-        dma_queue_push(dma_q, dma_make_data(ddr, dstb),
+        ಸ್ಥಿರಾಂಕ dma_addr_t ddr = dst_ದತ್ತಾಂಶ + (size_t) (cur.r * OW + cur.c0) * patch_stride * dst_elem;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(ddr, dstb),
                        nb * patch_stride * dst_elem, nb * patch_stride * dst_elem,
                        nb * patch_stride * dst_elem, 1);
-        if (bi + 2 < total_blocks) {
+        ಆದರೆ (bi + 2 < ಒಟ್ಟು_ಖಂಡಗಳು) {
             im2col_3d_blocked_dma_stage(ictx, dma_q, srcb, &stage);
-            im2col_3d_step_block(&stage, ictx);
+            im2col_3d_ಹೆಜ್ಜೆ_ಖಂಡ(&stage, ictx);
         }
-        im2col_3d_step_block(&cur, ictx);
+        im2col_3d_ಹೆಜ್ಜೆ_ಖಂಡ(&cur, ictx);
     }
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
-static void im2col_3d_patchembed_dma_stage(struct htp_im2col_context * ictx, dma_queue * dma_q,
-                                           float * srcb, const struct im2col_cursor * c) {
-    const struct htp_ops_context * octx = ictx->octx;
-    const uint32_t IC = ictx->IC;
-    const uint32_t ID = ictx->ID, IH = ictx->IH, IW = ictx->IW;
-    const uint32_t KD = ictx->KD, KH = ictx->KH;
-    const dma_addr_t src_data = octx->src[1]->data;
-    const uint32_t in = c->in, iod = c->iod, ioh = c->ioh;
-    const size_t src_channel_stride  = (size_t) ID * IH * IW * sizeof(float);
-    const size_t vtcm_channel_stride = (size_t) KD * KH * IW * sizeof(float);
-    const size_t row_size            = (size_t) KH * IW * sizeof(float);
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_3d_patchembed_dma_stage(ರಚನೆ htp_im2col_context * ictx, dma_ಸರತಿ * dma_q,
+                                           ದಶಮಾಂಶ * srcb, ಸ್ಥಿರಾಂಕ ರಚನೆ im2col_cursor * c) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ops_context * octx = ictx->octx;
+    ಸ್ಥಿರಾಂಕ uint32_t IC = ictx->IC;
+    ಸ್ಥಿರಾಂಕ uint32_t ID = ictx->ID, IH = ictx->IH, IW = ictx->IW;
+    ಸ್ಥಿರಾಂಕ uint32_t KD = ictx->KD, KH = ictx->KH;
+    ಸ್ಥಿರಾಂಕ dma_addr_t src_ದತ್ತಾಂಶ = octx->src[1]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ uint32_t ಒಳ = c->ಒಳ, iod = c->iod, ioh = c->ioh;
+    ಸ್ಥಿರಾಂಕ size_t src_channel_stride  = (size_t) ID * IH * IW * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ size_t vtcm_channel_stride = (size_t) KD * KH * IW * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ size_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ            = (size_t) KH * IW * ಗಾತ್ರ(ದಶಮಾಂಶ);
 
-    for (uint32_t ikd = 0; ikd < KD; ikd++) {
-        const uint32_t iid = iod * KD + ikd;
-        float * vdst = srcb + (size_t) ikd * KH * IW;
-        const dma_addr_t vsrc = src_data + (size_t) (((in * IC) * ID + iid) * IH + ioh * KH) * IW * sizeof(float);
-        dma_queue_push(dma_q, dma_make_data(vdst, vsrc),
-                       vtcm_channel_stride, src_channel_stride, row_size, IC);
+    ಗಾಗಿ (uint32_t ikd = 0; ikd < KD; ikd++) {
+        ಸ್ಥಿರಾಂಕ uint32_t iid = iod * KD + ikd;
+        ದಶಮಾಂಶ * vdst = srcb + (size_t) ikd * KH * IW;
+        ಸ್ಥಿರಾಂಕ dma_addr_t vsrc = src_ದತ್ತಾಂಶ + (size_t) (((ಒಳ * IC) * ID + iid) * IH + ioh * KH) * IW * ಗಾತ್ರ(ದಶಮಾಂಶ);
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(vdst, vsrc),
+                       vtcm_channel_stride, src_channel_stride, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, IC);
     }
 }
-static void im2col_3d_patchembed_compute_f16(
-    const struct htp_im2col_context * ictx,
-    void * restrict dstb_raw, const float * restrict srcb) {
-    uint16_t * restrict dstb = (uint16_t *) dstb_raw;
-    const uint32_t OW           = ictx->OW;
-    const uint32_t IC           = ictx->IC;
-    const uint32_t KD           = ictx->KD;
-    const uint32_t KH           = ictx->KH;
-    const uint32_t KW           = ictx->KW;
-    const uint32_t IW           = ictx->IW;
-    const uint32_t patch_stride = ictx->patch_stride;
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_3d_patchembed_compute_f16(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,
+    ಶೂನ್ಯ * ಸೀಮಿತ dstb_raw, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb) {
+    uint16_t * ಸೀಮಿತ dstb = (uint16_t *) dstb_raw;
+    ಸ್ಥಿರಾಂಕ uint32_t OW           = ictx->OW;
+    ಸ್ಥಿರಾಂಕ uint32_t IC           = ictx->IC;
+    ಸ್ಥಿರಾಂಕ uint32_t KD           = ictx->KD;
+    ಸ್ಥಿರಾಂಕ uint32_t KH           = ictx->KH;
+    ಸ್ಥಿರಾಂಕ uint32_t KW           = ictx->KW;
+    ಸ್ಥಿರಾಂಕ uint32_t IW           = ictx->IW;
+    ಸ್ಥಿರಾಂಕ uint32_t patch_stride = ictx->patch_stride;
 
-    for (uint32_t iow = 0; iow < OW; iow++) {
+    ಗಾಗಿ (uint32_t iow = 0; iow < OW; iow++) {
         uint16_t * dst_patch = dstb + (size_t) iow * patch_stride;
-        for (uint32_t iic = 0; iic < IC; iic++) {
-            for (uint32_t ikd = 0; ikd < KD; ikd++) {
-                for (uint32_t ikh = 0; ikh < KH; ikh++) {
-                    uint16_t * out_run = dst_patch + (size_t) (iic * KD * KH + ikd * KH + ikh) * KW;
-                    const float * src_run = srcb + (size_t) (iic * KD * KH + ikd * KH + ikh) * IW + (size_t) iow * KW;
-                    hvx_copy_f16_f32_uu((uint8_t *) out_run, (const uint8_t *) src_run, KW);
+        ಗಾಗಿ (uint32_t iic = 0; iic < IC; iic++) {
+            ಗಾಗಿ (uint32_t ikd = 0; ikd < KD; ikd++) {
+                ಗಾಗಿ (uint32_t ikh = 0; ikh < KH; ikh++) {
+                    uint16_t * ಹೊರಹೋಗು_ಸತತ = dst_patch + (size_t) (iic * KD * KH + ikd * KH + ikh) * KW;
+                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಸತತ = srcb + (size_t) (iic * KD * KH + ikd * KH + ikh) * IW + (size_t) iow * KW;
+                    hvx_copy_f16_f32_uu((uint8_t *) ಹೊರಹೋಗು_ಸತತ, (ಸ್ಥಿರಾಂಕ uint8_t *) src_ಸತತ, KW);
                 }
             }
         }
     }
 }
 
-static void im2col_3d_patchembed_compute_f32(
-    const struct htp_im2col_context * ictx,
-    void * restrict dstb_raw, const float * restrict srcb) {
-    float * restrict dstb = (float *) dstb_raw;
-    const uint32_t OW           = ictx->OW;
-    const uint32_t IC           = ictx->IC;
-    const uint32_t KD           = ictx->KD;
-    const uint32_t KH           = ictx->KH;
-    const uint32_t KW           = ictx->KW;
-    const uint32_t IW           = ictx->IW;
-    const uint32_t patch_stride = ictx->patch_stride;
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_3d_patchembed_compute_f32(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_context * ictx,
+    ಶೂನ್ಯ * ಸೀಮಿತ dstb_raw, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಸೀಮಿತ srcb) {
+    ದಶಮಾಂಶ * ಸೀಮಿತ dstb = (ದಶಮಾಂಶ *) dstb_raw;
+    ಸ್ಥಿರಾಂಕ uint32_t OW           = ictx->OW;
+    ಸ್ಥಿರಾಂಕ uint32_t IC           = ictx->IC;
+    ಸ್ಥಿರಾಂಕ uint32_t KD           = ictx->KD;
+    ಸ್ಥಿರಾಂಕ uint32_t KH           = ictx->KH;
+    ಸ್ಥಿರಾಂಕ uint32_t KW           = ictx->KW;
+    ಸ್ಥಿರಾಂಕ uint32_t IW           = ictx->IW;
+    ಸ್ಥಿರಾಂಕ uint32_t patch_stride = ictx->patch_stride;
 
-    for (uint32_t iow = 0; iow < OW; iow++) {
-        float * dst_patch = dstb + (size_t) iow * patch_stride;
-        for (uint32_t iic = 0; iic < IC; iic++) {
-            for (uint32_t ikd = 0; ikd < KD; ikd++) {
-                for (uint32_t ikh = 0; ikh < KH; ikh++) {
-                    float * out_run = dst_patch + (size_t) (iic * KD * KH + ikd * KH + ikh) * KW;
-                    const float * src_run = srcb + (size_t) (iic * KD * KH + ikd * KH + ikh) * IW + (size_t) iow * KW;
-                    hvx_copy_f32_uu((uint8_t *) out_run, (const uint8_t *) src_run, KW);
+    ಗಾಗಿ (uint32_t iow = 0; iow < OW; iow++) {
+        ದಶಮಾಂಶ * dst_patch = dstb + (size_t) iow * patch_stride;
+        ಗಾಗಿ (uint32_t iic = 0; iic < IC; iic++) {
+            ಗಾಗಿ (uint32_t ikd = 0; ikd < KD; ikd++) {
+                ಗಾಗಿ (uint32_t ikh = 0; ikh < KH; ikh++) {
+                    ದಶಮಾಂಶ * ಹೊರಹೋಗು_ಸತತ = dst_patch + (size_t) (iic * KD * KH + ikd * KH + ikh) * KW;
+                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಸತತ = srcb + (size_t) (iic * KD * KH + ikd * KH + ikh) * IW + (size_t) iow * KW;
+                    hvx_copy_f32_uu((uint8_t *) ಹೊರಹೋಗು_ಸತತ, (ಸ್ಥಿರಾಂಕ uint8_t *) src_ಸತತ, KW);
                 }
             }
         }
     }
 }
 
-static void im2col_3d_patchembed_dma_thread(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    struct htp_im2col_context * ictx        = (struct htp_im2col_context *) data;
-    struct htp_ops_context *    octx        = ictx->octx;
-    struct htp_thread_trace * restrict tr   = &octx->ctx->trace[ith];
-    const struct htp_tensor * restrict dst  = octx->dst;
-    const uint32_t KD           = ictx->KD;
-    const uint32_t OW           = ictx->OW;
-    const uint32_t patch_stride = ictx->patch_stride;
-    const uint32_t dst_elem     = ictx->dst_elem;
-    const dma_addr_t dst_data   = dst->data;
-    dma_queue * dma_q           = octx->ctx->dma[ith];
-    const uint32_t row_end_max  = ictx->pe_row_base + ictx->pe_nrows;
-    const uint32_t row_start    = ictx->pe_row_base + ictx->pe_rows_per_thread * ith;
-    const uint32_t row_end      = MIN(row_start + ictx->pe_rows_per_thread, row_end_max);
-    if (row_start >= row_end) {
-        return;
+ಸ್ಥಿರ ಶೂನ್ಯ im2col_3d_patchembed_dma_thread(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    (ಶೂನ್ಯ) nth;
+    ರಚನೆ htp_im2col_context * ictx        = (ರಚನೆ htp_im2col_context *) ದತ್ತಾಂಶ;
+    ರಚನೆ htp_ops_context *    octx        = ictx->octx;
+    ರಚನೆ htp_thread_trace * ಸೀಮಿತ tr   = &octx->ctx->trace[ith];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * ಸೀಮಿತ dst  = octx->dst;
+    ಸ್ಥಿರಾಂಕ uint32_t KD           = ictx->KD;
+    ಸ್ಥಿರಾಂಕ uint32_t OW           = ictx->OW;
+    ಸ್ಥಿರಾಂಕ uint32_t patch_stride = ictx->patch_stride;
+    ಸ್ಥಿರಾಂಕ uint32_t dst_elem     = ictx->dst_elem;
+    ಸ್ಥಿರಾಂಕ dma_addr_t dst_ದತ್ತಾಂಶ   = dst->ದತ್ತಾಂಶ;
+    dma_ಸರತಿ * dma_q           = octx->ctx->dma[ith];
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಕೊನೆ_max  = ictx->pe_ಅಡ್ಡಸಾಲು_ತಳ + ictx->pe_nrows;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಆರಂಭ    = ictx->pe_ಅಡ್ಡಸಾಲು_ತಳ + ictx->pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread * ith;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಕೊನೆ      = MIN(ಅಡ್ಡಸಾಲು_ಆರಂಭ + ictx->pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread, ಅಡ್ಡಸಾಲು_ಕೊನೆ_max);
+    ಆದರೆ (ಅಡ್ಡಸಾಲು_ಆರಂಭ >= ಅಡ್ಡಸಾಲು_ಕೊನೆ) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const uint32_t nrows_local  = row_end - row_start;
-    uint8_t * src_base          = ictx->pe_vtcm_src + ith * ictx->pe_src_size_per_thread;
-    uint8_t * dstb_base         = ictx->pe_vtcm_dst + ith * ictx->pe_dst_size_per_thread;
-    float * srcb2[2]            = { (float *) src_base, (float *) (src_base + ictx->pe_src_row_bytes) };
-    void * dstb2[2]             = { dstb_base, dstb_base + ictx->pe_dst_row_bytes };
-    struct im2col_cursor cur = {
-        .r   = row_start,
-        .in  = ictx->thread_in[ith],
+    ಸ್ಥಿರಾಂಕ uint32_t nrows_local  = ಅಡ್ಡಸಾಲು_ಕೊನೆ - ಅಡ್ಡಸಾಲು_ಆರಂಭ;
+    uint8_t * src_ತಳ          = ictx->pe_vtcm_src + ith * ictx->pe_src_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    uint8_t * dstb_ತಳ         = ictx->pe_vtcm_dst + ith * ictx->pe_dst_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    ದಶಮಾಂಶ * srcb2[2]            = { (ದಶಮಾಂಶ *) src_ತಳ, (ದಶಮಾಂಶ *) (src_ತಳ + ictx->pe_src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು) };
+    ಶೂನ್ಯ * dstb2[2]             = { dstb_ತಳ, dstb_ತಳ + ictx->pe_dst_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು };
+    ರಚನೆ im2col_cursor cur = {
+        .r   = ಅಡ್ಡಸಾಲು_ಆರಂಭ,
+        .ಒಳ  = ictx->thread_ಒಳ[ith],
         .iod = ictx->thread_iod[ith],
         .ioh = ictx->thread_ioh[ith],
         .c0  = 0,
     };
-    struct im2col_cursor stage = cur;
-    for (uint32_t i = 0; i < nrows_local && i < 2; i++) {
-        dma_queue_push(dma_q, dma_make_data(dst_data, dstb2[i]), 0, 0, 0, 0);
+    ರಚನೆ im2col_cursor stage = cur;
+    ಗಾಗಿ (uint32_t i = 0; i < nrows_local && i < 2; i++) {
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst_ದತ್ತಾಂಶ, dstb2[i]), 0, 0, 0, 0);
         im2col_3d_patchembed_dma_stage(ictx, dma_q, srcb2[i], &stage);
-        im2col_3d_step_row(&stage, ictx);
+        im2col_3d_ಹೆಜ್ಜೆ_ಅಡ್ಡಸಾಲು(&stage, ictx);
     }
 
     im2col_3d_patchembed_compute_fn_t compute = (im2col_3d_patchembed_compute_fn_t) ictx->compute;
-    for (uint32_t idx = 0; idx < nrows_local; idx++) {
-        const uint32_t buf = idx & 1u;
-        float * srcb = srcb2[buf];
-        void *  dstb = dstb2[buf];
-        dma_queue_pop(dma_q);
-        for (uint32_t p = 0; p < KD; p++) {
-            dma_queue_pop(dma_q);
+    ಗಾಗಿ (uint32_t idx = 0; idx < nrows_local; idx++) {
+        ಸ್ಥಿರಾಂಕ uint32_t buf = idx & 1u;
+        ದಶಮಾಂಶ * srcb = srcb2[buf];
+        ಶೂನ್ಯ *  dstb = dstb2[buf];
+        dma_ಸರತಿ_ತೆಗೆ(dma_q);
+        ಗಾಗಿ (uint32_t p = 0; p < KD; p++) {
+            dma_ಸರತಿ_ತೆಗೆ(dma_q);
         }
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
         compute(ictx, dstb, srcb);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, cur.r);
-        const dma_addr_t ddr_row = dst_data + (size_t) cur.r * OW * patch_stride * dst_elem;
-        dma_queue_push(dma_q, dma_make_data(ddr_row, dstb),
+        ಸ್ಥಿರಾಂಕ dma_addr_t ddr_ಅಡ್ಡಸಾಲು = dst_ದತ್ತಾಂಶ + (size_t) cur.r * OW * patch_stride * dst_elem;
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(ddr_ಅಡ್ಡಸಾಲು, dstb),
                        OW * patch_stride * dst_elem, OW * patch_stride * dst_elem,
                        OW * patch_stride * dst_elem, 1);
-        if (idx + 2 < nrows_local) {
+        ಆದರೆ (idx + 2 < nrows_local) {
             im2col_3d_patchembed_dma_stage(ictx, dma_q, srcb, &stage);
-            im2col_3d_step_row(&stage, ictx);
+            im2col_3d_ಹೆಜ್ಜೆ_ಅಡ್ಡಸಾಲು(&stage, ictx);
         }
-        im2col_3d_step_row(&cur, ictx);
+        im2col_3d_ಹೆಜ್ಜೆ_ಅಡ್ಡಸಾಲು(&cur, ictx);
     }
-    dma_queue_flush(dma_q);
+    dma_ಸರತಿ_flush(dma_q);
 }
 
-int op_im2col(struct htp_ops_context * octx) {
-    const struct htp_im2col_kernel_params * kparams = (const struct htp_im2col_kernel_params *) octx->kernel_params;
-    if (kparams->kernel_type == HTP_IM2COL_KERNEL_UNSUPPORTED) {
-        return HTP_STATUS_NO_SUPPORT;
+ಪೂರ್ಣಾಂಕ op_im2col(ರಚನೆ htp_ops_context * octx) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_kernel_params * kparams = (ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_kernel_params *) octx->kernel_params;
+    ಆದರೆ (kparams->kernel_type == HTP_IM2_ಲಂಬಸಾಲು_KERNEL_UNSUPPORTED) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ಆದರೆ (!htp_ops_context_ಗಣ_n_ಎಳೆಗಳು(octx, kparams->n_ಎಳೆಗಳು)) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_INVAL_PARAMS;
     }
 
-    const struct htp_tensor * dst = octx->dst;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * dst = octx->dst;
 
-    uint32_t row_base = 0;
-    uint32_t nrows    = kparams->total_rows;
-    if (octx->ctx->mdev.count > 1) {
-        const uint32_t row_size = dst->nb[2];
-        const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(row_size, HEX_L2_LINE_SIZE)) : 1;
-        const struct htp_tensor_mdev_range range =
-            htp_tensor_mdev_partition(kparams->total_rows, htp_tensor_mdev_data_aligned(dst) ? rows_per_chunk : 0,
-                                      octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_base = range.start;
-        nrows    = range.count;
+    uint32_t ಅಡ್ಡಸಾಲು_ತಳ = 0;
+    uint32_t nrows    = kparams->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು;
+    ಆದರೆ (octx->ctx->mdev.ಎಣಿಕೆ_2 > 1) {
+        ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = dst->nb[2];
+        ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk = (ಅಡ್ಡಸಾಲು_ಗಾತ್ರ > 0) ? (HEX_L2_ಸಾಲು_ಗಾತ್ರ / hex_ಮಹತ್ತಮ_ಸಾಮಾನ್ಯ_ಅಪವರ್ತನ_u32(ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, HEX_L2_ಸಾಲು_ಗಾತ್ರ)) : 1;
+        ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor_mdev_range range =
+            htp_tensor_mdev_ವಿಭಜನೆ(kparams->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು, htp_tensor_mdev_ದತ್ತಾಂಶ_aligned(dst) ? ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk : 0,
+                                      octx->ctx->mdev.idx, octx->ctx->mdev.ಎಣಿಕೆ_2, &octx->ctx->mdev.ಎಣಿಕೆ_div);
+        ಅಡ್ಡಸಾಲು_ತಳ = range.ಆರಂಭ;
+        nrows    = range.ಎಣಿಕೆ_2;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ಆದರೆ (nrows == 0) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
     }
 
-    struct htp_im2col_context ictx = { 0 };
-    uint8_t * const base = octx->ctx->vtcm_base;
+    ರಚನೆ htp_im2col_context ictx = { 0 };
+    uint8_t * ಸ್ಥಿರಾಂಕ ತಳ = octx->ctx->vtcm_ತಳ;
 
-    const uint32_t pth = MIN(octx->n_threads, nrows);
+    ಸ್ಥಿರಾಂಕ uint32_t pth = MIN(octx->n_ಎಳೆಗಳು, nrows);
     ictx.octx                   = octx;
-    ictx.pe_row_base            = row_base;
+    ictx.pe_ಅಡ್ಡಸಾಲು_ತಳ            = ಅಡ್ಡಸಾಲು_ತಳ;
     ictx.pe_nrows               = nrows;
-    ictx.pe_rows_per_thread     = (nrows + pth - 1) / pth;
-    ictx.pe_src_row_bytes       = kparams->src_row_bytes;
-    ictx.pe_dst_row_bytes       = kparams->dst_row_bytes;
-    ictx.pe_vtcm_src            = VTCM_LAYOUT_PTR(uint8_t, base, kparams->off_src);
-    ictx.pe_vtcm_dst            = VTCM_LAYOUT_PTR(uint8_t, base, kparams->off_dst);
-    ictx.pe_src_size_per_thread = kparams->src_bytes_per_thread;
-    ictx.pe_dst_size_per_thread = kparams->dst_bytes_per_thread;
+    ictx.pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread     = (nrows + pth - 1) / pth;
+    ictx.pe_src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು       = kparams->src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು;
+    ictx.pe_dst_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು       = kparams->dst_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು;
+    ictx.pe_vtcm_src            = VTCM_LAYOUT_PTR(uint8_t, ತಳ, kparams->off_src);
+    ictx.pe_vtcm_dst            = VTCM_LAYOUT_PTR(uint8_t, ತಳ, kparams->off_dst);
+    ictx.pe_src_ಗಾತ್ರ_ಪ್ರತಿ_thread = kparams->src_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
+    ictx.pe_dst_ಗಾತ್ರ_ಪ್ರತಿ_thread = kparams->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
     ictx.pe_owb                 = kparams->owb;
     ictx.pe_wb                  = kparams->wb;
     ictx.pe_nbpr                = kparams->nbpr;
@@ -820,72 +820,72 @@ int op_im2col(struct htp_ops_context * octx) {
     ictx.OW                     = kparams->OW;
     ictx.patch_stride           = kparams->patch_stride;
 
-    for (uint32_t ith = 0; ith < pth; ith++) {
-        uint32_t r = row_base + ictx.pe_rows_per_thread * ith;
+    ಗಾಗಿ (uint32_t ith = 0; ith < pth; ith++) {
+        uint32_t r = ಅಡ್ಡಸಾಲು_ತಳ + ictx.pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread * ith;
         ictx.thread_ioh[ith] = r % kparams->OH;
-        ictx.thread_in[ith]  = r / kparams->OH;
+        ictx.thread_ಒಳ[ith]  = r / kparams->OH;
     }
 
-    ictx.dst_elem = dst->type == HTP_TYPE_F16 ? sizeof(__fp16) : sizeof(float);
+    ictx.dst_elem = dst->type == HTP_TYPE_F16 ? ಗಾತ್ರ(__fp16) : ಗಾತ್ರ(ದಶಮಾಂಶ);
 
-    if (kparams->kernel_type == HTP_IM2COL_KERNEL_PATCHEMBED_DMA) {
-        ictx.compute = dst->type == HTP_TYPE_F16 ? (void *) im2col_patchembed_compute_f16
-                                                 : (void *) im2col_patchembed_compute_f32;
-        work_queue_run(octx->ctx->work_queue, im2col_patchembed_dma_thread, &ictx, pth);
-        return HTP_STATUS_OK;
-    } else if (kparams->kernel_type == HTP_IM2COL_KERNEL_BLOCKED_DMA) {
-        ictx.compute = dst->type == HTP_TYPE_F16 ? (void *) im2col_blocked_compute_f16
-                                                 : (void *) im2col_blocked_compute_f32;
-        work_queue_run(octx->ctx->work_queue, im2col_blocked_dma_thread, &ictx, pth);
-        return HTP_STATUS_OK;
+    ಆದರೆ (kparams->kernel_type == HTP_IM2_ಲಂಬಸಾಲು_KERNEL_PATCHEMBED_DMA) {
+        ictx.compute = dst->type == HTP_TYPE_F16 ? (ಶೂನ್ಯ *) im2col_patchembed_compute_f16
+                                                 : (ಶೂನ್ಯ *) im2col_patchembed_compute_f32;
+        work_ಸರತಿ_ಸತತ(octx->ctx->work_ಸರತಿ, im2col_patchembed_dma_thread, &ictx, pth);
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
+    } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (kparams->kernel_type == HTP_IM2_ಲಂಬಸಾಲು_KERNEL_BLOCKED_DMA) {
+        ictx.compute = dst->type == HTP_TYPE_F16 ? (ಶೂನ್ಯ *) im2col_blocked_compute_f16
+                                                 : (ಶೂನ್ಯ *) im2col_blocked_compute_f32;
+        work_ಸರತಿ_ಸತತ(octx->ctx->work_ಸರತಿ, im2col_blocked_dma_thread, &ictx, pth);
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
     }
 
-    return HTP_STATUS_NO_SUPPORT;
+    ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
 }
 
-int op_im2col_3d(struct htp_ops_context * octx) {
-    const struct htp_im2col_kernel_params * kparams =
-        (const struct htp_im2col_kernel_params *) octx->kernel_params;
-    if (kparams->kernel_type == HTP_IM2COL_KERNEL_UNSUPPORTED) {
-        return HTP_STATUS_NO_SUPPORT;
+ಪೂರ್ಣಾಂಕ op_im2col_3d(ರಚನೆ htp_ops_context * octx) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_kernel_params * kparams =
+        (ಸ್ಥಿರಾಂಕ ರಚನೆ htp_im2col_kernel_params *) octx->kernel_params;
+    ಆದರೆ (kparams->kernel_type == HTP_IM2_ಲಂಬಸಾಲು_KERNEL_UNSUPPORTED) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
     }
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ಆದರೆ (!htp_ops_context_ಗಣ_n_ಎಳೆಗಳು(octx, kparams->n_ಎಳೆಗಳು)) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_INVAL_PARAMS;
     }
 
-    const struct htp_tensor * dst = octx->dst;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * dst = octx->dst;
 
-    uint32_t row_base = 0;
-    uint32_t nrows    = kparams->total_rows;
-    if (octx->ctx->mdev.count > 1) {
-        const uint32_t row_size = dst->nb[2];
-        const uint32_t rows_per_chunk = (row_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(row_size, HEX_L2_LINE_SIZE)) : 1;
-        const struct htp_tensor_mdev_range range =
-            htp_tensor_mdev_partition(kparams->total_rows, htp_tensor_mdev_data_aligned(dst) ? rows_per_chunk : 0,
-                                      octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        row_base = range.start;
-        nrows    = range.count;
+    uint32_t ಅಡ್ಡಸಾಲು_ತಳ = 0;
+    uint32_t nrows    = kparams->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು;
+    ಆದರೆ (octx->ctx->mdev.ಎಣಿಕೆ_2 > 1) {
+        ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = dst->nb[2];
+        ಸ್ಥಿರಾಂಕ uint32_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk = (ಅಡ್ಡಸಾಲು_ಗಾತ್ರ > 0) ? (HEX_L2_ಸಾಲು_ಗಾತ್ರ / hex_ಮಹತ್ತಮ_ಸಾಮಾನ್ಯ_ಅಪವರ್ತನ_u32(ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, HEX_L2_ಸಾಲು_ಗಾತ್ರ)) : 1;
+        ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor_mdev_range range =
+            htp_tensor_mdev_ವಿಭಜನೆ(kparams->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು, htp_tensor_mdev_ದತ್ತಾಂಶ_aligned(dst) ? ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_chunk : 0,
+                                      octx->ctx->mdev.idx, octx->ctx->mdev.ಎಣಿಕೆ_2, &octx->ctx->mdev.ಎಣಿಕೆ_div);
+        ಅಡ್ಡಸಾಲು_ತಳ = range.ಆರಂಭ;
+        nrows    = range.ಎಣಿಕೆ_2;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    ಆದರೆ (nrows == 0) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
     }
 
-    struct htp_im2col_context ictx = { 0 };
-    uint8_t * const base = octx->ctx->vtcm_base;
+    ರಚನೆ htp_im2col_context ictx = { 0 };
+    uint8_t * ಸ್ಥಿರಾಂಕ ತಳ = octx->ctx->vtcm_ತಳ;
 
-    const uint32_t pth = MIN(octx->n_threads, nrows);
+    ಸ್ಥಿರಾಂಕ uint32_t pth = MIN(octx->n_ಎಳೆಗಳು, nrows);
     ictx.octx                   = octx;
-    ictx.pe_row_base            = row_base;
+    ictx.pe_ಅಡ್ಡಸಾಲು_ತಳ            = ಅಡ್ಡಸಾಲು_ತಳ;
     ictx.pe_nrows               = nrows;
-    ictx.pe_rows_per_thread     = (nrows + pth - 1) / pth;
-    ictx.pe_src_row_bytes       = kparams->src_row_bytes;
-    ictx.pe_dst_row_bytes       = kparams->dst_row_bytes;
-    ictx.pe_vtcm_src            = VTCM_LAYOUT_PTR(uint8_t, base, kparams->off_src);
-    ictx.pe_vtcm_dst            = VTCM_LAYOUT_PTR(uint8_t, base, kparams->off_dst);
-    ictx.pe_src_size_per_thread = kparams->src_bytes_per_thread;
-    ictx.pe_dst_size_per_thread = kparams->dst_bytes_per_thread;
+    ictx.pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread     = (nrows + pth - 1) / pth;
+    ictx.pe_src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು       = kparams->src_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು;
+    ictx.pe_dst_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು       = kparams->dst_ಅಡ್ಡಸಾಲು_ಬೈಟುಗಳು;
+    ictx.pe_vtcm_src            = VTCM_LAYOUT_PTR(uint8_t, ತಳ, kparams->off_src);
+    ictx.pe_vtcm_dst            = VTCM_LAYOUT_PTR(uint8_t, ತಳ, kparams->off_dst);
+    ictx.pe_src_ಗಾತ್ರ_ಪ್ರತಿ_thread = kparams->src_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
+    ictx.pe_dst_ಗಾತ್ರ_ಪ್ರತಿ_thread = kparams->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
     ictx.pe_owb                 = kparams->owb;
     ictx.pe_wb                  = kparams->wb;
     ictx.pe_nbpr                = kparams->nbpr;
@@ -902,27 +902,27 @@ int op_im2col_3d(struct htp_ops_context * octx) {
     ictx.OW                     = kparams->OW;
     ictx.patch_stride           = kparams->patch_stride;
 
-    for (uint32_t ith = 0; ith < pth; ith++) {
-        uint32_t rem = row_base + ictx.pe_rows_per_thread * ith;
+    ಗಾಗಿ (uint32_t ith = 0; ith < pth; ith++) {
+        uint32_t rem = ಅಡ್ಡಸಾಲು_ತಳ + ictx.pe_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread * ith;
         ictx.thread_ioh[ith] = rem % kparams->OH;
         rem /= kparams->OH;
         ictx.thread_iod[ith] = rem % kparams->OD;
-        ictx.thread_in[ith]  = rem / kparams->OD;
+        ictx.thread_ಒಳ[ith]  = rem / kparams->OD;
     }
 
-    ictx.dst_elem = dst->type == HTP_TYPE_F16 ? sizeof(__fp16) : sizeof(float);
+    ictx.dst_elem = dst->type == HTP_TYPE_F16 ? ಗಾತ್ರ(__fp16) : ಗಾತ್ರ(ದಶಮಾಂಶ);
 
-    if (kparams->kernel_type == HTP_IM2COL_KERNEL_PATCHEMBED_DMA) {
-        ictx.compute = dst->type == HTP_TYPE_F16 ? (void *) im2col_3d_patchembed_compute_f16
-                                                 : (void *) im2col_3d_patchembed_compute_f32;
-        work_queue_run(octx->ctx->work_queue, im2col_3d_patchembed_dma_thread, &ictx, pth);
-        return HTP_STATUS_OK;
-    } else if (kparams->kernel_type == HTP_IM2COL_KERNEL_BLOCKED_DMA) {
-        ictx.compute = dst->type == HTP_TYPE_F16 ? (void *) im2col_3d_blocked_compute_f16
-                                                 : (void *) im2col_3d_blocked_compute_f32;
-        work_queue_run(octx->ctx->work_queue, im2col_3d_blocked_dma_thread, &ictx, pth);
-        return HTP_STATUS_OK;
+    ಆದರೆ (kparams->kernel_type == HTP_IM2_ಲಂಬಸಾಲು_KERNEL_PATCHEMBED_DMA) {
+        ictx.compute = dst->type == HTP_TYPE_F16 ? (ಶೂನ್ಯ *) im2col_3d_patchembed_compute_f16
+                                                 : (ಶೂನ್ಯ *) im2col_3d_patchembed_compute_f32;
+        work_ಸರತಿ_ಸತತ(octx->ctx->work_ಸರತಿ, im2col_3d_patchembed_dma_thread, &ictx, pth);
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
+    } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (kparams->kernel_type == HTP_IM2_ಲಂಬಸಾಲು_KERNEL_BLOCKED_DMA) {
+        ictx.compute = dst->type == HTP_TYPE_F16 ? (ಶೂನ್ಯ *) im2col_3d_blocked_compute_f16
+                                                 : (ಶೂನ್ಯ *) im2col_3d_blocked_compute_f32;
+        work_ಸರತಿ_ಸತತ(octx->ctx->work_ಸರತಿ, im2col_3d_blocked_dma_thread, &ictx, pth);
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
     }
 
-    return HTP_STATUS_NO_SUPPORT;
+    ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_NO_SUPPORT;
 }

@@ -1,91 +1,91 @@
-#include "align_eltwise_ranks.h"
+#ಅನ್ತರ್ಭಾವ "align_eltwise_ranks.h"
 
-#include <numeric>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/sqrt.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/pass/pattern/op/wrap_type.hpp>
+#ಅನ್ತರ್ಭಾವ <numeric>
+#ಅನ್ತರ್ಭಾವ <openvino/op/add.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/constant.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/divide.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/multiply.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/sqrt.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/subtract.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/unsqueeze.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/pass/pattern/op/wrap_type.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+ನಾಮಾಕಾಶ ov {
+ನಾಮಾಕಾಶ frontend {
+ನಾಮಾಕಾಶ ggml {
+ನಾಮಾಕಾಶ pass {
 
-namespace {
+ನಾಮಾಕಾಶ {
 
 // True for an RMS-norm output, x * (1 / sqrt(mean(x^2) + eps)) as translate_rms_norm builds it, optionally
 // scaled by the norm weight.
-bool is_rms_norm_output(const ov::Output<ov::Node> & value, int depth = 1) {
-    const auto * node = value.get_node();
-    if (!ov::is_type<ov::op::v1::Multiply>(node)) {
-        return false;
+ತಾರ್ಕಿಕ is_rms_norm_output(ಸ್ಥಿರಾಂಕ ov::Output<ov::Node> & value, ಪೂರ್ಣಾಂಕ ಆಳ = 1) {
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ * ಗಂಟು = value.get_ಗಂಟು();
+    ಆದರೆ (!ov::is_type<ov::op::v1::Multiply>(ಗಂಟು)) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
-    for (const auto & input : node->input_values()) {
-        const auto * src = input.get_node();
-        if (ov::is_type<ov::op::v1::Divide>(src) && ov::is_type<ov::op::v0::Sqrt>(src->get_input_node_ptr(1))) {
-            return true;
+    ಗಾಗಿ (ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ & ಒಳಹರಿವು : ಗಂಟು->ಒಳಹರಿವು_ಮೌಲ್ಯಗಳು()) {
+        ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ * src = ಒಳಹರಿವು.get_ಗಂಟು();
+        ಆದರೆ (ov::is_type<ov::op::v1::Divide>(src) && ov::is_type<ov::op::v0::Sqrt>(src->get_ಒಳಹರಿವು_ಗಂಟು_ptr(1))) {
+            ಹಿಂತಿರುಗಿ ನಿಜ;
         }
-        if (depth > 0 && is_rms_norm_output(input, depth - 1)) {
-            return true;
+        ಆದರೆ (ಆಳ > 0 && is_rms_norm_output(ಒಳಹರಿವು, ಆಳ - 1)) {
+            ಹಿಂತಿರುಗಿ ನಿಜ;
         }
     }
-    return false;
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }
 
 }  // namespace
 
-AlignEltwiseOperandRanks::AlignEltwiseOperandRanks() {
-    auto eltwise_m = ov::pass::pattern::wrap_type<ov::op::v1::Add, ov::op::v1::Multiply, ov::op::v1::Subtract>();
+Align_Eltwise_ಕಾರ್ಯಾಂಶ_Ranks::Align_Eltwise_ಕಾರ್ಯಾಂಶ_Ranks() {
+    ಸ್ವಯಂಚಾಲಿತ eltwise_m = ov::pass::pattern::wrap_type<ov::op::v1::ಕೂಡಿಸು, ov::op::v1::Multiply, ov::op::v1::ಕಳೆ>();
 
-    const auto callback = [this](ov::pass::pattern::Matcher & m) {
-        auto node = m.get_match_root();
-        if (node->get_input_size() != 2) {
-            return false;
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ callback = [ಇದು](ov::pass::pattern::Matcher & m) {
+        ಸ್ವಯಂಚಾಲಿತ ಗಂಟು = m.get_ಹೊಂದಿಕೆ_ಬೇರು();
+        ಆದರೆ (ಗಂಟು->get_ಒಳಹರಿವು_ಗಾತ್ರ() != 2) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
 
-        auto lhs = node->input_value(0);
-        auto rhs = node->input_value(1);
+        ಸ್ವಯಂಚಾಲಿತ lhs = ಗಂಟು->ಒಳಹರಿವು_ಮೌಲ್ಯ(0);
+        ಸ್ವಯಂಚಾಲಿತ rhs = ಗಂಟು->ಒಳಹರಿವು_ಮೌಲ್ಯ(1);
 
         // A tensor-vs-Constant mismatch is the norm's own eps / 1-over-sqrt arithmetic. That
         // folds into the `rms` primitive itself instead of becoming a fused eltwise post-op,
         // so it is not affected and is left alone.
-        if (ov::is_type<ov::op::v0::Constant>(lhs.get_node()) ||
-            ov::is_type<ov::op::v0::Constant>(rhs.get_node())) {
-            return false;
+        ಆದರೆ (ov::is_type<ov::op::v0::Constant>(lhs.get_ಗಂಟು()) ||
+            ov::is_type<ov::op::v0::Constant>(rhs.get_ಗಂಟು())) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
 
-        const auto lhs_rank = lhs.get_partial_shape().rank();
-        const auto rhs_rank = rhs.get_partial_shape().rank();
-        if (lhs_rank.is_dynamic() || rhs_rank.is_dynamic() || lhs_rank == rhs_rank) {
-            return false;
+        ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ lhs_rank = lhs.get_partial_shape().rank();
+        ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ rhs_rank = rhs.get_partial_shape().rank();
+        ಆದರೆ (lhs_rank.is_dynamic() || rhs_rank.is_dynamic() || lhs_rank == rhs_rank) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
 
-        const size_t shorter_idx = lhs_rank.get_length() < rhs_rank.get_length() ? 0 : 1;
-        const auto & shorter = shorter_idx == 0 ? lhs : rhs;
+        ಸ್ಥಿರಾಂಕ size_t shorter_idx = lhs_rank.get_ಉದ್ದಳತೆ() < rhs_rank.get_ಉದ್ದಳತೆ() ? 0 : 1;
+        ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ & shorter = shorter_idx == 0 ? lhs : rhs;
 
         // The defect is with the norm output as the higher-rank operand. When the norm output is the
         // lower-rank one (gemma-3 adds it to a rank-4 residual), unsqueezing it puts the Unsqueeze between
         // `rms` and its post-op, and the GPU plugin then computes the layer wrongly.
-        if (is_rms_norm_output(shorter)) {
-            return false;
+        ಆದರೆ (is_rms_norm_output(shorter)) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        const int64_t diff = std::abs(lhs_rank.get_length() - rhs_rank.get_length());
+        ಸ್ಥಿರಾಂಕ int64_t diff = std::ನಿರಪೇಕ್ಷ(lhs_rank.get_ಉದ್ದಳತೆ() - rhs_rank.get_ಉದ್ದಳತೆ());
 
         std::vector<int64_t> axes(static_cast<size_t>(diff));
         std::iota(axes.begin(), axes.end(), 0);
-        auto unsqueeze = std::make_shared<ov::op::v0::Unsqueeze>(
+        ಸ್ವಯಂಚಾಲಿತ unsqueeze = std::make_shared<ov::op::v0::Unsqueeze>(
             shorter, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{ axes.size() }, axes));
 
-        node->input(shorter_idx).replace_source_output(unsqueeze->output(0));
-        register_new_node(unsqueeze);
-        return true;
+        ಗಂಟು->ಒಳಹರಿವು(shorter_idx).replace_ಮೂಲ_output(unsqueeze->output(0));
+        ರಿಜಿಸ್ಟರ್_new_ಗಂಟು(unsqueeze);
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     };
 
-    register_matcher(
+    ರಿಜಿಸ್ಟರ್_matcher(
         std::make_shared<ov::pass::pattern::Matcher>(eltwise_m, "ov::frontend::ggml::pass::AlignEltwiseOperandRanks"),
         callback);
 }

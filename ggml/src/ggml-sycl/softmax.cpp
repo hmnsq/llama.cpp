@@ -1,22 +1,22 @@
-#include "softmax.hpp"
-#include <cstdint>
-#include <utility>
-#include <cmath>
+#ಅನ್ತರ್ಭಾವ "softmax.hpp"
+#ಅನ್ತರ್ಭಾವ <cstdint>
+#ಅನ್ತರ್ಭಾವ <utility>
+#ಅನ್ತರ್ಭಾವ <cmath>
 
 
-template <typename T> static __dpct_inline__ float t2f32(T val) {
-    return (float) val;
+ಮಾದರಿ <ಬಗೆ_ಹೆಸರು T> ಸ್ಥಿರ __dpct_inline__ ದಶಮಾಂಶ t2f32(T val) {
+    ಹಿಂತಿರುಗಿ (ದಶಮಾಂಶ) val;
 }
 
-template <> float __dpct_inline__ t2f32<sycl::half>(sycl::half val) {
-  return sycl::vec<sycl::half, 1>(val)
-      .convert<float, sycl::rounding_mode::automatic>()[0];
+ಮಾದರಿ <> ದಶಮಾಂಶ __dpct_inline__ t2f32<sycl::half>(sycl::half val) {
+  ಹಿಂತಿರುಗಿ sycl::vec<sycl::half, 1>(val)
+      .convert<ದಶಮಾಂಶ, sycl::rounding_ಬಹುಲಕ::automatic>()[0];
 }
 
-struct soft_max_params {
+ರಚನೆ soft_max_params {
 
     int64_t nheads;
-    uint32_t n_head_log2;
+    uint32_t n_ತಲೆ_log2;
     int64_t ncols;
     int64_t nrows_x;
     int64_t nrows_y;
@@ -30,211 +30,211 @@ struct soft_max_params {
 
     int64_t ne12;
     int64_t ne13;
-    float scale;
-    float max_bias;
-    float m0;
-    float m1;
+    ದಶಮಾಂಶ scale;
+    ದಶಮಾಂಶ max_bias;
+    ದಶಮಾಂಶ m0;
+    ದಶಮಾಂಶ m1;
 };
 
 // When ncols_template == 0 the bounds for the loops in this function are not known and can't be unrolled.
 // As we want to keep pragma unroll for all other cases we suppress the clang transformation warning here.
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpass-failed"
-#endif // __clang__
-template <bool use_shared, int ncols_template, int block_size_template, typename T>
-static void soft_max_f32(const float *         x,
-                         const T *             mask,
-                         const float *         sinks,
-                         float *               dst,
-                         const soft_max_params p,
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __clang__
+#ಸೂಚನೆ clang diagnostic ತಳ್ಳು
+#ಸೂಚನೆ clang diagnostic ignored "-Wpass-failed"
+#ಆದರೆ_ಅಂತ್ಯ // __clang__
+ಮಾದರಿ <ತಾರ್ಕಿಕ use_shared, ಪೂರ್ಣಾಂಕ ncols_template, ಪೂರ್ಣಾಂಕ ಖಂಡ_ಗಾತ್ರ_template, ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ soft_max_f32(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *         x,
+                         ಸ್ಥಿರಾಂಕ T *             ಮುಖವಾಡ,
+                         ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *         sinks,
+                         ದಶಮಾಂಶ *               dst,
+                         ಸ್ಥಿರಾಂಕ soft_max_params p,
                          uint8_t *             dpct_local) {
-    auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int ncols    = ncols_template == 0 ? p.ncols : ncols_template;
-    const int block_size = block_size_template == 0
-                               ? item_ct1.get_local_range(2)
-                               : block_size_template;
-    const int nthreads = block_size;
-    const int nwarps = nthreads / WARP_SIZE;
-    const size_t nreduce = nwarps / WARP_SIZE;
+    ಸ್ವಯಂಚಾಲಿತ      ಅಂಶ_ct1 = sycl::ext::oneapi::this_work_ಅಂಶ::get_nd_ಅಂಶ<3>();
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols    = ncols_template == 0 ? p.ncols : ncols_template;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಖಂಡ_ಗಾತ್ರ_3 = ಖಂಡ_ಗಾತ್ರ_template == 0
+                               ? ಅಂಶ_ct1.get_local_range(2)
+                               : ಖಂಡ_ಗಾತ್ರ_template;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nthreads = ಖಂಡ_ಗಾತ್ರ_3;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nwarps = nthreads / WARP_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ size_t nreduce = nwarps / WARP_ಗಾತ್ರ;
 
-    const int tid = item_ct1.get_local_id(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ tid = ಅಂಶ_ct1.get_local_id(2);
 
-    const int64_t i03 = item_ct1.get_group(0);
-    const int64_t i02 = item_ct1.get_group(1);
-    const int64_t i01 = item_ct1.get_group(2);
+    ಸ್ಥಿರಾಂಕ int64_t i03 = ಅಂಶ_ct1.get_ಗುಂಪು(0);
+    ಸ್ಥಿರಾಂಕ int64_t i02 = ಅಂಶ_ct1.get_ಗುಂಪು(1);
+    ಸ್ಥಿರಾಂಕ int64_t i01 = ಅಂಶ_ct1.get_ಗುಂಪು(2);
 
     //TODO: noncontigous inputs/outputs
-    const int rowx = item_ct1.get_group(2) +
-                     item_ct1.get_group(1) * item_ct1.get_group_range(2) +
-                     item_ct1.get_group(0) * item_ct1.get_group_range(2) *
-                         item_ct1.get_group_range(1);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ rowx = ಅಂಶ_ct1.get_ಗುಂಪು(2) +
+                     ಅಂಶ_ct1.get_ಗುಂಪು(1) * ಅಂಶ_ct1.get_ಗುಂಪು_range(2) +
+                     ಅಂಶ_ct1.get_ಗುಂಪು(0) * ಅಂಶ_ct1.get_ಗುಂಪು_range(2) *
+                         ಅಂಶ_ct1.get_ಗುಂಪು_range(1);
 
-    const int64_t i11 = i01;
-    const int64_t i12 = i02 % p.ne12;
-    const int64_t i13 = i03 % p.ne13;
+    ಸ್ಥಿರಾಂಕ int64_t i11 = i01;
+    ಸ್ಥಿರಾಂಕ int64_t i12 = i02 % p.ne12;
+    ಸ್ಥಿರಾಂಕ int64_t i13 = i03 % p.ne13;
 
     x    += int64_t(rowx)*ncols;
-    mask += (i11*p.nb11 + i12*p.nb12 + i13*p.nb13) / sizeof(T) * (mask != nullptr);
+    ಮುಖವಾಡ += (i11*p.nb11 + i12*p.nb12 + i13*p.nb13) / ಗಾತ್ರ(T) * (ಮುಖವಾಡ != ಶೂನ್ಯಸೂಚಕ);
     dst  += int64_t(rowx)*ncols;
 
-    const int warp_id = item_ct1.get_local_id(2) / WARP_SIZE;
-    const int lane_id = item_ct1.get_local_id(2) % WARP_SIZE;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ warp_id = ಅಂಶ_ct1.get_local_id(2) / WARP_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ lane_id = ಅಂಶ_ct1.get_local_id(2) % WARP_ಗಾತ್ರ;
 
-    const float slope = get_alibi_slope(p.max_bias, i02, p.n_head_log2, p.m0, p.m1);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ ಇಳಿಜಾರು = get_alibi_ಇಳಿಜಾರು(p.max_bias, i02, p.n_ತಲೆ_log2, p.m0, p.m1);
 
-    float * buf_iw = (float *) dpct_local;
+    ದಶಮಾಂಶ * buf_iw = (ದಶಮಾಂಶ *) dpct_local;
 
     // shared memory buffer to cache values between iterations:
-    float *vals = use_shared ? buf_iw + sycl::max(nwarps, WARP_SIZE) : dst;
-    float max_val = sinks ? sinks[i02] : -INFINITY;
-#pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+    ದಶಮಾಂಶ *vals = use_shared ? buf_iw + sycl::max(nwarps, WARP_ಗಾತ್ರ) : dst;
+    ದಶಮಾಂಶ max_val = sinks ? sinks[i02] : -INFINITY;
+#ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ col0 = 0; col0 < ncols; col0 += ಖಂಡ_ಗಾತ್ರ_3) {
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            break;
+        ಆದರೆ (ncols_template == 0 && ಲಂಬಸಾಲು >= ncols) {
+            ನಿಲ್ಲಿಸು;
         }
 
-        const float val = x[col]*p.scale + (mask ? slope*t2f32(mask[col]) : 0.0f);
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ val = x[ಲಂಬಸಾಲು]*p.scale + (ಮುಖವಾಡ ? ಇಳಿಜಾರು*t2f32(ಮುಖವಾಡ[ಲಂಬಸಾಲು]) : 0.0f);
 
-        vals[col] = val;
+        vals[ಲಂಬಸಾಲು] = val;
         max_val   = sycl::max(max_val, val);
     }
     // find the max value in the block
-    max_val = warp_reduce_max<WARP_SIZE>(max_val);
+    max_val = warp_reduce_max<WARP_ಗಾತ್ರ>(max_val);
 
-    if (block_size > WARP_SIZE) {
-        if (lane_id == 0) {
+    ಆದರೆ (ಖಂಡ_ಗಾತ್ರ_3 > WARP_ಗಾತ್ರ) {
+        ಆದರೆ (lane_id == 0) {
             buf_iw[warp_id] = max_val;
         }
-        item_ct1.barrier();
+        ಅಂಶ_ct1.barrier();
 
         max_val = -INFINITY;
-        for (int i = lane_id; i < nwarps; i += WARP_SIZE) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = lane_id; i < nwarps; i += WARP_ಗಾತ್ರ) {
             max_val = sycl::max(max_val, buf_iw[i]);
         }
-        max_val = warp_reduce_max<WARP_SIZE>(max_val);
+        max_val = warp_reduce_max<WARP_ಗಾತ್ರ>(max_val);
     }
-    float tmp = 0.0f; // partial sum
+    ದಶಮಾಂಶ tmp = 0.0f; // partial sum
 
-#pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+#ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ col0 = 0; col0 < ncols; col0 += ಖಂಡ_ಗಾತ್ರ_3) {
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            break;
+        ಆದರೆ (ncols_template == 0 && ಲಂಬಸಾಲು >= ncols) {
+            ನಿಲ್ಲಿಸು;
         }
 
-        const float val = sycl::native::exp(sycl::max(vals[col] - max_val, -80.0f));
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ val = sycl::native::ಘಾತಾಂಕ(sycl::max(vals[ಲಂಬಸಾಲು] - max_val, -80.0f));
         tmp += val;
-        vals[col] = val;
+        vals[ಲಂಬಸಾಲು] = val;
     }
     // find the sum of exps in the block
-    tmp = warp_reduce_sum<WARP_SIZE>(tmp);
-    if (block_size > WARP_SIZE) {
-        item_ct1.barrier();
-        if (warp_id == 0) {
+    tmp = warp_reduce_ಮೊತ್ತ<WARP_ಗಾತ್ರ>(tmp);
+    ಆದರೆ (ಖಂಡ_ಗಾತ್ರ_3 > WARP_ಗಾತ್ರ) {
+        ಅಂಶ_ct1.barrier();
+        ಆದರೆ (warp_id == 0) {
             buf_iw[lane_id] = 0.0f;
-            for (size_t i = 1; i < nreduce; i += 1) {
-                buf_iw[lane_id + i * WARP_SIZE] = 0.f;
+            ಗಾಗಿ (size_t i = 1; i < nreduce; i += 1) {
+                buf_iw[lane_id + i * WARP_ಗಾತ್ರ] = 0.f;
             }
         }
-        item_ct1.barrier();
+        ಅಂಶ_ct1.barrier();
 
-        if (lane_id == 0) {
+        ಆದರೆ (lane_id == 0) {
             buf_iw[warp_id] = tmp;
         }
-        item_ct1.barrier();
+        ಅಂಶ_ct1.barrier();
 
         tmp = buf_iw[lane_id];
-        for (size_t i = 1; i < nreduce; i += 1) {
-            tmp += buf_iw[lane_id + i * WARP_SIZE];
+        ಗಾಗಿ (size_t i = 1; i < nreduce; i += 1) {
+            tmp += buf_iw[lane_id + i * WARP_ಗಾತ್ರ];
         }
-        tmp = warp_reduce_sum<WARP_SIZE>(tmp);
+        tmp = warp_reduce_ಮೊತ್ತ<WARP_ಗಾತ್ರ>(tmp);
     }
-    if (sinks) {
-        tmp += sycl::native::exp(sycl::max(sinks[i02] - max_val, -80.0f));
+    ಆದರೆ (sinks) {
+        tmp += sycl::native::ಘಾತಾಂಕ(sycl::max(sinks[i02] - max_val, -80.0f));
     }
-    const float inv_sum = 1.0f / tmp;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ inv_ಮೊತ್ತ = 1.0f / tmp;
 
-#pragma unroll
-    for (int col0 = 0; col0 < ncols; col0 += block_size) {
-        const int col = col0 + tid;
+#ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ col0 = 0; col0 < ncols; col0 += ಖಂಡ_ಗಾತ್ರ_3) {
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು = col0 + tid;
 
-        if (ncols_template == 0 && col >= ncols) {
-            return;
+        ಆದರೆ (ncols_template == 0 && ಲಂಬಸಾಲು >= ncols) {
+            ಹಿಂತಿರುಗಿ;
         }
 
-        dst[col] = vals[col] * inv_sum;
+        dst[ಲಂಬಸಾಲು] = vals[ಲಂಬಸಾಲು] * inv_ಮೊತ್ತ;
     }
 }
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif // __clang__
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __clang__
+#ಸೂಚನೆ clang diagnostic ತೆಗೆ
+#ಆದರೆ_ಅಂತ್ಯ // __clang__
 
-static void soft_max_back_f32(const float *grad, const float *dstf, float *dst,
-                              const int ncols, const float scale) {
-    auto      item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int tid      = item_ct1.get_local_id(2);
-    const int rowx     = item_ct1.get_group(2);
+ಸ್ಥಿರ ಶೂನ್ಯ soft_max_ಹಿಂಭಾಗ_f32(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *grad, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *dstf, ದಶಮಾಂಶ *dst,
+                              ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ scale) {
+    ಸ್ವಯಂಚಾಲಿತ      ಅಂಶ_ct1 = sycl::ext::oneapi::this_work_ಅಂಶ::get_nd_ಅಂಶ<3>();
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ tid      = ಅಂಶ_ct1.get_local_id(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ rowx     = ಅಂಶ_ct1.get_ಗುಂಪು(2);
 
     grad += int64_t(rowx)*ncols;
     dstf += int64_t(rowx)*ncols;
     dst  += int64_t(rowx)*ncols;
 
-    float dgf_dot = 0.0f; // dot product of dst from forward pass and gradients
+    ದಶಮಾಂಶ dgf_dot = 0.0f; // dot product of dst from forward pass and gradients
 
-    for (int col = tid; col < ncols; col += WARP_SIZE) {
-        dgf_dot += dstf[col]*grad[col];
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು = tid; ಲಂಬಸಾಲು < ncols; ಲಂಬಸಾಲು += WARP_ಗಾತ್ರ) {
+        dgf_dot += dstf[ಲಂಬಸಾಲು]*grad[ಲಂಬಸಾಲು];
     }
 
-    dgf_dot = warp_reduce_sum<WARP_SIZE>(dgf_dot);
+    dgf_dot = warp_reduce_ಮೊತ್ತ<WARP_ಗಾತ್ರ>(dgf_dot);
 
-    for (int col = tid; col < ncols; col += WARP_SIZE) {
-        dst[col] = scale * (grad[col] - dgf_dot) * dstf[col];
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು = tid; ಲಂಬಸಾಲು < ncols; ಲಂಬಸಾಲು += WARP_ಗಾತ್ರ) {
+        dst[ಲಂಬಸಾಲು] = scale * (grad[ಲಂಬಸಾಲು] - dgf_dot) * dstf[ಲಂಬಸಾಲು];
     }
 }
 
-template <int... Ns, typename T>
-static void launch_soft_max_kernels(const float *           x,
-                                    const T *               mask,
-                                    const float *           sinks,
-                                    float *                 dst,
-                                    const soft_max_params & p,
-                                    dpct::queue_ptr         stream,
-                                    dpct::dim3              block_dims,
-                                    dpct::dim3              block_nums,
+ಮಾದರಿ <ಪೂರ್ಣಾಂಕ... Ns, ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ launch_soft_max_kernels(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *           x,
+                                    ಸ್ಥಿರಾಂಕ T *               ಮುಖವಾಡ,
+                                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *           sinks,
+                                    ದಶಮಾಂಶ *                 dst,
+                                    ಸ್ಥಿರಾಂಕ soft_max_params & p,
+                                    dpct::ಸರತಿ_ptr         stream,
+                                    dpct::dim3              ಖಂಡ_dims,
+                                    dpct::dim3              ಖಂಡ_nums,
                                     size_t                  nbytes_shared)
 {
-    auto launch_kernel = [=](auto I) -> bool {
-        constexpr int ncols = decltype(I)::value;
-        constexpr int block = (ncols > 1024 ? 1024 : ncols);
-        if (p.ncols == ncols) {
+    ಸ್ವಯಂಚಾಲಿತ launch_kernel = [=](ಸ್ವಯಂಚಾಲಿತ I) -> ತಾರ್ಕಿಕ {
+        constexpr ಪೂರ್ಣಾಂಕ ncols = decltype(I)::value;
+        constexpr ಪೂರ್ಣಾಂಕ ಖಂಡ = (ncols > 1024 ? 1024 : ncols);
+        ಆದರೆ (p.ncols == ncols) {
             stream->submit([&](sycl::handler &cgh) {
                 sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
                     sycl::range<1>(nbytes_shared), cgh);
 
                 cgh.parallel_for(
-                    sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                    [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(
-                        WARP_SIZE)]] {
-                        soft_max_f32<true, ncols, block>(
-                            x, mask, sinks, dst, p,
+                    sycl::nd_range<3>(ಖಂಡ_nums * ಖಂಡ_dims, ಖಂಡ_dims),
+                    [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(
+                        WARP_ಗಾತ್ರ)]] {
+                        soft_max_f32<ನಿಜ, ncols, ಖಂಡ>(
+                            x, ಮುಖವಾಡ, sinks, dst, p,
                             dpct_local_acc_ct1
                                 .get_multi_ptr<sycl::access::decorated::no>()
                                 .get());
-                        GGML_UNUSED(item_ct1);
+                        GGML_ಬಳಸದ(ಅಂಶ_ct1);
                     });
             });
-            return true;
+            ಹಿಂತಿರುಗಿ ನಿಜ;
         }
-        return false;
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     };
 
     // unary fold over launch_kernel
-    if ((launch_kernel(std::integral_constant<int, Ns>{}) || ...)) {
-        return;
+    ಆದರೆ ((launch_kernel(std::integral_constant<ಪೂರ್ಣಾಂಕ, Ns>{}) || ...)) {
+        ಹಿಂತಿರುಗಿ;
     }
 
     stream->submit([&](sycl::handler &cgh) {
@@ -242,95 +242,95 @@ static void launch_soft_max_kernels(const float *           x,
             sycl::range<1>(nbytes_shared), cgh);
 
         cgh.parallel_for(
-            sycl::nd_range<3>(block_nums * block_dims, block_dims),
-            [=](sycl::nd_item<3> item_ct1)
-                [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    soft_max_f32<true, 0, 0>(
-                        x, mask, sinks, dst, p,
+            sycl::nd_range<3>(ಖಂಡ_nums * ಖಂಡ_dims, ಖಂಡ_dims),
+            [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1)
+                [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    soft_max_f32<ನಿಜ, 0, 0>(
+                        x, ಮುಖವಾಡ, sinks, dst, p,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
                             .get());
-                    GGML_UNUSED(item_ct1);
+                    GGML_ಬಳಸದ(ಅಂಶ_ct1);
                 });
     });
 }
 
-template <typename T>
-static void soft_max_f32_sycl(const float *x, const T *mask,
-                              const float *sinks, float *dst,
-                              const soft_max_params &params,
-                              dpct::queue_ptr stream, int device) {
-    int nth = WARP_SIZE;
-    int max_block_size = ggml_sycl_info().max_work_group_sizes[device];
-    const int64_t ncols_x = params.ncols;
+ಮಾದರಿ <ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ soft_max_f32_sycl(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *x, ಸ್ಥಿರಾಂಕ T *ಮುಖವಾಡ,
+                              ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *sinks, ದಶಮಾಂಶ *dst,
+                              ಸ್ಥಿರಾಂಕ soft_max_params &params,
+                              dpct::ಸರತಿ_ptr stream, ಪೂರ್ಣಾಂಕ device) {
+    ಪೂರ್ಣಾಂಕ nth = WARP_ಗಾತ್ರ;
+    ಪೂರ್ಣಾಂಕ max_ಖಂಡ_ಗಾತ್ರ = ggml_sycl_info().max_work_ಗುಂಪು_sizes[device];
+    ಸ್ಥಿರಾಂಕ int64_t ncols_x = params.ncols;
 
-    while (nth < ncols_x && nth < max_block_size) nth *= 2;
-    if (nth>max_block_size) nth = max_block_size;
+    ಆಗ (nth < ncols_x && nth < max_ಖಂಡ_ಗಾತ್ರ) nth *= 2;
+    ಆದರೆ (nth>max_ಖಂಡ_ಗಾತ್ರ) nth = max_ಖಂಡ_ಗಾತ್ರ;
 
-    const dpct::dim3 block_dims(nth, 1, 1);
-    const dpct::dim3 block_nums(params.ne01, params.ne02, params.ne03);
-    const size_t nbytes_shared =
-        (GGML_PAD(ncols_x, WARP_SIZE) + WARP_SIZE) * sizeof(float);
+    ಸ್ಥಿರಾಂಕ dpct::dim3 ಖಂಡ_dims(nth, 1, 1);
+    ಸ್ಥಿರಾಂಕ dpct::dim3 ಖಂಡ_nums(params.ne01, params.ne02, params.ne03);
+    ಸ್ಥಿರಾಂಕ size_t nbytes_shared =
+        (GGML_PAD(ncols_x, WARP_ಗಾತ್ರ) + WARP_ಗಾತ್ರ) * ಗಾತ್ರ(ದಶಮಾಂಶ);
 
-    const int id       = get_current_device_id();
-    const size_t smpbo = ggml_sycl_info().devices[id].smpbo;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ id       = get_current_device_id();
+    ಸ್ಥಿರಾಂಕ size_t smpbo = ggml_sycl_info().devices[id].smpbo;
 
-    if (nbytes_shared <= smpbo && ncols_x <= max_block_size) {
+    ಆದರೆ (nbytes_shared <= smpbo && ncols_x <= max_ಖಂಡ_ಗಾತ್ರ) {
         launch_soft_max_kernels<32, 64, 128, 256, 512, 1024, 2048, 4096>(
-            x, mask, sinks, dst, params, stream, block_dims, block_nums,
+            x, ಮುಖವಾಡ, sinks, dst, params, stream, ಖಂಡ_dims, ಖಂಡ_nums,
             nbytes_shared);
-    } else {
-        const size_t nbytes_shared_low = WARP_SIZE * sizeof(float);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಸ್ಥಿರಾಂಕ size_t nbytes_shared_ಕೆಳಗಿನ = WARP_ಗಾತ್ರ * ಗಾತ್ರ(ದಶಮಾಂಶ);
 
         stream->submit([&](sycl::handler &cgh) {
             sycl::local_accessor<uint8_t, 1> dpct_local_acc_ct1(
-                sycl::range<1>(nbytes_shared_low), cgh);
+                sycl::range<1>(nbytes_shared_ಕೆಳಗಿನ), cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1)
-                    [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    soft_max_f32<false, 0, 0>(
-                        x, mask, sinks, dst, params,
+                sycl::nd_range<3>(ಖಂಡ_nums * ಖಂಡ_dims, ಖಂಡ_dims),
+                [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1)
+                    [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    soft_max_f32<ಸುಳ್ಳು, 0, 0>(
+                        x, ಮುಖವಾಡ, sinks, dst, params,
                         dpct_local_acc_ct1
                             .get_multi_ptr<sycl::access::decorated::no>()
                             .get());
-                    GGML_UNUSED(item_ct1);
+                    GGML_ಬಳಸದ(ಅಂಶ_ct1);
                 });
         });
     }
 }
 
-static void soft_max_back_f32_sycl(const float *   grad,
-                                   const float *   dstf,
-                                   float *         dst,
-                                   const int       ncols,
-                                   const int       nrows,
-                                   const float     scale,
-                                   dpct::queue_ptr stream) {
-    const dpct::dim3 block_dims(WARP_SIZE, 1, 1);
-    const dpct::dim3 block_nums(nrows, 1, 1);
+ಸ್ಥಿರ ಶೂನ್ಯ soft_max_ಹಿಂಭಾಗ_f32_sycl(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *   grad,
+                                   ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *   dstf,
+                                   ದಶಮಾಂಶ *         dst,
+                                   ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ       ncols,
+                                   ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ       nrows,
+                                   ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ     scale,
+                                   dpct::ಸರತಿ_ptr stream) {
+    ಸ್ಥಿರಾಂಕ dpct::dim3 ಖಂಡ_dims(WARP_ಗಾತ್ರ, 1, 1);
+    ಸ್ಥಿರಾಂಕ dpct::dim3 ಖಂಡ_nums(nrows, 1, 1);
 
-    stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
-                         [=](sycl::nd_item<3> item_ct1) {
-                             soft_max_back_f32(grad, dstf, dst, ncols, scale);
-                             GGML_UNUSED(item_ct1);
+    stream->parallel_for(sycl::nd_range<3>(ಖಂಡ_nums * ಖಂಡ_dims, ಖಂಡ_dims),
+                         [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) {
+                             soft_max_ಹಿಂಭಾಗ_f32(grad, dstf, dst, ncols, scale);
+                             GGML_ಬಳಸದ(ಅಂಶ_ct1);
                          });
 }
 
-void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
 
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const ggml_tensor * src2 = dst->src[2];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0 = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src1 = dst->src[1];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src2 = dst->src[2];
 
-    const float * src0_d = (const float *) src0->data;
-    const void  * src1_d = src1 ? (const void *) src1->data : nullptr;
-    const void  * src2_d = src2 ? (const void *) src2->data : nullptr;
-    float       *  dst_d = (float *) dst->data;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src0_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src0->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ  * src1_d = src1 ? (ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ *) src1->ದತ್ತಾಂಶ : ಶೂನ್ಯಸೂಚಕ;
+    ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ  * src2_d = src2 ? (ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ *) src2->ದತ್ತಾಂಶ : ಶೂನ್ಯಸೂಚಕ;
+    ದಶಮಾಂಶ       *  dst_d = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
@@ -338,36 +338,36 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     // src1 contains mask and it is optional
     GGML_ASSERT(!src1 || src1->type == GGML_TYPE_F16 || src1->type == GGML_TYPE_F32);
 
-    const int64_t nrows_x = ggml_nrows(src0);
-    const int64_t nrows_y = src0->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t nrows_x = ggml_nrows(src0);
+    ಸ್ಥಿರಾಂಕ int64_t nrows_y = src0->ne[1];
 
-    const int64_t ne00 = src0->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t ne00 = src0->ne[0];
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    ದಶಮಾಂಶ scale    = 1.0f;
+    ದಶಮಾಂಶ max_bias = 0.0f;
 
-    memcpy(&scale,    (const float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (const float *) dst->op_params + 1, sizeof(float));
+    ಸ್ಮರಣೆ_ನಕಲು(&scale,    (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) dst->op_params + 0, ಗಾತ್ರ(ದಶಮಾಂಶ));
+    ಸ್ಮರಣೆ_ನಕಲು(&max_bias, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) dst->op_params + 1, ಗಾತ್ರ(ದಶಮಾಂಶ));
 
-    const bool use_f16 = (src1 && src1->type == GGML_TYPE_F16);
+    ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ use_f16 = (src1 && src1->type == GGML_TYPE_F16);
 
-    const int64_t nb11 = src1 ? src1->nb[1] : 1;
-    const int64_t nb12 = src1 ? src1->nb[2] : 1;
-    const int64_t nb13 = src1 ? src1->nb[3] : 1;
+    ಸ್ಥಿರಾಂಕ int64_t nb11 = src1 ? src1->nb[1] : 1;
+    ಸ್ಥಿರಾಂಕ int64_t nb12 = src1 ? src1->nb[2] : 1;
+    ಸ್ಥಿರಾಂಕ int64_t nb13 = src1 ? src1->nb[3] : 1;
 
-    const int64_t ne12 = src1 ? src1->ne[2] : 1;
-    const int64_t ne13 = src1 ? src1->ne[3] : 1;
+    ಸ್ಥಿರಾಂಕ int64_t ne12 = src1 ? src1->ne[2] : 1;
+    ಸ್ಥಿರಾಂಕ int64_t ne13 = src1 ? src1->ne[3] : 1;
 
-    const uint32_t n_head      = src0->ne[2];
-    const uint32_t n_head_log2 = 1u << (uint32_t) floorf(log2f((float) n_head));
+    ಸ್ಥಿರಾಂಕ uint32_t n_ತಲೆ      = src0->ne[2];
+    ಸ್ಥಿರಾಂಕ uint32_t n_ತಲೆ_log2 = 1u << (uint32_t) floorf(log2f((ದಶಮಾಂಶ) n_ತಲೆ));
 
-    const float m0 = powf(2.0f, -(max_bias       ) / n_head_log2);
-    const float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ m0 = powf(2.0f, -(max_bias       ) / n_ತಲೆ_log2);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ m1 = powf(2.0f, -(max_bias / 2.0f) / n_ತಲೆ_log2);
 
 
     soft_max_params params = {};
     params.nheads = src0->ne[2];
-    params.n_head_log2 = n_head_log2;
+    params.n_ತಲೆ_log2 = n_ತಲೆ_log2;
     params.ncols = ne00;
     params.nrows_x = nrows_x;
     params.nrows_y = nrows_y;
@@ -385,41 +385,41 @@ void ggml_sycl_op_soft_max(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     params.m0 = m0;
     params.m1 = m1;
 
-    if (use_f16) {
-        soft_max_f32_sycl(src0_d, (const sycl::half *)src1_d,
-                          (const float *)src2_d, dst_d, params, stream,
+    ಆದರೆ (use_f16) {
+        soft_max_f32_sycl(src0_d, (ಸ್ಥಿರಾಂಕ sycl::half *)src1_d,
+                          (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *)src2_d, dst_d, params, stream,
                           ctx.device);
-    } else {
-        soft_max_f32_sycl(src0_d, (const float *)src1_d, (const float *)src2_d,
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        soft_max_f32_sycl(src0_d, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *)src1_d, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *)src2_d,
                           dst_d, params, stream, ctx.device);
     }
 }
 
-void ggml_sycl_op_soft_max_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_op_soft_max_ಹಿಂಭಾಗ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    const ggml_tensor * src0 = dst->src[0]; // grad
-    const ggml_tensor * src1 = dst->src[1]; // forward pass output
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0 = dst->src[0]; // grad
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src1 = dst->src[1]; // forward pass output
 
-    const float * src0_d = (const float *) src0->data;
-    const float * src1_d = (const float *) src1->data;
-    float       * dst_d  = (float       *) dst->data;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src0_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src0->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src1_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src1->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ       * dst_d  = (ದಶಮಾಂಶ       *) dst->ದತ್ತಾಂಶ;
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    const int64_t ncols = src0->ne[0];
-    const int64_t nrows = ggml_nrows(src0);
+    ಸ್ಥಿರಾಂಕ int64_t ncols = src0->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t nrows = ggml_nrows(src0);
 
-    float scale    = 1.0f;
-    float max_bias = 0.0f;
+    ದಶಮಾಂಶ scale    = 1.0f;
+    ದಶಮಾಂಶ max_bias = 0.0f;
 
-    memcpy(&scale,    (const float *) dst->op_params + 0, sizeof(float));
-    memcpy(&max_bias, (const float *) dst->op_params + 1, sizeof(float));
+    ಸ್ಮರಣೆ_ನಕಲು(&scale,    (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) dst->op_params + 0, ಗಾತ್ರ(ದಶಮಾಂಶ));
+    ಸ್ಮರಣೆ_ನಕಲು(&max_bias, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) dst->op_params + 1, ಗಾತ್ರ(ದಶಮಾಂಶ));
 
     GGML_ASSERT(max_bias == 0.0f);
 
-    soft_max_back_f32_sycl(src0_d, src1_d, dst_d, ncols, nrows, scale, stream);
+    soft_max_ಹಿಂಭಾಗ_f32_sycl(src0_d, src1_d, dst_d, ncols, nrows, scale, stream);
 }

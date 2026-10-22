@@ -1,14 +1,14 @@
-#pragma once
+#ಸೂಚನೆ once
 
-#include "ggml.h"
+#ಅನ್ತರ್ಭಾವ "ggml.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __cplusplus
+ಬಾಹ್ಯ "C" {
+#ಆದರೆ_ಅಂತ್ಯ
 
-GGML_API void ggml_critical_section_start(void);
-GGML_API void ggml_critical_section_end(void);
+GGML_API ಶೂನ್ಯ ggml_critical_section_ಆರಂಭ(ಶೂನ್ಯ);
+GGML_API ಶೂನ್ಯ ggml_critical_section_ಕೊನೆ(ಶೂನ್ಯ);
 
-#ifdef __cplusplus
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __cplusplus
 }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ

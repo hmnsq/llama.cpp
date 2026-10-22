@@ -1,67 +1,67 @@
-#include "diag.hpp"
-#include "common.hpp"
+#ಅನ್ತರ್ಭಾವ "diag.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
 
-#define SYCL_DIAG_BLOCK_SIZE 256
+#ವ್ಯಾಖ್ಯಾನಿಸು SYCL_DIAG_ಖಂಡ_ಗಾತ್ರ 256
 
-template <typename T>
-static void diag_kernel(T * __restrict__ dst, const T * __restrict__ src,
-                        const int64_t ne0, const int64_t ne1,
-                        const int64_t ne2, const int64_t ne3,
-                        const int64_t total_elements,
-                        const sycl::nd_item<1> & item) {
-    const int64_t i = item.get_global_id(0);
-    if (i >= total_elements) {
-        return;
+ಮಾದರಿ <ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ diag_kernel(T * __restrict__ dst, ಸ್ಥಿರಾಂಕ T * __restrict__ src,
+                        ಸ್ಥಿರಾಂಕ int64_t ne0, ಸ್ಥಿರಾಂಕ int64_t ne1,
+                        ಸ್ಥಿರಾಂಕ int64_t ne2, ಸ್ಥಿರಾಂಕ int64_t ne3,
+                        ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_elements,
+                        ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> & ಅಂಶ) {
+    ಸ್ಥಿರಾಂಕ int64_t i = ಅಂಶ.get_global_id(0);
+    ಆದರೆ (i >= ಒಟ್ಟು_elements) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const int64_t i0 = i % ne0;
-    const int64_t i1 = (i / ne0) % ne1;
-    const int64_t i2 = (i / (ne0 * ne1)) % ne2;
-    const int64_t i3 = i / (ne0 * ne1 * ne2);
+    ಸ್ಥಿರಾಂಕ int64_t i0 = i % ne0;
+    ಸ್ಥಿರಾಂಕ int64_t i1 = (i / ne0) % ne1;
+    ಸ್ಥಿರಾಂಕ int64_t i2 = (i / (ne0 * ne1)) % ne2;
+    ಸ್ಥಿರಾಂಕ int64_t i3 = i / (ne0 * ne1 * ne2);
 
-    const int64_t dst_idx = ((i3 * ne2 + i2) * ne1 + i1) * ne0 + i0;
+    ಸ್ಥಿರಾಂಕ int64_t dst_idx = ((i3 * ne2 + i2) * ne1 + i1) * ne0 + i0;
 
-    if (i0 == i1) {
-        const int64_t batch_idx = i3 * ne2 + i2;
+    ಆದರೆ (i0 == i1) {
+        ಸ್ಥಿರಾಂಕ int64_t batch_idx = i3 * ne2 + i2;
         dst[dst_idx] = src[batch_idx * ne0 + i0];
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         dst[dst_idx] = T(0);
     }
 
-    (void)ne3;
+    (ಶೂನ್ಯ)ne3;
 }
 
-inline void ggml_sycl_op_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
+ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0 = dst->src[0];
 
     GGML_ASSERT(ggml_is_contiguous(dst));
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(src0->ne[1] == 1);
 
-    dpct::queue_ptr stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ಗಣ_device(ctx.device));
 
-    const void * src0_d = src0->data;
-    void * dst_d = dst->data;
+    ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * src0_d = src0->ದತ್ತಾಂಶ;
+    ಶೂನ್ಯ * dst_d = dst->ದತ್ತಾಂಶ;
 
-    const int64_t ne0 = dst->ne[0];
-    const int64_t ne1 = dst->ne[1];
-    const int64_t ne2 = dst->ne[2];
-    const int64_t ne3 = dst->ne[3];
-    const int64_t n_elems = ggml_nelements(dst);
-    const int64_t num_blocks = (n_elems + SYCL_DIAG_BLOCK_SIZE - 1) / SYCL_DIAG_BLOCK_SIZE;
+    ಸ್ಥಿರಾಂಕ int64_t ne0 = dst->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t ne1 = dst->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t ne2 = dst->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t ne3 = dst->ne[3];
+    ಸ್ಥಿರಾಂಕ int64_t n_elems = ggml_nelements(dst);
+    ಸ್ಥಿರಾಂಕ int64_t ಅಂಕೆ_ಖಂಡಗಳು = (n_elems + SYCL_DIAG_ಖಂಡ_ಗಾತ್ರ - 1) / SYCL_DIAG_ಖಂಡ_ಗಾತ್ರ;
 
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
     stream->parallel_for(
-        sycl::nd_range<1>(num_blocks * SYCL_DIAG_BLOCK_SIZE, SYCL_DIAG_BLOCK_SIZE),
-        [=](sycl::nd_item<1> item) {
-            diag_kernel(static_cast<float *>(dst_d),
-                        static_cast<const float *>(src0_d),
-                        ne0, ne1, ne2, ne3, n_elems, item);
+        sycl::nd_range<1>(ಅಂಕೆ_ಖಂಡಗಳು * SYCL_DIAG_ಖಂಡ_ಗಾತ್ರ, SYCL_DIAG_ಖಂಡ_ಗಾತ್ರ),
+        [=](sycl::nd_ಅಂಶ<1> ಅಂಶ) {
+            diag_kernel(static_cast<ದಶಮಾಂಶ *>(dst_d),
+                        static_cast<ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *>(src0_d),
+                        ne0, ne1, ne2, ne3, n_elems, ಅಂಶ);
         });
 }
 
-void ggml_sycl_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_diag(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_diag(ctx, dst);
 }

@@ -1,10 +1,10 @@
-#pragma once
+#ಸೂಚನೆ once
 
-#include "decoder.h"
+#ಅನ್ತರ್ಭಾವ "decoder.h"
 
-#include <cstdint>
-#include <openvino/frontend/node_context.hpp>
-#include <string>
+#ಅನ್ತರ್ಭಾವ <cstdint>
+#ಅನ್ತರ್ಭಾವ <openvino/frontend/node_context.hpp>
+#ಅನ್ತರ್ಭಾವ <string>
 
 namespace ov {
 namespace frontend {
@@ -12,168 +12,168 @@ namespace ggml {
 
 class TranslateSession;
 
-typedef std::map<std::string, Output<Node>> TensorMap;
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ std::map<std::string, Output<ಗಂಟು_2>> TensorMap;
 
-class NodeContext : public frontend::NodeContext {
-public:
-    NodeContext(const std::shared_ptr<GgmlDecoder> & decoder,
+class ಗಂಟು_Context : ಸಾರ್ವಜನಿಕ frontend::ಗಂಟು_Context {
+ಸಾರ್ವಜನಿಕ:
+    ಗಂಟು_Context(ಸ್ಥಿರಾಂಕ std::shared_ptr<GgmlDecoder> & decoder,
                 std::shared_ptr<TensorMap> & tensor_map,
-                int node_idx,
+                ಪೂರ್ಣಾಂಕ ಗಂಟು_idx,
                 TranslateSession * translate_session = nullptr) :
-        ov::frontend::NodeContext(decoder->get_op_type(node_idx)),
+        ov::frontend::ಗಂಟು_Context(decoder->get_op_type(ಗಂಟು_idx)),
         m_decoder(decoder),
         m_tensor_map(tensor_map),
-        m_node_idx(node_idx),
+        m_ಗಂಟು_idx(ಗಂಟು_idx),
         m_translate_session(translate_session) {
-        m_input_names = decoder->get_input_names(m_node_idx);
-        m_output_names = decoder->get_output_names(m_node_idx);
+        m_ಒಳಹರಿವು_ಹೆಸರುಗಳು = decoder->get_ಒಳಹರಿವು_ಹೆಸರುಗಳು(m_ಗಂಟು_idx);
+        m_output_ಹೆಸರುಗಳು = decoder->get_output_ಹೆಸರುಗಳು(m_ಗಂಟು_idx);
     }
 
-    TranslateSession * get_translate_session() const { return m_translate_session; }
+    TranslateSession * get_translate_session() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_translate_session; }
 
-    const std::vector<std::string> & get_input_names() const { return m_input_names; }
+    ಸ್ಥಿರಾಂಕ std::ಸದಿಶ<std::string> & get_ಒಳಹರಿವು_ಹೆಸರುಗಳು() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_ಒಳಹರಿವು_ಹೆಸರುಗಳು; }
 
-    const std::vector<std::string> & get_output_names() const { return m_output_names; }
+    ಸ್ಥಿರಾಂಕ std::ಸದಿಶ<std::string> & get_output_ಹೆಸರುಗಳು() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_output_ಹೆಸರುಗಳು; }
 
-    size_t get_input_size() const override { return m_decoder->get_input_size(m_node_idx); }
+    size_t get_ಒಳಹರಿವು_ಗಾತ್ರ() ಸ್ಥಿರಾಂಕ override { ಹಿಂತಿರುಗಿ m_decoder->get_ಒಳಹರಿವು_ಗಾತ್ರ(m_ಗಂಟು_idx); }
 
-    ov::element::Type get_input_type(size_t index) const {
-        return m_decoder->get_input_type(m_node_idx, m_input_names[index]);
+    ov::element::Type get_ಒಳಹರಿವು_type(size_t ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_ಒಳಹರಿವು_type(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ]);
     }
 
-    PartialShape get_input_shape(size_t input_index) const {
-        return m_decoder->get_input_shape(m_node_idx, m_input_names[input_index]);
+    PartialShape get_ಒಳಹರಿವು_shape(size_t ಒಳಹರಿವು_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_ಒಳಹರಿವು_shape(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಒಳಹರಿವು_ಸೂಚ್ಯಂಕ]);
     }
 
-    std::vector<size_t> get_input_stride(size_t index) const {
-        return m_decoder->get_input_stride(m_node_idx, m_input_names[index]);
+    std::ಸದಿಶ<size_t> get_ಒಳಹರಿವು_stride(size_t ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_ಒಳಹರಿವು_stride(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ]);
     }
 
-    std::string get_output_name() const { return m_output_names[0]; }
+    std::string get_output_name() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_output_ಹೆಸರುಗಳು[0]; }
 
-    PartialShape get_output_shape() const { return m_decoder->get_output_shape(m_node_idx); }
+    PartialShape get_output_shape() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->get_output_shape(m_ಗಂಟು_idx); }
 
-    int32_t * get_input_op_params(size_t index) const {
-        return m_decoder->get_input_op_params(m_node_idx, m_input_names[index]);
+    int32_t * get_ಒಳಹರಿವು_op_params(size_t ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_ಒಳಹರಿವು_op_params(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ]);
     }
 
-    size_t get_view_input_size(size_t index) const {
-        return m_decoder->get_view_input_size(m_node_idx, m_input_names[index]);
+    size_t get_view_ಒಳಹರಿವು_ಗಾತ್ರ(size_t ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_ಗಾತ್ರ(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ]);
     }
 
-    size_t get_view_input_offset(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_offset(m_node_idx, m_input_names[index], view_index);
+    size_t get_view_ಒಳಹರಿವು_ಸ್ಥಾನಾಂತರ(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_ಸ್ಥಾನಾಂತರ(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    size_t get_view_input_src_offset(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_offset(m_node_idx, m_input_names[index], view_index);
+    size_t get_view_ಒಳಹರಿವು_src_ಸ್ಥಾನಾಂತರ(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_src_ಸ್ಥಾನಾಂತರ(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    std::vector<size_t> get_view_input_stride(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_stride(m_node_idx, m_input_names[index], view_index);
+    std::ಸದಿಶ<size_t> get_view_ಒಳಹರಿವು_stride(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_stride(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    std::vector<size_t> get_view_input_src_stride(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_stride(m_node_idx, m_input_names[index], view_index);
+    std::ಸದಿಶ<size_t> get_view_ಒಳಹರಿವು_src_stride(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_src_stride(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    ov::Shape get_view_input_ggml_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_ggml_shape(m_node_idx, m_input_names[index], view_index);
+    ov::Shape get_view_ಒಳಹರಿವು_ggml_shape(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_ggml_shape(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    ov::Shape get_view_input_src_ggml_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_ggml_shape(m_node_idx, m_input_names[index], view_index);
+    ov::Shape get_view_ಒಳಹರಿವು_src_ggml_shape(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_src_ggml_shape(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    ov::PartialShape get_view_input_ov_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_ov_shape(m_node_idx, m_input_names[index], view_index);
+    ov::PartialShape get_view_ಒಳಹರಿವು_ov_shape(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_ov_shape(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    ov::PartialShape get_view_input_src_ov_shape(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_ov_shape(m_node_idx, m_input_names[index], view_index);
+    ov::PartialShape get_view_ಒಳಹರಿವು_src_ov_shape(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_src_ov_shape(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    std::string get_view_input_name(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_name(m_node_idx, m_input_names[index], view_index);
+    std::string get_view_ಒಳಹರಿವು_name(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_name(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    std::string get_view_input_src_name(size_t index, size_t view_index) const {
-        return m_decoder->get_view_input_src_name(m_node_idx, m_input_names[index], view_index);
+    std::string get_view_ಒಳಹರಿವು_src_name(size_t ಸೂಚ್ಯಂಕ, size_t view_ಸೂಚ್ಯಂಕ) ಸ್ಥಿರಾಂಕ {
+        ಹಿಂತಿರುಗಿ m_decoder->get_view_ಒಳಹರಿವು_src_name(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[ಸೂಚ್ಯಂಕ], view_ಸೂಚ್ಯಂಕ);
     }
 
-    int32_t get_op_dynamic_dim() const { return m_decoder->get_op_dynamic_dim(m_node_idx); }
+    int32_t get_op_dynamic_dim() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->get_op_dynamic_dim(m_ಗಂಟು_idx); }
 
-    int32_t * get_output_op_params() const { return m_decoder->get_output_op_params(m_node_idx); }
+    int32_t * get_output_op_params() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->get_output_op_params(m_ಗಂಟು_idx); }
 
-    size_t get_output_op_offset() const { return m_decoder->get_output_op_offset(m_node_idx); }
+    size_t get_output_op_ಸ್ಥಾನಾಂತರ() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->get_output_op_ಸ್ಥಾನಾಂತರ(m_ಗಂಟು_idx); }
 
-    ov::element::Type get_output_type() const { return m_decoder->get_output_type(m_node_idx); }
+    ov::element::Type get_output_type() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->get_output_type(m_ಗಂಟು_idx); }
 
-    std::vector<size_t> get_output_stride() const { return m_decoder->get_output_stride(m_node_idx); }
+    std::ಸದಿಶ<size_t> get_output_stride() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->get_output_stride(m_ಗಂಟು_idx); }
 
-    Output<Node> get_input(int idx) const override {
+    Output<ಗಂಟು_2> get_ಒಳಹರಿವು(ಪೂರ್ಣಾಂಕ idx) ಸ್ಥಿರಾಂಕ override {
         // Check if this input is a VIEW
-        size_t view_input_size = m_decoder->get_view_input_size(m_node_idx, m_input_names[idx]);
-        if (view_input_size > 0) {
+        size_t view_ಒಳಹರಿವು_ಗಾತ್ರ = m_decoder->get_view_ಒಳಹರಿವು_ಗಾತ್ರ(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[idx]);
+        ಆದರೆ (view_ಒಳಹರಿವು_ಗಾತ್ರ > 0) {
             // This is a VIEW input, get the base tensor name (last element in the chain)
-            std::string base_name =
-                m_decoder->get_view_input_src_name(m_node_idx, m_input_names[idx], view_input_size - 1);
+            std::string ತಳ_name =
+                m_decoder->get_view_ಒಳಹರಿವು_src_name(m_ಗಂಟು_idx, m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[idx], view_ಒಳಹರಿವು_ಗಾತ್ರ - 1);
             // Check if the VIEW has been resolved (translate_view produced a Slice)
-            auto view_it = m_tensor_map->find(m_input_names[idx]);
-            if (!base_name.empty() && view_it != m_tensor_map->end()) {
-                auto base_it = m_tensor_map->find(base_name);
+            ಸ್ವಯಂಚಾಲಿತ view_it = m_tensor_map->ಕಂಡುಹಿಡಿ(m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[idx]);
+            ಆದರೆ (!ತಳ_name.ಖಾಲಿಗಳು() && view_it != m_tensor_map->ಕೊನೆ()) {
+                ಸ್ವಯಂಚಾಲಿತ ತಳ_it = m_tensor_map->ಕಂಡುಹಿಡಿ(ತಳ_name);
                 // A multi-output translator can publish a VIEW directly without materializing
                 // its packed parent (GatedDeltaNet attention/state). In that case the VIEW is the
                 // authoritative value. The node comparison retains the existing resolved-VIEW path.
-                if (base_it == m_tensor_map->end() ||
-                    view_it->second.get_node_shared_ptr() != base_it->second.get_node_shared_ptr()) {
-                    return view_it->second;
+                ಆದರೆ (ತಳ_it == m_tensor_map->ಕೊನೆ() ||
+                    view_it->ಎರಡನೇ.get_ಗಂಟು_shared_ptr() != ತಳ_it->ಎರಡನೇ.get_ಗಂಟು_shared_ptr()) {
+                    ಹಿಂತಿರುಗಿ view_it->ಎರಡನೇ;
                 }
-                return base_it->second;
+                ಹಿಂತಿರುಗಿ ತಳ_it->ಎರಡನೇ;
             }
-            if (!base_name.empty()) {
-                return m_tensor_map->at(base_name);
+            ಆದರೆ (!ತಳ_name.ಖಾಲಿಗಳು()) {
+                ಹಿಂತಿರುಗಿ m_tensor_map->at(ತಳ_name);
             }
         }
         // Not a VIEW or failed to get base name, use the original logic
-        return m_tensor_map->at(m_input_names[idx]);
+        ಹಿಂತಿರುಗಿ m_tensor_map->at(m_ಒಳಹರಿವು_ಹೆಸರುಗಳು[idx]);
     }
 
-    Output<Node> get_input(const std::string & name) const override {
-        if (m_tensor_map->find(name) == m_tensor_map->end()) {
+    Output<ಗಂಟು_2> get_ಒಳಹರಿವು(ಸ್ಥಿರಾಂಕ std::string & name) ಸ್ಥಿರಾಂಕ override {
+        ಆದರೆ (m_tensor_map->ಕಂಡುಹಿಡಿ(name) == m_tensor_map->ಕೊನೆ()) {
             throw std::runtime_error("'" + name + "' not found in tensor map.");
         }
-        return m_tensor_map->at(name);
+        ಹಿಂತಿರುಗಿ m_tensor_map->at(name);
     }
 
-    bool has_input(const std::string & name) const { return m_tensor_map->find(name) != m_tensor_map->end(); }
+    bool has_ಒಳಹರಿವು(ಸ್ಥಿರಾಂಕ std::string & name) ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_tensor_map->ಕಂಡುಹಿಡಿ(name) != m_tensor_map->ಕೊನೆ(); }
 
-    void put_shared(const std::string & name, const Output<Node> & value) const {
-        m_tensor_map->insert({name, value});
+    ಶೂನ್ಯ put_shared(ಸ್ಥಿರಾಂಕ std::string & name, ಸ್ಥಿರಾಂಕ Output<ಗಂಟು_2> & ಮೌಲ್ಯ) ಸ್ಥಿರಾಂಕ {
+        m_tensor_map->ಸೇರಿಸು({name, ಮೌಲ್ಯ});
     }
 
-    const std::string & get_name() const override { return m_decoder->get_op_name(m_node_idx); }
+    ಸ್ಥಿರಾಂಕ std::string & get_name() ಸ್ಥಿರಾಂಕ override { ಹಿಂತಿರುಗಿ m_decoder->get_op_name(m_ಗಂಟು_idx); }
 
-    ov::Any get_attribute_as_any(const std::string & name) const override { return m_decoder->get_attribute(name); }
+    ov::Any get_attribute_as_any(ಸ್ಥಿರಾಂಕ std::string & name) ಸ್ಥಿರಾಂಕ override { ಹಿಂತಿರುಗಿ m_decoder->get_attribute(name); }
 
-    int get_op_case() const { return m_decoder->get_op_case(m_node_idx); }
+    ಪೂರ್ಣಾಂಕ get_op_case() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->get_op_case(m_ಗಂಟು_idx); }
 
-    bool is_static() const { return m_decoder->is_static(); }
+    bool is_static() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->is_static(); }
 
-    bool is_stateful() const { return m_decoder->is_stateful(); }
+    bool is_stateful() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->is_stateful(); }
 
-    int get_ssm_state_size() const { return m_decoder->get_ssm_state_size(); }
+    ಪೂರ್ಣಾಂಕ get_ssm_state_ಗಾತ್ರ() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_decoder->get_ssm_state_ಗಾತ್ರ(); }
 
-private:
+ಖಾಸಗಿ:
     std::shared_ptr<GgmlDecoder> m_decoder;
     std::shared_ptr<TensorMap> & m_tensor_map;
-    int m_node_idx;
+    ಪೂರ್ಣಾಂಕ m_ಗಂಟು_idx;
     TranslateSession * m_translate_session;
-    std::vector<std::string> m_input_names;
-    std::vector<std::string> m_output_names;
+    std::ಸದಿಶ<std::string> m_ಒಳಹರಿವು_ಹೆಸರುಗಳು;
+    std::ಸದಿಶ<std::string> m_output_ಹೆಸರುಗಳು;
 };
 
-using CreatorFunction = std::function<ov::OutputVector(const ov::frontend::ggml::NodeContext &)>;
+using CreatorFunction = std::function<ov::Output_ಸದಿಶ(ಸ್ಥಿರಾಂಕ ov::frontend::ggml::ಗಂಟು_Context &)>;
 
 }  // namespace ggml
 }  // namespace frontend

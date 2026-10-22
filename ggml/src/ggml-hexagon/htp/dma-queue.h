@@ -1,525 +1,525 @@
-#ifndef HTP_DMA_H
-#define HTP_DMA_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ HTP_DMA_H
+#ವ್ಯಾಖ್ಯಾನಿಸು HTP_DMA_H
 
-#include <HAP_farf.h>
-#include <hexagon_types.h>
-#include <assert.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include "hex-utils.h"
+#ಅನ್ತರ್ಭಾವ <HAP_farf.h>
+#ಅನ್ತರ್ಭಾವ <hexagon_types.h>
+#ಅನ್ತರ್ಭಾವ <assert.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <string.h>
+#ಅನ್ತರ್ಭಾವ "hex-utils.h"
 
-#include "hex-profile.h"
+#ಅನ್ತರ್ಭಾವ "hex-profile.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __cplusplus
+ಬಾಹ್ಯ "C" {
+#ಆದರೆ_ಅಂತ್ಯ
 
 // Define the HW descriptor structs here since the ones in HexSDK are a bit out of date
-typedef struct dma_descriptor_1d_s {
-    void *   next;
-    uint32_t size:24;
-    uint32_t desc_size:2;
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ dma_descriptor_1d_s {
+    ಶೂನ್ಯ *   ಮುಂದಿನ;
+    uint32_t ಗಾತ್ರ_2:24;
+    uint32_t desc_ಗಾತ್ರ:2;
     uint32_t dst_comp:1;
     uint32_t src_comp:1;
     uint32_t dst_bypass:1;
     uint32_t src_bypass:1;
-    uint32_t order:1;
-    uint32_t done:1;
+    uint32_t ಕ್ರಮ:1;
+    uint32_t ಮುಗಿದ:1;
     uint32_t src;
     uint32_t dst;
 } dma_descriptor_1d;
 
-#if __HVX_ARCH__ < 75
+#ಆದರೆ __HVX_ARCH__ < 75
 
-typedef struct dma_descriptor_2d_s {
-    void *   next;
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ dma_descriptor_2d_s {
+    ಶೂನ್ಯ *   ಮುಂದಿನ;
     uint32_t reserved0:24;
-    uint32_t desc_size:2;
+    uint32_t desc_ಗಾತ್ರ:2;
     uint32_t dst_comp:1;
     uint32_t src_comp:1;
     uint32_t dst_bypass:1;
     uint32_t src_bypass:1;
-    uint32_t order:1;
-    uint32_t done:1;
+    uint32_t ಕ್ರಮ:1;
+    uint32_t ಮುಗಿದ:1;
     uint32_t src;
     uint32_t dst;
     uint32_t desc_type:8;
     uint32_t reserved1:24;
-    uint32_t row_size:16;
+    uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ:16;
     uint32_t nrows:16;
     uint32_t src_stride:16;
     uint32_t dst_stride:16;
-    uint32_t src_offset:16;
-    uint32_t dst_offset:16;
+    uint32_t src_ಸ್ಥಾನಾಂತರ:16;
+    uint32_t dst_ಸ್ಥಾನಾಂತರ:16;
 } dma_descriptor_2d;
 
-#else
+#ಇಲ್ಲದಿದ್ದರೆ
 
-typedef struct dma_descriptor_2d_s {
-    void *   next;
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ dma_descriptor_2d_s {
+    ಶೂನ್ಯ *   ಮುಂದಿನ;
     uint32_t dst_stride:24;
-    uint32_t desc_size:2;
+    uint32_t desc_ಗಾತ್ರ:2;
     uint32_t dst_comp:1;
     uint32_t src_comp:1;
     uint32_t dst_bypass:1;
     uint32_t src_bypass:1;
-    uint32_t order:1;
-    uint32_t done:1;
+    uint32_t ಕ್ರಮ:1;
+    uint32_t ಮುಗಿದ:1;
     uint32_t src;
     uint32_t dst;
     uint32_t desc_type:8;
-#if __HVX_ARCH__ > 79
-    uint32_t src_upper:8;
-    uint32_t dst_upper:8;
-    uint32_t allocation:2;
+#ಆದರೆ __HVX_ARCH__ > 79
+    uint32_t src_ಊರ್ಧ್ವ:8;
+    uint32_t dst_ಊರ್ಧ್ವ:8;
+    uint32_t ಹಂಚಿಕೆ:2;
     uint32_t reserved0:2;
     uint32_t transform:4;
-#else
+#ಇಲ್ಲದಿದ್ದರೆ
     uint32_t reserved0:24;
-#endif
-    uint32_t row_size:24;
+#ಆದರೆ_ಅಂತ್ಯ
+    uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ:24;
     uint32_t nrows_lo:8;
     uint32_t nrows_hi:8;
     uint32_t src_stride:24;
-    uint32_t offset:24;
+    uint32_t ಸ್ಥಾನಾಂತರ:24;
     uint32_t reserved1:8;
 } dma_descriptor_2d;
 
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#if __HVX_ARCH__ > 79
-typedef uint64_t dma_addr_t;
-#else
-typedef uint32_t dma_addr_t;
-#endif
+#ಆದರೆ __HVX_ARCH__ > 79
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ uint64_t dma_addr_t;
+#ಇಲ್ಲದಿದ್ದರೆ
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ uint32_t dma_addr_t;
+#ಆದರೆ_ಅಂತ್ಯ
 
-typedef struct {
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ {
     dma_addr_t dst;
     dma_addr_t src;
-} dma_data;
+} dma_ದತ್ತಾಂಶ;
 
 // Hardware descriptor field limits
-#define DMA_MAX_NROWS          0xFFFFu        // 16-bit HW descriptor limit (65535)
-#define DMA_MAX_SIZE_16B       0xFFFFu        // 16-bit HW descriptor limit for row_size (65535)
-#define DMA_MAX_STRIDE_16B     0xFFFFu        // 16-bit HW descriptor limit for strides (65535)
-#define DMA_MAX_SIZE_24B       0x00FFFFFFu    // 24-bit HW descriptor limit for row_size / 1D size (16MB - 1)
-#define DMA_MAX_STRIDE_24B     0x00FFFFFFu    // 24-bit HW descriptor limit for strides (16MB - 1)
-#define DMA_SAFE_CHUNK_SIZE    0x00F00000u    // ~15MB safe contiguous chunk size
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_MAX_NROWS          0xFFFFu        // 16-bit HW descriptor limit (65535)
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_MAX_ಗಾತ್ರ_16_B       0xFFFFu        // 16-bit HW descriptor limit for row_size (65535)
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_MAX_STRIDE_16B     0xFFFFu        // 16-bit HW descriptor limit for strides (65535)
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_MAX_ಗಾತ್ರ_24_B       0x00FFFFFFu    // 24-bit HW descriptor limit for row_size / 1D size (16MB - 1)
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_MAX_STRIDE_24B     0x00FFFFFFu    // 24-bit HW descriptor limit for strides (16MB - 1)
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_ಸುರಕ್ಷಿತ_CHUNK_ಗಾತ್ರ    0x00F00000u    // ~15MB safe contiguous chunk size
 
-#if __HVX_ARCH__ < 75
-#define DMA_MAX_2D_ROW_SIZE    DMA_MAX_SIZE_16B
-#define DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_16B
-#else
-#define DMA_MAX_2D_ROW_SIZE    DMA_MAX_SIZE_24B
-#define DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_24B
-#endif
+#ಆದರೆ __HVX_ARCH__ < 75
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_MAX_2_D_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ    DMA_MAX_ಗಾತ್ರ_16_B
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_16B
+#ಇಲ್ಲದಿದ್ದರೆ
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_MAX_2_D_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ    DMA_MAX_ಗಾತ್ರ_24_B
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_MAX_2D_STRIDE      DMA_MAX_STRIDE_24B
+#ಆದರೆ_ಅಂತ್ಯ
 
-#define DMA_FALLBACK_CAPACITY  16u            // descriptors in secondary fallback ring
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_FALLBACK_ಸಾಮರ್ಥ್ಯ  16u            // descriptors in secondary fallback ring
 
-typedef struct dma_ring_s dma_ring;
-struct dma_ring_s {
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ dma_ring_s dma_ring;
+ರಚನೆ dma_ring_s {
     dma_descriptor_2d * desc;      // descriptor pointers
-    dma_descriptor_2d * tail;      // tail pointer
-    dma_data          * data;      // dst/src data
-    uint32_t            push_idx;
-    uint32_t            pop_idx;
-    uint32_t            capacity;
-    uint32_t            idx_mask;
-    struct htp_thread_trace * trace;
+    dma_descriptor_2d * ಬಾಲ;      // tail pointer
+    dma_ದತ್ತಾಂಶ          * ದತ್ತಾಂಶ;      // dst/src data
+    uint32_t            ತಳ್ಳು_idx;
+    uint32_t            ತೆಗೆ_idx;
+    uint32_t            ಸಾಮರ್ಥ್ಯ;
+    uint32_t            idx_ಮುಖವಾಡ;
+    ರಚನೆ htp_thread_trace * trace;
 };
 
-typedef struct dma_queue_s dma_queue;
-typedef dma_queue * dma_queue_t;
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ dma_ಸರತಿ_s dma_ಸರತಿ;
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ dma_ಸರತಿ * dma_ಸರತಿ_t;
 
-struct dma_queue_s {
+ರಚನೆ dma_ಸರತಿ_s {
     dma_ring *          ring0;     // Main descriptor ring state
     dma_ring *          ring1;     // Secondary fallback descriptor ring state
     bool                alias;     // When set, dma_queue_delete will not free the ring
 };
 
-size_t      dma_queue_sizeof(size_t capacity);
-size_t      dma_queue_alignof(void);
-dma_queue_t dma_queue_init(void * ptr, size_t capacity, struct htp_thread_trace * trace);
-void        dma_queue_free(dma_queue_t q);
+size_t      dma_ಸರತಿ_sizeof(size_t ಸಾಮರ್ಥ್ಯ);
+size_t      dma_ಸರತಿ_alignof(ಶೂನ್ಯ);
+dma_ಸರತಿ_t dma_ಸರತಿ_init(ಶೂನ್ಯ * ptr, size_t ಸಾಮರ್ಥ್ಯ, ರಚನೆ htp_thread_trace * trace);
+ಶೂನ್ಯ        dma_ಸರತಿ_free(dma_ಸರತಿ_t q);
 
-size_t      dma_queue_alias_sizeof(void);
-dma_queue_t dma_queue_alias_init(void * ptr, dma_queue_t main_q);
-void        dma_queue_alias_free(dma_queue_t q);
+size_t      dma_ಸರತಿ_alias_sizeof(ಶೂನ್ಯ);
+dma_ಸರತಿ_t dma_ಸರತಿ_alias_init(ಶೂನ್ಯ * ptr, dma_ಸರತಿ_t main_q);
+ಶೂನ್ಯ        dma_ಸರತಿ_alias_free(dma_ಸರತಿ_t q);
 
-bool        dma_queue_push_fallback_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
-bool        dma_queue_push_fallback_contig(dma_queue * q, dma_data ddata, size_t total);
-#if __HVX_ARCH__ < 75
-bool        dma_queue_push_fallback_1d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows);
-#endif
+bool        dma_ಸರತಿ_ತಳ್ಳು_fallback_2d(dma_ಸರತಿ * q, dma_ದತ್ತಾಂಶ ddata, size_t dst_stride, size_t src_stride, size_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, size_t nrows);
+bool        dma_ಸರತಿ_ತಳ್ಳು_fallback_contig(dma_ಸರತಿ * q, dma_ದತ್ತಾಂಶ ddata, size_t ಒಟ್ಟು);
+#ಆದರೆ __HVX_ARCH__ < 75
+bool        dma_ಸರತಿ_ತಳ್ಳು_fallback_1d(dma_ಸರತಿ * q, dma_ದತ್ತಾಂಶ ddata, size_t dst_stride, size_t src_stride, size_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, size_t nrows);
+#ಆದರೆ_ಅಂತ್ಯ
 
 // TODO: technically we don't need these and could use Q6_dmstart/wait/etc instead
 // but those do not seem to always compiler properly.
-static inline void dmstart(void * next) {
-    asm volatile(" release(%0):at" : : "r"(next));
-    asm volatile(" dmstart(%0)" : : "r"(next));
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dmstart(ಶೂನ್ಯ * ಮುಂದಿನ) {
+    asm ಅಸ್ಥಿರ(" release(%0):at" : : "r"(ಮುಂದಿನ));
+    asm ಅಸ್ಥಿರ(" dmstart(%0)" : : "r"(ಮುಂದಿನ));
 }
 
-static inline void dmlink(void * cur, void * next) {
-    asm volatile(" release(%0):at" : : "r"(next));
-    asm volatile(" dmlink(%0, %1)" : : "r"(cur), "r"(next));
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dmlink(ಶೂನ್ಯ * cur, ಶೂನ್ಯ * ಮುಂದಿನ) {
+    asm ಅಸ್ಥಿರ(" release(%0):at" : : "r"(ಮುಂದಿನ));
+    asm ಅಸ್ಥಿರ(" dmlink(%0, %1)" : : "r"(cur), "r"(ಮುಂದಿನ));
 }
 
-static inline unsigned int dmpoll(void) {
-    unsigned int ret = 0;
-    asm volatile(" %0 = dmpoll" : "=r"(ret) : : "memory");
-    return ret;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ dmpoll(ಶೂನ್ಯ) {
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ret = 0;
+    asm ಅಸ್ಥಿರ(" %0 = dmpoll" : "=r"(ret) : : "memory");
+    ಹಿಂತಿರುಗಿ ret;
 }
 
-static inline unsigned int dmwait(void) {
-    unsigned int ret = 0;
-    asm volatile(" %0 = dmwait" : "=r"(ret) : : "memory");
-    return ret;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ dmwait(ಶೂನ್ಯ) {
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ret = 0;
+    asm ಅಸ್ಥಿರ(" %0 = dmwait" : "=r"(ret) : : "memory");
+    ಹಿಂತಿರುಗಿ ret;
 }
 
-static inline dma_data dma_make_data_impl(dma_addr_t dst, dma_addr_t src)
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ dma_ದತ್ತಾಂಶ dma_make_ದತ್ತಾಂಶ_impl(dma_addr_t dst, dma_addr_t src)
 {
-    dma_data d = { dst, src };
-    return d;
+    dma_ದತ್ತಾಂಶ d = { dst, src };
+    ಹಿಂತಿರುಗಿ d;
 }
 
-#define dma_make_data(dst, src) dma_make_data_impl((dma_addr_t) (dst), (dma_addr_t) (src))
+#ವ್ಯಾಖ್ಯಾನಿಸು dma_make_ದತ್ತಾಂಶ(dst, src) dma_make_ದತ್ತಾಂಶ_impl((dma_addr_t) (dst), (dma_addr_t) (src))
 
-static inline bool dma_ring_push_single_1d(dma_ring * r, dma_data ddata, size_t size) {
-#if __HVX_ARCH__ > 79
-    assert(!((ddata.src | ddata.dst) >> 32) || size == 0);
-#endif
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_ring_ತಳ್ಳು_single_1d(dma_ring * r, dma_ದತ್ತಾಂಶ ddata, size_t ಗಾತ್ರ_2) {
+#ಆದರೆ __HVX_ARCH__ > 79
+    ಪ್ರತಿಜ್ಞಾ(!((ddata.src | ddata.dst) >> 32) || ಗಾತ್ರ_2 == 0);
+#ಆದರೆ_ಅಂತ್ಯ
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
-        return false;
+    ಆದರೆ (((r->ತಳ್ಳು_idx + 1) & r->idx_ಮುಖವಾಡ) == r->ತೆಗೆ_idx) {
+        ಹಿಂತಿರುಗಿ false;
     }
 
-    dma_descriptor_1d * desc = (dma_descriptor_1d *) &r->desc[r->push_idx];
+    dma_descriptor_1d * desc = (dma_descriptor_1d *) &r->desc[r->ತಳ್ಳು_idx];
     desc->src  = (uint32_t) ddata.src;
     desc->dst  = (uint32_t) ddata.dst;
-    desc->size = size;
+    desc->ಗಾತ್ರ_2 = ಗಾತ್ರ_2;
 
-    r->data[r->push_idx] = ddata;
+    r->ದತ್ತಾಂಶ[r->ತಳ್ಳು_idx] = ddata;
 
-    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
+    htp_trace_event_ಆರಂಭ(r->trace, HTP_TRACE_EVT_DMA, r->ತಳ್ಳು_idx);
 
-    if (size) {
-        desc->next       = NULL;
-        desc->desc_size  = 0; // 1D mode
+    ಆದರೆ (ಗಾತ್ರ_2) {
+        desc->ಮುಂದಿನ       = ಖಾಲಿ;
+        desc->desc_ಗಾತ್ರ  = 0; // 1D mode
         desc->src_bypass = 1;
         desc->dst_bypass = 1;
-        desc->order      = 0;
-        desc->done       = 0;
+        desc->ಕ್ರಮ      = 0;
+        desc->ಮುಗಿದ       = 0;
 
-        dmlink(r->tail, desc);
-        r->tail = (dma_descriptor_2d *) desc;
-    } else {
-        desc->desc_size = 0;
-        desc->done      = 1;
+        dmlink(r->ಬಾಲ, desc);
+        r->ಬಾಲ = (dma_descriptor_2d *) desc;
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        desc->desc_ಗಾತ್ರ = 0;
+        desc->ಮುಗಿದ      = 1;
     }
 
-    r->push_idx = (r->push_idx + 1) & r->idx_mask;
-    return true;
+    r->ತಳ್ಳು_idx = (r->ತಳ್ಳು_idx + 1) & r->idx_ಮುಖವಾಡ;
+    ಹಿಂತಿರುಗಿ true;
 }
 
-static inline bool dma_ring_push_single_2d(dma_ring * r, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-#if __HVX_ARCH__ > 79
-    assert(!((ddata.src | ddata.dst) >> 40) || nrows == 0);
-    const uint32_t src_hi = (uint32_t) (ddata.src >> 32);
-    const uint32_t dst_hi = (uint32_t) (ddata.dst >> 32);
-    const bool is_ext     = (src_hi | dst_hi) != 0;
-#endif
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_ring_ತಳ್ಳು_single_2d(dma_ring * r, dma_ದತ್ತಾಂಶ ddata, size_t dst_stride, size_t src_stride, size_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, size_t nrows) {
+#ಆದರೆ __HVX_ARCH__ > 79
+    ಪ್ರತಿಜ್ಞಾ(!((ddata.src | ddata.dst) >> 40) || nrows == 0);
+    ಸ್ಥಿರಾಂಕ uint32_t src_hi = (uint32_t) (ddata.src >> 32);
+    ಸ್ಥಿರಾಂಕ uint32_t dst_hi = (uint32_t) (ddata.dst >> 32);
+    ಸ್ಥಿರಾಂಕ bool is_ext     = (src_hi | dst_hi) != 0;
+#ಆದರೆ_ಅಂತ್ಯ
 
-    if (((r->push_idx + 1) & r->idx_mask) == r->pop_idx) {
-        return false;
+    ಆದರೆ (((r->ತಳ್ಳು_idx + 1) & r->idx_ಮುಖವಾಡ) == r->ತೆಗೆ_idx) {
+        ಹಿಂತಿರುಗಿ false;
     }
 
-    dma_descriptor_2d * desc = &r->desc[r->push_idx];
+    dma_descriptor_2d * desc = &r->desc[r->ತಳ್ಳು_idx];
 
-    desc->next           = NULL;
+    desc->ಮುಂದಿನ           = ಖಾಲಿ;
     desc->reserved1      = 0;
-    desc->desc_size      = 1; // 2d mode
+    desc->desc_ಗಾತ್ರ      = 1; // 2d mode
     desc->src_bypass     = 1;
     desc->dst_bypass     = 1;
     desc->src_comp       = 0;
     desc->dst_comp       = 0;
-    desc->order          = 0;
-    desc->done           = 0;
+    desc->ಕ್ರಮ          = 0;
+    desc->ಮುಗಿದ           = 0;
     desc->src_stride     = src_stride;
     desc->dst_stride     = dst_stride;
     desc->src            = (uint32_t) ddata.src;
     desc->dst            = (uint32_t) ddata.dst;
-    desc->row_size       = row_size;
+    desc->ಅಡ್ಡಸಾಲು_ಗಾತ್ರ       = ಅಡ್ಡಸಾಲು_ಗಾತ್ರ;
 
-#if __HVX_ARCH__ < 75
+#ಆದರೆ __HVX_ARCH__ < 75
     desc->reserved0      = 0;
     desc->desc_type      = 0; // 2d (16-bit) mode
     desc->nrows          = nrows;
-    desc->src_offset     = 0;
-    desc->dst_offset     = 0;
-#else
-#if __HVX_ARCH__ > 79
-    desc->src_upper      = src_hi;
-    desc->dst_upper      = dst_hi;
-    desc->allocation     = 0;
+    desc->src_ಸ್ಥಾನಾಂತರ     = 0;
+    desc->dst_ಸ್ಥಾನಾಂತರ     = 0;
+#ಇಲ್ಲದಿದ್ದರೆ
+#ಆದರೆ __HVX_ARCH__ > 79
+    desc->src_ಊರ್ಧ್ವ      = src_hi;
+    desc->dst_ಊರ್ಧ್ವ      = dst_hi;
+    desc->ಹಂಚಿಕೆ     = 0;
     desc->reserved0      = 0;
     desc->transform      = 0;
     desc->desc_type      = is_ext ? 10 : 9; // 2d 40-bit or 24-bit mode
-#else
+#ಇಲ್ಲದಿದ್ದರೆ
     desc->reserved0      = 0;
     desc->desc_type      = 9; // 2d (24-bit) mode
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
     desc->nrows_lo       = (nrows & 0xff);
     desc->nrows_hi       = (nrows >> 8);
-    desc->offset         = 0;
-#endif
+    desc->ಸ್ಥಾನಾಂತರ         = 0;
+#ಆದರೆ_ಅಂತ್ಯ
 
-    r->data[r->push_idx] = ddata;
+    r->ದತ್ತಾಂಶ[r->ತಳ್ಳು_idx] = ddata;
 
-    htp_trace_event_start(r->trace, HTP_TRACE_EVT_DMA, r->push_idx);
+    htp_trace_event_ಆರಂಭ(r->trace, HTP_TRACE_EVT_DMA, r->ತಳ್ಳು_idx);
 
-    if (nrows) {
-        dmlink(r->tail, desc);
-        r->tail = desc;
-    } else {
-        desc->done = 1;
+    ಆದರೆ (nrows) {
+        dmlink(r->ಬಾಲ, desc);
+        r->ಬಾಲ = desc;
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        desc->ಮುಗಿದ = 1;
     }
 
-    r->push_idx = (r->push_idx + 1) & r->idx_mask;
-    return true;
+    r->ತಳ್ಳು_idx = (r->ತಳ್ಳು_idx + 1) & r->idx_ಮುಖವಾಡ;
+    ಹಿಂತಿರುಗಿ true;
 }
 
-#if __HVX_ARCH__ < 75
-static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(r, ddata, size);
+#ಆದರೆ __HVX_ARCH__ < 75
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_ring_ತಳ್ಳು_single_contig(dma_ring * r, dma_ದತ್ತಾಂಶ ddata, size_t ಗಾತ್ರ_2) {
+    ಹಿಂತಿರುಗಿ dma_ring_ತಳ್ಳು_single_1d(r, ddata, ಗಾತ್ರ_2);
 }
-#else
-static inline bool dma_ring_push_single_contig(dma_ring * r, dma_data ddata, size_t size) {
-    return dma_ring_push_single_2d(r, ddata, size, size, size, 1);
+#ಇಲ್ಲದಿದ್ದರೆ
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_ring_ತಳ್ಳು_single_contig(dma_ring * r, dma_ದತ್ತಾಂಶ ddata, size_t ಗಾತ್ರ_2) {
+    ಹಿಂತಿರುಗಿ dma_ring_ತಳ್ಳು_single_2d(r, ddata, ಗಾತ್ರ_2, ಗಾತ್ರ_2, ಗಾತ್ರ_2, 1);
 }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-static inline dma_data dma_ring_pop(dma_ring * r) {
-    dma_data ddata = { 0 };
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ dma_ದತ್ತಾಂಶ dma_ring_ತೆಗೆ(dma_ring * r) {
+    dma_ದತ್ತಾಂಶ ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
-        return ddata;
+    ಆದರೆ (r->ತಳ್ಳು_idx == r->ತೆಗೆ_idx) {
+        ಹಿಂತಿರುಗಿ ddata;
     }
 
-    ddata = r->data[r->pop_idx];
+    ddata = r->ದತ್ತಾಂಶ[r->ತೆಗೆ_idx];
 
-    volatile dma_descriptor_2d * desc = &r->desc[r->pop_idx];
+    ಅಸ್ಥಿರ dma_descriptor_2d * desc = &r->desc[r->ತೆಗೆ_idx];
 
     // Wait for desc to complete
-    if (!desc->done) {
+    ಆದರೆ (!desc->ಮುಗಿದ) {
         // FARF(ALWAYS, "dma-poll: idx %u dst %p src %p", r->pop_idx, ddata.dst, ddata.src);
-        while (!desc->done) {
+        ಆಗ (!desc->ಮುಗಿದ) {
             dmpoll();
         }
     }
 
-    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
+    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->ತೆಗೆ_idx);
 
-    r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
-    return ddata;
+    r->ತೆಗೆ_idx = (r->ತೆಗೆ_idx + 1) & r->idx_ಮುಖವಾಡ;
+    ಹಿಂತಿರುಗಿ ddata;
 }
 
-static inline dma_data dma_ring_pop_nowait(dma_ring * r) {
-    dma_data ddata = { 0 };
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ dma_ದತ್ತಾಂಶ dma_ring_ತೆಗೆ_nowait(dma_ring * r) {
+    dma_ದತ್ತಾಂಶ ddata = { 0 };
 
-    if (r->push_idx == r->pop_idx) {
-        return ddata;
+    ಆದರೆ (r->ತಳ್ಳು_idx == r->ತೆಗೆ_idx) {
+        ಹಿಂತಿರುಗಿ ddata;
     }
 
-    ddata = r->data[r->pop_idx];
+    ddata = r->ದತ್ತಾಂಶ[r->ತೆಗೆ_idx];
 
-    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->pop_idx);
+    htp_trace_event_stop(r->trace, HTP_TRACE_EVT_DMA, r->ತೆಗೆ_idx);
 
-    r->pop_idx = (r->pop_idx + 1) & r->idx_mask;
-    return ddata;
+    r->ತೆಗೆ_idx = (r->ತೆಗೆ_idx + 1) & r->idx_ಮುಖವಾಡ;
+    ಹಿಂತಿರುಗಿ ddata;
 }
 
-static inline bool dma_ring_empty(dma_ring * r) {
-    return r->push_idx == r->pop_idx;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_ring_ಖಾಲಿಗಳು(dma_ring * r) {
+    ಹಿಂತಿರುಗಿ r->ತಳ್ಳು_idx == r->ತೆಗೆ_idx;
 }
 
-static inline void dma_ring_flush(dma_ring * r) {
-    while (!dma_ring_empty(r)) {
-        dma_ring_pop(r);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dma_ring_flush(dma_ring * r) {
+    ಆಗ (!dma_ring_ಖಾಲಿಗಳು(r)) {
+        dma_ring_ತೆಗೆ(r);
     }
 }
 
-static inline uint32_t dma_ring_depth(dma_ring * r) {
-    return (r->push_idx - r->pop_idx) & r->idx_mask;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint32_t dma_ring_ಆಳ(dma_ring * r) {
+    ಹಿಂತಿರುಗಿ (r->ತಳ್ಳು_idx - r->ತೆಗೆ_idx) & r->idx_ಮುಖವಾಡ;
 }
 
-static inline uint32_t dma_ring_capacity(dma_ring * r) {
-    return r->capacity;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint32_t dma_ring_ಸಾಮರ್ಥ್ಯ(dma_ring * r) {
+    ಹಿಂತಿರುಗಿ r->ಸಾಮರ್ಥ್ಯ;
 }
 
-static inline bool dma_queue_push_single_1d(dma_queue * q, dma_data ddata, size_t size) {
-    return dma_ring_push_single_1d(q->ring0, ddata, size);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_ಸರತಿ_ತಳ್ಳು_single_1d(dma_ಸರತಿ * q, dma_ದತ್ತಾಂಶ ddata, size_t ಗಾತ್ರ_2) {
+    ಹಿಂತಿರುಗಿ dma_ring_ತಳ್ಳು_single_1d(q->ring0, ddata, ಗಾತ್ರ_2);
 }
 
-static inline bool dma_queue_push_single_2d(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-    return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_ಸರತಿ_ತಳ್ಳು_single_2d(dma_ಸರತಿ * q, dma_ದತ್ತಾಂಶ ddata, size_t dst_stride, size_t src_stride, size_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, size_t nrows) {
+    ಹಿಂತಿರುಗಿ dma_ring_ತಳ್ಳು_single_2d(q->ring0, ddata, dst_stride, src_stride, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, nrows);
 }
 
-static inline dma_data dma_queue_pop(dma_queue * q) {
-    return dma_ring_pop(q->ring0);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ dma_ದತ್ತಾಂಶ dma_ಸರತಿ_ತೆಗೆ(dma_ಸರತಿ * q) {
+    ಹಿಂತಿರುಗಿ dma_ring_ತೆಗೆ(q->ring0);
 }
 
-static inline dma_data dma_queue_pop_nowait(dma_queue * q) {
-    return dma_ring_pop_nowait(q->ring0);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ dma_ದತ್ತಾಂಶ dma_ಸರತಿ_ತೆಗೆ_nowait(dma_ಸರತಿ * q) {
+    ಹಿಂತಿರುಗಿ dma_ring_ತೆಗೆ_nowait(q->ring0);
 }
 
-static inline bool dma_queue_empty(dma_queue * q) {
-    return dma_ring_empty(q->ring0);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_ಸರತಿ_ಖಾಲಿಗಳು(dma_ಸರತಿ * q) {
+    ಹಿಂತಿರುಗಿ dma_ring_ಖಾಲಿಗಳು(q->ring0);
 }
 
-static inline void dma_queue_flush(dma_queue * q) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dma_ಸರತಿ_flush(dma_ಸರತಿ * q) {
     dma_ring_flush(q->ring0);
 }
 
-static inline uint32_t dma_queue_depth(dma_queue * q) {
-    return dma_ring_depth(q->ring0);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint32_t dma_ಸರತಿ_ಆಳ(dma_ಸರತಿ * q) {
+    ಹಿಂತಿರುಗಿ dma_ring_ಆಳ(q->ring0);
 }
 
-static inline uint32_t dma_queue_capacity(dma_queue * q) {
-    return dma_ring_capacity(q->ring0);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint32_t dma_ಸರತಿ_ಸಾಮರ್ಥ್ಯ(dma_ಸರತಿ * q) {
+    ಹಿಂತಿರುಗಿ dma_ring_ಸಾಮರ್ಥ್ಯ(q->ring0);
 }
 
-static inline bool dma_queue_push(dma_queue * q, dma_data ddata, size_t dst_stride, size_t src_stride, size_t row_size, size_t nrows) {
-    if (__builtin_expect(nrows == 0, 0)) {
-        return dma_ring_push_single_1d(q->ring0, ddata, 0);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_ಸರತಿ_ತಳ್ಳು(dma_ಸರತಿ * q, dma_ದತ್ತಾಂಶ ddata, size_t dst_stride, size_t src_stride, size_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, size_t nrows) {
+    ಆದರೆ (__builtin_expect(nrows == 0, 0)) {
+        ಹಿಂತಿರುಗಿ dma_ring_ತಳ್ಳು_single_1d(q->ring0, ddata, 0);
     }
 
     // 1. Hot path: Contiguous or single-row (80-90% of calls)
-    if (nrows == 1 || !((row_size ^ src_stride) | (row_size ^ dst_stride))) {
-        const size_t total = row_size * nrows;
-        if (__builtin_expect(total <= DMA_MAX_SIZE_24B, 1)) {
-            return dma_ring_push_single_contig(q->ring0, ddata, total);
+    ಆದರೆ (nrows == 1 || !((ಅಡ್ಡಸಾಲು_ಗಾತ್ರ ^ src_stride) | (ಅಡ್ಡಸಾಲು_ಗಾತ್ರ ^ dst_stride))) {
+        ಸ್ಥಿರಾಂಕ size_t ಒಟ್ಟು = ಅಡ್ಡಸಾಲು_ಗಾತ್ರ * nrows;
+        ಆದರೆ (__builtin_expect(ಒಟ್ಟು <= DMA_MAX_ಗಾತ್ರ_24_B, 1)) {
+            ಹಿಂತಿರುಗಿ dma_ring_ತಳ್ಳು_single_contig(q->ring0, ddata, ಒಟ್ಟು);
         }
-        return dma_queue_push_fallback_contig(q, ddata, total);
+        ಹಿಂತಿರುಗಿ dma_ಸರತಿ_ತಳ್ಳು_fallback_contig(q, ddata, ಒಟ್ಟು);
     }
 
     // 2. Hot path: Standard strided 2D (10-20% of calls)
-    if (__builtin_expect(nrows <= DMA_MAX_NROWS &&
-                         (row_size | src_stride | dst_stride) <= DMA_MAX_2D_ROW_SIZE, 1)) {
-        return dma_ring_push_single_2d(q->ring0, ddata, dst_stride, src_stride, row_size, nrows);
+    ಆದರೆ (__builtin_expect(nrows <= DMA_MAX_NROWS &&
+                         (ಅಡ್ಡಸಾಲು_ಗಾತ್ರ | src_stride | dst_stride) <= DMA_MAX_2_D_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, 1)) {
+        ಹಿಂತಿರುಗಿ dma_ring_ತಳ್ಳು_single_2d(q->ring0, ddata, dst_stride, src_stride, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, nrows);
     }
 
     // 3. Cold path: Descriptor chunking fallbacks (< 0.1%)
-#if __HVX_ARCH__ < 75
-    if (row_size <= DMA_MAX_SIZE_16B && (src_stride | dst_stride) <= DMA_MAX_STRIDE_16B) {
-        return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
+#ಆದರೆ __HVX_ARCH__ < 75
+    ಆದರೆ (ಅಡ್ಡಸಾಲು_ಗಾತ್ರ <= DMA_MAX_ಗಾತ್ರ_16_B && (src_stride | dst_stride) <= DMA_MAX_STRIDE_16B) {
+        ಹಿಂತಿರುಗಿ dma_ಸರತಿ_ತಳ್ಳು_fallback_2d(q, ddata, dst_stride, src_stride, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, nrows);
     }
-    return dma_queue_push_fallback_1d(q, ddata, dst_stride, src_stride, row_size, nrows);
-#else
-    return dma_queue_push_fallback_2d(q, ddata, dst_stride, src_stride, row_size, nrows);
-#endif
+    ಹಿಂತಿರುಗಿ dma_ಸರತಿ_ತಳ್ಳು_fallback_1d(q, ddata, dst_stride, src_stride, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, nrows);
+#ಇಲ್ಲದಿದ್ದರೆ
+    ಹಿಂತಿರುಗಿ dma_ಸರತಿ_ತಳ್ಳು_fallback_2d(q, ddata, dst_stride, src_stride, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, nrows);
+#ಆದರೆ_ಅಂತ್ಯ
 }
 
-static inline void dma_sync_read(dma_queue * dma_q, void * dst, dma_addr_t src, size_t bytes) {
-    const uint32_t b = (uint32_t) bytes;
-    if (b > 0) {
-        dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
-        dma_queue_pop(dma_q);
-    }
-}
-
-static inline void dma_sync_write(dma_queue * dma_q, dma_addr_t dst, const void * src, size_t bytes) {
-    const uint32_t b = (uint32_t) bytes;
-    if (b > 0) {
-        dma_queue_push(dma_q, dma_make_data(dst, src), b, b, b, 1);
-        dma_queue_pop(dma_q);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dma_sync_read(dma_ಸರತಿ * dma_q, ಶೂನ್ಯ * dst, dma_addr_t src, size_t ಬೈಟುಗಳು) {
+    ಸ್ಥಿರಾಂಕ uint32_t b = (uint32_t) ಬೈಟುಗಳು;
+    ಆದರೆ (b > 0) {
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst, src), b, b, b, 1);
+        dma_ಸರತಿ_ತೆಗೆ(dma_q);
     }
 }
 
-#define DMA_CACHE_MAX_SIZE 256U
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dma_sync_write(dma_ಸರತಿ * dma_q, dma_addr_t dst, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * src, size_t ಬೈಟುಗಳು) {
+    ಸ್ಥಿರಾಂಕ uint32_t b = (uint32_t) ಬೈಟುಗಳು;
+    ಆದರೆ (b > 0) {
+        dma_ಸರತಿ_ತಳ್ಳು(dma_q, dma_make_ದತ್ತಾಂಶ(dst, src), b, b, b, 1);
+        dma_ಸರತಿ_ತೆಗೆ(dma_q);
+    }
+}
+
+#ವ್ಯಾಖ್ಯಾನಿಸು DMA_CACHE_MAX_ಗಾತ್ರ 256U
 
 // Fully assoc LRU cache
-typedef struct {
-    uint8_t *base;
-    uint32_t line_size;
-    uint32_t capacity;
-    dma_addr_t src[DMA_CACHE_MAX_SIZE];
-    uint16_t age[DMA_CACHE_MAX_SIZE];
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ {
+    uint8_t *ತಳ;
+    uint32_t ಸಾಲು_ಗಾತ್ರ;
+    uint32_t ಸಾಮರ್ಥ್ಯ;
+    dma_addr_t src[DMA_CACHE_MAX_ಗಾತ್ರ];
+    uint16_t age[DMA_CACHE_MAX_ಗಾತ್ರ];
 } dma_cache_fa;
 
-static inline void dma_cache_fa_init(dma_cache_fa *c, uint8_t *base, uint32_t line_size, uint32_t capacity)
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dma_cache_fa_init(dma_cache_fa *c, uint8_t *ತಳ, uint32_t ಸಾಲು_ಗಾತ್ರ, uint32_t ಸಾಮರ್ಥ್ಯ)
 {
-    c->capacity  = (capacity > DMA_CACHE_MAX_SIZE) ? DMA_CACHE_MAX_SIZE : capacity;
-    c->base      = base;
-    c->line_size = line_size;
+    c->ಸಾಮರ್ಥ್ಯ  = (ಸಾಮರ್ಥ್ಯ > DMA_CACHE_MAX_ಗಾತ್ರ) ? DMA_CACHE_MAX_ಗಾತ್ರ : ಸಾಮರ್ಥ್ಯ;
+    c->ತಳ      = ತಳ;
+    c->ಸಾಲು_ಗಾತ್ರ = ಸಾಲು_ಗಾತ್ರ;
 
-    for (unsigned i=0; i < c->capacity; i++) {
+    ಗಾಗಿ (ಚಿಹ್ನೆರಹಿತ i=0; i < c->ಸಾಮರ್ಥ್ಯ; i++) {
         c->src[i] = 0;
         c->age[i] = 0;
     }
 }
 
-static inline bool dma_cache_fa_push(dma_queue *q, dma_cache_fa *c, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_cache_fa_ತಳ್ಳು(dma_ಸರತಿ *q, dma_cache_fa *c, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, uint32_t nrows)
 {
     uint32_t o_idx = 0;
     uint16_t o_age = 0;
     uint8_t *  dst = 0;
 
-    for (unsigned i=0; i < c->capacity; i++) {
-        if (c->src[i] == src_addr) {
+    ಗಾಗಿ (ಚಿಹ್ನೆರಹಿತ i=0; i < c->ಸಾಮರ್ಥ್ಯ; i++) {
+        ಆದರೆ (c->src[i] == src_addr) {
             c->age[i] = 0;
-            dst = c->base + (i * c->line_size); nrows = 0; // dummy dma
-        } else {
+            dst = c->ತಳ + (i * c->ಸಾಲು_ಗಾತ್ರ); nrows = 0; // dummy dma
+        } ಇಲ್ಲದಿದ್ದರೆ {
             c->age[i]++;
-            if (c->age[i] > o_age) { o_age = c->age[i]; o_idx = i; }
+            ಆದರೆ (c->age[i] > o_age) { o_age = c->age[i]; o_idx = i; }
         }
     }
-    if (!dst) {
+    ಆದರೆ (!dst) {
         c->age[o_idx] = 0;
         c->src[o_idx] = src_addr;
-        dst = c->base + o_idx * c->line_size; // normal nrows dma
-        return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+        dst = c->ತಳ + o_idx * c->ಸಾಲು_ಗಾತ್ರ; // normal nrows dma
+        ಹಿಂತಿರುಗಿ dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(dst, src_addr), dst_stride, src_stride, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, nrows);
     }
 
-    return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0);
+    ಹಿಂತಿರುಗಿ dma_ಸರತಿ_ತಳ್ಳು_single_1d(q, dma_make_ದತ್ತಾಂಶ(dst, src_addr), 0);
 }
 
 // Direct mapped cache
-typedef struct {
-    uint8_t *base;
-    uint32_t line_size;
-    uint32_t capacity;
-    uint32_t idx_mask;
-    dma_addr_t src[DMA_CACHE_MAX_SIZE];
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ {
+    uint8_t *ತಳ;
+    uint32_t ಸಾಲು_ಗಾತ್ರ;
+    uint32_t ಸಾಮರ್ಥ್ಯ;
+    uint32_t idx_ಮುಖವಾಡ;
+    dma_addr_t src[DMA_CACHE_MAX_ಗಾತ್ರ];
 } dma_cache_dm;
 
-static inline void dma_cache_dm_init(dma_cache_dm *c, uint8_t *base, uint32_t line_size, uint32_t capacity)
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dma_cache_dm_init(dma_cache_dm *c, uint8_t *ತಳ, uint32_t ಸಾಲು_ಗಾತ್ರ, uint32_t ಸಾಮರ್ಥ್ಯ)
 {
-    c->capacity  = (capacity > DMA_CACHE_MAX_SIZE) ? DMA_CACHE_MAX_SIZE : capacity;
-    c->idx_mask  = c->capacity - 1;
-    c->base      = base;
-    c->line_size = line_size;
+    c->ಸಾಮರ್ಥ್ಯ  = (ಸಾಮರ್ಥ್ಯ > DMA_CACHE_MAX_ಗಾತ್ರ) ? DMA_CACHE_MAX_ಗಾತ್ರ : ಸಾಮರ್ಥ್ಯ;
+    c->idx_ಮುಖವಾಡ  = c->ಸಾಮರ್ಥ್ಯ - 1;
+    c->ತಳ      = ತಳ;
+    c->ಸಾಲು_ಗಾತ್ರ = ಸಾಲು_ಗಾತ್ರ;
 
-    for (unsigned i=0; i < c->capacity; i++) {
+    ಗಾಗಿ (ಚಿಹ್ನೆರಹಿತ i=0; i < c->ಸಾಮರ್ಥ್ಯ; i++) {
         c->src[i] = 0;
     }
 }
 
-static inline bool dma_cache_dm_push(dma_queue *q, dma_cache_dm *c, uint32_t slot, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t row_size, uint32_t nrows)
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool dma_cache_dm_ತಳ್ಳು(dma_ಸರತಿ *q, dma_cache_dm *c, uint32_t ಸ್ಥಾನ, dma_addr_t src_addr, uint32_t dst_stride, uint32_t src_stride, uint32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, uint32_t nrows)
 {
-    const uint32_t i = slot & c->idx_mask;
-    uint8_t * dst = c->base + (i * c->line_size);
+    ಸ್ಥಿರಾಂಕ uint32_t i = ಸ್ಥಾನ & c->idx_ಮುಖವಾಡ;
+    uint8_t * dst = c->ತಳ + (i * c->ಸಾಲು_ಗಾತ್ರ);
 
-    if (c->src[i] == src_addr) {
-        return dma_queue_push_single_1d(q, dma_make_data(dst, src_addr), 0); // dummy dma
+    ಆದರೆ (c->src[i] == src_addr) {
+        ಹಿಂತಿರುಗಿ dma_ಸರತಿ_ತಳ್ಳು_single_1d(q, dma_make_ದತ್ತಾಂಶ(dst, src_addr), 0); // dummy dma
     }
 
     c->src[i] = src_addr;
-    return dma_queue_push(q, dma_make_data(dst, src_addr), dst_stride, src_stride, row_size, nrows);
+    ಹಿಂತಿರುಗಿ dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(dst, src_addr), dst_stride, src_stride, ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, nrows);
 }
 
-#ifdef __cplusplus
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __cplusplus
 }  // extern "C"
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#endif /* HTP_DMA_H */
+#ಆದರೆ_ಅಂತ್ಯ /* HTP_DMA_H */

@@ -1,86 +1,86 @@
-#pragma once
+#ಸೂಚನೆ once
 
-#include <atomic>
-#include <cassert>
-#include <cerrno>
-#include <cstdarg>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
+#ಅನ್ತರ್ಭಾವ <atomic>
+#ಅನ್ತರ್ಭಾವ <cassert>
+#ಅನ್ತರ್ಭಾವ <cerrno>
+#ಅನ್ತರ್ಭಾವ <cstdarg>
+#ಅನ್ತರ್ಭಾವ <cstddef>
+#ಅನ್ತರ್ಭಾವ <cstdint>
+#ಅನ್ತರ್ಭಾವ <cstdio>
+#ಅನ್ತರ್ಭಾವ <cstdlib>
+#ಅನ್ತರ್ಭಾವ <ctime>
 
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#define likely(x)   __builtin_expect(!!(x), 1)
+#ವ್ಯಾಖ್ಯಾನಿಸು unlikely(x) __builtin_expect(!!(x), 0)
+#ವ್ಯಾಖ್ಯಾನಿಸು likely(x)   __builtin_expect(!!(x), 1)
 
-#ifndef UNUSED
-#    define UNUSED(x) (void) (x)
-#endif
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ ಬಳಸದ
+#    define ಬಳಸದ(x) (ಶೂನ್ಯ) (x)
+#ಆದರೆ_ಅಂತ್ಯ
 
 /** Checks is a value is a power of two. Does not handle zero. */
-#define IS_POT(v) (((v) & ((v) - 1)) == 0)
+#ವ್ಯಾಖ್ಯಾನಿಸು IS_POT(v) (((v) & ((v) - 1)) == 0)
 
 /** Checks is a value is a power of two. Zero handled. */
-#define IS_POT_NONZERO(v) ((v) != 0 && IS_POT(v))
+#ವ್ಯಾಖ್ಯಾನಿಸು IS_POT_NONZERO(v) ((v) != 0 && IS_POT(v))
 
 /** Align a value to a power of two */
-#define ALIGN_POT(x, pot_align) (((x) + (pot_align) - 1) & ~((pot_align) - 1))
+#ವ್ಯಾಖ್ಯಾನಿಸು ALIGN_POT(x, pot_align) (((x) + (pot_align) - 1) & ~((pot_align) - 1))
 
-#define p_atomic_read(_v) __atomic_load_n((_v), __ATOMIC_ACQUIRE)
+#ವ್ಯಾಖ್ಯಾನಿಸು p_atomic_read(_v) __atomic_load_n((_v), __ATOMIC_ACQUIRE)
 
-static inline bool util_is_power_of_two_nonzero64(uint64_t v) {
-    return IS_POT_NONZERO(v);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool util_is_power_ದ_two_nonzero64(uint64_t v) {
+    ಹಿಂತಿರುಗಿ IS_POT_NONZERO(v);
 }
 
-static inline uint64_t align64(uint64_t value, uint64_t alignment) {
-    assert(util_is_power_of_two_nonzero64(alignment));
-    return ALIGN_POT(value, alignment);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint64_t align64(uint64_t ಮೌಲ್ಯ, uint64_t alignment) {
+    ಪ್ರತಿಜ್ಞಾ(util_is_power_ದ_two_nonzero64(alignment));
+    ಹಿಂತಿರುಗಿ ALIGN_POT(ಮೌಲ್ಯ, alignment);
 }
 
-struct list_head {
-    list_head * prev;
-    list_head * next;
+ರಚನೆ list_ತಲೆ {
+    list_ತಲೆ * prev;
+    list_ತಲೆ * ಮುಂದಿನ;
 };
 
-struct util_sparse_array {
-    size_t   elem_size;
-    unsigned node_size_log2;
+ರಚನೆ util_sparse_array {
+    size_t   elem_ಗಾತ್ರ;
+    ಚಿಹ್ನೆರಹಿತ ಗಂಟು_ಗಾತ್ರ_log2;
 
-    uintptr_t root;
+    uintptr_t ಬೇರು;
 };
 
-void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx);
-void   util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size);
+ಶೂನ್ಯ * util_sparse_array_get(util_sparse_array * arr, uint64_t idx);
+ಶೂನ್ಯ   util_sparse_array_init(util_sparse_array * arr, size_t elem_ಗಾತ್ರ, size_t ಗಂಟು_ಗಾತ್ರ);
 
-inline void os_time_sleep(int64_t usecs) {
-    timespec time;
-    time.tv_sec  = usecs / 1000000;
-    time.tv_nsec = (usecs % 1000000) * 1000;
-    while (clock_nanosleep(CLOCK_MONOTONIC, 0, &time, &time) == EINTR)
+ಸಾಲೊಳಗೆ ಶೂನ್ಯ os_ಸಮಯ_sleep(int64_t usecs) {
+    timespec ಸಮಯ;
+    ಸಮಯ.tv_sec  = usecs / 1000000;
+    ಸಮಯ.tv_nsec = (usecs % 1000000) * 1000;
+    ಆಗ (clock_nanosleep(CLOCK_MONOTONIC, 0, &ಸಮಯ, &ಸಮಯ) == EINTR)
         ;
 }
 
-struct timer_data {
-    long long start;
-    long long total;
-    long long count;
+ರಚನೆ timer_ದತ್ತಾಂಶ {
+    ದೀರ್ಘ ದೀರ್ಘ ಆರಂಭ;
+    ದೀರ್ಘ ದೀರ್ಘ ಒಟ್ಟು;
+    ದೀರ್ಘ ದೀರ್ಘ ಎಣಿಕೆ_2;
 };
 
-static inline void start_timer(timer_data * timer) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ಆರಂಭ_timer(timer_ದತ್ತಾಂಶ * timer) {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    timer->start = (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    timer->ಆರಂಭ = (ದೀರ್ಘ ದೀರ್ಘ) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 }
 
 // returns the duration in ns
-static inline long long stop_timer(timer_data * timer) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ದೀರ್ಘ ದೀರ್ಘ stop_timer(timer_ದತ್ತಾಂಶ * timer) {
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    long long timer_end = (long long) ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    ದೀರ್ಘ ದೀರ್ಘ timer_ಕೊನೆ = (ದೀರ್ಘ ದೀರ್ಘ) ts.tv_sec * 1000000000LL + ts.tv_nsec;
 
-    long long duration = (timer_end - timer->start);
-    timer->total += duration;
-    timer->count += 1;
+    ದೀರ್ಘ ದೀರ್ಘ duration = (timer_ಕೊನೆ - timer->ಆರಂಭ);
+    timer->ಒಟ್ಟು += duration;
+    timer->ಎಣಿಕೆ_2 += 1;
 
-    return duration;
+    ಹಿಂತಿರುಗಿ duration;
 }

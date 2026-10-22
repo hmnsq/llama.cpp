@@ -1,135 +1,135 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
-#include "ggml.h"
+#ಅನ್ತರ್ಭಾವ "../node_context.h"
+#ಅನ್ತರ್ಭಾವ "../op_table.h"
+#ಅನ್ತರ್ಭಾವ "../utils.h"
+#ಅನ್ತರ್ಭಾವ "ggml.h"
 
-#include <memory>
-#include <openvino/core/type.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/swish.hpp>
-#include <openvino/op/tile.hpp>
-#include <openvino/op/util/precision_sensitive_attribute.hpp>
-#include <vector>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <openvino/core/type.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/constant.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/convert.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/divide.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/multiply.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/shape_of.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/sigmoid.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/swish.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/tile.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/util/precision_sensitive_attribute.hpp>
+#ಅನ್ತರ್ಭಾವ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ನಾಮಾಕಾಶ ov {
+ನಾಮಾಕಾಶ frontend {
+ನಾಮಾಕಾಶ ggml {
+ನಾಮಾಕಾಶ op {
 
-namespace {
+ನಾಮಾಕಾಶ {
 
-bool is_silu_div_pattern(const ov::Output<ov::Node> & numerator,
-                         const ov::Output<ov::Node> & denominator,
-                         const NodeContext & context) {
-    if (context.get_input_size() != 2) {
-        return false;
+ತಾರ್ಕಿಕ is_silu_div_ನಮೂನೆ(ಸ್ಥಿರಾಂಕ ov::Output<ov::Node> & numerator,
+                         ಸ್ಥಿರಾಂಕ ov::Output<ov::Node> & denominator,
+                         ಸ್ಥಿರಾಂಕ ಗಂಟು_Context & context) {
+    ಆದರೆ (context.get_ಒಳಹರಿವು_ಗಾತ್ರ() != 2) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 
-    const auto * unary_op = reinterpret_cast<const ggml_unary_op *>(context.get_input_op_params(0));
-    if (unary_op == nullptr || *unary_op != GGML_UNARY_OP_SILU) {
-        return false;
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ * unary_op = reinterpret_cast<ಸ್ಥಿರಾಂಕ ggml_unary_op *>(context.get_ಒಳಹರಿವು_op_params(0));
+    ಆದರೆ (unary_op == ಶೂನ್ಯಸೂಚಕ || *unary_op != GGML_UNARY_OP_SILU) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 
-    const auto denom_node = denominator.get_node_shared_ptr();
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ denom_ಗಂಟು = denominator.get_ಗಂಟು_shared_ptr();
 
-    if (auto swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_node_shared_ptr())) {
-        return swish->input_value(0).get_node_shared_ptr() == denom_node;
+    ಆದರೆ (ಸ್ವಯಂಚಾಲಿತ swish = ov::as_type_ptr<ov::op::v4::Swish>(numerator.get_ಗಂಟು_shared_ptr())) {
+        ಹಿಂತಿರುಗಿ swish->ಒಳಹರಿವು_ಮೌಲ್ಯ(0).get_ಗಂಟು_shared_ptr() == denom_ಗಂಟು;
     }
-    return false;
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }
 
-ov::Output<ov::Node> repeat_input_to_match(const NodeContext & context,
-                                           const ov::Output<ov::Node> & input,
-                                           const ov::Output<ov::Node> & target,
-                                           size_t input_index) {
-    const auto input_shape = context.get_input_shape(input_index);
-    const auto target_shape = context.get_input_shape(0);
+ov::Output<ov::Node> repeat_ಒಳಹರಿವು_ಗಮ್ಯ_ಹೊಂದಿಕೆ(ಸ್ಥಿರಾಂಕ ಗಂಟು_Context & context,
+                                           ಸ್ಥಿರಾಂಕ ov::Output<ov::Node> & ಒಳಹರಿವು,
+                                           ಸ್ಥಿರಾಂಕ ov::Output<ov::Node> & ಗುರಿ,
+                                           size_t ಒಳಹರಿವು_ಸೂಚ್ಯಂಕ) {
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ ಒಳಹರಿವು_shape = context.get_ಒಳಹರಿವು_shape(ಒಳಹರಿವು_ಸೂಚ್ಯಂಕ);
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ ಗುರಿ_shape = context.get_ಒಳಹರಿವು_shape(0);
 
-    if (input_shape == target_shape) {
-        return input;
+    ಆದರೆ (ಒಳಹರಿವು_shape == ಗುರಿ_shape) {
+        ಹಿಂತಿರುಗಿ ಒಳಹರಿವು;
     }
 
-    if (input_shape.rank().is_static() && target_shape.rank().is_static()) {
-        const auto rank = static_cast<size_t>(input_shape.rank().get_length());
+    ಆದರೆ (ಒಳಹರಿವು_shape.rank().is_static() && ಗುರಿ_shape.rank().is_static()) {
+        ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ rank = static_cast<size_t>(ಒಳಹರಿವು_shape.rank().get_ಉದ್ದಳತೆ());
         std::vector<int64_t> repeats(rank, 1);
-        bool needs_repeat = false;
+        ತಾರ್ಕಿಕ needs_repeat = ಸುಳ್ಳು;
 
-        for (size_t axis = 0; axis < rank; ++axis) {
-            FRONT_END_OP_CONVERSION_CHECK(input_shape[axis].is_static() && target_shape[axis].is_static(),
+        ಗಾಗಿ (size_t axis = 0; axis < rank; ++axis) {
+            FRONT_ಕೊನೆ_OP_CONVERSION_CHECK(ಒಳಹರಿವು_shape[axis].is_static() && ಗುರಿ_shape[axis].is_static(),
                                           "DIV repeat requires static dimensions on both inputs");
 
-            const int64_t input_dim = input_shape[axis].get_length();
-            const int64_t target_dim = target_shape[axis].get_length();
+            ಸ್ಥಿರಾಂಕ int64_t ಒಳಹರಿವು_dim = ಒಳಹರಿವು_shape[axis].get_ಉದ್ದಳತೆ();
+            ಸ್ಥಿರಾಂಕ int64_t ಗುರಿ_dim = ಗುರಿ_shape[axis].get_ಉದ್ದಳತೆ();
 
-            FRONT_END_OP_CONVERSION_CHECK(input_dim > 0 && target_dim > 0 && target_dim % input_dim == 0,
-                                          "DIV input shape ", input_shape, " cannot repeat to match ", target_shape);
+            FRONT_ಕೊನೆ_OP_CONVERSION_CHECK(ಒಳಹರಿವು_dim > 0 && ಗುರಿ_dim > 0 && ಗುರಿ_dim % ಒಳಹರಿವು_dim == 0,
+                                          "DIV input shape ", ಒಳಹರಿವು_shape, " cannot repeat to match ", ಗುರಿ_shape);
 
-            repeats[axis] = target_dim / input_dim;
+            repeats[axis] = ಗುರಿ_dim / ಒಳಹರಿವು_dim;
             needs_repeat = needs_repeat || repeats[axis] != 1;
         }
 
-        if (!needs_repeat) {
-            return input;
+        ಆದರೆ (!needs_repeat) {
+            ಹಿಂತಿರುಗಿ ಒಳಹರಿವು;
         }
 
-        auto repeats_node = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
-        return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+        ಸ್ವಯಂಚಾಲಿತ repeats_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {repeats.size()}, repeats);
+        ಹಿಂತಿರುಗಿ std::make_shared<ov::op::v0::Tile>(ಒಳಹರಿವು, repeats_ಗಂಟು);
     }
 
-    auto input_shape_node = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    auto target_shape_node = std::make_shared<ov::op::v3::ShapeOf>(target, ov::element::i64);
-    auto repeats_node = std::make_shared<ov::op::v1::Divide>(target_shape_node, input_shape_node);
-    return std::make_shared<ov::op::v0::Tile>(input, repeats_node);
+    ಸ್ವಯಂಚಾಲಿತ ಒಳಹರಿವು_shape_ಗಂಟು = std::make_shared<ov::op::v3::Shape_ದ>(ಒಳಹರಿವು, ov::element::i64);
+    ಸ್ವಯಂಚಾಲಿತ ಗುರಿ_shape_ಗಂಟು = std::make_shared<ov::op::v3::Shape_ದ>(ಗುರಿ, ov::element::i64);
+    ಸ್ವಯಂಚಾಲಿತ repeats_ಗಂಟು = std::make_shared<ov::op::v1::Divide>(ಗುರಿ_shape_ಗಂಟು, ಒಳಹರಿವು_shape_ಗಂಟು);
+    ಹಿಂತಿರುಗಿ std::make_shared<ov::op::v0::Tile>(ಒಳಹರಿವು, repeats_ಗಂಟು);
 }
 
 }  // namespace
 
-OutputVector translate_div(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+Output_ಸದಿಶ translate_div(ಸ್ಥಿರಾಂಕ ಗಂಟು_Context & context) {
+    ಅಂಕೆ_inputs_check(context, 2, 2);
 
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
+    ಸ್ವಯಂಚಾಲಿತ ಒಳಹರಿವು_0 = process_view_ಒಳಹರಿವು_new(context, 0);
+    ಸ್ವಯಂಚಾಲಿತ ಒಳಹರಿವು_1 = process_view_ಒಳಹರಿವು_new(context, 1);
 
-    if (is_silu_div_pattern(input_0, input_1, context)) {
-        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(input_1);
-        if (res.get_element_type() != context.get_output_type()) {
+    ಆದರೆ (is_silu_div_ನಮೂನೆ(ಒಳಹರಿವು_0, ಒಳಹರಿವು_1, context)) {
+        ov::Output<ov::Node> res = std::make_shared<ov::op::v0::Sigmoid>(ಒಳಹರಿವು_1);
+        ಆದರೆ (res.get_element_type() != context.get_output_type()) {
             res = std::make_shared<ov::op::v0::Convert>(res, context.get_output_type());
         }
-        return rename_outputs_with_suffix({res}, context.get_name());
+        ಹಿಂತಿರುಗಿ rename_outputs_with_suffix({res}, context.get_name());
     }
 
-    input_1 = repeat_input_to_match(context, input_1, input_0, 1);
+    ಒಳಹರಿವು_1 = repeat_ಒಳಹರಿವು_ಗಮ್ಯ_ಹೊಂದಿಕೆ(context, ಒಳಹರಿವು_1, ಒಳಹರಿವು_0, 1);
 
-    const auto output_type = context.get_output_type();
-    const bool use_f32_compute = input_0.get_element_type() != ov::element::f32 ||
-                                 input_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ output_type = context.get_output_type();
+    ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ use_f32_compute = ಒಳಹರಿವು_0.get_element_type() != ov::element::f32 ||
+                                 ಒಳಹರಿವು_1.get_element_type() != ov::element::f32 || output_type != ov::element::f32;
 
-    if (use_f32_compute) {
-        input_0 = std::make_shared<ov::op::v0::Convert>(input_0, ov::element::f32);
-        input_1 = std::make_shared<ov::op::v0::Convert>(input_1, ov::element::f32);
+    ಆದರೆ (use_f32_compute) {
+        ಒಳಹರಿವು_0 = std::make_shared<ov::op::v0::Convert>(ಒಳಹರಿವು_0, ov::element::f32);
+        ಒಳಹರಿವು_1 = std::make_shared<ov::op::v0::Convert>(ಒಳಹರಿವು_1, ov::element::f32);
     }
 
-    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(input_0, input_1);
-    if (use_f32_compute) {
+    ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Divide>(ಒಳಹರಿವು_0, ಒಳಹರಿವು_1);
+    ಆದರೆ (use_f32_compute) {
         // Keep the reciprocal/divide path in FP32. Without this hint, the GPU
         // plugin can still compress the subgraph back to FP16 and overflow on
         // small shexp gate values (e.g. silu(x) / x in qwen2moe).
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(0));
-        ov::mark_as_precision_sensitive(res.get_node_shared_ptr()->input(1));
+        ov::mark_as_precision_sensitive(res.get_ಗಂಟು_shared_ptr()->ಒಳಹರಿವು(0));
+        ov::mark_as_precision_sensitive(res.get_ಗಂಟು_shared_ptr()->ಒಳಹರಿವು(1));
     }
-    if (res.get_element_type() != output_type) {
-        auto output_convert = std::make_shared<ov::op::v0::Convert>(res, output_type);
-        if (use_f32_compute) {
-            ov::mark_as_precision_sensitive(output_convert->input(0));
+    ಆದರೆ (res.get_element_type() != output_type) {
+        ಸ್ವಯಂಚಾಲಿತ output_convert = std::make_shared<ov::op::v0::Convert>(res, output_type);
+        ಆದರೆ (use_f32_compute) {
+            ov::mark_as_precision_sensitive(output_convert->ಒಳಹರಿವು(0));
         }
         res = output_convert;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ಹಿಂತಿರುಗಿ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

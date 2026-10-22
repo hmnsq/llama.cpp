@@ -10,24 +10,24 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_MMQ_HPP
-#define GGML_SYCL_MMQ_HPP
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ GGML_SYCL_MMQ_HPP
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_SYCL_MMQ_HPP
 
-#include "common.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
 
-void ggml_sycl_op_mul_mat_q(
+ಶೂನ್ಯ ggml_sycl_op_mul_mat_q(
     ggml_backend_sycl_context & ctx,
-    const ggml_tensor* src0,
-    const ggml_tensor* src1,
+    ಸ್ಥಿರಾಂಕ ggml_tensor* src0,
+    ಸ್ಥಿರಾಂಕ ggml_tensor* src1,
     ggml_tensor* dst,
-    const char* src0_dd_i,
-    const float* src1_ddf_i,
-    const char* src1_ddq_i,
-    float* dst_dd_i,
-    const int64_t row_low,
-    const int64_t row_high,
-    const int64_t src1_ncols,
-    const int64_t src1_padded_row_size,
-    const dpct::queue_ptr& stream);
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ* src0_dd_i,
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* src1_ddf_i,
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ* src1_ddq_i,
+    ದಶಮಾಂಶ* dst_dd_i,
+    ಸ್ಥಿರಾಂಕ int64_t ಅಡ್ಡಸಾಲು_ಕೆಳಗಿನ,
+    ಸ್ಥಿರಾಂಕ int64_t ಅಡ್ಡಸಾಲು_ಮೇಲಿನ,
+    ಸ್ಥಿರಾಂಕ int64_t src1_ncols,
+    ಸ್ಥಿರಾಂಕ int64_t src1_padded_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ,
+    ಸ್ಥಿರಾಂಕ dpct::ಸರತಿ_ptr& stream);
 
-#endif // GGML_SYCL_MMQ_HPP
+#ಆದರೆ_ಅಂತ್ಯ // GGML_SYCL_MMQ_HPP

@@ -11,21 +11,21 @@
 // The class layout must stay in sync with
 //   openvino/src/common/transformations/include/transformations/low_precision/mark_dequantization_subgraph.hpp
 
-#pragma once
+#ಸೂಚನೆ once
 
-#include "openvino/core/type/element_type.hpp"
-#include "openvino/core/visibility.hpp"
-#include "openvino/pass/matcher_pass.hpp"
+#ಅನ್ತರ್ಭಾವ "openvino/core/type/element_type.hpp"
+#ಅನ್ತರ್ಭಾವ "openvino/core/visibility.hpp"
+#ಅನ್ತರ್ಭಾವ "openvino/pass/matcher_pass.hpp"
 
-#ifdef OPENVINO_STATIC_LIBRARY
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ OPENVINO_STATIC_LIBRARY
 #    define TRANSFORMATIONS_API
-#else
+#ಇಲ್ಲದಿದ್ದರೆ
 #    ifdef IMPLEMENT_OPENVINO_API
 #        define TRANSFORMATIONS_API OPENVINO_CORE_EXPORTS
-#    else
+#    ಇಲ್ಲದಿದ್ದರೆ
 #        define TRANSFORMATIONS_API OPENVINO_CORE_IMPORTS
 #    endif  // IMPLEMENT_OPENVINO_API
-#endif      // OPENVINO_STATIC_LIBRARY
+#ಆದರೆ_ಅಂತ್ಯ      // OPENVINO_STATIC_LIBRARY
 
 namespace ov {
 namespace pass {
@@ -35,10 +35,10 @@ class TRANSFORMATIONS_API MarkDequantization;
 }  // namespace pass
 }  // namespace ov
 
-class ov::pass::MarkDequantization : public MatcherPass {
-public:
+class ov::pass::MarkDequantization : ಸಾರ್ವಜನಿಕ MatcherPass {
+ಸಾರ್ವಜನಿಕ:
     OPENVINO_MATCHER_PASS_RTTI("MarkDequantization")
-    explicit MarkDequantization(const element::TypeVector & precisions,
-                                bool fold_subtract_const = false,
+    explicit MarkDequantization(ಸ್ಥಿರಾಂಕ element::Type_ಸದಿಶ & precisions,
+                                bool fold_ಕಳೆ_const = false,
                                 bool fold_multiply_const = true);
 };

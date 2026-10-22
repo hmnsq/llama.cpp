@@ -1,178 +1,178 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
-#include "ggml.h"
+#ಅನ್ತರ್ಭಾವ "../node_context.h"
+#ಅನ್ತರ್ಭಾವ "../op_table.h"
+#ಅನ್ತರ್ಭಾವ "../utils.h"
+#ಅನ್ತರ್ಭಾವ "ggml.h"
 
-#include <cmath>
-#include <cstddef>
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/interpolate.hpp>
-#include <openvino/op/matmul.hpp>
-#include <vector>
+#ಅನ್ತರ್ಭಾವ <cmath>
+#ಅನ್ತರ್ಭಾವ <cstddef>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <openvino/op/constant.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/gather.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/interpolate.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/matmul.hpp>
+#ಅನ್ತರ್ಭಾವ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ನಾಮಾಕಾಶ ov {
+ನಾಮಾಕಾಶ frontend {
+ನಾಮಾಕಾಶ ggml {
+ನಾಮಾಕಾಶ op {
 
-OutputVector translate_upscale(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_ಸದಿಶ translate_upscale(ಸ್ಥಿರಾಂಕ ಗಂಟು_Context & context) {
+    ಅಂಕೆ_inputs_check(context, 1, 1);
 
-    using Interpolate = ov::op::v4::Interpolate;
-    auto input = process_view_input_new(context, 0);
+    ಬಳಸಿ Interpolate = ov::op::v4::Interpolate;
+    ಸ್ವಯಂಚಾಲಿತ ಒಳಹರಿವು = process_view_ಒಳಹರಿವು_new(context, 0);
 
-    const auto input_shape = context.get_input_shape(0).to_shape();
-    const auto output_shape = context.get_output_shape().to_shape();
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ ಒಳಹರಿವು_shape = context.get_ಒಳಹರಿವು_shape(0).ಗಮ್ಯ_shape();
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ output_shape = context.get_output_shape().ಗಮ್ಯ_shape();
 
-    if (input_shape == output_shape) {
-        return rename_outputs_with_suffix({input}, context.get_name());
+    ಆದರೆ (ಒಳಹರಿವು_shape == output_shape) {
+        ಹಿಂತಿರುಗಿ rename_outputs_with_suffix({ಒಳಹರಿವು}, context.get_name());
     }
 
-    ov::Output<ov::Node> res = input;
+    ov::Output<ov::Node> res = ಒಳಹರಿವು;
 
     // Resample batch / channel dimensions (ne[3] and ne[2], corresponding to OV axes 0 and 1)
     // using nearest-neighbor index mapping: i0_d = floor(i_d * in_d / out_d).
-    for (size_t axis = 0; axis < 2; ++axis) {
-        const size_t in_dim = input_shape[axis];
-        const size_t out_dim = output_shape[axis];
-        if (in_dim != out_dim) {
-            std::vector<int64_t> indices(out_dim);
-            for (size_t i = 0; i < out_dim; ++i) {
-                indices[i] = static_cast<int64_t>((i * in_dim) / out_dim);
+    ಗಾಗಿ (size_t axis = 0; axis < 2; ++axis) {
+        ಸ್ಥಿರಾಂಕ size_t ಒಳ_dim = ಒಳಹರಿವು_shape[axis];
+        ಸ್ಥಿರಾಂಕ size_t ಹೊರಹೋಗು_dim = output_shape[axis];
+        ಆದರೆ (ಒಳ_dim != ಹೊರಹೋಗು_dim) {
+            std::vector<int64_t> indices(ಹೊರಹೋಗು_dim);
+            ಗಾಗಿ (size_t i = 0; i < ಹೊರಹೋಗು_dim; ++i) {
+                indices[i] = static_cast<int64_t>((i * ಒಳ_dim) / ಹೊರಹೋಗು_dim);
             }
-            auto indices_node = ov::op::v0::Constant::create(ov::element::i64, {indices.size()}, indices);
-            auto axis_node = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {axis});
-            res = std::make_shared<ov::op::v8::Gather>(res, indices_node, axis_node);
+            ಸ್ವಯಂಚಾಲಿತ indices_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {indices.size()}, indices);
+            ಸ್ವಯಂಚಾಲಿತ axis_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {axis});
+            res = std::make_shared<ov::op::v8::Gather>(res, indices_ಗಂಟು, axis_ಗಂಟು);
         }
     }
 
     // Spatial interpolation for ne[1] and ne[0] (OV axes 2 and 3)
-    if (input_shape[2] != output_shape[2] || input_shape[3] != output_shape[3]) {
-        const int32_t * op_params = context.get_output_op_params();
-        const int32_t mode_flags = op_params != nullptr ? op_params[0] : 0;
+    ಆದರೆ (ಒಳಹರಿವು_shape[2] != output_shape[2] || ಒಳಹರಿವು_shape[3] != output_shape[3]) {
+        ಸ್ಥಿರಾಂಕ int32_t * op_params = context.get_output_op_params();
+        ಸ್ಥಿರಾಂಕ int32_t ಬಹುಲಕ_flags = op_params != ಶೂನ್ಯಸೂಚಕ ? op_params[0] : 0;
 
-        const int op_case = context.get_op_case();
-        const bool align_corners = (mode_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) != 0;
-        const bool antialias = (mode_flags & GGML_SCALE_FLAG_ANTIALIAS) != 0;
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ op_case = context.get_op_case();
+        ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ align_corners = (ಬಹುಲಕ_flags & GGML_SCALE_FLAG_ALIGN_CORNERS) != 0;
+        ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ antialias = (ಬಹುಲಕ_flags & GGML_SCALE_FLAG_ANTIALIAS) != 0;
 
-        if (op_case == 2 && antialias) { // GGML_SCALE_MODE_BILINEAR with antialias
-            const size_t H_in = input_shape[2];
-            const size_t W_in = input_shape[3];
-            const size_t H_out = output_shape[2];
-            const size_t W_out = output_shape[3];
+        ಆದರೆ (op_case == 2 && antialias) { // GGML_SCALE_MODE_BILINEAR with antialias
+            ಸ್ಥಿರಾಂಕ size_t H_ಒಳ = ಒಳಹರಿವು_shape[2];
+            ಸ್ಥಿರಾಂಕ size_t W_ಒಳ = ಒಳಹರಿವು_shape[3];
+            ಸ್ಥಿರಾಂಕ size_t H_ಹೊರಹೋಗು = output_shape[2];
+            ಸ್ಥಿರಾಂಕ size_t W_ಹೊರಹೋಗು = output_shape[3];
 
-            const float pixel_offset = 0.5f;
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ pixel_ಸ್ಥಾನಾಂತರ = 0.5f;
 
             // Height projection: [H_out, H_in]
-            std::vector<float> Wy_data(H_out * H_in, 0.0f);
-            const float sf1 = static_cast<float>(H_out) / H_in;
-            const float support1 = std::max(1.0f, 1.0f / sf1);
-            const float invscale1 = 1.0f / support1;
+            std::vector<ದಶಮಾಂಶ> Wy_ದತ್ತಾಂಶ(H_ಹೊರಹೋಗು * H_ಒಳ, 0.0f);
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ sf1 = static_cast<ದಶಮಾಂಶ>(H_ಹೊರಹೋಗು) / H_ಒಳ;
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ support1 = std::max(1.0f, 1.0f / sf1);
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ invscale1 = 1.0f / support1;
 
-            for (size_t i1 = 0; i1 < H_out; ++i1) {
-                const float y = (static_cast<float>(i1) + pixel_offset) / sf1;
-                const auto y_start = static_cast<int64_t>(y - support1 + pixel_offset);
-                const size_t y_min = y_start > 0 ? static_cast<size_t>(y_start) : 0;
-                const auto y_end = static_cast<int64_t>(y + support1 + pixel_offset);
-                const size_t y_max = y_end > 0 ? std::min<size_t>(static_cast<size_t>(y_end), H_in) : 0;
+            ಗಾಗಿ (size_t i1 = 0; i1 < H_ಹೊರಹೋಗು; ++i1) {
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ y = (static_cast<ದಶಮಾಂಶ>(i1) + pixel_ಸ್ಥಾನಾಂತರ) / sf1;
+                ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ y_ಆರಂಭ = static_cast<int64_t>(y - support1 + pixel_ಸ್ಥಾನಾಂತರ);
+                ಸ್ಥಿರಾಂಕ size_t y_min = y_ಆರಂಭ > 0 ? static_cast<size_t>(y_ಆರಂಭ) : 0;
+                ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ y_ಕೊನೆ = static_cast<int64_t>(y + support1 + pixel_ಸ್ಥಾನಾಂತರ);
+                ಸ್ಥಿರಾಂಕ size_t y_max = y_ಕೊನೆ > 0 ? std::min<size_t>(static_cast<size_t>(y_ಕೊನೆ), H_ಒಳ) : 0;
 
-                float total_weight = 0.0f;
-                for (size_t sy = y_min; sy < y_max; ++sy) {
-                    float diff = std::abs((static_cast<float>(sy) - y + pixel_offset) * invscale1);
-                    float weight = std::max(1.0f - diff, 0.0f);
-                    Wy_data[i1 * H_in + sy] = weight;
-                    total_weight += weight;
+                ದಶಮಾಂಶ ಒಟ್ಟು_ತೂಕ = 0.0f;
+                ಗಾಗಿ (size_t sy = y_min; sy < y_max; ++sy) {
+                    ದಶಮಾಂಶ diff = std::ನಿರಪೇಕ್ಷ((static_cast<ದಶಮಾಂಶ>(sy) - y + pixel_ಸ್ಥಾನಾಂತರ) * invscale1);
+                    ದಶಮಾಂಶ ತೂಕ = std::max(1.0f - diff, 0.0f);
+                    Wy_ದತ್ತಾಂಶ[i1 * H_ಒಳ + sy] = ತೂಕ;
+                    ಒಟ್ಟು_ತೂಕ += ತೂಕ;
                 }
-                if (total_weight > 0.0f) {
-                    for (size_t sy = y_min; sy < y_max; ++sy) {
-                        Wy_data[i1 * H_in + sy] /= total_weight;
+                ಆದರೆ (ಒಟ್ಟು_ತೂಕ > 0.0f) {
+                    ಗಾಗಿ (size_t sy = y_min; sy < y_max; ++sy) {
+                        Wy_ದತ್ತಾಂಶ[i1 * H_ಒಳ + sy] /= ಒಟ್ಟು_ತೂಕ;
                     }
                 }
             }
 
             // Width projection: [W_in, W_out]
-            std::vector<float> Wx_data(W_in * W_out, 0.0f);
-            const float sf0 = static_cast<float>(W_out) / W_in;
-            const float support0 = std::max(1.0f, 1.0f / sf0);
-            const float invscale0 = 1.0f / support0;
+            std::vector<ದಶಮಾಂಶ> Wx_ದತ್ತಾಂಶ(W_ಒಳ * W_ಹೊರಹೋಗು, 0.0f);
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ sf0 = static_cast<ದಶಮಾಂಶ>(W_ಹೊರಹೋಗು) / W_ಒಳ;
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ support0 = std::max(1.0f, 1.0f / sf0);
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ invscale0 = 1.0f / support0;
 
-            for (size_t i0 = 0; i0 < W_out; ++i0) {
-                const float x = (static_cast<float>(i0) + pixel_offset) / sf0;
-                const auto x_start = static_cast<int64_t>(x - support0 + pixel_offset);
-                const size_t x_min = x_start > 0 ? static_cast<size_t>(x_start) : 0;
-                const auto x_end = static_cast<int64_t>(x + support0 + pixel_offset);
-                const size_t x_max = x_end > 0 ? std::min<size_t>(static_cast<size_t>(x_end), W_in) : 0;
+            ಗಾಗಿ (size_t i0 = 0; i0 < W_ಹೊರಹೋಗು; ++i0) {
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ x = (static_cast<ದಶಮಾಂಶ>(i0) + pixel_ಸ್ಥಾನಾಂತರ) / sf0;
+                ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ x_ಆರಂಭ = static_cast<int64_t>(x - support0 + pixel_ಸ್ಥಾನಾಂತರ);
+                ಸ್ಥಿರಾಂಕ size_t x_min = x_ಆರಂಭ > 0 ? static_cast<size_t>(x_ಆರಂಭ) : 0;
+                ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ x_ಕೊನೆ = static_cast<int64_t>(x + support0 + pixel_ಸ್ಥಾನಾಂತರ);
+                ಸ್ಥಿರಾಂಕ size_t x_max = x_ಕೊನೆ > 0 ? std::min<size_t>(static_cast<size_t>(x_ಕೊನೆ), W_ಒಳ) : 0;
 
-                float total_weight = 0.0f;
-                for (size_t sx = x_min; sx < x_max; ++sx) {
-                    float diff = std::abs((static_cast<float>(sx) - x + pixel_offset) * invscale0);
-                    float weight = std::max(1.0f - diff, 0.0f);
-                    Wx_data[sx * W_out + i0] = weight;
-                    total_weight += weight;
+                ದಶಮಾಂಶ ಒಟ್ಟು_ತೂಕ = 0.0f;
+                ಗಾಗಿ (size_t sx = x_min; sx < x_max; ++sx) {
+                    ದಶಮಾಂಶ diff = std::ನಿರಪೇಕ್ಷ((static_cast<ದಶಮಾಂಶ>(sx) - x + pixel_ಸ್ಥಾನಾಂತರ) * invscale0);
+                    ದಶಮಾಂಶ ತೂಕ = std::max(1.0f - diff, 0.0f);
+                    Wx_ದತ್ತಾಂಶ[sx * W_ಹೊರಹೋಗು + i0] = ತೂಕ;
+                    ಒಟ್ಟು_ತೂಕ += ತೂಕ;
                 }
-                if (total_weight > 0.0f) {
-                    for (size_t sx = x_min; sx < x_max; ++sx) {
-                        Wx_data[sx * W_out + i0] /= total_weight;
+                ಆದರೆ (ಒಟ್ಟು_ತೂಕ > 0.0f) {
+                    ಗಾಗಿ (size_t sx = x_min; sx < x_max; ++sx) {
+                        Wx_ದತ್ತಾಂಶ[sx * W_ಹೊರಹೋಗು + i0] /= ಒಟ್ಟು_ತೂಕ;
                     }
                 }
             }
 
-            auto Wy_node = ov::op::v0::Constant::create(ov::element::f32, {H_out, H_in}, Wy_data);
-            auto Wx_node = ov::op::v0::Constant::create(ov::element::f32, {W_in, W_out}, Wx_data);
+            ಸ್ವಯಂಚಾಲಿತ Wy_ಗಂಟು = ov::op::v0::Constant::create(ov::element::f32, {H_ಹೊರಹೋಗು, H_ಒಳ}, Wy_ದತ್ತಾಂಶ);
+            ಸ್ವಯಂಚಾಲಿತ Wx_ಗಂಟು = ov::op::v0::Constant::create(ov::element::f32, {W_ಒಳ, W_ಹೊರಹೋಗು}, Wx_ದತ್ತಾಂಶ);
 
-            auto res_y = std::make_shared<ov::op::v0::MatMul>(Wy_node, res);
-            res = std::make_shared<ov::op::v0::MatMul>(res_y, Wx_node);
-        } else {
+            ಸ್ವಯಂಚಾಲಿತ res_y = std::make_shared<ov::op::v0::MatMul>(Wy_ಗಂಟು, res);
+            res = std::make_shared<ov::op::v0::MatMul>(res_y, Wx_ಗಂಟು);
+        } ಇಲ್ಲದಿದ್ದರೆ {
             Interpolate::InterpolateAttrs attrs;
-            attrs.shape_calculation_mode = Interpolate::ShapeCalcMode::SIZES;
+            attrs.shape_calculation_ಬಹುಲಕ = Interpolate::Shape_Calc_ಬಹುಲಕ::SIZES;
             attrs.antialias = antialias;
             attrs.pads_begin = {0, 0, 0, 0};
-            attrs.pads_end = {0, 0, 0, 0};
+            attrs.pads_ಕೊನೆ = {0, 0, 0, 0};
 
-            switch (op_case) {
-            case 1:  // GGML_SCALE_MODE_NEAREST
-                attrs.mode = Interpolate::InterpolateMode::NEAREST;
-                attrs.nearest_mode = Interpolate::NearestMode::FLOOR;
-                attrs.coordinate_transformation_mode = Interpolate::CoordinateTransformMode::ASYMMETRIC;
-                break;
-            case 2:  // GGML_SCALE_MODE_BILINEAR
-                attrs.mode = Interpolate::InterpolateMode::LINEAR;
-                attrs.coordinate_transformation_mode = align_corners
-                    ? Interpolate::CoordinateTransformMode::ALIGN_CORNERS
-                    : Interpolate::CoordinateTransformMode::HALF_PIXEL;
-                break;
-            case 3:  // GGML_SCALE_MODE_BICUBIC
-                attrs.mode = Interpolate::InterpolateMode::CUBIC;
+            ಆಯ್ಕೆ (op_case) {
+            ಸ್ಥಿತಿ 1:  // GGML_SCALE_MODE_NEAREST
+                attrs.mode = Interpolate::Interpolate_ಬಹುಲಕ::ಹತ್ತಿರದ;
+                attrs.ಹತ್ತಿರದ_ಬಹುಲಕ = Interpolate::ಹತ್ತಿರದ_ಬಹುಲಕ_2::FLOOR;
+                attrs.coordinate_transformation_ಬಹುಲಕ = Interpolate::Coordinate_Transform_ಬಹುಲಕ::ASYMMETRIC;
+                ನಿಲ್ಲಿಸು;
+            ಸ್ಥಿತಿ 2:  // GGML_SCALE_MODE_BILINEAR
+                attrs.mode = Interpolate::Interpolate_ಬಹುಲಕ::ರೇಖೀಯ;
+                attrs.coordinate_transformation_ಬಹುಲಕ = align_corners
+                    ? Interpolate::Coordinate_Transform_ಬಹುಲಕ::ALIGN_CORNERS
+                    : Interpolate::Coordinate_Transform_ಬಹುಲಕ::HALF_PIXEL;
+                ನಿಲ್ಲಿಸು;
+            ಸ್ಥಿತಿ 3:  // GGML_SCALE_MODE_BICUBIC
+                attrs.mode = Interpolate::Interpolate_ಬಹುಲಕ::CUBIC;
                 attrs.cube_coeff = -0.75;
-                attrs.coordinate_transformation_mode = align_corners
-                    ? Interpolate::CoordinateTransformMode::ALIGN_CORNERS
-                    : Interpolate::CoordinateTransformMode::HALF_PIXEL;
-                break;
-            default:
-                FRONT_END_OP_CONVERSION_CHECK(false, "Unsupported upscale op_case: ", op_case);
+                attrs.coordinate_transformation_ಬಹುಲಕ = align_corners
+                    ? Interpolate::Coordinate_Transform_ಬಹುಲಕ::ALIGN_CORNERS
+                    : Interpolate::Coordinate_Transform_ಬಹುಲಕ::HALF_PIXEL;
+                ನಿಲ್ಲಿಸು;
+            ಪೂರ್ವನಿಯೋಜಿತ:
+                FRONT_ಕೊನೆ_OP_CONVERSION_CHECK(ಸುಳ್ಳು, "Unsupported upscale op_case: ", op_case);
             }
 
-            std::vector<int64_t> target_shape_vec = {
+            std::vector<int64_t> ಗುರಿ_shape_vec = {
                 static_cast<int64_t>(output_shape[2]),
                 static_cast<int64_t>(output_shape[3]),
             };
-            std::vector<float> scales_vec = {
-                static_cast<float>(output_shape[2]) / static_cast<float>(input_shape[2]),
-                static_cast<float>(output_shape[3]) / static_cast<float>(input_shape[3]),
+            std::vector<ದಶಮಾಂಶ> scales_vec = {
+                static_cast<ದಶಮಾಂಶ>(output_shape[2]) / static_cast<ದಶಮಾಂಶ>(ಒಳಹರಿವು_shape[2]),
+                static_cast<ದಶಮಾಂಶ>(output_shape[3]) / static_cast<ದಶಮಾಂಶ>(ಒಳಹರಿವು_shape[3]),
             };
 
-            auto target_shape_node = ov::op::v0::Constant::create(ov::element::i64, {2}, target_shape_vec);
-            auto scales_node = ov::op::v0::Constant::create(ov::element::f32, {2}, scales_vec);
-            auto axes_node = ov::op::v0::Constant::create(ov::element::i64, {2}, {2, 3});
+            ಸ್ವಯಂಚಾಲಿತ ಗುರಿ_shape_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {2}, ಗುರಿ_shape_vec);
+            ಸ್ವಯಂಚಾಲಿತ scales_ಗಂಟು = ov::op::v0::Constant::create(ov::element::f32, {2}, scales_vec);
+            ಸ್ವಯಂಚಾಲಿತ axes_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {2}, {2, 3});
 
             res = std::make_shared<Interpolate>(
-                res, target_shape_node, scales_node, axes_node, attrs);
+                res, ಗುರಿ_shape_ಗಂಟು, scales_ಗಂಟು, axes_ಗಂಟು, attrs);
         }
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ಹಿಂತಿರುಗಿ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

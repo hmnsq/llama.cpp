@@ -4,88 +4,88 @@
 // Vectorized 8-wide accumulation with horizontal reduction.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ಅನ್ತರ್ಭಾವ "ggml_tensor.h"
+#ಅನ್ತರ್ಭಾವ "platform.h"
 
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-struct ggml_et_sum_rows_params {
-    struct ggml_tensor src0;  // F32 input tensor [ne00, ne01, ne02, ne03]
-    struct ggml_tensor dst;   // F32 output tensor [1, ne01, ne02, ne03]
+ರಚನೆ ggml_et_ಮೊತ್ತ_ಅಡ್ಡಸಾಲುಗಳು_params {
+    ರಚನೆ ggml_tensor src0;  // F32 input tensor [ne00, ne01, ne02, ne03]
+    ರಚನೆ ggml_tensor dst;   // F32 output tensor [1, ne01, ne02, ne03]
 };
 
-int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
+ಪೂರ್ಣಾಂಕ ನಮೂದು_ಬಿಂದು(ರಚನೆ ggml_et_ಮೊತ್ತ_ಅಡ್ಡಸಾಲುಗಳು_params * params, ಶೂನ್ಯ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ಆದರೆ (!kernel_env) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ಪೂರ್ಣಾಂಕ thread_id   = get_relative_thread_id(kernel_env->shire_ಮುಖವಾಡ);
+    ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಎಳೆಗಳು = get_ಅಂಕೆ_ಎಳೆಗಳು(kernel_env->shire_ಮುಖವಾಡ);
 
-    if (thread_id < 0) {
-        return 0;
+    ಆದರೆ (thread_id < 0) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ಆದರೆ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ರಚನೆ ggml_tensor * src0 = &params->src0;
+    ರಚನೆ ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ಆದರೆ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    ದಶಮಾಂಶ * src0_ದತ್ತಾಂಶ = (ದಶಮಾಂಶ *) src0->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ * dst_ದತ್ತಾಂಶ  = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ಆದರೆ (!src0_ದತ್ತಾಂಶ || !dst_ದತ್ತಾಂಶ) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
 
-    const int64_t ne00 = src0->ne[0];  // Row length (to be summed)
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ಸ್ಥಿರಾಂಕ int64_t ne00 = src0->ne[0];  // Row length (to be summed)
+    ಸ್ಥಿರಾಂಕ int64_t ne01 = src0->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t ne02 = src0->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t ne03 = src0->ne[3];
 
-    const size_t nb01 = src0->nb[1];
-    const size_t nb02 = src0->nb[2];
-    const size_t nb03 = src0->nb[3];
+    ಸ್ಥಿರಾಂಕ size_t nb01 = src0->nb[1];
+    ಸ್ಥಿರಾಂಕ size_t nb02 = src0->nb[2];
+    ಸ್ಥಿರಾಂಕ size_t nb03 = src0->nb[3];
 
-    const size_t nb1 = dst->nb[1];
-    const size_t nb2 = dst->nb[2];
-    const size_t nb3 = dst->nb[3];
+    ಸ್ಥಿರಾಂಕ size_t nb1 = dst->nb[1];
+    ಸ್ಥಿರಾಂಕ size_t nb2 = dst->nb[2];
+    ಸ್ಥಿರಾಂಕ size_t nb3 = dst->nb[3];
 
     // Flatten rows across dimensions 1,2,3 and distribute across threads
-    const int64_t total_rows = ne01 * ne02 * ne03;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು = ne01 * ne02 * ne03;
 
-    for (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
-        const int64_t i03 = ir / (ne02 * ne01);
-        const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
-        const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
+    ಗಾಗಿ (int64_t ir = thread_id; ir < ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು; ir += ಅಂಕೆ_ಎಳೆಗಳು) {
+        ಸ್ಥಿರಾಂಕ int64_t i03 = ir / (ne02 * ne01);
+        ಸ್ಥಿರಾಂಕ int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
+        ಸ್ಥಿರಾಂಕ int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
 
-        const float * src_row = (const float *) ((const char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
-        float *       dst_ptr = (float *) ((char *) dst_data + i01 * nb1 + i02 * nb2 + i03 * nb3);
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಅಡ್ಡಸಾಲು = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src0_ದತ್ತಾಂಶ + i01 * nb01 + i02 * nb02 + i03 * nb03);
+        ದಶಮಾಂಶ *       dst_ptr = (ದಶಮಾಂಶ *) ((ಅಕ್ಷರ *) dst_ದತ್ತಾಂಶ + i01 * nb1 + i02 * nb2 + i03 * nb3);
 
         // Vectorized 8-wide sum accumulation
-        float zero = 0.0f;
-        __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+        ದಶಮಾಂಶ zero = 0.0f;
+        __asm__ ಅಸ್ಥಿರ("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-        for (int32_t i0 = 0; i0 < (int32_t) ne00; i0 += 8) {
-            __asm__ volatile(
+        ಗಾಗಿ (int32_t i0 = 0; i0 < (int32_t) ne00; i0 += 8) {
+            __asm__ ಅಸ್ಥಿರ(
                 "flw.ps f11, %[x_vec]\n"
                 "fadd.ps f10, f10, f11\n"
                 :
-                : [x_vec] "m"(*(const float (*)[8]) & src_row[i0])
+                : [x_vec] "m"(*(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ (*)[8]) & src_ಅಡ್ಡಸಾಲು[i0])
                 : "f10", "f11");
         }
 
         // Horizontal sum of 8 accumulated values in f10
-        float row_sum;
+        ದಶಮಾಂಶ ಅಡ್ಡಸಾಲು_ಮೊತ್ತ;
         __asm__ __volatile__(
             "fswizz.ps f1, f10, 0xB1 \n\t"
             "fadd.ps   f2, f10, f1, rne \n\t"
@@ -94,10 +94,10 @@ int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
             "fmvz.x.ps t0, f4, 4 \n\t"
             "fbcx.ps   f5, t0 \n\t"
             "fadd.ps   %[vout], f4, f5, rne \n\t"
-            : [vout] "=f"(row_sum)::"t0", "f1", "f2", "f3", "f4", "f5");
+            : [vout] "=f"(ಅಡ್ಡಸಾಲು_ಮೊತ್ತ)::"t0", "f1", "f2", "f3", "f4", "f5");
 
-        atomic_store_f32(dst_ptr, row_sum);
+        atomic_store_f32(dst_ptr, ಅಡ್ಡಸಾಲು_ಮೊತ್ತ);
     }
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }

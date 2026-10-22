@@ -1,68 +1,68 @@
-#include <sycl/sycl.hpp>
-#include "wkv.hpp"
+#ಅನ್ತರ್ಭಾವ <sycl/sycl.hpp>
+#ಅನ್ತರ್ಭಾವ "wkv.hpp"
 
-constexpr int WKV_BLOCK_SIZE = 64;
+constexpr ಪೂರ್ಣಾಂಕ WKV_ಖಂಡ_ಗಾತ್ರ = 64;
 
 // Helper function for the main kernel
-template <int block_size>
-static void rwkv_wkv6_f32_kernel(
-    const int B, const int T, const int C, const int H,
-    const float* k, const float* v, const float* r,
-    const float* tf, const float* td, const float* s,
-    float* dst, const sycl::nd_item<3>& item_ct1, float* shared_mem) {
+ಮಾದರಿ <ಪೂರ್ಣಾಂಕ ಖಂಡ_ಗಾತ್ರ_3>
+ಸ್ಥಿರ ಶೂನ್ಯ rwkv_wkv6_f32_kernel(
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ B, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ T, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ C, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ H,
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* k, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* v, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* r,
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* tf, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* td, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* s,
+    ದಶಮಾಂಶ* dst, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<3>& ಅಂಶ_ct1, ದಶಮಾಂಶ* shared_mem) {
 
-    const int tid = item_ct1.get_local_id(2);
-    const int bid = item_ct1.get_group(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ tid = ಅಂಶ_ct1.get_local_id(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ bid = ಅಂಶ_ct1.get_ಗುಂಪು(2);
 
-    const int head_size = block_size;
-    const int batch_i = bid / H;
-    const int head_i = bid % H;
-    const int state_size = C * head_size;
-    const int n_seq_tokens = T / B;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ತಲೆ_ಗಾತ್ರ = ಖಂಡ_ಗಾತ್ರ_3;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ batch_i = bid / H;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ತಲೆ_i = bid % H;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ state_ಗಾತ್ರ = C * ತಲೆ_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ n_seq_ಟೋಕನುಗಳು = T / B;
 
     // Set up shared memory pointers
-    float* _k = shared_mem;
-    float* _r = _k + head_size;
-    float* _tf = _r + head_size;
-    float* _td = _tf + head_size;
+    ದಶಮಾಂಶ* _k = shared_mem;
+    ದಶಮಾಂಶ* _r = _k + ತಲೆ_ಗಾತ್ರ;
+    ದಶಮಾಂಶ* _tf = _r + ತಲೆ_ಗಾತ್ರ;
+    ದಶಮಾಂಶ* _td = _tf + ತಲೆ_ಗಾತ್ರ;
 
     // Local state array
-    float state[block_size];
+    ದಶಮಾಂಶ state[ಖಂಡ_ಗಾತ್ರ_3];
 
     // Load initial state
-    #pragma unroll
-    for (int i = 0; i < head_size; i++) {
-        state[i] = s[batch_i * state_size + head_i * head_size * head_size + i * head_size + tid];
+    #ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ತಲೆ_ಗಾತ್ರ; i++) {
+        state[i] = s[batch_i * state_ಗಾತ್ರ + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ * ತಲೆ_ಗಾತ್ರ + i * ತಲೆ_ಗಾತ್ರ + tid];
     }
 
     // Sync threads before shared memory operations
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    ಅಂಶ_ct1.barrier(sycl::access::fence_space::local_space);
 
     // Load time-mixing parameters
-    _tf[tid] = tf[head_i * head_size + tid];
-    item_ct1.barrier(sycl::access::fence_space::local_space);
+    _tf[tid] = tf[ತಲೆ_i * ತಲೆ_ಗಾತ್ರ + tid];
+    ಅಂಶ_ct1.barrier(sycl::access::fence_space::local_space);
 
     // Main sequence processing loop
-    for (int t = batch_i * n_seq_tokens * C + head_i * head_size + tid;
-         t < (batch_i + 1) * n_seq_tokens * C + head_i * head_size + tid;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ t = batch_i * n_seq_ಟೋಕನುಗಳು * C + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ + tid;
+         t < (batch_i + 1) * n_seq_ಟೋಕನುಗಳು * C + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ + tid;
          t += C) {
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        ಅಂಶ_ct1.barrier(sycl::access::fence_space::local_space);
 
         // Load current timestep data to shared memory
         _k[tid] = k[t];
         _r[tid] = r[t];
         _td[tid] = td[t];
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        ಅಂಶ_ct1.barrier(sycl::access::fence_space::local_space);
 
-        const float _v = v[t];
-        float y = 0;
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ _v = v[t];
+        ದಶಮಾಂಶ y = 0;
 
         // Process in chunks of 4 for better vectorization
         sycl::float4 k4, r4, tf4, td4, s4;
-        #pragma unroll
-        for (int j = 0; j < head_size; j += 4) {
+        #ಸೂಚನೆ unroll
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < ತಲೆ_ಗಾತ್ರ; j += 4) {
             // Load data in vec4 chunks
             k4 = sycl::float4(_k[j], _k[j+1], _k[j+2], _k[j+3]);
             r4 = sycl::float4(_r[j], _r[j+1], _r[j+2], _r[j+3]);
@@ -90,46 +90,46 @@ static void rwkv_wkv6_f32_kernel(
     }
 
     // Save final state
-    #pragma unroll
-    for (int i = 0; i < head_size; i++) {
-        dst[T * C + batch_i * state_size + head_i * head_size * head_size + i * head_size + tid] = state[i];
+    #ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ತಲೆ_ಗಾತ್ರ; i++) {
+        dst[T * C + batch_i * state_ಗಾತ್ರ + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ * ತಲೆ_ಗಾತ್ರ + i * ತಲೆ_ಗಾತ್ರ + tid] = state[i];
     }
 }
 
-template <int block_size>
-static void rwkv_wkv7_f32_kernel(
-    const int B, const int T, const int C, const int H,
-    const float* r, const float* w, const float* k, const float* v,
-    const float* a, const float* b, const float* s,
-    float* dst, const sycl::nd_item<3>& item_ct1, float* shared_mem) {
+ಮಾದರಿ <ಪೂರ್ಣಾಂಕ ಖಂಡ_ಗಾತ್ರ_3>
+ಸ್ಥಿರ ಶೂನ್ಯ rwkv_wkv7_f32_kernel(
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ B, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ T, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ C, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ H,
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* r, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* w, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* k, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* v,
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* a, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* b, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* s,
+    ದಶಮಾಂಶ* dst, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<3>& ಅಂಶ_ct1, ದಶಮಾಂಶ* shared_mem) {
 
-    const int tid = item_ct1.get_local_id(2);
-    const int bid = item_ct1.get_group(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ tid = ಅಂಶ_ct1.get_local_id(2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ bid = ಅಂಶ_ct1.get_ಗುಂಪು(2);
 
-    const int head_size = block_size;
-    const int batch_i = bid / H;
-    const int head_i = bid % H;
-    const int state_size = C * head_size;
-    const int n_seq_tokens = T / B;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ತಲೆ_ಗಾತ್ರ = ಖಂಡ_ಗಾತ್ರ_3;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ batch_i = bid / H;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ತಲೆ_i = bid % H;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ state_ಗಾತ್ರ = C * ತಲೆ_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ n_seq_ಟೋಕನುಗಳು = T / B;
 
-    float* _r = shared_mem;
-    float* _w = _r + head_size;
-    float* _k = _w + head_size;
-    float* _a = _k + head_size;
-    float* _b = _a + head_size;
+    ದಶಮಾಂಶ* _r = shared_mem;
+    ದಶಮಾಂಶ* _w = _r + ತಲೆ_ಗಾತ್ರ;
+    ದಶಮಾಂಶ* _k = _w + ತಲೆ_ಗಾತ್ರ;
+    ದಶಮಾಂಶ* _a = _k + ತಲೆ_ಗಾತ್ರ;
+    ದಶಮಾಂಶ* _b = _a + ತಲೆ_ಗಾತ್ರ;
 
-    float state[block_size];
+    ದಶಮಾಂಶ state[ಖಂಡ_ಗಾತ್ರ_3];
 
-    #pragma unroll
-    for (int i = 0; i < head_size; i++) {
-        state[i] = s[batch_i * state_size + head_i * head_size * head_size + tid * head_size + i];
+    #ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ತಲೆ_ಗಾತ್ರ; i++) {
+        state[i] = s[batch_i * state_ಗಾತ್ರ + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ * ತಲೆ_ಗಾತ್ರ + tid * ತಲೆ_ಗಾತ್ರ + i];
     }
 
-    for (int t = batch_i * n_seq_tokens * C + head_i * head_size + tid;
-         t < (batch_i + 1) * n_seq_tokens * C + head_i * head_size + tid;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ t = batch_i * n_seq_ಟೋಕನುಗಳು * C + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ + tid;
+         t < (batch_i + 1) * n_seq_ಟೋಕನುಗಳು * C + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ + tid;
          t += C) {
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        ಅಂಶ_ct1.barrier(sycl::access::fence_space::local_space);
 
         _r[tid] = r[t];
         _w[tid] = w[t];
@@ -137,22 +137,22 @@ static void rwkv_wkv7_f32_kernel(
         _a[tid] = a[t];
         _b[tid] = b[t];
 
-        item_ct1.barrier(sycl::access::fence_space::local_space);
+        ಅಂಶ_ct1.barrier(sycl::access::fence_space::local_space);
 
-        const float _v = v[t];
-        float y = 0, sa = 0;
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ _v = v[t];
+        ದಶಮಾಂಶ y = 0, sa = 0;
         sycl::float4 a4, s4;
 
-        #pragma unroll
-        for (int j = 0; j < head_size; j += 4) {
+        #ಸೂಚನೆ unroll
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < ತಲೆ_ಗಾತ್ರ; j += 4) {
             a4 = sycl::float4(_a[j], _a[j+1], _a[j+2], _a[j+3]);
             s4 = sycl::float4(state[j], state[j+1], state[j+2], state[j+3]);
             sa += sycl::dot(a4, s4);
         }
 
         sycl::float4 r4, w4, k4, b4;
-        #pragma unroll
-        for (int j = 0; j < head_size; j += 4) {
+        #ಸೂಚನೆ unroll
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < ತಲೆ_ಗಾತ್ರ; j += 4) {
             r4 = sycl::float4(_r[j], _r[j+1], _r[j+2], _r[j+3]);
             w4 = sycl::float4(_w[j], _w[j+1], _w[j+2], _w[j+3]);
             k4 = sycl::float4(_k[j], _k[j+1], _k[j+2], _k[j+3]);
@@ -173,119 +173,119 @@ static void rwkv_wkv7_f32_kernel(
         dst[t] = y;
     }
 
-    #pragma unroll
-    for (int i = 0; i < head_size; i++) {
-        dst[T * C + batch_i * state_size + head_i * head_size * head_size + tid * head_size + i] = state[i];
+    #ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ತಲೆ_ಗಾತ್ರ; i++) {
+        dst[T * C + batch_i * state_ಗಾತ್ರ + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ * ತಲೆ_ಗಾತ್ರ + tid * ತಲೆ_ಗಾತ್ರ + i] = state[i];
     }
 }
 
-void ggml_sycl_op_rwkv_wkv6(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+ಶೂನ್ಯ ggml_sycl_op_rwkv_wkv6(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
-    const float* k_d = (const float*)dst->src[0]->data;
-    const float* v_d = (const float*)dst->src[1]->data;
-    const float* r_d = (const float*)dst->src[2]->data;
-    const float* tf_d = (const float*)dst->src[3]->data;
-    const float* td_d = (const float*)dst->src[4]->data;
-    const float* s_d = (const float*)dst->src[5]->data;
-    float* dst_d = (float*)dst->data;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* k_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[0]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* v_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[1]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* r_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[2]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* tf_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[3]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* td_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[4]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* s_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[5]->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ* dst_d = (ದಶಮಾಂಶ*)dst->ದತ್ತಾಂಶ;
 
-    const int64_t B = dst->src[5]->ne[1];
-    const int64_t T = dst->src[0]->ne[2];
-    const int64_t C = dst->ne[0];
-    const int64_t H = dst->src[0]->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t B = dst->src[5]->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t T = dst->src[0]->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t C = dst->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t H = dst->src[0]->ne[1];
 
     GGML_ASSERT(dst->src[5]->type == GGML_TYPE_F32);
     GGML_ASSERT(C % H == 0);
-    GGML_ASSERT(C / H == WKV_BLOCK_SIZE || C / H == WKV_BLOCK_SIZE * 2); // The current sycl kernel is designed for RWKV6, HEAD_SIZE == 64
+    GGML_ASSERT(C / H == WKV_ಖಂಡ_ಗಾತ್ರ || C / H == WKV_ಖಂಡ_ಗಾತ್ರ * 2); // The current sycl kernel is designed for RWKV6, HEAD_SIZE == 64
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
 
     // Calculate execution configuration
-    const size_t shared_mem_size = C / H * 4 * sizeof(float); // For k, r, tf, td
-    sycl::range<3> block_dims(1, 1, C / H);
+    ಸ್ಥಿರಾಂಕ size_t shared_mem_ಗಾತ್ರ = C / H * 4 * ಗಾತ್ರ(ದಶಮಾಂಶ); // For k, r, tf, td
+    sycl::range<3> ಖಂಡ_dims(1, 1, C / H);
     sycl::range<3> grid_dims(1, 1, B * H);
 
     // Submit kernel
-    if (C / H == WKV_BLOCK_SIZE) {
+    ಆದರೆ (C / H == WKV_ಖಂಡ_ಗಾತ್ರ) {
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> shared_mem_acc(shared_mem_size, cgh);
+            sycl::local_accessor<ದಶಮಾಂಶ, 1> shared_mem_acc(shared_mem_ಗಾತ್ರ, cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
-                    rwkv_wkv6_f32_kernel<WKV_BLOCK_SIZE>(
+                sycl::nd_range<3>(grid_dims * ಖಂಡ_dims, ಖಂಡ_dims),
+                [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) {
+                    rwkv_wkv6_f32_kernel<WKV_ಖಂಡ_ಗಾತ್ರ>(
                         B, T, C, H, k_d, v_d, r_d, tf_d, td_d, s_d, dst_d,
-                        item_ct1, (float*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
+                        ಅಂಶ_ct1, (ದಶಮಾಂಶ*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
                     );
                 });
         });
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> shared_mem_acc(shared_mem_size, cgh);
+            sycl::local_accessor<ದಶಮಾಂಶ, 1> shared_mem_acc(shared_mem_ಗಾತ್ರ, cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
-                    rwkv_wkv6_f32_kernel<WKV_BLOCK_SIZE * 2>(
+                sycl::nd_range<3>(grid_dims * ಖಂಡ_dims, ಖಂಡ_dims),
+                [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) {
+                    rwkv_wkv6_f32_kernel<WKV_ಖಂಡ_ಗಾತ್ರ * 2>(
                         B, T, C, H, k_d, v_d, r_d, tf_d, td_d, s_d, dst_d,
-                        item_ct1, (float*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
+                        ಅಂಶ_ct1, (ದಶಮಾಂಶ*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
                     );
                 });
         });
     }
 }
 
-void ggml_sycl_op_rwkv_wkv7(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
+ಶೂನ್ಯ ggml_sycl_op_rwkv_wkv7(ggml_backend_sycl_context& ctx, ggml_tensor* dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/7);
-    const float* r_d = (const float*)dst->src[0]->data;
-    const float* w_d = (const float*)dst->src[1]->data;
-    const float* k_d = (const float*)dst->src[2]->data;
-    const float* v_d = (const float*)dst->src[3]->data;
-    const float* a_d = (const float*)dst->src[4]->data;
-    const float* b_d = (const float*)dst->src[5]->data;
-    const float* s_d = (const float*)dst->src[6]->data;
-    float* dst_d = (float*)dst->data;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* r_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[0]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* w_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[1]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* k_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[2]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* v_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[3]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* a_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[4]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* b_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[5]->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ* s_d = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ*)dst->src[6]->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ* dst_d = (ದಶಮಾಂಶ*)dst->ದತ್ತಾಂಶ;
 
-    const int64_t B = dst->src[6]->ne[1];
-    const int64_t T = dst->src[0]->ne[2];
-    const int64_t C = dst->ne[0];
-    const int64_t H = dst->src[0]->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t B = dst->src[6]->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t T = dst->src[0]->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t C = dst->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t H = dst->src[0]->ne[1];
 
     GGML_ASSERT(dst->src[6]->type == GGML_TYPE_F32);
     GGML_ASSERT(C % H == 0);
-    GGML_ASSERT(C / H == WKV_BLOCK_SIZE || C / H == WKV_BLOCK_SIZE * 2);
+    GGML_ASSERT(C / H == WKV_ಖಂಡ_ಗಾತ್ರ || C / H == WKV_ಖಂಡ_ಗಾತ್ರ * 2);
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
 
     // Calculate execution configuration
-    const size_t shared_mem_size = C / H * 5 * sizeof(float); // For r, w, k, a, b
-    sycl::range<3> block_dims(1, 1, C / H);
+    ಸ್ಥಿರಾಂಕ size_t shared_mem_ಗಾತ್ರ = C / H * 5 * ಗಾತ್ರ(ದಶಮಾಂಶ); // For r, w, k, a, b
+    sycl::range<3> ಖಂಡ_dims(1, 1, C / H);
     sycl::range<3> grid_dims(1, 1, B * H);
 
     // Submit kernel
-    if (C / H == WKV_BLOCK_SIZE) {
+    ಆದರೆ (C / H == WKV_ಖಂಡ_ಗಾತ್ರ) {
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> shared_mem_acc(shared_mem_size, cgh);
+            sycl::local_accessor<ದಶಮಾಂಶ, 1> shared_mem_acc(shared_mem_ಗಾತ್ರ, cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
-                    rwkv_wkv7_f32_kernel<WKV_BLOCK_SIZE>(
+                sycl::nd_range<3>(grid_dims * ಖಂಡ_dims, ಖಂಡ_dims),
+                [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) {
+                    rwkv_wkv7_f32_kernel<WKV_ಖಂಡ_ಗಾತ್ರ>(
                         B, T, C, H, r_d, w_d, k_d, v_d, a_d, b_d, s_d, dst_d,
-                        item_ct1, (float*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
+                        ಅಂಶ_ct1, (ದಶಮಾಂಶ*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
                     );
                 });
         });
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         stream->submit([&](sycl::handler& cgh) {
-            sycl::local_accessor<float, 1> shared_mem_acc(shared_mem_size, cgh);
+            sycl::local_accessor<ದಶಮಾಂಶ, 1> shared_mem_acc(shared_mem_ಗಾತ್ರ, cgh);
 
             cgh.parallel_for(
-                sycl::nd_range<3>(grid_dims * block_dims, block_dims),
-                [=](sycl::nd_item<3> item_ct1) {
-                    rwkv_wkv7_f32_kernel<WKV_BLOCK_SIZE * 2>(
+                sycl::nd_range<3>(grid_dims * ಖಂಡ_dims, ಖಂಡ_dims),
+                [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) {
+                    rwkv_wkv7_f32_kernel<WKV_ಖಂಡ_ಗಾತ್ರ * 2>(
                         B, T, C, H, r_d, w_d, k_d, v_d, a_d, b_d, s_d, dst_d,
-                        item_ct1, (float*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
+                        ಅಂಶ_ct1, (ದಶಮಾಂಶ*)shared_mem_acc.get_multi_ptr<sycl::access::decorated::no>().get()
                     );
                 });
         });

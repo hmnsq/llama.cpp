@@ -1,105 +1,105 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "backend-dispatched.h"
+#ಅನ್ತರ್ಭಾವ "backend-virgl-apir.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend.h"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
 
-#include <cstdint>
+#ಅನ್ತರ್ಭಾವ <cstdint>
 
-uint32_t backend_buffer_type_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_ಬಫರ್_type_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_ಬಳಸದ(ctx);
+    ggml_backend_ಬಫರ್_type_t buft;
+    buft = apir_decode_ggml_ಬಫರ್_type(dec);
 
-    const char * string = buft->iface.get_name(buft);
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * string = buft->iface.get_name(buft);
 
-    const size_t string_size = strlen(string) + 1;
-    apir_encode_array_size(enc, string_size);
-    apir_encode_char_array(enc, string, string_size);
+    ಸ್ಥಿರಾಂಕ size_t string_ಗಾತ್ರ = ಅಕ್ಷರಸರಣಿ_ಉದ್ದ(string) + 1;
+    apir_encode_array_ಗಾತ್ರ(enc, string_ಗಾತ್ರ);
+    apir_encode_char_array(enc, string, string_ಗಾತ್ರ);
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }
 
-uint32_t backend_buffer_type_get_alignment(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_ಬಫರ್_type_get_alignment(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_ಬಳಸದ(ctx);
+    ggml_backend_ಬಫರ್_type_t buft;
+    buft = apir_decode_ggml_ಬಫರ್_type(dec);
 
     size_t value = buft->iface.get_alignment(buft);
-    apir_encode_size_t(enc, &value);
+    apir_encode_ಗಾತ್ರ_t(enc, &value);
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }
 
-uint32_t backend_buffer_type_get_max_size(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_ಬಫರ್_type_get_max_ಗಾತ್ರ(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_ಬಳಸದ(ctx);
+    ggml_backend_ಬಫರ್_type_t buft;
+    buft = apir_decode_ggml_ಬಫರ್_type(dec);
 
     size_t value = SIZE_MAX;
-    if (buft->iface.get_max_size) {
-        value = buft->iface.get_max_size(buft);
+    ಆದರೆ (buft->iface.get_max_ಗಾತ್ರ) {
+        value = buft->iface.get_max_ಗಾತ್ರ(buft);
     }
 
-    apir_encode_size_t(enc, &value);
+    apir_encode_ಗಾತ್ರ_t(enc, &value);
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }
 
 /* APIR_COMMAND_TYPE_BUFFER_TYPE_IS_HOST is deprecated. Keeping the handler for backward compatibility. */
-uint32_t backend_buffer_type_is_host(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    GGML_UNUSED(dec);
-    const bool is_host = false;
+uint32_t backend_ಬಫರ್_type_is_host(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_ಬಳಸದ(ctx);
+    GGML_ಬಳಸದ(dec);
+    ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ is_host = ಸುಳ್ಳು;
 
     apir_encode_bool_t(enc, &is_host);
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }
 
-uint32_t backend_buffer_type_alloc_buffer(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_ಬಫರ್_type_alloc_ಬಫರ್(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_ಬಳಸದ(ctx);
+    ggml_backend_ಬಫರ್_type_t buft;
+    buft = apir_decode_ggml_ಬಫರ್_type(dec);
 
     size_t size;
-    apir_decode_size_t(dec, &size);
+    apir_decode_ಗಾತ್ರ_t(dec, &size);
 
-    ggml_backend_buffer_t buffer;
+    ggml_backend_ಬಫರ್_t ಬಫರ್;
 
-    buffer = buft->iface.alloc_buffer(buft, size);
+    ಬಫರ್ = buft->iface.alloc_ಬಫರ್(buft, size);
 
-    apir_encode_ggml_buffer(enc, buffer);
+    apir_encode_ggml_ಬಫರ್(enc, ಬಫರ್);
 
-    if (buffer) {
-        apir_track_backend_buffer(buffer);
+    ಆದರೆ (ಬಫರ್) {
+        apir_track_backend_ಬಫರ್(ಬಫರ್);
     }
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }
 
-uint32_t backend_buffer_type_get_alloc_size(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
-    GGML_UNUSED(ctx);
-    ggml_backend_buffer_type_t buft;
-    buft = apir_decode_ggml_buffer_type(dec);
+uint32_t backend_ಬಫರ್_type_get_alloc_ಗಾತ್ರ(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+    GGML_ಬಳಸದ(ctx);
+    ggml_backend_ಬಫರ್_type_t buft;
+    buft = apir_decode_ggml_ಬಫರ್_type(dec);
 
-    const ggml_tensor * op = apir_decode_ggml_tensor_inplace(dec);
+    ಸ್ಥಿರಾಂಕ ggml_tensor * op = apir_decode_ggml_tensor_inplace(dec);
 
     // Check for decode error
-    if (op == nullptr) {
+    ಆದರೆ (op == ಶೂನ್ಯಸೂಚಕ) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Failed to decode tensor\n", __func__);
-        apir_decoder_set_fatal(dec);
-        return 1;
+        apir_decoder_ಗಣ_fatal(dec);
+        ಹಿಂತಿರುಗಿ 1;
     }
 
     size_t value;
-    if (buft->iface.get_alloc_size) {
-        value = buft->iface.get_alloc_size(buft, op);
-    } else {
+    ಆದರೆ (buft->iface.get_alloc_ಗಾತ್ರ) {
+        value = buft->iface.get_alloc_ಗಾತ್ರ(buft, op);
+    } ಇಲ್ಲದಿದ್ದರೆ {
         value = ggml_nbytes(op);  // Default fallback
     }
 
-    apir_encode_size_t(enc, &value);
+    apir_encode_ಗಾತ್ರ_t(enc, &value);
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }

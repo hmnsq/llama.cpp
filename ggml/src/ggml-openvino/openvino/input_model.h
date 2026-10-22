@@ -1,26 +1,26 @@
-#pragma once
+#ಸೂಚನೆ once
 
-#include "decoder.h"
+#ಅನ್ತರ್ಭಾವ "decoder.h"
 
-#include <openvino/frontend/input_model.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/frontend/input_model.hpp>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-class FrontEnd;
+class Front_ಕೊನೆ;
 class GgmlDecoder;
 using ov::frontend::ggml::GgmlDecoder;
 
-class InputModel : public ov::frontend::InputModel {
-    friend class ::ov::frontend::ggml::FrontEnd;
+class ಒಳಹರಿವು_Model : ಸಾರ್ವಜನಿಕ ov::frontend::ಒಳಹರಿವು_Model {
+    ಮಿತ್ರ class ::ov::frontend::ggml::Front_ಕೊನೆ;
 
-public:
-    explicit InputModel(const std::shared_ptr<GgmlDecoder> & gdecoder);
+ಸಾರ್ವಜನಿಕ:
+    explicit ಒಳಹರಿವು_Model(ಸ್ಥಿರಾಂಕ std::shared_ptr<GgmlDecoder> & gdecoder);
 
-    const std::shared_ptr<GgmlDecoder> & get_model_decoder() const;
+    ಸ್ಥಿರಾಂಕ std::shared_ptr<GgmlDecoder> & get_model_decoder() ಸ್ಥಿರಾಂಕ;
 
-private:
+ಖಾಸಗಿ:
     std::shared_ptr<GgmlDecoder> m_decoder;
 };
 

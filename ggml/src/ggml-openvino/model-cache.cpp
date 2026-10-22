@@ -1,26 +1,26 @@
-#include "model-cache.h"
+#ಅನ್ತರ್ಭಾವ "model-cache.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-openvino-extra.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend.h"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-openvino-extra.h"
 
-#include <cerrno>
-#include <algorithm>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <iomanip>
-#include <limits>
-#include <sstream>
-#include <openvino/core/version.hpp>
-#include <string>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <vector>
+#ಅನ್ತರ್ಭಾವ <cerrno>
+#ಅನ್ತರ್ಭಾವ <algorithm>
+#ಅನ್ತರ್ಭಾವ <cstdio>
+#ಅನ್ತರ್ಭಾವ <cstring>
+#ಅನ್ತರ್ಭಾವ <fstream>
+#ಅನ್ತರ್ಭಾವ <iomanip>
+#ಅನ್ತರ್ಭಾವ <limits>
+#ಅನ್ತರ್ಭಾವ <sstream>
+#ಅನ್ತರ್ಭಾವ <openvino/core/version.hpp>
+#ಅನ್ತರ್ಭಾವ <string>
+#ಅನ್ತರ್ಭಾವ <sys/stat.h>
+#ಅನ್ತರ್ಭಾವ <sys/types.h>
+#ಅನ್ತರ್ಭಾವ <vector>
 
-#if defined(_WIN32)
-#    define WIN32_LEAN_AND_MEAN
+#ಆದರೆ defined(_WIN32)
+#    define WIN32_LEAN_AND_ಸರಾಸರಿ
 #    ifndef NOMINMAX
 #        define NOMINMAX
 #    endif
@@ -28,143 +28,143 @@
 #    include <psapi.h>
 #    include <direct.h>
 #    include <process.h>
-#else
+#ಇಲ್ಲದಿದ್ದರೆ
 #    include <unistd.h>
-#endif
-#ifdef __linux__
+#ಆದರೆ_ಅಂತ್ಯ
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __linux__
 #    include <sys/sysmacros.h>
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-namespace {
+ನಾಮಾಕಾಶ {
 
 // 64-bit FNV-1a, the mixing primitive for all fingerprints here.
-inline uint64_t fnv1a(uint64_t h, const void * data, size_t n) {
-    const uint8_t * p = static_cast<const uint8_t *>(data);
-    for (size_t i = 0; i < n; ++i) {
+ಸಾಲೊಳಗೆ uint64_t fnv1a(uint64_t h, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ದತ್ತಾಂಶ, size_t n) {
+    ಸ್ಥಿರಾಂಕ uint8_t * p = static_cast<ಸ್ಥಿರಾಂಕ uint8_t *>(ದತ್ತಾಂಶ);
+    ಗಾಗಿ (size_t i = 0; i < n; ++i) {
         h ^= p[i];
         h *= 0x100000001b3ull;
     }
-    return h;
+    ಹಿಂತಿರುಗಿ h;
 }
 
-inline uint64_t fnv1a_u64(uint64_t h, uint64_t v) {
-    return fnv1a(h, &v, sizeof(v));
+ಸಾಲೊಳಗೆ uint64_t fnv1a_u64(uint64_t h, uint64_t v) {
+    ಹಿಂತಿರುಗಿ fnv1a(h, &v, ಗಾತ್ರ(v));
 }
 
-constexpr uint64_t FNV_OFFSET = 0xcbf29ce484222325ull;
+constexpr uint64_t FNV_ಸ್ಥಾನಾಂತರ = 0xcbf29ce484222325ull;
 
 // Fallback when source-file identity is unavailable outside cache-only mode.
-constexpr size_t WEIGHT_SAMPLE_BYTES = 4096;
+constexpr size_t ತೂಕ_SAMPLE_ಬೈಟುಗಳು = 4096;
 
 // Is this src a model weight, mirroring create_weight_nodes()'s selection:
 // non-view tensor whose buffer is USAGE_WEIGHTS or whose type is quantized.
-bool is_weight_src(const ggml_tensor * src) {
-    if (src == nullptr || src->view_src != nullptr || src->buffer == nullptr) {
-        return false;
+ತಾರ್ಕಿಕ is_ತೂಕ_src(ಸ್ಥಿರಾಂಕ ggml_tensor * src) {
+    ಆದರೆ (src == ಶೂನ್ಯಸೂಚಕ || src->view_src != ಶೂನ್ಯಸೂಚಕ || src->ಬಫರ್ == ಶೂನ್ಯಸೂಚಕ) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
-    return src->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS || ggml_is_quantized(src->type);
+    ಹಿಂತಿರುಗಿ src->ಬಫರ್->usage == GGML_BACKEND_ಬಫರ್_USAGE_WEIGHTS || ggml_is_quantized(src->type);
 }
 
 // Weight metadata and source identity; do not read repacked or unloaded buffers.
-uint64_t weight_fingerprint(const ggml_tensor * t) {
-    uint64_t h = FNV_OFFSET;
-    h = fnv1a(h, t->name, strlen(t->name));
-    for (int i = 0; i < GGML_MAX_DIMS; ++i) {
+uint64_t ತೂಕ_fingerprint(ಸ್ಥಿರಾಂಕ ggml_tensor * t) {
+    uint64_t h = FNV_ಸ್ಥಾನಾಂತರ;
+    h = fnv1a(h, t->name, ಅಕ್ಷರಸರಣಿ_ಉದ್ದ(t->name));
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < GGML_MAX_DIMS; ++i) {
         h = fnv1a_u64(h, static_cast<uint64_t>(t->ne[i]));
     }
     h = fnv1a_u64(h, static_cast<uint64_t>(t->type));
-    const size_t nbytes = ggml_nbytes(t);
+    ಸ್ಥಿರಾಂಕ size_t nbytes = ggml_nbytes(t);
     h = fnv1a_u64(h, nbytes);
-    return fnv1a_u64(h, ggml_backend_openvino_weight_fingerprint(t));
+    ಹಿಂತಿರುಗಿ fnv1a_u64(h, ggml_backend_openvino_ತೂಕ_fingerprint(t));
 }
 
 // Walk the cgraph and invoke fn(weight_tensor) for each distinct weight, in node
 // order. De-duplicates by tensor pointer so a weight used by several nodes is
 // fingerprinted once, deterministically.
-template <typename F>
-void for_each_weight(const ggml_cgraph * cgraph, F && fn) {
-    std::vector<const ggml_tensor *> seen;
-    for (int i = 0; i < cgraph->n_nodes; ++i) {
-        const ggml_tensor * node = cgraph->nodes[i];
-        for (int s = 0; s < GGML_MAX_SRC; ++s) {
-            const ggml_tensor * src = node->src[s];
-            if (!is_weight_src(src)) {
-                continue;
+ಮಾದರಿ <ಬಗೆ_ಹೆಸರು F>
+ಶೂನ್ಯ for_each_ತೂಕ(ಸ್ಥಿರಾಂಕ ggml_cgraph * cgraph, F && fn) {
+    std::vector<ಸ್ಥಿರಾಂಕ ggml_tensor *> ನೋಡಿದ;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < cgraph->n_nodes; ++i) {
+        ಸ್ಥಿರಾಂಕ ggml_tensor * ಗಂಟು = cgraph->nodes[i];
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ s = 0; s < GGML_MAX_SRC; ++s) {
+            ಸ್ಥಿರಾಂಕ ggml_tensor * src = ಗಂಟು->src[s];
+            ಆದರೆ (!is_ತೂಕ_src(src)) {
+                ಮುಂದುವರಿ;
             }
-            bool dup = false;
-            for (const auto * p : seen) {
-                if (p == src) {
-                    dup = true;
-                    break;
+            ತಾರ್ಕಿಕ dup = ಸುಳ್ಳು;
+            ಗಾಗಿ (ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ * p : ನೋಡಿದ) {
+                ಆದರೆ (p == src) {
+                    dup = ನಿಜ;
+                    ನಿಲ್ಲಿಸು;
                 }
             }
-            if (dup) {
-                continue;
+            ಆದರೆ (dup) {
+                ಮುಂದುವರಿ;
             }
-            seen.push_back(src);
+            ನೋಡಿದ.push_back(src);
             fn(src);
         }
     }
 }
 
-std::string ov_version_string() {
-    const ov::Version v = ov::get_openvino_version();
-    return std::string(v.buildNumber ? v.buildNumber : "unknown");
+std::string ov_ಆವೃತ್ತಿ_string() {
+    ಸ್ಥಿರಾಂಕ ov::ಆವೃತ್ತಿ v = ov::get_openvino_ಆವೃತ್ತಿ();
+    ಹಿಂತಿರುಗಿ std::string(v.build_ಸಂಖ್ಯೆ ? v.build_ಸಂಖ್ಯೆ : "unknown");
 }
 
 std::string hex64(uint64_t v) {
-    char buf[17];
-    snprintf(buf, sizeof(buf), "%016llx", static_cast<unsigned long long>(v));
-    return std::string(buf);
+    ಅಕ್ಷರ buf[17];
+    snprintf(buf, ಗಾತ್ರ(buf), "%016llx", static_cast<ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ದೀರ್ಘ>(v));
+    ಹಿಂತಿರುಗಿ std::string(buf);
 }
 
 // Portable mkdir for a single path component. Returns true if the directory
 // exists after the call (created now or already present).
-bool make_dir(const std::string & path) {
-#if defined(_WIN32)
-    int rc = _mkdir(path.c_str());
-#else
-    int rc = ::mkdir(path.c_str(), 0755);
-#endif
-    if (rc == 0 || errno == EEXIST) {
-        return true;
+ತಾರ್ಕಿಕ make_dir(ಸ್ಥಿರಾಂಕ std::string & path) {
+#ಆದರೆ defined(_WIN32)
+    ಪೂರ್ಣಾಂಕ rc = _mkdir(path.c_str());
+#ಇಲ್ಲದಿದ್ದರೆ
+    ಪೂರ್ಣಾಂಕ rc = ::mkdir(path.c_str(), 0755);
+#ಆದರೆ_ಅಂತ್ಯ
+    ಆದರೆ (rc == 0 || errno == EEXIST) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-    return false;
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }
 
 // Create `path` and any missing parents (like `mkdir -p`). Best-effort:
 // returns true only if the full directory exists afterwards.
-bool make_dirs(const std::string & path) {
-    if (path.empty()) {
-        return false;
+ತಾರ್ಕಿಕ make_dirs(ಸ್ಥಿರಾಂಕ std::string & path) {
+    ಆದರೆ (path.ಖಾಲಿಗಳು()) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
     std::string acc;
-    for (size_t i = 0; i < path.size(); ++i) {
-        const char c = path[i];
+    ಗಾಗಿ (size_t i = 0; i < path.size(); ++i) {
+        ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ c = path[i];
         acc.push_back(c);
-        const bool sep = (c == '/'
-#if defined(_WIN32)
+        ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ sep = (c == '/'
+#ಆದರೆ defined(_WIN32)
                           || c == '\\'
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
         );
         // Create each intermediate component (skip a leading "/" root).
-        if (sep && acc.size() > 1) {
+        ಆದರೆ (sep && acc.size() > 1) {
             std::string component = acc.substr(0, acc.size() - 1);
-            if (!make_dir(component)) {
-                return false;
+            ಆದರೆ (!make_dir(component)) {
+                ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
         }
     }
-    return make_dir(path);
+    ಹಿಂತಿರುಗಿ make_dir(path);
 }
 
 }  // namespace
 
-bool ggml_openvino_model_cache_only() {
-    return ggml_openvino_getenv_int("GGML_OPENVINO_COMPILED_MODEL_CACHE_ONLY") != 0;
+ತಾರ್ಕಿಕ ggml_openvino_model_cache_only() {
+    ಹಿಂತಿರುಗಿ ggml_openvino_getenv_int("GGML_OPENVINO_COMPILED_MODEL_CACHE_ONLY") != 0;
 }
 
-static const char * cache_settings[] = {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * cache_settings[] = {
     "GGML_OPENVINO_REQUANT_KQUANT",
     "GGML_OPENVINO_NATIVE_SOFTPLUS",
     "GGML_OPENVINO_DISABLE_KV_SLICE",
@@ -177,308 +177,308 @@ static const char * cache_settings[] = {
     "GGML_OPENVINO_PROFILING",
 };
 
-void ggml_openvino_model_cache_init() {
-    const bool cache_only = ggml_openvino_model_cache_only();
-    const std::string dir = ggml_openvino_model_cache_dir();
-    if (dir.empty()) {
-        if (cache_only) {
+ಶೂನ್ಯ ggml_openvino_model_cache_init() {
+    ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ cache_only = ggml_openvino_model_cache_only();
+    ಸ್ಥಿರಾಂಕ std::string dir = ggml_openvino_model_cache_dir();
+    ಆದರೆ (dir.ಖಾಲಿಗಳು()) {
+        ಆದರೆ (cache_only) {
             GGML_ABORT("ggml-openvino: cache-only mode requires GGML_OPENVINO_COMPILED_MODEL_CACHE_DIR");
         }
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
-    if (cache_only && (ggml_openvino_is_npu() || ggml_openvino_getenv_int("GGML_OPENVINO_FORCE_STATIC") ||
+    ಆದರೆ (cache_only && (ggml_openvino_is_npu() || ggml_openvino_getenv_int("GGML_OPENVINO_FORCE_STATIC") ||
                        ggml_openvino_getenv_int("GGML_OPENVINO_DISABLE_CACHE") ||
                        ggml_openvino_getenv_int("GGML_OPENVINO_ENABLE_FALLBACK"))) {
         GGML_ABORT("ggml-openvino: cache-only mode requires dynamic CPU/GPU execution with caching and without fallback");
     }
-#if !defined(__linux__) && !defined(_WIN32)
-    if (cache_only) {
+#ಆದರೆ !defined(__linux__) && !defined(_WIN32)
+    ಆದರೆ (cache_only) {
         GGML_ABORT("ggml-openvino: cache-only mmap identification requires Linux or Windows");
     }
-#endif
-    if (cache_only) {
-        auto & config = ggml_openvino_get_device_config();
+#ಆದರೆ_ಅಂತ್ಯ
+    ಆದರೆ (cache_only) {
+        ಸ್ವಯಂಚಾಲಿತ & config = ggml_openvino_get_device_config();
         config.environment_variables.erase("GGML_OPENVINO_SPILL_DIR");
         config.environment_variables["GGML_OPENVINO_RELEASE_WEIGHTS"] = "0";
     }
 }
 
-uint64_t ggml_openvino_source_fingerprint(const void * data, size_t size, std::vector<ggml_openvino_source_mapping> & mappings) {
-    const uintptr_t address = reinterpret_cast<uintptr_t>(data);
-    auto contains = [&](const ggml_openvino_source_mapping & m) {
-        return address >= m.begin && address < m.end && size <= m.end - address;
+uint64_t ggml_openvino_ಮೂಲ_fingerprint(ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ದತ್ತಾಂಶ, size_t size, std::vector<ggml_openvino_ಮೂಲ_mapping> & mappings) {
+    ಸ್ಥಿರಾಂಕ uintptr_t address = reinterpret_cast<uintptr_t>(ದತ್ತಾಂಶ);
+    ಸ್ವಯಂಚಾಲಿತ ಒಳಗೊಂಡಿದೆ = [&](ಸ್ಥಿರಾಂಕ ggml_openvino_ಮೂಲ_mapping & m) {
+        ಹಿಂತಿರುಗಿ address >= m.begin && address < m.end && size <= m.end - address;
     };
-    auto fingerprint = [&](const ggml_openvino_source_mapping & m) {
-        return fnv1a_u64(m.identity, m.offset + address - m.begin);
+    ಸ್ವಯಂಚಾಲಿತ fingerprint = [&](ಸ್ಥಿರಾಂಕ ggml_openvino_ಮೂಲ_mapping & m) {
+        ಹಿಂತಿರುಗಿ fnv1a_u64(m.ತಟಸ್ಥ, m.ಸ್ಥಾನಾಂತರ + address - m.begin);
     };
-    for (const auto & m : mappings) {
-        if (contains(m)) {
-            return fingerprint(m);
+    ಗಾಗಿ (ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ & m : mappings) {
+        ಆದರೆ (ಒಳಗೊಂಡಿದೆ(m)) {
+            ಹಿಂತಿರುಗಿ fingerprint(m);
         }
     }
-#ifdef __linux__
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __linux__
     std::ifstream maps("/proc/self/maps");
-    std::string line;
-    while (std::getline(maps, line)) {
-        unsigned long long begin, end, offset, inode;
-        unsigned int dev_major, dev_minor;
-        char permissions[5];
-        int path_start = 0;
-        if (sscanf(line.c_str(), "%llx-%llx %4s %llx %x:%x %llu %n", &begin, &end, permissions,
-                   &offset, &dev_major, &dev_minor, &inode, &path_start) != 7 || inode == 0) {
-            continue;
+    std::string ಸಾಲು;
+    ಆಗ (std::getline(maps, ಸಾಲು)) {
+        ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ದೀರ್ಘ begin, end, ಸ್ಥಾನಾಂತರ, inode;
+        ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ dev_major, dev_minor;
+        ಅಕ್ಷರ permissions[5];
+        ಪೂರ್ಣಾಂಕ ಮಾರ್ಗ_ಆರಂಭ = 0;
+        ಆದರೆ (ಅಕ್ಷರಸರಣಿ_ಓದು(ಸಾಲು.c_str(), "%llx-%llx %4s %llx %x:%x %llu %n", &begin, &end, permissions,
+                   &ಸ್ಥಾನಾಂತರ, &dev_major, &dev_minor, &inode, &ಮಾರ್ಗ_ಆರಂಭ) != 7 || inode == 0) {
+            ಮುಂದುವರಿ;
         }
-        ggml_openvino_source_mapping m{uintptr_t(begin), uintptr_t(end), offset, FNV_OFFSET};
-        if (!contains(m)) {
-            continue;
+        ggml_openvino_ಮೂಲ_mapping m{uintptr_t(begin), uintptr_t(end), ಸ್ಥಾನಾಂತರ, FNV_ಸ್ಥಾನಾಂತರ};
+        ಆದರೆ (!ಒಳಗೊಂಡಿದೆ(m)) {
+            ಮುಂದುವರಿ;
         }
-        struct stat st;
-        const std::string path = line.substr(path_start);
-        if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode) || uint64_t(st.st_ino) != inode ||
+        ರಚನೆ stat st;
+        ಸ್ಥಿರಾಂಕ std::string path = ಸಾಲು.substr(ಮಾರ್ಗ_ಆರಂಭ);
+        ಆದರೆ (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode) || uint64_t(st.st_ino) != inode ||
             major(st.st_dev) != dev_major || minor(st.st_dev) != dev_minor) {
-            break;
+            ನಿಲ್ಲಿಸು;
         }
-        m.identity = fnv1a_u64(m.identity, st.st_dev);
-        m.identity = fnv1a_u64(m.identity, st.st_ino);
-        m.identity = fnv1a_u64(m.identity, st.st_size);
-        m.identity = fnv1a_u64(m.identity, st.st_mtim.tv_sec);
-        m.identity = fnv1a_u64(m.identity, st.st_mtim.tv_nsec);
-        m.identity = fnv1a_u64(m.identity, st.st_ctim.tv_sec);
-        m.identity = fnv1a_u64(m.identity, st.st_ctim.tv_nsec);
+        m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, st.st_dev);
+        m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, st.st_ino);
+        m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, st.st_size);
+        m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, st.st_mtim.tv_sec);
+        m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, st.st_mtim.tv_nsec);
+        m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, st.st_ctim.tv_sec);
+        m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, st.st_ctim.tv_nsec);
         mappings.push_back(m);
-        return fingerprint(m);
+        ಹಿಂತಿರುಗಿ fingerprint(m);
     }
-#elif defined(_WIN32)
-    MEMORY_BASIC_INFORMATION memory;
-    if (VirtualQuery(data, &memory, sizeof(memory)) == sizeof(memory) && memory.Type == MEM_MAPPED) {
-        std::wstring name(MAX_PATH, L'\0');
-        DWORD length = 0;
-        while (name.size() <= 32768) {
-            length = GetMappedFileNameW(GetCurrentProcess(), const_cast<void *>(data), name.data(), static_cast<DWORD>(name.size()));
-            if (length == 0 || length < name.size() - 1) {
-                break;
+#ಅಥವಾಆದರೆ defined(_WIN32)
+    ಸ್ಮರಣೆ_BASIC_INFORMATION ಸ್ಮರಣೆ;
+    ಆದರೆ (VirtualQuery(ದತ್ತಾಂಶ, &ಸ್ಮರಣೆ, ಗಾತ್ರ(ಸ್ಮರಣೆ)) == ಗಾತ್ರ(ಸ್ಮರಣೆ) && ಸ್ಮರಣೆ.Type == MEM_MAPPED) {
+        std::wstring name(MAX_ಮಾರ್ಗ, L'\0');
+        DWORD ಉದ್ದಳತೆ = 0;
+        ಆಗ (name.size() <= 32768) {
+            ಉದ್ದಳತೆ = GetMappedFileNameW(GetCurrentProcess(), const_cast<ಶೂನ್ಯ *>(ದತ್ತಾಂಶ), name.ದತ್ತಾಂಶ(), static_cast<DWORD>(name.size()));
+            ಆದರೆ (ಉದ್ದಳತೆ == 0 || ಉದ್ದಳತೆ < name.size() - 1) {
+                ನಿಲ್ಲಿಸು;
             }
             name.resize(name.size() * 2);
         }
-        if (length > 0 && length < name.size() - 1) {
-            name.resize(length);
-            const std::wstring path = L"\\\\?\\GLOBALROOT" + name;
-            HANDLE file = CreateFileW(path.c_str(), FILE_READ_ATTRIBUTES,
-                                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
-                                      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-            if (file != INVALID_HANDLE_VALUE) {
+        ಆದರೆ (ಉದ್ದಳತೆ > 0 && ಉದ್ದಳತೆ < name.size() - 1) {
+            name.resize(ಉದ್ದಳತೆ);
+            ಸ್ಥಿರಾಂಕ std::wstring path = L"\\\\?\\GLOBALROOT" + name;
+            HANDLE file = CreateFileW(path.c_str(), FILE_READ_ಗುಣಲಕ್ಷಣಗಳು,
+                                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, ಶೂನ್ಯಸೂಚಕ,
+                                      OPEN_EXISTING, FILE_ATTRIBUTE_ಸಾಮಾನ್ಯ, ಶೂನ್ಯಸೂಚಕ);
+            ಆದರೆ (file != INVALID_HANDLE_ಮೌಲ್ಯ) {
                 BY_HANDLE_FILE_INFORMATION info;
                 FILE_BASIC_INFO basic;
-                const bool valid = GetFileInformationByHandle(file, &info) &&
-                                   GetFileInformationByHandleEx(file, FileBasicInfo, &basic, sizeof(basic));
+                ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ valid = GetFileInformationByHandle(file, &info) &&
+                                   GetFileInformationByHandleEx(file, FileBasicInfo, &basic, ಗಾತ್ರ(basic));
                 CloseHandle(file);
-                if (valid) {
-                    const uint64_t file_size = (uint64_t(info.nFileSizeHigh) << 32) | info.nFileSizeLow;
-                    const uintptr_t begin = reinterpret_cast<uintptr_t>(memory.AllocationBase);
-                    if (file_size <= std::numeric_limits<uintptr_t>::max() - begin) {
-                        ggml_openvino_source_mapping m{begin, begin + static_cast<uintptr_t>(file_size), 0,
-                                                       fnv1a(FNV_OFFSET, "win32", 5)};
-                        if (contains(m)) {
-                            m.identity = fnv1a_u64(m.identity, info.dwVolumeSerialNumber);
-                            m.identity = fnv1a_u64(m.identity, (uint64_t(info.nFileIndexHigh) << 32) | info.nFileIndexLow);
-                            m.identity = fnv1a_u64(m.identity, file_size);
-                            m.identity = fnv1a_u64(m.identity, (uint64_t(info.ftLastWriteTime.dwHighDateTime) << 32) |
-                                                                 info.ftLastWriteTime.dwLowDateTime);
-                            m.identity = fnv1a_u64(m.identity, static_cast<uint64_t>(basic.ChangeTime.QuadPart));
+                ಆದರೆ (valid) {
+                    ಸ್ಥಿರಾಂಕ uint64_t file_size = (uint64_t(info.n_File_ಗಾತ್ರ_ಮೇಲಿನ) << 32) | info.n_File_ಗಾತ್ರ_ಕೆಳಗಿನ;
+                    ಸ್ಥಿರಾಂಕ uintptr_t begin = reinterpret_cast<uintptr_t>(ಸ್ಮರಣೆ.ಹಂಚಿಕೆ_ತಳ);
+                    ಆದರೆ (file_size <= std::numeric_limits<uintptr_t>::max() - begin) {
+                        ggml_openvino_ಮೂಲ_mapping m{begin, begin + static_cast<uintptr_t>(file_size), 0,
+                                                       fnv1a(FNV_ಸ್ಥಾನಾಂತರ, "win32", 5)};
+                        ಆದರೆ (ಒಳಗೊಂಡಿದೆ(m)) {
+                            m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, info.dw_Volume_Serial_ಸಂಖ್ಯೆ);
+                            m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, (uint64_t(info.n_File_ಸೂಚ್ಯಂಕ_ಮೇಲಿನ) << 32) | info.n_File_ಸೂಚ್ಯಂಕ_ಕೆಳಗಿನ);
+                            m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, file_size);
+                            m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, (uint64_t(info.ft_ಕೊನೆಯ_Write_ಸಮಯ.dw_ಮೇಲಿನ_Date_ಸಮಯ) << 32) |
+                                                                 info.ft_ಕೊನೆಯ_Write_ಸಮಯ.dw_ಕೆಳಗಿನ_Date_ಸಮಯ);
+                            m.ತಟಸ್ಥ = fnv1a_u64(m.ತಟಸ್ಥ, static_cast<uint64_t>(basic.Change_ಸಮಯ.QuadPart));
                             mappings.push_back(m);
-                            return fingerprint(m);
+                            ಹಿಂತಿರುಗಿ fingerprint(m);
                         }
                     }
                 }
             }
         }
     }
-#endif
-    if (ggml_openvino_model_cache_only()) {
+#ಆದರೆ_ಅಂತ್ಯ
+    ಆದರೆ (ggml_openvino_model_cache_only()) {
         GGML_ABORT("ggml-openvino: could not identify mapped GGUF weight; use --load-mode mmap");
     }
-    uint64_t h = FNV_OFFSET;
-    const size_t head = std::min(size, WEIGHT_SAMPLE_BYTES);
-    h = fnv1a(h, data, head);
-    if (size > head) {
-        const size_t tail = std::min(size - head, WEIGHT_SAMPLE_BYTES);
-        h = fnv1a(h, static_cast<const uint8_t *>(data) + size - tail, tail);
+    uint64_t h = FNV_ಸ್ಥಾನಾಂತರ;
+    ಸ್ಥಿರಾಂಕ size_t ತಲೆ = std::min(size, ತೂಕ_SAMPLE_ಬೈಟುಗಳು);
+    h = fnv1a(h, ದತ್ತಾಂಶ, ತಲೆ);
+    ಆದರೆ (size > ತಲೆ) {
+        ಸ್ಥಿರಾಂಕ size_t ಬಾಲ = std::min(size - ತಲೆ, ತೂಕ_SAMPLE_ಬೈಟುಗಳು);
+        h = fnv1a(h, static_cast<ಸ್ಥಿರಾಂಕ uint8_t *>(ದತ್ತಾಂಶ) + size - ಬಾಲ, ಬಾಲ);
     }
-    return h;
+    ಹಿಂತಿರುಗಿ h;
 }
 
 std::string ggml_openvino_model_cache_dir() {
-    const char * dir = ggml_openvino_getenv_str("GGML_OPENVINO_COMPILED_MODEL_CACHE_DIR");
-    if (!dir || strlen(dir) == 0) {
-        return std::string();
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * dir = ggml_openvino_getenv_str("GGML_OPENVINO_COMPILED_MODEL_CACHE_DIR");
+    ಆದರೆ (!dir || ಅಕ್ಷರಸರಣಿ_ಉದ್ದ(dir) == 0) {
+        ಹಿಂತಿರುಗಿ std::string();
     }
     std::string path(dir);
-    if (ggml_openvino_model_cache_only()) {
-        return path;
+    ಆದರೆ (ggml_openvino_model_cache_only()) {
+        ಹಿಂತಿರುಗಿ path;
     }
     // Create the cache directory (and parents) on first use so callers don't
     // have to pre-create it; a missing dir would otherwise silently disable the
     // cache (manifest/blob writes fail with no directory to write into).
-    if (!make_dirs(path)) {
+    ಆದರೆ (!make_dirs(path)) {
         GGML_LOG_WARN("ggml-openvino: could not create model cache dir '%s' (errno=%d); caching disabled\n",
                       path.c_str(), errno);
-        return std::string();
+        ಹಿಂತಿರುಗಿ std::string();
     }
-    return path;
+    ಹಿಂತಿರುಗಿ path;
 }
 
-std::string ggml_openvino_model_cache_temp_path(const std::string & path) {
-#ifdef _WIN32
-    const int pid = _getpid();
-#else
-    const int pid = getpid();
-#endif
-    return path + ".tmp." + std::to_string(pid) + "." + std::to_string(ggml_time_us());
+std::string ggml_openvino_model_cache_ತಾತ್ಕಾಲಿಕ_ಮಾರ್ಗ(ಸ್ಥಿರಾಂಕ std::string & path) {
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ _WIN32
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ pid = _getpid();
+#ಇಲ್ಲದಿದ್ದರೆ
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ pid = getpid();
+#ಆದರೆ_ಅಂತ್ಯ
+    ಹಿಂತಿರುಗಿ path + ".tmp." + std::to_string(pid) + "." + std::to_string(ggml_ಸಮಯ_us());
 }
 
-uint64_t ggml_openvino_model_fingerprint(const ggml_cgraph * cgraph,
-                                         const std::string & device,
-                                         bool fa,
-                                         const int32_t * rope_params,
-                                         int rope_len,
+uint64_t ggml_openvino_model_fingerprint(ಸ್ಥಿರಾಂಕ ggml_cgraph * cgraph,
+                                         ಸ್ಥಿರಾಂಕ std::string & device,
+                                         ತಾರ್ಕಿಕ fa,
+                                         ಸ್ಥಿರಾಂಕ int32_t * rope_params,
+                                         ಪೂರ್ಣಾಂಕ rope_len,
                                          uint64_t extra_cfg,
-                                         const std::string & graph_signature) {
-    uint64_t h = FNV_OFFSET;
+                                         ಸ್ಥಿರಾಂಕ std::string & ನಕ್ಷೆ_signature) {
+    uint64_t h = FNV_ಸ್ಥಾನಾಂತರ;
     h = fnv1a_u64(h, 2);
-    h = fnv1a(h, graph_signature.data(), graph_signature.size());
-    for (const char * name : cache_settings) {
-        const char * value = ggml_openvino_getenv_str(name, "");
-        h = fnv1a(h, value, strlen(value) + 1);
+    h = fnv1a(h, ನಕ್ಷೆ_signature.ದತ್ತಾಂಶ(), ನಕ್ಷೆ_signature.size());
+    ಗಾಗಿ (ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * name : cache_settings) {
+        ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * value = ggml_openvino_getenv_str(name, "");
+        h = fnv1a(h, value, ಅಕ್ಷರಸರಣಿ_ಉದ್ದ(value) + 1);
     }
-    if (const char * debug_nodes = ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
-        h = fnv1a(h, "GGML_OPENVINO_DEBUG_NODE", sizeof("GGML_OPENVINO_DEBUG_NODE"));
-        h = fnv1a(h, debug_nodes, strlen(debug_nodes) + 1);
+    ಆದರೆ (ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * debug_nodes = ggml_openvino_getenv_str("GGML_OPENVINO_DEBUG_NODE")) {
+        h = fnv1a(h, "GGML_OPENVINO_DEBUG_NODE", ಗಾತ್ರ("GGML_OPENVINO_DEBUG_NODE"));
+        h = fnv1a(h, debug_nodes, ಅಕ್ಷರಸರಣಿ_ಉದ್ದ(debug_nodes) + 1);
     }
-    if (ggml_openvino_is_gpu() && ggml_openvino_getenv_int("GGML_OPENVINO_MOE_OP", 1) == 0) {
-        h = fnv1a(h, "GGML_OPENVINO_MOE_OP=0", sizeof("GGML_OPENVINO_MOE_OP=0"));
+    ಆದರೆ (ggml_openvino_is_gpu() && ggml_openvino_getenv_int("GGML_OPENVINO_MOE_OP", 1) == 0) {
+        h = fnv1a(h, "GGML_OPENVINO_MOE_OP=0", ಗಾತ್ರ("GGML_OPENVINO_MOE_OP=0"));
     }
 
     // Topology: node count + each node's op and name (cheap, and distinguishes
     // graphs that share weights but differ structurally).
     h = fnv1a_u64(h, static_cast<uint64_t>(cgraph->n_nodes));
-    for (int i = 0; i < cgraph->n_nodes; ++i) {
-        const ggml_tensor * node = cgraph->nodes[i];
-        h = fnv1a_u64(h, static_cast<uint64_t>(node->op));
-        h = fnv1a(h, node->name, strlen(node->name));
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < cgraph->n_nodes; ++i) {
+        ಸ್ಥಿರಾಂಕ ggml_tensor * ಗಂಟು = cgraph->nodes[i];
+        h = fnv1a_u64(h, static_cast<uint64_t>(ಗಂಟು->op));
+        h = fnv1a(h, ಗಂಟು->name, ಅಕ್ಷರಸರಣಿ_ಉದ್ದ(ಗಂಟು->name));
     }
 
     // Weights: the model identity.
-    for_each_weight(cgraph, [&](const ggml_tensor * t) { h = fnv1a_u64(h, weight_fingerprint(t)); });
+    for_each_ತೂಕ(cgraph, [&](ಸ್ಥಿರಾಂಕ ggml_tensor * t) { h = fnv1a_u64(h, ತೂಕ_fingerprint(t)); });
 
     // Device, model parameters, and backend configuration.
-    h = fnv1a(h, device.data(), device.size());
+    h = fnv1a(h, device.ದತ್ತಾಂಶ(), device.size());
     h = fnv1a_u64(h, fa ? 1u : 0u);
-    if (rope_params && rope_len > 0) {
-        h = fnv1a(h, rope_params, sizeof(int32_t) * static_cast<size_t>(rope_len));
+    ಆದರೆ (rope_params && rope_len > 0) {
+        h = fnv1a(h, rope_params, ಗಾತ್ರ(int32_t) * static_cast<size_t>(rope_len));
     }
     h = fnv1a_u64(h, extra_cfg);
-    const std::string ver = ov_version_string();
-    h = fnv1a(h, ver.data(), ver.size());
+    ಸ್ಥಿರಾಂಕ std::string ver = ov_ಆವೃತ್ತಿ_string();
+    h = fnv1a(h, ver.ದತ್ತಾಂಶ(), ver.size());
 
-    return h;
+    ಹಿಂತಿರುಗಿ h;
 }
 
-std::string ggml_openvino_model_cache_blob_path(const std::string & dir, uint64_t fingerprint) {
-    return dir + "/" + hex64(fingerprint) + ".blob";
+std::string ggml_openvino_model_cache_blob_ಮಾರ್ಗ(ಸ್ಥಿರಾಂಕ std::string & dir, uint64_t fingerprint) {
+    ಹಿಂತಿರುಗಿ dir + "/" + hex64(fingerprint) + ".blob";
 }
 
-std::string ggml_openvino_model_cache_manifest_path(const std::string & dir, uint64_t fingerprint) {
-    return dir + "/" + hex64(fingerprint) + ".manifest";
+std::string ggml_openvino_model_cache_manifest_ಮಾರ್ಗ(ಸ್ಥಿರಾಂಕ std::string & dir, uint64_t fingerprint) {
+    ಹಿಂತಿರುಗಿ dir + "/" + hex64(fingerprint) + ".manifest";
 }
 
-bool ggml_openvino_model_cache_write_manifest(const std::string & path,
-                                              const ggml_cgraph * cgraph,
+ತಾರ್ಕಿಕ ggml_openvino_model_cache_write_manifest(ಸ್ಥಿರಾಂಕ std::string & path,
+                                              ಸ್ಥಿರಾಂಕ ggml_cgraph * cgraph,
                                               uint64_t fingerprint,
-                                              const std::vector<std::string> & inputs,
-                                              const std::vector<std::string> & outputs) {
+                                              ಸ್ಥಿರಾಂಕ std::vector<std::string> & inputs,
+                                              ಸ್ಥಿರಾಂಕ std::vector<std::string> & outputs) {
     std::ofstream f(path, std::ios::trunc);
-    if (!f.is_open()) {
-        return false;
+    ಆದರೆ (!f.is_open()) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
     f << "fingerprint " << hex64(fingerprint) << "\n";
-    f << "ov_version " << ov_version_string() << "\n";
-    for_each_weight(cgraph, [&](const ggml_tensor * t) {
+    f << "ov_version " << ov_ಆವೃತ್ತಿ_string() << "\n";
+    for_each_ತೂಕ(cgraph, [&](ಸ್ಥಿರಾಂಕ ggml_tensor * t) {
         f << t->name << " " << t->ne[0] << " " << t->ne[1] << " " << t->ne[2] << " " << t->ne[3] << " "
-          << static_cast<int>(t->type) << " " << hex64(weight_fingerprint(t)) << "\n";
+          << static_cast<ಪೂರ್ಣಾಂಕ>(t->type) << " " << hex64(ತೂಕ_fingerprint(t)) << "\n";
     });
     f << "ports\n";
-    for (const auto * names : { &inputs, &outputs }) {
-        f << names->size() << '\n';
-        for (const auto & name : *names) {
+    ಗಾಗಿ (ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ * ಹೆಸರುಗಳು : { &inputs, &outputs }) {
+        f << ಹೆಸರುಗಳು->size() << '\n';
+        ಗಾಗಿ (ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ & name : *ಹೆಸರುಗಳು) {
             f << std::quoted(name) << '\n';
         }
     }
-    return f.good();
+    ಹಿಂತಿರುಗಿ f.good();
 }
 
-bool ggml_openvino_model_cache_verify_manifest(const std::string & path,
-                                               const ggml_cgraph * cgraph,
+ತಾರ್ಕಿಕ ggml_openvino_model_cache_verify_manifest(ಸ್ಥಿರಾಂಕ std::string & path,
+                                               ಸ್ಥಿರಾಂಕ ggml_cgraph * cgraph,
                                                uint64_t fingerprint,
                                                std::vector<std::string> & inputs,
                                                std::vector<std::string> & outputs) {
     std::ifstream f(path);
-    if (!f.is_open()) {
-        return false;
+    ಆದರೆ (!f.is_open()) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
-    std::string tag;
+    std::string ಟ್ಯಾಗ್;
     std::string val;
     // header: fingerprint
-    if (!(f >> tag >> val) || tag != "fingerprint" || val != hex64(fingerprint)) {
-        return false;
+    ಆದರೆ (!(f >> ಟ್ಯಾಗ್ >> val) || ಟ್ಯಾಗ್ != "fingerprint" || val != hex64(fingerprint)) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
     // header: ov_version
-    if (!(f >> tag >> val) || tag != "ov_version" || val != ov_version_string()) {
-        return false;
+    ಆದರೆ (!(f >> ಟ್ಯಾಗ್ >> val) || ಟ್ಯಾಗ್ != "ov_version" || val != ov_ಆವೃತ್ತಿ_string()) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 
     // Build the expected per-weight lines from the live cgraph, then require an
     // exact match (same set, same order) against the manifest.
     std::vector<std::string> expected;
-    for_each_weight(cgraph, [&](const ggml_tensor * t) {
+    for_each_ತೂಕ(cgraph, [&](ಸ್ಥಿರಾಂಕ ggml_tensor * t) {
         expected.push_back(std::string(t->name) + " " + std::to_string(t->ne[0]) + " " + std::to_string(t->ne[1]) +
                            " " + std::to_string(t->ne[2]) + " " + std::to_string(t->ne[3]) + " " +
-                           std::to_string(static_cast<int>(t->type)) + " " + hex64(weight_fingerprint(t)));
+                           std::to_string(static_cast<ಪೂರ್ಣಾಂಕ>(t->type)) + " " + hex64(ತೂಕ_fingerprint(t)));
     });
 
     size_t idx = 0;
-    std::string line;
-    std::getline(f, line);  // consume rest of ov_version line
-    while (idx < expected.size() && std::getline(f, line)) {
-        if (line.empty()) {
-            continue;
+    std::string ಸಾಲು;
+    std::getline(f, ಸಾಲು);  // consume rest of ov_version line
+    ಆಗ (idx < expected.size() && std::getline(f, ಸಾಲು)) {
+        ಆದರೆ (ಸಾಲು.ಖಾಲಿಗಳು()) {
+            ಮುಂದುವರಿ;
         }
-        if (idx >= expected.size() || line != expected[idx]) {
-            return false;
+        ಆದರೆ (idx >= expected.size() || ಸಾಲು != expected[idx]) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
         ++idx;
     }
-    if (idx != expected.size()) {
-        return false;
+    ಆದರೆ (idx != expected.size()) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
-    if (!std::getline(f, line)) {
-        return true;
+    ಆದರೆ (!std::getline(f, ಸಾಲು)) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-    if (line != "ports") {
-        return false;
+    ಆದರೆ (ಸಾಲು != "ports") {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
-    for (auto * names : { &inputs, &outputs }) {
+    ಗಾಗಿ (ಸ್ವಯಂಚಾಲಿತ * ಹೆಸರುಗಳು : { &inputs, &outputs }) {
         size_t count;
-        if (!(f >> count) || count > 100000) {
-            return false;
+        ಆದರೆ (!(f >> count) || count > 100000) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        for (size_t i = 0; i < count; ++i) {
+        ಗಾಗಿ (size_t i = 0; i < count; ++i) {
             std::string name;
-            if (!(f >> std::quoted(name))) {
-                return false;
+            ಆದರೆ (!(f >> std::quoted(name))) {
+                ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
-            names->push_back(name);
+            ಹೆಸರುಗಳು->push_back(name);
         }
     }
     f >> std::ws;
-    return f.eof();
+    ಹಿಂತಿರುಗಿ f.eof();
 }

@@ -1,24 +1,24 @@
-#ifndef HEX_BITMAP_H
-#define HEX_BITMAP_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ HEX_BITMAP_H
+#ವ್ಯಾಖ್ಯಾನಿಸು HEX_BITMAP_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <string.h>
 
-static inline void bitmap_set(uint32_t * bitmap, uint32_t idx) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ bitmap_ಗಣ(uint32_t * bitmap, uint32_t idx) {
     bitmap[idx / 32] |= (1U << (idx % 32));
 }
 
-static inline void bitmap_clear(uint32_t * bitmap, uint32_t idx) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ bitmap_clear(uint32_t * bitmap, uint32_t idx) {
     bitmap[idx / 32] &= ~(1U << (idx % 32));
 }
 
-static inline bool bitmap_test(const uint32_t * bitmap, uint32_t idx) {
-    return (bitmap[idx / 32] & (1U << (idx % 32))) != 0;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool bitmap_test(ಸ್ಥಿರಾಂಕ uint32_t * bitmap, uint32_t idx) {
+    ಹಿಂತಿರುಗಿ (bitmap[idx / 32] & (1U << (idx % 32))) != 0;
 }
 
-static inline void bitmap_reset(uint32_t * bitmap, size_t size_in_bits) {
-    memset(bitmap, 0, ((size_in_bits + 31) / 32) * sizeof(uint32_t));
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ bitmap_reset(uint32_t * bitmap, size_t ಗಾತ್ರ_ಒಳ_ಬಿಟ್ಟುಗಳು) {
+    memset(bitmap, 0, ((ಗಾತ್ರ_ಒಳ_ಬಿಟ್ಟುಗಳು + 31) / 32) * ಗಾತ್ರ(uint32_t));
 }
 
-#endif // HEX_BITMAP_H
+#ಆದರೆ_ಅಂತ್ಯ // HEX_BITMAP_H

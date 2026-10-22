@@ -1,59 +1,59 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ಅನ್ತರ್ಭಾವ "../node_context.h"
+#ಅನ್ತರ್ಭಾವ "../op_table.h"
+#ಅನ್ತರ್ಭಾವ "../utils.h"
 
-#include <memory>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/swish.hpp>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <openvino/core/node_output.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/constant.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/multiply.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/slice.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/swish.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ನಾಮಾಕಾಶ ov {
+ನಾಮಾಕಾಶ frontend {
+ನಾಮಾಕಾಶ ggml {
+ನಾಮಾಕಾಶ op {
 
-OutputVector translate_glu_geglu_quick(const NodeContext & context) {
-    num_inputs_check(context, 1, 2);
+Output_ಸದಿಶ translate_glu_geglu_ಶೀಘ್ರ(ಸ್ಥಿರಾಂಕ ಗಂಟು_Context & context) {
+    ಅಂಕೆ_inputs_check(context, 1, 2);
 
     ov::Output<ov::Node> src0;
     ov::Output<ov::Node> src1;
-    if (context.get_input_size() == 2) {
-        src0 = process_view_input_new(context, 0);
-        src1 = process_view_input_new(context, 1);
-    } else {
+    ಆದರೆ (context.get_ಒಳಹರಿವು_ಗಾತ್ರ() == 2) {
+        src0 = process_view_ಒಳಹರಿವು_new(context, 0);
+        src1 = process_view_ಒಳಹರಿವು_new(context, 1);
+    } ಇಲ್ಲದಿದ್ದರೆ {
         // split along last axis, nc = ne[0] / 2
-        auto combined = process_view_input_new(context, 0);
-        auto combined_shape = combined.get_partial_shape();
-        int64_t last_dim_val = combined_shape[combined_shape.rank().get_length() - 1].get_length();
-        int64_t nc = last_dim_val / 2;
+        ಸ್ವಯಂಚಾಲಿತ combined = process_view_ಒಳಹರಿವು_new(context, 0);
+        ಸ್ವಯಂಚಾಲಿತ combined_shape = combined.get_partial_shape();
+        int64_t ಕೊನೆಯ_dim_val = combined_shape[combined_shape.rank().get_ಉದ್ದಳತೆ() - 1].get_ಉದ್ದಳತೆ();
+        int64_t nc = ಕೊನೆಯ_dim_val / 2;
 
-        auto axis  = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
-        auto step  = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-        auto start0 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
-        auto stop0  = ov::op::v0::Constant::create(ov::element::i64, {1}, {nc});
-        auto start1 = ov::op::v0::Constant::create(ov::element::i64, {1}, {nc});
-        auto stop1  = ov::op::v0::Constant::create(ov::element::i64, {1}, {2 * nc});
+        ಸ್ವಯಂಚಾಲಿತ axis  = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+        ಸ್ವಯಂಚಾಲಿತ ಹೆಜ್ಜೆ  = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+        ಸ್ವಯಂಚಾಲಿತ start0 = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
+        ಸ್ವಯಂಚಾಲಿತ stop0  = ov::op::v0::Constant::create(ov::element::i64, {1}, {nc});
+        ಸ್ವಯಂಚಾಲಿತ start1 = ov::op::v0::Constant::create(ov::element::i64, {1}, {nc});
+        ಸ್ವಯಂಚಾಲಿತ stop1  = ov::op::v0::Constant::create(ov::element::i64, {1}, {2 * nc});
 
-        src0 = std::make_shared<ov::op::v8::Slice>(combined, start0, stop0, step, axis);
-        src1 = std::make_shared<ov::op::v8::Slice>(combined, start1, stop1, step, axis);
+        src0 = std::make_shared<ov::op::v8::ತುಂಡು>(combined, start0, stop0, ಹೆಜ್ಜೆ, axis);
+        src1 = std::make_shared<ov::op::v8::ತುಂಡು>(combined, start1, stop1, ಹೆಜ್ಜೆ, axis);
     }
 
     int32_t * params = context.get_output_op_params();
-    const int32_t swapped = params[1];
-    if (swapped) {
+    ಸ್ಥಿರಾಂಕ int32_t swapped = params[1];
+    ಆದರೆ (swapped) {
         std::swap(src0, src1);
     }
 
     // GELU_QUICK(x) = x * sigmoid(1.702 * x)
     // Create the constant in the same type as src0 to avoid f16/f32 mismatch.
-    auto input_type = src0.get_element_type();
-    auto coef = ov::op::v0::Constant::create(input_type, ov::Shape{}, {1.702f});
-    auto gated   = std::make_shared<ov::op::v4::Swish>(src0, coef);
-    auto res     = std::make_shared<ov::op::v1::Multiply>(gated, src1);
+    ಸ್ವಯಂಚಾಲಿತ ಒಳಹರಿವು_type = src0.get_element_type();
+    ಸ್ವಯಂಚಾಲಿತ coef = ov::op::v0::Constant::create(ಒಳಹರಿವು_type, ov::Shape{}, {1.702f});
+    ಸ್ವಯಂಚಾಲಿತ gated   = std::make_shared<ov::op::v4::Swish>(src0, coef);
+    ಸ್ವಯಂಚಾಲಿತ res     = std::make_shared<ov::op::v1::Multiply>(gated, src1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ಹಿಂತಿರುಗಿ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

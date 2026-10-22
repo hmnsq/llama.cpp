@@ -1,57 +1,57 @@
-#ifndef ALLREDUCE_OPS_H
-#define ALLREDUCE_OPS_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ ALLREDUCE_OPS_H
+#ವ್ಯಾಖ್ಯಾನಿಸು ALLREDUCE_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stddef.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
 
-#define HTP_ALLREDUCE_MAX_RANKS 4
+#ವ್ಯಾಖ್ಯಾನಿಸು HTP_ALLREDUCE_MAX_RANKS 4
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __cplusplus
+ಬಾಹ್ಯ "C" {
+#ಆದರೆ_ಅಂತ್ಯ
 
-enum htp_allreduce_kernel_type {
+ಎಣಿಕೆ htp_allreduce_kernel_type {
     HTP_ALLREDUCE_KERNEL_UNSUPPORTED = 0,
     HTP_ALLREDUCE_KERNEL_DMA_1D,
     HTP_ALLREDUCE_KERNEL_DMA_2D,
 };
 
-enum htp_allreduce_mode {
-    HTP_ALLREDUCE_FULL           = 0, // all ranks reduce full tensor
+ಎಣಿಕೆ htp_allreduce_ಬಹುಲಕ {
+    HTP_ALLREDUCE_ತುಂಬಿದ           = 0, // all ranks reduce full tensor
     HTP_ALLREDUCE_SHARDED_FANOUT = 1, // each rank reduces 1/N shard and fans out to all buffers
 };
 
-static inline size_t htp_allreduce_vtcm_buffer_count(
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ size_t htp_allreduce_vtcm_ಬಫರ್_ಎಣಿಕೆ(
     uint32_t n_ranks,
-    uint32_t n_threads,
-    bool has_add,
-    bool is_row_bcast
+    uint32_t n_ಎಳೆಗಳು,
+    bool has_ಕೂಡಿಸು,
+    bool is_ಅಡ್ಡಸಾಲು_bcast
 ) {
-    return (size_t) (n_ranks + 1) * n_threads + (has_add ? (is_row_bcast ? 1 : n_threads) : 0);
+    ಹಿಂತಿರುಗಿ (size_t) (n_ranks + 1) * n_ಎಳೆಗಳು + (has_ಕೂಡಿಸು ? (is_ಅಡ್ಡಸಾಲು_bcast ? 1 : n_ಎಳೆಗಳು) : 0);
 }
 
-struct htp_allreduce_kernel_params {
+ರಚನೆ htp_allreduce_kernel_params {
     int32_t rank;
     int32_t n_ranks;
-    int32_t n_threads;
-    int32_t block_elems;          // 1D: block_elems, 2D: block_rows
-    int32_t elems_per_thread;     // 1D: nelem_per_thread, 2D: nrows_per_thread
-    int32_t vtcm_size_per_thread;
-    int32_t vtcm_size;
+    int32_t n_ಎಳೆಗಳು;
+    int32_t ಖಂಡ_elems;          // 1D: block_elems, 2D: block_rows
+    int32_t elems_ಪ್ರತಿ_thread;     // 1D: nelem_per_thread, 2D: nrows_per_thread
+    int32_t vtcm_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    int32_t vtcm_ಗಾತ್ರ;
     int32_t kernel_type;
     int32_t ne0;
     int32_t ne1;
-    int32_t row_size_aligned;
-    int32_t rank_elem_start;
+    int32_t ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    int32_t rank_elem_ಆರಂಭ;
     int32_t rank_nelem;
     int32_t n_dsts;
-    int32_t is_row_bcast;
-    int32_t mode;                 // enum htp_allreduce_mode: FULL or SHARDED_FANOUT
+    int32_t is_ಅಡ್ಡಸಾಲು_bcast;
+    int32_t ಬಹುಲಕ;                 // enum htp_allreduce_mode: FULL or SHARDED_FANOUT
 };
 
-#ifdef __cplusplus
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __cplusplus
 }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#endif /* ALLREDUCE_OPS_H */
+#ಆದರೆ_ಅಂತ್ಯ /* ALLREDUCE_OPS_H */

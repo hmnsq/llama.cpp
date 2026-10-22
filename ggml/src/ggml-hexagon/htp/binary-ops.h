@@ -1,181 +1,181 @@
-#ifndef HTP_BINARY_OPS_H
-#define HTP_BINARY_OPS_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ HTP_ದ್ವಿಮಾನ_OPS_H
+#ವ್ಯಾಖ್ಯಾನಿಸು HTP_ದ್ವಿಮಾನ_OPS_H
 
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+#ಅನ್ತರ್ಭಾವ <stddef.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <string.h>
 
-#include "hex-common.h"
-#include "htp-ops.h"
-#include "htp-vtcm.h"
+#ಅನ್ತರ್ಭಾವ "hex-common.h"
+#ಅನ್ತರ್ಭಾವ "htp-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp-vtcm.h"
 
-enum htp_binary_kernel_type {
-    HTP_BINARY_KERNEL_SAME_SHAPE = 0,
-    HTP_BINARY_KERNEL_ROW_BCAST,
-    HTP_BINARY_KERNEL_SCALAR,
-    HTP_BINARY_KERNEL_ADD_ID,
-    HTP_BINARY_KERNEL_COMPLEX,
-    HTP_BINARY_KERNEL_REPEAT,
-    HTP_BINARY_KERNEL_CHUNKED,
+ಎಣಿಕೆ htp_ದ್ವಿಮಾನ_kernel_type {
+    HTP_ದ್ವಿಮಾನ_KERNEL_SAME_SHAPE = 0,
+    HTP_ದ್ವಿಮಾನ_KERNEL_ಅಡ್ಡಸಾಲು_BCAST,
+    HTP_ದ್ವಿಮಾನ_KERNEL_SCALAR,
+    HTP_ದ್ವಿಮಾನ_KERNEL_ಕೂಡಿಸು_ID,
+    HTP_ದ್ವಿಮಾನ_KERNEL_COMPLEX,
+    HTP_ದ್ವಿಮಾನ_KERNEL_REPEAT,
+    HTP_ದ್ವಿಮಾನ_KERNEL_CHUNKED,
 };
 
-struct htp_binary_kernel_params {
+ರಚನೆ htp_ದ್ವಿಮಾನ_kernel_params {
     uint32_t kernel_type;
-    uint32_t n_threads;
-    uint32_t rows_per_buffer;
+    uint32_t n_ಎಳೆಗಳು;
+    uint32_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್;
 
-    uint32_t src0_row_size_aligned;
-    uint32_t src1_row_size_aligned;
-    uint32_t dst_row_size_aligned;
+    uint32_t src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    uint32_t src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    uint32_t dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
 
-    uint32_t src1_size;
-    uint32_t src2_size;
-    uint32_t vtcm_size;
+    uint32_t src1_ಗಾತ್ರ;
+    uint32_t src2_ಗಾತ್ರ;
+    uint32_t vtcm_ಗಾತ್ರ;
 
-    uint32_t chunk_size;
-    uint32_t chunk_bytes;
+    uint32_t chunk_ಗಾತ್ರ;
+    uint32_t chunk_ಬೈಟುಗಳು;
     uint32_t is_scalar;
 
-    uint8_t  split_at_ne01;
-    uint8_t  split_at_ne02;
+    uint8_t  ವಿಭಜಿಸು_at_ne01;
+    uint8_t  ವಿಭಜಿಸು_at_ne02;
     uint8_t  src1_strided;
     uint8_t  pad;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#ಆದರೆ defined(__cplusplus)
+static_assert(ಗಾತ್ರ(ರಚನೆ htp_ದ್ವಿಮಾನ_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
 
-struct ggml_tensor;
-static inline bool htp_binary_strides_safe(
-    const struct ggml_tensor * src0,
-    const struct ggml_tensor * src1,
-    const struct ggml_tensor * dst,
-    size_t elem_size
+ರಚನೆ ggml_tensor;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool htp_ದ್ವಿಮಾನ_strides_ಸುರಕ್ಷಿತ(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * src0,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * src1,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * dst,
+    size_t elem_ಗಾತ್ರ
 ) {
-    if ((src0->ne[0] != 1 && src0->nb[0] != elem_size) ||
-        (src1->ne[0] != 1 && src1->nb[0] != elem_size) ||
-        (dst->ne[0]  != 1 && dst->nb[0]  != elem_size)) {
-        return false;
+    ಆದರೆ ((src0->ne[0] != 1 && src0->nb[0] != elem_ಗಾತ್ರ) ||
+        (src1->ne[0] != 1 && src1->nb[0] != elem_ಗಾತ್ರ) ||
+        (dst->ne[0]  != 1 && dst->nb[0]  != elem_ಗಾತ್ರ)) {
+        ಹಿಂತಿರುಗಿ false;
     }
-    if ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_size) ||
-        (src1->ne[1] > 1 && src1->nb[1] < src1->ne[0] * elem_size) ||
-        (dst->ne[1]  > 1 && dst->nb[1]  < dst->ne[0]  * elem_size)) {
-        return false;
+    ಆದರೆ ((src0->ne[1] > 1 && src0->nb[1] < src0->ne[0] * elem_ಗಾತ್ರ) ||
+        (src1->ne[1] > 1 && src1->nb[1] < src1->ne[0] * elem_ಗಾತ್ರ) ||
+        (dst->ne[1]  > 1 && dst->nb[1]  < dst->ne[0]  * elem_ಗಾತ್ರ)) {
+        ಹಿಂತಿರುಗಿ false;
     }
-    return true;
+    ಹಿಂತಿರುಗಿ true;
 }
-#else
-_Static_assert(sizeof(struct htp_binary_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
-#endif
+#ಇಲ್ಲದಿದ್ದರೆ
+_Static_assert(ಗಾತ್ರ(ರಚನೆ htp_ದ್ವಿಮಾನ_kernel_params) <= 128, "htp_binary_kernel_params is too large for kernel_params blob");
+#ಆದರೆ_ಅಂತ್ಯ
 
-struct htp_binary_vtcm_layout {
-    size_t total_bytes;
+ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout {
+    size_t ಒಟ್ಟು_ಬೈಟುಗಳು;
     size_t off_src0;
     size_t off_src1;
     size_t off_src2;
     size_t off_dst;
 
-    size_t src0_bytes_per_thread;
-    size_t src1_bytes_per_thread;
-    size_t dst_bytes_per_thread;
+    size_t src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
+    size_t src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
+    size_t dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
 
-    size_t src0_spad_half_size;
-    size_t src1_spad_half_size;
-    size_t dst_spad_half_size;
+    size_t src0_spad_half_ಗಾತ್ರ;
+    size_t src1_spad_half_ಗಾತ್ರ;
+    size_t dst_spad_half_ಗಾತ್ರ;
 
-    size_t src1_size;
-    size_t src2_size;
-    uint32_t rows_per_buffer;
+    size_t src1_ಗಾತ್ರ;
+    size_t src2_ಗಾತ್ರ;
+    uint32_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್;
 };
 
-static inline void htp_binary_vtcm_layout_build(
-    struct htp_binary_vtcm_layout * L,
-    const struct htp_binary_kernel_params * kparams,
-    size_t vtcm_size
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ htp_ದ್ವಿಮಾನ_vtcm_layout_build(
+    ರಚನೆ htp_ದ್ವಿಮಾನ_vtcm_layout * L,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_ದ್ವಿಮಾನ_kernel_params * kparams,
+    size_t vtcm_ಗಾತ್ರ
 ) {
-    memset(L, 0, sizeof(*L));
+    memset(L, 0, ಗಾತ್ರ(*L));
 
-    const uint32_t n_threads = kparams->n_threads;
-    if (n_threads == 0) {
-        return;
+    ಸ್ಥಿರಾಂಕ uint32_t n_ಎಳೆಗಳು = kparams->n_ಎಳೆಗಳು;
+    ಆದರೆ (n_ಎಳೆಗಳು == 0) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    if (kparams->kernel_type == HTP_BINARY_KERNEL_CHUNKED) {
-        const size_t chunk_bytes = kparams->chunk_bytes;
-        if (chunk_bytes == 0) {
-            return;
+    ಆದರೆ (kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_CHUNKED) {
+        ಸ್ಥಿರಾಂಕ size_t chunk_ಬೈಟುಗಳು = kparams->chunk_ಬೈಟುಗಳು;
+        ಆದರೆ (chunk_ಬೈಟುಗಳು == 0) {
+            ಹಿಂತಿರುಗಿ;
         }
 
-        L->src0_bytes_per_thread = 2 * chunk_bytes;
-        L->src1_bytes_per_thread = kparams->is_scalar ? 0 : (2 * chunk_bytes);
-        L->dst_bytes_per_thread  = 2 * chunk_bytes;
+        L->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread = 2 * chunk_ಬೈಟುಗಳು;
+        L->src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread = kparams->is_scalar ? 0 : (2 * chunk_ಬೈಟುಗಳು);
+        L->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread  = 2 * chunk_ಬೈಟುಗಳು;
 
-        L->src0_spad_half_size = chunk_bytes;
-        L->src1_spad_half_size = kparams->is_scalar ? 0 : chunk_bytes;
-        L->dst_spad_half_size  = chunk_bytes;
+        L->src0_spad_half_ಗಾತ್ರ = chunk_ಬೈಟುಗಳು;
+        L->src1_spad_half_ಗಾತ್ರ = kparams->is_scalar ? 0 : chunk_ಬೈಟುಗಳು;
+        L->dst_spad_half_ಗಾತ್ರ  = chunk_ಬೈಟುಗಳು;
 
-        L->rows_per_buffer = 1;
-        L->src1_size = 0;
+        L->ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್ = 1;
+        L->src1_ಗಾತ್ರ = 0;
 
-        const size_t src0_total = n_threads * L->src0_bytes_per_thread;
-        const size_t src1_total = kparams->is_scalar ? 128 : (n_threads * L->src1_bytes_per_thread);
-        const size_t dst_total  = n_threads * L->dst_bytes_per_thread;
+        ಸ್ಥಿರಾಂಕ size_t src0_ಒಟ್ಟು = n_ಎಳೆಗಳು * L->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
+        ಸ್ಥಿರಾಂಕ size_t src1_ಒಟ್ಟು = kparams->is_scalar ? 128 : (n_ಎಳೆಗಳು * L->src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread);
+        ಸ್ಥಿರಾಂಕ size_t dst_ಒಟ್ಟು  = n_ಎಳೆಗಳು * L->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
 
         size_t off = 0;
-        VTCM_LAYOUT_ALLOC(off, off_src0, src0_total);
-        VTCM_LAYOUT_ALLOC(off, off_src1, src1_total);
-        VTCM_LAYOUT_ALLOC(off, off_dst,  dst_total);
+        VTCM_LAYOUT_ALLOC(off, off_src0, src0_ಒಟ್ಟು);
+        VTCM_LAYOUT_ALLOC(off, off_src1, src1_ಒಟ್ಟು);
+        VTCM_LAYOUT_ALLOC(off, off_dst,  dst_ಒಟ್ಟು);
 
-        if (off > vtcm_size) {
-            return;
+        ಆದರೆ (off > vtcm_ಗಾತ್ರ) {
+            ಹಿಂತಿರುಗಿ;
         }
 
-        L->total_bytes = off;
-        return;
+        L->ಒಟ್ಟು_ಬೈಟುಗಳು = off;
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const size_t spad_row_total = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
-        ? 2 * (kparams->src0_row_size_aligned + kparams->src1_row_size_aligned + kparams->dst_row_size_aligned)
-        : 2 * (kparams->src0_row_size_aligned + kparams->dst_row_size_aligned);
+    ಸ್ಥಿರಾಂಕ size_t spad_ಅಡ್ಡಸಾಲು_ಒಟ್ಟು = (kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_SAME_SHAPE)
+        ? 2 * (kparams->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned + kparams->src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned + kparams->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned)
+        : 2 * (kparams->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned + kparams->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned);
 
-    const size_t static_vtcm_size = kparams->src1_size + kparams->src2_size;
-    if (spad_row_total == 0 || vtcm_size < static_vtcm_size) {
-        return;
+    ಸ್ಥಿರಾಂಕ size_t static_vtcm_ಗಾತ್ರ = kparams->src1_ಗಾತ್ರ + kparams->src2_ಗಾತ್ರ;
+    ಆದರೆ (spad_ಅಡ್ಡಸಾಲು_ಒಟ್ಟು == 0 || vtcm_ಗಾತ್ರ < static_vtcm_ಗಾತ್ರ) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const size_t rows_per_buffer = (vtcm_size - static_vtcm_size) / (n_threads * spad_row_total);
-    if (rows_per_buffer == 0) {
-        return;
+    ಸ್ಥಿರಾಂಕ size_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್ = (vtcm_ಗಾತ್ರ - static_vtcm_ಗಾತ್ರ) / (n_ಎಳೆಗಳು * spad_ಅಡ್ಡಸಾಲು_ಒಟ್ಟು);
+    ಆದರೆ (ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್ == 0) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    L->rows_per_buffer = (uint32_t) rows_per_buffer;
-    L->src1_size = kparams->src1_size;
-    L->src2_size = kparams->src2_size;
+    L->ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್ = (uint32_t) ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್;
+    L->src1_ಗಾತ್ರ = kparams->src1_ಗಾತ್ರ;
+    L->src2_ಗಾತ್ರ = kparams->src2_ಗಾತ್ರ;
 
-    L->src0_bytes_per_thread = rows_per_buffer * 2 * kparams->src0_row_size_aligned;
-    L->dst_bytes_per_thread  = rows_per_buffer * 2 * kparams->dst_row_size_aligned;
-    L->src1_bytes_per_thread = (kparams->kernel_type == HTP_BINARY_KERNEL_SAME_SHAPE)
-        ? rows_per_buffer * 2 * kparams->src1_row_size_aligned
+    L->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread = ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್ * 2 * kparams->src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    L->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread  = ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್ * 2 * kparams->dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    L->src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread = (kparams->kernel_type == HTP_ದ್ವಿಮಾನ_KERNEL_SAME_SHAPE)
+        ? ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_ಬಫರ್ * 2 * kparams->src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned
         : 0;
 
-    L->src0_spad_half_size = L->src0_bytes_per_thread / 2;
-    L->src1_spad_half_size = L->src1_bytes_per_thread / 2;
-    L->dst_spad_half_size  = L->dst_bytes_per_thread / 2;
+    L->src0_spad_half_ಗಾತ್ರ = L->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread / 2;
+    L->src1_spad_half_ಗಾತ್ರ = L->src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread / 2;
+    L->dst_spad_half_ಗಾತ್ರ  = L->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread / 2;
 
-    const size_t src0_total = n_threads * L->src0_bytes_per_thread;
-    const size_t src1_total = (kparams->src1_size > 0)
-        ? kparams->src1_size
-        : n_threads * L->src1_bytes_per_thread;
-    const size_t src2_total = kparams->src2_size;
-    const size_t dst_total  = n_threads * L->dst_bytes_per_thread;
+    ಸ್ಥಿರಾಂಕ size_t src0_ಒಟ್ಟು = n_ಎಳೆಗಳು * L->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
+    ಸ್ಥಿರಾಂಕ size_t src1_ಒಟ್ಟು = (kparams->src1_ಗಾತ್ರ > 0)
+        ? kparams->src1_ಗಾತ್ರ
+        : n_ಎಳೆಗಳು * L->src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
+    ಸ್ಥಿರಾಂಕ size_t src2_ಒಟ್ಟು = kparams->src2_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ size_t dst_ಒಟ್ಟು  = n_ಎಳೆಗಳು * L->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
 
     size_t off = 0;
-    VTCM_LAYOUT_ALLOC(off, off_src0, src0_total);
-    VTCM_LAYOUT_ALLOC(off, off_src1, src1_total);
-    VTCM_LAYOUT_ALLOC(off, off_src2, src2_total);
-    VTCM_LAYOUT_ALLOC(off, off_dst,  dst_total);
+    VTCM_LAYOUT_ALLOC(off, off_src0, src0_ಒಟ್ಟು);
+    VTCM_LAYOUT_ALLOC(off, off_src1, src1_ಒಟ್ಟು);
+    VTCM_LAYOUT_ALLOC(off, off_src2, src2_ಒಟ್ಟು);
+    VTCM_LAYOUT_ALLOC(off, off_dst,  dst_ಒಟ್ಟು);
 
-    L->total_bytes = off;
+    L->ಒಟ್ಟು_ಬೈಟುಗಳು = off;
 }
 
-#endif
+#ಆದರೆ_ಅಂತ್ಯ

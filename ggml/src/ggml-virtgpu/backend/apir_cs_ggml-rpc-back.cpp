@@ -1,115 +1,115 @@
-#include "ggml-backend-impl.h"
-#include "ggml-impl.h"
-#include "shared/apir_cs_rpc.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "shared/apir_cs_rpc.h"
 
-#include <cinttypes>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#ಅನ್ತರ್ಭಾವ <cinttypes>
+#ಅನ್ತರ್ಭಾವ <unordered_map>
+#ಅನ್ತರ್ಭಾವ <unordered_set>
+#ಅನ್ತರ್ಭಾವ <vector>
 
-std::unordered_set<ggml_backend_buffer_t> backend_buffers;
+std::unordered_set<ggml_backend_ಬಫರ್_t> backend_buffers;
 
-void apir_track_backend_buffer(ggml_backend_buffer_t buffer) {
-    backend_buffers.insert(buffer);
+ಶೂನ್ಯ apir_track_backend_ಬಫರ್(ggml_backend_ಬಫರ್_t ಬಫರ್) {
+    backend_buffers.insert(ಬಫರ್);
 }
 
-bool apir_untrack_backend_buffer(ggml_backend_buffer_t buffer) {
-    auto it = backend_buffers.find(buffer);
-    if (it == backend_buffers.end()) {
-        return false;
+ತಾರ್ಕಿಕ apir_untrack_backend_ಬಫರ್(ggml_backend_ಬಫರ್_t ಬಫರ್) {
+    ಸ್ವಯಂಚಾಲಿತ it = backend_buffers.find(ಬಫರ್);
+    ಆದರೆ (it == backend_buffers.end()) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 
     backend_buffers.erase(it);
-    return true;
+    ಹಿಂತಿರುಗಿ ನಿಜ;
 }
 
-std::unordered_set<ggml_backend_buffer_t> apir_get_track_backend_buffers() {
-    return backend_buffers;
+std::unordered_set<ggml_backend_ಬಫರ್_t> apir_get_track_backend_buffers() {
+    ಹಿಂತಿರುಗಿ backend_buffers;
 }
 
-ggml_tensor * apir_deserialize_tensor(ggml_context * ctx, const apir_rpc_tensor * tensor) {
-    ggml_tensor * result =
+ggml_tensor * apir_deserialize_tensor(ggml_context * ctx, ಸ್ಥಿರಾಂಕ apir_rpc_tensor * tensor) {
+    ggml_tensor * ಫಲಿತಾಂಶ =
         ggml_new_tensor_4d(ctx, (ggml_type) tensor->type, tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
-    for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
-        result->nb[i] = tensor->nb[i];
+    ಗಾಗಿ (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
+        ಫಲಿತಾಂಶ->nb[i] = tensor->nb[i];
     }
-    result->buffer = reinterpret_cast<ggml_backend_buffer_t>(tensor->buffer);
-    if (result->buffer && backend_buffers.find(result->buffer) == backend_buffers.end()) {
-        printf("WARNING: HOST BUFFER NOT FOUND | %p\n", (void *) result->buffer);
-        result->buffer = nullptr;
+    ಫಲಿತಾಂಶ->ಬಫರ್ = reinterpret_cast<ggml_backend_ಬಫರ್_t>(tensor->ಬಫರ್);
+    ಆದರೆ (ಫಲಿತಾಂಶ->ಬಫರ್ && backend_buffers.find(ಫಲಿತಾಂಶ->ಬಫರ್) == backend_buffers.end()) {
+        ಬರೆ("WARNING: HOST BUFFER NOT FOUND | %p\n", (ಶೂನ್ಯ *) ಫಲಿತಾಂಶ->ಬಫರ್);
+        ಫಲಿತಾಂಶ->ಬಫರ್ = ಶೂನ್ಯಸೂಚಕ;
     }
 
-    uint64_t tensor_data = tensor->data;
-    if (result->buffer) {
+    uint64_t tensor_ದತ್ತಾಂಶ = tensor->ದತ್ತಾಂಶ;
+    ಆದರೆ (ಫಲಿತಾಂಶ->ಬಫರ್) {
         // require that the tensor data does not go beyond the buffer end
-        uint64_t tensor_size  = (uint64_t) ggml_nbytes(result);
-        uint64_t buffer_start = (uint64_t) ggml_backend_buffer_get_base(result->buffer);
-        uint64_t buffer_size  = (uint64_t) ggml_backend_buffer_get_size(result->buffer);
+        uint64_t tensor_ಗಾತ್ರ  = (uint64_t) ggml_nbytes(ಫಲಿತಾಂಶ);
+        uint64_t ಬಫರ್_ಆರಂಭ = (uint64_t) ggml_backend_ಬಫರ್_get_ತಳ(ಫಲಿತಾಂಶ->ಬಫರ್);
+        uint64_t ಬಫರ್_ಗಾತ್ರ  = (uint64_t) ggml_backend_ಬಫರ್_get_ಗಾತ್ರ(ಫಲಿತಾಂಶ->ಬಫರ್);
 
         // tensor->data is serialized as an offset to the buffer base address
-        tensor_data += buffer_start;
+        tensor_ದತ್ತಾಂಶ += ಬಫರ್_ಆರಂಭ;
 
-        GGML_ASSERT(tensor_data + tensor_size >= tensor_data);  // check for overflow
-        GGML_ASSERT(tensor_data >= buffer_start && tensor_data + tensor_size <= buffer_start + buffer_size);
+        GGML_ASSERT(tensor_ದತ್ತಾಂಶ + tensor_ಗಾತ್ರ >= tensor_ದತ್ತಾಂಶ);  // check for overflow
+        GGML_ASSERT(tensor_ದತ್ತಾಂಶ >= ಬಫರ್_ಆರಂಭ && tensor_ದತ್ತಾಂಶ + tensor_ಗಾತ್ರ <= ಬಫರ್_ಆರಂಭ + ಬಫರ್_ಗಾತ್ರ);
     }
 
-    result->op = (ggml_op) tensor->op;
-    for (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / sizeof(int32_t); i++) {
-        result->op_params[i] = tensor->op_params[i];
+    ಫಲಿತಾಂಶ->op = (ggml_op) tensor->op;
+    ಗಾಗಿ (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / ಗಾತ್ರ(int32_t); i++) {
+        ಫಲಿತಾಂಶ->op_params[i] = tensor->op_params[i];
     }
-    result->flags = tensor->flags;
-    result->data  = reinterpret_cast<void *>(tensor_data);
-    ggml_set_name(result, tensor->name);
-    return result;
+    ಫಲಿತಾಂಶ->flags = tensor->flags;
+    ಫಲಿತಾಂಶ->ದತ್ತಾಂಶ  = reinterpret_cast<ಶೂನ್ಯ *>(tensor_ದತ್ತಾಂಶ);
+    ggml_ಗಣ_name(ಫಲಿತಾಂಶ, tensor->name);
+    ಹಿಂತಿರುಗಿ ಫಲಿತಾಂಶ;
 }
 
-ggml_tensor * apir_create_node(uint64_t                                                      id,
+ggml_tensor * apir_create_ಗಂಟು(uint64_t                                                      id,
                                ggml_context *                                                ctx,
-                               const std::unordered_map<uint64_t, const apir_rpc_tensor *> & tensor_ptrs,
+                               ಸ್ಥಿರಾಂಕ std::unordered_map<uint64_t, ಸ್ಥಿರಾಂಕ apir_rpc_tensor *> & tensor_ptrs,
                                std::unordered_map<uint64_t, ggml_tensor *> &                 tensor_map) {
-    if (id == 0) {
-        return nullptr;
+    ಆದರೆ (id == 0) {
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
-    if (tensor_map.find(id) != tensor_map.end()) {
-        return tensor_map[id];
+    ಆದರೆ (tensor_map.find(id) != tensor_map.end()) {
+        ಹಿಂತಿರುಗಿ tensor_map[id];
     }
-    const apir_rpc_tensor * tensor = tensor_ptrs.at(id);
-    ggml_tensor *           result = apir_deserialize_tensor(ctx, tensor);
-    if (result == nullptr) {
-        return nullptr;
+    ಸ್ಥಿರಾಂಕ apir_rpc_tensor * tensor = tensor_ptrs.at(id);
+    ggml_tensor *           ಫಲಿತಾಂಶ = apir_deserialize_tensor(ctx, tensor);
+    ಆದರೆ (ಫಲಿತಾಂಶ == ಶೂನ್ಯಸೂಚಕ) {
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
-    tensor_map[id] = result;
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        result->src[i] = apir_create_node(tensor->src[i], ctx, tensor_ptrs, tensor_map);
+    tensor_map[id] = ಫಲಿತಾಂಶ;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < GGML_MAX_SRC; i++) {
+        ಫಲಿತಾಂಶ->src[i] = apir_create_ಗಂಟು(tensor->src[i], ctx, tensor_ptrs, tensor_map);
     }
-    result->view_src  = apir_create_node(tensor->view_src, ctx, tensor_ptrs, tensor_map);
-    result->view_offs = tensor->view_offs;
-    return result;
+    ಫಲಿತಾಂಶ->view_src  = apir_create_ಗಂಟು(tensor->view_src, ctx, tensor_ptrs, tensor_map);
+    ಫಲಿತಾಂಶ->view_offs = tensor->view_offs;
+    ಹಿಂತಿರುಗಿ ಫಲಿತಾಂಶ;
 }
 
-ggml_cgraph * apir_deserialize_graph(uint32_t                n_nodes,
+ggml_cgraph * apir_deserialize_ನಕ್ಷೆ(uint32_t                n_nodes,
                                      uint32_t                n_tensors,
-                                     const apir_rpc_tensor * tensors,
-                                     const uint64_t *        nodes) {
-    size_t buf_size = ggml_tensor_overhead() * (n_nodes + n_tensors) + ggml_graph_overhead_custom(n_nodes, false);
+                                     ಸ್ಥಿರಾಂಕ apir_rpc_tensor * tensors,
+                                     ಸ್ಥಿರಾಂಕ uint64_t *        nodes) {
+    size_t buf_ಗಾತ್ರ = ggml_tensor_overhead() * (n_nodes + n_tensors) + ggml_ನಕ್ಷೆ_overhead_custom(n_nodes, ಸುಳ್ಳು);
     ggml_init_params params = {
-        /*.mem_size   =*/buf_size,
-        /*.mem_buffer =*/NULL,
-        /*.no_alloc   =*/true,
+        /*.mem_size   =*/buf_ಗಾತ್ರ,
+        /*.mem_buffer =*/ಖಾಲಿ,
+        /*.no_alloc   =*/ನಿಜ,
     };
     ggml_context * ctx   = ggml_init(params);
-    ggml_cgraph *  graph = ggml_new_graph_custom(ctx, n_nodes, false);
+    ggml_cgraph *  graph = ggml_new_ನಕ್ಷೆ_custom(ctx, n_nodes, ಸುಳ್ಳು);
     graph->n_nodes       = n_nodes;
-    std::unordered_map<uint64_t, const apir_rpc_tensor *> tensor_ptrs;
-    for (uint32_t i = 0; i < n_tensors; i++) {
+    std::unordered_map<uint64_t, ಸ್ಥಿರಾಂಕ apir_rpc_tensor *> tensor_ptrs;
+    ಗಾಗಿ (uint32_t i = 0; i < n_tensors; i++) {
         tensor_ptrs[tensors[i].id] = &tensors[i];
     }
     std::unordered_map<uint64_t, ggml_tensor *> tensor_map;
-    for (uint32_t i = 0; i < n_nodes; i++) {
+    ಗಾಗಿ (uint32_t i = 0; i < n_nodes; i++) {
         int64_t id;
-        memcpy(&id, &nodes[i], sizeof(id));
-        graph->nodes[i] = apir_create_node(id, ctx, tensor_ptrs, tensor_map);
+        ಸ್ಮರಣೆ_ನಕಲು(&id, &nodes[i], ಗಾತ್ರ(id));
+        graph->nodes[i] = apir_create_ಗಂಟು(id, ctx, tensor_ptrs, tensor_map);
     }
 
-    return graph;
+    ಹಿಂತಿರುಗಿ graph;
 }

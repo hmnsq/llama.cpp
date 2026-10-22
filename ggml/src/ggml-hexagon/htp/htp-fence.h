@@ -1,89 +1,89 @@
-#ifndef HTP_FENCE_H
-#define HTP_FENCE_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ HTP_FENCE_H
+#ವ್ಯಾಖ್ಯಾನಿಸು HTP_FENCE_H
 
-#include <stdatomic.h>
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdatomic.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-#include <HAP_farf.h>
+#ಅನ್ತರ್ಭಾವ <HAP_farf.h>
 
-#include "hex-utils.h"
-#include "htp-ops.h"
-#include "htp-ctx.h"
+#ಅನ್ತರ್ಭಾವ "hex-utils.h"
+#ಅನ್ತರ್ಭಾವ "htp-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp-ctx.h"
 
-static inline atomic_uint * htp_mdev_fence_slot(const void * fence_base, uint32_t idx) {
-    return (atomic_uint *) ((const uint8_t *) fence_base + (size_t) idx * HTP_FENCE_SLOT_SIZE);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ atomic_uint * htp_mdev_fence_ಸ್ಥಾನ(ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * fence_ತಳ, uint32_t idx) {
+    ಹಿಂತಿರುಗಿ (atomic_uint *) ((ಸ್ಥಿರಾಂಕ uint8_t *) fence_ತಳ + (size_t) idx * HTP_FENCE_ಸ್ಥಾನ_ಗಾತ್ರ);
 }
 
-static inline void htp_fence_write(void * fence_ptr, uint32_t seq, uint32_t status) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ htp_fence_write(ಶೂನ್ಯ * fence_ptr, uint32_t seq, uint32_t ಸ್ಥಿತಿ_2) {
     atomic_uint * fence = (atomic_uint *) fence_ptr;
-    atomic_store(&fence[1], status);
+    atomic_store(&fence[1], ಸ್ಥಿತಿ_2);
     atomic_store(&fence[0], seq);
-    asm volatile ("syncht" : : : "memory");
-    Q6_dccleaninva_A((void *) fence);
+    asm ಅಸ್ಥಿರ ("syncht" : : : "memory");
+    Q6_dccleaninva_A((ಶೂನ್ಯ *) fence);
 }
 
-static inline void htp_fence_read(const void * fence_ptr, uint32_t * seq, uint32_t * status) {
-    const atomic_uint * fence = (const atomic_uint *) fence_ptr;
-    Q6_dccleaninva_A((void *) fence);
-    asm volatile ("syncht" : : : "memory");
-    *seq = atomic_load(&fence[0]);
-    *status = atomic_load(&fence[1]);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ htp_fence_read(ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * fence_ptr, uint32_t * seq, uint32_t * ಸ್ಥಿತಿ_2) {
+    ಸ್ಥಿರಾಂಕ atomic_uint * fence = (ಸ್ಥಿರಾಂಕ atomic_uint *) fence_ptr;
+    Q6_dccleaninva_A((ಶೂನ್ಯ *) fence);
+    asm ಅಸ್ಥಿರ ("syncht" : : : "memory");
+    *seq = atomic_ತುಂಬು(&fence[0]);
+    *ಸ್ಥಿತಿ_2 = atomic_ತುಂಬು(&fence[1]);
 }
 
-static inline void htp_mdev_group_barrier(struct htp_ops_context * octx) {
-    struct htp_context * ctx = octx->ctx;
-    if (ctx->mdev.count <= 1) {
-        return;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ htp_mdev_ಗುಂಪು_barrier(ರಚನೆ htp_ops_context * octx) {
+    ರಚನೆ htp_context * ctx = octx->ctx;
+    ಆದರೆ (ctx->mdev.ಎಣಿಕೆ_2 <= 1) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const uint32_t seq = ++ctx->mdev.fence_seq;
+    ಸ್ಥಿರಾಂಕ uint32_t seq = ++ctx->mdev.fence_seq;
 
-    struct htp_thread_trace * tr = &ctx->trace[0];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
+    ರಚನೆ htp_thread_trace * tr = &ctx->trace[0];
+    htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
 
-    const uint32_t mdev_idx   = ctx->mdev.idx;
-    const uint32_t mdev_count = ctx->mdev.count;
+    ಸ್ಥಿರಾಂಕ uint32_t mdev_idx   = ctx->mdev.idx;
+    ಸ್ಥಿರಾಂಕ uint32_t mdev_ಎಣಿಕೆ = ctx->mdev.ಎಣಿಕೆ_2;
 
-    uint8_t * fence_base   = ctx->mdev.fence_base;
-    atomic_uint * my_fence = htp_mdev_fence_slot(fence_base, mdev_idx);
-    htp_fence_write(my_fence, seq, octx->status);
+    uint8_t * fence_ತಳ   = ctx->mdev.fence_ತಳ;
+    atomic_uint * my_fence = htp_mdev_fence_ಸ್ಥಾನ(fence_ತಳ, mdev_idx);
+    htp_fence_write(my_fence, seq, octx->ಸ್ಥಿತಿ_2);
 
-    for (uint32_t d = 0; d < mdev_count; d++) {
-        if (d == mdev_idx) continue;
-        atomic_uint * peer_fence = htp_mdev_fence_slot(fence_base, d);
+    ಗಾಗಿ (uint32_t d = 0; d < mdev_ಎಣಿಕೆ; d++) {
+        ಆದರೆ (d == mdev_idx) ಮುಂದುವರಿ;
+        atomic_uint * peer_fence = htp_mdev_fence_ಸ್ಥಾನ(fence_ತಳ, d);
         uint64_t spins = 0;
-        while (1) {
+        ಆಗ (1) {
             uint32_t peer_seq;
-            uint32_t peer_status;
-            htp_fence_read(peer_fence, &peer_seq, &peer_status);
-            if ((int32_t)(peer_seq - seq) >= 0) {
-                if (peer_status > HTP_STATUS_OK) {
+            uint32_t peer_ಸ್ಥಿತಿ;
+            htp_fence_read(peer_fence, &peer_seq, &peer_ಸ್ಥಿತಿ);
+            ಆದರೆ ((int32_t)(peer_seq - seq) >= 0) {
+                ಆದರೆ (peer_ಸ್ಥಿತಿ > HTP_ಸ್ಥಿತಿ_OK) {
                     FARF(ERROR, "ggml-hex: mdev %u peer %u failed with status %u : seq 0x%08x\n",
-                         mdev_idx, d, peer_status, seq);
-                    htp_ops_context_set_status(octx, peer_status);
+                         mdev_idx, d, peer_ಸ್ಥಿತಿ, seq);
+                    htp_ops_context_ಗಣ_ಸ್ಥಿತಿ(octx, peer_ಸ್ಥಿತಿ);
                 }
-                break;
+                ನಿಲ್ಲಿಸು;
             }
-            if (++spins == 10000) {
+            ಆದರೆ (++spins == 10000) {
                 FARF(ALWAYS, "ggml-hex: mdev %u waiting for mdev %u : seq 0x%08x (b %u op %u) my-fence %p peer-fence %p peer-seq 0x%08x (diff %d)\n",
                      mdev_idx, d, seq, seq >> 12, seq & 0xfff, my_fence, peer_fence, peer_seq, (int32_t)(peer_seq - seq));
             }
-            if (spins > HTP_FENCE_TIMEOUT) {
+            ಆದರೆ (spins > HTP_FENCE_TIMEOUT) {
                 FARF(ERROR, "ggml-hex: mdev %u timeout waiting for mdev %u : seq 0x%08x (b %u op %u) peer-fence %p peer-seq 0x%08x\n",
                      mdev_idx, d, seq, seq >> 12, seq & 0xfff, peer_fence, peer_seq);
-                htp_ops_context_set_status(octx, HTP_STATUS_INTERNAL_ERR);
-                break;
+                htp_ops_context_ಗಣ_ಸ್ಥಿತಿ(octx, HTP_ಸ್ಥಿತಿ_ಆಂತರಿಕ_ERR);
+                ನಿಲ್ಲಿಸು;
             }
             hex_pause();
         }
     }
-    asm volatile ("syncht" : : : "memory");
+    asm ಅಸ್ಥಿರ ("syncht" : : : "memory");
 
-    if (octx->status > HTP_STATUS_OK) {
-        htp_fence_write(my_fence, seq, octx->status);
+    ಆದರೆ (octx->ಸ್ಥಿತಿ_2 > HTP_ಸ್ಥಿತಿ_OK) {
+        htp_fence_write(my_fence, seq, octx->ಸ್ಥಿತಿ_2);
     }
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_FENCE, (uint16_t) seq);
 }
 
-#endif // HTP_FENCE_H
+#ಆದರೆ_ಅಂತ್ಯ // HTP_FENCE_H

@@ -1,91 +1,91 @@
-#include "ggml-impl.h"
-#include "dsv4-hc.hpp"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "dsv4-hc.hpp"
 
-#include <cmath>
-#include <type_traits>
+#ಅನ್ತರ್ಭಾವ <cmath>
+#ಅನ್ತರ್ಭಾವ <type_traits>
 
-static constexpr int DSV4_HC = 4;
+ಸ್ಥಿರ constexpr ಪೂರ್ಣಾಂಕ DSV4_HC = 4;
 
 // tunable: one work-item per (embedding element, token)
-static constexpr int dsv4_hc_pre_block_size = 256;
+ಸ್ಥಿರ constexpr ಪೂರ್ಣಾಂಕ dsv4_hc_pre_ಖಂಡ_ಗಾತ್ರ = 256;
 
 // gated: the weight is a per-element gate [n_embd, hc, n_tokens] passed through a sigmoid.
 // otherwise it is one weight per (stream, token).
-template <bool gated>
-static void dsv4_hc_pre_f32_sycl(
-        const float * x, const float * weights, float * dst,
-        int64_t n_embd, int64_t hc, int64_t n_tokens,
+ಮಾದರಿ <ತಾರ್ಕಿಕ gated>
+ಸ್ಥಿರ ಶೂನ್ಯ dsv4_hc_pre_f32_sycl(
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * x, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * weights, ದಶಮಾಂಶ * dst,
+        int64_t n_embd, int64_t hc, int64_t n_ಟೋಕನುಗಳು,
         int64_t sx0, int64_t sx1, int64_t sx2,
         int64_t sw0, int64_t sw1, int64_t sw2,
         int64_t sd0, int64_t sd1,
-        float scale,
-        queue_ptr stream) {
-    const int64_t nr = n_embd * n_tokens;
-    const int64_t num_blocks = (nr + dsv4_hc_pre_block_size - 1) / dsv4_hc_pre_block_size;
+        ದಶಮಾಂಶ scale,
+        ಸರತಿ_ptr stream) {
+    ಸ್ಥಿರಾಂಕ int64_t nr = n_embd * n_ಟೋಕನುಗಳು;
+    ಸ್ಥಿರಾಂಕ int64_t ಅಂಕೆ_ಖಂಡಗಳು = (nr + dsv4_hc_pre_ಖಂಡ_ಗಾತ್ರ - 1) / dsv4_hc_pre_ಖಂಡ_ಗಾತ್ರ;
 
     stream->parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(num_blocks * dsv4_hc_pre_block_size),
-                          sycl::range<1>(dsv4_hc_pre_block_size)),
-        [=](sycl::nd_item<1> item) {
-            const int64_t ir = item.get_global_id(0);
-            if (ir >= nr) {
-                return;
+        sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು * dsv4_hc_pre_ಖಂಡ_ಗಾತ್ರ),
+                          sycl::range<1>(dsv4_hc_pre_ಖಂಡ_ಗಾತ್ರ)),
+        [=](sycl::nd_ಅಂಶ<1> ಅಂಶ) {
+            ಸ್ಥಿರಾಂಕ int64_t ir = ಅಂಶ.get_global_id(0);
+            ಆದರೆ (ir >= nr) {
+                ಹಿಂತಿರುಗಿ;
             }
 
-            const int64_t i0 = ir % n_embd;
-            const int64_t it = ir / n_embd;
+            ಸ್ಥಿರಾಂಕ int64_t i0 = ir % n_embd;
+            ಸ್ಥಿರಾಂಕ int64_t it = ir / n_embd;
 
-            float sum = 0.0f;
-            for (int64_t ih = 0; ih < hc; ++ih) {
-                const float xv = x[i0*sx0 + ih*sx1 + it*sx2];
-                float wv;
-                if constexpr (gated) {
-                    const float gv = weights[i0*sw0 + ih*sw1 + it*sw2];
-                    wv = 1.0f / (1.0f + sycl::exp(-gv));
-                } else {
+            ದಶಮಾಂಶ ಮೊತ್ತ = 0.0f;
+            ಗಾಗಿ (int64_t ih = 0; ih < hc; ++ih) {
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ xv = x[i0*sx0 + ih*sx1 + it*sx2];
+                ದಶಮಾಂಶ wv;
+                ಆದರೆ constexpr (gated) {
+                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ gv = weights[i0*sw0 + ih*sw1 + it*sw2];
+                    wv = 1.0f / (1.0f + sycl::ಘಾತಾಂಕ(-gv));
+                } ಇಲ್ಲದಿದ್ದರೆ {
                     wv = weights[ih*sw0 + it*sw1];
                 }
-                sum += xv * wv;
+                ಮೊತ್ತ += xv * wv;
             }
 
-            dst[i0*sd0 + it*sd1] = scale * sum;
+            dst[i0*sd0 + it*sd1] = scale * ಮೊತ್ತ;
         });
 }
 
-static void dsv4_hc_comb_norm_cols(float * comb, float eps) {
-    for (int idst = 0; idst < DSV4_HC; ++idst) {
-        float sum = eps;
-        for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
-            sum += comb[idst + DSV4_HC*isrc];
+ಸ್ಥಿರ ಶೂನ್ಯ dsv4_hc_comb_norm_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ(ದಶಮಾಂಶ * comb, ದಶಮಾಂಶ eps) {
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ idst = 0; idst < DSV4_HC; ++idst) {
+        ದಶಮಾಂಶ ಮೊತ್ತ = eps;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ isrc = 0; isrc < DSV4_HC; ++isrc) {
+            ಮೊತ್ತ += comb[idst + DSV4_HC*isrc];
         }
 
-        const float inv_sum = 1.0f / sum;
-        for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
-            comb[idst + DSV4_HC*isrc] *= inv_sum;
-        }
-    }
-}
-
-static void dsv4_hc_comb_norm_rows(float * comb, float eps) {
-    for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
-        float sum = eps;
-        for (int idst = 0; idst < DSV4_HC; ++idst) {
-            sum += comb[idst + DSV4_HC*isrc];
-        }
-
-        const float inv_sum = 1.0f / sum;
-        for (int idst = 0; idst < DSV4_HC; ++idst) {
-            comb[idst + DSV4_HC*isrc] *= inv_sum;
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ inv_ಮೊತ್ತ = 1.0f / ಮೊತ್ತ;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ isrc = 0; isrc < DSV4_HC; ++isrc) {
+            comb[idst + DSV4_HC*isrc] *= inv_ಮೊತ್ತ;
         }
     }
 }
 
-static void dsv4_hc_comb_f32_sycl(
-        const float * mixes,
-        const float * scale,
-        const float * base,
-        float * dst,
-        int64_t n_tokens,
+ಸ್ಥಿರ ಶೂನ್ಯ dsv4_hc_comb_norm_ಅಡ್ಡಸಾಲುಗಳು(ದಶಮಾಂಶ * comb, ದಶಮಾಂಶ eps) {
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ isrc = 0; isrc < DSV4_HC; ++isrc) {
+        ದಶಮಾಂಶ ಮೊತ್ತ = eps;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ idst = 0; idst < DSV4_HC; ++idst) {
+            ಮೊತ್ತ += comb[idst + DSV4_HC*isrc];
+        }
+
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ inv_ಮೊತ್ತ = 1.0f / ಮೊತ್ತ;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ idst = 0; idst < DSV4_HC; ++idst) {
+            comb[idst + DSV4_HC*isrc] *= inv_ಮೊತ್ತ;
+        }
+    }
+}
+
+ಸ್ಥಿರ ಶೂನ್ಯ dsv4_hc_comb_f32_sycl(
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * mixes,
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * scale,
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ತಳ,
+        ದಶಮಾಂಶ * dst,
+        int64_t n_ಟೋಕನುಗಳು,
         int64_t sm0,
         int64_t sm1,
         int64_t ss0,
@@ -93,59 +93,59 @@ static void dsv4_hc_comb_f32_sycl(
         int64_t sd0,
         int64_t sd1,
         int64_t sd2,
-        float eps,
+        ದಶಮಾಂಶ eps,
         int32_t n_iter,
-        queue_ptr stream) {
-    constexpr int comb_offset = 2*DSV4_HC;
+        ಸರತಿ_ptr stream) {
+    constexpr ಪೂರ್ಣಾಂಕ comb_ಸ್ಥಾನಾಂತರ = 2*DSV4_HC;
 
-    const int64_t block_size = 256;
-    const int64_t num_blocks = (n_tokens + block_size - 1) / block_size;
+    ಸ್ಥಿರಾಂಕ int64_t ಖಂಡ_ಗಾತ್ರ_3 = 256;
+    ಸ್ಥಿರಾಂಕ int64_t ಅಂಕೆ_ಖಂಡಗಳು = (n_ಟೋಕನುಗಳು + ಖಂಡ_ಗಾತ್ರ_3 - 1) / ಖಂಡ_ಗಾತ್ರ_3;
 
     stream->parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(num_blocks * block_size), sycl::range<1>(block_size)),
-        [=](sycl::nd_item<1> item_ct1) {
-            const int64_t it = item_ct1.get_global_id(0);
+        sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು * ಖಂಡ_ಗಾತ್ರ_3), sycl::range<1>(ಖಂಡ_ಗಾತ್ರ_3)),
+        [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) {
+            ಸ್ಥಿರಾಂಕ int64_t it = ಅಂಶ_ct1.get_global_id(0);
 
-            if (it >= n_tokens) {
-                return;
+            ಆದರೆ (it >= n_ಟೋಕನುಗಳು) {
+                ಹಿಂತಿರುಗಿ;
             }
 
-            const float scale_comb = scale[2*ss0];
-            float comb[DSV4_HC*DSV4_HC];
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ scale_comb = scale[2*ss0];
+            ದಶಮಾಂಶ comb[DSV4_HC*DSV4_HC];
 
-            for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
-                float max = -INFINITY;
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
-                    const float v = mixes[(comb_offset + idx)*sm0 + it*sm1] * scale_comb + base[(comb_offset + idx)*sb0];
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ isrc = 0; isrc < DSV4_HC; ++isrc) {
+                ದಶಮಾಂಶ max = -INFINITY;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ idst = 0; idst < DSV4_HC; ++idst) {
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ idx = idst + DSV4_HC*isrc;
+                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ v = mixes[(comb_ಸ್ಥಾನಾಂತರ + idx)*sm0 + it*sm1] * scale_comb + ತಳ[(comb_ಸ್ಥಾನಾಂತರ + idx)*sb0];
                     comb[idx] = v;
                     max = fmaxf(max, v);
                 }
 
-                float sum = 0.0f;
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
-                    const float v = expf(comb[idx] - max);
+                ದಶಮಾಂಶ ಮೊತ್ತ = 0.0f;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ idst = 0; idst < DSV4_HC; ++idst) {
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ idx = idst + DSV4_HC*isrc;
+                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ v = expf(comb[idx] - max);
                     comb[idx] = v;
-                    sum += v;
+                    ಮೊತ್ತ += v;
                 }
 
-                const float inv_sum = 1.0f / sum;
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
-                    comb[idx] = comb[idx] * inv_sum + eps;
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ inv_ಮೊತ್ತ = 1.0f / ಮೊತ್ತ;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ idst = 0; idst < DSV4_HC; ++idst) {
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ idx = idst + DSV4_HC*isrc;
+                    comb[idx] = comb[idx] * inv_ಮೊತ್ತ + eps;
                 }
             }
 
-            dsv4_hc_comb_norm_cols(comb, eps);
-            for (int32_t i = 1; i < n_iter; ++i) {
-                dsv4_hc_comb_norm_rows(comb, eps);
-                dsv4_hc_comb_norm_cols(comb, eps);
+            dsv4_hc_comb_norm_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ(comb, eps);
+            ಗಾಗಿ (int32_t i = 1; i < n_iter; ++i) {
+                dsv4_hc_comb_norm_ಅಡ್ಡಸಾಲುಗಳು(comb, eps);
+                dsv4_hc_comb_norm_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ(comb, eps);
             }
 
-            for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ isrc = 0; isrc < DSV4_HC; ++isrc) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ idst = 0; idst < DSV4_HC; ++idst) {
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ idx = idst + DSV4_HC*isrc;
                     dst[idst*sd0 + isrc*sd1 + it*sd2] = comb[idx];
                 }
             }
@@ -153,53 +153,53 @@ static void dsv4_hc_comb_f32_sycl(
 }
 
 // tunable: one work-item per (embedding element, stream, token)
-static constexpr int dsv4_hc_post_block_size = 256;
+ಸ್ಥಿರ constexpr ಪೂರ್ಣಾಂಕ dsv4_hc_post_ಖಂಡ_ಗಾತ್ರ = 256;
 
 // comb == nullptr is identity mixing: each destination stream keeps its own residual
 // instead of summing across the streams.
-template <bool has_comb>
-static void dsv4_hc_post_f32_sycl(
-        const float * x, const float * residual, const float * post, const float * comb, float * dst,
-        int64_t n_embd, int64_t hc, int64_t n_tokens,
+ಮಾದರಿ <ತಾರ್ಕಿಕ has_comb>
+ಸ್ಥಿರ ಶೂನ್ಯ dsv4_hc_post_f32_sycl(
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * x, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * residual, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * post, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * comb, ದಶಮಾಂಶ * dst,
+        int64_t n_embd, int64_t hc, int64_t n_ಟೋಕನುಗಳು,
         int64_t sx0, int64_t sx1,
         int64_t sr0, int64_t sr1, int64_t sr2,
         int64_t sp0, int64_t sp1,
         int64_t sc0, int64_t sc1, int64_t sc2,
         int64_t sd0, int64_t sd1, int64_t sd2,
-        queue_ptr stream) {
-    const int64_t nr = n_embd * hc * n_tokens;
-    const int64_t block_size = dsv4_hc_post_block_size;
-    const int64_t num_blocks = (nr + block_size - 1) / block_size;
+        ಸರತಿ_ptr stream) {
+    ಸ್ಥಿರಾಂಕ int64_t nr = n_embd * hc * n_ಟೋಕನುಗಳು;
+    ಸ್ಥಿರಾಂಕ int64_t ಖಂಡ_ಗಾತ್ರ_3 = dsv4_hc_post_ಖಂಡ_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ int64_t ಅಂಕೆ_ಖಂಡಗಳು = (nr + ಖಂಡ_ಗಾತ್ರ_3 - 1) / ಖಂಡ_ಗಾತ್ರ_3;
 
     stream->parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(num_blocks * block_size), sycl::range<1>(block_size)),
-        [=](sycl::nd_item<1> item) {
-            const int64_t ir = item.get_global_id(0);
-            if (ir >= nr) {
-                return;
+        sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು * ಖಂಡ_ಗಾತ್ರ_3), sycl::range<1>(ಖಂಡ_ಗಾತ್ರ_3)),
+        [=](sycl::nd_ಅಂಶ<1> ಅಂಶ) {
+            ಸ್ಥಿರಾಂಕ int64_t ir = ಅಂಶ.get_global_id(0);
+            ಆದರೆ (ir >= nr) {
+                ಹಿಂತಿರುಗಿ;
             }
 
-            const int64_t i0   = ir % n_embd;
-            const int64_t idst = (ir / n_embd) % hc;
-            const int64_t it   = ir / (n_embd * hc);
+            ಸ್ಥಿರಾಂಕ int64_t i0   = ir % n_embd;
+            ಸ್ಥಿರಾಂಕ int64_t idst = (ir / n_embd) % hc;
+            ಸ್ಥಿರಾಂಕ int64_t it   = ir / (n_embd * hc);
 
-            float sum = x[i0*sx0 + it*sx1] * post[idst*sp0 + it*sp1];
-            if constexpr (has_comb) {
-                for (int64_t isrc = 0; isrc < hc; ++isrc) {
-                    sum += residual[i0*sr0 + isrc*sr1 + it*sr2] * comb[idst*sc0 + isrc*sc1 + it*sc2];
+            ದಶಮಾಂಶ ಮೊತ್ತ = x[i0*sx0 + it*sx1] * post[idst*sp0 + it*sp1];
+            ಆದರೆ constexpr (has_comb) {
+                ಗಾಗಿ (int64_t isrc = 0; isrc < hc; ++isrc) {
+                    ಮೊತ್ತ += residual[i0*sr0 + isrc*sr1 + it*sr2] * comb[idst*sc0 + isrc*sc1 + it*sc2];
                 }
-            } else {
-                sum += residual[i0*sr0 + idst*sr1 + it*sr2];
+            } ಇಲ್ಲದಿದ್ದರೆ {
+                ಮೊತ್ತ += residual[i0*sr0 + idst*sr1 + it*sr2];
             }
 
-            dst[i0*sd0 + idst*sd1 + it*sd2] = sum;
+            dst[i0*sd0 + idst*sd1 + it*sd2] = ಮೊತ್ತ;
         });
 }
 
-void ggml_sycl_op_dsv4_hc_pre(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_op_dsv4_hc_pre(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    const ggml_tensor * x       = dst->src[0];
-    const ggml_tensor * weights = dst->src[1];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * x       = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * weights = dst->src[1];
 
     GGML_ASSERT(x->type == GGML_TYPE_F32);
     GGML_ASSERT(weights->type == GGML_TYPE_F32);
@@ -209,49 +209,49 @@ void ggml_sycl_op_dsv4_hc_pre(ggml_backend_sycl_context & ctx, ggml_tensor * dst
     GGML_TENSOR_LOCALS(size_t, nbw, weights, nb);
     GGML_TENSOR_LOCALS(size_t, nbd, dst,     nb);
 
-    const int64_t n_embd   = x->ne[0];
-    const int64_t hc       = x->ne[1];
-    const int64_t n_tokens = x->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t n_embd   = x->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t hc       = x->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t n_ಟೋಕನುಗಳು = x->ne[2];
 
-    const float scale = ggml_get_op_params_f32(dst, 0);
-    const bool  gated = ggml_get_op_params_i32(dst, 1) != 0;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ scale = ggml_get_op_params_f32(dst, 0);
+    ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ  gated = ggml_get_op_params_i32(dst, 1) != 0;
 
-    queue_ptr stream = ctx.stream();
+    ಸರತಿ_ptr stream = ctx.stream();
 
-    if (gated) {
+    ಆದರೆ (gated) {
         GGML_ASSERT(weights->ne[0] == n_embd);
         GGML_ASSERT(weights->ne[1] == hc);
-        GGML_ASSERT(weights->ne[2] == n_tokens);
-        dsv4_hc_pre_f32_sycl<true>(
-                (const float *) x->data, (const float *) weights->data, (float *) dst->data,
-                n_embd, hc, n_tokens,
-                nbx0 / sizeof(float), nbx1 / sizeof(float), nbx2 / sizeof(float),
-                nbw0 / sizeof(float), nbw1 / sizeof(float), nbw2 / sizeof(float),
-                nbd0 / sizeof(float), nbd1 / sizeof(float),
+        GGML_ASSERT(weights->ne[2] == n_ಟೋಕನುಗಳು);
+        dsv4_hc_pre_f32_sycl<ನಿಜ>(
+                (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) x->ದತ್ತಾಂಶ, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) weights->ದತ್ತಾಂಶ, (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ,
+                n_embd, hc, n_ಟೋಕನುಗಳು,
+                nbx0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbx1 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbx2 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+                nbw0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbw1 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbw2 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+                nbd0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbd1 / ಗಾತ್ರ(ದಶಮಾಂಶ),
                 scale, stream);
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         GGML_ASSERT(weights->ne[0] == hc);
-        GGML_ASSERT(weights->ne[1] == n_tokens);
-        dsv4_hc_pre_f32_sycl<false>(
-                (const float *) x->data, (const float *) weights->data, (float *) dst->data,
-                n_embd, hc, n_tokens,
-                nbx0 / sizeof(float), nbx1 / sizeof(float), nbx2 / sizeof(float),
-                nbw0 / sizeof(float), nbw1 / sizeof(float), /*sw2=*/ 0,
-                nbd0 / sizeof(float), nbd1 / sizeof(float),
+        GGML_ASSERT(weights->ne[1] == n_ಟೋಕನುಗಳು);
+        dsv4_hc_pre_f32_sycl<ಸುಳ್ಳು>(
+                (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) x->ದತ್ತಾಂಶ, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) weights->ದತ್ತಾಂಶ, (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ,
+                n_embd, hc, n_ಟೋಕನುಗಳು,
+                nbx0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbx1 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbx2 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+                nbw0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbw1 / ಗಾತ್ರ(ದಶಮಾಂಶ), /*sw2=*/ 0,
+                nbd0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbd1 / ಗಾತ್ರ(ದಶಮಾಂಶ),
                 scale, stream);
     }
 }
 
-void ggml_sycl_op_dsv4_hc_comb(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_op_dsv4_hc_comb(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/3);
 
-    const ggml_tensor * mixes = dst->src[0];
-    const ggml_tensor * scale = dst->src[1];
-    const ggml_tensor * base  = dst->src[2];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * mixes = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * scale = dst->src[1];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * ತಳ  = dst->src[2];
 
     GGML_ASSERT(mixes->type == GGML_TYPE_F32);
     GGML_ASSERT(scale->type == GGML_TYPE_F32);
-    GGML_ASSERT(base->type == GGML_TYPE_F32);
+    GGML_ASSERT(ತಳ->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
     constexpr int64_t hc_mix_dim = (2 + DSV4_HC)*DSV4_HC;
@@ -261,35 +261,35 @@ void ggml_sycl_op_dsv4_hc_comb(ggml_backend_sycl_context & ctx, ggml_tensor * ds
     GGML_ASSERT(dst->ne[1] == DSV4_HC);
     GGML_ASSERT(dst->ne[2] == mixes->ne[1]);
     GGML_ASSERT(scale->ne[0] >= 3);
-    GGML_ASSERT(base->ne[0] == hc_mix_dim);
+    GGML_ASSERT(ತಳ->ne[0] == hc_mix_dim);
 
     GGML_TENSOR_LOCALS(size_t, nbm, mixes, nb);
     GGML_TENSOR_LOCALS(size_t, nbs, scale, nb);
-    GGML_TENSOR_LOCALS(size_t, nbb, base,  nb);
+    GGML_TENSOR_LOCALS(size_t, nbb, ತಳ,  nb);
     GGML_TENSOR_LOCALS(size_t, nbd, dst,   nb);
 
-    const int64_t n_tokens = mixes->ne[1];
-    const float eps = ggml_get_op_params_f32(dst, 0);
-    const int32_t n_iter = ggml_get_op_params_i32(dst, 1);
+    ಸ್ಥಿರಾಂಕ int64_t n_ಟೋಕನುಗಳು = mixes->ne[1];
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ eps = ggml_get_op_params_f32(dst, 0);
+    ಸ್ಥಿರಾಂಕ int32_t n_iter = ggml_get_op_params_i32(dst, 1);
 
-    queue_ptr stream = ctx.stream();
+    ಸರತಿ_ptr stream = ctx.stream();
 
     dsv4_hc_comb_f32_sycl(
-            (const float *) mixes->data, (const float *) scale->data, (const float *) base->data, (float *) dst->data,
-            n_tokens,
-            nbm0 / sizeof(float), nbm1 / sizeof(float),
-            nbs0 / sizeof(float),
-            nbb0 / sizeof(float),
-            nbd0 / sizeof(float), nbd1 / sizeof(float), nbd2 / sizeof(float),
+            (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) mixes->ದತ್ತಾಂಶ, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) scale->ದತ್ತಾಂಶ, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) ತಳ->ದತ್ತಾಂಶ, (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ,
+            n_ಟೋಕನುಗಳು,
+            nbm0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbm1 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+            nbs0 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+            nbb0 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+            nbd0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbd1 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbd2 / ಗಾತ್ರ(ದಶಮಾಂಶ),
             eps, n_iter, stream);
 }
 
-void ggml_sycl_op_dsv4_hc_post(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_op_dsv4_hc_post(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/4);
-    const ggml_tensor * x        = dst->src[0];
-    const ggml_tensor * residual = dst->src[1];
-    const ggml_tensor * post     = dst->src[2];
-    const ggml_tensor * comb     = dst->src[3];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * x        = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * residual = dst->src[1];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * post     = dst->src[2];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * comb     = dst->src[3];
 
     GGML_ASSERT(x->type == GGML_TYPE_F32);
     GGML_ASSERT(residual->type == GGML_TYPE_F32);
@@ -304,35 +304,35 @@ void ggml_sycl_op_dsv4_hc_post(ggml_backend_sycl_context & ctx, ggml_tensor * ds
     size_t nbc0 = 0;
     size_t nbc1 = 0;
     size_t nbc2 = 0;
-    if (comb) {
+    ಆದರೆ (comb) {
         GGML_ASSERT(comb->type == GGML_TYPE_F32);
         nbc0 = comb->nb[0];
         nbc1 = comb->nb[1];
         nbc2 = comb->nb[2];
     }
 
-    const int64_t n_embd   = x->ne[0];
-    const int64_t n_tokens = x->ne[1];
-    const int64_t hc       = residual->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t n_embd   = x->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t n_ಟೋಕನುಗಳು = x->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t hc       = residual->ne[1];
 
-    queue_ptr stream = ctx.stream();
+    ಸರತಿ_ptr stream = ctx.stream();
 
-    const auto launch = [&](auto has_comb) {
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ launch = [&](ಸ್ವಯಂಚಾಲಿತ has_comb) {
         dsv4_hc_post_f32_sycl<decltype(has_comb)::value>(
-            (const float *) x->data, (const float *) residual->data,
-            (const float *) post->data, comb ? (const float *) comb->data : nullptr, (float *) dst->data,
-            n_embd, hc, n_tokens,
-            nbx0 / sizeof(float), nbx1 / sizeof(float),
-            nbr0 / sizeof(float), nbr1 / sizeof(float), nbr2 / sizeof(float),
-            nbp0 / sizeof(float), nbp1 / sizeof(float),
-            nbc0 / sizeof(float), nbc1 / sizeof(float), nbc2 / sizeof(float),
-            nbd0 / sizeof(float), nbd1 / sizeof(float), nbd2 / sizeof(float),
+            (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) x->ದತ್ತಾಂಶ, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) residual->ದತ್ತಾಂಶ,
+            (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) post->ದತ್ತಾಂಶ, comb ? (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) comb->ದತ್ತಾಂಶ : ಶೂನ್ಯಸೂಚಕ, (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ,
+            n_embd, hc, n_ಟೋಕನುಗಳು,
+            nbx0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbx1 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+            nbr0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbr1 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbr2 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+            nbp0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbp1 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+            nbc0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbc1 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbc2 / ಗಾತ್ರ(ದಶಮಾಂಶ),
+            nbd0 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbd1 / ಗಾತ್ರ(ದಶಮಾಂಶ), nbd2 / ಗಾತ್ರ(ದಶಮಾಂಶ),
             stream);
     };
 
-    if (comb) {
+    ಆದರೆ (comb) {
         launch(std::true_type{});
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         launch(std::false_type{});
     }
 }

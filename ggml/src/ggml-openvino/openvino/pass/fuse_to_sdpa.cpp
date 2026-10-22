@@ -1,56 +1,56 @@
-#include "fuse_to_sdpa.h"
+#ಅನ್ತರ್ಭಾವ "fuse_to_sdpa.h"
 
-#include <openvino/core/graph_util.hpp>
-#include <openvino/core/rt_info.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/scaled_dot_product_attention.hpp>
-#include <openvino/op/softmax.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/pass/pattern/op/label.hpp>
-#include <openvino/pass/pattern/op/pattern.hpp>
-#include <openvino/pass/pattern/op/wrap_type.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/core/graph_util.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/core/rt_info.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/add.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/convert.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/matmul.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/multiply.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/scaled_dot_product_attention.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/softmax.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/transpose.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/pass/pattern/op/label.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/pass/pattern/op/pattern.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/pass/pattern/op/wrap_type.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+ನಾಮಾಕಾಶ ov {
+ನಾಮಾಕಾಶ frontend {
+ನಾಮಾಕಾಶ ggml {
+ನಾಮಾಕಾಶ pass {
 
-FuseToSDPA::FuseToSDPA() {
+Fuse_ಗಮ್ಯ_SDPA::Fuse_ಗಮ್ಯ_SDPA() {
     // Not maintained since FLASH_ATTN_EXT has replaced this pattern
-    const auto m_k = ov::pass::pattern::any_input();
-    const auto m_q = ov::pass::pattern::any_input();
-    const auto m_qk = ov::pass::pattern::wrap_type<ov::op::v0::MatMul>({m_q, m_k});
-    const auto m_qk_f32 = ov::pass::pattern::wrap_type<ov::op::v0::Convert>({m_qk});
-    const auto m_scale = ov::pass::pattern::any_input();
-    const auto m_scaled_qk = ov::pass::pattern::wrap_type<ov::op::v1::Multiply>({m_qk_f32, m_scale});
-    const auto m_mask = ov::pass::pattern::any_input();
-    const auto m_masked_qk = ov::pass::pattern::wrap_type<ov::op::v1::Add>({m_scaled_qk, m_mask});
-    const auto m_softmax_qk = ov::pass::pattern::wrap_type<ov::op::v8::Softmax>({m_masked_qk});
-    const auto m_softmax_qk_f16 = ov::pass::pattern::wrap_type<ov::op::v0::Convert>({m_softmax_qk});
-    const auto m_v = ov::pass::pattern::any_input();
-    const auto m_qkv = ov::pass::pattern::wrap_type<ov::op::v0::MatMul>({m_softmax_qk_f16, m_v});
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_k = ov::pass::pattern::any_ಒಳಹರಿವು();
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_q = ov::pass::pattern::any_ಒಳಹರಿವು();
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_qk = ov::pass::pattern::wrap_type<ov::op::v0::MatMul>({m_q, m_k});
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_qk_f32 = ov::pass::pattern::wrap_type<ov::op::v0::Convert>({m_qk});
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_scale = ov::pass::pattern::any_ಒಳಹರಿವು();
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_scaled_qk = ov::pass::pattern::wrap_type<ov::op::v1::Multiply>({m_qk_f32, m_scale});
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_ಮುಖವಾಡ = ov::pass::pattern::any_ಒಳಹರಿವು();
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_masked_qk = ov::pass::pattern::wrap_type<ov::op::v1::ಕೂಡಿಸು>({m_scaled_qk, m_ಮುಖವಾಡ});
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_softmax_qk = ov::pass::pattern::wrap_type<ov::op::v8::Softmax>({m_masked_qk});
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_softmax_qk_f16 = ov::pass::pattern::wrap_type<ov::op::v0::Convert>({m_softmax_qk});
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_v = ov::pass::pattern::any_ಒಳಹರಿವು();
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ m_qkv = ov::pass::pattern::wrap_type<ov::op::v0::MatMul>({m_softmax_qk_f16, m_v});
 
-    const auto callback = [=](ov::pass::pattern::Matcher & m) {
-        auto & pattern_to_output = m.get_pattern_value_map();
-        auto k = pattern_to_output[m_k];
-        auto q = pattern_to_output[m_q];
-        auto v = pattern_to_output[m_v];
-        auto mask = pattern_to_output[m_mask];
-        auto scale = pattern_to_output[m_scale];
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ callback = [=](ov::pass::pattern::Matcher & m) {
+        ಸ್ವಯಂಚಾಲಿತ & ನಮೂನೆ_ಗಮ್ಯ_output = m.get_ನಮೂನೆ_ಮೌಲ್ಯ_map();
+        ಸ್ವಯಂಚಾಲಿತ k = ನಮೂನೆ_ಗಮ್ಯ_output[m_k];
+        ಸ್ವಯಂಚಾಲಿತ q = ನಮೂನೆ_ಗಮ್ಯ_output[m_q];
+        ಸ್ವಯಂಚಾಲಿತ v = ನಮೂನೆ_ಗಮ್ಯ_output[m_v];
+        ಸ್ವಯಂಚಾಲಿತ ಮುಖವಾಡ = ನಮೂನೆ_ಗಮ್ಯ_output[m_ಮುಖವಾಡ];
+        ಸ್ವಯಂಚಾಲಿತ scale = ನಮೂನೆ_ಗಮ್ಯ_output[m_scale];
 
-        auto mask_f16 = register_new_node<ov::op::v0::Convert>(mask, ov::element::f16);
-        auto scale_f16 = register_new_node<ov::op::v0::Convert>(scale, ov::element::f16);
-        auto sdpa = std::make_shared<ov::op::v13::ScaledDotProductAttention>(q, k, v, mask_f16, scale_f16, false);
+        ಸ್ವಯಂಚಾಲಿತ ಮುಖವಾಡ_f16 = ರಿಜಿಸ್ಟರ್_new_ಗಂಟು<ov::op::v0::Convert>(ಮುಖವಾಡ, ov::element::f16);
+        ಸ್ವಯಂಚಾಲಿತ scale_f16 = ರಿಜಿಸ್ಟರ್_new_ಗಂಟು<ov::op::v0::Convert>(scale, ov::element::f16);
+        ಸ್ವಯಂಚಾಲಿತ sdpa = std::make_shared<ov::op::v13::Scaled_Dot_ಗುಣಲಬ್ಧ_Attention>(q, k, v, ಮುಖವಾಡ_f16, scale_f16, ಸುಳ್ಳು);
 
-        ov::replace_node(m.get_match_root(), sdpa);
+        ov::replace_ಗಂಟು(m.get_ಹೊಂದಿಕೆ_ಬೇರು(), sdpa);
         ov::copy_runtime_info(m.get_matched_nodes(), sdpa);
 
-        return true;
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     };
-    register_matcher(std::make_shared<ov::pass::pattern::Matcher>(m_qkv, "ov::frontend::ggml::pass::FuseToSDPA"),
+    ರಿಜಿಸ್ಟರ್_matcher(std::make_shared<ov::pass::pattern::Matcher>(m_qkv, "ov::frontend::ggml::pass::FuseToSDPA"),
                      callback);
 }
 

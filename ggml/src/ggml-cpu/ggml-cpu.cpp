@@ -1,448 +1,448 @@
-#include "ggml-backend.h"
-#include "ggml-backend-impl.h"
-#include "ggml-cpu.h"
-#include "repack.h"
-#include "traits.h"
-#include "ggml-impl.h"
-#include "amx/amx.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-cpu.h"
+#ಅನ್ತರ್ಭಾವ "repack.h"
+#ಅನ್ತರ್ಭಾವ "traits.h"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "amx/amx.h"
 
-#include <cctype>
-#include <string>
-#include <vector>
+#ಅನ್ತರ್ಭಾವ <cctype>
+#ಅನ್ತರ್ಭಾವ <string>
+#ಅನ್ತರ್ಭಾವ <vector>
 
-#ifdef GGML_USE_CPU_HBM
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_CPU_HBM
 #    include "hbm.h"
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#ifdef GGML_USE_CPU_KLEIDIAI
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_CPU_KLEIDIAI
 #    include "kleidiai/kleidiai.h"
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#ifdef GGML_USE_CPU_RISCV64_SPACEMIT
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_CPU_RISCV64_SPACEMIT
 #    include "spacemit/ime.h"
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#if defined(_WIN32)
-#    define WIN32_LEAN_AND_MEAN
+#ಆದರೆ defined(_WIN32)
+#    define WIN32_LEAN_AND_ಸರಾಸರಿ
 #    ifndef NOMINMAX
 #        define NOMINMAX
 #    endif
 #    include <windows.h>
-#else
+#ಇಲ್ಲದಿದ್ದರೆ
 #    include <unistd.h>
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#if defined(__APPLE__)
+#ಆದರೆ defined(__APPLE__)
 #    include <sys/sysctl.h>
 #    include <sys/types.h>
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
 // ggml-backend interface
 
-std::vector<ggml_backend_buffer_type_t> & ggml_backend_cpu_get_extra_buffer_types() {
-    static std::vector<ggml_backend_buffer_type_t> bufts = []() {
-        std::vector<ggml_backend_buffer_type_t> bufts;
+std::vector<ggml_backend_ಬಫರ್_type_t> & ggml_backend_cpu_get_extra_ಬಫರ್_types() {
+    ಸ್ಥಿರ std::vector<ggml_backend_ಬಫರ್_type_t> bufts = []() {
+        std::vector<ggml_backend_ಬಫರ್_type_t> bufts;
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
-        if (ggml_backend_amx_buffer_type()) {
-            bufts.push_back(ggml_backend_amx_buffer_type());
+#ಆದರೆ defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+        ಆದರೆ (ggml_backend_amx_ಬಫರ್_type()) {
+            bufts.push_back(ggml_backend_amx_ಬಫರ್_type());
         }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#ifdef GGML_USE_CPU_RISCV64_SPACEMIT
-        if (ggml_backend_cpu_riscv64_spacemit_buffer_type()) {
-            bufts.push_back(ggml_backend_cpu_riscv64_spacemit_buffer_type());
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_CPU_RISCV64_SPACEMIT
+        ಆದರೆ (ggml_backend_cpu_riscv64_spacemit_ಬಫರ್_type()) {
+            bufts.push_back(ggml_backend_cpu_riscv64_spacemit_ಬಫರ್_type());
         }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#ifdef GGML_USE_CPU_KLEIDIAI
-        if (ggml_backend_cpu_kleidiai_buffer_type()) {
-            bufts.push_back(ggml_backend_cpu_kleidiai_buffer_type());
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_CPU_KLEIDIAI
+        ಆದರೆ (ggml_backend_cpu_kleidiai_ಬಫರ್_type()) {
+            bufts.push_back(ggml_backend_cpu_kleidiai_ಬಫರ್_type());
         }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#ifdef GGML_USE_CPU_REPACK
-        if (ggml_backend_cpu_repack_buffer_type()) {
-            bufts.push_back(ggml_backend_cpu_repack_buffer_type());
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_CPU_REPACK
+        ಆದರೆ (ggml_backend_cpu_repack_ಬಫರ್_type()) {
+            bufts.push_back(ggml_backend_cpu_repack_ಬಫರ್_type());
         }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-        return bufts;
+        ಹಿಂತಿರುಗಿ bufts;
     }();
 
-    return bufts;
+    ಹಿಂತಿರುಗಿ bufts;
 }
 
-static ggml_backend_buffer_type_t * ggml_backend_cpu_device_get_extra_buffers_type(ggml_backend_dev_t device) {
-    static std::vector<ggml_backend_buffer_type_t> extra_bufts = [] {
-        std::vector<ggml_backend_buffer_type_t> bufts = ggml_backend_cpu_get_extra_buffer_types();
-        bufts.push_back(nullptr);
-        return bufts;
+ಸ್ಥಿರ ggml_backend_ಬಫರ್_type_t * ggml_backend_cpu_device_get_extra_buffers_type(ggml_backend_dev_t device) {
+    ಸ್ಥಿರ std::vector<ggml_backend_ಬಫರ್_type_t> extra_bufts = [] {
+        std::vector<ggml_backend_ಬಫರ್_type_t> bufts = ggml_backend_cpu_get_extra_ಬಫರ್_types();
+        bufts.push_back(ಶೂನ್ಯಸೂಚಕ);
+        ಹಿಂತಿರುಗಿ bufts;
     }();
 
-    return extra_bufts.data();
+    ಹಿಂತಿರುಗಿ extra_bufts.ದತ್ತಾಂಶ();
 
-    GGML_UNUSED(device);
+    GGML_ಬಳಸದ(device);
 }
 
-static bool ggml_backend_cpu_is_extra_buffer_type(ggml_backend_buffer_type_t buft) {
-    for (auto * extra : ggml_backend_cpu_get_extra_buffer_types()) {
-        if (extra == buft) {
-            return true;
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cpu_is_extra_ಬಫರ್_type(ggml_backend_ಬಫರ್_type_t buft) {
+    ಗಾಗಿ (ಸ್ವಯಂಚಾಲಿತ * extra : ggml_backend_cpu_get_extra_ಬಫರ್_types()) {
+        ಆದರೆ (extra == buft) {
+            ಹಿಂತಿರುಗಿ ನಿಜ;
         }
     }
-    return false;
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }
 
 // CPU backend - backend (stream)
 
-struct ggml_backend_cpu_context {
-    int                 n_threads;
+ರಚನೆ ggml_backend_cpu_context {
+    ಪೂರ್ಣಾಂಕ                 n_ಎಳೆಗಳು;
     ggml_threadpool_t   threadpool;
 
-    uint8_t *           work_data;
-    size_t              work_size;
+    uint8_t *           work_ದತ್ತಾಂಶ;
+    size_t              work_ಗಾತ್ರ;
 
     ggml_abort_callback abort_callback;
-    void *              abort_callback_data;
+    ಶೂನ್ಯ *              abort_callback_ದತ್ತಾಂಶ;
 
-    bool                use_ref;  // use reference implementation
+    ತಾರ್ಕಿಕ                use_ref;  // use reference implementation
 };
 
-static const char * ggml_backend_cpu_get_name(ggml_backend_t backend) {
-    return "CPU";
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cpu_get_name(ggml_backend_t backend) {
+    ಹಿಂತಿರುಗಿ "CPU";
 
-    GGML_UNUSED(backend);
+    GGML_ಬಳಸದ(backend);
 }
 
-static void ggml_backend_cpu_free(ggml_backend_t backend) {
-    struct ggml_backend_cpu_context * cpu_ctx = (struct ggml_backend_cpu_context *)backend->context;
-    delete[] cpu_ctx->work_data;
-    delete cpu_ctx;
-    delete backend;
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cpu_free(ggml_backend_t backend) {
+    ರಚನೆ ggml_backend_cpu_context * cpu_ctx = (ರಚನೆ ggml_backend_cpu_context *)backend->context;
+    ಅಳಿಸು[] cpu_ctx->work_ದತ್ತಾಂಶ;
+    ಅಳಿಸು cpu_ctx;
+    ಅಳಿಸು backend;
 }
 
-struct ggml_backend_plan_cpu {
-    struct ggml_cplan cplan;
-    struct ggml_cgraph cgraph;
+ರಚನೆ ggml_backend_plan_cpu {
+    ರಚನೆ ggml_cplan cplan;
+    ರಚನೆ ggml_cgraph cgraph;
 };
 
-static ggml_backend_graph_plan_t ggml_backend_cpu_graph_plan_create(ggml_backend_t backend, const struct ggml_cgraph * cgraph) {
-    struct ggml_backend_cpu_context * cpu_ctx = (struct ggml_backend_cpu_context *)backend->context;
+ಸ್ಥಿರ ggml_backend_ನಕ್ಷೆ_plan_t ggml_backend_cpu_ನಕ್ಷೆ_plan_create(ggml_backend_t backend, ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_cgraph * cgraph) {
+    ರಚನೆ ggml_backend_cpu_context * cpu_ctx = (ರಚನೆ ggml_backend_cpu_context *)backend->context;
 
-    struct ggml_backend_plan_cpu * cpu_plan = new ggml_backend_plan_cpu;
+    ರಚನೆ ggml_backend_plan_cpu * cpu_plan = ಹೊಸ ggml_backend_plan_cpu;
 
-    cpu_plan->cplan = ggml_graph_plan(cgraph, cpu_ctx->n_threads, cpu_ctx->threadpool);
+    cpu_plan->cplan = ggml_ನಕ್ಷೆ_plan(cgraph, cpu_ctx->n_ಎಳೆಗಳು, cpu_ctx->threadpool);
     cpu_plan->cgraph = *cgraph; // FIXME: deep copy
 
-    if (cpu_plan->cplan.work_size > 0) {
-        cpu_plan->cplan.work_data = new uint8_t[cpu_plan->cplan.work_size];
-        if (cpu_plan->cplan.work_data == NULL) {
-            delete cpu_plan;
-            return NULL;
+    ಆದರೆ (cpu_plan->cplan.work_ಗಾತ್ರ > 0) {
+        cpu_plan->cplan.work_ದತ್ತಾಂಶ = ಹೊಸ uint8_t[cpu_plan->cplan.work_ಗಾತ್ರ];
+        ಆದರೆ (cpu_plan->cplan.work_ದತ್ತಾಂಶ == ಖಾಲಿ) {
+            ಅಳಿಸು cpu_plan;
+            ಹಿಂತಿರುಗಿ ಖಾಲಿ;
         }
     }
 
     cpu_plan->cplan.abort_callback      = cpu_ctx->abort_callback;
-    cpu_plan->cplan.abort_callback_data = cpu_ctx->abort_callback_data;
+    cpu_plan->cplan.abort_callback_ದತ್ತಾಂಶ = cpu_ctx->abort_callback_ದತ್ತಾಂಶ;
     cpu_plan->cplan.use_ref             = cpu_ctx->use_ref;
 
-    return cpu_plan;
+    ಹಿಂತಿರುಗಿ cpu_plan;
 }
 
-static void ggml_backend_cpu_graph_plan_free(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
-    struct ggml_backend_plan_cpu * cpu_plan = (struct ggml_backend_plan_cpu *)plan;
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cpu_ನಕ್ಷೆ_plan_free(ggml_backend_t backend, ggml_backend_ನಕ್ಷೆ_plan_t plan) {
+    ರಚನೆ ggml_backend_plan_cpu * cpu_plan = (ರಚನೆ ggml_backend_plan_cpu *)plan;
 
-    delete[] cpu_plan->cplan.work_data;
-    delete cpu_plan;
+    ಅಳಿಸು[] cpu_plan->cplan.work_ದತ್ತಾಂಶ;
+    ಅಳಿಸು cpu_plan;
 
-    GGML_UNUSED(backend);
+    GGML_ಬಳಸದ(backend);
 }
 
-static enum ggml_status ggml_backend_cpu_graph_plan_compute(ggml_backend_t backend, ggml_backend_graph_plan_t plan) {
-    struct ggml_backend_plan_cpu * cpu_plan = (struct ggml_backend_plan_cpu *)plan;
+ಸ್ಥಿರ ಎಣಿಕೆ ggml_ಸ್ಥಿತಿ ggml_backend_cpu_ನಕ್ಷೆ_plan_compute(ggml_backend_t backend, ggml_backend_ನಕ್ಷೆ_plan_t plan) {
+    ರಚನೆ ggml_backend_plan_cpu * cpu_plan = (ರಚನೆ ggml_backend_plan_cpu *)plan;
 
-    return ggml_graph_compute(&cpu_plan->cgraph, &cpu_plan->cplan);
+    ಹಿಂತಿರುಗಿ ggml_ನಕ್ಷೆ_compute(&cpu_plan->cgraph, &cpu_plan->cplan);
 
-    GGML_UNUSED(backend);
+    GGML_ಬಳಸದ(backend);
 }
 
-static enum ggml_status ggml_backend_cpu_graph_compute(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
-    struct ggml_backend_cpu_context * cpu_ctx = (struct ggml_backend_cpu_context *)backend->context;
+ಸ್ಥಿರ ಎಣಿಕೆ ggml_ಸ್ಥಿತಿ ggml_backend_cpu_ನಕ್ಷೆ_compute(ggml_backend_t backend, ರಚನೆ ggml_cgraph * cgraph) {
+    ರಚನೆ ggml_backend_cpu_context * cpu_ctx = (ರಚನೆ ggml_backend_cpu_context *)backend->context;
 
-    struct ggml_cplan cplan = ggml_graph_plan(cgraph, cpu_ctx->n_threads, cpu_ctx->threadpool);
+    ರಚನೆ ggml_cplan cplan = ggml_ನಕ್ಷೆ_plan(cgraph, cpu_ctx->n_ಎಳೆಗಳು, cpu_ctx->threadpool);
 
-    if (cpu_ctx->work_size < cplan.work_size) {
-        delete[] cpu_ctx->work_data;
-        cpu_ctx->work_data = new uint8_t[cplan.work_size];
-        if (cpu_ctx->work_data == NULL) {
-            cpu_ctx->work_size = 0;
-            return GGML_STATUS_ALLOC_FAILED;
+    ಆದರೆ (cpu_ctx->work_ಗಾತ್ರ < cplan.work_ಗಾತ್ರ) {
+        ಅಳಿಸು[] cpu_ctx->work_ದತ್ತಾಂಶ;
+        cpu_ctx->work_ದತ್ತಾಂಶ = ಹೊಸ uint8_t[cplan.work_ಗಾತ್ರ];
+        ಆದರೆ (cpu_ctx->work_ದತ್ತಾಂಶ == ಖಾಲಿ) {
+            cpu_ctx->work_ಗಾತ್ರ = 0;
+            ಹಿಂತಿರುಗಿ GGML_ಸ್ಥಿತಿ_ALLOC_FAILED;
         }
-        cpu_ctx->work_size = cplan.work_size;
+        cpu_ctx->work_ಗಾತ್ರ = cplan.work_ಗಾತ್ರ;
     }
-    cplan.work_data = (uint8_t *)cpu_ctx->work_data;
+    cplan.work_ದತ್ತಾಂಶ = (uint8_t *)cpu_ctx->work_ದತ್ತಾಂಶ;
 
     cplan.abort_callback      = cpu_ctx->abort_callback;
-    cplan.abort_callback_data = cpu_ctx->abort_callback_data;
+    cplan.abort_callback_ದತ್ತಾಂಶ = cpu_ctx->abort_callback_ದತ್ತಾಂಶ;
     cplan.use_ref             = cpu_ctx->use_ref;
 
-    return ggml_graph_compute(cgraph, &cplan);
+    ಹಿಂತಿರುಗಿ ggml_ನಕ್ಷೆ_compute(cgraph, &cplan);
 }
 
-static const struct ggml_backend_i ggml_backend_cpu_i = {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_backend_i ggml_backend_cpu_i = {
     /* .get_name                = */ ggml_backend_cpu_get_name,
     /* .free                    = */ ggml_backend_cpu_free,
-    /* .set_tensor_async        = */ NULL,
-    /* .get_tensor_async        = */ NULL,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
-    /* .cpy_tensor_async        = */ NULL,
-    /* .synchronize             = */ NULL,
-    /* .graph_plan_create       = */ ggml_backend_cpu_graph_plan_create,
-    /* .graph_plan_free         = */ ggml_backend_cpu_graph_plan_free,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ ggml_backend_cpu_graph_plan_compute,
-    /* .graph_compute           = */ ggml_backend_cpu_graph_compute,
-    /* .event_record            = */ NULL,
-    /* .event_wait              = */ NULL,
-    /* .graph_optimize          = */ NULL,
+    /* .set_tensor_async        = */ ಖಾಲಿ,
+    /* .get_tensor_async        = */ ಖಾಲಿ,
+    /* .set_tensor_2d_async     = */ ಖಾಲಿ,
+    /* .get_tensor_2d_async     = */ ಖಾಲಿ,
+    /* .cpy_tensor_async        = */ ಖಾಲಿ,
+    /* .synchronize             = */ ಖಾಲಿ,
+    /* .graph_plan_create       = */ ggml_backend_cpu_ನಕ್ಷೆ_plan_create,
+    /* .graph_plan_free         = */ ggml_backend_cpu_ನಕ್ಷೆ_plan_free,
+    /* .graph_plan_update       = */ ಖಾಲಿ,
+    /* .graph_plan_compute      = */ ggml_backend_cpu_ನಕ್ಷೆ_plan_compute,
+    /* .graph_compute           = */ ggml_backend_cpu_ನಕ್ಷೆ_compute,
+    /* .event_record            = */ ಖಾಲಿ,
+    /* .event_wait              = */ ಖಾಲಿ,
+    /* .graph_optimize          = */ ಖಾಲಿ,
 };
 
-static ggml_guid_t ggml_backend_cpu_guid(void) {
-    static ggml_guid guid = { 0xaa, 0x67, 0xc7, 0x43, 0x96, 0xe6, 0xa3, 0x8a, 0xe3, 0xaf, 0xea, 0x92, 0x36, 0xbc, 0xfc, 0x89 };
-    return &guid;
+ಸ್ಥಿರ ggml_guid_t ggml_backend_cpu_guid(ಶೂನ್ಯ) {
+    ಸ್ಥಿರ ggml_guid guid = { 0xaa, 0x67, 0xc7, 0x43, 0x96, 0xe6, 0xa3, 0x8a, 0xe3, 0xaf, 0xea, 0x92, 0x36, 0xbc, 0xfc, 0x89 };
+    ಹಿಂತಿರುಗಿ &guid;
 }
 
-ggml_backend_t ggml_backend_cpu_init(void) {
+ggml_backend_t ggml_backend_cpu_init(ಶೂನ್ಯ) {
     // initialize CPU backend now to avoid slowing the first graph computation
     ggml_cpu_init();
 
-    struct ggml_backend_cpu_context * ctx = new ggml_backend_cpu_context;
-    if (ctx == NULL) {
-        return NULL;
+    ರಚನೆ ggml_backend_cpu_context * ctx = ಹೊಸ ggml_backend_cpu_context;
+    ಆದರೆ (ctx == ಖಾಲಿ) {
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    ctx->n_threads           = GGML_DEFAULT_N_THREADS;
-    ctx->threadpool          = NULL;
-    ctx->work_data           = NULL;
-    ctx->work_size           = 0;
-    ctx->abort_callback      = NULL;
-    ctx->abort_callback_data = NULL;
-    ctx->use_ref             = false;
+    ctx->n_ಎಳೆಗಳು           = GGML_DEFAULT_N_ಎಳೆಗಳು;
+    ctx->threadpool          = ಖಾಲಿ;
+    ctx->work_ದತ್ತಾಂಶ           = ಖಾಲಿ;
+    ctx->work_ಗಾತ್ರ           = 0;
+    ctx->abort_callback      = ಖಾಲಿ;
+    ctx->abort_callback_ದತ್ತಾಂಶ = ಖಾಲಿ;
+    ctx->use_ref             = ಸುಳ್ಳು;
 
-    ggml_backend_t cpu_backend = new ggml_backend {
+    ggml_backend_t cpu_backend = ಹೊಸ ggml_backend {
         /* .guid    = */ ggml_backend_cpu_guid(),
         /* .iface   = */ ggml_backend_cpu_i,
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
         /* .context = */ ctx,
     };
 
-    if (cpu_backend == NULL) {
-        delete ctx;
-        return NULL;
+    ಆದರೆ (cpu_backend == ಖಾಲಿ) {
+        ಅಳಿಸು ctx;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    return cpu_backend;
+    ಹಿಂತಿರುಗಿ cpu_backend;
 }
 
-bool ggml_backend_is_cpu(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_cpu_guid());
+ತಾರ್ಕಿಕ ggml_backend_is_cpu(ggml_backend_t backend) {
+    ಹಿಂತಿರುಗಿ backend != ಖಾಲಿ && ggml_guid_matches(backend->guid, ggml_backend_cpu_guid());
 }
 
-void ggml_backend_cpu_set_n_threads(ggml_backend_t backend_cpu, int n_threads) {
+ಶೂನ್ಯ ggml_backend_cpu_ಗಣ_n_ಎಳೆಗಳು(ggml_backend_t backend_cpu, ಪೂರ್ಣಾಂಕ n_ಎಳೆಗಳು) {
     GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
 
-    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
-    ctx->n_threads = n_threads;
+    ರಚನೆ ggml_backend_cpu_context * ctx = (ರಚನೆ ggml_backend_cpu_context *)backend_cpu->context;
+    ctx->n_ಎಳೆಗಳು = n_ಎಳೆಗಳು;
 }
 
-void ggml_backend_cpu_set_threadpool(ggml_backend_t backend_cpu, ggml_threadpool_t threadpool) {
+ಶೂನ್ಯ ggml_backend_cpu_ಗಣ_threadpool(ggml_backend_t backend_cpu, ggml_threadpool_t threadpool) {
     GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
 
-    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
+    ರಚನೆ ggml_backend_cpu_context * ctx = (ರಚನೆ ggml_backend_cpu_context *)backend_cpu->context;
 
-    if (ctx->threadpool && ctx->threadpool != threadpool) {
+    ಆದರೆ (ctx->threadpool && ctx->threadpool != threadpool) {
         // already had a different threadpool, pause/suspend it before switching
         ggml_threadpool_pause(ctx->threadpool);
     }
     ctx->threadpool = threadpool;
 }
 
-void ggml_backend_cpu_set_abort_callback(ggml_backend_t backend_cpu, ggml_abort_callback abort_callback, void * abort_callback_data) {
+ಶೂನ್ಯ ggml_backend_cpu_ಗಣ_abort_callback(ggml_backend_t backend_cpu, ggml_abort_callback abort_callback, ಶೂನ್ಯ * abort_callback_ದತ್ತಾಂಶ) {
     GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
 
-    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
+    ರಚನೆ ggml_backend_cpu_context * ctx = (ರಚನೆ ggml_backend_cpu_context *)backend_cpu->context;
     ctx->abort_callback = abort_callback;
-    ctx->abort_callback_data = abort_callback_data;
+    ctx->abort_callback_ದತ್ತಾಂಶ = abort_callback_ದತ್ತಾಂಶ;
 }
 
-void ggml_backend_cpu_set_use_ref(ggml_backend_t backend_cpu, bool use_ref) {
+ಶೂನ್ಯ ggml_backend_cpu_ಗಣ_use_ref(ggml_backend_t backend_cpu, ತಾರ್ಕಿಕ use_ref) {
     GGML_ASSERT(ggml_backend_is_cpu(backend_cpu));
 
-    struct ggml_backend_cpu_context * ctx = (struct ggml_backend_cpu_context *)backend_cpu->context;
+    ರಚನೆ ggml_backend_cpu_context * ctx = (ರಚನೆ ggml_backend_cpu_context *)backend_cpu->context;
     ctx->use_ref = use_ref;
 }
 
 // CPU backend - device
 
-struct ggml_backend_cpu_device_context {
+ರಚನೆ ggml_backend_cpu_device_context {
     std::string description = "CPU";
 
     ggml_backend_cpu_device_context() {
-#ifdef __APPLE__
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __APPLE__
         size_t len = 0;
-        if (!sysctlbyname("machdep.cpu.brand_string", NULL, &len, NULL, 0)) {
+        ಆದರೆ (!sysctlbyname("machdep.cpu.brand_string", ಖಾಲಿ, &len, ಖಾಲಿ, 0)) {
             description.resize(len);
-            sysctlbyname("machdep.cpu.brand_string", &description[0], &len, NULL, 0); // NOLINT
+            sysctlbyname("machdep.cpu.brand_string", &description[0], &len, ಖಾಲಿ, 0); // NOLINT
         }
-#elif defined(__linux__)
+#ಅಥವಾಆದರೆ defined(__linux__)
         FILE * f = fopen("/proc/cpuinfo", "r");
-        if (f) {
-            char buf[1024];
-            while (fgets(buf, sizeof(buf), f)) {
-                if (strncmp(buf, "model name", 10) == 0) {
-                    char * p = strchr(buf, ':');
-                    if (p) {
+        ಆದರೆ (f) {
+            ಅಕ್ಷರ buf[1024];
+            ಆಗ (fgets(buf, ಗಾತ್ರ(buf), f)) {
+                ಆದರೆ (ಅಕ್ಷರಸರಣಿ_ಹೋಲಿಕೆ(buf, "model name", 10) == 0) {
+                    ಅಕ್ಷರ * p = strchr(buf, ':');
+                    ಆದರೆ (p) {
                         p++;
-                        while (std::isspace(*p)) {
+                        ಆಗ (std::ಖಾಲಿಯೇ(*p)) {
                             p++;
                         }
-                        while (std::isspace(p[strlen(p) - 1])) {
-                            p[strlen(p) - 1] = '\0';
+                        ಆಗ (std::ಖಾಲಿಯೇ(p[ಅಕ್ಷರಸರಣಿ_ಉದ್ದ(p) - 1])) {
+                            p[ಅಕ್ಷರಸರಣಿ_ಉದ್ದ(p) - 1] = '\0';
                         }
                         description = p;
-                        break;
+                        ನಿಲ್ಲಿಸು;
                     }
                 }
             }
             fclose(f);
         }
-#elif defined(_WIN32)
-        HKEY hKey;
-        if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-                        TEXT("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"),
+#ಅಥವಾಆದರೆ defined(_WIN32)
+        HKEY h_ಕೀಲಿ;
+        ಆದರೆ (Reg_Open_ಕೀಲಿ_Ex(HKEY_LOCAL_MACHINE,
+                        ಪಠ್ಯ("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0"),
                         0,
-                        KEY_READ,
-                        &hKey) == ERROR_SUCCESS) {
-            DWORD cpu_brand_size = 0;
-            if (RegQueryValueExA(hKey,
+                        ಕೀಲಿ_READ,
+                        &h_ಕೀಲಿ) == ERROR_SUCCESS) {
+            DWORD cpu_brand_ಗಾತ್ರ = 0;
+            ಆದರೆ (Reg_Query_ಮೌಲ್ಯ_Ex_A(h_ಕೀಲಿ,
                                 "ProcessorNameString",
-                                NULL,
-                                NULL,
-                                NULL,
-                                &cpu_brand_size) == ERROR_SUCCESS) {
-                description.resize(cpu_brand_size);
-                if (RegQueryValueExA(hKey,
+                                ಖಾಲಿ,
+                                ಖಾಲಿ,
+                                ಖಾಲಿ,
+                                &cpu_brand_ಗಾತ್ರ) == ERROR_SUCCESS) {
+                description.resize(cpu_brand_ಗಾತ್ರ);
+                ಆದರೆ (Reg_Query_ಮೌಲ್ಯ_Ex_A(h_ಕೀಲಿ,
                                     "ProcessorNameString",
-                                    NULL,
-                                    NULL,
+                                    ಖಾಲಿ,
+                                    ಖಾಲಿ,
                                     (LPBYTE)&description[0], // NOLINT
-                                    &cpu_brand_size) == ERROR_SUCCESS) {
-                    if (description.find('\0') != std::string::npos) {
+                                    &cpu_brand_ಗಾತ್ರ) == ERROR_SUCCESS) {
+                    ಆದರೆ (description.find('\0') != std::string::npos) {
                         description.resize(description.find('\0'));
                     }
                 }
             }
-            RegCloseKey(hKey);
+            Reg_Close_ಕೀಲಿ(h_ಕೀಲಿ);
         }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
     }
 };
 
-static const char * ggml_backend_cpu_device_get_name(ggml_backend_dev_t dev) {
-    return "CPU";
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cpu_device_get_name(ggml_backend_dev_t dev) {
+    ಹಿಂತಿರುಗಿ "CPU";
 
-    GGML_UNUSED(dev);
+    GGML_ಬಳಸದ(dev);
 }
 
-static const char * ggml_backend_cpu_device_get_description(ggml_backend_dev_t dev) {
-    struct ggml_backend_cpu_device_context * ctx = (struct ggml_backend_cpu_device_context *)dev->context;
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cpu_device_get_description(ggml_backend_dev_t dev) {
+    ರಚನೆ ggml_backend_cpu_device_context * ctx = (ರಚನೆ ggml_backend_cpu_device_context *)dev->context;
 
-    return ctx->description.c_str();
+    ಹಿಂತಿರುಗಿ ctx->description.c_str();
 }
 
-static void ggml_backend_cpu_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
-#ifdef _WIN32
-    MEMORYSTATUSEX status;
-    status.dwLength = sizeof(status);
-    GlobalMemoryStatusEx(&status);
-    *total = status.ullTotalPhys;
-    *free = status.ullAvailPhys;
-#else
-    long pages = sysconf(_SC_PHYS_PAGES);
-    long page_size = sysconf(_SC_PAGE_SIZE);
-    *total = pages * page_size;
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cpu_device_get_ಸ್ಮರಣೆ(ggml_backend_dev_t dev, size_t * ಬಿಡುಗಡೆ, size_t * ಒಟ್ಟು) {
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ _WIN32
+    MEMORYSTATUSEX ಸ್ಥಿತಿ_2;
+    ಸ್ಥಿತಿ_2.dw_ಉದ್ದಳತೆ = ಗಾತ್ರ(ಸ್ಥಿತಿ_2);
+    Global_ಸ್ಮರಣೆ_ಸ್ಥಿತಿ_Ex(&ಸ್ಥಿತಿ_2);
+    *ಒಟ್ಟು = ಸ್ಥಿತಿ_2.ull_ಒಟ್ಟು_Phys;
+    *ಬಿಡುಗಡೆ = ಸ್ಥಿತಿ_2.ullAvailPhys;
+#ಇಲ್ಲದಿದ್ದರೆ
+    ದೀರ್ಘ ಪುಟಗಳು = sysconf(_SC_PHYS_PAGES);
+    ದೀರ್ಘ ಪುಟ_ಗಾತ್ರ = sysconf(_SC_PAGE_SIZE);
+    *ಒಟ್ಟು = ಪುಟಗಳು * ಪುಟ_ಗಾತ್ರ;
 
     // "free" system memory is ill-defined, for practical purposes assume that all of it is free:
-    *free = *total;
-#endif // _WIN32
+    *ಬಿಡುಗಡೆ = *ಒಟ್ಟು;
+#ಆದರೆ_ಅಂತ್ಯ // _WIN32
 
-    GGML_UNUSED(dev);
+    GGML_ಬಳಸದ(dev);
 }
 
-static enum ggml_backend_dev_type ggml_backend_cpu_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_CPU;
+ಸ್ಥಿರ ಎಣಿಕೆ ggml_backend_dev_type ggml_backend_cpu_device_get_type(ggml_backend_dev_t dev) {
+    ಹಿಂತಿರುಗಿ GGML_BACKEND_DEVICE_TYPE_CPU;
 
-    GGML_UNUSED(dev);
+    GGML_ಬಳಸದ(dev);
 }
 
-static void ggml_backend_cpu_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cpu_device_get_props(ggml_backend_dev_t dev, ರಚನೆ ggml_backend_dev_props * props) {
     props->name        = ggml_backend_cpu_device_get_name(dev);
     props->description = ggml_backend_cpu_device_get_description(dev);
     props->type        = ggml_backend_cpu_device_get_type(dev);
-    ggml_backend_cpu_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_cpu_device_get_ಸ್ಮರಣೆ(dev, &props->ಸ್ಮರಣೆ_free, &props->ಸ್ಮರಣೆ_ಒಟ್ಟು);
     props->caps = {
-        /* .async                 = */ false,
-        /* .host_buffer           = */ false,
-        /* .buffer_from_host_ptr  = */ true,
-        /* .events                = */ false,
-        /* .mmap_support          = */ true,
+        /* .async                 = */ ಸುಳ್ಳು,
+        /* .host_buffer           = */ ಸುಳ್ಳು,
+        /* .buffer_from_host_ptr  = */ ನಿಜ,
+        /* .events                = */ ಸುಳ್ಳು,
+        /* .mmap_support          = */ ನಿಜ,
     };
 }
 
-static ggml_backend_t ggml_backend_cpu_device_init_backend(ggml_backend_dev_t dev, const char * params) {
-    return ggml_backend_cpu_init();
+ಸ್ಥಿರ ggml_backend_t ggml_backend_cpu_device_init_backend(ggml_backend_dev_t dev, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * params) {
+    ಹಿಂತಿರುಗಿ ggml_backend_cpu_init();
 
-    GGML_UNUSED(dev);
-    GGML_UNUSED(params);
+    GGML_ಬಳಸದ(dev);
+    GGML_ಬಳಸದ(params);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_cpu_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_cpu_buffer_type();
+ಸ್ಥಿರ ggml_backend_ಬಫರ್_type_t ggml_backend_cpu_device_get_ಬಫರ್_type(ggml_backend_dev_t dev) {
+    ಹಿಂತಿರುಗಿ ggml_backend_cpu_ಬಫರ್_type();
 
-    GGML_UNUSED(dev);
+    GGML_ಬಳಸದ(dev);
 }
 
-static ggml_backend_buffer_t ggml_backend_cpu_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    return ggml_backend_cpu_buffer_from_ptr(ptr, size);
+ಸ್ಥಿರ ggml_backend_ಬಫರ್_t ggml_backend_cpu_device_ಬಫರ್_from_host_ptr(ggml_backend_dev_t dev, ಶೂನ್ಯ * ptr, size_t size, size_t max_tensor_ಗಾತ್ರ) {
+    ಹಿಂತಿರುಗಿ ggml_backend_cpu_ಬಫರ್_from_ptr(ptr, size);
 
-    GGML_UNUSED(dev);
-    GGML_UNUSED(max_tensor_size);
+    GGML_ಬಳಸದ(dev);
+    GGML_ಬಳಸದ(max_tensor_ಗಾತ್ರ);
 }
 
-static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
-    const struct ggml_tensor * src0 = op->src[0];
-    const struct ggml_tensor * src1 = op->src[1];
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * op) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * src0 = op->src[0];
+    ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * src1 = op->src[1];
 
-    if (op->op == GGML_OP_NONE || op->op == GGML_OP_RESHAPE || op->op == GGML_OP_VIEW || op->op == GGML_OP_PERMUTE || op->op == GGML_OP_TRANSPOSE) {
-        return true;
+    ಆದರೆ (op->op == GGML_OP_NONE || op->op == GGML_OP_RESHAPE || op->op == GGML_OP_VIEW || op->op == GGML_OP_ಕ್ರಮಬದಲಾವಣೆ || op->op == GGML_OP_TRANSPOSE) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
 
     // check extra buffer types
     // note: only the first sources are checked for extra buffer types to reduce overhead, increase if necessary
-    for (int i = 0; i < 4; i++) {
-        if (op->src[i] && op->src[i]->buffer &&
-            ggml_backend_cpu_is_extra_buffer_type(op->src[i]->buffer->buft)) {
-            auto * buf_extra = (ggml::cpu::extra_buffer_type *) op->src[i]->buffer->buft->context;
-            return buf_extra->supports_op(dev, op);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 4; i++) {
+        ಆದರೆ (op->src[i] && op->src[i]->ಬಫರ್ &&
+            ggml_backend_cpu_is_extra_ಬಫರ್_type(op->src[i]->ಬಫರ್->buft)) {
+            ಸ್ವಯಂಚಾಲಿತ * buf_extra = (ggml::cpu::extra_ಬಫರ್_type *) op->src[i]->ಬಫರ್->buft->context;
+            ಹಿಂತಿರುಗಿ buf_extra->supports_op(dev, op);
         }
     }
 
-    switch (op->op) {
-        case GGML_OP_CPY:
-        case GGML_OP_SET_ROWS:
-            return
+    ಆಯ್ಕೆ (op->op) {
+        ಸ್ಥಿತಿ GGML_OP_CPY:
+        ಸ್ಥಿತಿ GGML_OP_ಗಣ_ಅಡ್ಡಸಾಲುಗಳು:
+            ಹಿಂತಿರುಗಿ
                 op->type != GGML_TYPE_IQ3_XXS &&
                 op->type != GGML_TYPE_IQ3_S   &&
                 op->type != GGML_TYPE_IQ2_XXS &&
@@ -450,270 +450,270 @@ static bool ggml_backend_cpu_device_supports_op(ggml_backend_dev_t dev, const st
                 op->type != GGML_TYPE_IQ2_S   &&
                 op->type != GGML_TYPE_IQ1_S   &&
                 op->type != GGML_TYPE_IQ1_M; // missing type_traits.from_float
-        case GGML_OP_MUL_MAT:
-            if (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD &&
+        ಸ್ಥಿತಿ GGML_OP_MUL_MAT:
+            ಆದರೆ (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD &&
                 src0->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32) {
-                return src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16;
+                ಹಿಂತಿರುಗಿ src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16;
             }
             // BF16 in src1 is widened into the F32 work buffer
-            return src1->type == GGML_TYPE_F32 ||
+            ಹಿಂತಿರುಗಿ src1->type == GGML_TYPE_F32 ||
                    src1->type == ggml_get_type_traits_cpu(src0->type)->vec_dot_type ||
                    (src1->type == GGML_TYPE_BF16 && ggml_get_type_traits_cpu(src0->type)->vec_dot_type == GGML_TYPE_F32);
-        case GGML_OP_SOFT_MAX_BACK: {
-            if (op->src[0]->type != GGML_TYPE_F32 || op->src[1]->type != GGML_TYPE_F32) {
-                return false;
+        ಸ್ಥಿತಿ GGML_OP_SOFT_MAX_ಹಿಂಭಾಗ: {
+            ಆದರೆ (op->src[0]->type != GGML_TYPE_F32 || op->src[1]->type != GGML_TYPE_F32) {
+                ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
-            float max_bias = 0.0f;
+            ದಶಮಾಂಶ max_bias = 0.0f;
 
-            memcpy(&max_bias, (const float *) op->op_params + 1, sizeof(float));
+            ಸ್ಮರಣೆ_ನಕಲು(&max_bias, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) op->op_params + 1, ಗಾತ್ರ(ದಶಮಾಂಶ));
 
-            return max_bias == 0.0f;
+            ಹಿಂತಿರುಗಿ max_bias == 0.0f;
         }
-        case GGML_OP_IM2COL_BACK:
-            return src0->type == GGML_TYPE_F32 && (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16);
-        case GGML_OP_GET_ROWS_BACK:
-            return src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16;
-        case GGML_OP_OUT_PROD:
-            return (src0->type == GGML_TYPE_F32 ||
+        ಸ್ಥಿತಿ GGML_OP_IM2_ಲಂಬಸಾಲು_ಹಿಂಭಾಗ:
+            ಹಿಂತಿರುಗಿ src0->type == GGML_TYPE_F32 && (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16);
+        ಸ್ಥಿತಿ GGML_OP_GET_ಅಡ್ಡಸಾಲುಗಳು_ಹಿಂಭಾಗ:
+            ಹಿಂತಿರುಗಿ src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16;
+        ಸ್ಥಿತಿ GGML_OP_ಹೊರಹೋಗು_PROD:
+            ಹಿಂತಿರುಗಿ (src0->type == GGML_TYPE_F32 ||
                     ((src0->type == GGML_TYPE_F16 || ggml_is_quantized(src0->type)) && src0->ne[2] == src1->ne[2] && src0->ne[3] == src1->ne[3])) &&
                 src1->type == GGML_TYPE_F32 && op->type == GGML_TYPE_F32;
-        case GGML_OP_CONV_2D:
-            return ggml_is_contiguous(op->src[0]);
-        case GGML_OP_SSM_SCAN:
-            return ggml_get_op_params_i32(op, 0) == 1 || op->src[3]->ne[0] == 1;
-        default:
-            return true;
+        ಸ್ಥಿತಿ GGML_OP_CONV_2D:
+            ಹಿಂತಿರುಗಿ ggml_is_contiguous(op->src[0]);
+        ಸ್ಥಿತಿ GGML_OP_SSM_ಪರಿಶೀಲನೆ:
+            ಹಿಂತಿರುಗಿ ggml_get_op_params_i32(op, 0) == 1 || op->src[3]->ne[0] == 1;
+        ಪೂರ್ವನಿಯೋಜಿತ:
+            ಹಿಂತಿರುಗಿ ನಿಜ;
     }
 }
 
-static bool ggml_backend_cpu_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_host(buft) || ggml_backend_cpu_is_extra_buffer_type(buft);
-    GGML_UNUSED(dev);
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cpu_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_ಬಫರ್_type_t buft) {
+    ಹಿಂತಿರುಗಿ ggml_backend_buft_is_host(buft) || ggml_backend_cpu_is_extra_ಬಫರ್_type(buft);
+    GGML_ಬಳಸದ(dev);
 }
 
-static const struct ggml_backend_device_i ggml_backend_cpu_device_i = {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_backend_device_i ggml_backend_cpu_device_i = {
     /* .get_name             = */ ggml_backend_cpu_device_get_name,
     /* .get_description      = */ ggml_backend_cpu_device_get_description,
-    /* .get_memory           = */ ggml_backend_cpu_device_get_memory,
+    /* .get_memory           = */ ggml_backend_cpu_device_get_ಸ್ಮರಣೆ,
     /* .get_type             = */ ggml_backend_cpu_device_get_type,
     /* .get_props            = */ ggml_backend_cpu_device_get_props,
     /* .init_backend         = */ ggml_backend_cpu_device_init_backend,
-    /* .get_buffer_type      = */ ggml_backend_cpu_device_get_buffer_type,
-    /* .get_host_buffer_type = */ NULL,
-    /* .buffer_from_host_ptr = */ ggml_backend_cpu_device_buffer_from_host_ptr,
+    /* .get_buffer_type      = */ ggml_backend_cpu_device_get_ಬಫರ್_type,
+    /* .get_host_buffer_type = */ ಖಾಲಿ,
+    /* .buffer_from_host_ptr = */ ggml_backend_cpu_device_ಬಫರ್_from_host_ptr,
     /* .supports_op          = */ ggml_backend_cpu_device_supports_op,
     /* .supports_buft        = */ ggml_backend_cpu_device_supports_buft,
-    /* .offload_op           = */ NULL,
-    /* .event_new            = */ NULL,
-    /* .event_free           = */ NULL,
-    /* .event_synchronize    = */ NULL,
+    /* .offload_op           = */ ಖಾಲಿ,
+    /* .event_new            = */ ಖಾಲಿ,
+    /* .event_free           = */ ಖಾಲಿ,
+    /* .event_synchronize    = */ ಖಾಲಿ,
 };
 
 // CPU backend - backend (reg)
 
-static const char * ggml_backend_cpu_reg_get_name(ggml_backend_reg_t reg) {
-    return "CPU";
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cpu_reg_get_name(ggml_backend_reg_t reg) {
+    ಹಿಂತಿರುಗಿ "CPU";
 
-    GGML_UNUSED(reg);
+    GGML_ಬಳಸದ(reg);
 }
 
-static size_t ggml_backend_cpu_reg_get_device_count(ggml_backend_reg_t reg) {
-    return 1;
+ಸ್ಥಿರ size_t ggml_backend_cpu_reg_get_device_ಎಣಿಕೆ(ggml_backend_reg_t reg) {
+    ಹಿಂತಿರುಗಿ 1;
 
-    GGML_UNUSED(reg);
+    GGML_ಬಳಸದ(reg);
 }
 
-static ggml_backend_dev_t ggml_backend_cpu_reg_get_device(ggml_backend_reg_t reg, size_t index) {
-    GGML_ASSERT(index == 0);
+ಸ್ಥಿರ ggml_backend_dev_t ggml_backend_cpu_reg_get_device(ggml_backend_reg_t reg, size_t ಸೂಚ್ಯಂಕ) {
+    GGML_ASSERT(ಸೂಚ್ಯಂಕ == 0);
 
-    static ggml_backend_cpu_device_context ctx;
-    static ggml_backend_device ggml_backend_cpu_device = {
+    ಸ್ಥಿರ ggml_backend_cpu_device_context ctx;
+    ಸ್ಥಿರ ggml_backend_device ggml_backend_cpu_device = {
         /* .iface   = */ ggml_backend_cpu_device_i,
         /* .reg     = */ reg,
         /* .context = */ &ctx,
     };
 
-    return &ggml_backend_cpu_device;
+    ಹಿಂತಿರುಗಿ &ggml_backend_cpu_device;
 }
 
 // This is intended to replace the the ggml_cpu_has_* functions when loading the CPU backend dynamically,
 // and additionally to allow other backends to expose their own list of features that applications can query using the same API
-static ggml_backend_feature * ggml_backend_cpu_get_features(ggml_backend_reg_t reg) {
-    static std::vector<ggml_backend_feature> features = []() {
+ಸ್ಥಿರ ggml_backend_feature * ggml_backend_cpu_get_features(ggml_backend_reg_t reg) {
+    ಸ್ಥಿರ std::vector<ggml_backend_feature> features = []() {
         ggml_cpu_init();
 
         std::vector<ggml_backend_feature> features;
-        if (ggml_cpu_has_sse3()) {
+        ಆದರೆ (ggml_cpu_has_sse3()) {
             features.push_back({ "SSE3", "1" });
         }
-        if (ggml_cpu_has_ssse3()) {
+        ಆದರೆ (ggml_cpu_has_ssse3()) {
             features.push_back({ "SSSE3", "1" });
         }
-        if (ggml_cpu_has_avx()) {
+        ಆದರೆ (ggml_cpu_has_avx()) {
             features.push_back({ "AVX", "1" });
         }
-        if (ggml_cpu_has_avx_vnni()) {
+        ಆದರೆ (ggml_cpu_has_avx_vnni()) {
             features.push_back({ "AVX_VNNI", "1" });
         }
-        if (ggml_cpu_has_avx2()) {
+        ಆದರೆ (ggml_cpu_has_avx2()) {
             features.push_back({ "AVX2", "1" });
         }
-        if (ggml_cpu_has_f16c()) {
+        ಆದರೆ (ggml_cpu_has_f16c()) {
             features.push_back({ "F16C", "1" });
         }
-        if (ggml_cpu_has_fma()) {
+        ಆದರೆ (ggml_cpu_has_fma()) {
             features.push_back({ "FMA", "1" });
         }
-        if (ggml_cpu_has_bmi2()) {
+        ಆದರೆ (ggml_cpu_has_bmi2()) {
             features.push_back({ "BMI2", "1" });
         }
-        if (ggml_cpu_has_avx512()) {
+        ಆದರೆ (ggml_cpu_has_avx512()) {
             features.push_back({ "AVX512", "1" });
         }
-        if (ggml_cpu_has_avx512_vbmi()) {
+        ಆದರೆ (ggml_cpu_has_avx512_vbmi()) {
             features.push_back({ "AVX512_VBMI", "1" });
         }
-        if (ggml_cpu_has_avx512_vnni()) {
+        ಆದರೆ (ggml_cpu_has_avx512_vnni()) {
             features.push_back({ "AVX512_VNNI", "1" });
         }
-        if (ggml_cpu_has_avx512_bf16()) {
+        ಆದರೆ (ggml_cpu_has_avx512_bf16()) {
             features.push_back({ "AVX512_BF16", "1" });
         }
-        if (ggml_cpu_has_amx_int8()) {
+        ಆದರೆ (ggml_cpu_has_amx_int8()) {
             features.push_back({ "AMX_INT8", "1" });
         }
-        if (ggml_cpu_has_neon()) {
+        ಆದರೆ (ggml_cpu_has_neon()) {
             features.push_back({ "NEON", "1" });
         }
-        if (ggml_cpu_has_arm_fma()) {
+        ಆದರೆ (ggml_cpu_has_arm_fma()) {
             features.push_back({ "ARM_FMA", "1" });
         }
-        if (ggml_cpu_has_fp16_va()) {
+        ಆದರೆ (ggml_cpu_has_fp16_va()) {
             features.push_back({ "FP16_VA", "1" });
         }
-        if (ggml_cpu_has_matmul_int8()) {
+        ಆದರೆ (ggml_cpu_has_matmul_int8()) {
             features.push_back({ "MATMUL_INT8", "1" });
         }
-        if (ggml_cpu_has_sve()) {
+        ಆದರೆ (ggml_cpu_has_sve()) {
             features.push_back({ "SVE", "1" });
         }
-        if (ggml_cpu_has_dotprod()) {
+        ಆದರೆ (ggml_cpu_has_dotprod()) {
             features.push_back({ "DOTPROD", "1" });
         }
-        if (ggml_cpu_get_sve_cnt() > 0) {
-            static std::string sve_cnt = std::to_string(ggml_cpu_get_sve_cnt());
+        ಆದರೆ (ggml_cpu_get_sve_cnt() > 0) {
+            ಸ್ಥಿರ std::string sve_cnt = std::to_string(ggml_cpu_get_sve_cnt());
             features.push_back({ "SVE_CNT", sve_cnt.c_str() });
         }
-        if (ggml_cpu_has_sme()) {
+        ಆದರೆ (ggml_cpu_has_sme()) {
             features.push_back({ "SME", "1" });
         }
-        if (ggml_cpu_has_sme2()) {
+        ಆದರೆ (ggml_cpu_has_sme2()) {
             features.push_back({ "SME2", "1" });
         }
-        if (ggml_cpu_has_riscv_v()) {
+        ಆದರೆ (ggml_cpu_has_riscv_v()) {
             features.push_back({ "RISCV_V", "1" });
         }
-        if (ggml_cpu_get_rvv_vlen() > 0) {
-            static std::string rvv_vlen = std::to_string(ggml_cpu_get_rvv_vlen());
+        ಆದರೆ (ggml_cpu_get_rvv_vlen() > 0) {
+            ಸ್ಥಿರ std::string rvv_vlen = std::to_string(ggml_cpu_get_rvv_vlen());
             features.push_back({ "RVV_VLEN", rvv_vlen.c_str() });
         }
-        if (ggml_cpu_has_vsx()) {
+        ಆದರೆ (ggml_cpu_has_vsx()) {
             features.push_back({ "VSX", "1" });
         }
-        if (ggml_cpu_has_vxe()) {
+        ಆದರೆ (ggml_cpu_has_vxe()) {
             features.push_back({ "VXE", "1" });
         }
-        if (ggml_cpu_has_wasm_simd()) {
+        ಆದರೆ (ggml_cpu_has_wasm_simd()) {
             features.push_back({ "WASM_SIMD", "1" });
         }
-        if (ggml_cpu_has_llamafile()) {
+        ಆದರೆ (ggml_cpu_has_llamafile()) {
             features.push_back({ "LLAMAFILE", "1" });
         }
-    #ifdef GGML_USE_ACCELERATE
+    #ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_ACCELERATE
         features.push_back({ "ACCELERATE", "1" });
-    #endif
-    #ifdef GGML_USE_CPU_HBM
+    #ಆದರೆ_ಅಂತ್ಯ
+    #ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_CPU_HBM
         features.push_back({ "CPU_HBM", "1" });
-    #endif
-    #ifdef GGML_USE_OPENMP
+    #ಆದರೆ_ಅಂತ್ಯ
+    #ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_OPENMP
         features.push_back({ "OPENMP", "1" });
-    #endif
-    #ifdef GGML_USE_CPU_KLEIDIAI
+    #ಆದರೆ_ಅಂತ್ಯ
+    #ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_CPU_KLEIDIAI
         features.push_back({ "KLEIDIAI", "1" });
-    #endif
-    #ifdef GGML_USE_CPU_REPACK
+    #ಆದರೆ_ಅಂತ್ಯ
+    #ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_USE_CPU_REPACK
         features.push_back({ "REPACK", "1" });
-    #endif
+    #ಆದರೆ_ಅಂತ್ಯ
 
-        features.push_back({ nullptr, nullptr });
+        features.push_back({ ಶೂನ್ಯಸೂಚಕ, ಶೂನ್ಯಸೂಚಕ });
 
-        return features;
+        ಹಿಂತಿರುಗಿ features;
     }();
 
-    return features.data();
+    ಹಿಂತಿರುಗಿ features.ದತ್ತಾಂಶ();
 
-    GGML_UNUSED(reg);
+    GGML_ಬಳಸದ(reg);
 }
 
-static void * ggml_backend_cpu_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (strcmp(name, "ggml_backend_set_n_threads") == 0) {
-        ggml_backend_set_n_threads_t fct = ggml_backend_cpu_set_n_threads;
-        return (void *)fct;
+ಸ್ಥಿರ ಶೂನ್ಯ * ggml_backend_cpu_get_proc_ವಿಳಾಸ(ggml_backend_reg_t reg, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * name) {
+    ಆದರೆ (strcmp(name, "ggml_backend_set_n_threads") == 0) {
+        ggml_backend_ಗಣ_n_ಎಳೆಗಳು_t fct = ggml_backend_cpu_ಗಣ_n_ಎಳೆಗಳು;
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)fct;
     }
-    if (strcmp(name, "ggml_backend_dev_get_extra_bufts") == 0) {
+    ಆದರೆ (strcmp(name, "ggml_backend_dev_get_extra_bufts") == 0) {
         ggml_backend_dev_get_extra_bufts_t fct = ggml_backend_cpu_device_get_extra_buffers_type;
-        return (void *)fct;
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)fct;
     }
-    if (strcmp(name, "ggml_backend_get_features") == 0) {
-        return (void *)ggml_backend_cpu_get_features;
+    ಆದರೆ (strcmp(name, "ggml_backend_get_features") == 0) {
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)ggml_backend_cpu_get_features;
     }
-    if (strcmp(name, "ggml_backend_set_abort_callback") == 0) {
-        return (void *)ggml_backend_cpu_set_abort_callback;
+    ಆದರೆ (strcmp(name, "ggml_backend_set_abort_callback") == 0) {
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)ggml_backend_cpu_ಗಣ_abort_callback;
     }
-    if (strcmp(name, "ggml_backend_cpu_numa_init") == 0) {
-        return (void *)ggml_numa_init;
+    ಆದರೆ (strcmp(name, "ggml_backend_cpu_numa_init") == 0) {
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)ggml_numa_init;
     }
-    if (strcmp(name, "ggml_backend_cpu_is_numa") == 0) {
-        return (void *)ggml_is_numa;
+    ಆದರೆ (strcmp(name, "ggml_backend_cpu_is_numa") == 0) {
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)ggml_is_numa;
     }
-    if (strcmp(name, "ggml_backend_cpu_set_use_ref") == 0) {
-        return (void *)ggml_backend_cpu_set_use_ref;
+    ಆದರೆ (strcmp(name, "ggml_backend_cpu_set_use_ref") == 0) {
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)ggml_backend_cpu_ಗಣ_use_ref;
     }
 
     // threadpool - TODO:  move to ggml-base
-    if (strcmp(name, "ggml_threadpool_new") == 0) {
-        return (void *)ggml_threadpool_new;
+    ಆದರೆ (strcmp(name, "ggml_threadpool_new") == 0) {
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)ggml_threadpool_new;
     }
-    if (strcmp(name, "ggml_threadpool_free") == 0) {
-        return (void *)ggml_threadpool_free;
+    ಆದರೆ (strcmp(name, "ggml_threadpool_free") == 0) {
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)ggml_threadpool_free;
     }
-    if (strcmp(name, "ggml_backend_cpu_set_threadpool") == 0) {
-        return (void *)ggml_backend_cpu_set_threadpool;
+    ಆದರೆ (strcmp(name, "ggml_backend_cpu_set_threadpool") == 0) {
+        ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *)ggml_backend_cpu_ಗಣ_threadpool;
     }
 
-    return NULL;
+    ಹಿಂತಿರುಗಿ ಖಾಲಿ;
 
-    GGML_UNUSED(reg);
+    GGML_ಬಳಸದ(reg);
 }
 
-static const struct ggml_backend_reg_i ggml_backend_cpu_reg_i = {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_backend_reg_i ggml_backend_cpu_reg_i = {
     /* .get_name         = */ ggml_backend_cpu_reg_get_name,
-    /* .get_device_count = */ ggml_backend_cpu_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_cpu_reg_get_device_ಎಣಿಕೆ,
     /* .get_device       = */ ggml_backend_cpu_reg_get_device,
-    /* .get_proc_address = */ ggml_backend_cpu_get_proc_address,
+    /* .get_proc_address = */ ggml_backend_cpu_get_proc_ವಿಳಾಸ,
 };
 
-ggml_backend_reg_t ggml_backend_cpu_reg(void) {
+ggml_backend_reg_t ggml_backend_cpu_reg(ಶೂನ್ಯ) {
     // init CPU feature detection
     ggml_cpu_init();
 
-    static struct ggml_backend_reg ggml_backend_cpu_reg = {
-        /* .api_version = */ GGML_BACKEND_API_VERSION,
+    ಸ್ಥಿರ ರಚನೆ ggml_backend_reg ggml_backend_cpu_reg = {
+        /* .api_version = */ GGML_BACKEND_API_ಆವೃತ್ತಿ,
         /* .iface       = */ ggml_backend_cpu_reg_i,
-        /* .context     = */ NULL,
+        /* .context     = */ ಖಾಲಿ,
     };
 
-    return &ggml_backend_cpu_reg;
+    ಹಿಂತಿರುಗಿ &ggml_backend_cpu_reg;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_cpu_reg)

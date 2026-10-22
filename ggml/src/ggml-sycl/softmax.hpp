@@ -10,15 +10,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_SOFTMAX_HPP
-#define GGML_SYCL_SOFTMAX_HPP
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ GGML_SYCL_SOFTMAX_HPP
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_SYCL_SOFTMAX_HPP
 
-#include "common.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
 
-#define SYCL_SOFT_MAX_BLOCK_SIZE 1024
+#ವ್ಯಾಖ್ಯಾನಿಸು SYCL_SOFT_MAX_ಖಂಡ_ಗಾತ್ರ 1024
 
-void ggml_sycl_op_soft_max(ggml_backend_sycl_context &ctx, ggml_tensor *dst);
+ಶೂನ್ಯ ggml_sycl_op_soft_max(ggml_backend_sycl_context &ctx, ggml_tensor *dst);
 
-void ggml_sycl_op_soft_max_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ಶೂನ್ಯ ggml_sycl_op_soft_max_ಹಿಂಭಾಗ(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_SOFTMAX_HPP
+#ಆದರೆ_ಅಂತ್ಯ // GGML_SYCL_SOFTMAX_HPP

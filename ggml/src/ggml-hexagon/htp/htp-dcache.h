@@ -1,20 +1,20 @@
-#ifndef HTP_DCACHE_H
-#define HTP_DCACHE_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ HTP_DCACHE_H
+#ವ್ಯಾಖ್ಯಾನಿಸು HTP_DCACHE_H
 
-#include <stdint.h>
-#include "htp-ops.h"
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ "htp-ops.h"
 
-#define HTP_MAX_DIRTY_RANGES 64
+#ವ್ಯಾಖ್ಯಾನಿಸು HTP_MAX_DIRTY_RANGES 64
 
-struct htp_dirty_range {
-    uint32_t start;
-    uint32_t end;
+ರಚನೆ htp_dirty_range {
+    uint32_t ಆರಂಭ;
+    uint32_t ಕೊನೆ;
 };
 
-struct htp_context;
+ರಚನೆ htp_context;
 
-void htp_dcache_flush_dirty_ranges(struct htp_context * ctx);
-void htp_dcache_flush_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n);
-void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n);
+ಶೂನ್ಯ htp_dcache_flush_dirty_ranges(ರಚನೆ htp_context * ctx);
+ಶೂನ್ಯ htp_dcache_flush_dirty_tensors(ರಚನೆ htp_context * ctx, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * ಸ್ಥಿರಾಂಕ * tensors, uint32_t n);
+ಶೂನ್ಯ htp_dcache_mark_dirty_tensors(ರಚನೆ htp_context * ctx, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * ಸ್ಥಿರಾಂಕ * tensors, uint32_t n);
 
-#endif // HTP_DCACHE_H
+#ಆದರೆ_ಅಂತ್ಯ // HTP_DCACHE_H

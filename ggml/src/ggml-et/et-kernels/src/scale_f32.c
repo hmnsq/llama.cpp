@@ -3,92 +3,92 @@
 // dst[i] = src0[i] * scale + bias
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ಅನ್ತರ್ಭಾವ "ggml_tensor.h"
+#ಅನ್ತರ್ಭಾವ "platform.h"
 
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-struct ggml_et_scale_params {
-    struct ggml_tensor src0;   // F32 input tensor
-    struct ggml_tensor dst;    // F32 output tensor
-    float              scale;  // Scale factor
-    float              bias;   // Bias (additive offset)
+ರಚನೆ ggml_et_scale_params {
+    ರಚನೆ ggml_tensor src0;   // F32 input tensor
+    ರಚನೆ ggml_tensor dst;    // F32 output tensor
+    ದಶಮಾಂಶ              scale;  // Scale factor
+    ದಶಮಾಂಶ              bias;   // Bias (additive offset)
 };
 
-int entry_point(struct ggml_et_scale_params * params, void * env) {
+ಪೂರ್ಣಾಂಕ ನಮೂದು_ಬಿಂದು(ರಚನೆ ggml_et_scale_params * params, ಶೂನ್ಯ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ಆದರೆ (!kernel_env) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ಪೂರ್ಣಾಂಕ thread_id   = get_relative_thread_id(kernel_env->shire_ಮುಖವಾಡ);
+    ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಎಳೆಗಳು = get_ಅಂಕೆ_ಎಳೆಗಳು(kernel_env->shire_ಮುಖವಾಡ);
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ಆದರೆ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ರಚನೆ ggml_tensor * src0 = &params->src0;
+    ರಚನೆ ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ಆದರೆ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    ದಶಮಾಂಶ * src0_ದತ್ತಾಂಶ = (ದಶಮಾಂಶ *) src0->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ * dst_ದತ್ತಾಂಶ  = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ಆದರೆ (!src0_ದತ್ತಾಂಶ || !dst_ದತ್ತಾಂಶ) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
 
-    float scale = params->scale;
-    float bias  = params->bias;
+    ದಶಮಾಂಶ scale = params->scale;
+    ದಶಮಾಂಶ bias  = params->bias;
 
     // Total elements across all dimensions
-    const int64_t total_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_elements = src0->ne[0] * src0->ne[1] * src0->ne[2] * src0->ne[3];
 
     // Cache line = 64 bytes = 16 floats, but vector width = 8 floats
     // Parallelize at cache line granularity (16 floats)
-    const int64_t elements_per_cacheline = 16;
-    const int64_t total_cachelines       = (total_elements + elements_per_cacheline - 1) / elements_per_cacheline;
+    ಸ್ಥಿರಾಂಕ int64_t elements_ಪ್ರತಿ_cacheline = 16;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_cachelines       = (ಒಟ್ಟು_elements + elements_ಪ್ರತಿ_cacheline - 1) / elements_ಪ್ರತಿ_cacheline;
 
-    int64_t cachelines_per_thread = (total_cachelines + num_threads - 1) / num_threads;
-    int64_t start_cacheline       = thread_id * cachelines_per_thread;
-    int64_t end_cacheline         = start_cacheline + cachelines_per_thread;
+    int64_t cachelines_ಪ್ರತಿ_thread = (ಒಟ್ಟು_cachelines + ಅಂಕೆ_ಎಳೆಗಳು - 1) / ಅಂಕೆ_ಎಳೆಗಳು;
+    int64_t ಆರಂಭ_cacheline       = thread_id * cachelines_ಪ್ರತಿ_thread;
+    int64_t ಕೊನೆ_cacheline         = ಆರಂಭ_cacheline + cachelines_ಪ್ರತಿ_thread;
 
-    if (end_cacheline > total_cachelines) {
-        end_cacheline = total_cachelines;
+    ಆದರೆ (ಕೊನೆ_cacheline > ಒಟ್ಟು_cachelines) {
+        ಕೊನೆ_cacheline = ಒಟ್ಟು_cachelines;
     }
 
-    if (start_cacheline >= total_cachelines) {
-        return 0;
+    ಆದರೆ (ಆರಂಭ_cacheline >= ಒಟ್ಟು_cachelines) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    int64_t start_elem = start_cacheline * elements_per_cacheline;
-    int64_t end_elem   = end_cacheline * elements_per_cacheline;
-    if (end_elem > total_elements) {
-        end_elem = total_elements;
+    int64_t ಆರಂಭ_elem = ಆರಂಭ_cacheline * elements_ಪ್ರತಿ_cacheline;
+    int64_t ಕೊನೆ_elem   = ಕೊನೆ_cacheline * elements_ಪ್ರತಿ_cacheline;
+    ಆದರೆ (ಕೊನೆ_elem > ಒಟ್ಟು_elements) {
+        ಕೊನೆ_elem = ಒಟ್ಟು_elements;
     }
 
-    unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
-    __asm__ volatile("fbc.ps f20, %[scale_ptr]\n" : : [scale_ptr] "m"(scale) : "f20");
-    __asm__ volatile("fbc.ps f21, %[bias_ptr]\n" : : [bias_ptr] "m"(bias) : "f21");
+    ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ತಾತ್ಕಾಲಿಕ_ಮುಖವಾಡ;
+    __asm__ ಅಸ್ಥಿರ("mova.x.m %0" : "=r"(ತಾತ್ಕಾಲಿಕ_ಮುಖವಾಡ));
+    __asm__ ಅಸ್ಥಿರ("mov.m.x m0, x0, 0xFF");
+    __asm__ ಅಸ್ಥಿರ("fbc.ps f20, %[scale_ptr]\n" : : [scale_ptr] "m"(scale) : "f20");
+    __asm__ ಅಸ್ಥಿರ("fbc.ps f21, %[bias_ptr]\n" : : [bias_ptr] "m"(bias) : "f21");
 
-    for (int64_t i = start_elem; i < end_elem; i += 8) {
-        __asm__ volatile(
+    ಗಾಗಿ (int64_t i = ಆರಂಭ_elem; i < ಕೊನೆ_elem; i += 8) {
+        __asm__ ಅಸ್ಥಿರ(
             "flw.ps f10, %[src]\n"
             "fmadd.ps f10, f10, f20, f21\n"  // dst = src*scale + bias
             "fsw.ps f10, %[dst_out]\n"
-            : [dst_out] "=m"(*(float (*)[8]) & dst_data[i])
-            : [src] "m"(*(const float (*)[8]) & src0_data[i])
+            : [dst_ಹೊರಹೋಗು] "=m"(*(ದಶಮಾಂಶ (*)[8]) & dst_ದತ್ತಾಂಶ[i])
+            : [src] "m"(*(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ (*)[8]) & src0_ದತ್ತಾಂಶ[i])
             : "f10", "f20", "f21");
     }
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ ಅಸ್ಥಿರ("mova.m.x %0" ::"r"(ತಾತ್ಕಾಲಿಕ_ಮುಖವಾಡ));
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }

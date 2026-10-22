@@ -1,79 +1,79 @@
-#include "amx.h"
-#include "common.h"
-#include "mmq.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "traits.h"
+#ಅನ್ತರ್ಭಾವ "amx.h"
+#ಅನ್ತರ್ಭಾವ "common.h"
+#ಅನ್ತರ್ಭಾವ "mmq.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend.h"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-cpu.h"
+#ಅನ್ತರ್ಭಾವ "traits.h"
 
-#if defined(__linux__)
-#include <sys/syscall.h>
-#include <unistd.h>
-#endif
+#ಆದರೆ defined(__linux__)
+#ಅನ್ತರ್ಭಾವ <sys/syscall.h>
+#ಅನ್ತರ್ಭಾವ <unistd.h>
+#ಆದರೆ_ಅಂತ್ಯ
 
-#include <cstdlib>
-#include <cstring>
-#include <memory>
+#ಅನ್ತರ್ಭಾವ <cstdlib>
+#ಅನ್ತರ್ಭಾವ <cstring>
+#ಅನ್ತರ್ಭಾವ <memory>
 
-#if defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#ಆದರೆ defined(__AMX_INT8__) && defined(__AVX512VNNI__)
 
 // AMX type_trais
-namespace ggml::cpu::amx {
-class tensor_traits : public ggml::cpu::tensor_traits {
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
+ನಾಮಾಕಾಶ ggml::cpu::amx {
+ವರ್ಗ tensor_traits : ಸಾರ್ವಜನಿಕ ggml::cpu::tensor_traits {
+    ತಾರ್ಕಿಕ work_ಗಾತ್ರ(ಪೂರ್ಣಾಂಕ /* n_threads */, ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * op, size_t & size) override {
         size = ggml_backend_amx_desired_wsize(op);
-        return true;
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
 
-    bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT) {
+    ತಾರ್ಕಿಕ compute_forward(ರಚನೆ ggml_compute_params * params, ರಚನೆ ggml_tensor * op) override {
+        ಆದರೆ (op->op == GGML_OP_MUL_MAT) {
             ggml_backend_amx_mul_mat(params, op);
-            return true;
+            ಹಿಂತಿರುಗಿ ನಿಜ;
         }
-        return false;
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 };
 
-static ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_buffer_t, struct ggml_tensor *) {
-    static tensor_traits traits;
-    return &traits;
+ಸ್ಥಿರ ggml::cpu::tensor_traits * get_tensor_traits(ggml_backend_ಬಫರ್_t, ರಚನೆ ggml_tensor *) {
+    ಸ್ಥಿರ tensor_traits traits;
+    ಹಿಂತಿರುಗಿ &traits;
 }
 }  // namespace ggml::cpu::amx
 
 // AMX buffer interface
-static void ggml_backend_amx_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    free(buffer->context);
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_amx_ಬಫರ್_free_ಬಫರ್(ggml_backend_ಬಫರ್_t ಬಫರ್) {
+    ಬಿಡುಗಡೆ(ಬಫರ್->context);
 }
 
-static void * ggml_backend_amx_buffer_get_base(ggml_backend_buffer_t buffer) {
-    return (void *) (buffer->context);
+ಸ್ಥಿರ ಶೂನ್ಯ * ggml_backend_amx_ಬಫರ್_get_ತಳ(ggml_backend_ಬಫರ್_t ಬಫರ್) {
+    ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *) (ಬಫರ್->context);
 }
 
-static enum ggml_status ggml_backend_amx_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
-    tensor->extra = (void *) ggml::cpu::amx::get_tensor_traits(buffer, tensor);
+ಸ್ಥಿರ ಎಣಿಕೆ ggml_ಸ್ಥಿತಿ ggml_backend_amx_ಬಫರ್_init_tensor(ggml_backend_ಬಫರ್_t ಬಫರ್, ರಚನೆ ggml_tensor * tensor) {
+    tensor->extra = (ಶೂನ್ಯ *) ggml::cpu::amx::get_tensor_traits(ಬಫರ್, tensor);
 
-    GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    GGML_ಬಳಸದ(ಬಫರ್);
+    ಹಿಂತಿರುಗಿ GGML_ಸ್ಥಿತಿ_SUCCESS;
 }
 
-static void ggml_backend_amx_buffer_memset_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                                  uint8_t value, size_t offset, size_t size) {
-    memset((char *) tensor->data + offset, value, size);
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_amx_ಬಫರ್_memset_tensor(ggml_backend_ಬಫರ್_t ಬಫರ್, ರಚನೆ ggml_tensor * tensor,
+                                                  uint8_t value, size_t ಸ್ಥಾನಾಂತರ, size_t size) {
+    memset((ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + ಸ್ಥಾನಾಂತರ, value, size);
 
-    GGML_UNUSED(buffer);
+    GGML_ಬಳಸದ(ಬಫರ್);
 }
 
-static void ggml_backend_amx_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
-                                               const void * data, size_t offset, size_t size) {
-    if (qtype_has_amx_kernels(tensor->type)) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_amx_ಬಫರ್_ಗಣ_tensor(ggml_backend_ಬಫರ್_t ಬಫರ್, ರಚನೆ ggml_tensor * tensor,
+                                               ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ದತ್ತಾಂಶ, size_t ಸ್ಥಾನಾಂತರ, size_t size) {
+    ಆದರೆ (qtype_has_amx_kernels(tensor->type)) {
         GGML_LOG_DEBUG("%s: amx repack tensor %s of type %s\n", __func__, tensor->name, ggml_type_name(tensor->type));
-        ggml_backend_amx_convert_weight(tensor, data, offset, size);
-    } else {
-        memcpy((char *) tensor->data + offset, data, size);
+        ggml_backend_amx_convert_ತೂಕ(tensor, ದತ್ತಾಂಶ, ಸ್ಥಾನಾಂತರ, size);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಸ್ಮರಣೆ_ನಕಲು((ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + ಸ್ಥಾನಾಂತರ, ದತ್ತಾಂಶ, size);
     }
 
-    GGML_UNUSED(buffer);
+    GGML_ಬಳಸದ(ಬಫರ್);
 }
 
 /*
@@ -100,152 +100,152 @@ static bool ggml_backend_amx_buffer_cpy_tensor(ggml_backend_buffer_t buffer, con
 }
 */
 
-static void ggml_backend_amx_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    memset(buffer->context, value, buffer->size);
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_amx_ಬಫರ್_clear(ggml_backend_ಬಫರ್_t ಬಫರ್, uint8_t value) {
+    memset(ಬಫರ್->context, value, ಬಫರ್->size);
 }
 
-static ggml_backend_buffer_i ggml_backend_amx_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_amx_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_amx_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_amx_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_amx_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_amx_buffer_set_tensor,
-    /* .get_tensor      = */ nullptr,
-    /* .set_tensor_2d   = */ nullptr,
-    /* .get_tensor_2d   = */ nullptr,
-    /* .cpy_tensor      = */ nullptr,
-    /* .clear           = */ ggml_backend_amx_buffer_clear,
-    /* .reset           = */ nullptr,
+ಸ್ಥಿರ ggml_backend_ಬಫರ್_i ggml_backend_amx_ಬಫರ್_interface = {
+    /* .free_buffer     = */ ggml_backend_amx_ಬಫರ್_free_ಬಫರ್,
+    /* .get_base        = */ ggml_backend_amx_ಬಫರ್_get_ತಳ,
+    /* .init_tensor     = */ ggml_backend_amx_ಬಫರ್_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_amx_ಬಫರ್_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_amx_ಬಫರ್_ಗಣ_tensor,
+    /* .get_tensor      = */ ಶೂನ್ಯಸೂಚಕ,
+    /* .set_tensor_2d   = */ ಶೂನ್ಯಸೂಚಕ,
+    /* .get_tensor_2d   = */ ಶೂನ್ಯಸೂಚಕ,
+    /* .cpy_tensor      = */ ಶೂನ್ಯಸೂಚಕ,
+    /* .clear           = */ ggml_backend_amx_ಬಫರ್_clear,
+    /* .reset           = */ ಶೂನ್ಯಸೂಚಕ,
 };
 
-static const char * ggml_backend_amx_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "AMX";
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_amx_ಬಫರ್_type_get_name(ggml_backend_ಬಫರ್_type_t buft) {
+    ಹಿಂತಿರುಗಿ "AMX";
 
-    GGML_UNUSED(buft);
+    GGML_ಬಳಸದ(buft);
 }
 
-static ggml_backend_buffer_t ggml_backend_amx_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    void * data = ggml_aligned_malloc(size);
-    if (data == NULL) {
+ಸ್ಥಿರ ggml_backend_ಬಫರ್_t ggml_backend_amx_ಬಫರ್_type_alloc_ಬಫರ್(ggml_backend_ಬಫರ್_type_t buft, size_t size) {
+    ಶೂನ್ಯ * ದತ್ತಾಂಶ = ggml_aligned_malloc(size);
+    ಆದರೆ (ದತ್ತಾಂಶ == ಖಾಲಿ) {
         fprintf(stderr, "%s: failed to allocate buffer of size %zu\n", __func__, size);
-        return NULL;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    return ggml_backend_buffer_init(buft, ggml_backend_amx_buffer_interface, data, size);
+    ಹಿಂತಿರುಗಿ ggml_backend_ಬಫರ್_init(buft, ggml_backend_amx_ಬಫರ್_interface, ದತ್ತಾಂಶ, size);
 }
 
-static size_t ggml_backend_amx_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+ಸ್ಥಿರ size_t ggml_backend_amx_ಬಫರ್_type_get_alignment(ggml_backend_ಬಫರ್_type_t buft) {
+    ಹಿಂತಿರುಗಿ TENSOR_ALIGNMENT;
 
-    GGML_UNUSED(buft);
+    GGML_ಬಳಸದ(buft);
 }
 
-namespace ggml::cpu::amx {
-class extra_buffer_type : ggml::cpu::extra_buffer_type {
-    bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
-        if (op->op != GGML_OP_MUL_MAT) {
-            return false;
+ನಾಮಾಕಾಶ ggml::cpu::amx {
+ವರ್ಗ extra_ಬಫರ್_type : ggml::cpu::extra_ಬಫರ್_type {
+    ತಾರ್ಕಿಕ supports_op(ggml_backend_dev_t, ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * op) override {
+        ಆದರೆ (op->op != GGML_OP_MUL_MAT) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        auto * src0 = op->src[0];
-        auto * src1 = op->src[1];
+        ಸ್ವಯಂಚಾಲಿತ * src0 = op->src[0];
+        ಸ್ವಯಂಚಾಲಿತ * src1 = op->src[1];
 
-        if (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
-            return false;
+        ಆದರೆ (!ggml_is_contiguous(src0) || !ggml_is_contiguous(src1)) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        if (!src0->buffer || src0->buffer->buft != ggml_backend_amx_buffer_type()) {
-            return false;
+        ಆದರೆ (!src0->ಬಫರ್ || src0->ಬಫರ್->buft != ggml_backend_amx_ಬಫರ್_type()) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        if (src1->buffer && !ggml_backend_buft_is_host(src1->buffer->buft)) {
-            return false;
+        ಆದರೆ (src1->ಬಫರ್ && !ggml_backend_buft_is_host(src1->ಬಫರ್->buft)) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        if (op->ne[0] % (TILE_N * 2)) {
-            return false;
+        ಆದರೆ (op->ne[0] % (TILE_N * 2)) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        int alignment;
-        switch (src0->type) {
-            case GGML_TYPE_Q4_0:
-            case GGML_TYPE_Q4_1:
-            case GGML_TYPE_Q8_0:
+        ಪೂರ್ಣಾಂಕ alignment;
+        ಆಯ್ಕೆ (src0->type) {
+            ಸ್ಥಿತಿ GGML_TYPE_Q4_0:
+            ಸ್ಥಿತಿ GGML_TYPE_Q4_1:
+            ಸ್ಥಿತಿ GGML_TYPE_Q8_0:
                 alignment = TILE_K;
-                break;
-            case GGML_TYPE_Q4_K:
-            case GGML_TYPE_Q5_K:
-            case GGML_TYPE_Q6_K:
-            case GGML_TYPE_IQ4_XS:
+                ನಿಲ್ಲಿಸು;
+            ಸ್ಥಿತಿ GGML_TYPE_Q4_K:
+            ಸ್ಥಿತಿ GGML_TYPE_Q5_K:
+            ಸ್ಥಿತಿ GGML_TYPE_Q6_K:
+            ಸ್ಥಿತಿ GGML_TYPE_IQ4_XS:
                 alignment = 256; // QK_K
-                break;
-            case GGML_TYPE_F16:
+                ನಿಲ್ಲಿಸು;
+            ಸ್ಥಿತಿ GGML_TYPE_F16:
                 alignment = 16;
-                break;
-            default:
-                return false;
+                ನಿಲ್ಲಿಸು;
+            ಪೂರ್ವನಿಯೋಜಿತ:
+                ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        if (src0->ne[0] % alignment) {
-            return false;
+        ಆದರೆ (src0->ne[0] % alignment) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        if (src1->type != GGML_TYPE_F32) {
-            return false;
+        ಆದರೆ (src1->type != GGML_TYPE_F32) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        return true;
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
 
-    ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT && op->src[0]->buffer &&
-            op->src[0]->buffer->buft == ggml_backend_amx_buffer_type()) {
-            return (ggml::cpu::tensor_traits *) op->src[0]->extra;
+    ggml::cpu::tensor_traits * get_tensor_traits(ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_tensor * op) override {
+        ಆದರೆ (op->op == GGML_OP_MUL_MAT && op->src[0]->ಬಫರ್ &&
+            op->src[0]->ಬಫರ್->buft == ggml_backend_amx_ಬಫರ್_type()) {
+            ಹಿಂತಿರುಗಿ (ggml::cpu::tensor_traits *) op->src[0]->extra;
         }
 
-        return nullptr;
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
 };
 }  // namespace ggml::cpu::amx
 
-static size_t ggml_backend_amx_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
-    return ggml_backend_amx_get_alloc_size(tensor);
+ಸ್ಥಿರ size_t ggml_backend_amx_ಬಫರ್_type_get_alloc_ಗಾತ್ರ(ggml_backend_ಬಫರ್_type_t buft, ಸ್ಥಿರಾಂಕ ggml_tensor * tensor) {
+    ಹಿಂತಿರುಗಿ ggml_backend_amx_get_alloc_ಗಾತ್ರ(tensor);
 
-    GGML_UNUSED(buft);
+    GGML_ಬಳಸದ(buft);
 }
 
-#define ARCH_GET_XCOMP_PERM     0x1022
-#define ARCH_REQ_XCOMP_PERM     0x1023
-#define XFEATURE_XTILECFG       17
-#define XFEATURE_XTILEDATA      18
+#ವ್ಯಾಖ್ಯಾನಿಸು ARCH_GET_XCOMP_PERM     0x1022
+#ವ್ಯಾಖ್ಯಾನಿಸು ARCH_REQ_XCOMP_PERM     0x1023
+#ವ್ಯಾಖ್ಯಾನಿಸು XFEATURE_XTILECFG       17
+#ವ್ಯಾಖ್ಯಾನಿಸು XFEATURE_XTILEDATA      18
 
-static bool ggml_amx_init() {
-#if defined(__linux__)
-    if (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_amx_init() {
+#ಆದರೆ defined(__linux__)
+    ಆದರೆ (syscall(SYS_arch_prctl, ARCH_REQ_XCOMP_PERM, XFEATURE_XTILEDATA)) {
         fprintf(stderr, "AMX is not ready to be used!\n");
-        return false;
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
-    return true;
-#elif defined(_WIN32)
-    return true;
-#else
-    return false;
-#endif
+    ಹಿಂತಿರುಗಿ ನಿಜ;
+#ಅಥವಾಆದರೆ defined(_WIN32)
+    ಹಿಂತಿರುಗಿ ನಿಜ;
+#ಇಲ್ಲದಿದ್ದರೆ
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
+#ಆದರೆ_ಅಂತ್ಯ
 }
 
-ggml_backend_buffer_type_t ggml_backend_amx_buffer_type() {
-    static struct ggml_backend_buffer_type ggml_backend_buffer_type_amx = {
+ggml_backend_ಬಫರ್_type_t ggml_backend_amx_ಬಫರ್_type() {
+    ಸ್ಥಿರ ರಚನೆ ggml_backend_ಬಫರ್_type ggml_backend_ಬಫರ್_type_amx = {
         /* .iface = */ {
-                        /* .get_name            = */ ggml_backend_amx_buffer_type_get_name,
-                        /* .alloc_buffer        = */ ggml_backend_amx_buffer_type_alloc_buffer,
-                        /* .alloc_buffer_n      = */ nullptr,
-                        /* .get_alignment       = */ ggml_backend_amx_buffer_type_get_alignment,
-                        /* .get_max_size        = */ nullptr,  // defaults to SIZE_MAX
-                        /* .get_alloc_size      = */ ggml_backend_amx_buffer_type_get_alloc_size,
-                        /* .get_alloc_size_n    = */ NULL,
-                        /* .is_host             = */ nullptr,
+                        /* .get_name            = */ ggml_backend_amx_ಬಫರ್_type_get_name,
+                        /* .alloc_buffer        = */ ggml_backend_amx_ಬಫರ್_type_alloc_ಬಫರ್,
+                        /* .alloc_buffer_n      = */ ಶೂನ್ಯಸೂಚಕ,
+                        /* .get_alignment       = */ ggml_backend_amx_ಬಫರ್_type_get_alignment,
+                        /* .get_max_size        = */ ಶೂನ್ಯಸೂಚಕ,  // defaults to SIZE_MAX
+                        /* .get_alloc_size      = */ ggml_backend_amx_ಬಫರ್_type_get_alloc_ಗಾತ್ರ,
+                        /* .get_alloc_size_n    = */ ಖಾಲಿ,
+                        /* .is_host             = */ ಶೂನ್ಯಸೂಚಕ,
                         },
         /* .device  = */ ggml_backend_reg_dev_get(ggml_backend_cpu_reg(), 0),
-        /* .context = */ new ggml::cpu::amx::extra_buffer_type(),
+        /* .context = */ ಹೊಸ ggml::cpu::amx::extra_ಬಫರ್_type(),
     };
 
-    if (!ggml_amx_init()) {
-        return nullptr;
+    ಆದರೆ (!ggml_amx_init()) {
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
 
-    return &ggml_backend_buffer_type_amx;
+    ಹಿಂತಿರುಗಿ &ggml_backend_ಬಫರ್_type_amx;
 }
 
-#endif  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__AMX_INT8__) && defined(__AVX512VNNI__)

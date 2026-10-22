@@ -1,99 +1,99 @@
-#include "virtgpu-shm.h"
+#ಅನ್ತರ್ಭಾವ "virtgpu-shm.h"
 
-#include "virtgpu.h"
-#include "ggml-remoting.h"
+#ಅನ್ತರ್ಭಾವ "virtgpu.h"
+#ಅನ್ತರ್ಭಾವ "ggml-remoting.h"
 
-#include <assert.h>
+#ಅನ್ತರ್ಭಾವ <assert.h>
 
-static uint32_t virtgpu_ioctl_resource_create_blob(virtgpu *  gpu,
+ಸ್ಥಿರ uint32_t virtgpu_ioctl_resource_create_blob(virtgpu *  gpu,
                                                    uint32_t   blob_mem,
                                                    uint32_t   blob_flags,
-                                                   size_t     blob_size,
+                                                   size_t     blob_ಗಾತ್ರ,
                                                    uint64_t   blob_id,
                                                    uint32_t * res_id) {
-#ifdef SIMULATE_BO_SIZE_FIX
-    blob_size = align64(blob_size, 4096);
-#endif
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ SIMULATE_BO_ಗಾತ್ರ_FIX
+    blob_ಗಾತ್ರ = align64(blob_ಗಾತ್ರ, 4096);
+#ಆದರೆ_ಅಂತ್ಯ
 
-    drm_virtgpu_resource_create_blob args = {
+    drm_virtgpu_resource_create_blob ವಾದಗಳು_2 = {
         .blob_mem   = blob_mem,
         .blob_flags = blob_flags,
         .bo_handle  = 0,
         .res_handle = 0,
-        .size       = blob_size,
+        .size       = blob_ಗಾತ್ರ,
         .pad        = 0,
-        .cmd_size   = 0,
+        .cmd_ಗಾತ್ರ   = 0,
         .cmd        = 0,
         .blob_id    = blob_id,
     };
 
-    if (virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE_BLOB, &args)) {
-        return 0;
+    ಆದರೆ (virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_RESOURCE_CREATE_BLOB, &ವಾದಗಳು_2)) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    *res_id = args.res_handle;
-    return args.bo_handle;
+    *res_id = ವಾದಗಳು_2.res_handle;
+    ಹಿಂತಿರುಗಿ ವಾದಗಳು_2.bo_handle;
 }
 
-static void virtgpu_ioctl_gem_close(virtgpu * gpu, uint32_t gem_handle) {
-    drm_gem_close args = {
+ಸ್ಥಿರ ಶೂನ್ಯ virtgpu_ioctl_gem_close(virtgpu * gpu, uint32_t gem_handle) {
+    drm_gem_close ವಾದಗಳು_2 = {
         .handle = gem_handle,
         .pad    = 0,
     };
 
-    const int ret = virtgpu_ioctl(gpu, DRM_IOCTL_GEM_CLOSE, &args);
-    assert(!ret);
-#ifdef NDEBUG
-    UNUSED(ret);
-#endif
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ret = virtgpu_ioctl(gpu, DRM_IOCTL_GEM_CLOSE, &ವಾದಗಳು_2);
+    ಪ್ರತಿಜ್ಞಾ(!ret);
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ NDEBUG
+    ಬಳಸದ(ret);
+#ಆದರೆ_ಅಂತ್ಯ
 }
 
-static void * virtgpu_ioctl_map(virtgpu * gpu, uint32_t gem_handle, size_t size) {
-    drm_virtgpu_map args = {
-        .offset = 0,
+ಸ್ಥಿರ ಶೂನ್ಯ * virtgpu_ioctl_map(virtgpu * gpu, uint32_t gem_handle, size_t size) {
+    drm_virtgpu_map ವಾದಗಳು_2 = {
+        .ಸ್ಥಾನಾಂತರ = 0,
         .handle = gem_handle,
         .pad    = 0,
     };
 
-    if (virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_MAP, &args)) {
-        return NULL;
+    ಆದರೆ (virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_MAP, &ವಾದಗಳು_2)) {
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    void * ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, gpu->fd, args.offset);
-    if (ptr == MAP_FAILED) {
-        return NULL;
+    ಶೂನ್ಯ * ptr = mmap(ಖಾಲಿ, size, PROT_READ | PROT_WRITE, MAP_SHARED, gpu->fd, ವಾದಗಳು_2.ಸ್ಥಾನಾಂತರ);
+    ಆದರೆ (ptr == MAP_FAILED) {
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    return ptr;
+    ಹಿಂತಿರುಗಿ ptr;
 }
 
-void virtgpu_shmem_destroy(virtgpu * gpu, virtgpu_shmem * shmem) {
-    munmap(shmem->mmap_ptr, shmem->mmap_size);
+ಶೂನ್ಯ virtgpu_shmem_destroy(virtgpu * gpu, virtgpu_shmem * shmem) {
+    munmap(shmem->mmap_ptr, shmem->mmap_ಗಾತ್ರ);
     virtgpu_ioctl_gem_close(gpu, shmem->gem_handle);
 }
 
-int virtgpu_shmem_create(virtgpu * gpu, size_t size, virtgpu_shmem * shmem) {
+ಪೂರ್ಣಾಂಕ virtgpu_shmem_create(virtgpu * gpu, size_t size, virtgpu_shmem * shmem) {
     size = align64(size, 16384);
 
     uint32_t res_id;
     uint32_t gem_handle = virtgpu_ioctl_resource_create_blob(gpu, VIRTGPU_BLOB_MEM_HOST3D,
                                                              VIRTGPU_BLOB_FLAG_USE_MAPPABLE, size, 0, &res_id);
 
-    if (!gem_handle) {
-        return 1;
+    ಆದರೆ (!gem_handle) {
+        ಹಿಂತಿರುಗಿ 1;
     }
 
-    void * ptr = virtgpu_ioctl_map(gpu, gem_handle, size);
-    if (!ptr) {
+    ಶೂನ್ಯ * ptr = virtgpu_ioctl_map(gpu, gem_handle, size);
+    ಆದರೆ (!ptr) {
         virtgpu_ioctl_gem_close(gpu, gem_handle);
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: virtgpu_ioctl_map failed\n", __func__);
-        return 1;
+        ಹಿಂತಿರುಗಿ 1;
     }
 
     shmem->res_id     = res_id;
-    shmem->mmap_size  = size;
+    shmem->mmap_ಗಾತ್ರ  = size;
     shmem->mmap_ptr   = ptr;
     shmem->gem_handle = gem_handle;
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }

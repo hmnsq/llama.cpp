@@ -1,89 +1,89 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ಅನ್ತರ್ಭಾವ "../node_context.h"
+#ಅನ್ತರ್ಭಾವ "../op_table.h"
+#ಅನ್ತರ್ಭಾವ "../utils.h"
 
-#include <climits>
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/transpose.hpp>
-#include <openvino/op/unsqueeze.hpp>
-#include <openvino/op/util/op_types.hpp>
-#include <vector>
+#ಅನ್ತರ್ಭಾವ <climits>
+#ಅನ್ತರ್ಭಾವ <cstdint>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <openvino/core/node.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/core/node_output.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/broadcast.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/concat.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/constant.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/convert.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/matmul.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/reshape.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/slice.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/transpose.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/unsqueeze.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/util/op_types.hpp>
+#ಅನ್ತರ್ಭಾವ <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ನಾಮಾಕಾಶ ov {
+ನಾಮಾಕಾಶ frontend {
+ನಾಮಾಕಾಶ ggml {
+ನಾಮಾಕಾಶ op {
 
-OutputVector translate_mulmat(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+Output_ಸದಿಶ translate_mulmat(ಸ್ಥಿರಾಂಕ ಗಂಟು_Context & context) {
+    ಅಂಕೆ_inputs_check(context, 2, 2);
 
-    int op_case = context.get_op_case();
+    ಪೂರ್ಣಾಂಕ op_case = context.get_op_case();
 
-    ov::Output<ov::Node> B = process_view_input_new(context, 0);
-    ov::Output<ov::Node> A = process_view_input_new(context, 1);
+    ov::Output<ov::Node> B = process_view_ಒಳಹರಿವು_new(context, 0);
+    ov::Output<ov::Node> A = process_view_ಒಳಹರಿವು_new(context, 1);
 
-    if (A.get_element_type() != B.get_element_type()) {
-        B = std::make_shared<ov::op::v0::Convert>(B, context.get_input_type(1));
+    ಆದರೆ (A.get_element_type() != B.get_element_type()) {
+        B = std::make_shared<ov::op::v0::Convert>(B, context.get_ಒಳಹರಿವು_type(1));
     }
 
-    auto B_shape = context.get_input_shape(0).to_shape();
-    auto A_shape = context.get_input_shape(1).to_shape();
+    ಸ್ವಯಂಚಾಲಿತ B_shape = context.get_ಒಳಹರಿವು_shape(0).ಗಮ್ಯ_shape();
+    ಸ್ವಯಂಚಾಲಿತ A_shape = context.get_ಒಳಹರಿವು_shape(1).ಗಮ್ಯ_shape();
     int64_t A_batch = A_shape[1];
     int64_t B_batch = B_shape[1];
 
-    auto A_batch_larger = A_batch > B_batch;
-    auto batch_large = A_batch_larger ? A_batch : B_batch;
-    auto batch_small = A_batch_larger ? B_batch : A_batch;
+    ಸ್ವಯಂಚಾಲಿತ A_batch_larger = A_batch > B_batch;
+    ಸ್ವಯಂಚಾಲಿತ batch_large = A_batch_larger ? A_batch : B_batch;
+    ಸ್ವಯಂಚಾಲಿತ batch_small = A_batch_larger ? B_batch : A_batch;
 
     Output<Node> Z = A_batch_larger ? B : A;
-    auto Z_shape = A_batch_larger ? B_shape : A_shape;
-    int64_t factor = batch_large / batch_small;
-    if (factor > 1 && batch_small > 1) {
-        auto batch_large_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_large});
-        auto batch_small_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_small});
-        auto factor_node = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{factor});
+    ಸ್ವಯಂಚಾಲಿತ Z_shape = A_batch_larger ? B_shape : A_shape;
+    int64_t ಗುಣಕ = batch_large / batch_small;
+    ಆದರೆ (ಗುಣಕ > 1 && batch_small > 1) {
+        ಸ್ವಯಂಚಾಲಿತ batch_large_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_large});
+        ಸ್ವಯಂಚಾಲಿತ batch_small_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{batch_small});
+        ಸ್ವಯಂಚಾಲಿತ ಗುಣಕ_ಗಂಟು = ov::op::v0::Constant::create(ov::element::i64, {1}, std::vector<int64_t>{ಗುಣಕ});
 
-        auto unsqueeze_axes = ov::op::v0::Constant::create(ov::element::i64, Shape{}, {2});
-        auto Z_unsqueezed = std::make_shared<ov::op::v0::Unsqueeze>(Z, unsqueeze_axes);
+        ಸ್ವಯಂಚಾಲಿತ unsqueeze_axes = ov::op::v0::Constant::create(ov::element::i64, Shape{}, {2});
+        ಸ್ವಯಂಚಾಲಿತ Z_unsqueezed = std::make_shared<ov::op::v0::Unsqueeze>(Z, unsqueeze_axes);
 
-        auto broadcast_shape = ov::op::v0::Constant::create(
-            ov::element::i64, {5}, {(int64_t) 1, (int64_t) 1, factor, (int64_t) 1, (int64_t) 1});
-        auto new_Z_shape = ov::op::v0::Constant::create(ov::element::i64, {4},
+        ಸ್ವಯಂಚಾಲಿತ ಪ್ರಸಾರ_shape = ov::op::v0::Constant::create(
+            ov::element::i64, {5}, {(int64_t) 1, (int64_t) 1, ಗುಣಕ, (int64_t) 1, (int64_t) 1});
+        ಸ್ವಯಂಚಾಲಿತ new_Z_shape = ov::op::v0::Constant::create(ov::element::i64, {4},
                                                         {(int64_t) 0, batch_large, (int64_t) -1, (int64_t) Z_shape[3]});
-        if (op_case == 2) {
+        ಆದರೆ (op_case == 2) {
             new_Z_shape = ov::op::v0::Constant::create(ov::element::i64, {4},
                                                        {(int64_t) 0, batch_large, (int64_t) Z_shape[2], (int64_t) -1});
         }
 
-        auto Z_broadcasted = std::make_shared<ov::op::v3::Broadcast>(Z_unsqueezed, broadcast_shape,
-                                                                     ov::op::BroadcastType::BIDIRECTIONAL);
-        Z = std::make_shared<ov::op::v1::Reshape>(Z_broadcasted, new_Z_shape, true);
+        ಸ್ವಯಂಚಾಲಿತ Z_broadcasted = std::make_shared<ov::op::v3::ಪ್ರಸಾರ>(Z_unsqueezed, ಪ್ರಸಾರ_shape,
+                                                                     ov::op::ಪ್ರಸಾರ_Type::BIDIRECTIONAL);
+        Z = std::make_shared<ov::op::v1::Reshape>(Z_broadcasted, new_Z_shape, ನಿಜ);
     }
-    if (A_batch_larger) {
+    ಆದರೆ (A_batch_larger) {
         B = Z;
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         A = Z;
     }
 
-    bool transpose_b = true;
-    ov::Output<Node> res = std::make_shared<ov::op::v0::MatMul>(A, B, false, transpose_b);
+    ತಾರ್ಕಿಕ transpose_b = ನಿಜ;
+    ov::Output<Node> res = std::make_shared<ov::op::v0::MatMul>(A, B, ಸುಳ್ಳು, transpose_b);
 
-    const auto output_type = context.get_output_type();
-    if (res.get_element_type() != output_type) {
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ output_type = context.get_output_type();
+    ಆದರೆ (res.get_element_type() != output_type) {
         res = std::make_shared<ov::op::v0::Convert>(res, output_type);
     }
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ಹಿಂತಿರುಗಿ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

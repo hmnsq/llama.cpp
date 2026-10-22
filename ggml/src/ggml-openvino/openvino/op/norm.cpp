@@ -1,28 +1,28 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ಅನ್ತರ್ಭಾವ "../node_context.h"
+#ಅನ್ತರ್ಭಾವ "../op_table.h"
+#ಅನ್ತರ್ಭಾವ "../utils.h"
 
-#include <cstring>
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/mvn.hpp>
+#ಅನ್ತರ್ಭಾವ <cstring>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <openvino/op/constant.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/mvn.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+ನಾಮಾಕಾಶ ov {
+ನಾಮಾಕಾಶ frontend {
+ನಾಮಾಕಾಶ ggml {
+ನಾಮಾಕಾಶ op {
 
-OutputVector translate_norm(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+Output_ಸದಿಶ translate_norm(ಸ್ಥಿರಾಂಕ ಗಂಟು_Context & context) {
+    ಅಂಕೆ_inputs_check(context, 1, 1);
 
-    auto input_node = process_view_input_new(context, 0);
-    float eps;
-    memcpy(&eps, context.get_output_op_params(), sizeof(float));
+    ಸ್ವಯಂಚಾಲಿತ ಒಳಹರಿವು_ಗಂಟು = process_view_ಒಳಹರಿವು_new(context, 0);
+    ದಶಮಾಂಶ eps;
+    ಸ್ಮರಣೆ_ನಕಲು(&eps, context.get_output_op_params(), ಗಾತ್ರ(ದಶಮಾಂಶ));
 
-    auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
-    auto res = std::make_shared<ov::op::v6::MVN>(input_node, axes, true, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
+    ಸ್ವಯಂಚಾಲಿತ axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
+    ಸ್ವಯಂಚಾಲಿತ res = std::make_shared<ov::op::v6::MVN>(ಒಳಹರಿವು_ಗಂಟು, axes, ನಿಜ, eps, ov::op::MVNEps_ಬಹುಲಕ::INSIDE_SQRT);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ಹಿಂತಿರುಗಿ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

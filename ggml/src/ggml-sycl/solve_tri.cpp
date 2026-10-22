@@ -1,172 +1,172 @@
-#include "solve_tri.hpp"
-#include "common.hpp"
-#include <oneapi/mkl/blas.hpp>
+#ಅನ್ತರ್ಭಾವ "solve_tri.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
+#ಅನ್ತರ್ಭಾವ <oneapi/mkl/blas.hpp>
 
-template <int n_template, int k_template>
-static void solve_tri_f32_fast(const float * __restrict__ A,
-                               const float * __restrict__ B,
-                               float * __restrict__ X,
-                               const int64_t ne02, [[maybe_unused]] const int64_t ne03,
-                               const int64_t nb02, const int64_t nb03,
-                               const int64_t nb12, const int64_t nb13,
-                               const int64_t nb2,  const int64_t nb3,
-                               const int n_arg, const int k_arg,
-                               const sycl::nd_item<2> & item, float * sA) {
+ಮಾದರಿ <ಪೂರ್ಣಾಂಕ n_template, ಪೂರ್ಣಾಂಕ k_template>
+ಸ್ಥಿರ ಶೂನ್ಯ solve_tri_f32_fast(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * __restrict__ A,
+                               ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * __restrict__ B,
+                               ದಶಮಾಂಶ * __restrict__ X,
+                               ಸ್ಥಿರಾಂಕ int64_t ne02, [[maybe_unused]] ಸ್ಥಿರಾಂಕ int64_t ne03,
+                               ಸ್ಥಿರಾಂಕ int64_t nb02, ಸ್ಥಿರಾಂಕ int64_t nb03,
+                               ಸ್ಥಿರಾಂಕ int64_t nb12, ಸ್ಥಿರಾಂಕ int64_t nb13,
+                               ಸ್ಥಿರಾಂಕ int64_t nb2,  ಸ್ಥಿರಾಂಕ int64_t nb3,
+                               ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ n_arg, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k_arg,
+                               ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<2> & ಅಂಶ, ದಶಮಾಂಶ * sA) {
 
-    const int n = n_template == 0 ? n_arg : n_template;
-    const int k = k_template == 0 ? k_arg : k_template;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ n = n_template == 0 ? n_arg : n_template;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k = k_template == 0 ? k_arg : k_template;
 
-    const int batch_idx = item.get_group(1);
-    const int lane      = item.get_local_id(1) % WARP_SIZE;
-    const int col_idx   = item.get_local_id(0);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ batch_idx = ಅಂಶ.get_ಗುಂಪು(1);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ lane      = ಅಂಶ.get_local_id(1) % WARP_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು_idx   = ಅಂಶ.get_local_id(0);
 
-    if (col_idx >= k) {
-        return;
+    ಆದರೆ (ಲಂಬಸಾಲು_idx >= k) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const int64_t i03 = batch_idx / ne02;
-    const int64_t i02 = batch_idx % ne02;
+    ಸ್ಥಿರಾಂಕ int64_t i03 = batch_idx / ne02;
+    ಸ್ಥಿರಾಂಕ int64_t i02 = batch_idx % ne02;
 
-    const float * A_batch = (const float *) ((const char *) A + i02 * nb02 + i03 * nb03);
-    const float * B_batch = (const float *) ((const char *) B + i02 * nb12 + i03 * nb13);
-    float *       X_batch = (float *)       ((char *)       X + i02 * nb2  + i03 * nb3);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * A_batch = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) A + i02 * nb02 + i03 * nb03);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * B_batch = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) B + i02 * nb12 + i03 * nb13);
+    ದಶಮಾಂಶ *       X_batch = (ದಶಮಾಂಶ *)       ((ಅಕ್ಷರ *)       X + i02 * nb2  + i03 * nb3);
 
-    const int offset = item.get_local_id(1) + item.get_local_id(0) * item.get_local_range(1);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = ಅಂಶ.get_local_id(1) + ಅಂಶ.get_local_id(0) * ಅಂಶ.get_local_range(1);
 
-#pragma unroll
-    for (int i = 0; i < n * n; i += k * WARP_SIZE) {
-        const int i0 = i + offset;
-        if (i0 < n * n) {
+#ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < n * n; i += k * WARP_ಗಾತ್ರ) {
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ i0 = i + ಸ್ಥಾನಾಂತರ;
+        ಆದರೆ (i0 < n * n) {
             sA[i0] = A_batch[i0];
         }
     }
 
-    item.barrier(sycl::access::fence_space::local_space);
+    ಅಂಶ.barrier(sycl::access::fence_space::local_space);
 
-    float x_low  = (lane < n) ? B_batch[lane * k + col_idx] : 0.0f;
-    float x_high = (WARP_SIZE + lane < n) ? B_batch[(WARP_SIZE + lane) * k + col_idx] : 0.0f;
+    ದಶಮಾಂಶ x_ಕೆಳಗಿನ  = (lane < n) ? B_batch[lane * k + ಲಂಬಸಾಲು_idx] : 0.0f;
+    ದಶಮಾಂಶ x_ಮೇಲಿನ = (WARP_ಗಾತ್ರ + lane < n) ? B_batch[(WARP_ಗಾತ್ರ + lane) * k + ಲಂಬಸಾಲು_idx] : 0.0f;
 
-    const int half      = WARP_SIZE;
-    const int nrows_low = (n < half) ? n : half;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ half      = WARP_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nrows_ಕೆಳಗಿನ = (n < half) ? n : half;
 
-#pragma unroll
-    for (int row = 0; row < nrows_low; ++row) {
-        float sum = 0.0f;
-        if (lane < row) {
-            sum += sA[row * n + lane] * x_low;
+#ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = 0; ಅಡ್ಡಸಾಲು < nrows_ಕೆಳಗಿನ; ++ಅಡ್ಡಸಾಲು) {
+        ದಶಮಾಂಶ ಮೊತ್ತ = 0.0f;
+        ಆದರೆ (lane < ಅಡ್ಡಸಾಲು) {
+            ಮೊತ್ತ += sA[ಅಡ್ಡಸಾಲು * n + lane] * x_ಕೆಳಗಿನ;
         }
-        sum = warp_reduce_sum<WARP_SIZE>(sum);
-        if (lane == row) {
-            x_low = (x_low - sum) / sA[row * n + row];
-        }
-    }
-
-#pragma unroll
-    for (int row = half; row < n; ++row) {
-        float     sum = sA[row * n + lane] * x_low;
-        const int j   = half + lane;
-        if (j < row) {
-            sum += sA[row * n + j] * x_high;
-        }
-        sum = warp_reduce_sum<WARP_SIZE>(sum);
-        if (lane == row - half) {
-            x_high = (x_high - sum) / sA[row * n + row];
+        ಮೊತ್ತ = warp_reduce_ಮೊತ್ತ<WARP_ಗಾತ್ರ>(ಮೊತ್ತ);
+        ಆದರೆ (lane == ಅಡ್ಡಸಾಲು) {
+            x_ಕೆಳಗಿನ = (x_ಕೆಳಗಿನ - ಮೊತ್ತ) / sA[ಅಡ್ಡಸಾಲು * n + ಅಡ್ಡಸಾಲು];
         }
     }
 
-#pragma unroll
-    for (int rr = 0; rr < 2; ++rr) {
-        const int row = rr * WARP_SIZE + lane;
-        if (row < n) {
-            const float val            = (row < half) ? x_low : x_high;
-            X_batch[row * k + col_idx] = val;
+#ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = half; ಅಡ್ಡಸಾಲು < n; ++ಅಡ್ಡಸಾಲು) {
+        ದಶಮಾಂಶ     ಮೊತ್ತ = sA[ಅಡ್ಡಸಾಲು * n + lane] * x_ಕೆಳಗಿನ;
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ j   = half + lane;
+        ಆದರೆ (j < ಅಡ್ಡಸಾಲು) {
+            ಮೊತ್ತ += sA[ಅಡ್ಡಸಾಲು * n + j] * x_ಮೇಲಿನ;
+        }
+        ಮೊತ್ತ = warp_reduce_ಮೊತ್ತ<WARP_ಗಾತ್ರ>(ಮೊತ್ತ);
+        ಆದರೆ (lane == ಅಡ್ಡಸಾಲು - half) {
+            x_ಮೇಲಿನ = (x_ಮೇಲಿನ - ಮೊತ್ತ) / sA[ಅಡ್ಡಸಾಲು * n + ಅಡ್ಡಸಾಲು];
+        }
+    }
+
+#ಸೂಚನೆ unroll
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ rr = 0; rr < 2; ++rr) {
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = rr * WARP_ಗಾತ್ರ + lane;
+        ಆದರೆ (ಅಡ್ಡಸಾಲು < n) {
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ val            = (ಅಡ್ಡಸಾಲು < half) ? x_ಕೆಳಗಿನ : x_ಮೇಲಿನ;
+            X_batch[ಅಡ್ಡಸಾಲು * k + ಲಂಬಸಾಲು_idx] = val;
         }
     }
 }
 
-static void solve_tri_f32_mkl(dpct::queue_ptr stream,
-                               const float * A, float * X,
-                               int n, int k,
+ಸ್ಥಿರ ಶೂನ್ಯ solve_tri_f32_mkl(dpct::ಸರತಿ_ptr stream,
+                               ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * A, ದಶಮಾಂಶ * X,
+                               ಪೂರ್ಣಾಂಕ n, ಪೂರ್ಣಾಂಕ k,
                                int64_t ne02, [[maybe_unused]] int64_t ne03,
                                int64_t nb02, [[maybe_unused]] int64_t nb03,
                                int64_t nb2,  [[maybe_unused]] int64_t nb3) {
-    const float alpha = 1.0f;
-    const int64_t total_batches = ne02 * ne03;
-    if (total_batches == 0) {
-        return;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ alpha = 1.0f;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_batches = ne02 * ne03;
+    ಆದರೆ (ಒಟ್ಟು_batches == 0) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const int64_t stride_a = nb02 / sizeof(float);
-    const int64_t stride_x = nb2 / sizeof(float);
+    ಸ್ಥಿರಾಂಕ int64_t stride_a = nb02 / ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t stride_x = nb2 / ಗಾತ್ರ(ದಶಮಾಂಶ);
 
     oneapi::mkl::blas::trsm_batch(
         *stream,
-        oneapi::mkl::side::right,
+        oneapi::mkl::side::ಬಲ,
         oneapi::mkl::uplo::upper,
         oneapi::mkl::transpose::nontrans,
         oneapi::mkl::diag::nonunit,
         k, n, alpha,
         A, n, stride_a,
         X, k, stride_x,
-        total_batches);
+        ಒಟ್ಟು_batches);
 }
 
-inline void ggml_sycl_op_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0 = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(ggml_is_contiguous(src1));
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
 
-    dpct::queue_ptr stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ಗಣ_device(ctx.device));
 
-    const int n    = src0->ne[0];
-    const int k    = src1->ne[0];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ n    = src0->ne[0];
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k    = src1->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t ne02 = src0->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t ne03 = src0->ne[3];
 
     GGML_ASSERT(n <= SYCL_SOLVE_TRI_MAX_N && k <= SYCL_SOLVE_TRI_MAX_K);
 
-    const float * A_d = static_cast<const float *>(src0->data);
-    const float * B_d = static_cast<const float *>(src1->data);
-    float * X_d       = static_cast<float *>(dst->data);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * A_d = static_cast<ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *>(src0->ದತ್ತಾಂಶ);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * B_d = static_cast<ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *>(src1->ದತ್ತಾಂಶ);
+    ದಶಮಾಂಶ * X_d       = static_cast<ದಶಮಾಂಶ *>(dst->ದತ್ತಾಂಶ);
 
-    if (X_d != B_d) {
-        const int64_t total_elements = (int64_t)n * k * ne02 * ne03;
-        stream->memcpy(X_d, B_d, total_elements * sizeof(float));
+    ಆದರೆ (X_d != B_d) {
+        ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_elements = (int64_t)n * k * ne02 * ne03;
+        stream->ಸ್ಮರಣೆ_ನಕಲು(X_d, B_d, ಒಟ್ಟು_elements * ಗಾತ್ರ(ದಶಮಾಂಶ));
     }
 
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
-    const int64_t nb12 = src1->nb[2];
-    const int64_t nb13 = src1->nb[3];
-    const int64_t nb2  = dst->nb[2];
-    const int64_t nb3  = dst->nb[3];
+    ಸ್ಥಿರಾಂಕ int64_t nb02 = src0->nb[2];
+    ಸ್ಥಿರಾಂಕ int64_t nb03 = src0->nb[3];
+    ಸ್ಥಿರಾಂಕ int64_t nb12 = src1->nb[2];
+    ಸ್ಥಿರಾಂಕ int64_t nb13 = src1->nb[3];
+    ಸ್ಥಿರಾಂಕ int64_t nb2  = dst->nb[2];
+    ಸ್ಥಿರಾಂಕ int64_t nb3  = dst->nb[3];
 
-    const int64_t total_batches = ne02 * ne03;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_batches = ne02 * ne03;
 
-    if (n <= 2 * WARP_SIZE && k <= 32) {
-        const int smem_size = 2 * WARP_SIZE * 2 * WARP_SIZE;
-        const sycl::range<2> grid(1, total_batches);
-        const sycl::range<2> block(k, WARP_SIZE);
+    ಆದರೆ (n <= 2 * WARP_ಗಾತ್ರ && k <= 32) {
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ smem_ಗಾತ್ರ = 2 * WARP_ಗಾತ್ರ * 2 * WARP_ಗಾತ್ರ;
+        ಸ್ಥಿರಾಂಕ sycl::range<2> grid(1, ಒಟ್ಟು_batches);
+        ಸ್ಥಿರಾಂಕ sycl::range<2> ಖಂಡ(k, WARP_ಗಾತ್ರ);
         stream->submit([&](sycl::handler & cgh) {
-            sycl::local_accessor<float, 1> smem_acc(sycl::range<1>(smem_size), cgh);
+            sycl::local_accessor<ದಶಮಾಂಶ, 1> smem_acc(sycl::range<1>(smem_ಗಾತ್ರ), cgh);
             cgh.parallel_for(
-                sycl::nd_range<2>(grid * block, block),
-                [=](sycl::nd_item<2> item) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                sycl::nd_range<2>(grid * ಖಂಡ, ಖಂಡ),
+                [=](sycl::nd_ಅಂಶ<2> ಅಂಶ) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
                     solve_tri_f32_fast<0, 0>(A_d, B_d, X_d, ne02, ne03,
                                               nb02, nb03, nb12, nb13, nb2, nb3,
-                                              n, k, item, get_pointer(smem_acc));
+                                              n, k, ಅಂಶ, get_ಸೂಚಕ(smem_acc));
                 });
         });
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         solve_tri_f32_mkl(stream, A_d, X_d, n, k, ne02, ne03, nb02, nb03, nb2, nb3);
     }
 }
 
-void ggml_sycl_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_solve_tri(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_solve_tri(ctx, dst);
 }

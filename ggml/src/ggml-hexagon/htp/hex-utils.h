@@ -1,58 +1,58 @@
-#ifndef HEX_UTILS_H
-#define HEX_UTILS_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ HEX_UTILS_H
+#ವ್ಯಾಖ್ಯಾನಿಸು HEX_UTILS_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <qurt_memory.h>
-#include <qurt.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <qurt_memory.h>
+#ಅನ್ತರ್ಭಾವ <qurt.h>
 
-#include "hexagon_types.h"
-#include "hexagon_protos.h"
+#ಅನ್ತರ್ಭಾವ "hexagon_types.h"
+#ಅನ್ತರ್ಭಾವ "hexagon_protos.h"
 
-#include "hex-fastdiv.h"
-#include "hex-dump.h"
-#include "hex-common.h"
+#ಅನ್ತರ್ಭಾವ "hex-fastdiv.h"
+#ಅನ್ತರ್ಭಾವ "hex-dump.h"
+#ಅನ್ತರ್ಭಾವ "hex-common.h"
 
-static inline uint64_t hex_get_cycles() {
-    uint64_t cycles = 0;
-    asm volatile(" %0 = c15:14\n" : "=r"(cycles));
-    return cycles;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint64_t hex_get_ಚಕ್ರಗಳು() {
+    uint64_t ಚಕ್ರಗಳು = 0;
+    asm ಅಸ್ಥಿರ(" %0 = c15:14\n" : "=r"(ಚಕ್ರಗಳು));
+    ಹಿಂತಿರುಗಿ ಚಕ್ರಗಳು;
 }
 
-static inline uint64_t hex_get_pktcnt() {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint64_t hex_get_pktcnt() {
     uint64_t pktcnt;
-    asm volatile(" %0 = c19:18\n" : "=r"(pktcnt));
-    return pktcnt;
+    asm ಅಸ್ಥಿರ(" %0 = c19:18\n" : "=r"(pktcnt));
+    ಹಿಂತಿರುಗಿ pktcnt;
 }
 
-static inline void hex_l2fetch(const void * p, uint32_t width, uint32_t stride, uint32_t height) {
-    const uint64_t control = Q6_P_combine_RR(stride, Q6_R_combine_RlRl(width, height));
-    Q6_l2fetch_AP((void *) p, control);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hex_l2fetch(ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * p, uint32_t ಅಗಲ, uint32_t stride, uint32_t ಎತ್ತರ) {
+    ಸ್ಥಿರಾಂಕ uint64_t control = Q6_P_combine_RR(stride, Q6_R_combine_RlRl(ಅಗಲ, ಎತ್ತರ));
+    Q6_l2fetch_AP((ಶೂನ್ಯ *) p, control);
 }
 
-static inline void hex_l2fetch_block(const void * addr, size_t size) {
-    if (size == 0) return;
-    const uint32_t width = 16384; // 16KB rows
-    const uint32_t height = (size + width - 1) / width;
-    hex_l2fetch(addr, width, width, height);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hex_l2fetch_ಖಂಡ(ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * addr, size_t ಗಾತ್ರ_2) {
+    ಆದರೆ (ಗಾತ್ರ_2 == 0) ಹಿಂತಿರುಗಿ;
+    ಸ್ಥಿರಾಂಕ uint32_t ಅಗಲ = 16384; // 16KB rows
+    ಸ್ಥಿರಾಂಕ uint32_t ಎತ್ತರ = (ಗಾತ್ರ_2 + ಅಗಲ - 1) / ಅಗಲ;
+    hex_l2fetch(addr, ಅಗಲ, ಅಗಲ, ಎತ್ತರ);
 }
 
-#define HEX_L2_LINE_SIZE           128
-#define HEX_L2_BLOCK_SIZE          (HEX_L2_LINE_SIZE * 4) // flush granularity (chunks per thread)
-#define HEX_L2_FLUSH_WQ_THRESHOLD  (4 * 1024)
-#define HEX_L2_FLUSH_ALL_THRESHOLD (4 * 1024 * 1024)
+#ವ್ಯಾಖ್ಯಾನಿಸು HEX_L2_ಸಾಲು_ಗಾತ್ರ           128
+#ವ್ಯಾಖ್ಯಾನಿಸು HEX_L2_ಖಂಡ_ಗಾತ್ರ          (HEX_L2_ಸಾಲು_ಗಾತ್ರ * 4) // flush granularity (chunks per thread)
+#ವ್ಯಾಖ್ಯಾನಿಸು HEX_L2_FLUSH_WQ_ಮಿತಿ  (4 * 1024)
+#ವ್ಯಾಖ್ಯಾನಿಸು HEX_L2_FLUSH_ALL_ಮಿತಿ (4 * 1024 * 1024)
 
-static inline void hex_l2flush(void * addr, size_t size) {
-    if (size == 0) return;
-    const uint32_t s = ((uint32_t) addr) & ~(HEX_L2_LINE_SIZE - 1);
-    const uint32_t e = (((uint32_t) addr) + size + HEX_L2_LINE_SIZE - 1) & ~(HEX_L2_LINE_SIZE - 1);
-    for (uint32_t i = s; i < e; i += HEX_L2_LINE_SIZE) {
-        Q6_dccleaninva_A((void *) i);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hex_l2flush(ಶೂನ್ಯ * addr, size_t ಗಾತ್ರ_2) {
+    ಆದರೆ (ಗಾತ್ರ_2 == 0) ಹಿಂತಿರುಗಿ;
+    ಸ್ಥಿರಾಂಕ uint32_t s = ((uint32_t) addr) & ~(HEX_L2_ಸಾಲು_ಗಾತ್ರ - 1);
+    ಸ್ಥಿರಾಂಕ uint32_t e = (((uint32_t) addr) + ಗಾತ್ರ_2 + HEX_L2_ಸಾಲು_ಗಾತ್ರ - 1) & ~(HEX_L2_ಸಾಲು_ಗಾತ್ರ - 1);
+    ಗಾಗಿ (uint32_t i = s; i < e; i += HEX_L2_ಸಾಲು_ಗಾತ್ರ) {
+        Q6_dccleaninva_A((ಶೂನ್ಯ *) i);
     }
 }
 
-static inline void hex_pause() {
-    asm volatile(" pause(#255)\n");
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hex_pause() {
+    asm ಅಸ್ಥಿರ(" pause(#255)\n");
 }
 
-#endif /* HEX_UTILS_H */
+#ಆದರೆ_ಅಂತ್ಯ /* HEX_UTILS_H */

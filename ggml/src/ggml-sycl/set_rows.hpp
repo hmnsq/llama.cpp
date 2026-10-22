@@ -1,8 +1,8 @@
-#ifndef GGML_SYCL_SET_ROWS_HPP
-#define GGML_SYCL_SET_ROWS_HPP
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ GGML_SYCL_ಗಣ_ಅಡ್ಡಸಾಲುಗಳು_HPP
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_SYCL_ಗಣ_ಅಡ್ಡಸಾಲುಗಳು_HPP
 
-#include "common.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
 
-void ggml_sycl_op_set_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+ಶೂನ್ಯ ggml_sycl_op_ಗಣ_ಅಡ್ಡಸಾಲುಗಳು(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-#endif // GGML_SYCL_SET_ROWS_HPP
+#ಆದರೆ_ಅಂತ್ಯ // GGML_SYCL_SET_ROWS_HPP

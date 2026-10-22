@@ -1,79 +1,79 @@
-#pragma once
+#ಸೂಚನೆ once
 
-#ifdef _WIN32
-#   define WIN32_LEAN_AND_MEAN
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ _WIN32
+#   define WIN32_LEAN_AND_ಸರಾಸರಿ
 #   ifndef NOMINMAX
 #       define NOMINMAX
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#ಇಲ್ಲದಿದ್ದರೆ
 #    include <dlfcn.h>
 #    include <unistd.h>
-#endif
-#include <filesystem>
+#ಆದರೆ_ಅಂತ್ಯ
+#ಅನ್ತರ್ಭಾವ <filesystem>
 
 namespace fs = std::filesystem;
 
-#ifdef _WIN32
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ _WIN32
 
-using dl_handle = std::remove_pointer_t<HMODULE>;
+using dl_handle = std::remove_ಸೂಚಕ_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+ರಚನೆ dl_handle_deleter {
+    ಶೂನ್ಯ ಕ್ರಿಯಾಕಾರಕ()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ dl_handle * dl_ತುಂಬು_library(ಸ್ಥಿರಾಂಕ fs::ಮಾರ್ಗ & ಮಾರ್ಗ) {
     // suppress error dialogs for missing DLLs
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+    DWORD old_ಬಹುಲಕ = ಗಣ_Error_ಬಹುಲಕ(SEM_FAILCRITICALERRORS);
+    ಗಣ_Error_ಬಹುಲಕ(old_ಬಹುಲಕ | SEM_FAILCRITICALERRORS);
 
-    HMODULE handle = LoadLibraryW(path.wstring().c_str());
+    HMODULE handle = ತುಂಬು_Library_W(ಮಾರ್ಗ.wstring().c_str());
 
-    SetErrorMode(old_mode);
+    ಗಣ_Error_ಬಹುಲಕ(old_ಬಹುಲಕ);
 
-    return handle;
+    ಹಿಂತಿರುಗಿ handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
-    SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ * dl_get_sym(dl_handle * handle, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * name) {
+    DWORD old_ಬಹುಲಕ = ಗಣ_Error_ಬಹುಲಕ(SEM_FAILCRITICALERRORS);
+    ಗಣ_Error_ಬಹುಲಕ(old_ಬಹುಲಕ | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    ಶೂನ್ಯ * p = (ಶೂನ್ಯ *) Get_Proc_ವಿಳಾಸ(handle, name);
 
-    SetErrorMode(old_mode);
+    ಗಣ_Error_ಬಹುಲಕ(old_ಬಹುಲಕ);
 
-    return p;
+    ಹಿಂತಿರುಗಿ p;
 }
 
-static inline const char * dl_error() {
-    return "";
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * dl_error() {
+    ಹಿಂತಿರುಗಿ "";
 }
 
-#else
+#ಇಲ್ಲದಿದ್ದರೆ
 
-using dl_handle = void;
+using dl_handle = ಶೂನ್ಯ;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+ರಚನೆ dl_handle_deleter {
+    ಶೂನ್ಯ ಕ್ರಿಯಾಕಾರಕ()(ಶೂನ್ಯ * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
-    dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ dl_handle * dl_ತುಂಬು_library(ಸ್ಥಿರಾಂಕ fs::ಮಾರ್ಗ & ಮಾರ್ಗ) {
+    dl_handle * handle = dlopen(ಮಾರ್ಗ.string().c_str(), RTLD_NOW | RTLD_LOCAL);
+    ಹಿಂತಿರುಗಿ handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ * dl_get_sym(dl_handle * handle, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * name) {
+    ಹಿಂತಿರುಗಿ dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * dl_error() {
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *rslt = dlerror();
+    ಹಿಂತಿರುಗಿ rslt != nullptr ? rslt : "";
 }
 
-#endif
+#ಆದರೆ_ಅಂತ್ಯ

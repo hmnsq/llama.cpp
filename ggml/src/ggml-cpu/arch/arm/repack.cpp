@@ -1,103 +1,103 @@
-#define GGML_COMMON_IMPL_CPP
-#define GGML_COMMON_DECL_CPP
-#include "ggml-common.h"
-#include "ggml-backend-impl.h"
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_COMMON_IMPL_CPP
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_COMMON_DECL_CPP
+#ಅನ್ತರ್ಭಾವ "ggml-common.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
 
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "ggml-cpu-impl.h"
-#include "simd-mappings.h"
-#include "traits.h"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-cpu.h"
+#ಅನ್ತರ್ಭಾವ "ggml-cpu-impl.h"
+#ಅನ್ತರ್ಭಾವ "simd-mappings.h"
+#ಅನ್ತರ್ಭಾವ "traits.h"
 
-#include <cmath>
-#include <cstring>
-#include <cassert>
-#include <cstdlib> // for qsort
-#include <cstdio>  // for GGML_ASSERT
+#ಅನ್ತರ್ಭಾವ <cmath>
+#ಅನ್ತರ್ಭಾವ <cstring>
+#ಅನ್ತರ್ಭಾವ <cassert>
+#ಅನ್ತರ್ಭಾವ <cstdlib> // for qsort
+#ಅನ್ತರ್ಭಾವ <cstdio>  // for GGML_ASSERT
 
-#define GGML_CPU_CLANG_WORKAROUND
-#include "../../repack.h"
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_CPU_CLANG_WORKAROUND
+#ಅನ್ತರ್ಭಾವ "../../repack.h"
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic ignored "-Woverlength-strings"
-#endif
+#ಆದರೆ defined(__GNUC__)
+#ಸೂಚನೆ GCC diagnostic ignored "-Woverlength-strings"
+#ಆದರೆ_ಅಂತ್ಯ
 
-#define UNUSED GGML_UNUSED
+#ವ್ಯಾಖ್ಯಾನಿಸು ಬಳಸದ GGML_ಬಳಸದ
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && (defined(__ARM_FEATURE_MATMUL_INT8) || defined(__ARM_FEATURE_DOTPROD))
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && (defined(__ARM_FEATURE_MATMUL_INT8) || defined(__ARM_FEATURE_DOTPROD))
 // Helper for decoding scales and mins of Q4_K and Q5_K block formats
-static inline void decode_q_Kx8_6bit_scales(const uint8_t * scales_in, int16x8_t * out_mins, int8_t * out_scales) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ decode_q_Kx8_6bit_scales(ಸ್ಥಿರಾಂಕ uint8_t * scales_ಒಳ, int16x8_t * ಹೊರಹೋಗು_mins, int8_t * ಹೊರಹೋಗು_scales) {
     constexpr uint32_t kmask1 = 0x3f3f3f3f;
     constexpr uint32_t kmask2 = 0x0f0f0f0f;
     constexpr uint32_t kmask3 = 0x03030303;
-    constexpr uint8_t  scales_size = 12;
+    constexpr uint8_t  scales_ಗಾತ್ರ = 12;
 
     uint32_t sm[3];
-    memcpy(sm, scales_in, scales_size);
+    ಸ್ಮರಣೆ_ನಕಲು(sm, scales_ಒಳ, scales_ಗಾತ್ರ);
 
-    const uint32_t   mins_0_3 = sm[1] & kmask1;
-    const uint32_t   mins_4_7 = ((sm[2] >> 4) & kmask2) | (((sm[1] >> 6) & kmask3) << 4);
-    const uint32x2_t mins_u32 = { mins_0_3, mins_4_7 };
+    ಸ್ಥಿರಾಂಕ uint32_t   mins_0_3 = sm[1] & kmask1;
+    ಸ್ಥಿರಾಂಕ uint32_t   mins_4_7 = ((sm[2] >> 4) & kmask2) | (((sm[1] >> 6) & kmask3) << 4);
+    ಸ್ಥಿರಾಂಕ uint32x2_t mins_u32 = { mins_0_3, mins_4_7 };
 
-    *out_mins = vreinterpretq_s16_u16(vmovl_u8(vreinterpret_u8_u32(mins_u32)));
+    *ಹೊರಹೋಗು_mins = vreinterpretq_s16_u16(vmovl_u8(vreinterpret_u8_u32(mins_u32)));
 
     uint32_t scales_u32[2];
     scales_u32[0] = sm[0] & kmask1;
     scales_u32[1] = (sm[2] & kmask2) | (((sm[0] >> 6) & kmask3) << 4);
-    memcpy(out_scales, scales_u32, 8);
+    ಸ್ಮರಣೆ_ನಕಲು(ಹೊರಹೋಗು_scales, scales_u32, 8);
 }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && (defined(__ARM_FEATURE_DOTPROD) || defined(__ARM_FEATURE_MATMUL_INT8))
-#define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
-#define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
-#define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
-#define B4(c,s,n) B3(c,s,n ## c), B3(c,s,n ## s)
-#define B5(c,s,n) B4(c,s,n ## c), B4(c,s,n ## s)
-#define B6(c,s,n) B5(c,s,n ## c), B5(c,s,n ## s)
-#define B7(c,s,n) B6(c,s,n ## c), B6(c,s,n ## s)
-#define B8(c,s  ) B7(c,s,     c), B7(c,s,     s)
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && (defined(__ARM_FEATURE_DOTPROD) || defined(__ARM_FEATURE_MATMUL_INT8))
+#ವ್ಯಾಖ್ಯಾನಿಸು B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
+#ವ್ಯಾಖ್ಯಾನಿಸು B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
+#ವ್ಯಾಖ್ಯಾನಿಸು B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
+#ವ್ಯಾಖ್ಯಾನಿಸು B4(c,s,n) B3(c,s,n ## c), B3(c,s,n ## s)
+#ವ್ಯಾಖ್ಯಾನಿಸು B5(c,s,n) B4(c,s,n ## c), B4(c,s,n ## s)
+#ವ್ಯಾಖ್ಯಾನಿಸು B6(c,s,n) B5(c,s,n ## c), B5(c,s,n ## s)
+#ವ್ಯಾಖ್ಯಾನಿಸು B7(c,s,n) B6(c,s,n ## c), B6(c,s,n ## s)
+#ವ್ಯಾಖ್ಯಾನಿಸು B8(c,s  ) B7(c,s,     c), B7(c,s,     s)
 
-static const uint64_t table_q1_signs[256] = { B8(ff, 01) };
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ uint64_t ಕೋಷ್ಟಕ_q1_signs[256] = { B8(ff, 01) };
 
-static inline int8x16_t ggml_q1_0_unpack_pair(uint8_t bits0, uint8_t bits1) {
-    return vreinterpretq_s8_u8(vcombine_u8(vcreate_u8(table_q1_signs[bits0]),
-                                           vcreate_u8(table_q1_signs[bits1])));
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ int8x16_t ggml_q1_0_unpack_pair(uint8_t bits0, uint8_t bits1) {
+    ಹಿಂತಿರುಗಿ vreinterpretq_s8_u8(vcombine_u8(vcreate_u8(ಕೋಷ್ಟಕ_q1_signs[bits0]),
+                                           vcreate_u8(ಕೋಷ್ಟಕ_q1_signs[bits1])));
 }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-void ggml_quantize_mat_q8_0_4x4(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK8_0 == 32);
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+ಶೂನ್ಯ ggml_quantize_mat_q8_0_4x4(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * GGML_RESTRICT x, ಶೂನ್ಯ * GGML_RESTRICT vy, int64_t k) {
+    ಪ್ರತಿಜ್ಞಾ(QK8_0 == 32);
+    ಪ್ರತಿಜ್ಞಾ(k % QK8_0 == 0);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = k / QK8_0;
 
-    block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
+    ಖಂಡ_q8_0x4 * GGML_RESTRICT y = (ಖಂಡ_q8_0x4 *) vy;
 
-#if defined(__ARM_NEON)
+#ಆದರೆ defined(__ARM_NEON)
     float32x4_t srcv[4][8];
-    float id[4];
+    ದಶಮಾಂಶ id[4];
 
-    for (int i = 0; i < nb; i++) {
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < nb; i++) {
         float32x4_t asrcv[8];
         float32x4_t amaxv[8];
 
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
-            for (int j = 0; j < 8; j++) srcv[row_iter][j] = vld1q_f32(x + row_iter * k + i * 32 + 4 * j);
-            for (int j = 0; j < 8; j++) asrcv[j] = vabsq_f32(srcv[row_iter][j]);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು_iter = 0; ಅಡ್ಡಸಾಲು_iter < 4; ಅಡ್ಡಸಾಲು_iter++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 8; j++) srcv[ಅಡ್ಡಸಾಲು_iter][j] = vld1q_f32(x + ಅಡ್ಡಸಾಲು_iter * k + i * 32 + 4 * j);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 8; j++) asrcv[j] = vabsq_f32(srcv[ಅಡ್ಡಸಾಲು_iter][j]);
 
-            for (int j = 0; j < 4; j++) amaxv[2 * j] = vmaxq_f32(asrcv[2 * j], asrcv[2 * j + 1]);
-            for (int j = 0; j < 2; j++) amaxv[4 * j] = vmaxq_f32(amaxv[4 * j], amaxv[4 * j + 2]);
-            for (int j = 0; j < 1; j++) amaxv[8 * j] = vmaxq_f32(amaxv[8 * j], amaxv[8 * j + 4]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 4; j++) amaxv[2 * j] = vmaxq_f32(asrcv[2 * j], asrcv[2 * j + 1]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) amaxv[4 * j] = vmaxq_f32(amaxv[4 * j], amaxv[4 * j + 2]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 1; j++) amaxv[8 * j] = vmaxq_f32(amaxv[8 * j], amaxv[8 * j + 4]);
 
-            const float amax = vmaxvq_f32(amaxv[0]);
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ amax = vmaxvq_f32(amaxv[0]);
 
-            const float d = amax / ((1 << 7) - 1);
-            id[row_iter] = d ? 1.0f / d : 0.0f;
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ d = amax / ((1 << 7) - 1);
+            id[ಅಡ್ಡಸಾಲು_iter] = d ? 1.0f / d : 0.0f;
 
-            y[i].d[row_iter] = GGML_CPU_FP32_TO_FP16(d);
+            y[i].d[ಅಡ್ಡಸಾಲು_iter] = GGML_CPU_FP32_ಗಮ್ಯ_FP16(d);
         }
 
-        for (int j = 0; j < 8; j++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 8; j++) {
             float32x4_t v = vmulq_n_f32(srcv[0][j], id[0]);
             int32x4_t vi = vcvtnq_s32_f32(v);
             y[i].qs[16 * j + 0] = vgetq_lane_s32(vi, 0);
@@ -127,45 +127,45 @@ void ggml_quantize_mat_q8_0_4x4(const float * GGML_RESTRICT x, void * GGML_RESTR
             y[i].qs[16 * j + 15] = vgetq_lane_s32(vi, 3);
         }
     }
-#else
-    UNUSED(nb);
-    UNUSED(y);
+#ಇಲ್ಲದಿದ್ದರೆ
+    ಬಳಸದ(nb);
+    ಬಳಸದ(y);
     ggml_quantize_mat_q8_0_4x4_generic(x, vy, k);
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 }
 
-void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK8_0 == 32);
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+ಶೂನ್ಯ ggml_quantize_mat_q8_0_4x8(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * GGML_RESTRICT x, ಶೂನ್ಯ * GGML_RESTRICT vy, int64_t k) {
+    ಪ್ರತಿಜ್ಞಾ(QK8_0 == 32);
+    ಪ್ರತಿಜ್ಞಾ(k % QK8_0 == 0);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = k / QK8_0;
 
-    block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
+    ಖಂಡ_q8_0x4 * GGML_RESTRICT y = (ಖಂಡ_q8_0x4 *) vy;
 
-#if defined(__ARM_NEON)
+#ಆದರೆ defined(__ARM_NEON)
     float32x4_t srcv[4][8];
-    float id[4];
+    ದಶಮಾಂಶ id[4];
 
-    for (int i = 0; i < nb; i++) {
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < nb; i++) {
         float32x4_t asrcv[8];
         float32x4_t amaxv[8];
 
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
-            for (int j = 0; j < 8; j++) srcv[row_iter][j] = vld1q_f32(x + row_iter * k + i * 32 + 4 * j);
-            for (int j = 0; j < 8; j++) asrcv[j] = vabsq_f32(srcv[row_iter][j]);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು_iter = 0; ಅಡ್ಡಸಾಲು_iter < 4; ಅಡ್ಡಸಾಲು_iter++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 8; j++) srcv[ಅಡ್ಡಸಾಲು_iter][j] = vld1q_f32(x + ಅಡ್ಡಸಾಲು_iter * k + i * 32 + 4 * j);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 8; j++) asrcv[j] = vabsq_f32(srcv[ಅಡ್ಡಸಾಲು_iter][j]);
 
-            for (int j = 0; j < 4; j++) amaxv[2 * j] = vmaxq_f32(asrcv[2 * j], asrcv[2 * j + 1]);
-            for (int j = 0; j < 2; j++) amaxv[4 * j] = vmaxq_f32(amaxv[4 * j], amaxv[4 * j + 2]);
-            for (int j = 0; j < 1; j++) amaxv[8 * j] = vmaxq_f32(amaxv[8 * j], amaxv[8 * j + 4]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 4; j++) amaxv[2 * j] = vmaxq_f32(asrcv[2 * j], asrcv[2 * j + 1]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) amaxv[4 * j] = vmaxq_f32(amaxv[4 * j], amaxv[4 * j + 2]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 1; j++) amaxv[8 * j] = vmaxq_f32(amaxv[8 * j], amaxv[8 * j + 4]);
 
-            const float amax = vmaxvq_f32(amaxv[0]);
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ amax = vmaxvq_f32(amaxv[0]);
 
-            const float d = amax / ((1 << 7) - 1);
-            id[row_iter] = d ? 1.0f / d : 0.0f;
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ d = amax / ((1 << 7) - 1);
+            id[ಅಡ್ಡಸಾಲು_iter] = d ? 1.0f / d : 0.0f;
 
-            y[i].d[row_iter] = GGML_CPU_FP32_TO_FP16(d);
+            y[i].d[ಅಡ್ಡಸಾಲು_iter] = GGML_CPU_FP32_ಗಮ್ಯ_FP16(d);
         }
 
-        for (int j = 0; j < 4; j++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 4; j++) {
             float32x4_t v = vmulq_n_f32(srcv[0][2 * j], id[0]);
             int32x4_t vi = vcvtnq_s32_f32(v);
             y[i].qs[32 * j + 0] = vgetq_lane_s32(vi, 0);
@@ -220,48 +220,48 @@ void ggml_quantize_mat_q8_0_4x8(const float * GGML_RESTRICT x, void * GGML_RESTR
         }
     }
 
-#else
-    UNUSED(nb);
-    UNUSED(y);
+#ಇಲ್ಲದಿದ್ದರೆ
+    ಬಳಸದ(nb);
+    ಬಳಸದ(y);
     ggml_quantize_mat_q8_0_4x8_generic(x, vy, k);
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 }
 
-void ggml_gemv_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+ಶೂನ್ಯ ggml_gemv_q4_0_4x4_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 4;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx;
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_0x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_0x4 *) vx;
 
-    for (int c = 0; c < nc; c += ncols_interleaved) {
-        const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < nc; c += ncols_interleaved) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 *) vy;
         float32x4_t acc = vdupq_n_f32(0);
-        for (int b = 0; b < nb; b++) {
-            int8x16_t b0 = vld1q_s8((const int8_t *) b_ptr->qs);
-            int8x16_t b1 = vld1q_s8((const int8_t *) b_ptr->qs + 16);
-            int8x16_t b2 = vld1q_s8((const int8_t *) b_ptr->qs + 32);
-            int8x16_t b3 = vld1q_s8((const int8_t *) b_ptr->qs + 48);
-            float16x4_t bd = vld1_f16((const __fp16 *) b_ptr->d);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            int8x16_t b0 = vld1q_s8((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs);
+            int8x16_t b1 = vld1q_s8((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs + 16);
+            int8x16_t b2 = vld1q_s8((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs + 32);
+            int8x16_t b3 = vld1q_s8((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs + 48);
+            float16x4_t bd = vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) b_ptr->d);
 
             int8x16_t a0 = vld1q_s8(a_ptr->qs);
             int8x16_t a1 = vld1q_s8(a_ptr->qs + qk/2);
-            float16x4_t ad = vld1_dup_f16((const __fp16 *) &a_ptr->d);
+            float16x4_t ad = vld1_dup_f16((ಸ್ಥಿರಾಂಕ __fp16 *) &a_ptr->d);
 
             int32x4_t ret = vdupq_n_s32(0);
 
@@ -283,48 +283,48 @@ void ggml_gemv_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q4_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 8;
+ಶೂನ್ಯ ggml_gemv_q4_0_4x8_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx;
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_0x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_0x4 *) vx;
 
-    for (int c = 0; c < nc; c += ncols_interleaved) {
-        const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < nc; c += ncols_interleaved) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 *) vy;
         float32x4_t acc = vdupq_n_f32(0);
-        for (int b = 0; b < nb; b++) {
-            int8x16_t b0 = vld1q_s8((const int8_t *) b_ptr->qs);
-            int8x16_t b1 = vld1q_s8((const int8_t *) b_ptr->qs + 16);
-            int8x16_t b2 = vld1q_s8((const int8_t *) b_ptr->qs + 32);
-            int8x16_t b3 = vld1q_s8((const int8_t *) b_ptr->qs + 48);
-            float16x4_t bd = vld1_f16((const __fp16 *) b_ptr->d);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            int8x16_t b0 = vld1q_s8((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs);
+            int8x16_t b1 = vld1q_s8((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs + 16);
+            int8x16_t b2 = vld1q_s8((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs + 32);
+            int8x16_t b3 = vld1q_s8((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs + 48);
+            float16x4_t bd = vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) b_ptr->d);
 
-            int8x16_t a0 = (int8x16_t) vld1q_dup_s64((const int64_t *) a_ptr->qs);
-            int8x16_t a1 = (int8x16_t) vld1q_dup_s64((const int64_t *) a_ptr->qs + 1);
-            int8x16_t a2 = (int8x16_t) vld1q_dup_s64((const int64_t *) a_ptr->qs + 2);
-            int8x16_t a3 = (int8x16_t) vld1q_dup_s64((const int64_t *) a_ptr->qs + 3);
-            float16x4_t ad = vld1_dup_f16((const __fp16 *) &a_ptr->d);
+            int8x16_t a0 = (int8x16_t) vld1q_dup_s64((ಸ್ಥಿರಾಂಕ int64_t *) a_ptr->qs);
+            int8x16_t a1 = (int8x16_t) vld1q_dup_s64((ಸ್ಥಿರಾಂಕ int64_t *) a_ptr->qs + 1);
+            int8x16_t a2 = (int8x16_t) vld1q_dup_s64((ಸ್ಥಿರಾಂಕ int64_t *) a_ptr->qs + 2);
+            int8x16_t a3 = (int8x16_t) vld1q_dup_s64((ಸ್ಥಿರಾಂಕ int64_t *) a_ptr->qs + 3);
+            float16x4_t ad = vld1_dup_f16((ಸ್ಥಿರಾಂಕ __fp16 *) &a_ptr->d);
 
             int32x4_t ret0 = vdupq_n_s32(0);
             int32x4_t ret1 = vdupq_n_s32(0);
@@ -349,36 +349,36 @@ void ggml_gemv_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q4_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+ಶೂನ್ಯ ggml_gemv_q4_0_8x8_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
-#if defined(__ARM_FEATURE_SVE)
-    if (ggml_cpu_get_sve_cnt() == QK8_0) {
-        const void * b_ptr = vx;
-        const void * a_ptr = vy;
-        float * res_ptr = s;
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
+#ಆದರೆ defined(__ARM_FEATURE_SVE)
+    ಆದರೆ (ggml_cpu_get_sve_cnt() == QK8_0) {
+        ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * b_ptr = vx;
+        ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * a_ptr = vy;
+        ದಶಮಾಂಶ * res_ptr = s;
 
         __asm__ __volatile__(
             "ptrue p0.b\n"
@@ -438,43 +438,43 @@ void ggml_gemv_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
             : [a_ptr] "r" (a_ptr), [nb] "r" (nb)
             : "memory", "p0", "x20", "x21", "x22", "z16", "z17", "z18", "z19", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31"
         );
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
-#endif // #if defined(__ARM_FEATURE_SVE)
+#ಆದರೆ_ಅಂತ್ಯ // #if defined(__ARM_FEATURE_SVE)
 
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
     ggml_gemv_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+ಶೂನ್ಯ ggml_gemv_iq4_nl_4x4_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 4;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    const int8x16_t kvalues = vld1q_s8(kvalues_iq4nl);
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    float * res_ptr = s;
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಸ್ಥಿರಾಂಕ int8x16_t kvalues = vld1q_s8(kvalues_iq4nl);
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 *) vy;
+    ದಶಮಾಂಶ * res_ptr = s;
 
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_iq4_nlx4 * b_ptr = (const block_iq4_nlx4 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_iq4_nlx4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_iq4_nlx4 *) vx + (x * nb);
 
         float32x4_t sumf = vdupq_n_f32(0);
-        for (int l = 0; l < nb; l++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ l = 0; l < nb; l++) {
             uint8x16_t b_0 = vld1q_u8(b_ptr[l].qs + 0);
             uint8x16_t b_1 = vld1q_u8(b_ptr[l].qs + 16);
             uint8x16_t b_2 = vld1q_u8(b_ptr[l].qs + 32);
@@ -502,8 +502,8 @@ void ggml_gemv_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const 
             sumi = vdotq_laneq_s32(sumi, b_3_lo, a_0, 3);
             sumi = vdotq_laneq_s32(sumi, b_3_hi, a_1, 3);
 
-            float32x4_t a_d = vcvt_f32_f16(vld1_dup_f16((const float16_t *)&a_ptr[l].d));
-            float32x4_t b_d = vcvt_f32_f16(vld1_f16((const float16_t *)b_ptr[l].d));
+            float32x4_t a_d = vcvt_f32_f16(vld1_dup_f16((ಸ್ಥಿರಾಂಕ float16_t *)&a_ptr[l].d));
+            float32x4_t b_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *)b_ptr[l].d));
             float32x4_t d = a_d * b_d;
 
             sumf = vmlaq_f32(sumf, d, vcvtq_f32_s32(sumi));
@@ -511,40 +511,40 @@ void ggml_gemv_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const 
 
         vst1q_f32(res_ptr + x * 4, sumf);
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
     ggml_gemv_iq4_nl_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+ಶೂನ್ಯ ggml_gemv_mxfp4_4x4_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 4;
 
-    assert (n % qk == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    const int8x16_t kvalues = vld1q_s8(kvalues_mxfp4);
-    const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    float * res_ptr = s;
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಸ್ಥಿರಾಂಕ int8x16_t kvalues = vld1q_s8(kvalues_mxfp4);
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 *) vy;
+    ದಶಮಾಂಶ * res_ptr = s;
 
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_mxfp4x4 * b_ptr = (const block_mxfp4x4 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_mxfp4x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_mxfp4x4 *) vx + (x * nb);
 
         float32x4_t sumf = vdupq_n_f32(0);
-        for (int l = 0; l < nb; l++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ l = 0; l < nb; l++) {
             uint8x16_t b_0 = vld1q_u8(b_ptr[l].qs + 0);
             uint8x16_t b_1 = vld1q_u8(b_ptr[l].qs + 16);
             uint8x16_t b_2 = vld1q_u8(b_ptr[l].qs + 32);
@@ -572,12 +572,12 @@ void ggml_gemv_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
             sumi = vdotq_laneq_s32(sumi, b_3_lo, a_0, 3);
             sumi = vdotq_laneq_s32(sumi, b_3_hi, a_1, 3);
 
-            float32x4_t a_d = vcvt_f32_f16(vld1_dup_f16((const float16_t *)&a_ptr[l].d));
+            float32x4_t a_d = vcvt_f32_f16(vld1_dup_f16((ಸ್ಥಿರಾಂಕ float16_t *)&a_ptr[l].d));
             float32x4_t b_d = {
-                GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[0]),
-                GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[1]),
-                GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[2]),
-                GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[3]),
+                GGML_CPU_E8_M0_ಗಮ್ಯ_FP32_HALF(b_ptr[l].e[0]),
+                GGML_CPU_E8_M0_ಗಮ್ಯ_FP32_HALF(b_ptr[l].e[1]),
+                GGML_CPU_E8_M0_ಗಮ್ಯ_FP32_HALF(b_ptr[l].e[2]),
+                GGML_CPU_E8_M0_ಗಮ್ಯ_FP32_HALF(b_ptr[l].e[3]),
             };
             float32x4_t d = a_d * b_d;
 
@@ -586,63 +586,63 @@ void ggml_gemv_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
 
         vst1q_f32(res_ptr + x * 4, sumf);
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
     ggml_gemv_mxfp4_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+ಶೂನ್ಯ ggml_gemv_q4_K_8x4_q8_K(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 8;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    constexpr int    col_groups = ncols_interleaved / 4; // 0123 and 4567
-    const uint8x16_t m4b        = vdupq_n_u8(0x0f);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    constexpr ಪೂರ್ಣಾಂಕ    ಲಂಬಸಾಲು_groups = ncols_interleaved / 4; // 0123 and 4567
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b        = vdupq_n_u8(0x0f);
 
     // 1x8 tile = 2 x 4
-    float32x4_t acc_f32[col_groups];
+    float32x4_t acc_f32[ಲಂಬಸಾಲು_groups];
 
-    const block_q8_K * GGML_RESTRICT q8_ptr = (const block_q8_K *) vy;
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K *) vy;
 
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q4_Kx8 * GGML_RESTRICT q4_ptr = (const block_q4_Kx8 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 * GGML_RESTRICT q4_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 *) vx + (x * nb);
 
-        for (int i = 0; i < col_groups; i++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_groups; i++) {
             acc_f32[i] = vdupq_n_f32(0);
         }
 
-        for (int b = 0; b < nb; b++) {
-            float32x4_t q4_d_0        = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].d));      // d0 d1 d2 d3
-            float32x4_t q4_d_1        = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].d + 4));  // d4 d5 d6 d7
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            float32x4_t q4_d_0        = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].d));      // d0 d1 d2 d3
+            float32x4_t q4_d_1        = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].d + 4));  // d4 d5 d6 d7
             float32x4_t q8_d          = vdupq_n_f32(q8_ptr[b].d);
             float32x4_t sb_scale_0123 = vmulq_f32(q4_d_0, q8_d);
             float32x4_t sb_scale_4567 = vmulq_f32(q4_d_1, q8_d);
-            float32x4_t q4_dmin_0     = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].dmin));      // dmin 0..3
-            float32x4_t q4_dmin_1     = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].dmin + 4));  // dmin 4..7
+            float32x4_t q4_dmin_0     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].dmin));      // dmin 0..3
+            float32x4_t q4_dmin_1     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].dmin + 4));  // dmin 4..7
             float32x4_t sb_min_0123   = vmulq_f32(q4_dmin_0, q8_d);
             float32x4_t sb_min_4567   = vmulq_f32(q4_dmin_1, q8_d);
 
             // interleaved bias_acc: [0]->r0 0123, [1]->r0 4567
             int32x4_t bias_acc[2] = { vdupq_n_s32(0), vdupq_n_s32(0) };
-            int32x4_t acc_lo[col_groups];
-            int32x4_t acc_hi[col_groups];
+            int32x4_t acc_lo[ಲಂಬಸಾಲು_groups];
+            int32x4_t acc_hi[ಲಂಬಸಾಲು_groups];
 
             // Each bsum is 16 elements, pairwise add leaves us with the 8 bsums of the entire block
-            const int16x8_t bsums = vpaddq_s16(vld1q_s16(q8_ptr[b].bsums), vld1q_s16(q8_ptr[b].bsums + 8));
+            ಸ್ಥಿರಾಂಕ int16x8_t bsums = vpaddq_s16(vld1q_s16(q8_ptr[b].bsums), vld1q_s16(q8_ptr[b].bsums + 8));
             int16_t         bsums_arr[8];
             vst1q_s16(bsums_arr, bsums);
-            for (int sb = 0; sb < QK_K / 64; sb++) {
-                for (int i = 0; i < col_groups; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_groups; i++) {
                     acc_lo[i] = vdupq_n_s32(0);
                     acc_hi[i] = vdupq_n_s32(0);
                 }
@@ -650,139 +650,139 @@ void ggml_gemv_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 // 2 * 12 = 24 bytes per subblock, 4 sbs -> 4 * 24 = 96 bytes total
                 int16x8_t q4sb_mins[2];
                 int16x8_t q4sb_scales[2];
-                for (int i = 0; i < 2; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
                     int8_t    aux_q4sb[8];
-                    const int offset = sb * 24 + i * 12;
-                    decode_q_Kx8_6bit_scales(&q4_ptr[b].scales[offset], &q4sb_mins[i], aux_q4sb);
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = sb * 24 + i * 12;
+                    decode_q_Kx8_6bit_scales(&q4_ptr[b].scales[ಸ್ಥಾನಾಂತರ], &q4sb_mins[i], aux_q4sb);
                     q4sb_scales[i] = vmovl_s8(vld1_s8(aux_q4sb));
                 }
 
                 int8x16_t q8_qs[64 / 16];
-                for (int i = 0; i < 64 / 16; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 64 / 16; i++) {
                     q8_qs[i] = vld1q_s8(q8_ptr[b].qs + sb * 64 + i * 16);
                 }
 
-                for (int c = 0; c < col_groups; c++) {
-                    uint8x16_t q4_cols[8];
-                    for (int i = 0; i < 8; i++) {
-                        q4_cols[i] = vld1q_u8(q4_ptr[b].qs + sb * QK_K + i * 32 + 16 * c);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < ಲಂಬಸಾಲು_groups; c++) {
+                    uint8x16_t q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[8];
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
+                        q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[i] = vld1q_u8(q4_ptr[b].qs + sb * QK_K + i * 32 + 16 * c);
                     }
 
-                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_cols[0], m4b)), q8_qs[0], 0);
-                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_cols[1], m4b)), q8_qs[0], 1);
-                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_cols[2], m4b)), q8_qs[0], 2);
-                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_cols[3], m4b)), q8_qs[0], 3);
-                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_cols[4], m4b)), q8_qs[1], 0);
-                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_cols[5], m4b)), q8_qs[1], 1);
-                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_cols[6], m4b)), q8_qs[1], 2);
-                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_cols[7], m4b)), q8_qs[1], 3);
+                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[0], m4b)), q8_qs[0], 0);
+                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[1], m4b)), q8_qs[0], 1);
+                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[2], m4b)), q8_qs[0], 2);
+                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[3], m4b)), q8_qs[0], 3);
+                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[4], m4b)), q8_qs[1], 0);
+                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[5], m4b)), q8_qs[1], 1);
+                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[6], m4b)), q8_qs[1], 2);
+                    acc_lo[c] = vdotq_laneq_s32(acc_lo[c], vreinterpretq_s8_u8(vandq_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[7], m4b)), q8_qs[1], 3);
 
-                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_cols[0], 4)), q8_qs[2], 0);
-                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_cols[1], 4)), q8_qs[2], 1);
-                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_cols[2], 4)), q8_qs[2], 2);
-                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_cols[3], 4)), q8_qs[2], 3);
-                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_cols[4], 4)), q8_qs[3], 0);
-                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_cols[5], 4)), q8_qs[3], 1);
-                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_cols[6], 4)), q8_qs[3], 2);
-                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_cols[7], 4)), q8_qs[3], 3);
+                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[0], 4)), q8_qs[2], 0);
+                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[1], 4)), q8_qs[2], 1);
+                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[2], 4)), q8_qs[2], 2);
+                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[3], 4)), q8_qs[2], 3);
+                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[4], 4)), q8_qs[3], 0);
+                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[5], 4)), q8_qs[3], 1);
+                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[6], 4)), q8_qs[3], 2);
+                    acc_hi[c] = vdotq_laneq_s32(acc_hi[c], vreinterpretq_s8_u8(vshrq_n_u8(q4_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[7], 4)), q8_qs[3], 3);
                 }
 
                 // Scales
                 // row c0123 blk0 and blk1
-                const int16x4_t   sc_0123_lo = vget_low_s16(q4sb_scales[0]);
-                const int16x4_t   sc_0123_hi = vget_low_s16(q4sb_scales[1]);
-                const float32x4_t sumf_0123  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[0]),
+                ಸ್ಥಿರಾಂಕ int16x4_t   sc_0123_lo = vget_ಕೆಳಗಿನ_s16(q4sb_scales[0]);
+                ಸ್ಥಿರಾಂಕ int16x4_t   sc_0123_hi = vget_ಕೆಳಗಿನ_s16(q4sb_scales[1]);
+                ಸ್ಥಿರಾಂಕ float32x4_t sumf_0123  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[0]),
                                                                        vmulq_s32(vmovl_s16(sc_0123_hi), acc_hi[0])));
                 acc_f32[0]                   = vfmaq_f32(acc_f32[0], sb_scale_0123, sumf_0123);
                 // row c4567 blk0 and blk1
-                const int16x4_t   sc_4567_lo = vget_high_s16(q4sb_scales[0]);
-                const int16x4_t   sc_4567_hi = vget_high_s16(q4sb_scales[1]);
-                const float32x4_t sumf_4567  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[1]),
+                ಸ್ಥಿರಾಂಕ int16x4_t   sc_4567_lo = vget_ಮೇಲಿನ_s16(q4sb_scales[0]);
+                ಸ್ಥಿರಾಂಕ int16x4_t   sc_4567_hi = vget_ಮೇಲಿನ_s16(q4sb_scales[1]);
+                ಸ್ಥಿರಾಂಕ float32x4_t sumf_4567  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[1]),
                                                                        vmulq_s32(vmovl_s16(sc_4567_hi), acc_hi[1])));
                 acc_f32[1]                   = vfmaq_f32(acc_f32[1], sb_scale_4567, sumf_4567);
 
                 // Bias Correction
-                const int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[2 * sb + 0]);
-                const int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[2 * sb + 1]);
+                ಸ್ಥಿರಾಂಕ int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[2 * sb + 0]);
+                ಸ್ಥಿರಾಂಕ int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[2 * sb + 1]);
 
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_low_s16(q4sb_mins[0]));
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_low_s16(q4sb_mins[1]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_high_s16(q4sb_mins[0]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_high_s16(q4sb_mins[1]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_ಕೆಳಗಿನ_s16(q4sb_mins[0]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_ಕೆಳಗಿನ_s16(q4sb_mins[1]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_ಮೇಲಿನ_s16(q4sb_mins[0]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_ಮೇಲಿನ_s16(q4sb_mins[1]));
             }  // for sb
 
             acc_f32[0] = vmlsq_f32(acc_f32[0], vcvtq_f32_s32(bias_acc[0]), sb_min_0123);
             acc_f32[1] = vmlsq_f32(acc_f32[1], vcvtq_f32_s32(bias_acc[1]), sb_min_4567);
         }  // for b
 
-        int base = x * ncols_interleaved;
-        vst1q_f32(s + base, acc_f32[0]);
-        vst1q_f32(s + base + 4, acc_f32[1]);
+        ಪೂರ್ಣಾಂಕ ತಳ = x * ncols_interleaved;
+        vst1q_f32(s + ತಳ, acc_f32[0]);
+        vst1q_f32(s + ತಳ + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // #if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // #if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q4_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q4_K_8x8_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemv_q4_K_8x8_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 8;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    constexpr int    col_pairs = ncols_interleaved / 2;
-    const uint8x16_t m4b       = vdupq_n_u8(0x0f);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    constexpr ಪೂರ್ಣಾಂಕ    ಲಂಬಸಾಲು_ಜೋಡಿಗಳು = ncols_interleaved / 2;
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b       = vdupq_n_u8(0x0f);
 
     // 1x8 tile = 2 x 4
     float32x4_t acc_f32[ncols_interleaved / 4];
 
-    const block_q8_K * GGML_RESTRICT q8_ptr = (const block_q8_K *) vy;
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K *) vy;
 
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q4_Kx8 * GGML_RESTRICT q4_ptr = (const block_q4_Kx8 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 * GGML_RESTRICT q4_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 *) vx + (x * nb);
 
-        for (int i = 0; i < ncols_interleaved / 4; i++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ncols_interleaved / 4; i++) {
             acc_f32[i] = vdupq_n_f32(0);
         }
 
-        for (int b = 0; b < nb; b++) {
-            float32x4_t q4_d_0     = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].d));      // d0 d1 d2 d3
-            float32x4_t q4_d_1     = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].d + 4));  // d4 d5 d6 d7
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            float32x4_t q4_d_0     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].d));      // d0 d1 d2 d3
+            float32x4_t q4_d_1     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].d + 4));  // d4 d5 d6 d7
             float32x4_t q8_d       = vdupq_n_f32(q8_ptr[b].d);
             float32x4_t sb_scale_0 = vmulq_f32(q4_d_0, q8_d);
             float32x4_t sb_scale_1 = vmulq_f32(q4_d_1, q8_d);
-            float32x4_t q4_dmin_0  = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].dmin));      // dmin 0..3
-            float32x4_t q4_dmin_1  = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].dmin + 4));  // dmin 4..7
+            float32x4_t q4_dmin_0  = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].dmin));      // dmin 0..3
+            float32x4_t q4_dmin_1  = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].dmin + 4));  // dmin 4..7
             float32x4_t sb_min_0   = vmulq_f32(q4_dmin_0, q8_d);
             float32x4_t sb_min_1   = vmulq_f32(q4_dmin_1, q8_d);
 
             // interleaved bias_acc: [0]->r0 0123, [1]->r0 4567
             int32x4_t bias_acc[2] = { vdupq_n_s32(0), vdupq_n_s32(0) };
             // 2 sb each iteration
-            int32x4_t acc_lo[col_pairs];
-            int32x4_t acc_hi[col_pairs];
+            int32x4_t acc_lo[ಲಂಬಸಾಲು_ಜೋಡಿಗಳು];
+            int32x4_t acc_hi[ಲಂಬಸಾಲು_ಜೋಡಿಗಳು];
 
             // Each bsum is 16 elements, pairwise add leaves us with the 8 bsums of the entire block
-            const int16x8_t bsums = vpaddq_s16(vld1q_s16(q8_ptr[b].bsums), vld1q_s16(q8_ptr[b].bsums + 8));
+            ಸ್ಥಿರಾಂಕ int16x8_t bsums = vpaddq_s16(vld1q_s16(q8_ptr[b].bsums), vld1q_s16(q8_ptr[b].bsums + 8));
             int16_t         bsums_arr[8];
             vst1q_s16(bsums_arr, bsums);
-            for (int sb = 0; sb < QK_K / 64; sb++) {
-                for (int i = 0; i < col_pairs; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; i++) {
                     acc_lo[i] = vdupq_n_s32(0);
                     acc_hi[i] = vdupq_n_s32(0);
                 }
@@ -790,29 +790,29 @@ void ggml_gemv_q4_K_8x8_q8_K(int                        n,
                 // 2 * 12 = 24 bytes per subblock, 4 sbs -> 4 * 24 = 96 bytes total
                 int16x8_t q4sb_mins[2];  // int16 as its needed for bias_acc later
                 int16x8_t q4sb_scales[2];
-                for (int i = 0; i < 2; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
                     int8_t    aux_q4sb[8];
-                    const int offset = sb * 24 + i * 12;
-                    decode_q_Kx8_6bit_scales(&q4_ptr[b].scales[offset], &q4sb_mins[i], aux_q4sb);
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = sb * 24 + i * 12;
+                    decode_q_Kx8_6bit_scales(&q4_ptr[b].scales[ಸ್ಥಾನಾಂತರ], &q4sb_mins[i], aux_q4sb);
                     q4sb_scales[i] = vmovl_s8(vld1_s8(aux_q4sb));
                 }
 
-                const uint8_t * q4_base = q4_ptr[b].qs + sb * QK_K;
+                ಸ್ಥಿರಾಂಕ uint8_t * q4_ತಳ = q4_ptr[b].qs + sb * QK_K;
 
                 // Load the 64 quants from q8K duplicated to use vecdots with the interleaved columns
                 // but still need the qs to use the low and hi bits from q4
-                const int8_t * q8_base = q8_ptr[b].qs + sb * 64;
+                ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ = q8_ptr[b].qs + sb * 64;
                 int8x16_t      q8_qs[8];
-                for (int i = 0; i < 8; i++) {
-                    q8_qs[i] = (int8x16_t) vld1q_dup_s64((const int64_t *) (q8_base + i * 8));
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
+                    q8_qs[i] = (int8x16_t) vld1q_dup_s64((ಸ್ಥಿರಾಂಕ int64_t *) (q8_ತಳ + i * 8));
                 }
 
                 // Q4s columns iterated in pairs (01, 23, 45, 67)
-                for (int cp = 0; cp < col_pairs; cp++) {
-                    uint8x16_t q4_qs_cp_0 = vld1q_u8(q4_base + 16 * cp);
-                    uint8x16_t q4_qs_cp_1 = vld1q_u8(q4_base + 16 * cp + 64);
-                    uint8x16_t q4_qs_cp_2 = vld1q_u8(q4_base + 16 * cp + 128);
-                    uint8x16_t q4_qs_cp_3 = vld1q_u8(q4_base + 16 * cp + 192);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ cp = 0; cp < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; cp++) {
+                    uint8x16_t q4_qs_cp_0 = vld1q_u8(q4_ತಳ + 16 * cp);
+                    uint8x16_t q4_qs_cp_1 = vld1q_u8(q4_ತಳ + 16 * cp + 64);
+                    uint8x16_t q4_qs_cp_2 = vld1q_u8(q4_ತಳ + 16 * cp + 128);
+                    uint8x16_t q4_qs_cp_3 = vld1q_u8(q4_ತಳ + 16 * cp + 192);
 
                     acc_lo[cp] =
                         ggml_vdotq_s32(acc_lo[cp], vreinterpretq_s8_u8(vandq_u8(q4_qs_cp_0, m4b)), q8_qs[0]);  // 0 .. 7
@@ -835,18 +835,18 @@ void ggml_gemv_q4_K_8x8_q8_K(int                        n,
 
                 // Iterates over a pair of column pairs (4 columns) to use a single 128 register
                 // p = 0 -> 0123  p2 -> 4567
-                for (int i = 0, p = 0; p < col_pairs; i++, p += 2) {
-                    int16x4_t   group_scales_lo = p == 0 ? vget_low_s16(q4sb_scales[0]) : vget_high_s16(q4sb_scales[0]);
-                    int16x4_t   group_scales_hi = p == 0 ? vget_low_s16(q4sb_scales[1]) : vget_high_s16(q4sb_scales[1]);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0, p = 0; p < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; i++, p += 2) {
+                    int16x4_t   ಗುಂಪು_scales_lo = p == 0 ? vget_ಕೆಳಗಿನ_s16(q4sb_scales[0]) : vget_ಮೇಲಿನ_s16(q4sb_scales[0]);
+                    int16x4_t   ಗುಂಪು_scales_hi = p == 0 ? vget_ಕೆಳಗಿನ_s16(q4sb_scales[1]) : vget_ಮೇಲಿನ_s16(q4sb_scales[1]);
                     float32x4_t sb_scale        = p == 0 ? sb_scale_0 : sb_scale_1;
 
                     // 0123 or 4567
                     float32x4_t sumf_0 =
-                        vcvtq_f32_s32(vmulq_s32(vmovl_s16(group_scales_lo), vpaddq_s32(acc_lo[p], acc_lo[p + 1])));
+                        vcvtq_f32_s32(vmulq_s32(vmovl_s16(ಗುಂಪು_scales_lo), vpaddq_s32(acc_lo[p], acc_lo[p + 1])));
                     acc_f32[i] = vfmaq_f32(acc_f32[i], sb_scale, sumf_0);
 
                     float32x4_t sumf_1 =
-                        vcvtq_f32_s32(vmulq_s32(vmovl_s16(group_scales_hi), vpaddq_s32(acc_hi[p], acc_hi[p + 1])));
+                        vcvtq_f32_s32(vmulq_s32(vmovl_s16(ಗುಂಪು_scales_hi), vpaddq_s32(acc_hi[p], acc_hi[p + 1])));
                     acc_f32[i] = vfmaq_f32(acc_f32[i], sb_scale, sumf_1);
                 }
 
@@ -857,95 +857,95 @@ void ggml_gemv_q4_K_8x8_q8_K(int                        n,
                 int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[2 * sb + 1]);
 
                 // cols 0-3 bias
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_low_s16(q4sb_mins[0]));
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_low_s16(q4sb_mins[1]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_ಕೆಳಗಿನ_s16(q4sb_mins[0]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_ಕೆಳಗಿನ_s16(q4sb_mins[1]));
 
                 // cols 4-7 bias
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_high_s16(q4sb_mins[0]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_high_s16(q4sb_mins[1]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_ಮೇಲಿನ_s16(q4sb_mins[0]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_ಮೇಲಿನ_s16(q4sb_mins[1]));
             }  // for sb
 
             acc_f32[0] = vmlsq_f32(acc_f32[0], vcvtq_f32_s32(bias_acc[0]), sb_min_0);
             acc_f32[1] = vmlsq_f32(acc_f32[1], vcvtq_f32_s32(bias_acc[1]), sb_min_1);
         }  // for b
 
-        int base = x * ncols_interleaved;
-        vst1q_f32(s + base, acc_f32[0]);
-        vst1q_f32(s + base + 4, acc_f32[1]);
+        ಪೂರ್ಣಾಂಕ ತಳ = x * ncols_interleaved;
+        vst1q_f32(s + ತಳ, acc_f32[0]);
+        vst1q_f32(s + ತಳ + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q4_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q5_K_8x4_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemv_q5_K_8x4_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 4;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 4;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    constexpr int    col_groups = ncols_interleaved / 4;  // 0123 and 4567
-    const uint8x16_t m4b        = vdupq_n_u8(0x0f);
-    const uint8x16_t mone       = vdupq_n_u8(1);
-    const uint8x16_t mtwo       = vdupq_n_u8(2);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    constexpr ಪೂರ್ಣಾಂಕ    ಲಂಬಸಾಲು_groups = ncols_interleaved / 4;  // 0123 and 4567
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b        = vdupq_n_u8(0x0f);
+    ಸ್ಥಿರಾಂಕ uint8x16_t mone       = vdupq_n_u8(1);
+    ಸ್ಥಿರಾಂಕ uint8x16_t mtwo       = vdupq_n_u8(2);
 
     // 1x8 tile = 2 x 4
-    float32x4_t acc_f32[col_groups];
+    float32x4_t acc_f32[ಲಂಬಸಾಲು_groups];
 
-    const block_q8_K * GGML_RESTRICT q8_ptr = (const block_q8_K *) vy;
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K *) vy;
 
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q5_Kx8 * GGML_RESTRICT q5_ptr = (const block_q5_Kx8 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q5_Kx8 * GGML_RESTRICT q5_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q5_Kx8 *) vx + (x * nb);
 
-        for (int i = 0; i < col_groups; i++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_groups; i++) {
             acc_f32[i] = vdupq_n_f32(0);
         }
 
-        for (int b = 0; b < nb; b++) {
-            float32x4_t q5_d_0        = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].d));      // d0 d1 d2 d3
-            float32x4_t q5_d_1        = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].d + 4));  // d4 d5 d6 d7
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            float32x4_t q5_d_0        = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].d));      // d0 d1 d2 d3
+            float32x4_t q5_d_1        = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].d + 4));  // d4 d5 d6 d7
             float32x4_t q8_d          = vdupq_n_f32(q8_ptr[b].d);
             float32x4_t sb_scale_0123 = vmulq_f32(q5_d_0, q8_d);
             float32x4_t sb_scale_4567 = vmulq_f32(q5_d_1, q8_d);
-            float32x4_t q5_dmin_0     = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].dmin));      // dmin 0..3
-            float32x4_t q5_dmin_1     = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].dmin + 4));  // dmin 4..7
+            float32x4_t q5_dmin_0     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].dmin));      // dmin 0..3
+            float32x4_t q5_dmin_1     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].dmin + 4));  // dmin 4..7
             float32x4_t sb_min_0123   = vmulq_f32(q5_dmin_0, q8_d);
             float32x4_t sb_min_4567   = vmulq_f32(q5_dmin_1, q8_d);
 
             // interleaved bias_acc: [0]->r0 0123, [1]->r0 4567
             int32x4_t bias_acc[2] = { vdupq_n_s32(0), vdupq_n_s32(0) };
-            int32x4_t acc_lo[col_groups];
-            int32x4_t acc_hi[col_groups];
+            int32x4_t acc_lo[ಲಂಬಸಾಲು_groups];
+            int32x4_t acc_hi[ಲಂಬಸಾಲು_groups];
 
             // Each bsum is 16 elements, pairwise add leaves us with the 8 bsums of the entire block
-            const int16x8_t bsums = vpaddq_s16(vld1q_s16(q8_ptr[b].bsums), vld1q_s16(q8_ptr[b].bsums + 8));
+            ಸ್ಥಿರಾಂಕ int16x8_t bsums = vpaddq_s16(vld1q_s16(q8_ptr[b].bsums), vld1q_s16(q8_ptr[b].bsums + 8));
             int16_t         bsums_arr[8];
             vst1q_s16(bsums_arr, bsums);
 
-            uint8x16_t qh[col_groups][8];
-            for (int c = 0; c < col_groups; c++) {
-                for (int i = 0; i < 8; i++) {
+            uint8x16_t qh[ಲಂಬಸಾಲು_groups][8];
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < ಲಂಬಸಾಲು_groups; c++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
                     qh[c][i] = vld1q_u8(q5_ptr[b].qh + i * 32 + 16 * c);
                 }
             }
 
-            for (int sb = 0; sb < QK_K / 64; sb++) {
-                for (int i = 0; i < col_groups; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_groups; i++) {
                     acc_lo[i] = vdupq_n_s32(0);
                     acc_hi[i] = vdupq_n_s32(0);
                 }
@@ -953,32 +953,32 @@ void ggml_gemv_q5_K_8x4_q8_K(int                        n,
                 // 2 * 12 = 24 bytes per subblock, 4 sbs -> 4 * 24 = 96 bytes total
                 int16x8_t q5sb_mins[2];
                 int16x8_t q5sb_scales[2];
-                for (int i = 0; i < 2; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
                     int8_t    aux_q5sb[8];
-                    const int offset = sb * 24 + i * 12;
-                    decode_q_Kx8_6bit_scales(&q5_ptr[b].scales[offset], &q5sb_mins[i], aux_q5sb);
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = sb * 24 + i * 12;
+                    decode_q_Kx8_6bit_scales(&q5_ptr[b].scales[ಸ್ಥಾನಾಂತರ], &q5sb_mins[i], aux_q5sb);
                     q5sb_scales[i] = vmovl_s8(vld1_s8(aux_q5sb));
                 }
 
                 int8x16_t q8_qs[4];
-                for (int i = 0; i < 4; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 4; i++) {
                     q8_qs[i] = vld1q_s8(q8_ptr[b].qs + sb * 64 + i * 16);
                 }
 
-                for (int c = 0; c < col_groups; c++) {
-                    uint8x16_t q5_cols[8];
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < ಲಂಬಸಾಲು_groups; c++) {
+                    uint8x16_t q5_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[8];
                     uint8x16_t hbit_lo[8];
                     uint8x16_t hbit_hi[8];
                     int8x16_t  q5_lo[8];
                     int8x16_t  q5_hi[8];
 
-                    for (int i = 0; i < 8; i++) {
-                        q5_cols[i] = vld1q_u8(q5_ptr[b].qs + sb * QK_K + i * 32 + 16 * c);
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
+                        q5_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[i] = vld1q_u8(q5_ptr[b].qs + sb * QK_K + i * 32 + 16 * c);
                         hbit_lo[i] = vandq_u8(qh[c][i], mone);
                         hbit_hi[i] = vshlq_n_u8(vandq_u8(qh[c][i], mtwo), 3);
                         qh[c][i]   = vshrq_n_u8(qh[c][i], 2);
-                        q5_lo[i]   = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q5_cols[i], m4b), hbit_lo[i], 4));
-                        q5_hi[i]   = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q5_cols[i], 4), hbit_hi[i]));
+                        q5_lo[i]   = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q5_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[i], m4b), hbit_lo[i], 4));
+                        q5_hi[i]   = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q5_ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ[i], 4), hbit_hi[i]));
                     }
 
                     acc_lo[c] = vdotq_laneq_s32(acc_lo[c], q5_lo[0], q8_qs[0], 0);
@@ -1002,111 +1002,111 @@ void ggml_gemv_q5_K_8x4_q8_K(int                        n,
 
                 // Scales
                 // row c0123 blk0 and blk1
-                const int16x4_t   sc_0123_lo = vget_low_s16(q5sb_scales[0]);
-                const int16x4_t   sc_0123_hi = vget_low_s16(q5sb_scales[1]);
-                const float32x4_t sumf_0123  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[0]),
+                ಸ್ಥಿರಾಂಕ int16x4_t   sc_0123_lo = vget_ಕೆಳಗಿನ_s16(q5sb_scales[0]);
+                ಸ್ಥಿರಾಂಕ int16x4_t   sc_0123_hi = vget_ಕೆಳಗಿನ_s16(q5sb_scales[1]);
+                ಸ್ಥಿರಾಂಕ float32x4_t sumf_0123  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[0]),
                                                                        vmulq_s32(vmovl_s16(sc_0123_hi), acc_hi[0])));
                 acc_f32[0]                   = vfmaq_f32(acc_f32[0], sb_scale_0123, sumf_0123);
                 // row c4567 blk0 and blk1
-                const int16x4_t   sc_4567_lo = vget_high_s16(q5sb_scales[0]);
-                const int16x4_t   sc_4567_hi = vget_high_s16(q5sb_scales[1]);
-                const float32x4_t sumf_4567  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[1]),
+                ಸ್ಥಿರಾಂಕ int16x4_t   sc_4567_lo = vget_ಮೇಲಿನ_s16(q5sb_scales[0]);
+                ಸ್ಥಿರಾಂಕ int16x4_t   sc_4567_hi = vget_ಮೇಲಿನ_s16(q5sb_scales[1]);
+                ಸ್ಥಿರಾಂಕ float32x4_t sumf_4567  = vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[1]),
                                                                        vmulq_s32(vmovl_s16(sc_4567_hi), acc_hi[1])));
                 acc_f32[1]                   = vfmaq_f32(acc_f32[1], sb_scale_4567, sumf_4567);
 
                 // Bias Correction
-                const int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[2 * sb + 0]);
-                const int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[2 * sb + 1]);
+                ಸ್ಥಿರಾಂಕ int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[2 * sb + 0]);
+                ಸ್ಥಿರಾಂಕ int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[2 * sb + 1]);
 
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_low_s16(q5sb_mins[0]));
-                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_low_s16(q5sb_mins[1]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_high_s16(q5sb_mins[0]));
-                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_high_s16(q5sb_mins[1]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_lo, vget_ಕೆಳಗಿನ_s16(q5sb_mins[0]));
+                bias_acc[0] = vmlal_s16(bias_acc[0], bsums_vec_hi, vget_ಕೆಳಗಿನ_s16(q5sb_mins[1]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_lo, vget_ಮೇಲಿನ_s16(q5sb_mins[0]));
+                bias_acc[1] = vmlal_s16(bias_acc[1], bsums_vec_hi, vget_ಮೇಲಿನ_s16(q5sb_mins[1]));
             }  // for sb
 
             acc_f32[0] = vmlsq_f32(acc_f32[0], vcvtq_f32_s32(bias_acc[0]), sb_min_0123);
             acc_f32[1] = vmlsq_f32(acc_f32[1], vcvtq_f32_s32(bias_acc[1]), sb_min_4567);
         }  // for b
 
-        int base = x * ncols_interleaved;
-        vst1q_f32(s + base, acc_f32[0]);
-        vst1q_f32(s + base + 4, acc_f32[1]);
+        ಪೂರ್ಣಾಂಕ ತಳ = x * ncols_interleaved;
+        vst1q_f32(s + ತಳ, acc_f32[0]);
+        vst1q_f32(s + ತಳ + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q5_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q5_K_8x8_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemv_q5_K_8x8_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 8;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    constexpr int    col_pairs = ncols_interleaved / 2;
-    const uint8x16_t m4b       = vdupq_n_u8(0x0f);
-    const uint8x16_t mone      = vdupq_n_u8(1);
-    const uint8x16_t mtwo      = vdupq_n_u8(2);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    constexpr ಪೂರ್ಣಾಂಕ    ಲಂಬಸಾಲು_ಜೋಡಿಗಳು = ncols_interleaved / 2;
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b       = vdupq_n_u8(0x0f);
+    ಸ್ಥಿರಾಂಕ uint8x16_t mone      = vdupq_n_u8(1);
+    ಸ್ಥಿರಾಂಕ uint8x16_t mtwo      = vdupq_n_u8(2);
 
     // 1x8 tile = 2 x 4
     float32x4_t acc_f32[ncols_interleaved / 4];
 
-    const block_q8_K * GGML_RESTRICT q8_ptr = (const block_q8_K *) vy;
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K *) vy;
 
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q5_Kx8 * GGML_RESTRICT q5_ptr = (const block_q5_Kx8 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q5_Kx8 * GGML_RESTRICT q5_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q5_Kx8 *) vx + (x * nb);
 
-        for (int i = 0; i < ncols_interleaved / 4; i++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ncols_interleaved / 4; i++) {
             acc_f32[i] = vdupq_n_f32(0);
         }
 
-        for (int b = 0; b < nb; b++) {
-            float32x4_t q5_d_0     = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].d));      // d0 d1 d2 d3
-            float32x4_t q5_d_1     = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].d + 4));  // d4 d5 d6 d7
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            float32x4_t q5_d_0     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].d));      // d0 d1 d2 d3
+            float32x4_t q5_d_1     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].d + 4));  // d4 d5 d6 d7
             float32x4_t q8_d       = vdupq_n_f32(q8_ptr[b].d);
             float32x4_t sb_scale_0 = vmulq_f32(q5_d_0, q8_d);
             float32x4_t sb_scale_1 = vmulq_f32(q5_d_1, q8_d);
-            float32x4_t q5_dmin_0  = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].dmin));      // dmin 0..3
-            float32x4_t q5_dmin_1  = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].dmin + 4));  // dmin 4..7
+            float32x4_t q5_dmin_0  = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].dmin));      // dmin 0..3
+            float32x4_t q5_dmin_1  = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].dmin + 4));  // dmin 4..7
             float32x4_t sb_min_0   = vmulq_f32(q5_dmin_0, q8_d);
             float32x4_t sb_min_1   = vmulq_f32(q5_dmin_1, q8_d);
 
             // 2 sb each iteration
-            int32x4_t acc_lo[col_pairs];
-            int32x4_t acc_hi[col_pairs];
+            int32x4_t acc_lo[ಲಂಬಸಾಲು_ಜೋಡಿಗಳು];
+            int32x4_t acc_hi[ಲಂಬಸಾಲು_ಜೋಡಿಗಳು];
 
             // Each bsum is 16 elements, pairwise add leaves us with the 8 bsums of the entire block
-            const int16x8_t bsums = vpaddq_s16(vld1q_s16(q8_ptr[b].bsums), vld1q_s16(q8_ptr[b].bsums + 8));
+            ಸ್ಥಿರಾಂಕ int16x8_t bsums = vpaddq_s16(vld1q_s16(q8_ptr[b].bsums), vld1q_s16(q8_ptr[b].bsums + 8));
             int16_t         bsums_arr[8];
             vst1q_s16(bsums_arr, bsums);
 
             // Load qh once per block and shift after each subblock
-            const uint8_t * qh_base = q5_ptr[b].qh;
-            uint8x16_t      qh[col_pairs][4];
-            for (int cp = 0; cp < col_pairs; cp++) {
-                qh[cp][0] = vld1q_u8(qh_base + 16 * cp);
-                qh[cp][1] = vld1q_u8(qh_base + 16 * cp + 64);
-                qh[cp][2] = vld1q_u8(qh_base + 16 * cp + 128);
-                qh[cp][3] = vld1q_u8(qh_base + 16 * cp + 192);
+            ಸ್ಥಿರಾಂಕ uint8_t * qh_ತಳ = q5_ptr[b].qh;
+            uint8x16_t      qh[ಲಂಬಸಾಲು_ಜೋಡಿಗಳು][4];
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ cp = 0; cp < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; cp++) {
+                qh[cp][0] = vld1q_u8(qh_ತಳ + 16 * cp);
+                qh[cp][1] = vld1q_u8(qh_ತಳ + 16 * cp + 64);
+                qh[cp][2] = vld1q_u8(qh_ತಳ + 16 * cp + 128);
+                qh[cp][3] = vld1q_u8(qh_ತಳ + 16 * cp + 192);
             }
 
-            for (int sb = 0; sb < QK_K / 64; sb++) {
-                for (int i = 0; i < col_pairs; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; i++) {
                     acc_lo[i] = vdupq_n_s32(0);
                     acc_hi[i] = vdupq_n_s32(0);
                 }
@@ -1114,29 +1114,29 @@ void ggml_gemv_q5_K_8x8_q8_K(int                        n,
                 // 2 * 12 = 24 bytes per subblock, 4 sbs -> 4 * 24 = 96 bytes total
                 int16x8_t q5sb_mins[2];  // int16 as its needed for bias_acc later
                 int16x8_t q5sb_scales[2];
-                for (int i = 0; i < 2; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
                     int8_t    aux_q5sb[8];
-                    const int offset = sb * 24 + i * 12;
-                    decode_q_Kx8_6bit_scales(&q5_ptr[b].scales[offset], &q5sb_mins[i], aux_q5sb);
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = sb * 24 + i * 12;
+                    decode_q_Kx8_6bit_scales(&q5_ptr[b].scales[ಸ್ಥಾನಾಂತರ], &q5sb_mins[i], aux_q5sb);
                     q5sb_scales[i] = vmovl_s8(vld1_s8(aux_q5sb));
                 }
 
-                const uint8_t * qs_base = q5_ptr[b].qs + sb * QK_K;
+                ಸ್ಥಿರಾಂಕ uint8_t * qs_ತಳ = q5_ptr[b].qs + sb * QK_K;
 
                 // Load the 64 quants from q8K duplicated to use vecdots with the interleaved columns
-                const int8_t * q8_base = q8_ptr[b].qs + sb * 64;
+                ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ = q8_ptr[b].qs + sb * 64;
                 int8x16_t      q8_qs[8];
-                for (int i = 0; i < 8; i++) {
-                    q8_qs[i] = (int8x16_t) vld1q_dup_s64((const int64_t *) (q8_base + i * 8));
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
+                    q8_qs[i] = (int8x16_t) vld1q_dup_s64((ಸ್ಥಿರಾಂಕ int64_t *) (q8_ತಳ + i * 8));
                 }
 
                 // Q5s column pair loop unrolled
                 {
                     // Cols 01
-                    uint8x16_t qs_0 = vld1q_u8(qs_base);
-                    uint8x16_t qs_1 = vld1q_u8(qs_base + 64);
-                    uint8x16_t qs_2 = vld1q_u8(qs_base + 128);
-                    uint8x16_t qs_3 = vld1q_u8(qs_base + 192);
+                    uint8x16_t qs_0 = vld1q_u8(qs_ತಳ);
+                    uint8x16_t qs_1 = vld1q_u8(qs_ತಳ + 64);
+                    uint8x16_t qs_2 = vld1q_u8(qs_ತಳ + 128);
+                    uint8x16_t qs_3 = vld1q_u8(qs_ತಳ + 192);
 
                     uint8x16_t hbit_lo_0 = vandq_u8(qh[0][0], mone);
                     uint8x16_t hbit_lo_1 = vandq_u8(qh[0][1], mone);
@@ -1170,10 +1170,10 @@ void ggml_gemv_q5_K_8x8_q8_K(int                        n,
                                                q8_qs[7]);
 
                     // Cols 23
-                    qs_0 = vld1q_u8(qs_base + 16);
-                    qs_1 = vld1q_u8(qs_base + 80);
-                    qs_2 = vld1q_u8(qs_base + 144);
-                    qs_3 = vld1q_u8(qs_base + 208);
+                    qs_0 = vld1q_u8(qs_ತಳ + 16);
+                    qs_1 = vld1q_u8(qs_ತಳ + 80);
+                    qs_2 = vld1q_u8(qs_ತಳ + 144);
+                    qs_3 = vld1q_u8(qs_ತಳ + 208);
 
                     hbit_lo_0 = vandq_u8(qh[1][0], mone);
                     hbit_lo_1 = vandq_u8(qh[1][1], mone);
@@ -1207,10 +1207,10 @@ void ggml_gemv_q5_K_8x8_q8_K(int                        n,
                                                q8_qs[7]);
 
                     // Cols 45
-                    qs_0 = vld1q_u8(qs_base + 32);
-                    qs_1 = vld1q_u8(qs_base + 96);
-                    qs_2 = vld1q_u8(qs_base + 160);
-                    qs_3 = vld1q_u8(qs_base + 224);
+                    qs_0 = vld1q_u8(qs_ತಳ + 32);
+                    qs_1 = vld1q_u8(qs_ತಳ + 96);
+                    qs_2 = vld1q_u8(qs_ತಳ + 160);
+                    qs_3 = vld1q_u8(qs_ತಳ + 224);
 
                     hbit_lo_0 = vandq_u8(qh[2][0], mone);
                     hbit_lo_1 = vandq_u8(qh[2][1], mone);
@@ -1244,10 +1244,10 @@ void ggml_gemv_q5_K_8x8_q8_K(int                        n,
                                                q8_qs[7]);
 
                     // Cols 45
-                    qs_0 = vld1q_u8(qs_base + 48);
-                    qs_1 = vld1q_u8(qs_base + 112);
-                    qs_2 = vld1q_u8(qs_base + 176);
-                    qs_3 = vld1q_u8(qs_base + 240);
+                    qs_0 = vld1q_u8(qs_ತಳ + 48);
+                    qs_1 = vld1q_u8(qs_ತಳ + 112);
+                    qs_2 = vld1q_u8(qs_ತಳ + 176);
+                    qs_3 = vld1q_u8(qs_ತಳ + 240);
 
                     hbit_lo_0 = vandq_u8(qh[3][0], mone);
                     hbit_lo_1 = vandq_u8(qh[3][1], mone);
@@ -1288,96 +1288,96 @@ void ggml_gemv_q5_K_8x8_q8_K(int                        n,
 
                 // Iterates over a pair of column pairs (4 columns) to use a single 128 register
                 // p = 0 -> 0123  p2 -> 4567
-                for (int i = 0, p = 0; p < col_pairs; i++, p += 2) {
-                    int16x4_t   group_scales_lo = p == 0 ? vget_low_s16(q5sb_scales[0]) : vget_high_s16(q5sb_scales[0]);
-                    int16x4_t   group_scales_hi = p == 0 ? vget_low_s16(q5sb_scales[1]) : vget_high_s16(q5sb_scales[1]);
-                    int16x4_t   group_mins_lo   = p == 0 ? vget_low_s16(q5sb_mins[0]) : vget_high_s16(q5sb_mins[0]);
-                    int16x4_t   group_mins_hi   = p == 0 ? vget_low_s16(q5sb_mins[1]) : vget_high_s16(q5sb_mins[1]);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0, p = 0; p < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; i++, p += 2) {
+                    int16x4_t   ಗುಂಪು_scales_lo = p == 0 ? vget_ಕೆಳಗಿನ_s16(q5sb_scales[0]) : vget_ಮೇಲಿನ_s16(q5sb_scales[0]);
+                    int16x4_t   ಗುಂಪು_scales_hi = p == 0 ? vget_ಕೆಳಗಿನ_s16(q5sb_scales[1]) : vget_ಮೇಲಿನ_s16(q5sb_scales[1]);
+                    int16x4_t   ಗುಂಪು_mins_lo   = p == 0 ? vget_ಕೆಳಗಿನ_s16(q5sb_mins[0]) : vget_ಮೇಲಿನ_s16(q5sb_mins[0]);
+                    int16x4_t   ಗುಂಪು_mins_hi   = p == 0 ? vget_ಕೆಳಗಿನ_s16(q5sb_mins[1]) : vget_ಮೇಲಿನ_s16(q5sb_mins[1]);
                     float32x4_t sb_scale        = p == 0 ? sb_scale_0 : sb_scale_1;
                     float32x4_t sb_min          = p == 0 ? sb_min_0 : sb_min_1;
 
                     // 0123 or 4567
                     float32x4_t sumf_0 =
-                        vcvtq_f32_s32(vmulq_s32(vmovl_s16(group_scales_lo), vpaddq_s32(acc_lo[p], acc_lo[p + 1])));
+                        vcvtq_f32_s32(vmulq_s32(vmovl_s16(ಗುಂಪು_scales_lo), vpaddq_s32(acc_lo[p], acc_lo[p + 1])));
                     acc_f32[i] = vfmaq_f32(acc_f32[i], sb_scale, sumf_0);
 
                     float32x4_t sumf_1 =
-                        vcvtq_f32_s32(vmulq_s32(vmovl_s16(group_scales_hi), vpaddq_s32(acc_hi[p], acc_hi[p + 1])));
+                        vcvtq_f32_s32(vmulq_s32(vmovl_s16(ಗುಂಪು_scales_hi), vpaddq_s32(acc_hi[p], acc_hi[p + 1])));
                     acc_f32[i] = vfmaq_f32(acc_f32[i], sb_scale, sumf_1);
 
                     // FUSED BIAS: Compute and subtract bias immediately
                     // bias = (bsums_lo * mins_lo + bsums_hi * mins_hi) * sb_min
-                    int32x4_t bias       = vmull_s16(bsums_vec_lo, group_mins_lo);
-                    bias                 = vmlal_s16(bias, bsums_vec_hi, group_mins_hi);
+                    int32x4_t bias       = vmull_s16(bsums_vec_lo, ಗುಂಪು_mins_lo);
+                    bias                 = vmlal_s16(bias, bsums_vec_hi, ಗುಂಪು_mins_hi);
                     float32x4_t bias_f32 = vcvtq_f32_s32(bias);
                     acc_f32[i]           = vmlsq_f32(acc_f32[i], sb_min, bias_f32);
                 }
             }  // for sb
         }  // for b
 
-        int base = x * ncols_interleaved;
-        vst1q_f32(s + base, acc_f32[0]);
-        vst1q_f32(s + base + 4, acc_f32[1]);
+        ಪೂರ್ಣಾಂಕ ತಳ = x * ncols_interleaved;
+        vst1q_f32(s + ತಳ, acc_f32[0]);
+        vst1q_f32(s + ತಳ + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q5_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q6_K_8x4_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemv_q6_K_8x4_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 4;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 4;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    constexpr int    col_groups = ncols_interleaved / 4;
-    const uint8x16_t m4b        = vdupq_n_u8(0x0f);
-    const uint8x16_t mask_lo    = vdupq_n_u8(0x03);
-    const uint8x16_t mask_hi    = vdupq_n_u8(0x30);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    constexpr ಪೂರ್ಣಾಂಕ    ಲಂಬಸಾಲು_groups = ncols_interleaved / 4;
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b        = vdupq_n_u8(0x0f);
+    ಸ್ಥಿರಾಂಕ uint8x16_t ಮುಖವಾಡ_lo    = vdupq_n_u8(0x03);
+    ಸ್ಥಿರಾಂಕ uint8x16_t ಮುಖವಾಡ_hi    = vdupq_n_u8(0x30);
 
     // 1x8 tile = 2 x 4
     float32x4_t acc_f32[2];
 
-    const block_q8_K * GGML_RESTRICT q8_ptr = (const block_q8_K *) vy;
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K *) vy;
 
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q6_Kx8 * GGML_RESTRICT q6_ptr = (const block_q6_Kx8 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q6_Kx8 * GGML_RESTRICT q6_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q6_Kx8 *) vx + (x * nb);
 
-        for (int i = 0; i < col_groups; i++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_groups; i++) {
             acc_f32[i] = vdupq_n_f32(0);
         }
 
-        for (int b = 0; b < nb; b++) {
-            float32x4_t q6_d_0     = vcvt_f32_f16(vld1_f16((const __fp16 *) q6_ptr[b].d));      // d0 d1 d2 d3
-            float32x4_t q6_d_1     = vcvt_f32_f16(vld1_f16((const __fp16 *) q6_ptr[b].d + 4));  // d4 d5 d6 d7
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            float32x4_t q6_d_0     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q6_ptr[b].d));      // d0 d1 d2 d3
+            float32x4_t q6_d_1     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q6_ptr[b].d + 4));  // d4 d5 d6 d7
             float32x4_t q8_d       = vdupq_n_f32(q8_ptr[b].d);
             float32x4_t sb_scale_0 = vmulq_f32(q6_d_0, q8_d);
             float32x4_t sb_scale_1 = vmulq_f32(q6_d_1, q8_d);
 
-            int32x4_t acc[col_groups];
-            for (int i = 0; i < col_groups; i++) {
+            int32x4_t acc[ಲಂಬಸಾಲು_groups];
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_groups; i++) {
                 acc[i] = vdupq_n_s32(0);
             }
 
             // Load all 16 scales once and widen to int16 (Q6_K has 16 scales per block)
             // Reused for bias and dequantization later
             int16_t q6_scales[16 * 8];
-            for (int i = 0; i < 16; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 16; i++) {
                 int16x8_t scales = vmovl_s8(vld1_s8(q6_ptr[b].scales + i * 8));
                 vst1q_s16(q6_scales + i * 8, scales);
             }
@@ -1387,7 +1387,7 @@ void ggml_gemv_q6_K_8x4_q8_K(int                        n,
             int32x4_t bias_hi = vdupq_n_s32(0);
 
             // Load bsums in chunks of 4 to process with vectorized operations
-            for (int i = 0; i < 16; i += 4) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 16; i += 4) {
                 int16x4_t bsums_vec   = vld1_s16(q8_ptr[b].bsums + i);
                 int16x4_t scales_lo_0 = vld1_s16(q6_scales + (i + 0) * 8);
                 int16x4_t scales_hi_0 = vld1_s16(q6_scales + (i + 0) * 8 + 4);
@@ -1411,36 +1411,36 @@ void ggml_gemv_q6_K_8x4_q8_K(int                        n,
             bias_hi = vshlq_n_s32(bias_hi, 5);
 
             // Process two 128-value halves per superblock
-            for (int half = 0; half < 2; half++) {
-                const uint8_t * ql_base = q6_ptr[b].ql + half * 512;
-                const uint8_t * qh_base = q6_ptr[b].qh + half * 256;
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ half = 0; half < 2; half++) {
+                ಸ್ಥಿರಾಂಕ uint8_t * ql_ತಳ = q6_ptr[b].ql + half * 512;
+                ಸ್ಥಿರಾಂಕ uint8_t * qh_ತಳ = q6_ptr[b].qh + half * 256;
 
                 // A subblock (sb) is a set of weights that share the scale
                 // Since q6_K scales are per 16 elements
                 // num sbs -> 256 elements / (16 elements/scale * 2 elements/byte * 2 halves)
-                for (int sb = 0; sb < QK_K / 64; sb++) {
-                    const int8_t * q8_base_l = q8_ptr[b].qs + half * 128 + sb * 16;
-                    const int8_t * q8_base_h = q8_base_l + 64;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
+                    ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ_l = q8_ptr[b].qs + half * 128 + sb * 16;
+                    ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ_h = q8_ತಳ_l + 64;
 
                     // Load and duplicate q8 values (each register covers four interleaved columns of q6)
                     int8x16_t q8_l[4];
                     int8x16_t q8_h[4];
-                    for (int i = 0; i < 4; i++) {
-                        q8_l[i] = (int8x16_t) vld1q_dup_s32((const int32_t *) (q8_base_l + i * 4));
-                        q8_h[i] = (int8x16_t) vld1q_dup_s32((const int32_t *) (q8_base_h + i * 4));
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 4; i++) {
+                        q8_l[i] = (int8x16_t) vld1q_dup_s32((ಸ್ಥಿರಾಂಕ int32_t *) (q8_ತಳ_l + i * 4));
+                        q8_h[i] = (int8x16_t) vld1q_dup_s32((ಸ್ಥಿರಾಂಕ int32_t *) (q8_ತಳ_h + i * 4));
                     }
 
-                    const int ql_off_base = sb * QK_K / 2;
-                    const int qh_off_base = ql_off_base & 255;  // wraps after 256 bytes
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ql_off_ತಳ = sb * QK_K / 2;
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qh_off_ತಳ = ql_off_ತಳ & 255;  // wraps after 256 bytes
 
                     // Load 4 vectors at once (64 bytes each for ql_0, ql_1, qh_0, qh_1)
-                    uint8x16x4_t q6_ql_0 = vld1q_u8_x4(ql_base + ql_off_base);
-                    uint8x16x4_t q6_ql_1 = vld1q_u8_x4(ql_base + ql_off_base + 64);
-                    uint8x16x4_t q6_qh_0 = vld1q_u8_x4(qh_base + qh_off_base);
-                    uint8x16x4_t q6_qh_1 = vld1q_u8_x4(qh_base + qh_off_base + 64);
+                    uint8x16x4_t q6_ql_0 = vld1q_u8_x4(ql_ತಳ + ql_off_ತಳ);
+                    uint8x16x4_t q6_ql_1 = vld1q_u8_x4(ql_ತಳ + ql_off_ತಳ + 64);
+                    uint8x16x4_t q6_qh_0 = vld1q_u8_x4(qh_ತಳ + qh_off_ತಳ);
+                    uint8x16x4_t q6_qh_1 = vld1q_u8_x4(qh_ತಳ + qh_off_ತಳ + 64);
 
                     // Adjust qh for subblocks 2 and 3 (shift right by 2)
-                    if (sb > 1) {
+                    ಆದರೆ (sb > 1) {
                         q6_qh_0.val[0] = vshrq_n_u8(q6_qh_0.val[0], 2);
                         q6_qh_0.val[1] = vshrq_n_u8(q6_qh_0.val[1], 2);
                         q6_qh_0.val[2] = vshrq_n_u8(q6_qh_0.val[2], 2);
@@ -1451,39 +1451,39 @@ void ggml_gemv_q6_K_8x4_q8_K(int                        n,
                         q6_qh_1.val[3] = vshrq_n_u8(q6_qh_1.val[3], 2);
                     }
 
-                    const uint8x16_t q6_ql[8] = { q6_ql_0.val[0], q6_ql_0.val[1], q6_ql_0.val[2], q6_ql_0.val[3],
+                    ಸ್ಥಿರಾಂಕ uint8x16_t q6_ql[8] = { q6_ql_0.val[0], q6_ql_0.val[1], q6_ql_0.val[2], q6_ql_0.val[3],
                                                   q6_ql_1.val[0], q6_ql_1.val[1], q6_ql_1.val[2], q6_ql_1.val[3] };
-                    const uint8x16_t q6_qh[8] = { q6_qh_0.val[0], q6_qh_0.val[1], q6_qh_0.val[2], q6_qh_0.val[3],
+                    ಸ್ಥಿರಾಂಕ uint8x16_t q6_qh[8] = { q6_qh_0.val[0], q6_qh_0.val[1], q6_qh_0.val[2], q6_qh_0.val[3],
                                                   q6_qh_1.val[0], q6_qh_1.val[1], q6_qh_1.val[2], q6_qh_1.val[3] };
 
                     // Process column groups (0-3, 4-7)
-                    for (int g = 0; g < col_groups; g++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ g = 0; g < ಲಂಬಸಾಲು_groups; g++) {
                         int32x4_t sb_acc_l = vdupq_n_s32(0);
                         int32x4_t sb_acc_h = vdupq_n_s32(0);
 
-                        for (int chunk = 0; chunk < 4; chunk++) {
-                            const int idx = chunk * 2 + g;
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ chunk = 0; chunk < 4; chunk++) {
+                            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ idx = chunk * 2 + g;
 
-                            const uint8x16_t q6_qs_l = q6_ql[idx];
-                            const uint8x16_t q6_qs_h = q6_qh[idx];
+                            ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_l = q6_ql[idx];
+                            ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_h = q6_qh[idx];
 
                             // Extract high 2 bits for upper nibble reconstruction
-                            const uint8x16_t q6_qs_hh = vandq_u8(q6_qs_h, mask_hi);
+                            ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_hh = vandq_u8(q6_qs_h, ಮುಖವಾಡ_hi);
 
                             // q6 = (low4 | high2<<4), without -32 bias (handled via bsums)
-                            const int8x16_t q6_l =
-                                vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q6_qs_l, m4b), vandq_u8(q6_qs_h, mask_lo), 4));
-                            const int8x16_t q6_h = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q6_qs_l, 4), q6_qs_hh));
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_l =
+                                vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q6_qs_l, m4b), vandq_u8(q6_qs_h, ಮುಖವಾಡ_lo), 4));
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_h = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q6_qs_l, 4), q6_qs_hh));
 
                             sb_acc_l = vdotq_s32(sb_acc_l, q6_l, q8_l[chunk]);
                             sb_acc_h = vdotq_s32(sb_acc_h, q6_h, q8_h[chunk]);
                         }
 
-                        const int scale_idx_l = half * 8 + sb;
-                        const int scale_idx_h = half * 8 + sb + 4;
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ scale_idx_l = half * 8 + sb;
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ scale_idx_h = half * 8 + sb + 4;
 
-                        const int32x4_t scale_vec_l = vmovl_s16(vld1_s16(q6_scales + scale_idx_l * 8 + g * 4));
-                        const int32x4_t scale_vec_h = vmovl_s16(vld1_s16(q6_scales + scale_idx_h * 8 + g * 4));
+                        ಸ್ಥಿರಾಂಕ int32x4_t scale_vec_l = vmovl_s16(vld1_s16(q6_scales + scale_idx_l * 8 + g * 4));
+                        ಸ್ಥಿರಾಂಕ int32x4_t scale_vec_h = vmovl_s16(vld1_s16(q6_scales + scale_idx_h * 8 + g * 4));
 
                         acc[g] = vmlaq_s32(acc[g], sb_acc_l, scale_vec_l);
                         acc[g] = vmlaq_s32(acc[g], sb_acc_h, scale_vec_h);
@@ -1504,68 +1504,68 @@ void ggml_gemv_q6_K_8x4_q8_K(int                        n,
             acc_f32[1] = vaddq_f32(acc_f32[1], w_4567);
         }  // for b
 
-        int base = x * ncols_interleaved;
-        vst1q_f32(s + base, acc_f32[0]);
-        vst1q_f32(s + base + 4, acc_f32[1]);
+        ಪೂರ್ಣಾಂಕ ತಳ = x * ncols_interleaved;
+        vst1q_f32(s + ತಳ, acc_f32[0]);
+        vst1q_f32(s + ತಳ + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q6_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q6_K_8x8_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemv_q6_K_8x8_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 8;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    constexpr int    col_pairs = ncols_interleaved / 2;
-    const uint8x16_t m4b       = vdupq_n_u8(0x0f);
-    const uint8x16_t mask_lo   = vdupq_n_u8(0x03);
-    const uint8x16_t mask_hi   = vdupq_n_u8(0x30);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    constexpr ಪೂರ್ಣಾಂಕ    ಲಂಬಸಾಲು_ಜೋಡಿಗಳು = ncols_interleaved / 2;
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b       = vdupq_n_u8(0x0f);
+    ಸ್ಥಿರಾಂಕ uint8x16_t ಮುಖವಾಡ_lo   = vdupq_n_u8(0x03);
+    ಸ್ಥಿರಾಂಕ uint8x16_t ಮುಖವಾಡ_hi   = vdupq_n_u8(0x30);
 
     // 1x8 tile = 2 x 4
     float32x4_t acc_f32[2];
 
-    const block_q8_K * GGML_RESTRICT q8_ptr = (const block_q8_K *) vy;
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_K *) vy;
 
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
-        const block_q6_Kx8 * GGML_RESTRICT q6_ptr = (const block_q6_Kx8 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q6_Kx8 * GGML_RESTRICT q6_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q6_Kx8 *) vx + (x * nb);
 
         acc_f32[0] = vdupq_n_f32(0);
         acc_f32[1] = vdupq_n_f32(0);
 
-        for (int b = 0; b < nb; b++) {
-            float32x4_t q6_d_0     = vcvt_f32_f16(vld1_f16((const __fp16 *) q6_ptr[b].d));      // d0 d1 d2 d3
-            float32x4_t q6_d_1     = vcvt_f32_f16(vld1_f16((const __fp16 *) q6_ptr[b].d + 4));  // d4 d5 d6 d7
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            float32x4_t q6_d_0     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q6_ptr[b].d));      // d0 d1 d2 d3
+            float32x4_t q6_d_1     = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q6_ptr[b].d + 4));  // d4 d5 d6 d7
             float32x4_t q8_d       = vdupq_n_f32(q8_ptr[b].d);
             float32x4_t sb_scale_0 = vmulq_f32(q6_d_0, q8_d);
             float32x4_t sb_scale_1 = vmulq_f32(q6_d_1, q8_d);
 
-            int32x2_t acc[col_pairs];
-            for (int i = 0; i < col_pairs; i++) {
+            int32x2_t acc[ಲಂಬಸಾಲು_ಜೋಡಿಗಳು];
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; i++) {
                 acc[i] = vdup_n_s32(0);
             }
 
             // Load all 16 scales once and widen to int16 (Q6_K has 16 scales per block)
             // Reused for bias and dequantization later
             int16_t q6_scales[16 * 8];
-            for (int i = 0; i < 16; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 16; i++) {
                 int16x8_t scales = vmovl_s8(vld1_s8(q6_ptr[b].scales + i * 8));
                 vst1q_s16(q6_scales + i * 8, scales);
             }
@@ -1575,7 +1575,7 @@ void ggml_gemv_q6_K_8x8_q8_K(int                        n,
             int32x4_t bias_hi = vdupq_n_s32(0);
 
             // Load bsums in chunks of 4 to process with vectorized operations
-            for (int i = 0; i < 16; i += 4) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 16; i += 4) {
                 int16x4_t bsums_vec   = vld1_s16(q8_ptr[b].bsums + i);
                 int16x4_t scales_lo_0 = vld1_s16(q6_scales + (i + 0) * 8);
                 int16x4_t scales_hi_0 = vld1_s16(q6_scales + (i + 0) * 8 + 4);
@@ -1599,36 +1599,36 @@ void ggml_gemv_q6_K_8x8_q8_K(int                        n,
             bias_hi = vshlq_n_s32(bias_hi, 5);
 
             // Process two 128-value halves per superblock
-            for (int half = 0; half < 2; half++) {
-                const uint8_t * ql_base = q6_ptr[b].ql + half * 512;
-                const uint8_t * qh_base = q6_ptr[b].qh + half * 256;
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ half = 0; half < 2; half++) {
+                ಸ್ಥಿರಾಂಕ uint8_t * ql_ತಳ = q6_ptr[b].ql + half * 512;
+                ಸ್ಥಿರಾಂಕ uint8_t * qh_ತಳ = q6_ptr[b].qh + half * 256;
 
                 // A subblock (sb) is a set of weights that share the scale
                 // Since q6_K scales are per 16 elements
                 // num sbs -> 256 elements / (16 elements/scale * 2 elements/byte * 2 halves)
-                for (int sb = 0; sb < QK_K / 64; sb++) {
-                    const int8_t * q8_base_l = q8_ptr[b].qs + half * 128 + sb * 16;
-                    const int8_t * q8_base_h = q8_base_l + 64;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
+                    ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ_l = q8_ptr[b].qs + half * 128 + sb * 16;
+                    ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ_h = q8_ತಳ_l + 64;
 
                     // Load and duplicate q8 values (each register covers two interleaved columns of q6)
                     int8x16_t q8_l[2];
                     int8x16_t q8_h[2];
-                    for (int i = 0; i < 2; i++) {
-                        q8_l[i] = (int8x16_t) vld1q_dup_s64((const int64_t *) (q8_base_l + i * 8));
-                        q8_h[i] = (int8x16_t) vld1q_dup_s64((const int64_t *) (q8_base_h + i * 8));
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
+                        q8_l[i] = (int8x16_t) vld1q_dup_s64((ಸ್ಥಿರಾಂಕ int64_t *) (q8_ತಳ_l + i * 8));
+                        q8_h[i] = (int8x16_t) vld1q_dup_s64((ಸ್ಥಿರಾಂಕ int64_t *) (q8_ತಳ_h + i * 8));
                     }
 
-                    const int ql_off_base = sb * QK_K / 2;
-                    const int qh_off_base = ql_off_base & 255;  // wraps after 256 bytes
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ql_off_ತಳ = sb * QK_K / 2;
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qh_off_ತಳ = ql_off_ತಳ & 255;  // wraps after 256 bytes
 
                     // Load 4 vectors at once (64 bytes each for ql_0, ql_1, qh_0, qh_1)
-                    uint8x16x4_t q6_ql_0 = vld1q_u8_x4(ql_base + ql_off_base);
-                    uint8x16x4_t q6_ql_1 = vld1q_u8_x4(ql_base + ql_off_base + 64);
-                    uint8x16x4_t q6_qh_0 = vld1q_u8_x4(qh_base + qh_off_base);
-                    uint8x16x4_t q6_qh_1 = vld1q_u8_x4(qh_base + qh_off_base + 64);
+                    uint8x16x4_t q6_ql_0 = vld1q_u8_x4(ql_ತಳ + ql_off_ತಳ);
+                    uint8x16x4_t q6_ql_1 = vld1q_u8_x4(ql_ತಳ + ql_off_ತಳ + 64);
+                    uint8x16x4_t q6_qh_0 = vld1q_u8_x4(qh_ತಳ + qh_off_ತಳ);
+                    uint8x16x4_t q6_qh_1 = vld1q_u8_x4(qh_ತಳ + qh_off_ತಳ + 64);
 
                     // Adjust qh for subblocks 2 and 3 (shift right by 2)
-                    if (sb > 1) {
+                    ಆದರೆ (sb > 1) {
                         q6_qh_0.val[0] = vshrq_n_u8(q6_qh_0.val[0], 2);
                         q6_qh_0.val[1] = vshrq_n_u8(q6_qh_0.val[1], 2);
                         q6_qh_0.val[2] = vshrq_n_u8(q6_qh_0.val[2], 2);
@@ -1640,24 +1640,24 @@ void ggml_gemv_q6_K_8x8_q8_K(int                        n,
                     }
 
                     // Process column pairs (0-1, 2-3, 4-5, 6-7)
-                    for (int cp = 0; cp < col_pairs; cp++) {
-                        const uint8x16_t q6_qs_cp_0_l = q6_ql_0.val[cp];
-                        const uint8x16_t q6_qs_cp_1_l = q6_ql_1.val[cp];
-                        const uint8x16_t q6_qs_cp_0_h = q6_qh_0.val[cp];
-                        const uint8x16_t q6_qs_cp_1_h = q6_qh_1.val[cp];
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ cp = 0; cp < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; cp++) {
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_0_l = q6_ql_0.val[cp];
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_1_l = q6_ql_1.val[cp];
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_0_h = q6_qh_0.val[cp];
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_1_h = q6_qh_1.val[cp];
 
                         // Extract high 2 bits for upper nibble reconstruction
-                        const uint8x16_t q6_qs_cp_0_hh = vandq_u8(q6_qs_cp_0_h, mask_hi);
-                        const uint8x16_t q6_qs_cp_1_hh = vandq_u8(q6_qs_cp_1_h, mask_hi);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_0_hh = vandq_u8(q6_qs_cp_0_h, ಮುಖವಾಡ_hi);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_1_hh = vandq_u8(q6_qs_cp_1_h, ಮುಖವಾಡ_hi);
 
                         // q6 = (low4 | high2<<4), without -32 bias (handled via bsums)
-                        const int8x16_t q6_l0 = vreinterpretq_s8_u8(
-                            vsliq_n_u8(vandq_u8(q6_qs_cp_0_l, m4b), vandq_u8(q6_qs_cp_0_h, mask_lo), 4));
-                        const int8x16_t q6_l1 = vreinterpretq_s8_u8(
-                            vsliq_n_u8(vandq_u8(q6_qs_cp_1_l, m4b), vandq_u8(q6_qs_cp_1_h, mask_lo), 4));
-                        const int8x16_t q6_h0 =
+                        ಸ್ಥಿರಾಂಕ int8x16_t q6_l0 = vreinterpretq_s8_u8(
+                            vsliq_n_u8(vandq_u8(q6_qs_cp_0_l, m4b), vandq_u8(q6_qs_cp_0_h, ಮುಖವಾಡ_lo), 4));
+                        ಸ್ಥಿರಾಂಕ int8x16_t q6_l1 = vreinterpretq_s8_u8(
+                            vsliq_n_u8(vandq_u8(q6_qs_cp_1_l, m4b), vandq_u8(q6_qs_cp_1_h, ಮುಖವಾಡ_lo), 4));
+                        ಸ್ಥಿರಾಂಕ int8x16_t q6_h0 =
                             vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q6_qs_cp_0_l, 4), q6_qs_cp_0_hh));
-                        const int8x16_t q6_h1 =
+                        ಸ್ಥಿರಾಂಕ int8x16_t q6_h1 =
                             vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q6_qs_cp_1_l, 4), q6_qs_cp_1_hh));
 
                         int32x4_t sb_acc_l = vdupq_n_s32(0);
@@ -1669,95 +1669,95 @@ void ggml_gemv_q6_K_8x8_q8_K(int                        n,
                         sb_acc_h           = vdotq_s32(sb_acc_h, q6_h1, q8_h[1]);
 
                         // Pairwise add to get per-column sums: [col0, col1]
-                        int32x2_t sum_l = vpadd_s32(vget_low_s32(sb_acc_l), vget_high_s32(sb_acc_l));
-                        int32x2_t sum_h = vpadd_s32(vget_low_s32(sb_acc_h), vget_high_s32(sb_acc_h));
+                        int32x2_t ಮೊತ್ತ_l = vpadd_s32(vget_ಕೆಳಗಿನ_s32(sb_acc_l), vget_ಮೇಲಿನ_s32(sb_acc_l));
+                        int32x2_t ಮೊತ್ತ_h = vpadd_s32(vget_ಕೆಳಗಿನ_s32(sb_acc_h), vget_ಮೇಲಿನ_s32(sb_acc_h));
 
-                        const int scale_idx_l = half * 8 + sb;
-                        const int scale_idx_h = half * 8 + sb + 4;
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ scale_idx_l = half * 8 + sb;
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ scale_idx_h = half * 8 + sb + 4;
 
                         // Access scales using array indexing (scales are interleaved by column)
-                        const int32x2_t scale_vec_l = { (int32_t) q6_scales[scale_idx_l * 8 + cp * 2],
+                        ಸ್ಥಿರಾಂಕ int32x2_t scale_vec_l = { (int32_t) q6_scales[scale_idx_l * 8 + cp * 2],
                                                         (int32_t) q6_scales[scale_idx_l * 8 + cp * 2 + 1] };
-                        const int32x2_t scale_vec_h = { (int32_t) q6_scales[scale_idx_h * 8 + cp * 2],
+                        ಸ್ಥಿರಾಂಕ int32x2_t scale_vec_h = { (int32_t) q6_scales[scale_idx_h * 8 + cp * 2],
                                                         (int32_t) q6_scales[scale_idx_h * 8 + cp * 2 + 1] };
 
                         // Accumulate scaled results
-                        acc[cp] = vmla_s32(acc[cp], sum_l, scale_vec_l);
-                        acc[cp] = vmla_s32(acc[cp], sum_h, scale_vec_h);
+                        acc[cp] = vmla_s32(acc[cp], ಮೊತ್ತ_l, scale_vec_l);
+                        acc[cp] = vmla_s32(acc[cp], ಮೊತ್ತ_h, scale_vec_h);
                     }
                 }
             }  // for half
 
             // Bias correction
-            acc[0] = vsub_s32(acc[0], vget_low_s32(bias_lo));
-            acc[1] = vsub_s32(acc[1], vget_high_s32(bias_lo));
-            acc[2] = vsub_s32(acc[2], vget_low_s32(bias_hi));
-            acc[3] = vsub_s32(acc[3], vget_high_s32(bias_hi));
+            acc[0] = vsub_s32(acc[0], vget_ಕೆಳಗಿನ_s32(bias_lo));
+            acc[1] = vsub_s32(acc[1], vget_ಮೇಲಿನ_s32(bias_lo));
+            acc[2] = vsub_s32(acc[2], vget_ಕೆಳಗಿನ_s32(bias_hi));
+            acc[3] = vsub_s32(acc[3], vget_ಮೇಲಿನ_s32(bias_hi));
 
             // Apply superblock scale (no mins for q6_K)
             // acc[cp] has [c0, c1]
-            float32x2_t w_01 = vmul_f32(vcvt_f32_s32(acc[0]), vget_low_f32(sb_scale_0));
-            float32x2_t w_23 = vmul_f32(vcvt_f32_s32(acc[1]), vget_high_f32(sb_scale_0));
-            float32x2_t w_45 = vmul_f32(vcvt_f32_s32(acc[2]), vget_low_f32(sb_scale_1));
-            float32x2_t w_67 = vmul_f32(vcvt_f32_s32(acc[3]), vget_high_f32(sb_scale_1));
+            float32x2_t w_01 = vmul_f32(vcvt_f32_s32(acc[0]), vget_ಕೆಳಗಿನ_f32(sb_scale_0));
+            float32x2_t w_23 = vmul_f32(vcvt_f32_s32(acc[1]), vget_ಮೇಲಿನ_f32(sb_scale_0));
+            float32x2_t w_45 = vmul_f32(vcvt_f32_s32(acc[2]), vget_ಕೆಳಗಿನ_f32(sb_scale_1));
+            float32x2_t w_67 = vmul_f32(vcvt_f32_s32(acc[3]), vget_ಮೇಲಿನ_f32(sb_scale_1));
 
             acc_f32[0] = vaddq_f32(acc_f32[0], vcombine_f32(w_01, w_23));
             acc_f32[1] = vaddq_f32(acc_f32[1], vcombine_f32(w_45, w_67));
         }  // for b
 
-        int base = x * ncols_interleaved;
-        vst1q_f32(s + base, acc_f32[0]);
-        vst1q_f32(s + base + 4, acc_f32[1]);
+        ಪೂರ್ಣಾಂಕ ತಳ = x * ncols_interleaved;
+        vst1q_f32(s + ತಳ, acc_f32[0]);
+        vst1q_f32(s + ತಳ + 4, acc_f32[1]);
     }  // for x
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q6_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q8_0_4x4_q8_0(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemv_q8_0_4x4_q8_0(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 4;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk                = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb                = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen          = 4;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx;
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vx;
 
-    for (int c = 0; c < nc; c += ncols_interleaved) {
-        const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < nc; c += ncols_interleaved) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 *) vy;
         float32x4_t        acc   = vdupq_n_f32(0);
-        for (int b = 0; b < nb; b++) {
-            int8x16x4_t b_low  = vld1q_s8_x4((const int8_t *) b_ptr->qs);
-            int8x16x4_t b_high = vld1q_s8_x4((const int8_t *) b_ptr->qs + 64);
-            float16x4_t bd     = vld1_f16((const __fp16 *) b_ptr->d);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            int8x16x4_t b_ಕೆಳಗಿನ  = vld1q_s8_x4((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs);
+            int8x16x4_t b_ಮೇಲಿನ = vld1q_s8_x4((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs + 64);
+            float16x4_t bd     = vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) b_ptr->d);
 
             int8x16x2_t a  = vld1q_s8_x2(a_ptr->qs);
-            float16x4_t ad = vld1_dup_f16((const __fp16 *) &a_ptr->d);
+            float16x4_t ad = vld1_dup_f16((ಸ್ಥಿರಾಂಕ __fp16 *) &a_ptr->d);
 
             int32x4_t ret = vdupq_n_s32(0);
 
-            ret = vdotq_laneq_s32(ret, b_low.val[0], a.val[0], 0);
-            ret = vdotq_laneq_s32(ret, b_low.val[1], a.val[0], 1);
-            ret = vdotq_laneq_s32(ret, b_low.val[2], a.val[0], 2);
-            ret = vdotq_laneq_s32(ret, b_low.val[3], a.val[0], 3);
+            ret = vdotq_laneq_s32(ret, b_ಕೆಳಗಿನ.val[0], a.val[0], 0);
+            ret = vdotq_laneq_s32(ret, b_ಕೆಳಗಿನ.val[1], a.val[0], 1);
+            ret = vdotq_laneq_s32(ret, b_ಕೆಳಗಿನ.val[2], a.val[0], 2);
+            ret = vdotq_laneq_s32(ret, b_ಕೆಳಗಿನ.val[3], a.val[0], 3);
 
-            ret = vdotq_laneq_s32(ret, b_high.val[0], a.val[1], 0);
-            ret = vdotq_laneq_s32(ret, b_high.val[1], a.val[1], 1);
-            ret = vdotq_laneq_s32(ret, b_high.val[2], a.val[1], 2);
-            ret = vdotq_laneq_s32(ret, b_high.val[3], a.val[1], 3);
+            ret = vdotq_laneq_s32(ret, b_ಮೇಲಿನ.val[0], a.val[1], 0);
+            ret = vdotq_laneq_s32(ret, b_ಮೇಲಿನ.val[1], a.val[1], 1);
+            ret = vdotq_laneq_s32(ret, b_ಮೇಲಿನ.val[2], a.val[1], 2);
+            ret = vdotq_laneq_s32(ret, b_ಮೇಲಿನ.val[3], a.val[1], 3);
 
             acc = vfmaq_f32(acc, vcvtq_f32_s32(ret), vmulq_f32(vcvt_f32_f16(ad), vcvt_f32_f16(bd)));
             a_ptr++;
@@ -1766,65 +1766,65 @@ void ggml_gemv_q8_0_4x4_q8_0(int                        n,
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
+    ಹಿಂತಿರುಗಿ;
 
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q8_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q8_0_4x8_q8_0(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemv_q8_0_4x8_q8_0(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk                = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb                = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx;
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vx;
 
-    for (int c = 0; c < nc; c += ncols_interleaved) {
-        const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < nc; c += ncols_interleaved) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 *) vy;
         float32x4_t        acc   = vdupq_n_f32(0);
 
-        for (int b = 0; b < nb; b++) {
-            int8x16x4_t b_low  = vld1q_s8_x4((const int8_t *) b_ptr->qs);
-            int8x16x4_t b_high = vld1q_s8_x4((const int8_t *) b_ptr->qs + 64);
-            float16x4_t bd     = vld1_f16((const __fp16 *) b_ptr->d);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+            int8x16x4_t b_ಕೆಳಗಿನ  = vld1q_s8_x4((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs);
+            int8x16x4_t b_ಮೇಲಿನ = vld1q_s8_x4((ಸ್ಥಿರಾಂಕ int8_t *) b_ptr->qs + 64);
+            float16x4_t bd     = vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) b_ptr->d);
 
             int8x8x4_t  a_chunks = vld1_s8_x4(a_ptr->qs);
             int8x16_t   a0       = vcombine_s8(a_chunks.val[0], a_chunks.val[0]);
             int8x16_t   a1       = vcombine_s8(a_chunks.val[1], a_chunks.val[1]);
             int8x16_t   a2       = vcombine_s8(a_chunks.val[2], a_chunks.val[2]);
             int8x16_t   a3       = vcombine_s8(a_chunks.val[3], a_chunks.val[3]);
-            float16x4_t ad       = vld1_dup_f16((const __fp16 *) &a_ptr->d);
+            float16x4_t ad       = vld1_dup_f16((ಸ್ಥಿರಾಂಕ __fp16 *) &a_ptr->d);
 
             int32x4_t ret0 = vdupq_n_s32(0);
             int32x4_t ret1 = vdupq_n_s32(0);
 
             // 0..7
-            ret0 = vdotq_s32(ret0, b_low.val[0], a0);
-            ret1 = vdotq_s32(ret1, b_low.val[1], a0);
+            ret0 = vdotq_s32(ret0, b_ಕೆಳಗಿನ.val[0], a0);
+            ret1 = vdotq_s32(ret1, b_ಕೆಳಗಿನ.val[1], a0);
             // 8..15
-            ret0 = vdotq_s32(ret0, b_low.val[2], a1);
-            ret1 = vdotq_s32(ret1, b_low.val[3], a1);
+            ret0 = vdotq_s32(ret0, b_ಕೆಳಗಿನ.val[2], a1);
+            ret1 = vdotq_s32(ret1, b_ಕೆಳಗಿನ.val[3], a1);
             // 16..23
-            ret0 = vdotq_s32(ret0, b_high.val[0], a2);
-            ret1 = vdotq_s32(ret1, b_high.val[1], a2);
+            ret0 = vdotq_s32(ret0, b_ಮೇಲಿನ.val[0], a2);
+            ret1 = vdotq_s32(ret1, b_ಮೇಲಿನ.val[1], a2);
             // 24..31
-            ret0 = vdotq_s32(ret0, b_high.val[2], a3);
-            ret1 = vdotq_s32(ret1, b_high.val[3], a3);
+            ret0 = vdotq_s32(ret0, b_ಮೇಲಿನ.val[2], a3);
+            ret1 = vdotq_s32(ret1, b_ಮೇಲಿನ.val[3], a3);
 
             int32x4_t ret = vpaddq_s32(ret0, ret1);
 
@@ -1835,54 +1835,54 @@ void ggml_gemv_q8_0_4x8_q8_0(int                        n,
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
+    ಹಿಂತಿರುಗಿ;
 
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemv_q8_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q1_0_4x4_q8_0(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemv_q1_0_4x4_q8_0(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk                = QK1_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb                = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    for (int c = 0; c < nc; c += ncols_interleaved) {
-        const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (c / ncols_interleaved) * nb;
-        const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < nc; c += ncols_interleaved) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q1_0x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q1_0x4 *) vx + (c / ncols_interleaved) * nb;
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 *) vy;
         float32x4_t acc = vdupq_n_f32(0);
 
-        for (int l = 0; l < nb; l++) {
-            const float32x4_t b_d = vcvt_f32_f16(vld1_f16((const float16_t *) b_ptr[l].d));
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ l = 0; l < nb; l++) {
+            ಸ್ಥಿರಾಂಕ float32x4_t b_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *) b_ptr[l].d));
             float32x4_t accb = vdupq_n_f32(0);
 
-            for (int k = 0; k < 4; k++) {
-                const block_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * 4 + k;
-                const float ad = GGML_CPU_FP16_TO_FP32(a_blk->d);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; k++) {
+                ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * 4 + k;
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ ad = GGML_CPU_FP16_ಗಮ್ಯ_FP32(a_blk->d);
                 int32x4_t ret = vdupq_n_s32(0);
 
-                for (int tile = 0; tile < 8; tile += 4) {
-                    const int8x16_t signs0 = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * (tile + 0) + 0],
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ tile = 0; tile < 8; tile += 4) {
+                    ಸ್ಥಿರಾಂಕ int8x16_t signs0 = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * (tile + 0) + 0],
                                                                     b_ptr[l].qs[k * 16 + 2 * (tile + 0) + 1]);
-                    const int8x16_t signs1 = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * (tile + 1) + 0],
+                    ಸ್ಥಿರಾಂಕ int8x16_t signs1 = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * (tile + 1) + 0],
                                                                     b_ptr[l].qs[k * 16 + 2 * (tile + 1) + 1]);
-                    const int8x16_t signs2 = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * (tile + 2) + 0],
+                    ಸ್ಥಿರಾಂಕ int8x16_t signs2 = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * (tile + 2) + 0],
                                                                     b_ptr[l].qs[k * 16 + 2 * (tile + 2) + 1]);
-                    const int8x16_t signs3 = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * (tile + 3) + 0],
+                    ಸ್ಥಿರಾಂಕ int8x16_t signs3 = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * (tile + 3) + 0],
                                                                     b_ptr[l].qs[k * 16 + 2 * (tile + 3) + 1]);
-                    const int8x16_t q_tiles = vld1q_s8(a_blk->qs + tile * 4);
+                    ಸ್ಥಿರಾಂಕ int8x16_t q_tiles = vld1q_s8(a_blk->qs + tile * 4);
 
                     ret = vdotq_laneq_s32(ret, signs0, q_tiles, 0);
                     ret = vdotq_laneq_s32(ret, signs1, q_tiles, 1);
@@ -1897,42 +1897,42 @@ void ggml_gemv_q1_0_4x4_q8_0(int                        n,
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
-#endif
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ
     ggml_gemv_q1_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q1_0_4x8_q8_0(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemv_q1_0_4x8_q8_0(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk                = QK1_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb                = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
 
-    assert(n % qk == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    for (int c = 0; c < nc; c += ncols_interleaved) {
-        const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (c / ncols_interleaved) * nb;
-        const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < nc; c += ncols_interleaved) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q1_0x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q1_0x4 *) vx + (c / ncols_interleaved) * nb;
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 *) vy;
         float32x4_t acc = vdupq_n_f32(0);
 
-        for (int l = 0; l < nb; l++) {
-            const float32x4_t b_d = vcvt_f32_f16(vld1_f16((const float16_t *) b_ptr[l].d));
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ l = 0; l < nb; l++) {
+            ಸ್ಥಿರಾಂಕ float32x4_t b_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *) b_ptr[l].d));
             float32x4_t accb = vdupq_n_f32(0);
 
-            for (int k = 0; k < 4; ++k) {
-                const block_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * 4 + k;
-                const uint8_t * GGML_RESTRICT b_qs = (const uint8_t *) b_ptr[l].qs + k * 16;
-                const float ad = GGML_CPU_FP16_TO_FP32(a_blk->d);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; ++k) {
+                ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * 4 + k;
+                ಸ್ಥಿರಾಂಕ uint8_t * GGML_RESTRICT b_qs = (ಸ್ಥಿರಾಂಕ uint8_t *) b_ptr[l].qs + k * 16;
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ ad = GGML_CPU_FP16_ಗಮ್ಯ_FP32(a_blk->d);
 
                 int8x8x4_t  a_chunks = vld1_s8_x4(a_blk->qs);
                 int8x16_t   a0       = vcombine_s8(a_chunks.val[0], a_chunks.val[0]);
@@ -1961,37 +1961,37 @@ void ggml_gemv_q1_0_4x8_q8_0(int                        n,
         vst1q_f32(s, acc);
         s += ncols_interleaved;
     }
-    return;
-#endif
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ
 
     ggml_gemv_q1_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+ಶೂನ್ಯ ggml_gemm_q4_0_4x4_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 4;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    const void * b_ptr = vx;
-    const void * a_ptr = vy;
-    float * res_ptr = s;
-    size_t res_stride = bs * sizeof(float);
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * b_ptr = vx;
+    ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * a_ptr = vy;
+    ದಶಮಾಂಶ * res_ptr = s;
+    size_t res_stride = bs * ಗಾತ್ರ(ದಶಮಾಂಶ);
 
     __asm__ __volatile__(
         "mov x10, %x[nr]\n"
@@ -2443,36 +2443,36 @@ void ggml_gemm_q4_0_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         : [b_ptr] "r" (b_ptr), [nr] "r" (nr), [nb] "r" (nb), [res_stride] "r" (res_stride), [nc] "r" (nc)
         : "cc", "memory", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "x9", "x10", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28"
     );
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
     ggml_gemm_q4_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 8;
+ಶೂನ್ಯ ggml_gemm_q4_0_4x8_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
-    const void * b_ptr = vx;
-    const void * a_ptr = vy;
-    float * res_ptr = s;
-    size_t res_stride = bs * sizeof(float);
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * b_ptr = vx;
+    ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * a_ptr = vy;
+    ದಶಮಾಂಶ * res_ptr = s;
+    size_t res_stride = bs * ಗಾತ್ರ(ದಶಮಾಂಶ);
 
     __asm__ __volatile__(
         "mov x10, %x[nr]\n"
@@ -2864,38 +2864,38 @@ void ggml_gemm_q4_0_4x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
         : [b_ptr] "r" (b_ptr), [nr] "r" (nr), [nb] "r" (nb), [res_stride] "r" (res_stride), [nc] "r" (nc)
         : "cc", "memory", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", "x9", "x10", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28"
     );
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
     ggml_gemm_q4_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+ಶೂನ್ಯ ggml_gemm_q4_0_8x8_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 8;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
-#if defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
-    if (ggml_cpu_get_sve_cnt() == QK8_0) {
-        const void * b_ptr = vx;
-        const void * a_ptr = vy;
-        float * res_ptr = s;
-        size_t res_stride = bs * sizeof(float);
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
+#ಆದರೆ defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಆದರೆ (ggml_cpu_get_sve_cnt() == QK8_0) {
+        ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * b_ptr = vx;
+        ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * a_ptr = vy;
+        ದಶಮಾಂಶ * res_ptr = s;
+        size_t res_stride = bs * ಗಾತ್ರ(ದಶಮಾಂಶ);
 
         __asm__ __volatile__(
             "mov x20, #0x4\n"
@@ -3299,57 +3299,57 @@ void ggml_gemm_q4_0_8x8_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const vo
             : [b_ptr] "r" (b_ptr), [nr] "r" (nr), [nb] "r" (nb), [res_stride] "r" (res_stride), [nc] "r" (nc)
             : "cc", "memory", "p0", "p1", "x9", "x10", "x11", "x12", "x13", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "z0", "z1", "z2", "z3", "z4", "z5", "z6", "z7", "z8", "z9", "z10", "z11", "z12", "z13", "z14", "z15", "z16", "z17", "z18", "z19", "z20", "z21", "z22", "z23", "z24", "z25", "z26", "z27", "z28", "z29", "z30", "z31"
         );
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
-#endif // #if defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
+#ಆದರೆ_ಅಂತ್ಯ // #if defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
 
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__)
     ggml_gemm_q4_0_8x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+ಶೂನ್ಯ ggml_gemm_iq4_nl_4x4_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 4;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    const int8x16_t kvalues = vld1q_s8(kvalues_iq4nl);
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಸ್ಥಿರಾಂಕ int8x16_t kvalues = vld1q_s8(kvalues_iq4nl);
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_iq4_nlx4 * b_ptr = (const block_iq4_nlx4 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / 4; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vy + (y * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_iq4_nlx4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_iq4_nlx4 *) vx + (x * nb);
 
             float32x4_t sumf[4];
-            for (int m = 0; m < 4; m++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; m++) {
                 sumf[m] = vdupq_n_f32(0);
             }
 
-            for (int l = 0; l < nb; l++) {
-                float32x4_t a_d = vcvt_f32_f16(vld1_f16((const float16_t *)a_ptr[l].d));
-                float32x4_t b_d = vcvt_f32_f16(vld1_f16((const float16_t *)b_ptr[l].d));
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ l = 0; l < nb; l++) {
+                float32x4_t a_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *)a_ptr[l].d));
+                float32x4_t b_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *)b_ptr[l].d));
 
                 int32x4_t sumi_0 = vdupq_n_s32(0);
                 int32x4_t sumi_1 = vdupq_n_s32(0);
                 int32x4_t sumi_2 = vdupq_n_s32(0);
                 int32x4_t sumi_3 = vdupq_n_s32(0);
 
-                for (int k = 0; k < 4; k++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; k++) {
                     int8x16_t a_0 = vld1q_s8(a_ptr[l].qs + 16 * k + 0);
                     int8x16_t a_1 = vld1q_s8(a_ptr[l].qs + 16 * k + 64);
 
@@ -3373,56 +3373,56 @@ void ggml_gemm_iq4_nl_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const 
                 sumf[3] = vmlaq_f32(sumf[3], vmulq_laneq_f32(b_d, a_d, 3), vcvtq_f32_s32(sumi_3));
             }
 
-            for (int m = 0; m < 4; m++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; m++) {
                 vst1q_f32(s + (y * 4 + m) * bs + x * 4, sumf[m]);
             }
         }
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
     ggml_gemm_iq4_nl_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+ಶೂನ್ಯ ggml_gemm_mxfp4_4x4_q8_0(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen = 4;
 
-    assert (n % qk == 0);
-    assert (nr % 4 == 0);
-    assert (nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ (n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ (nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ (nc % ncols_interleaved == 0);
 
-    UNUSED(s);
-    UNUSED(bs);
-    UNUSED(vx);
-    UNUSED(vy);
-    UNUSED(nr);
-    UNUSED(nc);
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(s);
+    ಬಳಸದ(bs);
+    ಬಳಸದ(vx);
+    ಬಳಸದ(vy);
+    ಬಳಸದ(nr);
+    ಬಳಸದ(nc);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    const int8x16_t kvalues = vld1q_s8(kvalues_mxfp4);
+#ಆದರೆ ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಸ್ಥಿರಾಂಕ int8x16_t kvalues = vld1q_s8(kvalues_mxfp4);
 
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_mxfp4x4 * b_ptr = (const block_mxfp4x4 *) vx + (x * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / 4; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vy + (y * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_mxfp4x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_mxfp4x4 *) vx + (x * nb);
 
             float32x4_t sumf[4];
-            for (int m = 0; m < 4; m++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; m++) {
                 sumf[m] = vdupq_n_f32(0);
             }
 
-            for (int l = 0; l < nb; l++) {
-                float32x4_t a_d = vcvt_f32_f16(vld1_f16((const float16_t *)a_ptr[l].d));
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ l = 0; l < nb; l++) {
+                float32x4_t a_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *)a_ptr[l].d));
                 float32x4_t b_d = {
-                    GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[0]),
-                    GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[1]),
-                    GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[2]),
-                    GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[3]),
+                    GGML_CPU_E8_M0_ಗಮ್ಯ_FP32_HALF(b_ptr[l].e[0]),
+                    GGML_CPU_E8_M0_ಗಮ್ಯ_FP32_HALF(b_ptr[l].e[1]),
+                    GGML_CPU_E8_M0_ಗಮ್ಯ_FP32_HALF(b_ptr[l].e[2]),
+                    GGML_CPU_E8_M0_ಗಮ್ಯ_FP32_HALF(b_ptr[l].e[3]),
                 };
 
                 int32x4_t sumi_0 = vdupq_n_s32(0);
@@ -3430,7 +3430,7 @@ void ggml_gemm_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
                 int32x4_t sumi_2 = vdupq_n_s32(0);
                 int32x4_t sumi_3 = vdupq_n_s32(0);
 
-                for (int k = 0; k < 4; k++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; k++) {
                     int8x16_t a_0 = vld1q_s8(a_ptr[l].qs + 16 * k + 0);
                     int8x16_t a_1 = vld1q_s8(a_ptr[l].qs + 16 * k + 64);
 
@@ -3454,58 +3454,58 @@ void ggml_gemm_mxfp4_4x4_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
                 sumf[3] = vmlaq_f32(sumf[3], vmulq_laneq_f32(b_d, a_d, 3), vcvtq_f32_s32(sumi_3));
             }
 
-            for (int m = 0; m < 4; m++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; m++) {
                 vst1q_f32(s + (y * 4 + m) * bs + x * 4, sumf[m]);
             }
         }
     }
-    return;
-#endif // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ // #if ! ((defined(_MSC_VER)) && ! defined(__clang__)) && defined(__aarch64__) && defined(__ARM_NEON)
     ggml_gemm_mxfp4_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+ಶೂನ್ಯ ggml_gemm_q4_K_8x4_q8_K(ಪೂರ್ಣಾಂಕ n, ದಶಮಾಂಶ * GGML_RESTRICT s, size_t bs, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy, ಪೂರ್ಣಾಂಕ nr, ಪೂರ್ಣಾಂಕ nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 4;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 4;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    constexpr int    q8_k_blocklen = 4;
-    constexpr int    acc_size  = 2 * 4;  // 2 row pairs × 4 col pairs
-    const uint8x16_t m4b       = vdupq_n_u8(0x0f);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    constexpr ಪೂರ್ಣಾಂಕ    q8_k_blocklen = 4;
+    constexpr ಪೂರ್ಣಾಂಕ    acc_ಗಾತ್ರ  = 2 * 4;  // 2 row pairs × 4 col pairs
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b       = vdupq_n_u8(0x0f);
 
     // 8 accumulators: 2 row pairs × 4 col pairs
-    float32x4_t acc_f32[acc_size];
+    float32x4_t acc_f32[acc_ಗಾತ್ರ];
 
-    for (int y = 0; y < nr / q8_k_blocklen; y++) {
-        const block_q8_Kx4 * GGML_RESTRICT q8_ptr = (const block_q8_Kx4 *) vy + (y * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / q8_k_blocklen; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 *) vy + (y * nb);
 
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q4_Kx8 * GGML_RESTRICT q4_ptr = (const block_q4_Kx8 *) vx + (x * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 * GGML_RESTRICT q4_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 *) vx + (x * nb);
 
-            for (int i = 0; i < acc_size; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < acc_ಗಾತ್ರ; i++) {
                 acc_f32[i] = vdupq_n_f32(0);
             }
 
-            for (int b = 0; b < nb; b++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
                 // d4 0 1 2 3, 4 5 6 7
-                float32x4_t q4_d_0123    = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].d));
-                float32x4_t q4_d_4567    = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].d + 4));
+                float32x4_t q4_d_0123    = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].d));
+                float32x4_t q4_d_4567    = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].d + 4));
                 // d8 0 1 2 3
                 float32x4_t q8_d_0123    = vld1q_f32(q8_ptr[b].d);
                 // mins
-                float32x4_t q4_dmin_0123 = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].dmin));
-                float32x4_t q4_dmin_4567 = vcvt_f32_f16(vld1_f16((const __fp16 *) q4_ptr[b].dmin + 4));
+                float32x4_t q4_dmin_0123 = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].dmin));
+                float32x4_t q4_dmin_4567 = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q4_ptr[b].dmin + 4));
 
                 // Precomputation of scales and mins
                 float32x4_t sbd_scale_0123[q8_k_blocklen];
@@ -3534,28 +3534,28 @@ void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                 sbd_min_4567[3]   = vmulq_laneq_f32(q4_dmin_4567, q8_d_0123, 3);
 
                 // Precomputation of bsums, each vpaddq calcs all the bsums for each row
-                const int16x8_t bsums[q8_k_blocklen] = {
+                ಸ್ಥಿರಾಂಕ int16x8_t bsums[q8_k_blocklen] = {
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 0), vld1q_s16(q8_ptr[b].bsums + 16 * 0 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 1), vld1q_s16(q8_ptr[b].bsums + 16 * 1 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 2), vld1q_s16(q8_ptr[b].bsums + 16 * 2 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 3), vld1q_s16(q8_ptr[b].bsums + 16 * 3 + 8)),
                 };
                 int16_t bsums_arr[QK_K / 64][8];
-                for (int q8_row = 0; q8_row < 4; q8_row++) {
-                    vst1q_s16(bsums_arr[q8_row], bsums[q8_row]);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ q8_ಅಡ್ಡಸಾಲು = 0; q8_ಅಡ್ಡಸಾಲು < 4; q8_ಅಡ್ಡಸಾಲು++) {
+                    vst1q_s16(bsums_arr[q8_ಅಡ್ಡಸಾಲು], bsums[q8_ಅಡ್ಡಸಾಲು]);
                 }
 
                 // interleaved bias_acc: [0]->r0 0123, [1]->r1 0123, .., [4]->r0 4567, [5]->r1 4567 ..
-                int32x4_t bias_acc[acc_size];
-                for (int i = 0; i < acc_size; i++) {
+                int32x4_t bias_acc[acc_ಗಾತ್ರ];
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < acc_ಗಾತ್ರ; i++) {
                     bias_acc[i] = vdupq_n_s32(0);
                 }
 
-                for (int sb = 0; sb < QK_K / 64; sb++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
                     // Int accumulators for qs vecdot (4 row x 2 col quartets)
-                    int32x4_t acc_lo[acc_size];
-                    int32x4_t acc_hi[acc_size];
-                    for (int i = 0; i < acc_size; i++) {
+                    int32x4_t acc_lo[acc_ಗಾತ್ರ];
+                    int32x4_t acc_hi[acc_ಗಾತ್ರ];
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < acc_ಗಾತ್ರ; i++) {
                         acc_lo[i] = vdupq_n_s32(0);
                         acc_hi[i] = vdupq_n_s32(0);
                     }
@@ -3563,24 +3563,24 @@ void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                     // 2 * 12 = 24 bytes per subblock, 4 sbs -> 4 * 24 = 96 bytes total
                     int16x8_t q4sb_scales[2];
                     int16x8_t q4sb_mins[2];
-                    for (int i = 0; i < 2; i++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
                         int8_t    aux_q4sb[8];
-                        const int offset = sb * 24 + i * 12;
-                        decode_q_Kx8_6bit_scales(&q4_ptr[b].scales[offset], &q4sb_mins[i], aux_q4sb);
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = sb * 24 + i * 12;
+                        decode_q_Kx8_6bit_scales(&q4_ptr[b].scales[ಸ್ಥಾನಾಂತರ], &q4sb_mins[i], aux_q4sb);
                         q4sb_scales[i] = vmovl_s8(vld1_s8(aux_q4sb));
                     }
 
-                    constexpr int reads_per_sb = 8;  // 8 * 16 bytes each => 32 qs * 4 rows
-                    for (int k = 0; k < reads_per_sb; k++) {
-                        const int8x16_t q8_blk0 = vld1q_s8(q8_ptr[b].qs + sb * 256 + 16 * k);
-                        const int8x16_t q8_blk1 = vld1q_s8(q8_ptr[b].qs + sb * 256 + 16 * k + 128);
+                    constexpr ಪೂರ್ಣಾಂಕ reads_ಪ್ರತಿ_sb = 8;  // 8 * 16 bytes each => 32 qs * 4 rows
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < reads_ಪ್ರತಿ_sb; k++) {
+                        ಸ್ಥಿರಾಂಕ int8x16_t q8_blk0 = vld1q_s8(q8_ptr[b].qs + sb * 256 + 16 * k);
+                        ಸ್ಥಿರಾಂಕ int8x16_t q8_blk1 = vld1q_s8(q8_ptr[b].qs + sb * 256 + 16 * k + 128);
 
                         // 0..3 & 32..35
-                        const uint8x16_t q4_0123 = vld1q_u8(q4_ptr[b].qs + sb * QK_K + 32 * k);
-                        const uint8x16_t q4_4567 = vld1q_u8(q4_ptr[b].qs + sb * QK_K + 32 * k + 16);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q4_0123 = vld1q_u8(q4_ptr[b].qs + sb * QK_K + 32 * k);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q4_4567 = vld1q_u8(q4_ptr[b].qs + sb * QK_K + 32 * k + 16);
 
-                        const int8x16_t q4_0123_lo = vreinterpretq_s8_u8(vandq_u8(q4_0123, m4b));
-                        const int8x16_t q4_0123_hi = vreinterpretq_s8_u8(vshrq_n_u8(q4_0123, 4));
+                        ಸ್ಥಿರಾಂಕ int8x16_t q4_0123_lo = vreinterpretq_s8_u8(vandq_u8(q4_0123, m4b));
+                        ಸ್ಥಿರಾಂಕ int8x16_t q4_0123_hi = vreinterpretq_s8_u8(vshrq_n_u8(q4_0123, 4));
 
                         acc_lo[0] = vdotq_laneq_s32(acc_lo[0], q4_0123_lo, q8_blk0, 0);  //  0..3  r0 c0123
                         acc_lo[1] = vdotq_laneq_s32(acc_lo[1], q4_0123_lo, q8_blk0, 1);  //  0..3  r1 c0123
@@ -3592,8 +3592,8 @@ void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
                         acc_hi[2] = vdotq_laneq_s32(acc_hi[2], q4_0123_hi, q8_blk1, 2);  // 32..35 r2 c0123
                         acc_hi[3] = vdotq_laneq_s32(acc_hi[3], q4_0123_hi, q8_blk1, 3);  // 32..35 r3 c0123
 
-                        const int8x16_t q4_4567_lo = vreinterpretq_s8_u8(vandq_u8(q4_4567, m4b));
-                        const int8x16_t q4_4567_hi = vreinterpretq_s8_u8(vshrq_n_u8(q4_4567, 4));
+                        ಸ್ಥಿರಾಂಕ int8x16_t q4_4567_lo = vreinterpretq_s8_u8(vandq_u8(q4_4567, m4b));
+                        ಸ್ಥಿರಾಂಕ int8x16_t q4_4567_hi = vreinterpretq_s8_u8(vshrq_n_u8(q4_4567, 4));
 
                         acc_lo[4] = vdotq_laneq_s32(acc_lo[4], q4_4567_lo, q8_blk0, 0);  //  0..3  r0 c4567
                         acc_lo[5] = vdotq_laneq_s32(acc_lo[5], q4_4567_lo, q8_blk0, 1);  //  0..3  r1 c4567
@@ -3608,113 +3608,113 @@ void ggml_gemm_q4_K_8x4_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
                     // Scale and bias application
                     // acc is stored interleaved to match output layout
-                    const int16x4_t sc_0123_lo = vget_low_s16(q4sb_scales[0]);
-                    const int16x4_t sc_4567_lo = vget_high_s16(q4sb_scales[0]);
-                    const int16x4_t sc_0123_hi = vget_low_s16(q4sb_scales[1]);
-                    const int16x4_t sc_4567_hi = vget_high_s16(q4sb_scales[1]);
-                    for (int row = 0; row < q8_k_blocklen; row++) {
+                    ಸ್ಥಿರಾಂಕ int16x4_t sc_0123_lo = vget_ಕೆಳಗಿನ_s16(q4sb_scales[0]);
+                    ಸ್ಥಿರಾಂಕ int16x4_t sc_4567_lo = vget_ಮೇಲಿನ_s16(q4sb_scales[0]);
+                    ಸ್ಥಿರಾಂಕ int16x4_t sc_0123_hi = vget_ಕೆಳಗಿನ_s16(q4sb_scales[1]);
+                    ಸ್ಥಿರಾಂಕ int16x4_t sc_4567_hi = vget_ಮೇಲಿನ_s16(q4sb_scales[1]);
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = 0; ಅಡ್ಡಸಾಲು < q8_k_blocklen; ಅಡ್ಡಸಾಲು++) {
                         // Bias correction
                         // row c0123 blk0 and blk1
-                        const float32x4_t sumf_0123 =
-                            vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[row]),
-                                                    vmulq_s32(vmovl_s16(sc_0123_hi), acc_hi[row])));
-                        acc_f32[2 * row] = vfmaq_f32(acc_f32[2 * row], sbd_scale_0123[row], sumf_0123);
+                        ಸ್ಥಿರಾಂಕ float32x4_t sumf_0123 =
+                            vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[ಅಡ್ಡಸಾಲು]),
+                                                    vmulq_s32(vmovl_s16(sc_0123_hi), acc_hi[ಅಡ್ಡಸಾಲು])));
+                        acc_f32[2 * ಅಡ್ಡಸಾಲು] = vfmaq_f32(acc_f32[2 * ಅಡ್ಡಸಾಲು], sbd_scale_0123[ಅಡ್ಡಸಾಲು], sumf_0123);
 
                         // row c4567 blk0 and blk1
-                        const float32x4_t sumf_4567 =
-                            vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[row + 4]),
-                                                    vmulq_s32(vmovl_s16(sc_4567_hi), acc_hi[row + 4])));
-                        acc_f32[2 * row + 1] = vfmaq_f32(acc_f32[2 * row + 1], sbd_scale_4567[row], sumf_4567);
+                        ಸ್ಥಿರಾಂಕ float32x4_t sumf_4567 =
+                            vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[ಅಡ್ಡಸಾಲು + 4]),
+                                                    vmulq_s32(vmovl_s16(sc_4567_hi), acc_hi[ಅಡ್ಡಸಾಲು + 4])));
+                        acc_f32[2 * ಅಡ್ಡಸಾಲು + 1] = vfmaq_f32(acc_f32[2 * ಅಡ್ಡಸಾಲು + 1], sbd_scale_4567[ಅಡ್ಡಸಾಲು], sumf_4567);
 
                         // Bias
-                        const int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[sb][row * 2]);
-                        const int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][row * 2 + 1]);
+                        ಸ್ಥಿರಾಂಕ int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[sb][ಅಡ್ಡಸಾಲು * 2]);
+                        ಸ್ಥಿರಾಂಕ int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][ಅಡ್ಡಸಾಲು * 2 + 1]);
 
                         // row c0123 blk0 and blk1
-                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_lo, vget_low_s16(q4sb_mins[0]));
-                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_hi, vget_low_s16(q4sb_mins[1]));
+                        bias_acc[2 * ಅಡ್ಡಸಾಲು] = vmlal_s16(bias_acc[2 * ಅಡ್ಡಸಾಲು], bsums_vec_lo, vget_ಕೆಳಗಿನ_s16(q4sb_mins[0]));
+                        bias_acc[2 * ಅಡ್ಡಸಾಲು] = vmlal_s16(bias_acc[2 * ಅಡ್ಡಸಾಲು], bsums_vec_hi, vget_ಕೆಳಗಿನ_s16(q4sb_mins[1]));
 
                         // row c4567 blk0 and blk1
-                        bias_acc[2 * row + 1] =
-                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_lo, vget_high_s16(q4sb_mins[0]));
-                        bias_acc[2 * row + 1] =
-                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_hi, vget_high_s16(q4sb_mins[1]));
+                        bias_acc[2 * ಅಡ್ಡಸಾಲು + 1] =
+                            vmlal_s16(bias_acc[2 * ಅಡ್ಡಸಾಲು + 1], bsums_vec_lo, vget_ಮೇಲಿನ_s16(q4sb_mins[0]));
+                        bias_acc[2 * ಅಡ್ಡಸಾಲು + 1] =
+                            vmlal_s16(bias_acc[2 * ಅಡ್ಡಸಾಲು + 1], bsums_vec_hi, vget_ಮೇಲಿನ_s16(q4sb_mins[1]));
                     }
                 }  // for sb
 
-                for (int row = 0; row < q8_k_blocklen; row++) {
-                    acc_f32[2 * row] = vmlsq_f32(acc_f32[2 * row], vcvtq_f32_s32(bias_acc[2 * row]), sbd_min_0123[row]);
-                    acc_f32[2 * row + 1] =
-                        vmlsq_f32(acc_f32[2 * row + 1], vcvtq_f32_s32(bias_acc[2 * row + 1]), sbd_min_4567[row]);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = 0; ಅಡ್ಡಸಾಲು < q8_k_blocklen; ಅಡ್ಡಸಾಲು++) {
+                    acc_f32[2 * ಅಡ್ಡಸಾಲು] = vmlsq_f32(acc_f32[2 * ಅಡ್ಡಸಾಲು], vcvtq_f32_s32(bias_acc[2 * ಅಡ್ಡಸಾಲು]), sbd_min_0123[ಅಡ್ಡಸಾಲು]);
+                    acc_f32[2 * ಅಡ್ಡಸಾಲು + 1] =
+                        vmlsq_f32(acc_f32[2 * ಅಡ್ಡಸಾಲು + 1], vcvtq_f32_s32(bias_acc[2 * ಅಡ್ಡಸಾಲು + 1]), sbd_min_4567[ಅಡ್ಡಸಾಲು]);
                 }
             }  // for b
 
-            for (int i = 0; i < q8_k_blocklen; i++) {
-                int row = y * q8_k_blocklen + i;
-                for (int j = 0; j < 2; j++) {
-                    int col    = x * ncols_interleaved + j * 4;
-                    int offset = row * bs + col;
-                    vst1q_f32(s + offset, acc_f32[2 * i + j]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = y * q8_k_blocklen + i;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
+                    ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು    = x * ncols_interleaved + j * 4;
+                    ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = ಅಡ್ಡಸಾಲು * bs + ಲಂಬಸಾಲು;
+                    vst1q_f32(s + ಸ್ಥಾನಾಂತರ, acc_f32[2 * i + j]);
                 }
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemm_q4_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q5_K_8x4_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemm_q5_K_8x4_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 4;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 4;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    constexpr int    q8_k_blocklen = 4;
-    constexpr int    acc_size      = 2 * 4;  // 2 row pairs, 4 col pairs
-    constexpr int    col_groups    = ncols_interleaved / 4;
-    const uint8x16_t m4b           = vdupq_n_u8(0x0f);
-    const uint8x16_t mone          = vdupq_n_u8(1);
-    const uint8x16_t mtwo          = vdupq_n_u8(2);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    constexpr ಪೂರ್ಣಾಂಕ    q8_k_blocklen = 4;
+    constexpr ಪೂರ್ಣಾಂಕ    acc_ಗಾತ್ರ      = 2 * 4;  // 2 row pairs, 4 col pairs
+    constexpr ಪೂರ್ಣಾಂಕ    ಲಂಬಸಾಲು_groups    = ncols_interleaved / 4;
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b           = vdupq_n_u8(0x0f);
+    ಸ್ಥಿರಾಂಕ uint8x16_t mone          = vdupq_n_u8(1);
+    ಸ್ಥಿರಾಂಕ uint8x16_t mtwo          = vdupq_n_u8(2);
 
     // 8 accumulators: 2 row pairs, 4 col pairs
-    float32x4_t acc_f32[acc_size];
+    float32x4_t acc_f32[acc_ಗಾತ್ರ];
 
-    for (int y = 0; y < nr / q8_k_blocklen; y++) {
-        const block_q8_Kx4 * GGML_RESTRICT q8_ptr = (const block_q8_Kx4 *) vy + (y * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / q8_k_blocklen; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 *) vy + (y * nb);
 
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q5_Kx8 * GGML_RESTRICT q5_ptr = (const block_q5_Kx8 *) vx + (x * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q5_Kx8 * GGML_RESTRICT q5_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q5_Kx8 *) vx + (x * nb);
 
-            for (int i = 0; i < acc_size; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < acc_ಗಾತ್ರ; i++) {
                 acc_f32[i] = vdupq_n_f32(0);
             }
 
-            for (int b = 0; b < nb; b++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
                 // d5 0 1 2 3, 4 5 6 7
-                float32x4_t q5_d_0123    = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].d));
-                float32x4_t q5_d_4567    = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].d + 4));
+                float32x4_t q5_d_0123    = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].d));
+                float32x4_t q5_d_4567    = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].d + 4));
                 // d8 0 1 2 3
                 float32x4_t q8_d_0123    = vld1q_f32(q8_ptr[b].d);
                 // mins
-                float32x4_t q5_dmin_0123 = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].dmin));
-                float32x4_t q5_dmin_4567 = vcvt_f32_f16(vld1_f16((const __fp16 *) q5_ptr[b].dmin + 4));
+                float32x4_t q5_dmin_0123 = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].dmin));
+                float32x4_t q5_dmin_4567 = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q5_ptr[b].dmin + 4));
 
                 // Precomputation of scales and mins
                 float32x4_t sbd_scale_0123[q8_k_blocklen];
@@ -3743,35 +3743,35 @@ void ggml_gemm_q5_K_8x4_q8_K(int                        n,
                 sbd_min_4567[3]   = vmulq_laneq_f32(q5_dmin_4567, q8_d_0123, 3);
 
                 // Precomputation of bsums, each vpaddq calcs all the bsums for each row
-                const int16x8_t bsums[q8_k_blocklen] = {
+                ಸ್ಥಿರಾಂಕ int16x8_t bsums[q8_k_blocklen] = {
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 0), vld1q_s16(q8_ptr[b].bsums + 16 * 0 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 1), vld1q_s16(q8_ptr[b].bsums + 16 * 1 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 2), vld1q_s16(q8_ptr[b].bsums + 16 * 2 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 3), vld1q_s16(q8_ptr[b].bsums + 16 * 3 + 8)),
                 };
                 int16_t bsums_arr[QK_K / 64][8];
-                for (int q8_row = 0; q8_row < 4; q8_row++) {
-                    vst1q_s16(bsums_arr[q8_row], bsums[q8_row]);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ q8_ಅಡ್ಡಸಾಲು = 0; q8_ಅಡ್ಡಸಾಲು < 4; q8_ಅಡ್ಡಸಾಲು++) {
+                    vst1q_s16(bsums_arr[q8_ಅಡ್ಡಸಾಲು], bsums[q8_ಅಡ್ಡಸಾಲು]);
                 }
 
                 // interleaved bias_acc: [0]->r0 0123, [1]->r1 0123, .., [4]->r0 4567, [5]->r1 4567 ..
-                int32x4_t bias_acc[acc_size];
-                for (int i = 0; i < acc_size; i++) {
+                int32x4_t bias_acc[acc_ಗಾತ್ರ];
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < acc_ಗಾತ್ರ; i++) {
                     bias_acc[i] = vdupq_n_s32(0);
                 }
 
-                uint8x16_t qh[col_groups][8];
-                for (int c = 0; c < col_groups; c++) {
-                    for (int i = 0; i < 8; i++) {
+                uint8x16_t qh[ಲಂಬಸಾಲು_groups][8];
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = 0; c < ಲಂಬಸಾಲು_groups; c++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
                         qh[c][i] = vld1q_u8(q5_ptr[b].qh + i * 32 + 16 * c);
                     }
                 }
 
-                for (int sb = 0; sb < QK_K / 64; sb++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
                     // Int accumulators for qs vecdot (4 row * 2 col quartets)
-                    int32x4_t acc_lo[acc_size];
-                    int32x4_t acc_hi[acc_size];
-                    for (int i = 0; i < acc_size; i++) {
+                    int32x4_t acc_lo[acc_ಗಾತ್ರ];
+                    int32x4_t acc_hi[acc_ಗಾತ್ರ];
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < acc_ಗಾತ್ರ; i++) {
                         acc_lo[i] = vdupq_n_s32(0);
                         acc_hi[i] = vdupq_n_s32(0);
                     }
@@ -3779,34 +3779,34 @@ void ggml_gemm_q5_K_8x4_q8_K(int                        n,
                     // 2 * 12 = 24 bytes per subblock, 4 sbs -> 4 * 24 = 96 bytes total
                     int16x8_t q5sb_scales[2];
                     int16x8_t q5sb_mins[2];
-                    for (int i = 0; i < 2; i++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
                         int8_t    aux_q5sb[8];
-                        const int offset = sb * 24 + i * 12;
-                        decode_q_Kx8_6bit_scales(&q5_ptr[b].scales[offset], &q5sb_mins[i], aux_q5sb);
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = sb * 24 + i * 12;
+                        decode_q_Kx8_6bit_scales(&q5_ptr[b].scales[ಸ್ಥಾನಾಂತರ], &q5sb_mins[i], aux_q5sb);
                         q5sb_scales[i] = vmovl_s8(vld1_s8(aux_q5sb));
                     }
 
-                    constexpr int reads_per_sb = 8;  // 8 * 16 bytes each => 32 qs * 4 rows
-                    for (int k = 0; k < reads_per_sb; k++) {
-                        const int8x16_t q8_blk0 = vld1q_s8(q8_ptr[b].qs + sb * 256 + 16 * k);
-                        const int8x16_t q8_blk1 = vld1q_s8(q8_ptr[b].qs + sb * 256 + 16 * k + 128);
+                    constexpr ಪೂರ್ಣಾಂಕ reads_ಪ್ರತಿ_sb = 8;  // 8 * 16 bytes each => 32 qs * 4 rows
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < reads_ಪ್ರತಿ_sb; k++) {
+                        ಸ್ಥಿರಾಂಕ int8x16_t q8_blk0 = vld1q_s8(q8_ptr[b].qs + sb * 256 + 16 * k);
+                        ಸ್ಥಿರಾಂಕ int8x16_t q8_blk1 = vld1q_s8(q8_ptr[b].qs + sb * 256 + 16 * k + 128);
 
                         // 0..3 & 32..35
-                        const uint8x16_t q5_0123 = vld1q_u8(q5_ptr[b].qs + sb * QK_K + 32 * k);
-                        const uint8x16_t q5_4567 = vld1q_u8(q5_ptr[b].qs + sb * QK_K + 32 * k + 16);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q5_0123 = vld1q_u8(q5_ptr[b].qs + sb * QK_K + 32 * k);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t q5_4567 = vld1q_u8(q5_ptr[b].qs + sb * QK_K + 32 * k + 16);
 
                         // NOTE: This is the only difference with q4_K
-                        const uint8x16_t hbit_lo_0123 = vandq_u8(qh[0][k], mone);
-                        const uint8x16_t hbit_hi_0123 = vshlq_n_u8(vandq_u8(qh[0][k], mtwo), 3);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t hbit_lo_0123 = vandq_u8(qh[0][k], mone);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t hbit_hi_0123 = vshlq_n_u8(vandq_u8(qh[0][k], mtwo), 3);
                         qh[0][k]                      = vshrq_n_u8(qh[0][k], 2);
-                        const uint8x16_t hbit_lo_4567 = vandq_u8(qh[1][k], mone);
-                        const uint8x16_t hbit_hi_4567 = vshlq_n_u8(vandq_u8(qh[1][k], mtwo), 3);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t hbit_lo_4567 = vandq_u8(qh[1][k], mone);
+                        ಸ್ಥಿರಾಂಕ uint8x16_t hbit_hi_4567 = vshlq_n_u8(vandq_u8(qh[1][k], mtwo), 3);
                         qh[1][k]                      = vshrq_n_u8(qh[1][k], 2);
                         // From here, same as q4_K
 
-                        const int8x16_t q5_0123_lo =
+                        ಸ್ಥಿರಾಂಕ int8x16_t q5_0123_lo =
                             vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q5_0123, m4b), hbit_lo_0123, 4));
-                        const int8x16_t q5_0123_hi =
+                        ಸ್ಥಿರಾಂಕ int8x16_t q5_0123_hi =
                             vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q5_0123, 4), hbit_hi_0123));
 
                         acc_lo[0] = vdotq_laneq_s32(acc_lo[0], q5_0123_lo, q8_blk0, 0);  //  0..3  r0 c0123
@@ -3819,9 +3819,9 @@ void ggml_gemm_q5_K_8x4_q8_K(int                        n,
                         acc_hi[2] = vdotq_laneq_s32(acc_hi[2], q5_0123_hi, q8_blk1, 2);  // 32..35 r2 c0123
                         acc_hi[3] = vdotq_laneq_s32(acc_hi[3], q5_0123_hi, q8_blk1, 3);  // 32..35 r3 c0123
 
-                        const int8x16_t q5_4567_lo =
+                        ಸ್ಥಿರಾಂಕ int8x16_t q5_4567_lo =
                             vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q5_4567, m4b), hbit_lo_4567, 4));
-                        const int8x16_t q5_4567_hi =
+                        ಸ್ಥಿರಾಂಕ int8x16_t q5_4567_hi =
                             vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q5_4567, 4), hbit_hi_4567));
 
                         acc_lo[4] = vdotq_laneq_s32(acc_lo[4], q5_4567_lo, q8_blk0, 0);  //  0..3  r0 c4567
@@ -3837,111 +3837,111 @@ void ggml_gemm_q5_K_8x4_q8_K(int                        n,
 
                     // Scale and bias application
                     // acc is stored interleaved to match output layout
-                    const int16x4_t sc_0123_lo = vget_low_s16(q5sb_scales[0]);
-                    const int16x4_t sc_4567_lo = vget_high_s16(q5sb_scales[0]);
-                    const int16x4_t sc_0123_hi = vget_low_s16(q5sb_scales[1]);
-                    const int16x4_t sc_4567_hi = vget_high_s16(q5sb_scales[1]);
-                    for (int row = 0; row < q8_k_blocklen; row++) {
+                    ಸ್ಥಿರಾಂಕ int16x4_t sc_0123_lo = vget_ಕೆಳಗಿನ_s16(q5sb_scales[0]);
+                    ಸ್ಥಿರಾಂಕ int16x4_t sc_4567_lo = vget_ಮೇಲಿನ_s16(q5sb_scales[0]);
+                    ಸ್ಥಿರಾಂಕ int16x4_t sc_0123_hi = vget_ಕೆಳಗಿನ_s16(q5sb_scales[1]);
+                    ಸ್ಥಿರಾಂಕ int16x4_t sc_4567_hi = vget_ಮೇಲಿನ_s16(q5sb_scales[1]);
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = 0; ಅಡ್ಡಸಾಲು < q8_k_blocklen; ಅಡ್ಡಸಾಲು++) {
                         // Bias correction
                         // row c0123 blk0 and blk1
-                        const float32x4_t sumf_0123 =
-                            vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[row]),
-                                                    vmulq_s32(vmovl_s16(sc_0123_hi), acc_hi[row])));
-                        acc_f32[2 * row] = vfmaq_f32(acc_f32[2 * row], sbd_scale_0123[row], sumf_0123);
+                        ಸ್ಥಿರಾಂಕ float32x4_t sumf_0123 =
+                            vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_0123_lo), acc_lo[ಅಡ್ಡಸಾಲು]),
+                                                    vmulq_s32(vmovl_s16(sc_0123_hi), acc_hi[ಅಡ್ಡಸಾಲು])));
+                        acc_f32[2 * ಅಡ್ಡಸಾಲು] = vfmaq_f32(acc_f32[2 * ಅಡ್ಡಸಾಲು], sbd_scale_0123[ಅಡ್ಡಸಾಲು], sumf_0123);
 
                         // row c4567 blk0 and blk1
-                        const float32x4_t sumf_4567 =
-                            vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[row + 4]),
-                                                    vmulq_s32(vmovl_s16(sc_4567_hi), acc_hi[row + 4])));
-                        acc_f32[2 * row + 1] = vfmaq_f32(acc_f32[2 * row + 1], sbd_scale_4567[row], sumf_4567);
+                        ಸ್ಥಿರಾಂಕ float32x4_t sumf_4567 =
+                            vcvtq_f32_s32(vaddq_s32(vmulq_s32(vmovl_s16(sc_4567_lo), acc_lo[ಅಡ್ಡಸಾಲು + 4]),
+                                                    vmulq_s32(vmovl_s16(sc_4567_hi), acc_hi[ಅಡ್ಡಸಾಲು + 4])));
+                        acc_f32[2 * ಅಡ್ಡಸಾಲು + 1] = vfmaq_f32(acc_f32[2 * ಅಡ್ಡಸಾಲು + 1], sbd_scale_4567[ಅಡ್ಡಸಾಲು], sumf_4567);
 
                         // Bias
-                        const int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[sb][row * 2]);
-                        const int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][row * 2 + 1]);
+                        ಸ್ಥಿರಾಂಕ int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[sb][ಅಡ್ಡಸಾಲು * 2]);
+                        ಸ್ಥಿರಾಂಕ int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][ಅಡ್ಡಸಾಲು * 2 + 1]);
 
                         // row c0123 blk0 and blk1
-                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_lo, vget_low_s16(q5sb_mins[0]));
-                        bias_acc[2 * row] = vmlal_s16(bias_acc[2 * row], bsums_vec_hi, vget_low_s16(q5sb_mins[1]));
+                        bias_acc[2 * ಅಡ್ಡಸಾಲು] = vmlal_s16(bias_acc[2 * ಅಡ್ಡಸಾಲು], bsums_vec_lo, vget_ಕೆಳಗಿನ_s16(q5sb_mins[0]));
+                        bias_acc[2 * ಅಡ್ಡಸಾಲು] = vmlal_s16(bias_acc[2 * ಅಡ್ಡಸಾಲು], bsums_vec_hi, vget_ಕೆಳಗಿನ_s16(q5sb_mins[1]));
 
                         // row c4567 blk0 and blk1
-                        bias_acc[2 * row + 1] =
-                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_lo, vget_high_s16(q5sb_mins[0]));
-                        bias_acc[2 * row + 1] =
-                            vmlal_s16(bias_acc[2 * row + 1], bsums_vec_hi, vget_high_s16(q5sb_mins[1]));
+                        bias_acc[2 * ಅಡ್ಡಸಾಲು + 1] =
+                            vmlal_s16(bias_acc[2 * ಅಡ್ಡಸಾಲು + 1], bsums_vec_lo, vget_ಮೇಲಿನ_s16(q5sb_mins[0]));
+                        bias_acc[2 * ಅಡ್ಡಸಾಲು + 1] =
+                            vmlal_s16(bias_acc[2 * ಅಡ್ಡಸಾಲು + 1], bsums_vec_hi, vget_ಮೇಲಿನ_s16(q5sb_mins[1]));
                     }
                 }  // for sb
 
-                for (int row = 0; row < q8_k_blocklen; row++) {
-                    acc_f32[2 * row] = vmlsq_f32(acc_f32[2 * row], vcvtq_f32_s32(bias_acc[2 * row]), sbd_min_0123[row]);
-                    acc_f32[2 * row + 1] =
-                        vmlsq_f32(acc_f32[2 * row + 1], vcvtq_f32_s32(bias_acc[2 * row + 1]), sbd_min_4567[row]);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = 0; ಅಡ್ಡಸಾಲು < q8_k_blocklen; ಅಡ್ಡಸಾಲು++) {
+                    acc_f32[2 * ಅಡ್ಡಸಾಲು] = vmlsq_f32(acc_f32[2 * ಅಡ್ಡಸಾಲು], vcvtq_f32_s32(bias_acc[2 * ಅಡ್ಡಸಾಲು]), sbd_min_0123[ಅಡ್ಡಸಾಲು]);
+                    acc_f32[2 * ಅಡ್ಡಸಾಲು + 1] =
+                        vmlsq_f32(acc_f32[2 * ಅಡ್ಡಸಾಲು + 1], vcvtq_f32_s32(bias_acc[2 * ಅಡ್ಡಸಾಲು + 1]), sbd_min_4567[ಅಡ್ಡಸಾಲು]);
                 }
             }  // for b
 
-            for (int i = 0; i < q8_k_blocklen; i++) {
-                int row = y * q8_k_blocklen + i;
-                for (int j = 0; j < 2; j++) {
-                    int col    = x * ncols_interleaved + j * 4;
-                    int offset = row * bs + col;
-                    vst1q_f32(s + offset, acc_f32[2 * i + j]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = y * q8_k_blocklen + i;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
+                    ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು    = x * ncols_interleaved + j * 4;
+                    ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = ಅಡ್ಡಸಾಲು * bs + ಲಂಬಸಾಲು;
+                    vst1q_f32(s + ಸ್ಥಾನಾಂತರ, acc_f32[2 * i + j]);
                 }
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemm_q5_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q4_K_8x8_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemm_q4_K_8x8_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 8;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
-    if (svcntb() * 8 == 256) {
-        constexpr int    q8_k_blocklen = 4;
-        const svuint8_t m4b_1          = svdup_n_u8(0x0f);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಆದರೆ (svcntb() * 8 == 256) {
+        constexpr ಪೂರ್ಣಾಂಕ    q8_k_blocklen = 4;
+        ಸ್ಥಿರಾಂಕ svuint8_t m4b_1          = svdup_n_u8(0x0f);
         // 8 accumulators: 2 row pairs × 4 col pairs
         svfloat32_t acc_f32_01, acc_f32_23, acc_f32_45, acc_f32_67;
         uint32_t idx_arr[8] = { 0, 2, 4, 6,  1, 3, 5, 7 };
         svbool_t pg = svptrue_pat_b32(SV_VL8);
         svuint32_t idx = svld1(pg, idx_arr);
 
-        static const uint32_t idx_data[8] = {0, 4, 2, 6, 1, 5, 3, 7};
-        svuint32_t idx1 = svld1_u32(svptrue_b32(), idx_data);
+        ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ uint32_t idx_ದತ್ತಾಂಶ[8] = {0, 4, 2, 6, 1, 5, 3, 7};
+        svuint32_t idx1 = svld1_u32(svptrue_b32(), idx_ದತ್ತಾಂಶ);
 
-        for (int y = 0; y < nr / q8_k_blocklen; y++) {
-            const block_q8_Kx4 * GGML_RESTRICT q8_ptr = (const block_q8_Kx4 *) vy + (y * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / q8_k_blocklen; y++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 *) vy + (y * nb);
 
-            for (int x = 0; x < nc / ncols_interleaved; x++) {
-                const block_q4_Kx8 * GGML_RESTRICT q4_ptr = (const block_q4_Kx8 *) vx + (x * nb);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+                ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 * GGML_RESTRICT q4_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 *) vx + (x * nb);
 
                 acc_f32_01 = svdup_n_f32(0);
                 acc_f32_23 = svdup_n_f32(0);
                 acc_f32_45 = svdup_n_f32(0);
                 acc_f32_67 = svdup_n_f32(0);
 
-                for (int b = 0; b < nb; b++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
                     // bsums pairs belongs to the same q8_k subblock
                     // 64 elements loaded and made sum of 0-7 and 8-15 sum || 16-23 and 24 - 31 sum
-                    const int16x8_t bsums[4]{
+                    ಸ್ಥಿರಾಂಕ int16x8_t bsums[4]{
                         vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 0), vld1q_s16(q8_ptr[b].bsums + 16 * 0 + 8)),
                         vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 1), vld1q_s16(q8_ptr[b].bsums + 16 * 1 + 8)),
                         vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 2), vld1q_s16(q8_ptr[b].bsums + 16 * 2 + 8)),
@@ -3950,16 +3950,16 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
 
                     int32_t bsums_arr32[4][8];
 
-                    for (int q8_row = 0; q8_row < 4; q8_row++) {
-                        int16x8_t v16 = bsums[q8_row];
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ q8_ಅಡ್ಡಸಾಲು = 0; q8_ಅಡ್ಡಸಾಲು < 4; q8_ಅಡ್ಡಸಾಲು++) {
+                        int16x8_t v16 = bsums[q8_ಅಡ್ಡಸಾಲು];
 
                         // low 4
-                        int32x4_t v32_lo = vmovl_s16(vget_low_s16(v16));
-                        vst1q_s32(&bsums_arr32[q8_row][0], v32_lo);
+                        int32x4_t v32_lo = vmovl_s16(vget_ಕೆಳಗಿನ_s16(v16));
+                        vst1q_s32(&bsums_arr32[q8_ಅಡ್ಡಸಾಲು][0], v32_lo);
 
                         // high 4
-                        int32x4_t v32_hi = vmovl_s16(vget_high_s16(v16));
-                        vst1q_s32(&bsums_arr32[q8_row][4], v32_hi);
+                        int32x4_t v32_hi = vmovl_s16(vget_ಮೇಲಿನ_s16(v16));
+                        vst1q_s32(&bsums_arr32[q8_ಅಡ್ಡಸಾಲು][4], v32_hi);
                     }
 
                     svint32_t sb_acc_0 = svdup_n_s32(0);
@@ -3979,42 +3979,42 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                     svint32_t bias_acc_44 = svdup_n_s32(0);
                     svint32_t bias_acc_66 = svdup_n_s32(0);
 
-                    for (int sb = 0; sb < QK_K / 64; sb++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
                         // Need scales for the low and high nibbles
                         // 2 * 12 = 24 bytes per subblock, 4 sbs -> 4 * 24 = 96 bytes total
-                        svint32_t block_scale_0, block_scale_1, block_scale_2, block_scale_3;
+                        svint32_t ಖಂಡ_scale_0, ಖಂಡ_scale_1, ಖಂಡ_scale_2, ಖಂಡ_scale_3;
                         svint32_t q4sb_mins_0, q4sb_mins_1;
                         {
                             // 2-superblock I am working on
-                            const int offset = sb * 24 + 0 * 12;
-                            const uint8_t * scales_in = &q4_ptr[b].scales[offset];
+                            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = sb * 24 + 0 * 12;
+                            ಸ್ಥಿರಾಂಕ uint8_t * scales_ಒಳ = &q4_ptr[b].scales[ಸ್ಥಾನಾಂತರ];
 
-                            const int offset1 = sb * 24 + 12;
-                            const uint8_t * scales_in1 = &q4_ptr[b].scales[offset1];
+                            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ offset1 = sb * 24 + 12;
+                            ಸ್ಥಿರಾಂಕ uint8_t * scales_in1 = &q4_ptr[b].scales[offset1];
 
                             constexpr uint32_t kmask1 = 0x3f3f3f3f;
                             constexpr uint32_t kmask2 = 0x0f0f0f0f;
                             constexpr uint32_t kmask3 = 0x03030303;
-                            constexpr uint8_t  scales_size = 12;
+                            constexpr uint8_t  scales_ಗಾತ್ರ = 12;
 
                             uint32_t sm[3];
-                            memcpy(sm, scales_in, scales_size);
+                            ಸ್ಮರಣೆ_ನಕಲು(sm, scales_ಒಳ, scales_ಗಾತ್ರ);
 
                             uint32_t sm1[3];
-                            memcpy(sm1, scales_in1, scales_size);
+                            ಸ್ಮರಣೆ_ನಕಲು(sm1, scales_in1, scales_ಗಾತ್ರ);
 
-                            const uint32_t mins_0_3 = sm[1] & kmask1;
-                            const uint32_t mins_4_7 = ((sm[2] >> 4) & kmask2) | (((sm[1] >> 6) & kmask3) << 4);
+                            ಸ್ಥಿರಾಂಕ uint32_t mins_0_3 = sm[1] & kmask1;
+                            ಸ್ಥಿರಾಂಕ uint32_t mins_4_7 = ((sm[2] >> 4) & kmask2) | (((sm[1] >> 6) & kmask3) << 4);
 
-                            const uint32_t mins_0_3_1 = sm1[1] & kmask1;
-                            const uint32_t mins_4_7_1 = ((sm1[2] >> 4) & kmask2) | (((sm1[1] >> 6) & kmask3) << 4);
+                            ಸ್ಥಿರಾಂಕ uint32_t mins_0_3_1 = sm1[1] & kmask1;
+                            ಸ್ಥಿರಾಂಕ uint32_t mins_4_7_1 = ((sm1[2] >> 4) & kmask2) | (((sm1[1] >> 6) & kmask3) << 4);
 
-                            svuint32_t mins_u32_temp = svzip1_u32(svdup_n_u32(mins_0_3), svdup_n_u32(mins_4_7));
-                            svuint32_t mins_u32_temp_1 = svzip1_u32(svdup_n_u32(mins_0_3_1), svdup_n_u32(mins_4_7_1));
+                            svuint32_t mins_u32_ತಾತ್ಕಾಲಿಕ = svzip1_u32(svdup_n_u32(mins_0_3), svdup_n_u32(mins_4_7));
+                            svuint32_t mins_u32_ತಾತ್ಕಾಲಿಕ_1 = svzip1_u32(svdup_n_u32(mins_0_3_1), svdup_n_u32(mins_4_7_1));
 
                             /* reinterpret u32 → u8 */
-                            svuint8_t mins_u8 = svreinterpret_u8_u32(mins_u32_temp);
-                            svuint8_t mins_u8_1 = svreinterpret_u8_u32(mins_u32_temp_1);
+                            svuint8_t mins_u8 = svreinterpret_u8_u32(mins_u32_ತಾತ್ಕಾಲಿಕ);
+                            svuint8_t mins_u8_1 = svreinterpret_u8_u32(mins_u32_ತಾತ್ಕಾಲಿಕ_1);
 
                             /* widen u8 → u16->u32 (lower half only) */
                             svuint32_t mins_u16 = svunpklo_u32(svunpklo_u16(mins_u8));
@@ -4043,32 +4043,32 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                             svint32_t S23_d = svunpklo_s32(svunpklo_s16(svzip1_s8(S23_b, S23_b)));
                             svint32_t R23_d = svunpklo_s32(svunpklo_s16(svzip1_s8(R23_b, R23_b)));
 
-                            block_scale_0 = svtbl_s32(svzip1_s32(S01_d, R01_d), idx);
-                            block_scale_1 = svtbl_s32(svzip2_s32(S01_d, R01_d), idx);
-                            block_scale_2 = svtbl_s32(svzip1_s32(S23_d, R23_d), idx);
-                            block_scale_3 = svtbl_s32(svzip2_s32(S23_d, R23_d), idx);
+                            ಖಂಡ_scale_0 = svtbl_s32(svzip1_s32(S01_d, R01_d), idx);
+                            ಖಂಡ_scale_1 = svtbl_s32(svzip2_s32(S01_d, R01_d), idx);
+                            ಖಂಡ_scale_2 = svtbl_s32(svzip1_s32(S23_d, R23_d), idx);
+                            ಖಂಡ_scale_3 = svtbl_s32(svzip2_s32(S23_d, R23_d), idx);
                         }
 
-                        const int8_t * q8_base_1 = q8_ptr[b].qs + sb * 256;
+                        ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ_1 = q8_ptr[b].qs + sb * 256;
 
                         // Load 32-byte per row pair, 1 subblock each time
                         // predicate for activating higher lanes for 16 int8 elements
-                        const svbool_t ph16 = svptrue_pat_b8(SV_VL16);
+                        ಸ್ಥಿರಾಂಕ svbool_t ph16 = svptrue_pat_b8(SV_VL16);
                         // predicate for activating lower lanes for  16 int8 elements
-                        const svbool_t pl16 = svnot_b_z(svptrue_b8(), ph16);
+                        ಸ್ಥಿರಾಂಕ svbool_t pl16 = svnot_b_z(svptrue_b8(), ph16);
 
-                        svint8_t q8_qs_0 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_base_1 + 0), svld1_s8(pl16, q8_base_1 + 112));
-                        svint8_t q8_qs_2 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_base_1 + 32), svld1_s8(pl16, q8_base_1 + 144));
-                        svint8_t q8_qs_4 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_base_1 + 64), svld1_s8(pl16, q8_base_1 + 176));
-                        svint8_t q8_qs_6 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_base_1 + 96), svld1_s8(pl16, q8_base_1 + 208));
+                        svint8_t q8_qs_0 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_ತಳ_1 + 0), svld1_s8(pl16, q8_ತಳ_1 + 112));
+                        svint8_t q8_qs_2 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_ತಳ_1 + 32), svld1_s8(pl16, q8_ತಳ_1 + 144));
+                        svint8_t q8_qs_4 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_ತಳ_1 + 64), svld1_s8(pl16, q8_ತಳ_1 + 176));
+                        svint8_t q8_qs_6 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_ತಳ_1 + 96), svld1_s8(pl16, q8_ತಳ_1 + 208));
 
-                        svint8_t q8_qs_1 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_base_1 + 16), svld1_s8(pl16, q8_base_1 + 128));
-                        svint8_t q8_qs_3 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_base_1 + 48), svld1_s8(pl16, q8_base_1 + 160));
-                        svint8_t q8_qs_5 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_base_1 + 80), svld1_s8(pl16, q8_base_1 + 192));
-                        svint8_t q8_qs_7 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_base_1 + 112), svld1_s8(pl16, q8_base_1 + 224));
+                        svint8_t q8_qs_1 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_ತಳ_1 + 16), svld1_s8(pl16, q8_ತಳ_1 + 128));
+                        svint8_t q8_qs_3 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_ತಳ_1 + 48), svld1_s8(pl16, q8_ತಳ_1 + 160));
+                        svint8_t q8_qs_5 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_ತಳ_1 + 80), svld1_s8(pl16, q8_ತಳ_1 + 192));
+                        svint8_t q8_qs_7 = svadd_s8_x(svptrue_b8(), svld1_s8(ph16, q8_ತಳ_1 + 112), svld1_s8(pl16, q8_ತಳ_1 + 224));
 
                         // Q4s columns iterated in pairs (01, 23, 45, 67)
-                        for (int cp = 0; cp < ncols_interleaved / 2; cp++) {
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ cp = 0; cp < ncols_interleaved / 2; cp++) {
 
                             sb_acc_0 = svdup_n_s32(0);
                             sb_acc_2 = svdup_n_s32(0);
@@ -4095,21 +4095,21 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                             sb_acc_2 = svmmla_s32(sb_acc_2, q4_nibbles_02, q8_qs_5);
                             sb_acc_2 = svmmla_s32(sb_acc_2, q4_nibbles_03, q8_qs_7);
 
-                            if(cp == 0) {
-                                acc_00 = svmla_s32_m(svptrue_b32(), acc_00, sb_acc_0, block_scale_0);
-                                acc_44 = svmla_s32_m(svptrue_b32(), acc_44, sb_acc_2, block_scale_0);
+                            ಆದರೆ(cp == 0) {
+                                acc_00 = svmla_s32_m(svptrue_b32(), acc_00, sb_acc_0, ಖಂಡ_scale_0);
+                                acc_44 = svmla_s32_m(svptrue_b32(), acc_44, sb_acc_2, ಖಂಡ_scale_0);
                             }
-                            if(cp == 1) {
-                                acc_11 = svmla_s32_m(svptrue_b32(), acc_11, sb_acc_0, block_scale_1);
-                                acc_55 = svmla_s32_m(svptrue_b32(), acc_55, sb_acc_2, block_scale_1);
+                            ಆದರೆ(cp == 1) {
+                                acc_11 = svmla_s32_m(svptrue_b32(), acc_11, sb_acc_0, ಖಂಡ_scale_1);
+                                acc_55 = svmla_s32_m(svptrue_b32(), acc_55, sb_acc_2, ಖಂಡ_scale_1);
                             }
-                            if(cp == 2) {
-                                acc_22 = svmla_s32_m(svptrue_b32(), acc_22, sb_acc_0, block_scale_2);
-                                acc_66 = svmla_s32_m(svptrue_b32(), acc_66, sb_acc_2, block_scale_2);
+                            ಆದರೆ(cp == 2) {
+                                acc_22 = svmla_s32_m(svptrue_b32(), acc_22, sb_acc_0, ಖಂಡ_scale_2);
+                                acc_66 = svmla_s32_m(svptrue_b32(), acc_66, sb_acc_2, ಖಂಡ_scale_2);
                             }
-                            if(cp == 3) {
-                                acc_33 = svmla_s32_m(svptrue_b32(), acc_33, sb_acc_0, block_scale_3);
-                                acc_77 = svmla_s32_m(svptrue_b32(), acc_77, sb_acc_2, block_scale_3);
+                            ಆದರೆ(cp == 3) {
+                                acc_33 = svmla_s32_m(svptrue_b32(), acc_33, sb_acc_0, ಖಂಡ_scale_3);
+                                acc_77 = svmla_s32_m(svptrue_b32(), acc_77, sb_acc_2, ಖಂಡ_scale_3);
                             }
                         }
 
@@ -4145,20 +4145,20 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                     // Broadcast q8 scalar
                     svfloat32_t q8_d = svdup_f32(q8_ptr[b].d[0]);
 
-                    svfloat32_t q4_dmin_temp = svcvt_f32_f16_x(svptrue_b32(), svzip1_f16( svld1_f16(svptrue_pat_b16(SV_VL8), (const __fp16 *)q4_ptr[b].dmin), svdup_f16(0)));
+                    svfloat32_t q4_dmin_ತಾತ್ಕಾಲಿಕ = svcvt_f32_f16_x(svptrue_b32(), svzip1_f16( svld1_f16(svptrue_pat_b16(SV_VL8), (ಸ್ಥಿರಾಂಕ __fp16 *)q4_ptr[b].dmin), svdup_f16(0)));
 
-                    svfloat32_t q4_d_temp = svcvt_f32_f16_x(svptrue_b32(), svzip1_f16( svld1_f16(svptrue_pat_b16(SV_VL8), (const __fp16 *)q4_ptr[b].d), svdup_f16(0)));
+                    svfloat32_t q4_d_ತಾತ್ಕಾಲಿಕ = svcvt_f32_f16_x(svptrue_b32(), svzip1_f16( svld1_f16(svptrue_pat_b16(SV_VL8), (ಸ್ಥಿರಾಂಕ __fp16 *)q4_ptr[b].d), svdup_f16(0)));
 
-                    svfloat32_t scale1 = svmul_f32_x(svptrue_b32(), q4_d_temp, q8_d);
-                    svfloat32_t dmins1 = svmul_f32_x(svptrue_b32(), q4_dmin_temp, q8_d);
+                    svfloat32_t scale1 = svmul_f32_x(svptrue_b32(), q4_d_ತಾತ್ಕಾಲಿಕ, q8_d);
+                    svfloat32_t dmins1 = svmul_f32_x(svptrue_b32(), q4_dmin_ತಾತ್ಕಾಲಿಕ, q8_d);
 
                     acc_f32_01 = svmls_f32_m(svptrue_b32(), acc_f32_01, svcvt_f32_s32_m(svdup_n_f32(0), svptrue_b32(), bias_acc_00), dmins1);
                     acc_f32_01 = svmla_f32_m(svptrue_b32(), acc_f32_01, svcvt_f32_s32_m(svdup_n_f32(0), svptrue_b32(), reorder_acc_01), scale1);
 
                     q8_d = svdup_f32(q8_ptr[b].d[1]);
 
-                    scale1 = svmul_f32_x(svptrue_b32(), q4_d_temp, q8_d);
-                    dmins1 = svmul_f32_x(svptrue_b32(), q4_dmin_temp, q8_d);
+                    scale1 = svmul_f32_x(svptrue_b32(), q4_d_ತಾತ್ಕಾಲಿಕ, q8_d);
+                    dmins1 = svmul_f32_x(svptrue_b32(), q4_dmin_ತಾತ್ಕಾಲಿಕ, q8_d);
 
                     acc_f32_23 = svmls_f32_m(svptrue_b32(), acc_f32_23, svcvt_f32_s32_m(svdup_n_f32(0), svptrue_b32(), bias_acc_22), dmins1);
                     acc_f32_23 = svmla_f32_m(svptrue_b32(), acc_f32_23, svcvt_f32_s32_m(svdup_n_f32(0), svptrue_b32(), reorder_acc_23), scale1);
@@ -4166,16 +4166,16 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                     q8_d = svdup_f32(q8_ptr[b].d[2]);
 
 
-                    scale1 = svmul_f32_x(svptrue_b32(), q4_d_temp, q8_d);
-                    dmins1 = svmul_f32_x(svptrue_b32(), q4_dmin_temp, q8_d);
+                    scale1 = svmul_f32_x(svptrue_b32(), q4_d_ತಾತ್ಕಾಲಿಕ, q8_d);
+                    dmins1 = svmul_f32_x(svptrue_b32(), q4_dmin_ತಾತ್ಕಾಲಿಕ, q8_d);
 
                     acc_f32_45 = svmls_f32_m(svptrue_b32(), acc_f32_45, svcvt_f32_s32_m(svdup_n_f32(0), svptrue_b32(), bias_acc_44), dmins1);
                     acc_f32_45 = svmla_f32_m(svptrue_b32(), acc_f32_45, svcvt_f32_s32_m(svdup_n_f32(0), svptrue_b32(), reorder_acc_45), scale1);
 
                     q8_d = svdup_f32(q8_ptr[b].d[3]);
 
-                    scale1 = svmul_f32_x(svptrue_b32(), q4_d_temp, q8_d);
-                    dmins1 = svmul_f32_x(svptrue_b32(), q4_dmin_temp, q8_d);
+                    scale1 = svmul_f32_x(svptrue_b32(), q4_d_ತಾತ್ಕಾಲಿಕ, q8_d);
+                    dmins1 = svmul_f32_x(svptrue_b32(), q4_dmin_ತಾತ್ಕಾಲಿಕ, q8_d);
 
                     acc_f32_67 = svmls_f32_m(svptrue_b32(), acc_f32_67, svcvt_f32_s32_m(svdup_n_f32(0), svptrue_b32(), bias_acc_66), dmins1);
                     acc_f32_67 = svmla_f32_m(svptrue_b32(), acc_f32_67, svcvt_f32_s32_m(svdup_n_f32(0), svptrue_b32(), reorder_acc_67), scale1);
@@ -4185,107 +4185,107 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                 // With the previous reorder, the tile is already in the correct memory layout.
                 // Predicate for exactly 4 lanes
                 svbool_t pg4 = svptrue_pat_b32(SV_VL4);
-                for (int i = 0; i < q8_k_blocklen; i++) {
-                    int row = y * q8_k_blocklen + i;
-                    for (int j = 0; j < 2; j++) {
-                        int col    = x * ncols_interleaved + j * 4;
-                        int offset = row * bs + col;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                    ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = y * q8_k_blocklen + i;
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
+                        ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು    = x * ncols_interleaved + j * 4;
+                        ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = ಅಡ್ಡಸಾಲು * bs + ಲಂಬಸಾಲು;
 
-                        if (i == 0 && j == 0) {
+                        ಆದರೆ (i == 0 && j == 0) {
                             // acc_f32_0 → lower half of acc_f32_01
-                            svst1_f32(pg4, s + offset, acc_f32_01);
-                        } else if (i == 0 && j == 1) {
+                            svst1_f32(pg4, s + ಸ್ಥಾನಾಂತರ, acc_f32_01);
+                        } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (i == 0 && j == 1) {
                             // acc_f32_1 → upper half of acc_f32_01
-                            svst1_f32(pg4, s + offset, svext_f32(acc_f32_01, acc_f32_01, 4));
-                        } else if (i == 1 && j == 0) {
+                            svst1_f32(pg4, s + ಸ್ಥಾನಾಂತರ, svext_f32(acc_f32_01, acc_f32_01, 4));
+                        } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (i == 1 && j == 0) {
                             // acc_f32_2
-                            svst1_f32(pg4, s + offset, acc_f32_23);
-                        } else if (i == 1 && j == 1) {
+                            svst1_f32(pg4, s + ಸ್ಥಾನಾಂತರ, acc_f32_23);
+                        } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (i == 1 && j == 1) {
                             // acc_f32_3
-                            svst1_f32(pg4, s + offset, svext_f32(acc_f32_23, acc_f32_23, 4));
-                        } else if (i == 2 && j == 0) {
+                            svst1_f32(pg4, s + ಸ್ಥಾನಾಂತರ, svext_f32(acc_f32_23, acc_f32_23, 4));
+                        } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (i == 2 && j == 0) {
                             // acc_f32_4
-                            svst1_f32(pg4, s + offset, acc_f32_45);
-                        } else if (i == 2 && j == 1) {
+                            svst1_f32(pg4, s + ಸ್ಥಾನಾಂತರ, acc_f32_45);
+                        } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (i == 2 && j == 1) {
                             // acc_f32_5
-                            svst1_f32(pg4, s + offset, svext_f32(acc_f32_45, acc_f32_45, 4));
-                        } else if (i == 3 && j == 0) {
+                            svst1_f32(pg4, s + ಸ್ಥಾನಾಂತರ, svext_f32(acc_f32_45, acc_f32_45, 4));
+                        } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (i == 3 && j == 0) {
                             // acc_f32_6
-                            svst1_f32(pg4, s + offset, acc_f32_67);
-                        } else if (i == 3 && j == 1) {
+                            svst1_f32(pg4, s + ಸ್ಥಾನಾಂತರ, acc_f32_67);
+                        } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (i == 3 && j == 1) {
                             // acc_f32_7
-                            svst1_f32(pg4, s + offset, svext_f32(acc_f32_67, acc_f32_67, 4));
+                            svst1_f32(pg4, s + ಸ್ಥಾನಾಂತರ, svext_f32(acc_f32_67, acc_f32_67, 4));
                         }
                     }
                 }
             }  // for x
         }  // for y
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
-#endif  // SVE compile-time end
+#ಆದರೆ_ಅಂತ್ಯ  // SVE compile-time end
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
-    constexpr int    q8_k_blocklen = 4;
-    const uint8x16_t m4b           = vdupq_n_u8(0x0f);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    constexpr ಪೂರ್ಣಾಂಕ    q8_k_blocklen = 4;
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b           = vdupq_n_u8(0x0f);
 
     // 8 accumulators: 2 row pairs × 4 col pairs
     float32x4_t acc_f32[blocklen];
 
-    for (int y = 0; y < nr / q8_k_blocklen; y++) {
-        const block_q8_Kx4 * GGML_RESTRICT q8_ptr = (const block_q8_Kx4 *) vy + (y * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / q8_k_blocklen; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 *) vy + (y * nb);
 
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q4_Kx8 * GGML_RESTRICT q4_ptr = (const block_q4_Kx8 *) vx + (x * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 * GGML_RESTRICT q4_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_Kx8 *) vx + (x * nb);
 
-            for (int i = 0; i < blocklen; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < blocklen; i++) {
                 acc_f32[i] = vdupq_n_f32(0);
             }
 
-            for (int b = 0; b < nb; b++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
                 // bsums pairs belongs to the same q8_k subblock
-                const int16x8_t bsums[4]{
+                ಸ್ಥಿರಾಂಕ int16x8_t bsums[4]{
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 0), vld1q_s16(q8_ptr[b].bsums + 16 * 0 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 1), vld1q_s16(q8_ptr[b].bsums + 16 * 1 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 2), vld1q_s16(q8_ptr[b].bsums + 16 * 2 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 3), vld1q_s16(q8_ptr[b].bsums + 16 * 3 + 8)),
                 };
                 int16_t bsums_arr[4][8];
-                for (int q8_row = 0; q8_row < 4; q8_row++) {
-                    vst1q_s16(bsums_arr[q8_row], bsums[q8_row]);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ q8_ಅಡ್ಡಸಾಲು = 0; q8_ಅಡ್ಡಸಾಲು < 4; q8_ಅಡ್ಡಸಾಲು++) {
+                    vst1q_s16(bsums_arr[q8_ಅಡ್ಡಸಾಲು], bsums[q8_ಅಡ್ಡಸಾಲು]);
                 }
 
                 int32x4_t sb_acc[4];    // Aux accumulators to store subblock (partial) results
                 int32x4_t acc[8];       // rows 01 stored in [0][1][2][3] rows 23 stored in [4][5][6][7]
                 int32x4_t bias_acc[8];  // interleaved bias_acc: [0]->r0 0123, [1]->r0 4567, [2]->r1 0123 ...
-                for (int i = 0; i < 8; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
                     acc[i]      = vdupq_n_s32(0);
                     bias_acc[i] = vdupq_n_s32(0);
                 }
 
-                for (int sb = 0; sb < QK_K / 64; sb++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
                     // Need scales for the low and high nibbles
                     // 2 * 12 = 24 bytes per subblock, 4 sbs -> 4 * 24 = 96 bytes total
                     int8_t    q4sb_scales[2][8];
                     int16x8_t q4sb_mins[2];  // int16 as its needed for bias_acc later
-                    for (int i = 0; i < 2; i++) {
-                        const int offset = sb * 24 + i * 12;
-                        decode_q_Kx8_6bit_scales(&q4_ptr[b].scales[offset], &q4sb_mins[i], q4sb_scales[i]);
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = sb * 24 + i * 12;
+                        decode_q_Kx8_6bit_scales(&q4_ptr[b].scales[ಸ್ಥಾನಾಂತರ], &q4sb_mins[i], q4sb_scales[i]);
                     }
 
                     // q8_ptr[b].qs has interleaved Q8 rows (01, 23)
-                    const int8_t * q8_base = q8_ptr[b].qs + sb * 256;
+                    ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ = q8_ptr[b].qs + sb * 256;
 
                     int8x16_t q8_qs_01[8];
                     int8x16_t q8_qs_23[8];
 
                     // Load 32-byte per row pair, 1 subblock each time
-                    for (int i = 0; i < 8; i++) {
-                        const int offset = i * 32;  // 16 for row 01, 16 for row 23
-                        q8_qs_01[i]      = vld1q_s8(q8_base + offset);
-                        q8_qs_23[i]      = vld1q_s8(q8_base + offset + 16);
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = i * 32;  // 16 for row 01, 16 for row 23
+                        q8_qs_01[i]      = vld1q_s8(q8_ತಳ + ಸ್ಥಾನಾಂತರ);
+                        q8_qs_23[i]      = vld1q_s8(q8_ತಳ + ಸ್ಥಾನಾಂತರ + 16);
                     }
 
-                    const int8x16_t q8s[2][8] = {
+                    ಸ್ಥಿರಾಂಕ int8x16_t q8s[2][8] = {
                         { q8_qs_01[0], q8_qs_01[1], q8_qs_01[2], q8_qs_01[3],
                           q8_qs_01[4], q8_qs_01[5], q8_qs_01[6], q8_qs_01[7] },
                         { q8_qs_23[0], q8_qs_23[1], q8_qs_23[2], q8_qs_23[3],
@@ -4293,8 +4293,8 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                     };
 
                     // Q4s columns iterated in pairs (01, 23, 45, 67)
-                    for (int cp = 0; cp < ncols_interleaved / 2; cp++) {
-                        for (int i = 0; i < 4; i++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ cp = 0; cp < ncols_interleaved / 2; cp++) {
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 4; i++) {
                             sb_acc[i] = vdupq_n_s32(0);
                         }
 
@@ -4302,7 +4302,7 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
                         uint8x16_t q4_qs_cp_1 = vld1q_u8(q4_ptr[b].qs + sb * QK_K + 16 * cp + 64);   // 8 ..15 & 40..47
                         uint8x16_t q4_qs_cp_2 = vld1q_u8(q4_ptr[b].qs + sb * QK_K + 16 * cp + 128);  // 16..23 & 48..55
                         uint8x16_t q4_qs_cp_3 = vld1q_u8(q4_ptr[b].qs + sb * QK_K + 16 * cp + 192);  // 24..31 & 56..63
-                        const int8x16_t q4_nibbles[2][4] = {
+                        ಸ್ಥಿರಾಂಕ int8x16_t q4_nibbles[2][4] = {
                             {
                                 vreinterpretq_s8_u8(vandq_u8(q4_qs_cp_0, m4b)),
                                 vreinterpretq_s8_u8(vandq_u8(q4_qs_cp_1, m4b)),
@@ -4319,76 +4319,76 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
 
                         // Calculates the Qs muladd of every row pair (rp) rows 01 and 23 of q8
                         // for each of the internal 32 qs subblock (blk)
-                        for (int rp = 0; rp < 2; rp++) {
-                            for (int blk = 0; blk < 2; blk++) {
-                                const int8x16_t * q8  = &q8s[rp][4 * blk];
-                                const int8x16_t * q4  = q4_nibbles[blk];
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ rp = 0; rp < 2; rp++) {
+                            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ blk = 0; blk < 2; blk++) {
+                                ಸ್ಥಿರಾಂಕ int8x16_t * q8  = &q8s[rp][4 * blk];
+                                ಸ್ಥಿರಾಂಕ int8x16_t * q4  = q4_nibbles[blk];
                                 int32x4_t         acc = sb_acc[2 * rp + blk];
                                 // mul add for each qs in the same subblock
-                                for (int qs_offset = 0; qs_offset < 4; qs_offset++) {
-                                    acc = vmmlaq_s32(acc, q4[qs_offset], q8[qs_offset]);
+                                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ qs_ಸ್ಥಾನಾಂತರ = 0; qs_ಸ್ಥಾನಾಂತರ < 4; qs_ಸ್ಥಾನಾಂತರ++) {
+                                    acc = vmmlaq_s32(acc, q4[qs_ಸ್ಥಾನಾಂತರ], q8[qs_ಸ್ಥಾನಾಂತರ]);
                                 }
                                 sb_acc[2 * rp + blk] = acc;
                             }
                         }
 
                         // Scales[i] corresponds to column i
-                        const int scale_offset = cp * 2;
-                        const int32_t scale_00 = q4sb_scales[0][scale_offset];
-                        const int32_t scale_01 = q4sb_scales[0][scale_offset + 1];
-                        const int32_t scale_10 = q4sb_scales[1][scale_offset];
-                        const int32_t scale_11 = q4sb_scales[1][scale_offset + 1];
-                        const int32x4_t block_scale_0 = vcombine_s32(vdup_n_s32(scale_00), vdup_n_s32(scale_01));
-                        const int32x4_t block_scale_1 = vcombine_s32(vdup_n_s32(scale_10), vdup_n_s32(scale_11));
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ scale_ಸ್ಥಾನಾಂತರ = cp * 2;
+                        ಸ್ಥಿರಾಂಕ int32_t scale_00 = q4sb_scales[0][scale_ಸ್ಥಾನಾಂತರ];
+                        ಸ್ಥಿರಾಂಕ int32_t scale_01 = q4sb_scales[0][scale_ಸ್ಥಾನಾಂತರ + 1];
+                        ಸ್ಥಿರಾಂಕ int32_t scale_10 = q4sb_scales[1][scale_ಸ್ಥಾನಾಂತರ];
+                        ಸ್ಥಿರಾಂಕ int32_t scale_11 = q4sb_scales[1][scale_ಸ್ಥಾನಾಂತರ + 1];
+                        ಸ್ಥಿರಾಂಕ int32x4_t ಖಂಡ_scale_0 = vcombine_s32(vdup_n_s32(scale_00), vdup_n_s32(scale_01));
+                        ಸ್ಥಿರಾಂಕ int32x4_t ಖಂಡ_scale_1 = vcombine_s32(vdup_n_s32(scale_10), vdup_n_s32(scale_11));
 
-                        acc[cp]     = vmlaq_s32(acc[cp], sb_acc[0], block_scale_0);
-                        acc[cp + 4] = vmlaq_s32(acc[cp + 4], sb_acc[2], block_scale_0);
-                        acc[cp]     = vmlaq_s32(acc[cp], sb_acc[1], block_scale_1);
-                        acc[cp + 4] = vmlaq_s32(acc[cp + 4], sb_acc[3], block_scale_1);
+                        acc[cp]     = vmlaq_s32(acc[cp], sb_acc[0], ಖಂಡ_scale_0);
+                        acc[cp + 4] = vmlaq_s32(acc[cp + 4], sb_acc[2], ಖಂಡ_scale_0);
+                        acc[cp]     = vmlaq_s32(acc[cp], sb_acc[1], ಖಂಡ_scale_1);
+                        acc[cp + 4] = vmlaq_s32(acc[cp + 4], sb_acc[3], ಖಂಡ_scale_1);
                     }
 
                     // Multiply Acc bsum + mins
-                    for (int q8_row = 0; q8_row < 4; q8_row++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ q8_ಅಡ್ಡಸಾಲು = 0; q8_ಅಡ್ಡಸಾಲು < 4; q8_ಅಡ್ಡಸಾಲು++) {
                         // Each pair of subblocks share the same bsums
                         // Load scalar bsum → broadcast to a vector (vdupq_n_s16(s)).
-                        int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[sb][q8_row * 2]);
-                        int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][q8_row * 2 + 1]);
+                        int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[sb][q8_ಅಡ್ಡಸಾಲು * 2]);
+                        int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][q8_ಅಡ್ಡಸಾಲು * 2 + 1]);
 
-                        bias_acc[2 * q8_row] =
-                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_lo, vget_low_s16(q4sb_mins[0]));
-                        bias_acc[2 * q8_row] =
-                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_hi, vget_low_s16(q4sb_mins[1]));
-                        bias_acc[2 * q8_row + 1] =
-                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_lo, vget_high_s16(q4sb_mins[0]));
-                        bias_acc[2 * q8_row + 1] =
-                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_hi, vget_high_s16(q4sb_mins[1]));
+                        bias_acc[2 * q8_ಅಡ್ಡಸಾಲು] =
+                            vmlal_s16(bias_acc[2 * q8_ಅಡ್ಡಸಾಲು], bsums_vec_lo, vget_ಕೆಳಗಿನ_s16(q4sb_mins[0]));
+                        bias_acc[2 * q8_ಅಡ್ಡಸಾಲು] =
+                            vmlal_s16(bias_acc[2 * q8_ಅಡ್ಡಸಾಲು], bsums_vec_hi, vget_ಕೆಳಗಿನ_s16(q4sb_mins[1]));
+                        bias_acc[2 * q8_ಅಡ್ಡಸಾಲು + 1] =
+                            vmlal_s16(bias_acc[2 * q8_ಅಡ್ಡಸಾಲು + 1], bsums_vec_lo, vget_ಮೇಲಿನ_s16(q4sb_mins[0]));
+                        bias_acc[2 * q8_ಅಡ್ಡಸಾಲು + 1] =
+                            vmlal_s16(bias_acc[2 * q8_ಅಡ್ಡಸಾಲು + 1], bsums_vec_hi, vget_ಮೇಲಿನ_s16(q4sb_mins[1]));
                     }
                 }  // for sb
 
                 // Reorder of i8mm output with bias and output layout
-                for (int i = 0; i < 8; i++) {
-                    int32x2x2_t aux = vzip_s32(vget_low_s32(acc[i]), vget_high_s32(acc[i]));
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
+                    int32x2x2_t aux = vzip_s32(vget_ಕೆಳಗಿನ_s32(acc[i]), vget_ಮೇಲಿನ_s32(acc[i]));
                     acc[i]          = vcombine_s32(aux.val[0], aux.val[1]);
                 }
                 int32x4_t reorder_acc[8] = {
-                    vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1])),
-                    vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3])),
-                    vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1])),
-                    vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3])),
-                    vcombine_s32(vget_low_s32(acc[4]), vget_low_s32(acc[5])),
-                    vcombine_s32(vget_low_s32(acc[6]), vget_low_s32(acc[7])),
-                    vcombine_s32(vget_high_s32(acc[4]), vget_high_s32(acc[5])),
-                    vcombine_s32(vget_high_s32(acc[6]), vget_high_s32(acc[7])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[0]), vget_ಕೆಳಗಿನ_s32(acc[1])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[2]), vget_ಕೆಳಗಿನ_s32(acc[3])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[0]), vget_ಮೇಲಿನ_s32(acc[1])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[2]), vget_ಮೇಲಿನ_s32(acc[3])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[4]), vget_ಕೆಳಗಿನ_s32(acc[5])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[6]), vget_ಕೆಳಗಿನ_s32(acc[7])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[4]), vget_ಮೇಲಿನ_s32(acc[5])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[6]), vget_ಮೇಲಿನ_s32(acc[7])),
                 };
 
-                for (int i = 0; i < q8_k_blocklen; i++) {
-                    for (int j = 0; j < 2; j++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
                         float32x4_t       q8_d    = vdupq_n_f32(q8_ptr[b].d[i]);
-                        float32x4_t       q4_dmin = vcvt_f32_f16(vld1_f16((const __fp16 *) (q4_ptr[b].dmin + j * 4)));
-                        const float32x4_t dmins   = vmulq_f32(q4_dmin, q8_d);
+                        float32x4_t       q4_dmin = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) (q4_ptr[b].dmin + j * 4)));
+                        ಸ್ಥಿರಾಂಕ float32x4_t dmins   = vmulq_f32(q4_dmin, q8_d);
 
-                        float32x4_t       q4_d  = vcvt_f32_f16(vld1_f16((const __fp16 *) (q4_ptr[b].d + j * 4)));
-                        const float32x4_t scale = vmulq_f32(q4_d, q8_d);
+                        float32x4_t       q4_d  = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) (q4_ptr[b].d + j * 4)));
+                        ಸ್ಥಿರಾಂಕ float32x4_t scale = vmulq_f32(q4_d, q8_d);
 
                         acc_f32[2 * i + j] = vmlsq_f32(acc_f32[2 * i + j], vcvtq_f32_s32(bias_acc[2 * i + j]), dmins);
                         acc_f32[2 * i + j] =
@@ -4398,117 +4398,117 @@ void ggml_gemm_q4_K_8x8_q8_K(int                        n,
             }  // for b
 
             // With the previous reorder, the tile is already in the correct memory layout.
-            for (int i = 0; i < q8_k_blocklen; i++) {
-                int row = y * q8_k_blocklen + i;
-                for (int j = 0; j < 2; j++) {
-                    int col    = x * ncols_interleaved + j * 4;
-                    int offset = row * bs + col;
-                    vst1q_f32(s + offset, acc_f32[2 * i + j]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = y * q8_k_blocklen + i;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
+                    ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು    = x * ncols_interleaved + j * 4;
+                    ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = ಅಡ್ಡಸಾಲು * bs + ಲಂಬಸಾಲು;
+                    vst1q_f32(s + ಸ್ಥಾನಾಂತರ, acc_f32[2 * i + j]);
                 }
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
     ggml_gemm_q4_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q5_K_8x8_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemm_q5_K_8x8_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 8;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
-    constexpr int    q8_k_blocklen = 4;
-    constexpr int    col_pairs     = ncols_interleaved / 2;
-    const uint8x16_t m4b           = vdupq_n_u8(0x0f);
-    const uint8x16_t mone          = vdupq_n_u8(1);
-    const uint8x16_t mtwo          = vdupq_n_u8(2);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    constexpr ಪೂರ್ಣಾಂಕ    q8_k_blocklen = 4;
+    constexpr ಪೂರ್ಣಾಂಕ    ಲಂಬಸಾಲು_ಜೋಡಿಗಳು     = ncols_interleaved / 2;
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b           = vdupq_n_u8(0x0f);
+    ಸ್ಥಿರಾಂಕ uint8x16_t mone          = vdupq_n_u8(1);
+    ಸ್ಥಿರಾಂಕ uint8x16_t mtwo          = vdupq_n_u8(2);
 
     // 8 accumulators: 2 row pairs × 4 col pairs
     float32x4_t acc_f32[blocklen];
 
-    for (int y = 0; y < nr / q8_k_blocklen; y++) {
-        const block_q8_Kx4 * GGML_RESTRICT q8_ptr = (const block_q8_Kx4 *) vy + (y * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / q8_k_blocklen; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 *) vy + (y * nb);
 
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q5_Kx8 * GGML_RESTRICT q5_ptr = (const block_q5_Kx8 *) vx + (x * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q5_Kx8 * GGML_RESTRICT q5_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q5_Kx8 *) vx + (x * nb);
 
-            for (int i = 0; i < blocklen; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < blocklen; i++) {
                 acc_f32[i] = vdupq_n_f32(0);
             }
 
-            for (int b = 0; b < nb; b++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
                 // bsums pairs belongs to the same q8_k subblock
-                const int16x8_t bsums[4]{
+                ಸ್ಥಿರಾಂಕ int16x8_t bsums[4]{
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 0), vld1q_s16(q8_ptr[b].bsums + 16 * 0 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 1), vld1q_s16(q8_ptr[b].bsums + 16 * 1 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 2), vld1q_s16(q8_ptr[b].bsums + 16 * 2 + 8)),
                     vpaddq_s16(vld1q_s16(q8_ptr[b].bsums + 16 * 3), vld1q_s16(q8_ptr[b].bsums + 16 * 3 + 8)),
                 };
                 int16_t bsums_arr[4][8];
-                for (int q8_row = 0; q8_row < 4; q8_row++) {
-                    vst1q_s16(bsums_arr[q8_row], bsums[q8_row]);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ q8_ಅಡ್ಡಸಾಲು = 0; q8_ಅಡ್ಡಸಾಲು < 4; q8_ಅಡ್ಡಸಾಲು++) {
+                    vst1q_s16(bsums_arr[q8_ಅಡ್ಡಸಾಲು], bsums[q8_ಅಡ್ಡಸಾಲು]);
                 }
 
                 int32x4_t sb_acc[4];    // Aux accumulators to store subblock (partial) results
                 int32x4_t acc[8];       // rows 01 stored in [0][1][2][3] rows 23 stored in [4][5][6][7]
                 int32x4_t bias_acc[8];  // interleaved bias_acc: [0]->r0 0123, [1]->r0 4567, [2]->r1 0123 ...
-                for (int i = 0; i < 8; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
                     acc[i]      = vdupq_n_s32(0);
                     bias_acc[i] = vdupq_n_s32(0);
                 }
 
                 // Load qh once per block and shift after each subblock
-                const uint8_t * qh_base = q5_ptr[b].qh;
-                uint8x16_t      qh[col_pairs][4];
-                for (int cp = 0; cp < col_pairs; cp++) {
-                    qh[cp][0] = vld1q_u8(qh_base + 16 * cp);
-                    qh[cp][1] = vld1q_u8(qh_base + 16 * cp + 64);
-                    qh[cp][2] = vld1q_u8(qh_base + 16 * cp + 128);
-                    qh[cp][3] = vld1q_u8(qh_base + 16 * cp + 192);
+                ಸ್ಥಿರಾಂಕ uint8_t * qh_ತಳ = q5_ptr[b].qh;
+                uint8x16_t      qh[ಲಂಬಸಾಲು_ಜೋಡಿಗಳು][4];
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ cp = 0; cp < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; cp++) {
+                    qh[cp][0] = vld1q_u8(qh_ತಳ + 16 * cp);
+                    qh[cp][1] = vld1q_u8(qh_ತಳ + 16 * cp + 64);
+                    qh[cp][2] = vld1q_u8(qh_ತಳ + 16 * cp + 128);
+                    qh[cp][3] = vld1q_u8(qh_ತಳ + 16 * cp + 192);
                 }
 
-                for (int sb = 0; sb < QK_K / 64; sb++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
                     // Need scales for the low and high nibbles
                     // 2 * 12 = 24 bytes per subblock, 4 sbs -> 4 * 24 = 96 bytes total
                     int8_t    q5sb_scales[2][8];
                     int16x8_t q5sb_mins[2];  // int16 as its needed for bias_acc later
-                    for (int i = 0; i < 2; i++) {
-                        const int offset = sb * 24 + i * 12;
-                        decode_q_Kx8_6bit_scales(&q5_ptr[b].scales[offset], &q5sb_mins[i], q5sb_scales[i]);
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = sb * 24 + i * 12;
+                        decode_q_Kx8_6bit_scales(&q5_ptr[b].scales[ಸ್ಥಾನಾಂತರ], &q5sb_mins[i], q5sb_scales[i]);
                     }
 
                     // q8_ptr[b].qs has interleaved Q8 rows (01, 23)
-                    const int8_t * q8_base = q8_ptr[b].qs + sb * 256;
+                    ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ = q8_ptr[b].qs + sb * 256;
 
                     int8x16_t q8_qs_01[8];
                     int8x16_t q8_qs_23[8];
 
                     // Load 32-byte per row pair, 1 subblock each time
-                    for (int i = 0; i < 8; i++) {
-                        const int offset = i * 32;  // 16 for row 01, 16 for row 23
-                        q8_qs_01[i]      = vld1q_s8(q8_base + offset);
-                        q8_qs_23[i]      = vld1q_s8(q8_base + offset + 16);
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = i * 32;  // 16 for row 01, 16 for row 23
+                        q8_qs_01[i]      = vld1q_s8(q8_ತಳ + ಸ್ಥಾನಾಂತರ);
+                        q8_qs_23[i]      = vld1q_s8(q8_ತಳ + ಸ್ಥಾನಾಂತರ + 16);
                     }
 
-                    const int8x16_t q8s[2][8] = {
+                    ಸ್ಥಿರಾಂಕ int8x16_t q8s[2][8] = {
                         { q8_qs_01[0], q8_qs_01[1], q8_qs_01[2], q8_qs_01[3], q8_qs_01[4], q8_qs_01[5], q8_qs_01[6],
                          q8_qs_01[7] },
                         { q8_qs_23[0], q8_qs_23[1], q8_qs_23[2], q8_qs_23[3], q8_qs_23[4], q8_qs_23[5], q8_qs_23[6],
@@ -4516,8 +4516,8 @@ void ggml_gemm_q5_K_8x8_q8_K(int                        n,
                     };
 
                     // Q5s columns iterated in pairs (01, 23, 45, 67)
-                    for (int cp = 0; cp < col_pairs; cp++) {
-                        for (int i = 0; i < 4; i++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ cp = 0; cp < ಲಂಬಸಾಲು_ಜೋಡಿಗಳು; cp++) {
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 4; i++) {
                             sb_acc[i] = vdupq_n_s32(0);
                         }
 
@@ -4532,12 +4532,12 @@ void ggml_gemm_q5_K_8x8_q8_K(int                        n,
                         uint8x16_t hbit_hi_0    = vshlq_n_u8(vandq_u8(qh[cp][0], mtwo), 3);
                         qh[cp][0]               = vshrq_n_u8(qh[cp][0], 2);
                         // Same as Q4_K, i8mm to dequantize the weights.
-                        const int8x16_t qs_lo_0 = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(qs_cp_0, m4b), hbit_lo_0, 4));
+                        ಸ್ಥಿರಾಂಕ int8x16_t qs_lo_0 = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(qs_cp_0, m4b), hbit_lo_0, 4));
                         int32x4_t       acc_0   = sb_acc[0];
                         acc_0                   = vmmlaq_s32(acc_0, qs_lo_0, q8s[0][0]);
                         int32x4_t acc_2         = sb_acc[2];
                         acc_2                   = vmmlaq_s32(acc_2, qs_lo_0, q8s[1][0]);
-                        const int8x16_t qs_hi_0 = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(qs_cp_0, 4), hbit_hi_0));
+                        ಸ್ಥಿರಾಂಕ int8x16_t qs_hi_0 = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(qs_cp_0, 4), hbit_hi_0));
                         int32x4_t       acc_1   = sb_acc[1];
                         acc_1                   = vmmlaq_s32(acc_1, qs_hi_0, q8s[0][4]);
                         int32x4_t acc_3         = sb_acc[3];
@@ -4547,95 +4547,95 @@ void ggml_gemm_q5_K_8x8_q8_K(int                        n,
                         uint8x16_t hbit_hi_1    = vshlq_n_u8(vandq_u8(qh[cp][1], mtwo), 3);
                         uint8x16_t hbit_lo_1    = vandq_u8(qh[cp][1], mone);
                         qh[cp][1]               = vshrq_n_u8(qh[cp][1], 2);
-                        const int8x16_t qs_lo_1 = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(qs_cp_1, m4b), hbit_lo_1, 4));
+                        ಸ್ಥಿರಾಂಕ int8x16_t qs_lo_1 = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(qs_cp_1, m4b), hbit_lo_1, 4));
                         acc_0                   = vmmlaq_s32(acc_0, qs_lo_1, q8s[0][1]);
                         acc_2                   = vmmlaq_s32(acc_2, qs_lo_1, q8s[1][1]);
-                        const int8x16_t qs_hi_1 = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(qs_cp_1, 4), hbit_hi_1));
+                        ಸ್ಥಿರಾಂಕ int8x16_t qs_hi_1 = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(qs_cp_1, 4), hbit_hi_1));
                         acc_1                   = vmmlaq_s32(acc_1, qs_hi_1, q8s[0][5]);
                         acc_3                   = vmmlaq_s32(acc_3, qs_hi_1, q8s[1][5]);
 
                         uint8x16_t hbit_hi_2    = vshlq_n_u8(vandq_u8(qh[cp][2], mtwo), 3);
                         uint8x16_t hbit_lo_2    = vandq_u8(qh[cp][2], mone);
                         qh[cp][2]               = vshrq_n_u8(qh[cp][2], 2);
-                        const int8x16_t qs_lo_2 = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(qs_cp_2, m4b), hbit_lo_2, 4));
+                        ಸ್ಥಿರಾಂಕ int8x16_t qs_lo_2 = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(qs_cp_2, m4b), hbit_lo_2, 4));
                         acc_0                   = vmmlaq_s32(acc_0, qs_lo_2, q8s[0][2]);
                         acc_2                   = vmmlaq_s32(acc_2, qs_lo_2, q8s[1][2]);
-                        const int8x16_t qs_hi_2 = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(qs_cp_2, 4), hbit_hi_2));
+                        ಸ್ಥಿರಾಂಕ int8x16_t qs_hi_2 = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(qs_cp_2, 4), hbit_hi_2));
                         acc_1                   = vmmlaq_s32(acc_1, qs_hi_2, q8s[0][6]);
                         acc_3                   = vmmlaq_s32(acc_3, qs_hi_2, q8s[1][6]);
 
                         uint8x16_t hbit_lo_3    = vandq_u8(qh[cp][3], mone);
                         uint8x16_t hbit_hi_3    = vshlq_n_u8(vandq_u8(qh[cp][3], mtwo), 3);
                         qh[cp][3]               = vshrq_n_u8(qh[cp][3], 2);
-                        const int8x16_t qs_lo_3 = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(qs_cp_3, m4b), hbit_lo_3, 4));
+                        ಸ್ಥಿರಾಂಕ int8x16_t qs_lo_3 = vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(qs_cp_3, m4b), hbit_lo_3, 4));
                         acc_0                   = vmmlaq_s32(acc_0, qs_lo_3, q8s[0][3]);
                         sb_acc[0]               = acc_0;
                         acc_2                   = vmmlaq_s32(acc_2, qs_lo_3, q8s[1][3]);
                         sb_acc[2]               = acc_2;
 
                         // Scales[i] corresponds to column i
-                        const int       scale_offset = cp * 2;
-                        const int32_t   s0           = q5sb_scales[0][scale_offset];
-                        const int32_t   s1           = q5sb_scales[0][scale_offset + 1];
-                        const int32x4_t block_scale  = vcombine_s32(vdup_n_s32(s0), vdup_n_s32(s1));
-                        acc[cp]                      = vmlaq_s32(acc[cp], sb_acc[0], block_scale);
-                        acc[cp + 4]                  = vmlaq_s32(acc[cp + 4], sb_acc[2], block_scale);
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ       scale_ಸ್ಥಾನಾಂತರ = cp * 2;
+                        ಸ್ಥಿರಾಂಕ int32_t   s0           = q5sb_scales[0][scale_ಸ್ಥಾನಾಂತರ];
+                        ಸ್ಥಿರಾಂಕ int32_t   s1           = q5sb_scales[0][scale_ಸ್ಥಾನಾಂತರ + 1];
+                        ಸ್ಥಿರಾಂಕ int32x4_t ಖಂಡ_scale  = vcombine_s32(vdup_n_s32(s0), vdup_n_s32(s1));
+                        acc[cp]                      = vmlaq_s32(acc[cp], sb_acc[0], ಖಂಡ_scale);
+                        acc[cp + 4]                  = vmlaq_s32(acc[cp + 4], sb_acc[2], ಖಂಡ_scale);
 
-                        const int8x16_t qs_hi_3 = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(qs_cp_3, 4), hbit_hi_3));
+                        ಸ್ಥಿರಾಂಕ int8x16_t qs_hi_3 = vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(qs_cp_3, 4), hbit_hi_3));
                         acc_1                   = vmmlaq_s32(acc_1, qs_hi_3, q8s[0][7]);
                         sb_acc[1]               = acc_1;
                         acc_3                   = vmmlaq_s32(acc_3, qs_hi_3, q8s[1][7]);
                         sb_acc[3]               = acc_3;
 
-                        const int32_t   s2           = q5sb_scales[1][scale_offset];
-                        const int32_t   s3           = q5sb_scales[1][scale_offset + 1];
-                        const int32x4_t block_scale2 = vcombine_s32(vdup_n_s32(s2), vdup_n_s32(s3));
-                        acc[cp]                      = vmlaq_s32(acc[cp], sb_acc[1], block_scale2);
-                        acc[cp + 4]                  = vmlaq_s32(acc[cp + 4], sb_acc[3], block_scale2);
+                        ಸ್ಥಿರಾಂಕ int32_t   s2           = q5sb_scales[1][scale_ಸ್ಥಾನಾಂತರ];
+                        ಸ್ಥಿರಾಂಕ int32_t   s3           = q5sb_scales[1][scale_ಸ್ಥಾನಾಂತರ + 1];
+                        ಸ್ಥಿರಾಂಕ int32x4_t ಖಂಡ_scale2 = vcombine_s32(vdup_n_s32(s2), vdup_n_s32(s3));
+                        acc[cp]                      = vmlaq_s32(acc[cp], sb_acc[1], ಖಂಡ_scale2);
+                        acc[cp + 4]                  = vmlaq_s32(acc[cp + 4], sb_acc[3], ಖಂಡ_scale2);
                     }
 
                     // Multiply Acc bsum + mins
-                    for (int q8_row = 0; q8_row < 4; q8_row++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ q8_ಅಡ್ಡಸಾಲು = 0; q8_ಅಡ್ಡಸಾಲು < 4; q8_ಅಡ್ಡಸಾಲು++) {
                         // Each pair of subblocks share the same bsums
                         // Load scalar bsum → broadcast to a vector (vdupq_n_s16(s)).
-                        int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[sb][q8_row * 2]);
-                        int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][q8_row * 2 + 1]);
+                        int16x4_t bsums_vec_lo = vdup_n_s16(bsums_arr[sb][q8_ಅಡ್ಡಸಾಲು * 2]);
+                        int16x4_t bsums_vec_hi = vdup_n_s16(bsums_arr[sb][q8_ಅಡ್ಡಸಾಲು * 2 + 1]);
 
-                        bias_acc[2 * q8_row] =
-                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_lo, vget_low_s16(q5sb_mins[0]));
-                        bias_acc[2 * q8_row] =
-                            vmlal_s16(bias_acc[2 * q8_row], bsums_vec_hi, vget_low_s16(q5sb_mins[1]));
-                        bias_acc[2 * q8_row + 1] =
-                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_lo, vget_high_s16(q5sb_mins[0]));
-                        bias_acc[2 * q8_row + 1] =
-                            vmlal_s16(bias_acc[2 * q8_row + 1], bsums_vec_hi, vget_high_s16(q5sb_mins[1]));
+                        bias_acc[2 * q8_ಅಡ್ಡಸಾಲು] =
+                            vmlal_s16(bias_acc[2 * q8_ಅಡ್ಡಸಾಲು], bsums_vec_lo, vget_ಕೆಳಗಿನ_s16(q5sb_mins[0]));
+                        bias_acc[2 * q8_ಅಡ್ಡಸಾಲು] =
+                            vmlal_s16(bias_acc[2 * q8_ಅಡ್ಡಸಾಲು], bsums_vec_hi, vget_ಕೆಳಗಿನ_s16(q5sb_mins[1]));
+                        bias_acc[2 * q8_ಅಡ್ಡಸಾಲು + 1] =
+                            vmlal_s16(bias_acc[2 * q8_ಅಡ್ಡಸಾಲು + 1], bsums_vec_lo, vget_ಮೇಲಿನ_s16(q5sb_mins[0]));
+                        bias_acc[2 * q8_ಅಡ್ಡಸಾಲು + 1] =
+                            vmlal_s16(bias_acc[2 * q8_ಅಡ್ಡಸಾಲು + 1], bsums_vec_hi, vget_ಮೇಲಿನ_s16(q5sb_mins[1]));
                     }
                 }  // for sb
 
                 // Reorder of i8mm output with bias and output layout
-                for (int i = 0; i < 8; i++) {
-                    int32x2x2_t aux = vzip_s32(vget_low_s32(acc[i]), vget_high_s32(acc[i]));
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
+                    int32x2x2_t aux = vzip_s32(vget_ಕೆಳಗಿನ_s32(acc[i]), vget_ಮೇಲಿನ_s32(acc[i]));
                     acc[i]          = vcombine_s32(aux.val[0], aux.val[1]);
                 }
                 int32x4_t reorder_acc[8] = {
-                    vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1])),
-                    vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3])),
-                    vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1])),
-                    vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3])),
-                    vcombine_s32(vget_low_s32(acc[4]), vget_low_s32(acc[5])),
-                    vcombine_s32(vget_low_s32(acc[6]), vget_low_s32(acc[7])),
-                    vcombine_s32(vget_high_s32(acc[4]), vget_high_s32(acc[5])),
-                    vcombine_s32(vget_high_s32(acc[6]), vget_high_s32(acc[7])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[0]), vget_ಕೆಳಗಿನ_s32(acc[1])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[2]), vget_ಕೆಳಗಿನ_s32(acc[3])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[0]), vget_ಮೇಲಿನ_s32(acc[1])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[2]), vget_ಮೇಲಿನ_s32(acc[3])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[4]), vget_ಕೆಳಗಿನ_s32(acc[5])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[6]), vget_ಕೆಳಗಿನ_s32(acc[7])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[4]), vget_ಮೇಲಿನ_s32(acc[5])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[6]), vget_ಮೇಲಿನ_s32(acc[7])),
                 };
 
-                for (int i = 0; i < q8_k_blocklen; i++) {
-                    for (int j = 0; j < 2; j++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
                         float32x4_t       q8_d    = vdupq_n_f32(q8_ptr[b].d[i]);
-                        float32x4_t       q5_dmin = vcvt_f32_f16(vld1_f16((const __fp16 *) (q5_ptr[b].dmin + j * 4)));
-                        const float32x4_t dmins   = vmulq_f32(q5_dmin, q8_d);
+                        float32x4_t       q5_dmin = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) (q5_ptr[b].dmin + j * 4)));
+                        ಸ್ಥಿರಾಂಕ float32x4_t dmins   = vmulq_f32(q5_dmin, q8_d);
 
-                        float32x4_t       q5_d  = vcvt_f32_f16(vld1_f16((const __fp16 *) (q5_ptr[b].d + j * 4)));
-                        const float32x4_t scale = vmulq_f32(q5_d, q8_d);
+                        float32x4_t       q5_d  = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) (q5_ptr[b].d + j * 4)));
+                        ಸ್ಥಿರಾಂಕ float32x4_t scale = vmulq_f32(q5_d, q8_d);
 
                         acc_f32[2 * i + j] = vmlsq_f32(acc_f32[2 * i + j], vcvtq_f32_s32(bias_acc[2 * i + j]), dmins);
                         acc_f32[2 * i + j] =
@@ -4645,66 +4645,66 @@ void ggml_gemm_q5_K_8x8_q8_K(int                        n,
             }  // for b
 
             // With the previous reorder, the tile is already in the correct memory layout.
-            for (int i = 0; i < q8_k_blocklen; i++) {
-                int row = y * q8_k_blocklen + i;
-                for (int j = 0; j < 2; j++) {
-                    int col    = x * ncols_interleaved + j * 4;
-                    int offset = row * bs + col;
-                    vst1q_f32(s + offset, acc_f32[2 * i + j]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = y * q8_k_blocklen + i;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
+                    ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು    = x * ncols_interleaved + j * 4;
+                    ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = ಅಡ್ಡಸಾಲು * bs + ಲಂಬಸಾಲು;
+                    vst1q_f32(s + ಸ್ಥಾನಾಂತರ, acc_f32[2 * i + j]);
                 }
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
     ggml_gemm_q5_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q6_K_8x4_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemm_q6_K_8x4_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 4;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 4;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    constexpr int    q8_k_blocklen = 4;
-    constexpr int    col_groups    = ncols_interleaved / 4;
-    constexpr int    acc_size      = q8_k_blocklen * col_groups;  // 4 rows, 2 column groups
-    const uint8x16_t m4b           = vdupq_n_u8(0x0f);
-    const uint8x16_t mask_lo       = vdupq_n_u8(0x03);
-    const uint8x16_t mask_hi       = vdupq_n_u8(0x30);
-    const int8x16_t  m32s          = vdupq_n_s8(32);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    constexpr ಪೂರ್ಣಾಂಕ    q8_k_blocklen = 4;
+    constexpr ಪೂರ್ಣಾಂಕ    ಲಂಬಸಾಲು_groups    = ncols_interleaved / 4;
+    constexpr ಪೂರ್ಣಾಂಕ    acc_ಗಾತ್ರ      = q8_k_blocklen * ಲಂಬಸಾಲು_groups;  // 4 rows, 2 column groups
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b           = vdupq_n_u8(0x0f);
+    ಸ್ಥಿರಾಂಕ uint8x16_t ಮುಖವಾಡ_lo       = vdupq_n_u8(0x03);
+    ಸ್ಥಿರಾಂಕ uint8x16_t ಮುಖವಾಡ_hi       = vdupq_n_u8(0x30);
+    ಸ್ಥಿರಾಂಕ int8x16_t  m32s          = vdupq_n_s8(32);
 
-    float32x4_t acc_f32[acc_size];
+    float32x4_t acc_f32[acc_ಗಾತ್ರ];
 
-    for (int y = 0; y < nr / q8_k_blocklen; y++) {
-        const block_q8_Kx4 * GGML_RESTRICT q8_ptr = (const block_q8_Kx4 *) vy + (y * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / q8_k_blocklen; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 *) vy + (y * nb);
 
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q6_Kx8 * GGML_RESTRICT q6_ptr = (const block_q6_Kx8 *) vx + (x * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q6_Kx8 * GGML_RESTRICT q6_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q6_Kx8 *) vx + (x * nb);
 
-            for (int i = 0; i < acc_size; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < acc_ಗಾತ್ರ; i++) {
                 acc_f32[i] = vdupq_n_f32(0);
             }
 
-            for (int b = 0; b < nb; b++) {
-                float32x4_t q6_d_0123 = vcvt_f32_f16(vld1_f16((const __fp16 *) q6_ptr[b].d));
-                float32x4_t q6_d_4567 = vcvt_f32_f16(vld1_f16((const __fp16 *) q6_ptr[b].d + 4));
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
+                float32x4_t q6_d_0123 = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q6_ptr[b].d));
+                float32x4_t q6_d_4567 = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) q6_ptr[b].d + 4));
                 float32x4_t q8_d_0123 = vld1q_f32(q8_ptr[b].d);
 
                 float32x4_t sbd_scale_0123[q8_k_blocklen];
@@ -4719,74 +4719,74 @@ void ggml_gemm_q6_K_8x4_q8_K(int                        n,
                 sbd_scale_0123[3] = vmulq_laneq_f32(q6_d_0123, q8_d_0123, 3);
                 sbd_scale_4567[3] = vmulq_laneq_f32(q6_d_4567, q8_d_0123, 3);
 
-                int32x4_t acc_s32[acc_size];
-                for (int i = 0; i < acc_size; i++) {
+                int32x4_t acc_s32[acc_ಗಾತ್ರ];
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < acc_ಗಾತ್ರ; i++) {
                     acc_s32[i] = vdupq_n_s32(0);
                 }
 
                 int16_t q6_scales[8 * 16];
-                for (int i = 0; i < 16; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 16; i++) {
                     int16x8_t scales = vmovl_s8(vld1_s8(q6_ptr[b].scales + i * 8));
                     vst1q_s16(q6_scales + i * 8, scales);
                 }
 
-                for (int half = 0; half < 2; half++) {
-                    const uint8_t * ql_base = q6_ptr[b].ql + half * 512;
-                    const uint8_t * qh_base = q6_ptr[b].qh + half * 256;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ half = 0; half < 2; half++) {
+                    ಸ್ಥಿರಾಂಕ uint8_t * ql_ತಳ = q6_ptr[b].ql + half * 512;
+                    ಸ್ಥಿರಾಂಕ uint8_t * qh_ತಳ = q6_ptr[b].qh + half * 256;
 
-                    for (int sb = 0; sb < QK_K / 64; sb++) {
-                        int32x4_t acc_lo[acc_size];
-                        int32x4_t acc_hi[acc_size];
-                        for (int i = 0; i < acc_size; i++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
+                        int32x4_t acc_lo[acc_ಗಾತ್ರ];
+                        int32x4_t acc_hi[acc_ಗಾತ್ರ];
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < acc_ಗಾತ್ರ; i++) {
                             acc_lo[i] = vdupq_n_s32(0);
                             acc_hi[i] = vdupq_n_s32(0);
                         }
 
-                        const int8_t * q8_base_l = q8_ptr[b].qs + half * 512 + sb * 64;
-                        const int8_t * q8_base_h = q8_ptr[b].qs + half * 512 + 256 + sb * 64;
+                        ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ_l = q8_ptr[b].qs + half * 512 + sb * 64;
+                        ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ_h = q8_ptr[b].qs + half * 512 + 256 + sb * 64;
 
                         // 4 rows * 16 elements per scale
                         // 4 reads of 16 bytes each
-                        constexpr int reads_per_sb = 4;
-                        int8x16_t     q8_l[reads_per_sb];
-                        int8x16_t     q8_h[reads_per_sb];
-                        for (int k = 0; k < reads_per_sb; k++) {
-                            q8_l[k] = vld1q_s8(q8_base_l + 16 * k);
-                            q8_h[k] = vld1q_s8(q8_base_h + 16 * k);
+                        constexpr ಪೂರ್ಣಾಂಕ reads_ಪ್ರತಿ_sb = 4;
+                        int8x16_t     q8_l[reads_ಪ್ರತಿ_sb];
+                        int8x16_t     q8_h[reads_ಪ್ರತಿ_sb];
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < reads_ಪ್ರತಿ_sb; k++) {
+                            q8_l[k] = vld1q_s8(q8_ತಳ_l + 16 * k);
+                            q8_h[k] = vld1q_s8(q8_ತಳ_h + 16 * k);
                         }
 
-                        const int ql_off_base = sb * QK_K / 2;
-                        const int qh_off_base = ql_off_base & 255;
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ql_off_ತಳ = sb * QK_K / 2;
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qh_off_ತಳ = ql_off_ತಳ & 255;
 
-                        uint8x16_t q6_ql_0123[reads_per_sb];
-                        uint8x16_t q6_ql_4567[reads_per_sb];
-                        uint8x16_t q6_qh_0123[reads_per_sb];
-                        uint8x16_t q6_qh_4567[reads_per_sb];
+                        uint8x16_t q6_ql_0123[reads_ಪ್ರತಿ_sb];
+                        uint8x16_t q6_ql_4567[reads_ಪ್ರತಿ_sb];
+                        uint8x16_t q6_qh_0123[reads_ಪ್ರತಿ_sb];
+                        uint8x16_t q6_qh_4567[reads_ಪ್ರತಿ_sb];
 
-                        for (int k = 0; k < reads_per_sb; k++) {
-                            q6_ql_0123[k] = vld1q_u8(ql_base + ql_off_base + k * 32);
-                            q6_ql_4567[k] = vld1q_u8(ql_base + ql_off_base + k * 32 + 16);
-                            q6_qh_0123[k] = vld1q_u8(qh_base + qh_off_base + k * 32);
-                            q6_qh_4567[k] = vld1q_u8(qh_base + qh_off_base + k * 32 + 16);
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < reads_ಪ್ರತಿ_sb; k++) {
+                            q6_ql_0123[k] = vld1q_u8(ql_ತಳ + ql_off_ತಳ + k * 32);
+                            q6_ql_4567[k] = vld1q_u8(ql_ತಳ + ql_off_ತಳ + k * 32 + 16);
+                            q6_qh_0123[k] = vld1q_u8(qh_ತಳ + qh_off_ತಳ + k * 32);
+                            q6_qh_4567[k] = vld1q_u8(qh_ತಳ + qh_off_ತಳ + k * 32 + 16);
                         }
 
-                        if (sb > 1) {
-                            for (int k = 0; k < reads_per_sb; k++) {
+                        ಆದರೆ (sb > 1) {
+                            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < reads_ಪ್ರತಿ_sb; k++) {
                                 q6_qh_0123[k] = vshrq_n_u8(q6_qh_0123[k], 2);
                                 q6_qh_4567[k] = vshrq_n_u8(q6_qh_4567[k], 2);
                             }
                         }
 
-                        for (int k = 0; k < reads_per_sb; k++) {
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < reads_ಪ್ರತಿ_sb; k++) {
                             // q = (ql | qh) - 32
-                            const uint8x16_t hbit_lo_0123 = vandq_u8(q6_qh_0123[k], mask_lo);
-                            const uint8x16_t hbit_hi_0123 = vandq_u8(q6_qh_0123[k], mask_hi);
-                            const uint8x16_t hbit_lo_4567 = vandq_u8(q6_qh_4567[k], mask_lo);
-                            const uint8x16_t hbit_hi_4567 = vandq_u8(q6_qh_4567[k], mask_hi);
+                            ಸ್ಥಿರಾಂಕ uint8x16_t hbit_lo_0123 = vandq_u8(q6_qh_0123[k], ಮುಖವಾಡ_lo);
+                            ಸ್ಥಿರಾಂಕ uint8x16_t hbit_hi_0123 = vandq_u8(q6_qh_0123[k], ಮುಖವಾಡ_hi);
+                            ಸ್ಥಿರಾಂಕ uint8x16_t hbit_lo_4567 = vandq_u8(q6_qh_4567[k], ಮುಖವಾಡ_lo);
+                            ಸ್ಥಿರಾಂಕ uint8x16_t hbit_hi_4567 = vandq_u8(q6_qh_4567[k], ಮುಖವಾಡ_hi);
 
-                            const int8x16_t q6_0123_lo = vsubq_s8(
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_0123_lo = vsubq_s8(
                                 vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q6_ql_0123[k], m4b), hbit_lo_0123, 4)), m32s);
-                            const int8x16_t q6_0123_hi = vsubq_s8(
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_0123_hi = vsubq_s8(
                                 vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q6_ql_0123[k], 4), hbit_hi_0123)), m32s);
 
                             acc_lo[0] = vdotq_laneq_s32(acc_lo[0], q6_0123_lo, q8_l[k], 0);  //  0..3  r0 c0123
@@ -4799,9 +4799,9 @@ void ggml_gemm_q6_K_8x4_q8_K(int                        n,
                             acc_hi[2] = vdotq_laneq_s32(acc_hi[2], q6_0123_hi, q8_h[k], 2);  // 64..67 r2 c0123
                             acc_hi[3] = vdotq_laneq_s32(acc_hi[3], q6_0123_hi, q8_h[k], 3);  // 64..67 r3 c0123
 
-                            const int8x16_t q6_4567_lo = vsubq_s8(
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_4567_lo = vsubq_s8(
                                 vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q6_ql_4567[k], m4b), hbit_lo_4567, 4)), m32s);
-                            const int8x16_t q6_4567_hi = vsubq_s8(
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_4567_hi = vsubq_s8(
                                 vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q6_ql_4567[k], 4), hbit_hi_4567)), m32s);
 
                             acc_lo[4] = vdotq_laneq_s32(acc_lo[4], q6_4567_lo, q8_l[k], 0);  //  0..3  r0 c4567
@@ -4816,185 +4816,185 @@ void ggml_gemm_q6_K_8x4_q8_K(int                        n,
                         }
 
                         // Scale and bias
-                        const int scale_idx_l = half * 8 + sb;
-                        const int scale_idx_h = half * 8 + sb + 4;
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ scale_idx_l = half * 8 + sb;
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ scale_idx_h = half * 8 + sb + 4;
 
-                        for (int g = 0; g < col_groups; g++) {
-                            const int16x4_t scales_l16  = vld1_s16(q6_scales + scale_idx_l * 8 + g * 4);
-                            const int16x4_t scales_h16  = vld1_s16(q6_scales + scale_idx_h * 8 + g * 4);
-                            const int32x4_t scale_vec_l = vmovl_s16(scales_l16);
-                            const int32x4_t scale_vec_h = vmovl_s16(scales_h16);
-                            const int       acc_offset  = g * q8_k_blocklen;
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ g = 0; g < ಲಂಬಸಾಲು_groups; g++) {
+                            ಸ್ಥಿರಾಂಕ int16x4_t scales_l16  = vld1_s16(q6_scales + scale_idx_l * 8 + g * 4);
+                            ಸ್ಥಿರಾಂಕ int16x4_t scales_h16  = vld1_s16(q6_scales + scale_idx_h * 8 + g * 4);
+                            ಸ್ಥಿರಾಂಕ int32x4_t scale_vec_l = vmovl_s16(scales_l16);
+                            ಸ್ಥಿರಾಂಕ int32x4_t scale_vec_h = vmovl_s16(scales_h16);
+                            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ       acc_ಸ್ಥಾನಾಂತರ  = g * q8_k_blocklen;
 
-                            for (int row = 0; row < q8_k_blocklen; row++) {
-                                const int idx = row * 2 + g;
-                                acc_s32[idx]  = vmlaq_s32(acc_s32[idx], acc_lo[acc_offset + row], scale_vec_l);
-                                acc_s32[idx]  = vmlaq_s32(acc_s32[idx], acc_hi[acc_offset + row], scale_vec_h);
+                            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = 0; ಅಡ್ಡಸಾಲು < q8_k_blocklen; ಅಡ್ಡಸಾಲು++) {
+                                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ idx = ಅಡ್ಡಸಾಲು * 2 + g;
+                                acc_s32[idx]  = vmlaq_s32(acc_s32[idx], acc_lo[acc_ಸ್ಥಾನಾಂತರ + ಅಡ್ಡಸಾಲು], scale_vec_l);
+                                acc_s32[idx]  = vmlaq_s32(acc_s32[idx], acc_hi[acc_ಸ್ಥಾನಾಂತರ + ಅಡ್ಡಸಾಲು], scale_vec_h);
                             }
                         }
                     }
                 }
 
                 // Finally we apply the superblock scales
-                for (int row = 0; row < q8_k_blocklen; row++) {
-                    const int       idx0     = 2 * row;
-                    const int       idx1     = 2 * row + 1;
-                    const int32x4_t acc_0123 = acc_s32[idx0];
-                    const int32x4_t acc_4567 = acc_s32[idx1];
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = 0; ಅಡ್ಡಸಾಲು < q8_k_blocklen; ಅಡ್ಡಸಾಲು++) {
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ       idx0     = 2 * ಅಡ್ಡಸಾಲು;
+                    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ       idx1     = 2 * ಅಡ್ಡಸಾಲು + 1;
+                    ಸ್ಥಿರಾಂಕ int32x4_t acc_0123 = acc_s32[idx0];
+                    ಸ್ಥಿರಾಂಕ int32x4_t acc_4567 = acc_s32[idx1];
 
-                    acc_f32[idx0] = vmlaq_f32(acc_f32[idx0], vcvtq_f32_s32(acc_0123), sbd_scale_0123[row]);
-                    acc_f32[idx1] = vmlaq_f32(acc_f32[idx1], vcvtq_f32_s32(acc_4567), sbd_scale_4567[row]);
+                    acc_f32[idx0] = vmlaq_f32(acc_f32[idx0], vcvtq_f32_s32(acc_0123), sbd_scale_0123[ಅಡ್ಡಸಾಲು]);
+                    acc_f32[idx1] = vmlaq_f32(acc_f32[idx1], vcvtq_f32_s32(acc_4567), sbd_scale_4567[ಅಡ್ಡಸಾಲು]);
                 }
             }  // for b
 
-            for (int i = 0; i < q8_k_blocklen; i++) {
-                int row = y * q8_k_blocklen + i;
-                for (int j = 0; j < 2; j++) {
-                    int col    = x * ncols_interleaved + j * 4;
-                    int offset = row * bs + col;
-                    vst1q_f32(s + offset, acc_f32[2 * i + j]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = y * q8_k_blocklen + i;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
+                    ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು    = x * ncols_interleaved + j * 4;
+                    ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = ಅಡ್ಡಸಾಲು * bs + ಲಂಬಸಾಲು;
+                    vst1q_f32(s + ಸ್ಥಾನಾಂತರ, acc_f32[2 * i + j]);
                 }
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemm_q6_K_8x4_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q6_K_8x8_q8_K(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemm_q6_K_8x8_q8_K(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    constexpr int qk = QK_K;
-    const int     nb = n / qk;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    constexpr ಪೂರ್ಣಾಂಕ qk = QK_K;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ     nb = n / qk;
 
-    constexpr int ncols_interleaved = 8;
-    constexpr int blocklen          = 8;
+    constexpr ಪೂರ್ಣಾಂಕ ncols_interleaved = 8;
+    constexpr ಪೂರ್ಣಾಂಕ blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
-    constexpr int    q8_k_blocklen = 4;
-    const uint8x16_t m4b           = vdupq_n_u8(0x0f);
-    const uint8x16_t mask_lo       = vdupq_n_u8(0x03);
-    const uint8x16_t mask_hi       = vdupq_n_u8(0x30);
-    const int8x16_t  m32s          = vdupq_n_s8(32);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    constexpr ಪೂರ್ಣಾಂಕ    q8_k_blocklen = 4;
+    ಸ್ಥಿರಾಂಕ uint8x16_t m4b           = vdupq_n_u8(0x0f);
+    ಸ್ಥಿರಾಂಕ uint8x16_t ಮುಖವಾಡ_lo       = vdupq_n_u8(0x03);
+    ಸ್ಥಿರಾಂಕ uint8x16_t ಮುಖವಾಡ_hi       = vdupq_n_u8(0x30);
+    ಸ್ಥಿರಾಂಕ int8x16_t  m32s          = vdupq_n_s8(32);
 
     // 8 accumulators: 4 q8 rows × 2 col groups (0-3, 4-7)
     float32x4_t acc_f32[blocklen];
 
-    for (int y = 0; y < nr / q8_k_blocklen; y++) {
-        const block_q8_Kx4 * GGML_RESTRICT q8_ptr = (const block_q8_Kx4 *) vy + (y * nb);
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / q8_k_blocklen; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 * GGML_RESTRICT q8_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_Kx4 *) vy + (y * nb);
 
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q6_Kx8 * GGML_RESTRICT q6_ptr = (const block_q6_Kx8 *) vx + (x * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q6_Kx8 * GGML_RESTRICT q6_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q6_Kx8 *) vx + (x * nb);
 
-            for (int i = 0; i < blocklen; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < blocklen; i++) {
                 acc_f32[i] = vdupq_n_f32(0);
             }
 
-            for (int b = 0; b < nb; b++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
                 int32x4_t acc[8];  // rows 01 stored in [0][1][2][3], rows 23 stored in [4][5][6][7]
-                for (int i = 0; i < 8; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
                     acc[i] = vdupq_n_s32(0);
                 }
 
                 // Q6_K has simple 8-bit scales, 16 per block (one per 16 values)
                 // Reused for bias and dequantization later
                 int16_t q6_scales[16 * 8];
-                for (int i = 0; i < 16; ++i) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 16; ++i) {
                     int16x8_t s16 = vmovl_s8(vld1_s8(q6_ptr[b].scales + i * 8));
                     vst1q_s16(q6_scales + i * 8, s16);
                 }
 
                 // Process two 128-value halves per superblock
-                for (int half = 0; half < 2; half++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ half = 0; half < 2; half++) {
 
-                    const uint8_t * ql_base = q6_ptr[b].ql + half * 512;
-                    const uint8_t * qh_base = q6_ptr[b].qh + half * 256;
+                    ಸ್ಥಿರಾಂಕ uint8_t * ql_ತಳ = q6_ptr[b].ql + half * 512;
+                    ಸ್ಥಿರಾಂಕ uint8_t * qh_ತಳ = q6_ptr[b].qh + half * 256;
 
                     // A subblock (sb) is a set of weights that share the scale
                     // Since q6_K scales are per 16 elements
                     // num sbs -> 256 elements / (16 elements/scale * 2 elements/byte * 2 halves)
-                    for (int sb = 0; sb < QK_K / 64; sb++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ sb = 0; sb < QK_K / 64; sb++) {
                         // Q6_K weight index increasing by 64 instead of 32 requires
                         // loading various q8 memory regions
-                        const int8_t * q8_base_l = q8_ptr[b].qs + half * 512 + sb * 64;
-                        const int8_t * q8_base_h = q8_ptr[b].qs + half * 512 + 256 + sb * 64;
+                        ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ_l = q8_ptr[b].qs + half * 512 + sb * 64;
+                        ಸ್ಥಿರಾಂಕ int8_t * q8_ತಳ_h = q8_ptr[b].qs + half * 512 + 256 + sb * 64;
 
                         int8x16_t q8_l_01[2];
                         int8x16_t q8_l_23[2];
-                        for (int i = 0; i < 2; i++) {
-                            const int offset = i * 32;
-                            q8_l_01[i]       = vld1q_s8(q8_base_l + offset);       // 0..7 & 8..15 (r01)
-                            q8_l_23[i]       = vld1q_s8(q8_base_l + offset + 16);  // 0..7 & 8..15 (r23)
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
+                            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = i * 32;
+                            q8_l_01[i]       = vld1q_s8(q8_ತಳ_l + ಸ್ಥಾನಾಂತರ);       // 0..7 & 8..15 (r01)
+                            q8_l_23[i]       = vld1q_s8(q8_ತಳ_l + ಸ್ಥಾನಾಂತರ + 16);  // 0..7 & 8..15 (r23)
                         }
 
                         int8x16_t q8_h_01[2];
                         int8x16_t q8_h_23[2];
-                        for (int i = 0; i < 2; i++) {
-                            const int offset = i * 32;
-                            q8_h_01[i]       = vld1q_s8(q8_base_h + offset);
-                            q8_h_23[i]       = vld1q_s8(q8_base_h + offset + 16);
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 2; i++) {
+                            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = i * 32;
+                            q8_h_01[i]       = vld1q_s8(q8_ತಳ_h + ಸ್ಥಾನಾಂತರ);
+                            q8_h_23[i]       = vld1q_s8(q8_ತಳ_h + ಸ್ಥಾನಾಂತರ + 16);
                         }
 
-                        const int ql_off_base = sb * QK_K / 2;
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ql_off_ತಳ = sb * QK_K / 2;
 
                         uint8x16_t q6_ql_0[4];
                         uint8x16_t q6_ql_1[4];
-                        for (int k = 0; k < 4; k++) {
-                            q6_ql_0[k] = vld1q_u8(ql_base + ql_off_base + 16 * k);
-                            q6_ql_1[k] = vld1q_u8(ql_base + ql_off_base + 64 + 16 * k);
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; k++) {
+                            q6_ql_0[k] = vld1q_u8(ql_ತಳ + ql_off_ತಳ + 16 * k);
+                            q6_ql_1[k] = vld1q_u8(ql_ತಳ + ql_off_ತಳ + 64 + 16 * k);
                         }
 
-                        const int  qh_off_base = (sb * QK_K / 2) & 255;  // wrap after 256 bytes
+                        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ  qh_off_ತಳ = (sb * QK_K / 2) & 255;  // wrap after 256 bytes
                         uint8x16_t q6_qh_0[4];
                         uint8x16_t q6_qh_1[4];
-                        for (int k = 0; k < 4; k++) {
-                            q6_qh_0[k] = vld1q_u8(qh_base + qh_off_base + 16 * k);
-                            q6_qh_1[k] = vld1q_u8(qh_base + qh_off_base + 64 + 16 * k);
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; k++) {
+                            q6_qh_0[k] = vld1q_u8(qh_ತಳ + qh_off_ತಳ + 16 * k);
+                            q6_qh_1[k] = vld1q_u8(qh_ತಳ + qh_off_ತಳ + 64 + 16 * k);
                         }
 
                         // Adjust for the proper high bits (Sb 2 and 3)
-                        if (sb > 1) {
-                            for (int k = 0; k < 4; k++) {
+                        ಆದರೆ (sb > 1) {
+                            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; k++) {
                                 q6_qh_0[k] = vshrq_n_u8(q6_qh_0[k], 2);
                                 q6_qh_1[k] = vshrq_n_u8(q6_qh_1[k], 2);
                             }
                         }
 
                         // Process column pairs (0-1, 2-3, 4-5, 6-7)
-                        for (int cp = 0; cp < ncols_interleaved / 2; cp++) {
-                            const uint8x16_t q6_qs_cp_0_l = q6_ql_0[cp];
-                            const uint8x16_t q6_qs_cp_1_l = q6_ql_1[cp];
-                            const uint8x16_t q6_qs_cp_0_h = q6_qh_0[cp];
-                            const uint8x16_t q6_qs_cp_1_h = q6_qh_1[cp];
+                        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ cp = 0; cp < ncols_interleaved / 2; cp++) {
+                            ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_0_l = q6_ql_0[cp];
+                            ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_1_l = q6_ql_1[cp];
+                            ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_0_h = q6_qh_0[cp];
+                            ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_1_h = q6_qh_1[cp];
 
                             // Extract high 2 bits for upper nibble reconstruction
-                            const uint8x16_t q6_qs_cp_0_hh = vandq_u8(q6_qs_cp_0_h, mask_hi);
-                            const uint8x16_t q6_qs_cp_1_hh = vandq_u8(q6_qs_cp_1_h, mask_hi);
+                            ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_0_hh = vandq_u8(q6_qs_cp_0_h, ಮುಖವಾಡ_hi);
+                            ಸ್ಥಿರಾಂಕ uint8x16_t q6_qs_cp_1_hh = vandq_u8(q6_qs_cp_1_h, ಮುಖವಾಡ_hi);
 
                             // q6 = (low4 | high2<<4) - 32
                             // Use vsliq_n_u8 to combine shift-left-insert in one instruction (like Q5_K)
-                            const int8x16_t q6_l0 = vsubq_s8(
-                                vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q6_qs_cp_0_l, m4b), vandq_u8(q6_qs_cp_0_h, mask_lo), 4)),
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_l0 = vsubq_s8(
+                                vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q6_qs_cp_0_l, m4b), vandq_u8(q6_qs_cp_0_h, ಮುಖವಾಡ_lo), 4)),
                                 m32s);
-                            const int8x16_t q6_l1 = vsubq_s8(
-                                vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q6_qs_cp_1_l, m4b), vandq_u8(q6_qs_cp_1_h, mask_lo), 4)),
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_l1 = vsubq_s8(
+                                vreinterpretq_s8_u8(vsliq_n_u8(vandq_u8(q6_qs_cp_1_l, m4b), vandq_u8(q6_qs_cp_1_h, ಮುಖವಾಡ_lo), 4)),
                                 m32s);
-                            const int8x16_t q6_h0 = vsubq_s8(
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_h0 = vsubq_s8(
                                 vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q6_qs_cp_0_l, 4), q6_qs_cp_0_hh)), m32s);
-                            const int8x16_t q6_h1 = vsubq_s8(
+                            ಸ್ಥಿರಾಂಕ int8x16_t q6_h1 = vsubq_s8(
                                 vreinterpretq_s8_u8(vorrq_u8(vshrq_n_u8(q6_qs_cp_1_l, 4), q6_qs_cp_1_hh)), m32s);
 
                             // row pair 0, base_l
@@ -5010,16 +5010,16 @@ void ggml_gemm_q6_K_8x8_q8_K(int                        n,
                             int32x4_t sb_acc_1h = vmmlaq_s32(vdupq_n_s32(0), q6_h0, q8_h_23[0]);
                             sb_acc_1h           = vmmlaq_s32(sb_acc_1h, q6_h1, q8_h_23[1]);
 
-                            const int scale_idx_l = half * 8 + sb;
-                            const int scale_idx_h = half * 8 + sb + 4;
+                            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ scale_idx_l = half * 8 + sb;
+                            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ scale_idx_h = half * 8 + sb + 4;
 
-                            const int32x4_t scale_vec_l = {
+                            ಸ್ಥಿರಾಂಕ int32x4_t scale_vec_l = {
                                 q6_scales[scale_idx_l * 8 + cp * 2 + 0],
                                 q6_scales[scale_idx_l * 8 + cp * 2 + 0],
                                 q6_scales[scale_idx_l * 8 + cp * 2 + 1],
                                 q6_scales[scale_idx_l * 8 + cp * 2 + 1],
                             };
-                            const int32x4_t scale_vec_h = {
+                            ಸ್ಥಿರಾಂಕ int32x4_t scale_vec_h = {
                                 q6_scales[scale_idx_h * 8 + cp * 2 + 0],
                                 q6_scales[scale_idx_h * 8 + cp * 2 + 0],
                                 q6_scales[scale_idx_h * 8 + cp * 2 + 1],
@@ -5035,27 +5035,27 @@ void ggml_gemm_q6_K_8x8_q8_K(int                        n,
                 }  // for half
 
                 // Reorder i8mm output to match memory layout
-                for (int i = 0; i < 8; i++) {
-                    int32x2x2_t aux = vzip_s32(vget_low_s32(acc[i]), vget_high_s32(acc[i]));
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 8; i++) {
+                    int32x2x2_t aux = vzip_s32(vget_ಕೆಳಗಿನ_s32(acc[i]), vget_ಮೇಲಿನ_s32(acc[i]));
                     acc[i]          = vcombine_s32(aux.val[0], aux.val[1]);
                 }
                 int32x4_t reorder_acc[8] = {
-                    vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1])),
-                    vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3])),
-                    vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1])),
-                    vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3])),
-                    vcombine_s32(vget_low_s32(acc[4]), vget_low_s32(acc[5])),
-                    vcombine_s32(vget_low_s32(acc[6]), vget_low_s32(acc[7])),
-                    vcombine_s32(vget_high_s32(acc[4]), vget_high_s32(acc[5])),
-                    vcombine_s32(vget_high_s32(acc[6]), vget_high_s32(acc[7])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[0]), vget_ಕೆಳಗಿನ_s32(acc[1])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[2]), vget_ಕೆಳಗಿನ_s32(acc[3])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[0]), vget_ಮೇಲಿನ_s32(acc[1])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[2]), vget_ಮೇಲಿನ_s32(acc[3])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[4]), vget_ಕೆಳಗಿನ_s32(acc[5])),
+                    vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[6]), vget_ಕೆಳಗಿನ_s32(acc[7])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[4]), vget_ಮೇಲಿನ_s32(acc[5])),
+                    vcombine_s32(vget_ಮೇಲಿನ_s32(acc[6]), vget_ಮೇಲಿನ_s32(acc[7])),
                 };
 
                 // Apply superblock scale (no mins for q6_K)
-                for (int i = 0; i < q8_k_blocklen; i++) {
-                    for (int j = 0; j < 2; j++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
                         float32x4_t       q8_d  = vdupq_n_f32(q8_ptr[b].d[i]);
-                        float32x4_t       q6_d  = vcvt_f32_f16(vld1_f16((const __fp16 *) (q6_ptr[b].d + j * 4)));
-                        const float32x4_t scale = vmulq_f32(q6_d, q8_d);
+                        float32x4_t       q6_d  = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) (q6_ptr[b].d + j * 4)));
+                        ಸ್ಥಿರಾಂಕ float32x4_t scale = vmulq_f32(q6_d, q8_d);
 
                         acc_f32[2 * i + j] =
                             vmlaq_f32(acc_f32[2 * i + j], vcvtq_f32_s32(reorder_acc[2 * i + j]), scale);
@@ -5064,66 +5064,66 @@ void ggml_gemm_q6_K_8x8_q8_K(int                        n,
             }  // for b
 
             // Store results
-            for (int i = 0; i < q8_k_blocklen; i++) {
-                int row = y * q8_k_blocklen + i;
-                for (int j = 0; j < 2; j++) {
-                    int col    = x * ncols_interleaved + j * 4;
-                    int offset = row * bs + col;
-                    vst1q_f32(s + offset, acc_f32[2 * i + j]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < q8_k_blocklen; i++) {
+                ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = y * q8_k_blocklen + i;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 2; j++) {
+                    ಪೂರ್ಣಾಂಕ ಲಂಬಸಾಲು    = x * ncols_interleaved + j * 4;
+                    ಪೂರ್ಣಾಂಕ ಸ್ಥಾನಾಂತರ = ಅಡ್ಡಸಾಲು * bs + ಲಂಬಸಾಲು;
+                    vst1q_f32(s + ಸ್ಥಾನಾಂತರ, acc_f32[2 * i + j]);
                 }
             }
         }  // for x
     }  // for y
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
     ggml_gemm_q6_K_8x8_q8_K_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q8_0_4x4_q8_0(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemm_q8_0_4x4_q8_0(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 4;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk                = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb                = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen          = 4;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx + (x * nb);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / 4; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vy + (y * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vx + (x * nb);
 
             float32x4_t sumf[4];
-            for (int m = 0; m < 4; m++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; m++) {
                 sumf[m] = vdupq_n_f32(0);
             }
 
-            for (int l = 0; l < nb; l++) {
-                float32x4_t a_d = vcvt_f32_f16(vld1_f16((const float16_t *) a_ptr[l].d));
-                float32x4_t b_d = vcvt_f32_f16(vld1_f16((const float16_t *) b_ptr[l].d));
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ l = 0; l < nb; l++) {
+                float32x4_t a_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *) a_ptr[l].d));
+                float32x4_t b_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *) b_ptr[l].d));
 
                 int32x4_t sumi_0 = vdupq_n_s32(0);
                 int32x4_t sumi_1 = vdupq_n_s32(0);
                 int32x4_t sumi_2 = vdupq_n_s32(0);
                 int32x4_t sumi_3 = vdupq_n_s32(0);
 
-                for (int k_group = 0; k_group < 8; k_group += 4) {
-                    int8x16x4_t a = vld1q_s8_x4(a_ptr[l].qs + 16 * k_group);
-                    int8x16x4_t b = vld1q_s8_x4(b_ptr[l].qs + 16 * k_group);
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k_ಗುಂಪು = 0; k_ಗುಂಪು < 8; k_ಗುಂಪು += 4) {
+                    int8x16x4_t a = vld1q_s8_x4(a_ptr[l].qs + 16 * k_ಗುಂಪು);
+                    int8x16x4_t b = vld1q_s8_x4(b_ptr[l].qs + 16 * k_ಗುಂಪು);
 
-                    for (int k = 0; k < 4; k++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; k++) {
                         sumi_0 = vdotq_laneq_s32(sumi_0, b.val[k], a.val[k], 0);
                         sumi_1 = vdotq_laneq_s32(sumi_1, b.val[k], a.val[k], 1);
                         sumi_2 = vdotq_laneq_s32(sumi_2, b.val[k], a.val[k], 2);
@@ -5137,64 +5137,64 @@ void ggml_gemm_q8_0_4x4_q8_0(int                        n,
                 sumf[3] = vmlaq_f32(sumf[3], vmulq_laneq_f32(b_d, a_d, 3), vcvtq_f32_s32(sumi_3));
             }
 
-            for (int m = 0; m < 4; m++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; m++) {
                 vst1q_f32(s + (y * 4 + m) * bs + x * 4, sumf[m]);
             }
         }
     }
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
     ggml_gemm_q8_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q8_0_4x8_q8_0(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemm_q8_0_4x8_q8_0(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk                = QK8_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb                = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ blocklen          = 8;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
-    UNUSED(blocklen);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
+    ಬಳಸದ(blocklen);
 
-#if defined(__aarch64__) && defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
-    if (svcntb() * 8 == 256) {
-        const block_q8_0x4 * b_ptr_base = (const block_q8_0x4 *) vx;
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_FEATURE_SVE) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಆದರೆ (svcntb() * 8 == 256) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * b_ptr_ತಳ = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vx;
 
-        static const uint32_t idx_arr[8] = {0, 1, 4, 5, 2, 3, 6, 7};
+        ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ uint32_t idx_arr[8] = {0, 1, 4, 5, 2, 3, 6, 7};
         svuint32_t idx = svld1(svptrue_b32(), idx_arr);
-        static const uint32_t idx_arr1[8] = {0, 1, 2, 3, 1, 2, 3, 0};
+        ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ uint32_t idx_arr1[8] = {0, 1, 2, 3, 1, 2, 3, 0};
         svuint32_t idx_sc1 = svld1(svptrue_b32(), idx_arr1);
-        static const uint32_t idx_arr2[8] = {0, 1, 2, 3, 0, 1, 2, 3};
+        ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ uint32_t idx_arr2[8] = {0, 1, 2, 3, 0, 1, 2, 3};
         svuint32_t idx_sc2 = svld1(svptrue_b32(), idx_arr2);
 
-        for (int y = 0; y < nr; y += 4) {
-            const block_q8_0x4 * a_ptr_base = (const block_q8_0x4 *) vy + (y / 4) * nb;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr; y += 4) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * a_ptr_ತಳ = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vy + (y / 4) * nb;
 
-            for (int x = 0; x < nc; x += ncols_interleaved) {
-                const block_q8_0x4 * b_ptr = b_ptr_base + (x / 4) * nb;
-                const block_q8_0x4 * a_ptr = a_ptr_base;
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc; x += ncols_interleaved) {
+                ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * b_ptr = b_ptr_ತಳ + (x / 4) * nb;
+                ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * a_ptr = a_ptr_ತಳ;
 
                 svfloat32_t acc_f32_01 = svdup_f32(0);
                 svfloat32_t acc_f32_23 = svdup_f32(0);
 
-                for (int b = 0; b < nb; b++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
 
                     svint32_t acc_01 = svdup_s32(0);
                     svint32_t acc_23 = svdup_s32(0);
 
                     // Process 4 chunks of 8 positions each
-                    for (int chunk = 0; chunk < 4; chunk++) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ chunk = 0; chunk < 4; chunk++) {
                         svint8_t s_a01 = svld1rq_s8(svptrue_b8(), a_ptr->qs + chunk * 32);
                         svint8_t s_a23 = svld1rq_s8(svptrue_b8(), a_ptr->qs + chunk * 32 + 16);
                         svint8_t s_b0123 = svld1_s8(svptrue_b8(), b_ptr->qs + chunk * 32);
@@ -5210,8 +5210,8 @@ void ggml_gemm_q8_0_4x8_q8_0(int                        n,
                     svint32_t row01 = svtbl_s32(acc_01, idx);
                     svint32_t row23 = svtbl_s32(acc_23, idx);
 
-                    svfloat16_t temp1 = svld1_f16(svptrue_pat_b16(SV_VL4), (const __fp16 *) a_ptr->d);
-                    svfloat16_t temp2 = svld1_f16(svptrue_pat_b16(SV_VL4), (const __fp16 *) b_ptr->d);
+                    svfloat16_t temp1 = svld1_f16(svptrue_pat_b16(SV_VL4), (ಸ್ಥಿರಾಂಕ __fp16 *) a_ptr->d);
+                    svfloat16_t temp2 = svld1_f16(svptrue_pat_b16(SV_VL4), (ಸ್ಥಿರಾಂಕ __fp16 *) b_ptr->d);
                     svfloat32_t sv_a_d = svtbl_f32(svcvt_f32_f16_x(svptrue_b32(), svzip1_f16(temp1, temp1)), idx_sc1);
                     svfloat32_t sv_b_d = svtbl_f32(svcvt_f32_f16_x(svptrue_b32(), svzip1_f16(temp2, temp2)), idx_sc2);
 
@@ -5228,33 +5228,33 @@ void ggml_gemm_q8_0_4x8_q8_0(int                        n,
                 svst1_f32(pg4, s + (y+3) * bs + x, svext_f32(acc_f32_23, acc_f32_23, 4));
             }
         }
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
-#endif  // SVE compile-time end
+#ಆದರೆ_ಅಂತ್ಯ  // SVE compile-time end
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
-    const block_q8_0x4 * b_ptr_base = (const block_q8_0x4 *) vx;
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * b_ptr_ತಳ = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vx;
 
-    for (int y = 0; y < nr; y += 4) {
-        const block_q8_0x4 * a_ptr_base = (const block_q8_0x4 *) vy + (y / 4) * nb;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr; y += 4) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * a_ptr_ತಳ = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vy + (y / 4) * nb;
 
-        for (int x = 0; x < nc; x += ncols_interleaved) {
-            const block_q8_0x4 * b_ptr = b_ptr_base + (x / 4) * nb;
-            const block_q8_0x4 * a_ptr = a_ptr_base;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc; x += ncols_interleaved) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * b_ptr = b_ptr_ತಳ + (x / 4) * nb;
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * a_ptr = a_ptr_ತಳ;
 
             float32x4_t acc_f32[4];
-            for (int i = 0; i < 4; i++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 4; i++) {
                 acc_f32[i] = vdupq_n_f32(0);
             }
 
-            for (int b = 0; b < nb; b++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ b = 0; b < nb; b++) {
                 int32x4_t acc[4];
-                for (int i = 0; i < 4; i++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 4; i++) {
                     acc[i] = vdupq_n_s32(0);
                 }
 
                 // Process 4 chunks of 8 positions each
-                for (int chunk = 0; chunk < 4; chunk++) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ chunk = 0; chunk < 4; chunk++) {
                     int8x16_t a01 = vld1q_s8(a_ptr->qs + chunk * 32);
                     int8x16_t a23 = vld1q_s8(a_ptr->qs + chunk * 32 + 16);
                     int8x16_t b01 = vld1q_s8(b_ptr->qs + chunk * 32);
@@ -5271,14 +5271,14 @@ void ggml_gemm_q8_0_4x8_q8_0(int                        n,
                 // acc[1] = [r0c2, r0c3, r1c2, r1c3]
                 // acc[2] = [r2c0, r2c1, r3c0, r3c1]
                 // acc[3] = [r2c2, r2c3, r3c2, r3c3]
-                int32x4_t row0 = vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1]));
-                int32x4_t row1 = vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1]));
-                int32x4_t row2 = vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3]));
-                int32x4_t row3 = vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3]));
+                int32x4_t row0 = vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[0]), vget_ಕೆಳಗಿನ_s32(acc[1]));
+                int32x4_t row1 = vcombine_s32(vget_ಮೇಲಿನ_s32(acc[0]), vget_ಮೇಲಿನ_s32(acc[1]));
+                int32x4_t row2 = vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[2]), vget_ಕೆಳಗಿನ_s32(acc[3]));
+                int32x4_t row3 = vcombine_s32(vget_ಮೇಲಿನ_s32(acc[2]), vget_ಮೇಲಿನ_s32(acc[3]));
 
                 // Scales
-                float32x4_t a_d = vcvt_f32_f16(vld1_f16((const __fp16 *) a_ptr->d));
-                float32x4_t b_d = vcvt_f32_f16(vld1_f16((const __fp16 *) b_ptr->d));
+                float32x4_t a_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) a_ptr->d));
+                float32x4_t b_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ __fp16 *) b_ptr->d));
 
                 acc_f32[0] = vfmaq_f32(acc_f32[0], vcvtq_f32_s32(row0), vmulq_laneq_f32(b_d, a_d, 0));
                 acc_f32[1] = vfmaq_f32(acc_f32[1], vcvtq_f32_s32(row1), vmulq_laneq_f32(b_d, a_d, 1));
@@ -5289,65 +5289,65 @@ void ggml_gemm_q8_0_4x8_q8_0(int                        n,
                 b_ptr++;
             }
 
-            for (int row = 0; row < 4; row++) {
-                vst1q_f32(s + (y + row) * bs + x, acc_f32[row]);
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ ಅಡ್ಡಸಾಲು = 0; ಅಡ್ಡಸಾಲು < 4; ಅಡ್ಡಸಾಲು++) {
+                vst1q_f32(s + (y + ಅಡ್ಡಸಾಲು) * bs + x, acc_f32[ಅಡ್ಡಸಾಲು]);
             }
         }
     }
-    return;
-#endif  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ  // defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
     ggml_gemm_q8_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q1_0_4x4_q8_0(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemm_q1_0_4x4_q8_0(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk                = QK1_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb                = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (4 * y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_DOTPROD)
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / 4; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vy + (4 * y * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q1_0x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q1_0x4 *) vx + (x * nb);
 
             float32x4_t sumf[4];
-            for (int m = 0; m < 4; m++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; m++) {
                 sumf[m] = vdupq_n_f32(0);
             }
 
-            for (int l = 0; l < nb; l++) {
-                float32x4_t b_d = vcvt_f32_f16(vld1_f16((const float16_t *) b_ptr[l].d));
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ l = 0; l < nb; l++) {
+                float32x4_t b_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *) b_ptr[l].d));
                 float32x4_t blockf_0 = vdupq_n_f32(0);
                 float32x4_t blockf_1 = vdupq_n_f32(0);
                 float32x4_t blockf_2 = vdupq_n_f32(0);
                 float32x4_t blockf_3 = vdupq_n_f32(0);
 
-                for (int k = 0; k < 4; ++k) {
-                    const block_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k;
-                    float32x4_t a_d = vcvt_f32_f16(vld1_f16((const float16_t *) a_blk->d));
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; ++k) {
+                    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k;
+                    float32x4_t a_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *) a_blk->d));
 
                     int32x4_t sumi_0 = vdupq_n_s32(0);
                     int32x4_t sumi_1 = vdupq_n_s32(0);
                     int32x4_t sumi_2 = vdupq_n_s32(0);
                     int32x4_t sumi_3 = vdupq_n_s32(0);
 
-                    for (int tile = 0; tile < 8; ++tile) {
-                        const int8x16_t signs = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * tile + 0],
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ tile = 0; tile < 8; ++tile) {
+                        ಸ್ಥಿರಾಂಕ int8x16_t signs = ggml_q1_0_unpack_pair(b_ptr[l].qs[k * 16 + 2 * tile + 0],
                                                                        b_ptr[l].qs[k * 16 + 2 * tile + 1]);
-                        const int8x16_t a_tile = vld1q_s8(a_blk->qs + tile * 16);
+                        ಸ್ಥಿರಾಂಕ int8x16_t a_tile = vld1q_s8(a_blk->qs + tile * 16);
 
                         sumi_0 = vdotq_laneq_s32(sumi_0, signs, a_tile, 0);
                         sumi_1 = vdotq_laneq_s32(sumi_1, signs, a_tile, 1);
@@ -5367,67 +5367,67 @@ void ggml_gemm_q1_0_4x4_q8_0(int                        n,
                 sumf[3] = vfmaq_f32(sumf[3], blockf_3, b_d);
             }
 
-            for (int m = 0; m < 4; m++) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; m++) {
                 vst1q_f32(s + (y * 4 + m) * bs + x * 4, sumf[m]);
             }
         }
     }
-    return;
-#endif
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ
     ggml_gemm_q1_0_4x4_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q1_0_4x8_q8_0(int                        n,
-                             float * GGML_RESTRICT      s,
+ಶೂನ್ಯ ggml_gemm_q1_0_4x8_q8_0(ಪೂರ್ಣಾಂಕ                        n,
+                             ದಶಮಾಂಶ * GGML_RESTRICT      s,
                              size_t                     bs,
-                             const void * GGML_RESTRICT vx,
-                             const void * GGML_RESTRICT vy,
-                             int                        nr,
-                             int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vx,
+                             ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * GGML_RESTRICT vy,
+                             ಪೂರ್ಣಾಂಕ                        nr,
+                             ಪೂರ್ಣಾಂಕ                        nc) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ qk                = QK1_0;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ nb                = n / qk;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ncols_interleaved = 4;
 
-    assert(n % qk == 0);
-    assert(nr % 4 == 0);
-    assert(nc % ncols_interleaved == 0);
+    ಪ್ರತಿಜ್ಞಾ(n % qk == 0);
+    ಪ್ರತಿಜ್ಞಾ(nr % 4 == 0);
+    ಪ್ರತಿಜ್ಞಾ(nc % ncols_interleaved == 0);
 
-    UNUSED(nb);
-    UNUSED(ncols_interleaved);
+    ಬಳಸದ(nb);
+    ಬಳಸದ(ncols_interleaved);
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
-    for (int y = 0; y < nr / 4; y++) {
-        const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (4 * y * nb);
+#ಆದರೆ defined(__aarch64__) && defined(__ARM_NEON) && defined(__ARM_FEATURE_MATMUL_INT8)
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ y = 0; y < nr / 4; y++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * a_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 *) vy + (4 * y * nb);
 
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
-            const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ x = 0; x < nc / ncols_interleaved; x++) {
+            ಸ್ಥಿರಾಂಕ ಖಂಡ_q1_0x4 * b_ptr = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q1_0x4 *) vx + (x * nb);
 
             float32x4_t sumf[4];
-            for (int m = 0; m < 4; ++m) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; ++m) {
                 sumf[m] = vdupq_n_f32(0);
             }
 
-            for (int l = 0; l < nb; l++) {
-                const float32x4_t b_d = vcvt_f32_f16(vld1_f16((const float16_t *) b_ptr[l].d));
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ l = 0; l < nb; l++) {
+                ಸ್ಥಿರಾಂಕ float32x4_t b_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *) b_ptr[l].d));
                 float32x4_t blockf[4];
-                for (int m = 0; m < 4; ++m) {
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; ++m) {
                     blockf[m] = vdupq_n_f32(0);
                 }
 
-                for (int k = 0; k < 4; ++k) {
-                    const block_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k;
-                    const uint8_t * GGML_RESTRICT b_qs = (const uint8_t *) b_ptr[l].qs + k * 16;
+                ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 4; ++k) {
+                    ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k;
+                    ಸ್ಥಿರಾಂಕ uint8_t * GGML_RESTRICT b_qs = (ಸ್ಥಿರಾಂಕ uint8_t *) b_ptr[l].qs + k * 16;
 
                     int32x4_t acc[4];
-                    for (int i = 0; i < 4; ++i) {
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < 4; ++i) {
                         acc[i] = vdupq_n_s32(0);
                     }
 
-                    for (int chunk = 0; chunk < 4; ++chunk) {
-                        const int8x16_t a01 = vld1q_s8(a_blk->qs + chunk * 32);
-                        const int8x16_t a23 = vld1q_s8(a_blk->qs + chunk * 32 + 16);
-                        const int8x16_t b01 = ggml_q1_0_unpack_pair(b_qs[chunk * 4 + 0], b_qs[chunk * 4 + 1]);
-                        const int8x16_t b23 = ggml_q1_0_unpack_pair(b_qs[chunk * 4 + 2], b_qs[chunk * 4 + 3]);
+                    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ chunk = 0; chunk < 4; ++chunk) {
+                        ಸ್ಥಿರಾಂಕ int8x16_t a01 = vld1q_s8(a_blk->qs + chunk * 32);
+                        ಸ್ಥಿರಾಂಕ int8x16_t a23 = vld1q_s8(a_blk->qs + chunk * 32 + 16);
+                        ಸ್ಥಿರಾಂಕ int8x16_t b01 = ggml_q1_0_unpack_pair(b_qs[chunk * 4 + 0], b_qs[chunk * 4 + 1]);
+                        ಸ್ಥಿರಾಂಕ int8x16_t b23 = ggml_q1_0_unpack_pair(b_qs[chunk * 4 + 2], b_qs[chunk * 4 + 3]);
 
                         acc[0] = vmmlaq_s32(acc[0], a01, b01);
                         acc[1] = vmmlaq_s32(acc[1], a01, b23);
@@ -5435,11 +5435,11 @@ void ggml_gemm_q1_0_4x8_q8_0(int                        n,
                         acc[3] = vmmlaq_s32(acc[3], a23, b23);
                     }
 
-                    const int32x4_t row0 = vcombine_s32(vget_low_s32(acc[0]), vget_low_s32(acc[1]));
-                    const int32x4_t row1 = vcombine_s32(vget_high_s32(acc[0]), vget_high_s32(acc[1]));
-                    const int32x4_t row2 = vcombine_s32(vget_low_s32(acc[2]), vget_low_s32(acc[3]));
-                    const int32x4_t row3 = vcombine_s32(vget_high_s32(acc[2]), vget_high_s32(acc[3]));
-                    const float32x4_t a_d = vcvt_f32_f16(vld1_f16((const float16_t *) a_blk->d));
+                    ಸ್ಥಿರಾಂಕ int32x4_t row0 = vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[0]), vget_ಕೆಳಗಿನ_s32(acc[1]));
+                    ಸ್ಥಿರಾಂಕ int32x4_t row1 = vcombine_s32(vget_ಮೇಲಿನ_s32(acc[0]), vget_ಮೇಲಿನ_s32(acc[1]));
+                    ಸ್ಥಿರಾಂಕ int32x4_t row2 = vcombine_s32(vget_ಕೆಳಗಿನ_s32(acc[2]), vget_ಕೆಳಗಿನ_s32(acc[3]));
+                    ಸ್ಥಿರಾಂಕ int32x4_t row3 = vcombine_s32(vget_ಮೇಲಿನ_s32(acc[2]), vget_ಮೇಲಿನ_s32(acc[3]));
+                    ಸ್ಥಿರಾಂಕ float32x4_t a_d = vcvt_f32_f16(vld1_f16((ಸ್ಥಿರಾಂಕ float16_t *) a_blk->d));
 
                     blockf[0] = vfmaq_laneq_f32(blockf[0], vcvtq_f32_s32(row0), a_d, 0);
                     blockf[1] = vfmaq_laneq_f32(blockf[1], vcvtq_f32_s32(row1), a_d, 1);
@@ -5453,13 +5453,13 @@ void ggml_gemm_q1_0_4x8_q8_0(int                        n,
                 sumf[3] = vfmaq_f32(sumf[3], blockf[3], b_d);
             }
 
-            for (int m = 0; m < 4; ++m) {
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ m = 0; m < 4; ++m) {
                 vst1q_f32(s + (y * 4 + m) * bs + x * 4, sumf[m]);
             }
         }
     }
-    return;
-#endif
+    ಹಿಂತಿರುಗಿ;
+#ಆದರೆ_ಅಂತ್ಯ
 
     ggml_gemm_q1_0_4x8_q8_0_generic(n, s, bs, vx, vy, nr, nc);
 }

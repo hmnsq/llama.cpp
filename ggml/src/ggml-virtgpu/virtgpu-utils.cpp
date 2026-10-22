@@ -1,152 +1,152 @@
-#include "virtgpu-utils.h"
+#ಅನ್ತರ್ಭಾವ "virtgpu-utils.h"
 
-#include <malloc.h>
-#include <stdlib.h>
+#ಅನ್ತರ್ಭಾವ <malloc.h>
+#ಅನ್ತರ್ಭಾವ <stdlib.h>
 
-#include <cstring>
+#ಅನ್ತರ್ಭಾವ <cstring>
 
-#define NODE_ALLOC_ALIGN 64
-#define NODE_PTR_MASK    (~((uintptr_t) NODE_ALLOC_ALIGN - 1))
-#define NODE_LEVEL_MASK  ((uintptr_t) NODE_ALLOC_ALIGN - 1)
-#define NULL_NODE        0
+#ವ್ಯಾಖ್ಯಾನಿಸು ಗಂಟು_ALLOC_ALIGN 64
+#ವ್ಯಾಖ್ಯಾನಿಸು ಗಂಟು_PTR_ಮುಖವಾಡ    (~((uintptr_t) ಗಂಟು_ALLOC_ALIGN - 1))
+#ವ್ಯಾಖ್ಯಾನಿಸು ಗಂಟು_LEVEL_ಮುಖವಾಡ  ((uintptr_t) ಗಂಟು_ALLOC_ALIGN - 1)
+#ವ್ಯಾಖ್ಯಾನಿಸು NULL_ಗಂಟು        0
 
-#define os_malloc_aligned(_size, _align) _aligned_malloc(_size, _align)
-#define os_free_aligned(_ptr)            free(_ptr)
-#define p_atomic_cmpxchg(v, old, _new)   __sync_val_compare_and_swap((v), (old), (_new))
+#ವ್ಯಾಖ್ಯಾನಿಸು os_malloc_aligned(ಗಾತ್ರ_3, _align) _aligned_malloc(ಗಾತ್ರ_3, _align)
+#ವ್ಯಾಖ್ಯಾನಿಸು os_free_aligned(_ptr)            ಬಿಡುಗಡೆ(_ptr)
+#ವ್ಯಾಖ್ಯಾನಿಸು p_atomic_cmpxchg(v, old, _new)   __sync_val_compare_and_swap((v), (old), (_new))
 
-static inline uint64_t util_logbase2_64(uint64_t n) {
-#if defined(HAVE___BUILTIN_CLZLL)
-    return ((sizeof(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
-#else
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint64_t util_logbase2_64(uint64_t n) {
+#ಆದರೆ defined(HAVE___BUILTIN_CLZLL)
+    ಹಿಂತಿರುಗಿ ((ಗಾತ್ರ(uint64_t) * 8 - 1) - __builtin_clzll(n | 1));
+#ಇಲ್ಲದಿದ್ದರೆ
     uint64_t pos = 0ull;
-    if (n >= 1ull << 32) {
+    ಆದರೆ (n >= 1ull << 32) {
         n >>= 32;
         pos += 32;
     }
-    if (n >= 1ull << 16) {
+    ಆದರೆ (n >= 1ull << 16) {
         n >>= 16;
         pos += 16;
     }
-    if (n >= 1ull << 8) {
+    ಆದರೆ (n >= 1ull << 8) {
         n >>= 8;
         pos += 8;
     }
-    if (n >= 1ull << 4) {
+    ಆದರೆ (n >= 1ull << 4) {
         n >>= 4;
         pos += 4;
     }
-    if (n >= 1ull << 2) {
+    ಆದರೆ (n >= 1ull << 2) {
         n >>= 2;
         pos += 2;
     }
-    if (n >= 1ull << 1) {
+    ಆದರೆ (n >= 1ull << 1) {
         pos += 1;
     }
-    return pos;
-#endif
+    ಹಿಂತಿರುಗಿ pos;
+#ಆದರೆ_ಅಂತ್ಯ
 }
 
-void util_sparse_array_init(util_sparse_array * arr, size_t elem_size, size_t node_size) {
-    memset(arr, 0, sizeof(*arr));
-    arr->elem_size      = elem_size;
-    arr->node_size_log2 = util_logbase2_64(node_size);
-    assert(node_size >= 2 && node_size == (1ull << arr->node_size_log2));
+ಶೂನ್ಯ util_sparse_array_init(util_sparse_array * arr, size_t elem_ಗಾತ್ರ, size_t ಗಂಟು_ಗಾತ್ರ) {
+    memset(arr, 0, ಗಾತ್ರ(*arr));
+    arr->elem_ಗಾತ್ರ      = elem_ಗಾತ್ರ;
+    arr->ಗಂಟು_ಗಾತ್ರ_log2 = util_logbase2_64(ಗಂಟು_ಗಾತ್ರ);
+    ಪ್ರತಿಜ್ಞಾ(ಗಂಟು_ಗಾತ್ರ >= 2 && ಗಂಟು_ಗಾತ್ರ == (1ull << arr->ಗಂಟು_ಗಾತ್ರ_log2));
 }
 
-static inline void * os_malloc_aligned(size_t size, size_t alignment) {
-    void * ptr;
-    alignment = (alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
-    if (posix_memalign(&ptr, alignment, size) != 0) {
-        return NULL;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ * os_malloc_aligned(size_t size, size_t alignment) {
+    ಶೂನ್ಯ * ptr;
+    alignment = (alignment + ಗಾತ್ರ(ಶೂನ್ಯ *) - 1) & ~(ಗಾತ್ರ(ಶೂನ್ಯ *) - 1);
+    ಆದರೆ (posix_memalign(&ptr, alignment, size) != 0) {
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
-    return ptr;
+    ಹಿಂತಿರುಗಿ ptr;
 }
 
-static inline void * _util_sparse_array_node_data(uintptr_t handle) {
-    return (void *) (handle & NODE_PTR_MASK);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ * util_sparse_array_ಗಂಟು_ದತ್ತಾಂಶ(uintptr_t handle) {
+    ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *) (handle & ಗಂಟು_PTR_ಮುಖವಾಡ);
 }
 
-static inline unsigned _util_sparse_array_node_level(uintptr_t handle) {
-    return handle & NODE_LEVEL_MASK;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಚಿಹ್ನೆರಹಿತ util_sparse_array_ಗಂಟು_level(uintptr_t handle) {
+    ಹಿಂತಿರುಗಿ handle & ಗಂಟು_LEVEL_ಮುಖವಾಡ;
 }
 
-static inline void _util_sparse_array_node_finish(util_sparse_array * arr, uintptr_t node) {
-    if (_util_sparse_array_node_level(node) > 0) {
-        uintptr_t * children  = (uintptr_t *) _util_sparse_array_node_data(node);
-        size_t      node_size = 1ull << arr->node_size_log2;
-        for (size_t i = 0; i < node_size; i++) {
-            if (children[i]) {
-                _util_sparse_array_node_finish(arr, children[i]);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ util_sparse_array_ಗಂಟು_ಮುಕ್ತಾಯ(util_sparse_array * arr, uintptr_t ಗಂಟು) {
+    ಆದರೆ (util_sparse_array_ಗಂಟು_level(ಗಂಟು) > 0) {
+        uintptr_t * children  = (uintptr_t *) util_sparse_array_ಗಂಟು_ದತ್ತಾಂಶ(ಗಂಟು);
+        size_t      ಗಂಟು_ಗಾತ್ರ = 1ull << arr->ಗಂಟು_ಗಾತ್ರ_log2;
+        ಗಾಗಿ (size_t i = 0; i < ಗಂಟು_ಗಾತ್ರ; i++) {
+            ಆದರೆ (children[i]) {
+                util_sparse_array_ಗಂಟು_ಮುಕ್ತಾಯ(arr, children[i]);
             }
         }
     }
 
-    os_free_aligned(_util_sparse_array_node_data(node));
+    os_free_aligned(util_sparse_array_ಗಂಟು_ದತ್ತಾಂಶ(ಗಂಟು));
 }
 
-static inline uintptr_t _util_sparse_array_node(void * data, unsigned level) {
-    assert(data != NULL);
-    assert(((uintptr_t) data & NODE_LEVEL_MASK) == 0);
-    assert((level & NODE_PTR_MASK) == 0);
-    return (uintptr_t) data | level;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uintptr_t util_sparse_array_ಗಂಟು(ಶೂನ್ಯ * ದತ್ತಾಂಶ, ಚಿಹ್ನೆರಹಿತ level) {
+    ಪ್ರತಿಜ್ಞಾ(ದತ್ತಾಂಶ != ಖಾಲಿ);
+    ಪ್ರತಿಜ್ಞಾ(((uintptr_t) ದತ್ತಾಂಶ & ಗಂಟು_LEVEL_ಮುಖವಾಡ) == 0);
+    ಪ್ರತಿಜ್ಞಾ((level & ಗಂಟು_PTR_ಮುಖವಾಡ) == 0);
+    ಹಿಂತಿರುಗಿ (uintptr_t) ದತ್ತಾಂಶ | level;
 }
 
-inline uintptr_t _util_sparse_array_node_alloc(util_sparse_array * arr, unsigned level) {
+ಸಾಲೊಳಗೆ uintptr_t util_sparse_array_ಗಂಟು_alloc(util_sparse_array * arr, ಚಿಹ್ನೆರಹಿತ level) {
     size_t size;
-    if (level == 0) {
-        size = arr->elem_size << arr->node_size_log2;
-    } else {
-        size = sizeof(uintptr_t) << arr->node_size_log2;
+    ಆದರೆ (level == 0) {
+        size = arr->elem_ಗಾತ್ರ << arr->ಗಂಟು_ಗಾತ್ರ_log2;
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        size = ಗಾತ್ರ(uintptr_t) << arr->ಗಂಟು_ಗಾತ್ರ_log2;
     }
 
-    void * data = os_malloc_aligned(size, NODE_ALLOC_ALIGN);
-    memset(data, 0, size);
+    ಶೂನ್ಯ * ದತ್ತಾಂಶ = os_malloc_aligned(size, ಗಂಟು_ALLOC_ALIGN);
+    memset(ದತ್ತಾಂಶ, 0, size);
 
-    return _util_sparse_array_node(data, level);
+    ಹಿಂತಿರುಗಿ util_sparse_array_ಗಂಟು(ದತ್ತಾಂಶ, level);
 }
 
-static inline uintptr_t _util_sparse_array_set_or_free_node(uintptr_t * node_ptr, uintptr_t cmp_node, uintptr_t node) {
-    uintptr_t prev_node = p_atomic_cmpxchg(node_ptr, cmp_node, node);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uintptr_t util_sparse_array_ಗಣ_or_free_ಗಂಟು(uintptr_t * ಗಂಟು_ptr, uintptr_t cmp_ಗಂಟು, uintptr_t ಗಂಟು) {
+    uintptr_t prev_ಗಂಟು = p_atomic_cmpxchg(ಗಂಟು_ptr, cmp_ಗಂಟು, ಗಂಟು);
 
-    if (prev_node != cmp_node) {
+    ಆದರೆ (prev_ಗಂಟು != cmp_ಗಂಟು) {
         /* We lost the race.  Free this one and return the one that was already
        * allocated.
        */
-        os_free_aligned(_util_sparse_array_node_data(node));
-        return prev_node;
-    } else {
-        return node;
+        os_free_aligned(util_sparse_array_ಗಂಟು_ದತ್ತಾಂಶ(ಗಂಟು));
+        ಹಿಂತಿರುಗಿ prev_ಗಂಟು;
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ ಗಂಟು;
     }
 }
 
-void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
-    const unsigned node_size_log2 = arr->node_size_log2;
-    uintptr_t      root           = p_atomic_read(&arr->root);
-    if (unlikely(!root)) {
-        unsigned root_level = 0;
-        uint64_t idx_iter   = idx >> node_size_log2;
-        while (idx_iter) {
-            idx_iter >>= node_size_log2;
-            root_level++;
+ಶೂನ್ಯ * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
+    ಸ್ಥಿರಾಂಕ ಚಿಹ್ನೆರಹಿತ ಗಂಟು_ಗಾತ್ರ_log2 = arr->ಗಂಟು_ಗಾತ್ರ_log2;
+    uintptr_t      ಬೇರು           = p_atomic_read(&arr->ಬೇರು);
+    ಆದರೆ (unlikely(!ಬೇರು)) {
+        ಚಿಹ್ನೆರಹಿತ ಬೇರು_level = 0;
+        uint64_t idx_iter   = idx >> ಗಂಟು_ಗಾತ್ರ_log2;
+        ಆಗ (idx_iter) {
+            idx_iter >>= ಗಂಟು_ಗಾತ್ರ_log2;
+            ಬೇರು_level++;
         }
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level);
-        root               = _util_sparse_array_set_or_free_node(&arr->root, NULL_NODE, new_root);
+        uintptr_t new_ಬೇರು = util_sparse_array_ಗಂಟು_alloc(arr, ಬೇರು_level);
+        ಬೇರು               = util_sparse_array_ಗಣ_or_free_ಗಂಟು(&arr->ಬೇರು, NULL_ಗಂಟು, new_ಬೇರು);
     }
 
-    while (1) {
-        unsigned root_level = _util_sparse_array_node_level(root);
-        uint64_t root_idx   = idx >> (root_level * node_size_log2);
-        if (likely(root_idx < (1ull << node_size_log2))) {
-            break;
+    ಆಗ (1) {
+        ಚಿಹ್ನೆರಹಿತ ಬೇರು_level = util_sparse_array_ಗಂಟು_level(ಬೇರು);
+        uint64_t ಬೇರು_idx   = idx >> (ಬೇರು_level * ಗಂಟು_ಗಾತ್ರ_log2);
+        ಆದರೆ (likely(ಬೇರು_idx < (1ull << ಗಂಟು_ಗಾತ್ರ_log2))) {
+            ನಿಲ್ಲಿಸು;
         }
 
         /* In this case, we have a root but its level is low enough that the
        * requested index is out-of-bounds.
        */
-        uintptr_t new_root = _util_sparse_array_node_alloc(arr, root_level + 1);
+        uintptr_t new_ಬೇರು = util_sparse_array_ಗಂಟು_alloc(arr, ಬೇರು_level + 1);
 
-        uintptr_t * new_root_children = (uintptr_t *) _util_sparse_array_node_data(new_root);
-        new_root_children[0]          = root;
+        uintptr_t * new_ಬೇರು_children = (uintptr_t *) util_sparse_array_ಗಂಟು_ದತ್ತಾಂಶ(new_ಬೇರು);
+        new_ಬೇರು_children[0]          = ಬೇರು;
 
         /* We only add one at a time instead of the whole tree because it's
        * easier to ensure correctness of both the tree building and the
@@ -154,26 +154,26 @@ void * util_sparse_array_get(util_sparse_array * arr, uint64_t idx) {
        * worry about trying to free multiple things without freeing the old
        * things.
        */
-        root = _util_sparse_array_set_or_free_node(&arr->root, root, new_root);
+        ಬೇರು = util_sparse_array_ಗಣ_or_free_ಗಂಟು(&arr->ಬೇರು, ಬೇರು, new_ಬೇರು);
     }
 
-    void *   node_data  = _util_sparse_array_node_data(root);
-    unsigned node_level = _util_sparse_array_node_level(root);
-    while (node_level > 0) {
-        uint64_t child_idx = (idx >> (node_level * node_size_log2)) & ((1ull << node_size_log2) - 1);
+    ಶೂನ್ಯ *   ಗಂಟು_ದತ್ತಾಂಶ  = util_sparse_array_ಗಂಟು_ದತ್ತಾಂಶ(ಬೇರು);
+    ಚಿಹ್ನೆರಹಿತ ಗಂಟು_level = util_sparse_array_ಗಂಟು_level(ಬೇರು);
+    ಆಗ (ಗಂಟು_level > 0) {
+        uint64_t ಮಗು_idx = (idx >> (ಗಂಟು_level * ಗಂಟು_ಗಾತ್ರ_log2)) & ((1ull << ಗಂಟು_ಗಾತ್ರ_log2) - 1);
 
-        uintptr_t * children = (uintptr_t *) node_data;
-        uintptr_t   child    = p_atomic_read(&children[child_idx]);
+        uintptr_t * children = (uintptr_t *) ಗಂಟು_ದತ್ತಾಂಶ;
+        uintptr_t   ಮಗು    = p_atomic_read(&children[ಮಗು_idx]);
 
-        if (unlikely(!child)) {
-            child = _util_sparse_array_node_alloc(arr, node_level - 1);
-            child = _util_sparse_array_set_or_free_node(&children[child_idx], NULL_NODE, child);
+        ಆದರೆ (unlikely(!ಮಗು)) {
+            ಮಗು = util_sparse_array_ಗಂಟು_alloc(arr, ಗಂಟು_level - 1);
+            ಮಗು = util_sparse_array_ಗಣ_or_free_ಗಂಟು(&children[ಮಗು_idx], NULL_ಗಂಟು, ಮಗು);
         }
 
-        node_data  = _util_sparse_array_node_data(child);
-        node_level = _util_sparse_array_node_level(child);
+        ಗಂಟು_ದತ್ತಾಂಶ  = util_sparse_array_ಗಂಟು_ದತ್ತಾಂಶ(ಮಗು);
+        ಗಂಟು_level = util_sparse_array_ಗಂಟು_level(ಮಗು);
     }
 
-    uint64_t elem_idx = idx & ((1ull << node_size_log2) - 1);
-    return (void *) ((char *) node_data + (elem_idx * arr->elem_size));
+    uint64_t elem_idx = idx & ((1ull << ಗಂಟು_ಗಾತ್ರ_log2) - 1);
+    ಹಿಂತಿರುಗಿ (ಶೂನ್ಯ *) ((ಅಕ್ಷರ *) ಗಂಟು_ದತ್ತಾಂಶ + (elem_idx * arr->elem_ಗಾತ್ರ));
 }

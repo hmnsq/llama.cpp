@@ -4,84 +4,84 @@
 // dst[i] = c  for all elements
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ಅನ್ತರ್ಭಾವ "ggml_tensor.h"
+#ಅನ್ತರ್ಭಾವ "platform.h"
 
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-struct ggml_et_fill_params {
-    struct ggml_tensor dst;  // F32 output tensor (contiguous)
-    float              c;    // Constant value to fill
+ರಚನೆ ggml_et_fill_params {
+    ರಚನೆ ggml_tensor dst;  // F32 output tensor (contiguous)
+    ದಶಮಾಂಶ              c;    // Constant value to fill
 };
 
-int entry_point(struct ggml_et_fill_params * params, void * env) {
+ಪೂರ್ಣಾಂಕ ನಮೂದು_ಬಿಂದು(ರಚನೆ ggml_et_fill_params * params, ಶೂನ್ಯ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ಆದರೆ (!kernel_env) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ಪೂರ್ಣಾಂಕ thread_id   = get_relative_thread_id(kernel_env->shire_ಮುಖವಾಡ);
+    ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಎಳೆಗಳು = get_ಅಂಕೆ_ಎಳೆಗಳು(kernel_env->shire_ಮುಖವಾಡ);
 
-    if (thread_id < 0) {
-        return 0;
+    ಆದರೆ (thread_id < 0) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ಆದರೆ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    struct ggml_tensor * dst = &params->dst;
+    ರಚನೆ ggml_tensor * dst = &params->dst;
 
-    if (dst->type != GGML_TYPE_F32) {
-        return -1;
+    ಆದರೆ (dst->type != GGML_TYPE_F32) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    float * dst_data = (float *) dst->data;
-    if (!dst_data) {
-        return -1;
+    ದಶಮಾಂಶ * dst_ದತ್ತಾಂಶ = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
+    ಆದರೆ (!dst_ದತ್ತಾಂಶ) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    const int64_t total_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
 
-    if (total_elements == 0) {
-        return 0;
+    ಆದರೆ (ಒಟ್ಟು_elements == 0) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
     // Distribute by cache lines (16 floats = 64 bytes)
-    const int64_t elems_per_cl  = 16;
-    const int64_t total_cl      = (total_elements + elems_per_cl - 1) / elems_per_cl;
-    const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-    const int64_t cl_start      = thread_id * cl_per_thread;
-    int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
-        cl_end = total_cl;
+    ಸ್ಥಿರಾಂಕ int64_t elems_ಪ್ರತಿ_cl  = 16;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_cl      = (ಒಟ್ಟು_elements + elems_ಪ್ರತಿ_cl - 1) / elems_ಪ್ರತಿ_cl;
+    ಸ್ಥಿರಾಂಕ int64_t cl_ಪ್ರತಿ_thread = (ಒಟ್ಟು_cl + ಅಂಕೆ_ಎಳೆಗಳು - 1) / ಅಂಕೆ_ಎಳೆಗಳು;
+    ಸ್ಥಿರಾಂಕ int64_t cl_ಆರಂಭ      = thread_id * cl_ಪ್ರತಿ_thread;
+    int64_t       cl_ಕೊನೆ        = cl_ಆರಂಭ + cl_ಪ್ರತಿ_thread;
+    ಆದರೆ (cl_ಕೊನೆ > ಒಟ್ಟು_cl) {
+        cl_ಕೊನೆ = ಒಟ್ಟು_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
+    ಆದರೆ (cl_ಆರಂಭ >= ಒಟ್ಟು_cl) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    const int64_t es = cl_start * elems_per_cl;
-    int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
-        ee = total_elements;
+    ಸ್ಥಿರಾಂಕ int64_t es = cl_ಆರಂಭ * elems_ಪ್ರತಿ_cl;
+    int64_t       ee = cl_ಕೊನೆ * elems_ಪ್ರತಿ_cl;
+    ಆದರೆ (ee > ಒಟ್ಟು_elements) {
+        ee = ಒಟ್ಟು_elements;
     }
 
     // Broadcast constant to all SIMD lanes
-    float c = params->c;
-    __asm__ volatile("fbc.ps f10, %[v]\n" : : [v] "m"(c) : "f10");
+    ದಶಮಾಂಶ c = params->c;
+    __asm__ ಅಸ್ಥಿರ("fbc.ps f10, %[v]\n" : : [v] "m"(c) : "f10");
 
     // Vector fill (8-wide)
     int64_t       i       = es;
-    const int64_t vec_end = es + ((ee - es) / 8) * 8;
-    for (; i < vec_end; i += 8) {
-        __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_data[i])::"f10");
+    ಸ್ಥಿರಾಂಕ int64_t vec_ಕೊನೆ = es + ((ee - es) / 8) * 8;
+    ಗಾಗಿ (; i < vec_ಕೊನೆ; i += 8) {
+        __asm__ ಅಸ್ಥಿರ("fsw.ps f10, %[d]\n" : [d] "=m"(*(ದಶಮಾಂಶ (*)[8]) & dst_ದತ್ತಾಂಶ[i])::"f10");
     }
     // Scalar tail
-    for (; i < ee; i++) {
-        dst_data[i] = c;
+    ಗಾಗಿ (; i < ee; i++) {
+        dst_ದತ್ತಾಂಶ[i] = c;
     }
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }

@@ -1,243 +1,243 @@
-#include "work-queue.h"
-#include "hex-utils.h"
+#ಅನ್ತರ್ಭಾವ "work-queue.h"
+#ಅನ್ತರ್ಭಾವ "hex-utils.h"
 
-#include <qurt.h>
-#include <qurt_hvx.h>
+#ಅನ್ತರ್ಭಾವ <qurt.h>
+#ಅನ್ತರ್ಭಾವ <qurt_hvx.h>
 
-#include <stdatomic.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ಅನ್ತರ್ಭಾವ <stdatomic.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdio.h>
+#ಅನ್ತರ್ಭಾವ <stdlib.h>
+#ಅನ್ತರ್ಭಾವ <string.h>
 
-#include "HAP_farf.h"
+#ಅನ್ತರ್ಭಾವ "HAP_farf.h"
 
-#define LOWEST_USABLE_QURT_PRIO (254)
+#ವ್ಯಾಖ್ಯಾನಿಸು ಅತಿಕಡಿಮೆ_USABLE_QURT_PRIO (254)
 
 // internal structure kept in thread-local storage per instance of work queue
-typedef struct {
-    work_queue_t  queue;
-    unsigned int  id;
-} worker_context_t;
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ {
+    work_ಸರತಿ_t  ಸರತಿ;
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ  id;
+} ಕೆಲಸಗಾರ_context_t;
 
-struct work_queue_task_s {
-    work_queue_func_t func;
-    void *            data;
-    unsigned int      n_threads;
+ರಚನೆ work_ಸರತಿ_task_s {
+    work_ಸರತಿ_func_t func;
+    ಶೂನ್ಯ *            ದತ್ತಾಂಶ;
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ      n_ಎಳೆಗಳು;
     atomic_uint       barrier;
 };
 
 // internal structure kept in thread-local storage per instance of work queue
-struct work_queue_s {
+ರಚನೆ work_ಸರತಿ_s {
     atomic_uint        seqn;      // seqno used to detect new jobs
     atomic_uint        idx_read;  // Updated by producer (pop/reclaim)
     atomic_uint        idx_write; // Updated by producer (push)
-    uint32_t           idx_mask;
-    uint32_t           capacity;
+    uint32_t           idx_ಮುಖವಾಡ;
+    uint32_t           ಸಾಮರ್ಥ್ಯ;
 
-    qurt_thread_t      thread[WORK_QUEUE_MAX_N_THREADS];   // thread ID's of the workers
-    worker_context_t   context[WORK_QUEUE_MAX_N_THREADS];  // worker contexts
-    void *             stack[WORK_QUEUE_MAX_N_THREADS];    // thread stack pointers
-    unsigned int       n_threads;                          // total threads (workers + main)
-    unsigned int       n_workers;                          // number of active threads (just workers)
+    qurt_thread_t      thread[WORK_ಸರತಿ_MAX_N_ಎಳೆಗಳು];   // thread ID's of the workers
+    ಕೆಲಸಗಾರ_context_t   context[WORK_ಸರತಿ_MAX_N_ಎಳೆಗಳು];  // worker contexts
+    ಶೂನ್ಯ *             ರಾಶಿ[WORK_ಸರತಿ_MAX_N_ಎಳೆಗಳು];    // thread stack pointers
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ       n_ಎಳೆಗಳು;                          // total threads (workers + main)
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ       n_workers;                          // number of active threads (just workers)
 
-    atomic_uint        active;                             // workers are polling/active
+    atomic_uint        ಸಕ್ರಿಯ;                             // workers are polling/active
     atomic_bool        killed;                             // threads need to exit
     bool               external_mem;                       // memory owned externally
 
-    struct work_queue_task_s queue[] __attribute__((aligned(HEX_L2_LINE_SIZE)));
+    ರಚನೆ work_ಸರತಿ_task_s ಸರತಿ[] __attribute__((aligned(HEX_L2_ಸಾಲು_ಗಾತ್ರ)));
 };
 
-static void work_queue_thread(void * context) {
-    worker_context_t * me = (worker_context_t *) context;
-    work_queue_t       q  = me->queue;
+ಸ್ಥಿರ ಶೂನ್ಯ work_ಸರತಿ_thread(ಶೂನ್ಯ * context) {
+    ಕೆಲಸಗಾರ_context_t * me = (ಕೆಲಸಗಾರ_context_t *) context;
+    work_ಸರತಿ_t       q  = me->ಸರತಿ;
 
-    FARF(HIGH, "work-queue: thread %u started", me->id);
+    FARF(ಮೇಲಿನ_2, "work-queue: thread %u started", me->id);
 
-    unsigned int prev_seqn = 0;
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ prev_seqn = 0;
 
-    while (!atomic_load_explicit(&q->killed, memory_order_relaxed)) {
-        unsigned int seqn = atomic_load_explicit(&q->seqn, memory_order_acquire);
-        if (seqn == prev_seqn) {
-            if (atomic_load_explicit(&q->active, memory_order_relaxed)) {
+    ಆಗ (!atomic_ತುಂಬು_explicit(&q->killed, memory_order_relaxed)) {
+        ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ seqn = atomic_ತುಂಬು_explicit(&q->seqn, memory_order_acquire);
+        ಆದರೆ (seqn == prev_seqn) {
+            ಆದರೆ (atomic_ತುಂಬು_explicit(&q->ಸಕ್ರಿಯ, memory_order_relaxed)) {
                 hex_pause();
-            } else {
-                qurt_futex_wait(&q->active, 0);
+            } ಇಲ್ಲದಿದ್ದರೆ {
+                qurt_futex_wait(&q->ಸಕ್ರಿಯ, 0);
             }
-            continue;
+            ಮುಂದುವರಿ;
         }
 
         prev_seqn = seqn;
 
         // Process all active tasks in the queue
-        unsigned int ir = atomic_load_explicit(&q->idx_read, memory_order_relaxed);
-        unsigned int iw = atomic_load_explicit(&q->idx_write, memory_order_relaxed);
+        ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ir = atomic_ತುಂಬು_explicit(&q->idx_read, memory_order_relaxed);
+        ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ iw = atomic_ತುಂಬು_explicit(&q->idx_write, memory_order_relaxed);
 
-        while (ir != iw) {
-            struct work_queue_task_s * task = &q->queue[ir];
+        ಆಗ (ir != iw) {
+            ರಚನೆ work_ಸರತಿ_task_s * task = &q->ಸರತಿ[ir];
 
-            unsigned int n = task->n_threads;
-            unsigned int i = me->id;
-            if (i < n) {
-                task->func(n, i, task->data);
+            ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ n = task->n_ಎಳೆಗಳು;
+            ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ i = me->id;
+            ಆದರೆ (i < n) {
+                task->func(n, i, task->ದತ್ತಾಂಶ);
 
                 atomic_fetch_sub_explicit(&task->barrier, 1, memory_order_release);
-            } else {
-                while (atomic_load_explicit(&task->barrier, memory_order_relaxed) > 0) {
+            } ಇಲ್ಲದಿದ್ದರೆ {
+                ಆಗ (atomic_ತುಂಬು_explicit(&task->barrier, memory_order_relaxed) > 0) {
                     hex_pause();
                 }
             }
 
-            ir = (ir + 1) & q->idx_mask;
+            ir = (ir + 1) & q->idx_ಮುಖವಾಡ;
         }
     }
 
-    FARF(HIGH, "work-queue: thread %u stopped", me->id);
+    FARF(ಮೇಲಿನ_2, "work-queue: thread %u stopped", me->id);
 }
 
-bool work_queue_run_async(work_queue_t q, work_queue_func_t func, void * data, unsigned int n) {
-    if (n > q->n_threads) {
-        FARF(ERROR, "work-queue: invalid number of jobs %u for n-threads %u", n, q->n_threads);
-        return false;
+bool work_ಸರತಿ_ಸತತ_async(work_ಸರತಿ_t q, work_ಸರತಿ_func_t func, ಶೂನ್ಯ * ದತ್ತಾಂಶ, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ n) {
+    ಆದರೆ (n > q->n_ಎಳೆಗಳು) {
+        FARF(ERROR, "work-queue: invalid number of jobs %u for n-threads %u", n, q->n_ಎಳೆಗಳು);
+        ಹಿಂತಿರುಗಿ false;
     }
 
-    unsigned int ir = atomic_load_explicit(&q->idx_read,  memory_order_relaxed);
-    unsigned int iw = atomic_load_explicit(&q->idx_write, memory_order_relaxed);
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ir = atomic_ತುಂಬು_explicit(&q->idx_read,  memory_order_relaxed);
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ iw = atomic_ತುಂಬು_explicit(&q->idx_write, memory_order_relaxed);
 
-    if (((iw + 1) & q->idx_mask) == ir) {
+    ಆದರೆ (((iw + 1) & q->idx_ಮುಖವಾಡ) == ir) {
         FARF(ERROR, "work-queue-push: queue is full\n");
-        return false;
+        ಹಿಂತಿರುಗಿ false;
     }
 
-    struct work_queue_task_s * task = &q->queue[iw];
+    ರಚನೆ work_ಸರತಿ_task_s * task = &q->ಸರತಿ[iw];
     task->func      = func;
-    task->data      = data;
-    task->n_threads = n;
+    task->ದತ್ತಾಂಶ      = ದತ್ತಾಂಶ;
+    task->n_ಎಳೆಗಳು = n;
     atomic_store_explicit(&task->barrier, n, memory_order_relaxed);
 
-    atomic_store_explicit(&q->idx_write, (iw + 1) & q->idx_mask, memory_order_relaxed);
+    atomic_store_explicit(&q->idx_write, (iw + 1) & q->idx_ಮುಖವಾಡ, memory_order_relaxed);
 
     // publish job to workers (already awake and polling)
-    atomic_fetch_add_explicit(&q->seqn, 1, memory_order_release);
+    atomic_fetch_ಕೂಡಿಸು_explicit(&q->seqn, 1, memory_order_release);
 
     // main thread runs job #0
-    func(n, 0, data);
+    func(n, 0, ದತ್ತಾಂಶ);
 
     atomic_fetch_sub_explicit(&task->barrier, 1, memory_order_release);
 
-    while (atomic_load_explicit(&task->barrier, memory_order_relaxed) > 0) {
+    ಆಗ (atomic_ತುಂಬು_explicit(&task->barrier, memory_order_relaxed) > 0) {
         hex_pause();
     }
 
     atomic_thread_fence(memory_order_acquire);
 
-    atomic_store_explicit(&q->idx_read, (ir + 1) & q->idx_mask, memory_order_relaxed);
+    atomic_store_explicit(&q->idx_read, (ir + 1) & q->idx_ಮುಖವಾಡ, memory_order_relaxed);
 
-    return true;
+    ಹಿಂತಿರುಗಿ true;
 }
 
-size_t work_queue_sizeof(uint32_t n_threads, uint32_t capacity, uint32_t stack_size) {
-    capacity = hex_ceil_pow2(capacity);
-    uint32_t n_workers = n_threads > 1 ? n_threads - 1 : 0;
-    size_t size_stacks = stack_size * n_workers;
-    size_t size_q = hex_align_up(sizeof(struct work_queue_s) + capacity * sizeof(struct work_queue_task_s), HEX_L2_LINE_SIZE);
-    return size_stacks + size_q;
+size_t work_ಸರತಿ_sizeof(uint32_t n_ಎಳೆಗಳು, uint32_t ಸಾಮರ್ಥ್ಯ, uint32_t ರಾಶಿ_ಗಾತ್ರ) {
+    ಸಾಮರ್ಥ್ಯ = hex_ceil_pow2(ಸಾಮರ್ಥ್ಯ);
+    uint32_t n_workers = n_ಎಳೆಗಳು > 1 ? n_ಎಳೆಗಳು - 1 : 0;
+    size_t ಗಾತ್ರ_stacks = ರಾಶಿ_ಗಾತ್ರ * n_workers;
+    size_t ಗಾತ್ರ_q = hex_align_ಮೇಲೆ(ಗಾತ್ರ(ರಚನೆ work_ಸರತಿ_s) + ಸಾಮರ್ಥ್ಯ * ಗಾತ್ರ(ರಚನೆ work_ಸರತಿ_task_s), HEX_L2_ಸಾಲು_ಗಾತ್ರ);
+    ಹಿಂತಿರುಗಿ ಗಾತ್ರ_stacks + ಗಾತ್ರ_q;
 }
 
-size_t work_queue_alignof(void) {
-    return 4096;
+size_t work_ಸರತಿ_alignof(ಶೂನ್ಯ) {
+    ಹಿಂತಿರುಗಿ 4096;
 }
 
-work_queue_t work_queue_init(void * ptr, uint32_t n_threads, uint32_t capacity, uint32_t stack_size) {
-    capacity = hex_ceil_pow2(capacity);
-    uint32_t n_workers = n_threads > 1 ? n_threads - 1 : 0;
-    unsigned char * mem_blob = (unsigned char *) ptr;
+work_ಸರತಿ_t work_ಸರತಿ_init(ಶೂನ್ಯ * ptr, uint32_t n_ಎಳೆಗಳು, uint32_t ಸಾಮರ್ಥ್ಯ, uint32_t ರಾಶಿ_ಗಾತ್ರ) {
+    ಸಾಮರ್ಥ್ಯ = hex_ceil_pow2(ಸಾಮರ್ಥ್ಯ);
+    uint32_t n_workers = n_ಎಳೆಗಳು > 1 ? n_ಎಳೆಗಳು - 1 : 0;
+    ಚಿಹ್ನೆರಹಿತ ಅಕ್ಷರ * mem_blob = (ಚಿಹ್ನೆರಹಿತ ಅಕ್ಷರ *) ptr;
 
-    work_queue_t q = (work_queue_t) (mem_blob + stack_size * n_workers);
-    memset(q, 0, sizeof(struct work_queue_s) + capacity * sizeof(struct work_queue_task_s));
+    work_ಸರತಿ_t q = (work_ಸರತಿ_t) (mem_blob + ರಾಶಿ_ಗಾತ್ರ * n_workers);
+    memset(q, 0, ಗಾತ್ರ(ರಚನೆ work_ಸರತಿ_s) + ಸಾಮರ್ಥ್ಯ * ಗಾತ್ರ(ರಚನೆ work_ಸರತಿ_task_s));
 
-    q->n_threads = n_threads;
+    q->n_ಎಳೆಗಳು = n_ಎಳೆಗಳು;
     q->n_workers = n_workers;
     q->external_mem = true;
-    q->capacity = capacity;
+    q->ಸಾಮರ್ಥ್ಯ = ಸಾಮರ್ಥ್ಯ;
 
-    for (unsigned int i = 0; i < n_workers; i++) {
-        q->stack[i]  = mem_blob; mem_blob += stack_size;
+    ಗಾಗಿ (ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ i = 0; i < n_workers; i++) {
+        q->ರಾಶಿ[i]  = mem_blob; mem_blob += ರಾಶಿ_ಗಾತ್ರ;
         q->thread[i] = 0;
         q->context[i].id    = i + 1;
-        q->context[i].queue = q;
+        q->context[i].ಸರತಿ = q;
     }
 
     atomic_init(&q->idx_read,  0);
     atomic_init(&q->idx_write, 0);
     atomic_init(&q->seqn,      0);
-    atomic_init(&q->active,    0);
-    q->idx_mask  = capacity - 1;
+    atomic_init(&q->ಸಕ್ರಿಯ,    0);
+    q->idx_ಮುಖವಾಡ  = ಸಾಮರ್ಥ್ಯ - 1;
     q->killed    = 0;
-    for (int i = 0; i < (int) capacity; i++) {
-        atomic_init(&q->queue[i].barrier, 0);
-        q->queue[i].func      = NULL;
-        q->queue[i].data      = NULL;
-        q->queue[i].n_threads = 0;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < (ಪೂರ್ಣಾಂಕ) ಸಾಮರ್ಥ್ಯ; i++) {
+        atomic_init(&q->ಸರತಿ[i].barrier, 0);
+        q->ಸರತಿ[i].func      = ಖಾಲಿ;
+        q->ಸರತಿ[i].ದತ್ತಾಂಶ      = ಖಾಲಿ;
+        q->ಸರತಿ[i].n_ಎಳೆಗಳು = 0;
     }
 
     // launch the workers
     qurt_thread_attr_t attr;
     qurt_thread_attr_init(&attr);
 
-    for (unsigned int i = 0; i < n_workers; i++) {
-        qurt_thread_attr_set_stack_addr(&attr, q->stack[i]);
-        qurt_thread_attr_set_stack_size(&attr, stack_size);
+    ಗಾಗಿ (ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ i = 0; i < n_workers; i++) {
+        qurt_thread_attr_ಗಣ_ರಾಶಿ_addr(&attr, q->ರಾಶಿ[i]);
+        qurt_thread_attr_ಗಣ_ರಾಶಿ_ಗಾತ್ರ(&attr, ರಾಶಿ_ಗಾತ್ರ);
 
-        char thread_name[32];
-        snprintf(thread_name, sizeof(thread_name), "work-queue:%u", i);
-        qurt_thread_attr_set_name(&attr, thread_name);
+        ಅಕ್ಷರ thread_name[32];
+        snprintf(thread_name, ಗಾತ್ರ(thread_name), "work-queue:%u", i);
+        qurt_thread_attr_ಗಣ_name(&attr, thread_name);
 
         // set up priority - by default, match the creating thread's prio
-        int prio = qurt_thread_get_priority(qurt_thread_get_id());
-        if (prio < 1) {
+        ಪೂರ್ಣಾಂಕ prio = qurt_thread_get_ಆದ್ಯತೆ(qurt_thread_get_id());
+        ಆದರೆ (prio < 1) {
             prio = 1;
         }
-        if (prio > LOWEST_USABLE_QURT_PRIO) {
-            prio = LOWEST_USABLE_QURT_PRIO;
+        ಆದರೆ (prio > ಅತಿಕಡಿಮೆ_USABLE_QURT_PRIO) {
+            prio = ಅತಿಕಡಿಮೆ_USABLE_QURT_PRIO;
         }
 
-        qurt_thread_attr_set_priority(&attr, prio);
+        qurt_thread_attr_ಗಣ_ಆದ್ಯತೆ(&attr, prio);
 
-        int err = qurt_thread_create(&q->thread[i], &attr, work_queue_thread, (void *) &q->context[i]);
-        if (err) {
+        ಪೂರ್ಣಾಂಕ err = qurt_thread_create(&q->thread[i], &attr, work_ಸರತಿ_thread, (ಶೂನ್ಯ *) &q->context[i]);
+        ಆದರೆ (err) {
             FARF(ERROR, "Could not launch worker threads!");
-            work_queue_free(q);
-            return NULL;
+            work_ಸರತಿ_free(q);
+            ಹಿಂತಿರುಗಿ ಖಾಲಿ;
         }
     }
 
-    return q;
+    ಹಿಂತಿರುಗಿ q;
 }
 
-void work_queue_free(work_queue_t q) {
-    if (!q) { return; }
+ಶೂನ್ಯ work_ಸರತಿ_free(work_ಸರತಿ_t q) {
+    ಆದರೆ (!q) { ಹಿಂತಿರುಗಿ; }
 
     atomic_store_explicit(&q->killed,   1, memory_order_relaxed);
-    atomic_store_explicit(&q->active,   1, memory_order_release);
-    atomic_fetch_add_explicit(&q->seqn, 1, memory_order_release);
-    qurt_futex_wake(&q->active, q->n_workers);
+    atomic_store_explicit(&q->ಸಕ್ರಿಯ,   1, memory_order_release);
+    atomic_fetch_ಕೂಡಿಸು_explicit(&q->seqn, 1, memory_order_release);
+    qurt_futex_wake(&q->ಸಕ್ರಿಯ, q->n_workers);
 
-    for (unsigned int i = 0; i < q->n_workers; i++) {
-        if (q->thread[i]) {
-            int status;
-            (void) qurt_thread_join(q->thread[i], &status);
+    ಗಾಗಿ (ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ i = 0; i < q->n_workers; i++) {
+        ಆದರೆ (q->thread[i]) {
+            ಪೂರ್ಣಾಂಕ ಸ್ಥಿತಿ_2;
+            (ಶೂನ್ಯ) qurt_thread_join(q->thread[i], &ಸ್ಥಿತಿ_2);
         }
     }
 }
 
-void work_queue_wakeup(work_queue_t q) {
-    if (!atomic_load_explicit(&q->active, memory_order_relaxed)) {
-        atomic_store_explicit(&q->active, 1, memory_order_release);
-        qurt_futex_wake(&q->active, q->n_workers);
+ಶೂನ್ಯ work_ಸರತಿ_wakeup(work_ಸರತಿ_t q) {
+    ಆದರೆ (!atomic_ತುಂಬು_explicit(&q->ಸಕ್ರಿಯ, memory_order_relaxed)) {
+        atomic_store_explicit(&q->ಸಕ್ರಿಯ, 1, memory_order_release);
+        qurt_futex_wake(&q->ಸಕ್ರಿಯ, q->n_workers);
     }
 }
 
-void work_queue_suspend(work_queue_t q) {
-    atomic_store_explicit(&q->active, 0, memory_order_release);
+ಶೂನ್ಯ work_ಸರತಿ_suspend(work_ಸರತಿ_t q) {
+    atomic_store_explicit(&q->ಸಕ್ರಿಯ, 0, memory_order_release);
 }

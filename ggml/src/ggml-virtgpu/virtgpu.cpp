@@ -1,41 +1,41 @@
-#include "virtgpu.h"
-#include "ggml-remoting.h"
+#ಅನ್ತರ್ಭಾವ "virtgpu.h"
+#ಅನ್ತರ್ಭಾವ "ggml-remoting.h"
 
-#include <stdio.h>
-#include <unistd.h>
+#ಅನ್ತರ್ಭಾವ <stdio.h>
+#ಅನ್ತರ್ಭಾವ <unistd.h>
 
-#include <cassert>
-#include <cerrno>
-#include <cstdlib>
+#ಅನ್ತರ್ಭಾವ <cassert>
+#ಅನ್ತರ್ಭಾವ <cerrno>
+#ಅನ್ತರ್ಭಾವ <cstdlib>
 
-static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr dev);
-static virt_gpu_result_t virtgpu_open(virtgpu * gpu);
+ಸ್ಥಿರ virt_gpu_ಫಲಿತಾಂಶ_t virtgpu_open_device(virtgpu * gpu, ಸ್ಥಿರಾಂಕ drmDevicePtr dev);
+ಸ್ಥಿರ virt_gpu_ಫಲಿತಾಂಶ_t virtgpu_open(virtgpu * gpu);
 
-static virt_gpu_result_t virtgpu_init_capset(virtgpu * gpu);
-static virt_gpu_result_t virtgpu_init_context(virtgpu * gpu);
+ಸ್ಥಿರ virt_gpu_ಫಲಿತಾಂಶ_t virtgpu_init_capset(virtgpu * gpu);
+ಸ್ಥಿರ virt_gpu_ಫಲಿತಾಂಶ_t virtgpu_init_context(virtgpu * gpu);
 
-static int      virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id);
-static int      virtgpu_ioctl_get_caps(virtgpu *             gpu,
+ಸ್ಥಿರ ಪೂರ್ಣಾಂಕ      virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id);
+ಸ್ಥಿರ ಪೂರ್ಣಾಂಕ      virtgpu_ioctl_get_caps(virtgpu *             gpu,
                                        virgl_renderer_capset id,
-                                       uint32_t              version,
-                                       void *                capset,
-                                       size_t                capset_size);
-static uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param);
-static void     virtgpu_init_renderer_info(virtgpu * gpu);
+                                       uint32_t              ಆವೃತ್ತಿ_2,
+                                       ಶೂನ್ಯ *                capset,
+                                       size_t                capset_ಗಾತ್ರ);
+ಸ್ಥಿರ uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param);
+ಸ್ಥಿರ ಶೂನ್ಯ     virtgpu_init_renderer_info(virtgpu * gpu);
 
-static void log_call_duration(long long call_duration_ns, const char * name);
+ಸ್ಥಿರ ಶೂನ್ಯ log_call_duration(ದೀರ್ಘ ದೀರ್ಘ call_duration_ns, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * name);
 
-const uint64_t APIR_HANDSHAKE_MAX_WAIT_MS   = 2 * 1000;   // 2s
-const uint64_t APIR_LOADLIBRARY_MAX_WAIT_MS = 60 * 1000;  // 60s
+ಸ್ಥಿರಾಂಕ uint64_t APIR_HANDSHAKE_MAX_WAIT_MS   = 2 * 1000;   // 2s
+ಸ್ಥಿರಾಂಕ uint64_t APIR_LOADLIBRARY_MAX_WAIT_MS = 60 * 1000;  // 60s
 
-static int virtgpu_handshake(virtgpu * gpu) {
+ಸ್ಥಿರ ಪೂರ್ಣಾಂಕ virtgpu_handshake(virtgpu * gpu) {
     apir_encoder * encoder;
     apir_decoder * decoder;
 
     encoder = remote_call_prepare(gpu, APIR_COMMAND_TYPE_HANDSHAKE, 0);
-    if (!encoder) {
+    ಆದರೆ (!encoder) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to prepare the remote call encoder", __func__);
-        return 1;
+        ಹಿಂತಿರುಗಿ 1;
     }
 
     /* write handshake props */
@@ -48,16 +48,16 @@ static int virtgpu_handshake(virtgpu * gpu) {
     /* *** */
 
     uint32_t  ret_magic;
-    long long call_duration_ns;
+    ದೀರ್ಘ ದೀರ್ಘ call_duration_ns;
     ret_magic = remote_call(gpu, encoder, &decoder, APIR_HANDSHAKE_MAX_WAIT_MS, &call_duration_ns);
     log_call_duration(call_duration_ns, "API Remoting handshake");
 
-    if (!decoder) {
+    ಆದರೆ (!decoder) {
         GGML_ABORT(GGML_VIRTGPU
                    "%s: failed to initiate the communication with the virglrenderer library. "
                    "Most likely, the wrong virglrenderer library was loaded in the hypervisor.",
                    __func__);
-        return 1;
+        ಹಿಂತಿರುಗಿ 1;
     }
 
     /* read handshake return values */
@@ -65,314 +65,314 @@ static int virtgpu_handshake(virtgpu * gpu) {
     uint32_t host_major;
     uint32_t host_minor;
 
-    if (ret_magic != APIR_HANDSHAKE_MAGIC) {
+    ಆದರೆ (ret_magic != APIR_HANDSHAKE_MAGIC) {
         GGML_ABORT(GGML_VIRTGPU "%s: handshake with the virglrenderer failed (code=%d | %s)", __func__, ret_magic,
                    apir_backend_initialize_error(ret_magic));
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         apir_decode_uint32_t(decoder, &host_major);
         apir_decode_uint32_t(decoder, &host_minor);
     }
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_ಮುಕ್ತಾಯ(gpu, encoder, decoder);
 
-    if (ret_magic != APIR_HANDSHAKE_MAGIC) {
-        return 1;
+    ಆದರೆ (ret_magic != APIR_HANDSHAKE_MAGIC) {
+        ಹಿಂತಿರುಗಿ 1;
     }
 
     GGML_LOG_INFO(GGML_VIRTGPU "%s: Guest is running with %u.%u\n", __func__, guest_major, guest_minor);
     GGML_LOG_INFO(GGML_VIRTGPU "%s: Host is running with %u.%u\n", __func__, host_major, host_minor);
 
-    if (guest_major != host_major) {
+    ಆದರೆ (guest_major != host_major) {
         GGML_LOG_ERROR(GGML_VIRTGPU "Host major (%d) and guest major (%d) version differ\n", host_major, guest_major);
-    } else if (guest_minor != host_minor) {
+    } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (guest_minor != host_minor) {
         GGML_LOG_WARN(GGML_VIRTGPU "Host minor (%d) and guest minor (%d) version differ\n", host_minor, guest_minor);
     }
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }
 
-static ApirLoadLibraryReturnCode virtgpu_load_library(virtgpu * gpu) {
+ಸ್ಥಿರ Apir_ತುಂಬು_Library_Return_ಸಂಕೇತ virtgpu_ತುಂಬು_library(virtgpu * gpu) {
     apir_encoder *            encoder;
     apir_decoder *            decoder;
-    ApirLoadLibraryReturnCode ret;
+    Apir_ತುಂಬು_Library_Return_ಸಂಕೇತ ret;
 
     encoder = remote_call_prepare(gpu, APIR_COMMAND_TYPE_LOADLIBRARY, 0);
-    if (!encoder) {
+    ಆದರೆ (!encoder) {
         GGML_ABORT(GGML_VIRTGPU "%s: hypercall error: failed to prepare the API Remoting command encoder", __func__);
-        return APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
+        ಹಿಂತಿರುಗಿ APIR_ತುಂಬು_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
     }
 
-    long long call_duration_ns;
+    ದೀರ್ಘ ದೀರ್ಘ call_duration_ns;
 
-    ret = (ApirLoadLibraryReturnCode) remote_call(gpu, encoder, &decoder, APIR_LOADLIBRARY_MAX_WAIT_MS,
+    ret = (Apir_ತುಂಬು_Library_Return_ಸಂಕೇತ) remote_call(gpu, encoder, &decoder, APIR_LOADLIBRARY_MAX_WAIT_MS,
                                                   &call_duration_ns);
     log_call_duration(call_duration_ns, "API Remoting LoadLibrary");
 
-    if (!decoder) {
+    ಆದರೆ (!decoder) {
         GGML_ABORT(GGML_VIRTGPU "%s: hypercall error: failed to trigger the API Remoting hypercall.\n", __func__);
-        return APIR_LOAD_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
+        ಹಿಂತಿರುಗಿ APIR_ತುಂಬು_LIBRARY_HYPERCALL_INITIALIZATION_ERROR;
     }
 
-    remote_call_finish(gpu, encoder, decoder);
+    remote_call_ಮುಕ್ತಾಯ(gpu, encoder, decoder);
 
-    if (ret == APIR_LOAD_LIBRARY_SUCCESS) {
+    ಆದರೆ (ret == APIR_ತುಂಬು_LIBRARY_SUCCESS) {
         GGML_LOG_INFO(GGML_VIRTGPU "The API Remoting backend was successfully loaded and initialized\n");
 
-        return ret;
+        ಹಿಂತಿರುಗಿ ret;
     }
 
     // something wrong happened, find out what.
-    if (ret < APIR_LOAD_LIBRARY_INIT_BASE_INDEX) {
-        if (ret == APIR_LOAD_LIBRARY_ENV_VAR_MISSING) {
+    ಆದರೆ (ret < APIR_ತುಂಬು_LIBRARY_INIT_ತಳ_ಸೂಚ್ಯಂಕ) {
+        ಆದರೆ (ret == APIR_ತುಂಬು_LIBRARY_ENV_VAR_MISSING) {
             GGML_ABORT(GGML_VIRTGPU
                        "%s: virglrenderer could not open the API Remoting backend library, "
                        "some environment variables are missing. "
                        "Make sure virglrenderer is correctly configured by the hypervisor. (%s)",
-                       __func__, apir_load_library_error(ret));
-        } else if (ret == APIR_LOAD_LIBRARY_CANNOT_OPEN) {
+                       __func__, apir_ತುಂಬು_library_error(ret));
+        } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (ret == APIR_ತುಂಬು_LIBRARY_CANNOT_OPEN) {
             GGML_ABORT(GGML_VIRTGPU
                        "%s: virglrenderer could not open the API Remoting backend library. "
                        "Make sure virglrenderer is correctly configured by the hypervisor. (%s)",
-                       __func__, apir_load_library_error(ret));
-        } else if (ret == APIR_LOAD_LIBRARY_ENV_VAR_MISSING) {
+                       __func__, apir_ತುಂಬು_library_error(ret));
+        } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (ret == APIR_ತುಂಬು_LIBRARY_ENV_VAR_MISSING) {
             GGML_ABORT(GGML_VIRTGPU
                        "%s: could not load the backend library, some symbols are missing. "
                        "Make sure virglrenderer is correctly configured by the hypervisor. (%s) ",
-                       __func__, apir_load_library_error(ret));
-        } else {
+                       __func__, apir_ತುಂಬು_library_error(ret));
+        } ಇಲ್ಲದಿದ್ದರೆ {
             GGML_ABORT(GGML_VIRTGPU "%s: virglrenderer could not load the API Remoting backend library. (%s - code %d)",
-                       __func__, apir_load_library_error(ret), ret);
+                       __func__, apir_ತುಂಬು_library_error(ret), ret);
         }
-        return ret;
+        ಹಿಂತಿರುಗಿ ret;
     }
 
     GGML_LOG_INFO(GGML_VIRTGPU "%s: virglrenderer successfully loaded the API Remoting backend library.\n", __func__);
 
-    ApirLoadLibraryReturnCode apir_ret = (ApirLoadLibraryReturnCode) (ret - APIR_LOAD_LIBRARY_INIT_BASE_INDEX);
+    Apir_ತುಂಬು_Library_Return_ಸಂಕೇತ apir_ret = (Apir_ತುಂಬು_Library_Return_ಸಂಕೇತ) (ret - APIR_ತುಂಬು_LIBRARY_INIT_ತಳ_ಸೂಚ್ಯಂಕ);
 
-    if (apir_ret == APIR_LOAD_LIBRARY_CANNOT_OPEN) {
+    ಆದರೆ (apir_ret == APIR_ತುಂಬು_LIBRARY_CANNOT_OPEN) {
         GGML_ABORT(GGML_VIRTGPU
                    "%s: the API Remoting backend library couldn't load the GGML backend library. "
                    "Make sure virglrenderer is correctly configured by the hypervisor. (%s)",
-                   __func__, apir_load_library_error(apir_ret));
-    } else if (apir_ret == APIR_LOAD_LIBRARY_SYMBOL_MISSING) {
+                   __func__, apir_ತುಂಬು_library_error(apir_ret));
+    } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (apir_ret == APIR_ತುಂಬು_LIBRARY_ಚಿಹ್ನೆ_MISSING) {
         GGML_ABORT(
             GGML_VIRTGPU
             "%s: the API Remoting backend library couldn't load the GGML backend library, some symbols are missing. "
             "Make sure virglrenderer is correctly configured by the hypervisor. (%s)",
-            __func__, apir_load_library_error(apir_ret));
-    } else if (apir_ret < APIR_LOAD_LIBRARY_INIT_BASE_INDEX) {
+            __func__, apir_ತುಂಬು_library_error(apir_ret));
+    } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (apir_ret < APIR_ತುಂಬು_LIBRARY_INIT_ತಳ_ಸೂಚ್ಯಂಕ) {
         GGML_ABORT(GGML_VIRTGPU
                    "%s: the API Remoting backend library couldn't load the GGML backend library: apir code=%d | %s)",
-                   __func__, apir_ret, apir_load_library_error(apir_ret));
-    } else {
-        uint32_t lib_ret = apir_ret - APIR_LOAD_LIBRARY_INIT_BASE_INDEX;
+                   __func__, apir_ret, apir_ತುಂಬು_library_error(apir_ret));
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        uint32_t lib_ret = apir_ret - APIR_ತುಂಬು_LIBRARY_INIT_ತಳ_ಸೂಚ್ಯಂಕ;
         GGML_ABORT(GGML_VIRTGPU
                    "%s: the API Remoting backend library failed to initialize its backend library: apir code=%d)",
                    __func__, lib_ret);
     }
-    return ret;
+    ಹಿಂತಿರುಗಿ ret;
 }
 
 virtgpu * create_virtgpu() {
-    virtgpu * gpu = new virtgpu();
+    virtgpu * gpu = ಹೊಸ virtgpu();
 
-    gpu->use_apir_capset = getenv("GGML_REMOTING_USE_APIR_CAPSET") != nullptr;
-    util_sparse_array_init(&gpu->shmem_array, sizeof(virtgpu_shmem), 1024);
+    gpu->use_apir_capset = getenv("GGML_REMOTING_USE_APIR_CAPSET") != ಶೂನ್ಯಸೂಚಕ;
+    util_sparse_array_init(&gpu->shmem_array, ಗಾತ್ರ(virtgpu_shmem), 1024);
 
     // Initialize mutex to protect shared data_shmem buffer
-    if (mtx_init(&gpu->data_shmem_mutex, mtx_plain) != thrd_success) {
-        delete gpu;
+    ಆದರೆ (mtx_init(&gpu->ದತ್ತಾಂಶ_shmem_mutex, mtx_plain) != thrd_success) {
+        ಅಳಿಸು gpu;
         GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize data_shmem mutex", __func__);
-        return NULL;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    if (virtgpu_open(gpu) != APIR_SUCCESS) {
+    ಆದರೆ (virtgpu_open(gpu) != APIR_SUCCESS) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to open the virtgpu device\n", __func__);
-        return NULL;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    if (virtgpu_init_capset(gpu) != APIR_SUCCESS) {
-        if (gpu->use_apir_capset) {
+    ಆದರೆ (virtgpu_init_capset(gpu) != APIR_SUCCESS) {
+        ಆದರೆ (gpu->use_apir_capset) {
             GGML_ABORT(GGML_VIRTGPU
                        "%s: failed to initialize the virtgpu APIR capset. Make sure that the virglrenderer library "
                        "supports it.",
                        __func__);
-        } else {
+        } ಇಲ್ಲದಿದ್ದರೆ {
             GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize the virtgpu Venus capset", __func__);
         }
-        return NULL;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    if (virtgpu_init_context(gpu) != APIR_SUCCESS) {
+    ಆದರೆ (virtgpu_init_context(gpu) != APIR_SUCCESS) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize the GPU context", __func__);
-        return NULL;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    if (virtgpu_shmem_create(gpu, SHMEM_REPLY_SIZE, &gpu->reply_shmem)) {
+    ಆದರೆ (virtgpu_shmem_create(gpu, SHMEM_ಉತ್ತರ_ಗಾತ್ರ, &gpu->ಉತ್ತರ_shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to create the shared reply memory pages", __func__);
-        return NULL;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    if (virtgpu_shmem_create(gpu, SHMEM_DATA_SIZE, &gpu->data_shmem)) {
+    ಆದರೆ (virtgpu_shmem_create(gpu, SHMEM_ದತ್ತಾಂಶ_ಗಾತ್ರ, &gpu->ದತ್ತಾಂಶ_shmem)) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to create the shared data memory pages", __func__);
-        return NULL;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    if (virtgpu_handshake(gpu)) {
+    ಆದರೆ (virtgpu_handshake(gpu)) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to handshake with the virglrenderer library", __func__);
-        return NULL;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    if (virtgpu_load_library(gpu) != APIR_LOAD_LIBRARY_SUCCESS) {
+    ಆದರೆ (virtgpu_ತುಂಬು_library(gpu) != APIR_ತುಂಬು_LIBRARY_SUCCESS) {
         GGML_ABORT(GGML_VIRTGPU "%s: failed to load the backend library", __func__);
-        return NULL;
+        ಹಿಂತಿರುಗಿ ಖಾಲಿ;
     }
 
-    return gpu;
+    ಹಿಂತಿರುಗಿ gpu;
 }
 
-static virt_gpu_result_t virtgpu_open(virtgpu * gpu) {
+ಸ್ಥಿರ virt_gpu_ಫಲಿತಾಂಶ_t virtgpu_open(virtgpu * gpu) {
     drmDevicePtr devs[8];
-    int          count = drmGetDevices2(0, devs, ARRAY_SIZE(devs));
-    if (count < 0) {
+    ಪೂರ್ಣಾಂಕ          count = drmGetDevices2(0, devs, ARRAY_ಗಾತ್ರ(devs));
+    ಆದರೆ (count < 0) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to enumerate DRM devices\n", __func__);
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        ಹಿಂತಿರುಗಿ APIR_ERROR_INITIALIZATION_FAILED;
     }
 
-    virt_gpu_result_t result = APIR_ERROR_INITIALIZATION_FAILED;
-    for (int i = 0; i < count; i++) {
-        result = virtgpu_open_device(gpu, devs[i]);
-        if (result == APIR_SUCCESS) {
-            break;
+    virt_gpu_ಫಲಿತಾಂಶ_t ಫಲಿತಾಂಶ = APIR_ERROR_INITIALIZATION_FAILED;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < count; i++) {
+        ಫಲಿತಾಂಶ = virtgpu_open_device(gpu, devs[i]);
+        ಆದರೆ (ಫಲಿತಾಂಶ == APIR_SUCCESS) {
+            ನಿಲ್ಲಿಸು;
         }
     }
 
     drmFreeDevices(devs, count);
 
-    return result;
+    ಹಿಂತಿರುಗಿ ಫಲಿತಾಂಶ;
 }
 
-static virt_gpu_result_t virtgpu_open_device(virtgpu * gpu, const drmDevicePtr dev) {
-    const char * node_path = dev->nodes[DRM_NODE_RENDER];
+ಸ್ಥಿರ virt_gpu_ಫಲಿತಾಂಶ_t virtgpu_open_device(virtgpu * gpu, ಸ್ಥಿರಾಂಕ drmDevicePtr dev) {
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ಗಂಟು_ಮಾರ್ಗ = dev->nodes[DRM_ಗಂಟು_RENDER];
 
-    int fd = open(node_path, O_RDWR | O_CLOEXEC);
-    if (fd < 0) {
-        GGML_ABORT(GGML_VIRTGPU "%s: failed to open %s", __func__, node_path);
-        return APIR_ERROR_INITIALIZATION_FAILED;
+    ಪೂರ್ಣಾಂಕ fd = open(ಗಂಟು_ಮಾರ್ಗ, O_RDWR | O_CLOEXEC);
+    ಆದರೆ (fd < 0) {
+        GGML_ABORT(GGML_VIRTGPU "%s: failed to open %s", __func__, ಗಂಟು_ಮಾರ್ಗ);
+        ಹಿಂತಿರುಗಿ APIR_ERROR_INITIALIZATION_FAILED;
     }
 
-    drmVersionPtr version = drmGetVersion(fd);
-    if (!version || strcmp(version->name, "virtio_gpu") || version->version_major != 0) {
-        if (version) {
-            GGML_LOG_ERROR(GGML_VIRTGPU "%s: unknown DRM driver %s version %d\n", __func__, version->name,
-                           version->version_major);
-        } else {
+    drm_ಆವೃತ್ತಿ_Ptr ಆವೃತ್ತಿ_2 = drm_Get_ಆವೃತ್ತಿ(fd);
+    ಆದರೆ (!ಆವೃತ್ತಿ_2 || strcmp(ಆವೃತ್ತಿ_2->name, "virtio_gpu") || ಆವೃತ್ತಿ_2->ಆವೃತ್ತಿ_major != 0) {
+        ಆದರೆ (ಆವೃತ್ತಿ_2) {
+            GGML_LOG_ERROR(GGML_VIRTGPU "%s: unknown DRM driver %s version %d\n", __func__, ಆವೃತ್ತಿ_2->name,
+                           ಆವೃತ್ತಿ_2->ಆವೃತ್ತಿ_major);
+        } ಇಲ್ಲದಿದ್ದರೆ {
             GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to get DRM driver version\n", __func__);
         }
 
-        if (version) {
-            drmFreeVersion(version);
+        ಆದರೆ (ಆವೃತ್ತಿ_2) {
+            drm_Free_ಆವೃತ್ತಿ(ಆವೃತ್ತಿ_2);
         }
         close(fd);
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        ಹಿಂತಿರುಗಿ APIR_ERROR_INITIALIZATION_FAILED;
     }
 
     gpu->fd = fd;
 
-    drmFreeVersion(version);
+    drm_Free_ಆವೃತ್ತಿ(ಆವೃತ್ತಿ_2);
 
-    GGML_LOG_INFO(GGML_VIRTGPU "using DRM device %s\n", node_path);
+    GGML_LOG_INFO(GGML_VIRTGPU "using DRM device %s\n", ಗಂಟು_ಮಾರ್ಗ);
 
-    return APIR_SUCCESS;
+    ಹಿಂತಿರುಗಿ APIR_SUCCESS;
 }
 
-static virt_gpu_result_t virtgpu_init_context(virtgpu * gpu) {
-    assert(!gpu->capset.version);
-    const int ret = virtgpu_ioctl_context_init(gpu, gpu->capset.id);
-    if (ret) {
+ಸ್ಥಿರ virt_gpu_ಫಲಿತಾಂಶ_t virtgpu_init_context(virtgpu * gpu) {
+    ಪ್ರತಿಜ್ಞಾ(!gpu->capset.ಆವೃತ್ತಿ_2);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ret = virtgpu_ioctl_context_init(gpu, gpu->capset.id);
+    ಆದರೆ (ret) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to initialize context: %s\n", __func__, strerror(errno));
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        ಹಿಂತಿರುಗಿ APIR_ERROR_INITIALIZATION_FAILED;
     }
 
-    return APIR_SUCCESS;
+    ಹಿಂತಿರುಗಿ APIR_SUCCESS;
 }
 
-static virt_gpu_result_t virtgpu_init_capset(virtgpu * gpu) {
-    if (gpu->use_apir_capset) {
+ಸ್ಥಿರ virt_gpu_ಫಲಿತಾಂಶ_t virtgpu_init_capset(virtgpu * gpu) {
+    ಆದರೆ (gpu->use_apir_capset) {
         GGML_LOG_INFO(GGML_VIRTGPU "Using the APIR capset\n");
         gpu->capset.id = VIRTGPU_DRM_CAPSET_APIR;
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         GGML_LOG_INFO(GGML_VIRTGPU "Using the Venus capset\n");
         gpu->capset.id = VIRTGPU_DRM_CAPSET_VENUS;
     }
-    gpu->capset.version = 0;
+    gpu->capset.ಆವೃತ್ತಿ_2 = 0;
 
-    int ret =
-        virtgpu_ioctl_get_caps(gpu, gpu->capset.id, gpu->capset.version, &gpu->capset.data, sizeof(gpu->capset.data));
+    ಪೂರ್ಣಾಂಕ ret =
+        virtgpu_ioctl_get_caps(gpu, gpu->capset.id, gpu->capset.ಆವೃತ್ತಿ_2, &gpu->capset.ದತ್ತಾಂಶ, ಗಾತ್ರ(gpu->capset.ದತ್ತಾಂಶ));
 
-    if (ret) {
-        GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to get APIR v%d capset: %s\n", __func__, gpu->capset.version,
+    ಆದರೆ (ret) {
+        GGML_LOG_ERROR(GGML_VIRTGPU "%s: failed to get APIR v%d capset: %s\n", __func__, gpu->capset.ಆವೃತ್ತಿ_2,
                        strerror(errno));
-        return APIR_ERROR_INITIALIZATION_FAILED;
+        ಹಿಂತಿರುಗಿ APIR_ERROR_INITIALIZATION_FAILED;
     }
 
-    assert(gpu->capset.data.supports_blob_resources);
+    ಪ್ರತಿಜ್ಞಾ(gpu->capset.ದತ್ತಾಂಶ.supports_blob_resources);
 
-    return APIR_SUCCESS;
+    ಹಿಂತಿರುಗಿ APIR_SUCCESS;
 }
 
-static int virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id) {
-    drm_virtgpu_context_set_param ctx_set_params[3] = {
+ಸ್ಥಿರ ಪೂರ್ಣಾಂಕ virtgpu_ioctl_context_init(virtgpu * gpu, virgl_renderer_capset capset_id) {
+    drm_virtgpu_context_ಗಣ_param ctx_ಗಣ_params[3] = {
         {
          .param = VIRTGPU_CONTEXT_PARAM_CAPSET_ID,
          .value = capset_id,
          },
         {
-         .param = VIRTGPU_CONTEXT_PARAM_NUM_RINGS,
+         .param = VIRTGPU_CONTEXT_PARAM_ಅಂಕೆ_RINGS,
          .value = 1,
          },
         {
-         .param = VIRTGPU_CONTEXT_PARAM_POLL_RINGS_MASK,
+         .param = VIRTGPU_CONTEXT_PARAM_POLL_RINGS_ಮುಖವಾಡ,
          .value = 0, /* don't generate drm_events on fence signaling */
         },
     };
 
-    drm_virtgpu_context_init args = {
-        .num_params     = ARRAY_SIZE(ctx_set_params),
+    drm_virtgpu_context_init ವಾದಗಳು_2 = {
+        .ಅಂಕೆ_params     = ARRAY_ಗಾತ್ರ(ctx_ಗಣ_params),
         .pad            = 0,
-        .ctx_set_params = (uintptr_t) &ctx_set_params,
+        .ctx_ಗಣ_params = (uintptr_t) &ctx_ಗಣ_params,
     };
 
-    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_CONTEXT_INIT, &args);
+    ಹಿಂತಿರುಗಿ virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_CONTEXT_INIT, &ವಾದಗಳು_2);
 }
 
-static int virtgpu_ioctl_get_caps(virtgpu *             gpu,
+ಸ್ಥಿರ ಪೂರ್ಣಾಂಕ virtgpu_ioctl_get_caps(virtgpu *             gpu,
                                   virgl_renderer_capset id,
-                                  uint32_t              version,
-                                  void *                capset,
-                                  size_t                capset_size) {
-    drm_virtgpu_get_caps args = {
-        .cap_set_id  = id,
-        .cap_set_ver = version,
+                                  uint32_t              ಆವೃತ್ತಿ_2,
+                                  ಶೂನ್ಯ *                capset,
+                                  size_t                capset_ಗಾತ್ರ) {
+    drm_virtgpu_get_caps ವಾದಗಳು_2 = {
+        .cap_ಗಣ_id  = id,
+        .cap_ಗಣ_ver = ಆವೃತ್ತಿ_2,
         .addr        = (uintptr_t) capset,
-        .size        = (__u32) capset_size,
+        .size        = (__u32) capset_ಗಾತ್ರ,
         .pad         = 0,
     };
 
-    return virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GET_CAPS, &args);
+    ಹಿಂತಿರುಗಿ virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GET_CAPS, &ವಾದಗಳು_2);
 }
 
-static uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param) {
+ಸ್ಥಿರ uint64_t virtgpu_ioctl_getparam(virtgpu * gpu, uint64_t param) {
     /* val must be zeroed because kernel only writes the lower 32 bits */
     uint64_t             val  = 0;
-    drm_virtgpu_getparam args = {
+    drm_virtgpu_getparam ವಾದಗಳು_2 = {
         .param = param,
         .value = (uintptr_t) &val,
     };
 
-    const int ret = virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GETPARAM, &args);
-    return ret ? 0 : val;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ret = virtgpu_ioctl(gpu, DRM_IOCTL_VIRTGPU_GETPARAM, &ವಾದಗಳು_2);
+    ಹಿಂತಿರುಗಿ ret ? 0 : val;
 }
 
 apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type, int32_t cmd_flags) {
@@ -380,14 +380,14 @@ apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type,
      * Prepare the command encoder and its buffer
      */
 
-    thread_local char encoder_buffer[4096];
+    thread_local ಅಕ್ಷರ encoder_ಬಫರ್[4096];
 
     thread_local apir_encoder enc;
     enc = {
-        .cur   = encoder_buffer,
-        .start = encoder_buffer,
-        .end   = encoder_buffer + sizeof(encoder_buffer),
-        .fatal = false,
+        .cur   = encoder_ಬಫರ್,
+        .start = encoder_ಬಫರ್,
+        .end   = encoder_ಬಫರ್ + ಗಾತ್ರ(encoder_ಬಫರ್),
+        .fatal = ಸುಳ್ಳು,
     };
 
     /*
@@ -400,34 +400,34 @@ apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type,
     int32_t cmd_type = apir_cmd_type;
 
     // for testing during the hypervisor transition
-    if (!gpu->use_apir_capset) {
-        cmd_type += VENUS_COMMAND_TYPE_LENGTH;
+    ಆದರೆ (!gpu->use_apir_capset) {
+        cmd_type += VENUS_COMMAND_TYPE_ಉದ್ದಳತೆ;
     }
     apir_encode_int32_t(&enc, &cmd_type);
     apir_encode_int32_t(&enc, &cmd_flags);
 
-    uint32_t reply_res_id = gpu->reply_shmem.res_id;
-    apir_encode_uint32_t(&enc, &reply_res_id);
+    uint32_t ಉತ್ತರ_res_id = gpu->ಉತ್ತರ_shmem.res_id;
+    apir_encode_uint32_t(&enc, &ಉತ್ತರ_res_id);
 
-    return &enc;
+    ಹಿಂತಿರುಗಿ &enc;
 }
 
-void remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec) {
-    UNUSED(gpu);
+ಶೂನ್ಯ remote_call_ಮುಕ್ತಾಯ(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec) {
+    ಬಳಸದ(gpu);
 
-    if (!enc) {
+    ಆದರೆ (!enc) {
         GGML_ABORT(GGML_VIRTGPU "%s: Invalid (null) encoder", __func__);
     }
 
-    if (!dec) {
+    ಆದರೆ (!dec) {
         GGML_ABORT(GGML_VIRTGPU "%s: Invalid (null) decoder", __func__);
     }
 
-    if (apir_encoder_get_fatal(enc)) {
+    ಆದರೆ (apir_encoder_get_fatal(enc)) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Failed to encode the output parameters.", __func__);
     }
 
-    if (apir_decoder_get_fatal(dec)) {
+    ಆದರೆ (apir_decoder_get_fatal(dec)) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Failed to decode the input parameters.", __func__);
     }
 }
@@ -435,111 +435,111 @@ void remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec) {
 uint32_t remote_call(virtgpu *       gpu,
                      apir_encoder *  encoder,
                      apir_decoder ** decoder,
-                     float           max_wait_ms,
-                     long long *     call_duration_ns) {
+                     ದಶಮಾಂಶ           max_wait_ms,
+                     ದೀರ್ಘ ದೀರ್ಘ *     call_duration_ns) {
     /*
      * Prepare the reply notification pointer
      */
 
-    volatile std::atomic_uint * atomic_reply_notif = (volatile std::atomic_uint *) gpu->reply_shmem.mmap_ptr;
-    *atomic_reply_notif                            = 0;
+    ಅಸ್ಥಿರ std::atomic_uint * atomic_ಉತ್ತರ_notif = (ಅಸ್ಥಿರ std::atomic_uint *) gpu->ಉತ್ತರ_shmem.mmap_ptr;
+    *atomic_ಉತ್ತರ_notif                            = 0;
 
     /*
      * Trigger the execbuf ioctl
      */
 
-    drm_virtgpu_execbuffer args = {
+    drm_virtgpu_execbuffer ವಾದಗಳು_2 = {
         .flags   = VIRTGPU_EXECBUF_RING_IDX,
         .size    = (uint32_t) (encoder->cur - encoder->start),
         .command = (uintptr_t) encoder->start,
 
         .bo_handles     = 0,
-        .num_bo_handles = 0,
+        .ಅಂಕೆ_bo_handles = 0,
 
         .fence_fd         = 0,
         .ring_idx         = 0,
         .syncobj_stride   = 0,
-        .num_in_syncobjs  = 0,
-        .num_out_syncobjs = 0,
-        .in_syncobjs      = 0,
-        .out_syncobjs     = 0,
+        .ಅಂಕೆ_ಒಳ_syncobjs  = 0,
+        .ಅಂಕೆ_ಹೊರಹೋಗು_syncobjs = 0,
+        .ಒಳ_syncobjs      = 0,
+        .ಹೊರಹೋಗು_syncobjs     = 0,
     };
 
-    *decoder = NULL;
+    *decoder = ಖಾಲಿ;
 
-    int ret = drmIoctl(gpu->fd, DRM_IOCTL_VIRTGPU_EXECBUFFER, &args);
+    ಪೂರ್ಣಾಂಕ ret = drmIoctl(gpu->fd, DRM_IOCTL_VIRTGPU_EXECBUFFER, &ವಾದಗಳು_2);
 
-    if (ret != 0) {
+    ಆದರೆ (ret != 0) {
         GGML_ABORT(GGML_VIRTGPU "%s: the virtgpu EXECBUFFER ioctl failed (%d)", __func__, ret);
     }
 
     /*
      * Wait for the response notification
      */
-    timer_data wait_host_reply_timer = { 0, 0, 0 };
+    timer_ದತ್ತಾಂಶ wait_host_ಉತ್ತರ_timer = { 0, 0, 0 };
 
-    start_timer(&wait_host_reply_timer);
+    ಆರಂಭ_timer(&wait_host_ಉತ್ತರ_timer);
 
-    timespec ts_start, ts_end;
-    clock_gettime(CLOCK_MONOTONIC, &ts_start);
-    long long start_time = (long long) ts_start.tv_sec * 1000000000LL + ts_start.tv_nsec;
+    timespec ts_ಆರಂಭ, ts_ಕೊನೆ;
+    clock_gettime(CLOCK_MONOTONIC, &ts_ಆರಂಭ);
+    ದೀರ್ಘ ದೀರ್ಘ ಆರಂಭ_ಸಮಯ = (ದೀರ್ಘ ದೀರ್ಘ) ts_ಆರಂಭ.tv_sec * 1000000000LL + ts_ಆರಂಭ.tv_nsec;
 
-    bool     timedout    = false;
-    uint32_t notif_value = 0;
-    while (true) {
-        notif_value = std::atomic_load_explicit(atomic_reply_notif, std::memory_order_acquire);
+    ತಾರ್ಕಿಕ     timedout    = ಸುಳ್ಳು;
+    uint32_t notif_ಮೌಲ್ಯ = 0;
+    ಆಗ (ನಿಜ) {
+        notif_ಮೌಲ್ಯ = std::atomic_load_explicit(atomic_ಉತ್ತರ_notif, std::memory_order_acquire);
 
-        if (notif_value != 0) {
-            break;
+        ಆದರೆ (notif_ಮೌಲ್ಯ != 0) {
+            ನಿಲ್ಲಿಸು;
         }
 
-        int64_t base_sleep_us = 15;
+        int64_t ತಳ_sleep_us = 15;
 
-        os_time_sleep(base_sleep_us);
+        os_ಸಮಯ_sleep(ತಳ_sleep_us);
 
-        if (max_wait_ms) {
-            clock_gettime(CLOCK_MONOTONIC, &ts_end);
-            long long end_time    = (long long) ts_end.tv_sec * 1000000000LL + ts_end.tv_nsec;
-            float     duration_ms = (end_time - start_time) / 1000000;
+        ಆದರೆ (max_wait_ms) {
+            clock_gettime(CLOCK_MONOTONIC, &ts_ಕೊನೆ);
+            ದೀರ್ಘ ದೀರ್ಘ ಕೊನೆ_ಸಮಯ    = (ದೀರ್ಘ ದೀರ್ಘ) ts_ಕೊನೆ.tv_sec * 1000000000LL + ts_ಕೊನೆ.tv_nsec;
+            ದಶಮಾಂಶ     duration_ms = (ಕೊನೆ_ಸಮಯ - ಆರಂಭ_ಸಮಯ) / 1000000;
 
-            if (duration_ms > max_wait_ms) {
-                timedout = true;
-                break;
+            ಆದರೆ (duration_ms > max_wait_ms) {
+                timedout = ನಿಜ;
+                ನಿಲ್ಲಿಸು;
             }
         }
     }
 
-    if (call_duration_ns) {
-        *call_duration_ns = stop_timer(&wait_host_reply_timer);
+    ಆದರೆ (call_duration_ns) {
+        *call_duration_ns = stop_timer(&wait_host_ಉತ್ತರ_timer);
     }
 
-    if (max_wait_ms && timedout) {
+    ಆದರೆ (max_wait_ms && timedout) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: timed out waiting for the host answer...\n", __func__);
-        return APIR_FORWARD_TIMEOUT;
+        ಹಿಂತಿರುಗಿ APIR_FORWARD_TIMEOUT;
     }
 
     /*
      * Prepare the decoder
      */
-    static apir_decoder response_dec;
-    response_dec.cur = (char *) gpu->reply_shmem.mmap_ptr + sizeof(*atomic_reply_notif);
-    response_dec.end = (char *) gpu->reply_shmem.mmap_ptr + gpu->reply_shmem.mmap_size;
+    ಸ್ಥಿರ apir_decoder response_dec;
+    response_dec.cur = (ಅಕ್ಷರ *) gpu->ಉತ್ತರ_shmem.mmap_ptr + ಗಾತ್ರ(*atomic_ಉತ್ತರ_notif);
+    response_dec.end = (ಅಕ್ಷರ *) gpu->ಉತ್ತರ_shmem.mmap_ptr + gpu->ಉತ್ತರ_shmem.mmap_ಗಾತ್ರ;
     *decoder         = &response_dec;
 
     // extract the actual return value from the notif flag
-    uint32_t returned_value = notif_value - 1;
-    return returned_value;
+    uint32_t returned_ಮೌಲ್ಯ = notif_ಮೌಲ್ಯ - 1;
+    ಹಿಂತಿರುಗಿ returned_ಮೌಲ್ಯ;
 }
 
-static void log_call_duration(long long call_duration_ns, const char * name) {
-    double call_duration_ms = (double) call_duration_ns / 1e6;  // 1 millisecond = 1e6 nanoseconds
-    double call_duration_s  = (double) call_duration_ns / 1e9;  // 1 second = 1e9 nanoseconds
+ಸ್ಥಿರ ಶೂನ್ಯ log_call_duration(ದೀರ್ಘ ದೀರ್ಘ call_duration_ns, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * name) {
+    ದ್ವಿಗುಣ call_duration_ms = (ದ್ವಿಗುಣ) call_duration_ns / 1e6;  // 1 millisecond = 1e6 nanoseconds
+    ದ್ವಿಗುಣ call_duration_s  = (ದ್ವಿಗುಣ) call_duration_ns / 1e9;  // 1 second = 1e9 nanoseconds
 
-    if (call_duration_s > 1) {
+    ಆದರೆ (call_duration_s > 1) {
         GGML_LOG_INFO(GGML_VIRTGPU "waited %.2fs for the %s host reply...\n", call_duration_s, name);
-    } else if (call_duration_ms > 1) {
+    } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (call_duration_ms > 1) {
         GGML_LOG_INFO(GGML_VIRTGPU "waited %.2fms for the %s host reply...\n", call_duration_ms, name);
-    } else {
+    } ಇಲ್ಲದಿದ್ದರೆ {
         GGML_LOG_INFO(GGML_VIRTGPU "waited %lldns for the %s host reply...\n", call_duration_ns, name);
     }
 }

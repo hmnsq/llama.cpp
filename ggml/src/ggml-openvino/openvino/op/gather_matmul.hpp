@@ -11,33 +11,33 @@
 //
 // \note GatherMatmul op class is under development and subject to change.
 
-#pragma once
+#ಸೂಚನೆ once
 
-#include "openvino/op/op.hpp"
+#ಅನ್ತರ್ಭಾವ "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+ನಾಮಾಕಾಶ ov::op::internal {
 
-class OPENVINO_API GatherMatmul : public ov::op::Op {
-public:
+ವರ್ಗ OPENVINO_API GatherMatmul : ಸಾರ್ವಜನಿಕ ov::op::Op {
+ಸಾರ್ವಜನಿಕ:
     OPENVINO_OP("GatherMatmul")
 
-    GatherMatmul() = default;
+    GatherMatmul() = ಪೂರ್ವನಿಯೋಜಿತ;
 
-    GatherMatmul(const ov::Output<Node>& A,
-                 const ov::Output<Node>& B,
-                 const ov::Output<Node>& indices,
-                 const ov::Output<Node>& bias);
+    GatherMatmul(ಸ್ಥಿರಾಂಕ ov::Output<Node>& A,
+                 ಸ್ಥಿರಾಂಕ ov::Output<Node>& B,
+                 ಸ್ಥಿರಾಂಕ ov::Output<Node>& indices,
+                 ಸ್ಥಿರಾಂಕ ov::Output<Node>& bias);
 
-    GatherMatmul(const ov::Output<Node>& A, const ov::Output<Node>& B, const ov::Output<Node>& indices);
+    GatherMatmul(ಸ್ಥಿರಾಂಕ ov::Output<Node>& A, ಸ್ಥಿರಾಂಕ ov::Output<Node>& B, ಸ್ಥಿರಾಂಕ ov::Output<Node>& indices);
 
-    std::shared_ptr<Node> clone_with_new_inputs(const ov::OutputVector& new_args) const override;
+    std::shared_ptr<Node> clone_with_new_inputs(ಸ್ಥಿರಾಂಕ ov::Output_ಸದಿಶ& new_ವಾದಗಳು) ಸ್ಥಿರಾಂಕ override;
 
-    void validate_and_infer_types() override;
+    ಶೂನ್ಯ validate_and_infer_types() override;
 
-private:
+ಖಾಸಗಿ:
     // the weights matrix B is expected to have the transposed form [group, N, K]
-    static constexpr bool transp_a = false;
-    static constexpr bool transp_b = true;
+    ಸ್ಥಿರ constexpr ತಾರ್ಕಿಕ transp_a = ಸುಳ್ಳು;
+    ಸ್ಥಿರ constexpr ತಾರ್ಕಿಕ transp_b = ನಿಜ;
 };
 
 }  // namespace ov::op::internal

@@ -36,7 +36,7 @@ option(USE_ACL_GRAPH "Enable CANN graph execution (ACL graph mode)" OFF)
 if(USE_ACL_GRAPH AND (SOC_TYPE_MAJOR_SN STREQUAL "310P" OR SOC_TYPE_COMPILE_OPTION STREQUAL "ASCEND_310P"))
     message(FATAL_ERROR
         "CANN Graph (ACL graph mode) is not supported on 310P devices. "
-        "Please build with -DUSE_ACL_GRAPH=OFF or use a supported SOC.")
+        "Please build with -DUSE_ACL_ನಕ್ಷೆ=OFF or use a supported SOC.")
 endif()
 
 if (CANN_INSTALL_DIR)

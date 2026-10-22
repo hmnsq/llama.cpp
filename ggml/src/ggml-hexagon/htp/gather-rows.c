@@ -1,387 +1,387 @@
-#include "gather-rows.h"
+#ಅನ್ತರ್ಭಾವ "gather-rows.h"
 
-#include <assert.h>
+#ಅನ್ತರ್ಭಾವ <assert.h>
 
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "hvx-utils.h"
-#include "dma-queue.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "work-queue.h"
+#ಅನ್ತರ್ಭಾವ "hex-common.h"
+#ಅನ್ತರ್ಭಾವ "hex-profile.h"
+#ಅನ್ತರ್ಭಾವ "hvx-utils.h"
+#ಅನ್ತರ್ಭಾವ "dma-queue.h"
+#ಅನ್ತರ್ಭಾವ "htp-ctx.h"
+#ಅನ್ತರ್ಭಾವ "htp-ops.h"
+#ಅನ್ತರ್ಭಾವ "htp-tensor.h"
+#ಅನ್ತರ್ಭಾವ "work-queue.h"
 
-typedef void (*gather_rows_compute_fn_t)(
-    uint8_t * restrict out, const uint8_t * restrict region, uint32_t nvec,
-    const struct htp_gather_rows_params * restrict kparams,
-    const HVX_Vector * restrict tab, const HVX_Vector * restrict inc, HVX_Vector * restrict cur);
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*gather_ಅಡ್ಡಸಾಲುಗಳು_compute_fn_t)(
+    uint8_t * ಸೀಮಿತ ಹೊರಹೋಗು, ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ region, uint32_t nvec,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * ಸೀಮಿತ kparams,
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ tab, ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ inc, HVX_ಸದಿಶ * ಸೀಮಿತ cur);
 
-struct gather_rows_task {
-    struct htp_ops_context *              octx;
-    const struct htp_tensor *             a;
-    const struct htp_tensor *             b;
+ರಚನೆ gather_ಅಡ್ಡಸಾಲುಗಳು_task {
+    ರಚನೆ htp_ops_context *              octx;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor *             a;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor *             b;
     dma_addr_t                            dst;
-    uint32_t                              r_start;
-    uint32_t                              rows;
-    uint32_t                              rows_per_thread;
-    const struct htp_gather_rows_params * kparams;
-    gather_rows_compute_fn_t              compute;
+    uint32_t                              r_ಆರಂಭ;
+    uint32_t                              ಅಡ್ಡಸಾಲುಗಳು;
+    uint32_t                              ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * kparams;
+    gather_ಅಡ್ಡಸಾಲುಗಳು_compute_fn_t              compute;
 };
 
-static inline __attribute__((always_inline)) void gather_rows_dma_in(
-    dma_queue * q, const struct gather_rows_task * task,
-    uint8_t * region, uint32_t r, uint32_t nr, uint32_t elem_size) {
-    const struct htp_tensor * a = task->a;
-    const struct htp_tensor * b = task->b;
-    const struct htp_gather_rows_params * kparams = task->kparams;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ __attribute__((always_inline)) ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಒಳ(
+    dma_ಸರತಿ * q, ಸ್ಥಿರಾಂಕ ರಚನೆ gather_ಅಡ್ಡಸಾಲುಗಳು_task * task,
+    uint8_t * region, uint32_t r, uint32_t nr, uint32_t elem_ಗಾತ್ರ) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * a = task->a;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * b = task->b;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * kparams = task->kparams;
 
-    const size_t a_size = (nr - 1) * a->nb[1] + kparams->na * elem_size;
-    dma_queue_push(q, dma_make_data(region, a->data + r * a->nb[1]), a_size, a_size, a_size, 1);
-    if (b) {
-        if (kparams->b_dense) {
-            const size_t b_size = (nr - 1) * b->nb[1] + kparams->nb * elem_size;
-            dma_queue_push(q, dma_make_data(region + kparams->v1, b->data + r * b->nb[1]), b_size, b_size, b_size, 1);
-        } else {
-            const size_t b_size = (nr - 1) * b->nb[1] + elem_size;
-            for (uint32_t k = 0; k < kparams->nb; k++) {
-                dma_queue_push(q, dma_make_data(region + kparams->v1 + k * kparams->span1,
-                                                b->data + k * b->nb[0] + r * b->nb[1]), b_size, b_size, b_size, 1);
+    ಸ್ಥಿರಾಂಕ size_t a_ಗಾತ್ರ = (nr - 1) * a->nb[1] + kparams->na * elem_ಗಾತ್ರ;
+    dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(region, a->ದತ್ತಾಂಶ + r * a->nb[1]), a_ಗಾತ್ರ, a_ಗಾತ್ರ, a_ಗಾತ್ರ, 1);
+    ಆದರೆ (b) {
+        ಆದರೆ (kparams->b_dense) {
+            ಸ್ಥಿರಾಂಕ size_t b_ಗಾತ್ರ = (nr - 1) * b->nb[1] + kparams->nb * elem_ಗಾತ್ರ;
+            dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(region + kparams->v1, b->ದತ್ತಾಂಶ + r * b->nb[1]), b_ಗಾತ್ರ, b_ಗಾತ್ರ, b_ಗಾತ್ರ, 1);
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            ಸ್ಥಿರಾಂಕ size_t b_ಗಾತ್ರ = (nr - 1) * b->nb[1] + elem_ಗಾತ್ರ;
+            ಗಾಗಿ (uint32_t k = 0; k < kparams->nb; k++) {
+                dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(region + kparams->v1 + k * kparams->span1,
+                                                b->ದತ್ತಾಂಶ + k * b->nb[0] + r * b->nb[1]), b_ಗಾತ್ರ, b_ಗಾತ್ರ, b_ಗಾತ್ರ, 1);
             }
         }
     }
 }
 
-static inline void gather_rows_dma_out(dma_queue * q, const struct gather_rows_task * task,
-                                       uint8_t * out, uint32_t r, uint32_t nr, uint32_t elem_size) {
-    const struct htp_gather_rows_params * kparams = task->kparams;
-    const size_t out_size = nr * kparams->ne * elem_size;
-    dma_queue_push(q, dma_make_data(task->dst + r * kparams->ne * elem_size, out), out_size, out_size, out_size, 1);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಹೊರಹೋಗು(dma_ಸರತಿ * q, ಸ್ಥಿರಾಂಕ ರಚನೆ gather_ಅಡ್ಡಸಾಲುಗಳು_task * task,
+                                       uint8_t * ಹೊರಹೋಗು, uint32_t r, uint32_t nr, uint32_t elem_ಗಾತ್ರ) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * kparams = task->kparams;
+    ಸ್ಥಿರಾಂಕ size_t ಹೊರಹೋಗು_ಗಾತ್ರ = nr * kparams->ne * elem_ಗಾತ್ರ;
+    dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(task->dst + r * kparams->ne * elem_ಗಾತ್ರ, ಹೊರಹೋಗು), ಹೊರಹೋಗು_ಗಾತ್ರ, ಹೊರಹೋಗು_ಗಾತ್ರ, ಹೊರಹೋಗು_ಗಾತ್ರ, 1);
 }
 
-static __attribute__((noinline)) void gather_rows_init_tables_f32(
-    HVX_Vector * tab, HVX_Vector * inc,
-    const struct htp_gather_rows_params * kparams,
-    const struct htp_tensor * a, const struct htp_tensor * b) {
+ಸ್ಥಿರ __attribute__((noinline)) ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_init_tables_f32(
+    HVX_ಸದಿಶ * tab, HVX_ಸದಿಶ * inc,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * kparams,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * a, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * b) {
 
-    const int32_t s_a = kparams->rg * a->nb[1];
-    const int32_t s_b = b ? kparams->rg * b->nb[1] : 0;
-    const uint32_t b_nb1 = b ? b->nb[1] : 0;
-    uint32_t row = 0;
-    uint32_t col = 0;
+    ಸ್ಥಿರಾಂಕ int32_t s_a = kparams->rg * a->nb[1];
+    ಸ್ಥಿರಾಂಕ int32_t s_b = b ? kparams->rg * b->nb[1] : 0;
+    ಸ್ಥಿರಾಂಕ uint32_t b_nb1 = b ? b->nb[1] : 0;
+    uint32_t ಅಡ್ಡಸಾಲು = 0;
+    uint32_t ಲಂಬಸಾಲು = 0;
     int32_t t_buf[32] __attribute__((aligned(128)));
     int32_t s_buf[32] __attribute__((aligned(128)));
-    for (uint32_t k = 0; k < kparams->vg; k++) {
-        for (uint32_t lane = 0; lane < 32; lane++) {
-            if (col < kparams->na) {
-                t_buf[lane] = row * a->nb[1] + col * 4;
+    ಗಾಗಿ (uint32_t k = 0; k < kparams->vg; k++) {
+        ಗಾಗಿ (uint32_t lane = 0; lane < 32; lane++) {
+            ಆದರೆ (ಲಂಬಸಾಲು < kparams->na) {
+                t_buf[lane] = ಅಡ್ಡಸಾಲು * a->nb[1] + ಲಂಬಸಾಲು * 4;
                 s_buf[lane] = s_a;
-            } else {
-                t_buf[lane] = kparams->v1 + (col - kparams->na) * kparams->span1 + row * b_nb1;
+            } ಇಲ್ಲದಿದ್ದರೆ {
+                t_buf[lane] = kparams->v1 + (ಲಂಬಸಾಲು - kparams->na) * kparams->span1 + ಅಡ್ಡಸಾಲು * b_nb1;
                 s_buf[lane] = s_b;
             }
-            if (++col == kparams->ne) {
-                col = 0;
-                row++;
+            ಆದರೆ (++ಲಂಬಸಾಲು == kparams->ne) {
+                ಲಂಬಸಾಲು = 0;
+                ಅಡ್ಡಸಾಲು++;
             }
         }
-        tab[k] = *(const HVX_Vector *) t_buf;
-        inc[k] = *(const HVX_Vector *) s_buf;
+        tab[k] = *(ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) t_buf;
+        inc[k] = *(ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) s_buf;
     }
 }
 
-static __attribute__((noinline)) void gather_rows_init_tables_f16(
-    HVX_Vector * tab, HVX_Vector * inc,
-    const struct htp_gather_rows_params * kparams,
-    const struct htp_tensor * a, const struct htp_tensor * b) {
+ಸ್ಥಿರ __attribute__((noinline)) ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_init_tables_f16(
+    HVX_ಸದಿಶ * tab, HVX_ಸದಿಶ * inc,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * kparams,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * a, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * b) {
 
-    const int16_t s_a = (int16_t) (kparams->rg * a->nb[1]);
-    const int16_t s_b = (int16_t) (b ? kparams->rg * b->nb[1] : 0);
-    const uint32_t b_nb1 = b ? b->nb[1] : 0;
-    uint32_t row = 0;
-    uint32_t col = 0;
+    ಸ್ಥಿರಾಂಕ int16_t s_a = (int16_t) (kparams->rg * a->nb[1]);
+    ಸ್ಥಿರಾಂಕ int16_t s_b = (int16_t) (b ? kparams->rg * b->nb[1] : 0);
+    ಸ್ಥಿರಾಂಕ uint32_t b_nb1 = b ? b->nb[1] : 0;
+    uint32_t ಅಡ್ಡಸಾಲು = 0;
+    uint32_t ಲಂಬಸಾಲು = 0;
     int16_t t_buf[64] __attribute__((aligned(128)));
     int16_t s_buf[64] __attribute__((aligned(128)));
-    for (uint32_t k = 0; k < kparams->vg; k++) {
-        for (uint32_t lane = 0; lane < 64; lane++) {
-            if (col < kparams->na) {
-                t_buf[lane] = (int16_t) (row * a->nb[1] + col * 2);
+    ಗಾಗಿ (uint32_t k = 0; k < kparams->vg; k++) {
+        ಗಾಗಿ (uint32_t lane = 0; lane < 64; lane++) {
+            ಆದರೆ (ಲಂಬಸಾಲು < kparams->na) {
+                t_buf[lane] = (int16_t) (ಅಡ್ಡಸಾಲು * a->nb[1] + ಲಂಬಸಾಲು * 2);
                 s_buf[lane] = s_a;
-            } else {
-                t_buf[lane] = (int16_t) (kparams->v1 + (col - kparams->na) * kparams->span1 + row * b_nb1);
+            } ಇಲ್ಲದಿದ್ದರೆ {
+                t_buf[lane] = (int16_t) (kparams->v1 + (ಲಂಬಸಾಲು - kparams->na) * kparams->span1 + ಅಡ್ಡಸಾಲು * b_nb1);
                 s_buf[lane] = s_b;
             }
-            if (++col == kparams->ne) {
-                col = 0;
-                row++;
+            ಆದರೆ (++ಲಂಬಸಾಲು == kparams->ne) {
+                ಲಂಬಸಾಲು = 0;
+                ಅಡ್ಡಸಾಲು++;
             }
         }
-        tab[k] = *(const HVX_Vector *) t_buf;
-        inc[k] = *(const HVX_Vector *) s_buf;
+        tab[k] = *(ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) t_buf;
+        inc[k] = *(ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) s_buf;
     }
 }
 
-static void gather_rows_compute_f32_vg1(
-    uint8_t * restrict out, const uint8_t * restrict region, uint32_t nvec,
-    const struct htp_gather_rows_params * restrict kparams,
-    const HVX_Vector * restrict tab, const HVX_Vector * restrict inc, HVX_Vector * restrict cur) {
-    (void) cur;
-    const uint32_t region_size = kparams->region_size;
-    HVX_Vector vcur = tab[0];
-    const HVX_Vector vinc = inc[0];
-    #pragma unroll(4)
-    for (uint32_t v = 0; v < nvec; v++) {
-        Q6_vgather_ARMVw((HVX_Vector *) (out + v * 128), (size_t) region, region_size, vcur);
+ಸ್ಥಿರ ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_compute_f32_vg1(
+    uint8_t * ಸೀಮಿತ ಹೊರಹೋಗು, ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ region, uint32_t nvec,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * ಸೀಮಿತ kparams,
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ tab, ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ inc, HVX_ಸದಿಶ * ಸೀಮಿತ cur) {
+    (ಶೂನ್ಯ) cur;
+    ಸ್ಥಿರಾಂಕ uint32_t region_ಗಾತ್ರ = kparams->region_ಗಾತ್ರ;
+    HVX_ಸದಿಶ vcur = tab[0];
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ vinc = inc[0];
+    #ಸೂಚನೆ unroll(4)
+    ಗಾಗಿ (uint32_t v = 0; v < nvec; v++) {
+        Q6_vgather_ARMVw((HVX_ಸದಿಶ *) (ಹೊರಹೋಗು + v * 128), (size_t) region, region_ಗಾತ್ರ, vcur);
         vcur = Q6_Vw_vadd_VwVw(vcur, vinc);
     }
 }
 
-static void gather_rows_compute_f32_vgn(
-    uint8_t * restrict out, const uint8_t * restrict region, uint32_t nvec,
-    const struct htp_gather_rows_params * restrict kparams,
-    const HVX_Vector * restrict tab, const HVX_Vector * restrict inc, HVX_Vector * restrict cur) {
-    const uint32_t vg = kparams->vg;
-    const uint32_t region_size = kparams->region_size;
-    for (uint32_t k = 0; k < vg; k++) {
+ಸ್ಥಿರ ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_compute_f32_vgn(
+    uint8_t * ಸೀಮಿತ ಹೊರಹೋಗು, ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ region, uint32_t nvec,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * ಸೀಮಿತ kparams,
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ tab, ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ inc, HVX_ಸದಿಶ * ಸೀಮಿತ cur) {
+    ಸ್ಥಿರಾಂಕ uint32_t vg = kparams->vg;
+    ಸ್ಥಿರಾಂಕ uint32_t region_ಗಾತ್ರ = kparams->region_ಗಾತ್ರ;
+    ಗಾಗಿ (uint32_t k = 0; k < vg; k++) {
         cur[k] = tab[k];
     }
     uint32_t k = 0;
-    #pragma unroll(4)
-    for (uint32_t v = 0; v < nvec; v++) {
-        Q6_vgather_ARMVw((HVX_Vector *) (out + v * 128), (size_t) region, region_size, cur[k]);
+    #ಸೂಚನೆ unroll(4)
+    ಗಾಗಿ (uint32_t v = 0; v < nvec; v++) {
+        Q6_vgather_ARMVw((HVX_ಸದಿಶ *) (ಹೊರಹೋಗು + v * 128), (size_t) region, region_ಗಾತ್ರ, cur[k]);
         cur[k] = Q6_Vw_vadd_VwVw(cur[k], inc[k]);
-        if (++k == vg) {
+        ಆದರೆ (++k == vg) {
             k = 0;
         }
     }
 }
 
-static void gather_rows_compute_f16_vg1(
-    uint8_t * restrict out, const uint8_t * restrict region, uint32_t nvec,
-    const struct htp_gather_rows_params * restrict kparams,
-    const HVX_Vector * restrict tab, const HVX_Vector * restrict inc, HVX_Vector * restrict cur) {
-    (void) cur;
-    const uint32_t region_size = kparams->region_size;
-    HVX_Vector vcur = tab[0];
-    const HVX_Vector vinc = inc[0];
-    #pragma unroll(4)
-    for (uint32_t v = 0; v < nvec; v++) {
-        Q6_vgather_ARMVh((HVX_Vector *) (out + v * 128), (size_t) region, region_size, vcur);
+ಸ್ಥಿರ ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_compute_f16_vg1(
+    uint8_t * ಸೀಮಿತ ಹೊರಹೋಗು, ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ region, uint32_t nvec,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * ಸೀಮಿತ kparams,
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ tab, ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ inc, HVX_ಸದಿಶ * ಸೀಮಿತ cur) {
+    (ಶೂನ್ಯ) cur;
+    ಸ್ಥಿರಾಂಕ uint32_t region_ಗಾತ್ರ = kparams->region_ಗಾತ್ರ;
+    HVX_ಸದಿಶ vcur = tab[0];
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ vinc = inc[0];
+    #ಸೂಚನೆ unroll(4)
+    ಗಾಗಿ (uint32_t v = 0; v < nvec; v++) {
+        Q6_vgather_ARMVh((HVX_ಸದಿಶ *) (ಹೊರಹೋಗು + v * 128), (size_t) region, region_ಗಾತ್ರ, vcur);
         vcur = Q6_Vh_vadd_VhVh(vcur, vinc);
     }
 }
 
-static void gather_rows_compute_f16_vgn(
-    uint8_t * restrict out, const uint8_t * restrict region, uint32_t nvec,
-    const struct htp_gather_rows_params * restrict kparams,
-    const HVX_Vector * restrict tab, const HVX_Vector * restrict inc, HVX_Vector * restrict cur) {
-    const uint32_t vg = kparams->vg;
-    const uint32_t region_size = kparams->region_size;
-    for (uint32_t k = 0; k < vg; k++) {
+ಸ್ಥಿರ ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_compute_f16_vgn(
+    uint8_t * ಸೀಮಿತ ಹೊರಹೋಗು, ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ region, uint32_t nvec,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * ಸೀಮಿತ kparams,
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ tab, ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ inc, HVX_ಸದಿಶ * ಸೀಮಿತ cur) {
+    ಸ್ಥಿರಾಂಕ uint32_t vg = kparams->vg;
+    ಸ್ಥಿರಾಂಕ uint32_t region_ಗಾತ್ರ = kparams->region_ಗಾತ್ರ;
+    ಗಾಗಿ (uint32_t k = 0; k < vg; k++) {
         cur[k] = tab[k];
     }
     uint32_t k = 0;
-    #pragma unroll(4)
-    for (uint32_t v = 0; v < nvec; v++) {
-        Q6_vgather_ARMVh((HVX_Vector *) (out + v * 128), (size_t) region, region_size, cur[k]);
+    #ಸೂಚನೆ unroll(4)
+    ಗಾಗಿ (uint32_t v = 0; v < nvec; v++) {
+        Q6_vgather_ARMVh((HVX_ಸದಿಶ *) (ಹೊರಹೋಗು + v * 128), (size_t) region, region_ಗಾತ್ರ, cur[k]);
         cur[k] = Q6_Vh_vadd_VhVh(cur[k], inc[k]);
-        if (++k == vg) {
+        ಆದರೆ (++k == vg) {
             k = 0;
         }
     }
 }
 
-static void gather_rows_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    const struct gather_rows_task * task = (const struct gather_rows_task *) data;
-    const struct htp_gather_rows_params * kparams = task->kparams;
-    const struct htp_tensor * a = task->a;
-    const struct htp_tensor * b = task->b;
+ಸ್ಥಿರ ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_thread_f32(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    (ಶೂನ್ಯ) nth;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ gather_ಅಡ್ಡಸಾಲುಗಳು_task * task = (ಸ್ಥಿರಾಂಕ ರಚನೆ gather_ಅಡ್ಡಸಾಲುಗಳು_task *) ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * kparams = task->kparams;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * a = task->a;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * b = task->b;
 
-    const uint32_t r_offset = MIN(ith * task->rows_per_thread, task->rows);
-    const uint32_t r_beg    = task->r_start + r_offset;
-    const uint32_t r_end    = task->r_start + MIN(r_offset + task->rows_per_thread, task->rows);
-    if (r_beg >= r_end) {
-        return;
+    ಸ್ಥಿರಾಂಕ uint32_t r_ಸ್ಥಾನಾಂತರ = MIN(ith * task->ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread, task->ಅಡ್ಡಸಾಲುಗಳು);
+    ಸ್ಥಿರಾಂಕ uint32_t r_beg    = task->r_ಆರಂಭ + r_ಸ್ಥಾನಾಂತರ;
+    ಸ್ಥಿರಾಂಕ uint32_t r_ಕೊನೆ    = task->r_ಆರಂಭ + MIN(r_ಸ್ಥಾನಾಂತರ + task->ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread, task->ಅಡ್ಡಸಾಲುಗಳು);
+    ಆದರೆ (r_beg >= r_ಕೊನೆ) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    struct htp_thread_trace * tr = &task->octx->ctx->trace[ith];
+    ರಚನೆ htp_thread_trace * tr = &task->octx->ctx->trace[ith];
 
-    uint8_t * base   = task->octx->ctx->vtcm_base + ith * kparams->slice;
-    HVX_Vector * tab = (HVX_Vector *) base;
-    HVX_Vector * inc = tab + kparams->vg;
-    HVX_Vector * cur = inc + kparams->vg;
-    uint8_t * region_base = (uint8_t *) (cur + kparams->vg);
+    uint8_t * ತಳ   = task->octx->ctx->vtcm_ತಳ + ith * kparams->ತುಂಡು_2;
+    HVX_ಸದಿಶ * tab = (HVX_ಸದಿಶ *) ತಳ;
+    HVX_ಸದಿಶ * inc = tab + kparams->vg;
+    HVX_ಸದಿಶ * cur = inc + kparams->vg;
+    uint8_t * region_ತಳ = (uint8_t *) (cur + kparams->vg);
 
-    uint8_t * region[2] = { region_base, region_base + kparams->buf_stride };
-    uint8_t * out[2]    = { region[0] + kparams->out_off, region[1] + kparams->out_off };
+    uint8_t * region[2] = { region_ತಳ, region_ತಳ + kparams->buf_stride };
+    uint8_t * ಹೊರಹೋಗು[2]    = { region[0] + kparams->ಹೊರಹೋಗು_off, region[1] + kparams->ಹೊರಹೋಗು_off };
 
-    htp_trace_event_start(tr, HTP_TRACE_EVT_INIT, (uint16_t) r_beg);
-    gather_rows_init_tables_f32(tab, inc, kparams, a, b);
+    htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_INIT, (uint16_t) r_beg);
+    gather_ಅಡ್ಡಸಾಲುಗಳು_init_tables_f32(tab, inc, kparams, a, b);
     htp_trace_event_stop(tr, HTP_TRACE_EVT_INIT, (uint16_t) r_beg);
 
-    dma_queue * q = task->octx->ctx->dma[ith];
-    const uint32_t n_in   = 1 + (task->b ? (kparams->b_dense ? 1 : kparams->nb) : 0);
-    const uint32_t nr_max = kparams->nr_max;
-    const uint32_t nr0    = MIN(nr_max, r_end - r_beg);
+    dma_ಸರತಿ * q = task->octx->ctx->dma[ith];
+    ಸ್ಥಿರಾಂಕ uint32_t n_ಒಳ   = 1 + (task->b ? (kparams->b_dense ? 1 : kparams->nb) : 0);
+    ಸ್ಥಿರಾಂಕ uint32_t nr_max = kparams->nr_max;
+    ಸ್ಥಿರಾಂಕ uint32_t nr0    = MIN(nr_max, r_ಕೊನೆ - r_beg);
 
-    dma_queue_push(q, dma_make_data(task->dst, out[0]), 0, 0, 0, 0); // dummy out
-    gather_rows_dma_in(q, task, region[0], r_beg, nr0, 4);
+    dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(task->dst, ಹೊರಹೋಗು[0]), 0, 0, 0, 0); // dummy out
+    gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಒಳ(q, task, region[0], r_beg, nr0, 4);
 
-    const uint32_t r1 = r_beg + nr_max;
-    if (r1 < r_end) {
-        const uint32_t nr1 = MIN(nr_max, r_end - r1);
-        dma_queue_push(q, dma_make_data(task->dst, out[1]), 0, 0, 0, 0); // dummy out
-        gather_rows_dma_in(q, task, region[1], r1, nr1, 4);
+    ಸ್ಥಿರಾಂಕ uint32_t r1 = r_beg + nr_max;
+    ಆದರೆ (r1 < r_ಕೊನೆ) {
+        ಸ್ಥಿರಾಂಕ uint32_t nr1 = MIN(nr_max, r_ಕೊನೆ - r1);
+        dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(task->dst, ಹೊರಹೋಗು[1]), 0, 0, 0, 0); // dummy out
+        gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಒಳ(q, task, region[1], r1, nr1, 4);
     }
 
     uint32_t buf = 0;
-    for (uint32_t r = r_beg; r < r_end; r += nr_max) {
-        const uint32_t nr = MIN(nr_max, r_end - r);
-        const uint32_t next_buf = buf ^ 1;
+    ಗಾಗಿ (uint32_t r = r_beg; r < r_ಕೊನೆ; r += nr_max) {
+        ಸ್ಥಿರಾಂಕ uint32_t nr = MIN(nr_max, r_ಕೊನೆ - r);
+        ಸ್ಥಿರಾಂಕ uint32_t ಮುಂದಿನ_buf = buf ^ 1;
 
-        dma_queue_pop(q); // complete out
-        for (uint32_t i = 0; i < n_in; i++) {
-            dma_queue_pop(q);
+        dma_ಸರತಿ_ತೆಗೆ(q); // complete out
+        ಗಾಗಿ (uint32_t i = 0; i < n_ಒಳ; i++) {
+            dma_ಸರತಿ_ತೆಗೆ(q);
         }
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);
-        const uint32_t nvec = (nr * kparams->ne + 31) >> 5;
-        task->compute(out[buf], region[buf], nvec, kparams, tab, inc, cur);
-        hvx_gather_sync(out[buf]);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);
+        ಸ್ಥಿರಾಂಕ uint32_t nvec = (nr * kparams->ne + 31) >> 5;
+        task->compute(ಹೊರಹೋಗು[buf], region[buf], nvec, kparams, tab, inc, cur);
+        hvx_gather_sync(ಹೊರಹೋಗು[buf]);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);
 
-        gather_rows_dma_out(q, task, out[buf], r, nr, 4);
+        gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಹೊರಹೋಗು(q, task, ಹೊರಹೋಗು[buf], r, nr, 4);
 
-        const uint32_t r_prefetch = r + 2 * nr_max;
-        if (r_prefetch < r_end) {
-            const uint32_t nr_prefetch = MIN(nr_max, r_end - r_prefetch);
-            gather_rows_dma_in(q, task, region[buf], r_prefetch, nr_prefetch, 4);
+        ಸ್ಥಿರಾಂಕ uint32_t r_prefetch = r + 2 * nr_max;
+        ಆದರೆ (r_prefetch < r_ಕೊನೆ) {
+            ಸ್ಥಿರಾಂಕ uint32_t nr_prefetch = MIN(nr_max, r_ಕೊನೆ - r_prefetch);
+            gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಒಳ(q, task, region[buf], r_prefetch, nr_prefetch, 4);
         }
 
-        buf = next_buf;
+        buf = ಮುಂದಿನ_buf;
     }
-    dma_queue_flush(q);
+    dma_ಸರತಿ_flush(q);
 }
 
-static void gather_rows_thread_f16(unsigned int nth, unsigned int ith, void * data) {
-    (void) nth;
-    const struct gather_rows_task * task = (const struct gather_rows_task *) data;
-    const struct htp_gather_rows_params * kparams = task->kparams;
-    const struct htp_tensor * a = task->a;
-    const struct htp_tensor * b = task->b;
+ಸ್ಥಿರ ಶೂನ್ಯ gather_ಅಡ್ಡಸಾಲುಗಳು_thread_f16(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ nth, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ith, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    (ಶೂನ್ಯ) nth;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ gather_ಅಡ್ಡಸಾಲುಗಳು_task * task = (ಸ್ಥಿರಾಂಕ ರಚನೆ gather_ಅಡ್ಡಸಾಲುಗಳು_task *) ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * kparams = task->kparams;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * a = task->a;
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * b = task->b;
 
-    const uint32_t r_offset = MIN(ith * task->rows_per_thread, task->rows);
-    const uint32_t r_beg    = task->r_start + r_offset;
-    const uint32_t r_end    = task->r_start + MIN(r_offset + task->rows_per_thread, task->rows);
-    if (r_beg >= r_end) {
-        return;
+    ಸ್ಥಿರಾಂಕ uint32_t r_ಸ್ಥಾನಾಂತರ = MIN(ith * task->ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread, task->ಅಡ್ಡಸಾಲುಗಳು);
+    ಸ್ಥಿರಾಂಕ uint32_t r_beg    = task->r_ಆರಂಭ + r_ಸ್ಥಾನಾಂತರ;
+    ಸ್ಥಿರಾಂಕ uint32_t r_ಕೊನೆ    = task->r_ಆರಂಭ + MIN(r_ಸ್ಥಾನಾಂತರ + task->ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread, task->ಅಡ್ಡಸಾಲುಗಳು);
+    ಆದರೆ (r_beg >= r_ಕೊನೆ) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    struct htp_thread_trace * tr = &task->octx->ctx->trace[ith];
+    ರಚನೆ htp_thread_trace * tr = &task->octx->ctx->trace[ith];
 
-    uint8_t * base   = task->octx->ctx->vtcm_base + ith * kparams->slice;
-    HVX_Vector * tab = (HVX_Vector *) base;
-    HVX_Vector * inc = tab + kparams->vg;
-    HVX_Vector * cur = inc + kparams->vg;
-    uint8_t * region_base = (uint8_t *) (cur + kparams->vg);
+    uint8_t * ತಳ   = task->octx->ctx->vtcm_ತಳ + ith * kparams->ತುಂಡು_2;
+    HVX_ಸದಿಶ * tab = (HVX_ಸದಿಶ *) ತಳ;
+    HVX_ಸದಿಶ * inc = tab + kparams->vg;
+    HVX_ಸದಿಶ * cur = inc + kparams->vg;
+    uint8_t * region_ತಳ = (uint8_t *) (cur + kparams->vg);
 
-    uint8_t * region[2] = { region_base, region_base + kparams->buf_stride };
-    uint8_t * out[2]    = { region[0] + kparams->out_off, region[1] + kparams->out_off };
+    uint8_t * region[2] = { region_ತಳ, region_ತಳ + kparams->buf_stride };
+    uint8_t * ಹೊರಹೋಗು[2]    = { region[0] + kparams->ಹೊರಹೋಗು_off, region[1] + kparams->ಹೊರಹೋಗು_off };
 
-    htp_trace_event_start(tr, HTP_TRACE_EVT_INIT, (uint16_t) r_beg);
-    gather_rows_init_tables_f16(tab, inc, kparams, a, b);
+    htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_INIT, (uint16_t) r_beg);
+    gather_ಅಡ್ಡಸಾಲುಗಳು_init_tables_f16(tab, inc, kparams, a, b);
     htp_trace_event_stop(tr, HTP_TRACE_EVT_INIT, (uint16_t) r_beg);
 
-    dma_queue * q = task->octx->ctx->dma[ith];
-    const uint32_t n_in = 1 + (task->b ? (kparams->b_dense ? 1 : kparams->nb) : 0);
+    dma_ಸರತಿ * q = task->octx->ctx->dma[ith];
+    ಸ್ಥಿರಾಂಕ uint32_t n_ಒಳ = 1 + (task->b ? (kparams->b_dense ? 1 : kparams->nb) : 0);
 
-    const uint32_t nr_max = kparams->nr_max;
-    const uint32_t nr0 = MIN(nr_max, r_end - r_beg);
-    dma_queue_push(q, dma_make_data(task->dst, out[0]), 0, 0, 0, 0); // dummy out
-    gather_rows_dma_in(q, task, region[0], r_beg, nr0, 2);
+    ಸ್ಥಿರಾಂಕ uint32_t nr_max = kparams->nr_max;
+    ಸ್ಥಿರಾಂಕ uint32_t nr0 = MIN(nr_max, r_ಕೊನೆ - r_beg);
+    dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(task->dst, ಹೊರಹೋಗು[0]), 0, 0, 0, 0); // dummy out
+    gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಒಳ(q, task, region[0], r_beg, nr0, 2);
 
-    const uint32_t r1 = r_beg + nr_max;
-    if (r1 < r_end) {
-        const uint32_t nr1 = MIN(nr_max, r_end - r1);
-        dma_queue_push(q, dma_make_data(task->dst, out[1]), 0, 0, 0, 0); // dummy out
-        gather_rows_dma_in(q, task, region[1], r1, nr1, 2);
+    ಸ್ಥಿರಾಂಕ uint32_t r1 = r_beg + nr_max;
+    ಆದರೆ (r1 < r_ಕೊನೆ) {
+        ಸ್ಥಿರಾಂಕ uint32_t nr1 = MIN(nr_max, r_ಕೊನೆ - r1);
+        dma_ಸರತಿ_ತಳ್ಳು(q, dma_make_ದತ್ತಾಂಶ(task->dst, ಹೊರಹೋಗು[1]), 0, 0, 0, 0); // dummy out
+        gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಒಳ(q, task, region[1], r1, nr1, 2);
     }
 
     uint32_t buf = 0;
-    for (uint32_t r = r_beg; r < r_end; r += nr_max) {
-        const uint32_t nr = MIN(nr_max, r_end - r);
-        const uint32_t next_buf = buf ^ 1;
+    ಗಾಗಿ (uint32_t r = r_beg; r < r_ಕೊನೆ; r += nr_max) {
+        ಸ್ಥಿರಾಂಕ uint32_t nr = MIN(nr_max, r_ಕೊನೆ - r);
+        ಸ್ಥಿರಾಂಕ uint32_t ಮುಂದಿನ_buf = buf ^ 1;
 
-        dma_queue_pop(q); // complete out
-        for (uint32_t i = 0; i < n_in; i++) {
-            dma_queue_pop(q);
+        dma_ಸರತಿ_ತೆಗೆ(q); // complete out
+        ಗಾಗಿ (uint32_t i = 0; i < n_ಒಳ; i++) {
+            dma_ಸರತಿ_ತೆಗೆ(q);
         }
 
-        htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);
-        const uint32_t nvec = (nr * kparams->ne + 63) >> 6;
-        task->compute(out[buf], region[buf], nvec, kparams, tab, inc, cur);
-        hvx_gather_sync(out[buf]);
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);
+        ಸ್ಥಿರಾಂಕ uint32_t nvec = (nr * kparams->ne + 63) >> 6;
+        task->compute(ಹೊರಹೋಗು[buf], region[buf], nvec, kparams, tab, inc, cur);
+        hvx_gather_sync(ಹೊರಹೋಗು[buf]);
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);
 
-        gather_rows_dma_out(q, task, out[buf], r, nr, 2);
+        gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಹೊರಹೋಗು(q, task, ಹೊರಹೋಗು[buf], r, nr, 2);
 
-        const uint32_t r_prefetch = r + 2 * nr_max;
-        if (r_prefetch < r_end) {
-            const uint32_t nr_prefetch = MIN(nr_max, r_end - r_prefetch);
-            gather_rows_dma_in(q, task, region[buf], r_prefetch, nr_prefetch, 2);
+        ಸ್ಥಿರಾಂಕ uint32_t r_prefetch = r + 2 * nr_max;
+        ಆದರೆ (r_prefetch < r_ಕೊನೆ) {
+            ಸ್ಥಿರಾಂಕ uint32_t nr_prefetch = MIN(nr_max, r_ಕೊನೆ - r_prefetch);
+            gather_ಅಡ್ಡಸಾಲುಗಳು_dma_ಒಳ(q, task, region[buf], r_prefetch, nr_prefetch, 2);
         }
 
-        buf = next_buf;
+        buf = ಮುಂದಿನ_buf;
     }
-    dma_queue_flush(q);
+    dma_ಸರತಿ_flush(q);
 }
 
-int htp_gather_rows(
-    struct htp_ops_context * octx,
-    const struct htp_tensor * a,
-    const struct htp_tensor * b,
-    const struct htp_gather_rows_params * kparams,
-    uint32_t n_threads) {
+ಪೂರ್ಣಾಂಕ htp_gather_ಅಡ್ಡಸಾಲುಗಳು(
+    ರಚನೆ htp_ops_context * octx,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * a,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * b,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_gather_ಅಡ್ಡಸಾಲುಗಳು_params * kparams,
+    uint32_t n_ಎಳೆಗಳು) {
 
-    if (!htp_ops_context_set_n_threads(octx, n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    ಆದರೆ (!htp_ops_context_ಗಣ_n_ಎಳೆಗಳು(octx, n_ಎಳೆಗಳು)) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_INVAL_PARAMS;
     }
 
-    assert(kparams->slice * octx->n_threads <= octx->ctx->vtcm_size);
+    ಪ್ರತಿಜ್ಞಾ(kparams->ತುಂಡು_2 * octx->n_ಎಳೆಗಳು <= octx->ctx->vtcm_ಗಾತ್ರ);
 
-    const uint32_t total_rows = kparams->total_rows;
-    uint32_t r_start = 0;
-    uint32_t r_count = total_rows;
-    if (octx->ctx->mdev.count > 1) {
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
-            total_rows, kparams->rg, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
-        r_start = range.start;
-        r_count = range.count;
+    ಸ್ಥಿರಾಂಕ uint32_t ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು = kparams->ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು;
+    uint32_t r_ಆರಂಭ = 0;
+    uint32_t r_ಎಣಿಕೆ = ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು;
+    ಆದರೆ (octx->ctx->mdev.ಎಣಿಕೆ_2 > 1) {
+        ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor_mdev_range range = htp_tensor_mdev_ವಿಭಜನೆ(
+            ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು, kparams->rg, octx->ctx->mdev.idx, octx->ctx->mdev.ಎಣಿಕೆ_2, &octx->ctx->mdev.ಎಣಿಕೆ_div);
+        r_ಆರಂಭ = range.ಆರಂಭ;
+        r_ಎಣಿಕೆ = range.ಎಣಿಕೆ_2;
     }
 
-    if (r_count == 0) {
-        return HTP_STATUS_OK;
+    ಆದರೆ (r_ಎಣಿಕೆ == 0) {
+        ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
     }
 
-    const uint32_t elem_size = (a->type == HTP_TYPE_F16) ? 2 : 4;
+    ಸ್ಥಿರಾಂಕ uint32_t elem_ಗಾತ್ರ = (a->type == HTP_TYPE_F16) ? 2 : 4;
 
-    struct gather_rows_task task;
+    ರಚನೆ gather_ಅಡ್ಡಸಾಲುಗಳು_task task;
     task.octx            = octx;
     task.a               = a;
     task.b               = b;
-    task.dst             = octx->dst->data;
-    task.r_start         = r_start;
-    task.rows            = r_count;
+    task.dst             = octx->dst->ದತ್ತಾಂಶ;
+    task.r_ಆರಂಭ         = r_ಆರಂಭ;
+    task.ಅಡ್ಡಸಾಲುಗಳು            = r_ಎಣಿಕೆ;
     task.kparams         = kparams;
-    task.rows_per_thread = kparams->rows_per_thread;
+    task.ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread = kparams->ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_thread;
 
-    if (elem_size == 2) {
-        task.compute = (kparams->vg == 1) ? gather_rows_compute_f16_vg1 : gather_rows_compute_f16_vgn;
-    } else {
-        task.compute = (kparams->vg == 1) ? gather_rows_compute_f32_vg1 : gather_rows_compute_f32_vgn;
+    ಆದರೆ (elem_ಗಾತ್ರ == 2) {
+        task.compute = (kparams->vg == 1) ? gather_ಅಡ್ಡಸಾಲುಗಳು_compute_f16_vg1 : gather_ಅಡ್ಡಸಾಲುಗಳು_compute_f16_vgn;
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        task.compute = (kparams->vg == 1) ? gather_ಅಡ್ಡಸಾಲುಗಳು_compute_f32_vg1 : gather_ಅಡ್ಡಸಾಲುಗಳು_compute_f32_vgn;
     }
 
-    work_queue_func_t worker_func = (elem_size == 2) ? gather_rows_thread_f16 : gather_rows_thread_f32;
-    work_queue_run(octx->ctx->work_queue, worker_func, &task, octx->n_threads);
-    return HTP_STATUS_OK;
+    work_ಸರತಿ_func_t ಕೆಲಸಗಾರ_func = (elem_ಗಾತ್ರ == 2) ? gather_ಅಡ್ಡಸಾಲುಗಳು_thread_f16 : gather_ಅಡ್ಡಸಾಲುಗಳು_thread_f32;
+    work_ಸರತಿ_ಸತತ(octx->ctx->work_ಸರತಿ, ಕೆಲಸಗಾರ_func, &task, octx->n_ಎಳೆಗಳು);
+    ಹಿಂತಿರುಗಿ HTP_ಸ್ಥಿತಿ_OK;
 }

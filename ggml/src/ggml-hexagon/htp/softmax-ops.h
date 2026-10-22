@@ -1,106 +1,106 @@
-#ifndef HTP_SOFTMAX_OPS_H
-#define HTP_SOFTMAX_OPS_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ HTP_SOFTMAX_OPS_H
+#ವ್ಯಾಖ್ಯಾನಿಸು HTP_SOFTMAX_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <math.h>
-#include "hex-fastdiv.h"
-#include "hex-common.h"
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stddef.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <math.h>
+#ಅನ್ತರ್ಭಾವ "hex-fastdiv.h"
+#ಅನ್ತರ್ಭಾವ "hex-common.h"
 
-enum htp_softmax_kernel_id {
+ಎಣಿಕೆ htp_softmax_kernel_id {
     HTP_SOFTMAX_KERNEL_NOMASK = 0,
-    HTP_SOFTMAX_KERNEL_MASK_F32,
-    HTP_SOFTMAX_KERNEL_MASK_F16,
-    HTP_SOFTMAX_KERNEL_COUNT,
+    HTP_SOFTMAX_KERNEL_ಮುಖವಾಡ_F32,
+    HTP_SOFTMAX_KERNEL_ಮುಖವಾಡ_F16,
+    HTP_SOFTMAX_KERNEL_ಎಣಿಕೆ,
 };
 
-struct htp_softmax_kernel_params {
-    uint32_t n_threads;
+ರಚನೆ htp_softmax_kernel_params {
+    uint32_t n_ಎಳೆಗಳು;
     uint32_t src0_nrows;
-    uint32_t src0_nrows_per_thread;
-    uint32_t vtcm_size;
+    uint32_t src0_nrows_ಪ್ರತಿ_thread;
+    uint32_t vtcm_ಗಾತ್ರ;
 
-    uint32_t vtcm_src0_size_per_thread;
-    uint32_t vtcm_src1_size_per_thread;
-    uint32_t vtcm_dst_size_per_thread;
+    uint32_t vtcm_src0_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    uint32_t vtcm_src1_ಗಾತ್ರ_ಪ್ರತಿ_thread;
+    uint32_t vtcm_dst_ಗಾತ್ರ_ಪ್ರತಿ_thread;
 
-    uint32_t src0_row_size_aligned;
-    uint32_t src1_row_size_aligned;
-    uint32_t dst_row_size_aligned;
+    uint32_t src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    uint32_t src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    uint32_t dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
 
-    uint32_t src0_spad_half_size;
-    uint32_t src1_spad_half_size;
-    uint32_t dst_spad_half_size;
+    uint32_t src0_spad_half_ಗಾತ್ರ;
+    uint32_t src1_spad_half_ಗಾತ್ರ;
+    uint32_t dst_spad_half_ಗಾತ್ರ;
 
-    uint32_t n_head;
-    uint32_t n_head_log2;
+    uint32_t n_ತಲೆ;
+    uint32_t n_ತಲೆ_log2;
     uint32_t use_src1;
     uint32_t use_f16;
     uint32_t kernel_id;
 
-    float    scale;
-    float    max_bias;
-    float    m0;
-    float    m1;
+    ದಶಮಾಂಶ    scale;
+    ದಶಮಾಂಶ    max_bias;
+    ದಶಮಾಂಶ    m0;
+    ದಶಮಾಂಶ    m1;
 
-    struct fastdiv_values div_ne01;
-    struct fastdiv_values div_ne02;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_ne13;
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು div_ne01;
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು div_ne02;
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು div_ne12;
+    ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು div_ne13;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
-#endif
+#ಆದರೆ defined(__cplusplus)
+static_assert(ಗಾತ್ರ(ರಚನೆ htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
+#ಇಲ್ಲದಿದ್ದರೆ
+_Static_assert(ಗಾತ್ರ(ರಚನೆ htp_softmax_kernel_params) <= 128, "htp_softmax_kernel_params is too large for kernel_params blob");
+#ಆದರೆ_ಅಂತ್ಯ
 
-struct htp_softmax_vtcm_layout {
-    size_t total_bytes;
+ರಚನೆ htp_softmax_vtcm_layout {
+    size_t ಒಟ್ಟು_ಬೈಟುಗಳು;
     size_t off_src0;
     size_t off_dst;
     size_t off_src1;
 
-    size_t src0_bytes_per_thread;
-    size_t dst_bytes_per_thread;
-    size_t src1_bytes_per_thread;
+    size_t src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
+    size_t dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
+    size_t src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread;
 
-    size_t src0_spad_half_size;
-    size_t dst_spad_half_size;
-    size_t src1_spad_half_size;
+    size_t src0_spad_half_ಗಾತ್ರ;
+    size_t dst_spad_half_ಗಾತ್ರ;
+    size_t src1_spad_half_ಗಾತ್ರ;
 };
 
-static inline void htp_softmax_vtcm_layout_build(
-    struct htp_softmax_vtcm_layout * layout,
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ htp_softmax_vtcm_layout_build(
+    ರಚನೆ htp_softmax_vtcm_layout * layout,
     uint32_t ne00,
     uint32_t ne10,
     bool use_src1,
     bool use_f16,
-    uint32_t n_threads
+    uint32_t n_ಎಳೆಗಳು
 ) {
-    size_t src0_row_size = ne00 * sizeof(float);
-    size_t dst_row_size  = ne00 * sizeof(float);
-    size_t src1_row_size = use_src1 ? (ne10 * (use_f16 ? 2 : 4)) : 0;
+    size_t src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = ne00 * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    size_t dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ  = ne00 * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    size_t src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = use_src1 ? (ne10 * (use_f16 ? 2 : 4)) : 0;
 
-    size_t src0_row_size_aligned = hex_round_up(src0_row_size, 128);
-    size_t dst_row_size_aligned  = hex_round_up(dst_row_size,  128);
-    size_t src1_row_size_aligned = use_src1 ? hex_round_up(src1_row_size, 128) : 0;
+    size_t src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned = hex_ಸುತ್ತು_ಮೇಲೆ(src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, 128);
+    size_t dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned  = hex_ಸುತ್ತು_ಮೇಲೆ(dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ,  128);
+    size_t src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned = use_src1 ? hex_ಸುತ್ತು_ಮೇಲೆ(src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, 128) : 0;
 
-    layout->src0_spad_half_size = src0_row_size_aligned;
-    layout->dst_spad_half_size  = dst_row_size_aligned;
-    layout->src1_spad_half_size = src1_row_size_aligned;
+    layout->src0_spad_half_ಗಾತ್ರ = src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    layout->dst_spad_half_ಗಾತ್ರ  = dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
+    layout->src1_spad_half_ಗಾತ್ರ = src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned;
 
     // Double buffering: 2 half-buffers per thread
-    layout->src0_bytes_per_thread = src0_row_size_aligned * 2;
-    layout->dst_bytes_per_thread  = dst_row_size_aligned  * 2;
-    layout->src1_bytes_per_thread = src1_row_size_aligned * 2;
+    layout->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread = src0_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned * 2;
+    layout->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread  = dst_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned  * 2;
+    layout->src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread = src1_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ_aligned * 2;
 
     layout->off_src0 = 0;
-    layout->off_dst  = layout->off_src0 + layout->src0_bytes_per_thread * n_threads;
-    layout->off_src1 = layout->off_dst  + layout->dst_bytes_per_thread  * n_threads;
+    layout->off_dst  = layout->off_src0 + layout->src0_ಬೈಟುಗಳು_ಪ್ರತಿ_thread * n_ಎಳೆಗಳು;
+    layout->off_src1 = layout->off_dst  + layout->dst_ಬೈಟುಗಳು_ಪ್ರತಿ_thread  * n_ಎಳೆಗಳು;
 
-    layout->total_bytes = layout->off_src1 + layout->src1_bytes_per_thread * n_threads;
+    layout->ಒಟ್ಟು_ಬೈಟುಗಳು = layout->off_src1 + layout->src1_ಬೈಟುಗಳು_ಪ್ರತಿ_thread * n_ಎಳೆಗಳು;
 }
 
-#endif // HTP_SOFTMAX_OPS_H
+#ಆದರೆ_ಅಂತ್ಯ // HTP_SOFTMAX_OPS_H

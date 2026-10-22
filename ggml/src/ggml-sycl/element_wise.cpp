@@ -1,290 +1,290 @@
-#include "common.hpp"
-#include "ggml-sycl/presets.hpp"
-#include "ggml.h"
-#include "element_wise.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
+#ಅನ್ತರ್ಭಾವ "ggml-sycl/presets.hpp"
+#ಅನ್ತರ್ಭಾವ "ggml.h"
+#ಅನ್ತರ್ಭಾವ "element_wise.hpp"
 
-#define SYCL_GLOBAL_ID_LOOP(K, ITEM) \
-    for (auto i = ITEM.get_global_id(0); i < (size_t)K; i += ITEM.get_global_range(0))
+#ವ್ಯಾಖ್ಯಾನಿಸು SYCL_GLOBAL_ID_LOOP(K, ಅಂಶ_2) \
+    ಗಾಗಿ (ಸ್ವಯಂಚಾಲಿತ i = ಅಂಶ_2.get_global_id(0); i < (size_t)K; i += ಅಂಶ_2.get_global_range(0))
 
-#define SYCL_LOCAL_ID_CALC(ITEM, IDX) \
-    (ITEM.get_local_range(IDX) * ITEM.get_group(IDX) + ITEM.get_local_id(IDX))
+#ವ್ಯಾಖ್ಯಾನಿಸು SYCL_LOCAL_ID_CALC(ಅಂಶ_2, IDX) \
+    (ಅಂಶ_2.get_local_range(IDX) * ಅಂಶ_2.get_ಗುಂಪು(IDX) + ಅಂಶ_2.get_local_id(IDX))
 
-static void acc_f32(const char * x, const char * y, float * dst, const int64_t ne,
-    const int64_t ne0, const int64_t ne1, const int64_t ne2,
-    const int64_t nb00, const int64_t nb01, const int64_t nb02, const int64_t nb03,
-    const int64_t ne10, const int64_t ne11, const int64_t ne12, const int64_t ne13,
-    const int64_t nb10, const int64_t nb11, const int64_t nb12, const int64_t nb13,
-    const int64_t s11, const int64_t s12, const int64_t s13, const int64_t offset) {
-    auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const int64_t i = SYCL_LOCAL_ID_CALC(item_ct1, 2);
+ಸ್ಥಿರ ಶೂನ್ಯ acc_f32(ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * x, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * y, ದಶಮಾಂಶ * dst, ಸ್ಥಿರಾಂಕ int64_t ne,
+    ಸ್ಥಿರಾಂಕ int64_t ne0, ಸ್ಥಿರಾಂಕ int64_t ne1, ಸ್ಥಿರಾಂಕ int64_t ne2,
+    ಸ್ಥಿರಾಂಕ int64_t nb00, ಸ್ಥಿರಾಂಕ int64_t nb01, ಸ್ಥಿರಾಂಕ int64_t nb02, ಸ್ಥಿರಾಂಕ int64_t nb03,
+    ಸ್ಥಿರಾಂಕ int64_t ne10, ಸ್ಥಿರಾಂಕ int64_t ne11, ಸ್ಥಿರಾಂಕ int64_t ne12, ಸ್ಥಿರಾಂಕ int64_t ne13,
+    ಸ್ಥಿರಾಂಕ int64_t nb10, ಸ್ಥಿರಾಂಕ int64_t nb11, ಸ್ಥಿರಾಂಕ int64_t nb12, ಸ್ಥಿರಾಂಕ int64_t nb13,
+    ಸ್ಥಿರಾಂಕ int64_t s11, ಸ್ಥಿರಾಂಕ int64_t s12, ಸ್ಥಿರಾಂಕ int64_t s13, ಸ್ಥಿರಾಂಕ int64_t ಸ್ಥಾನಾಂತರ) {
+    ಸ್ವಯಂಚಾಲಿತ ಅಂಶ_ct1 = sycl::ext::oneapi::this_work_ಅಂಶ::get_nd_ಅಂಶ<3>();
+    ಸ್ಥಿರಾಂಕ int64_t i = SYCL_LOCAL_ID_CALC(ಅಂಶ_ct1, 2);
 
-    if (i >= ne) {
-        return;
+    ಆದರೆ (i >= ne) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    int64_t src1_idx = i - offset;
+    int64_t src1_idx = i - ಸ್ಥಾನಾಂತರ;
 
     int64_t tmp = src1_idx;
-    const int64_t i13 = tmp / s13;
+    ಸ್ಥಿರಾಂಕ int64_t i13 = tmp / s13;
     tmp -= i13 * s13;
-    const int64_t i12 = tmp / s12;
+    ಸ್ಥಿರಾಂಕ int64_t i12 = tmp / s12;
     tmp -= i12 * s12;
-    const int64_t i11 = tmp / s11;
+    ಸ್ಥಿರಾಂಕ int64_t i11 = tmp / s11;
     tmp -= i11 * s11;
-    const int64_t i10 = tmp;
+    ಸ್ಥಿರಾಂಕ int64_t i10 = tmp;
 
     int64_t tmp_dst = i;
-    const int64_t i3 = tmp_dst / (ne2*ne1*ne0);
+    ಸ್ಥಿರಾಂಕ int64_t i3 = tmp_dst / (ne2*ne1*ne0);
     tmp_dst -= i3 * (ne2*ne1*ne0);
-    const int64_t i2 = tmp_dst / (ne1*ne0);
+    ಸ್ಥಿರಾಂಕ int64_t i2 = tmp_dst / (ne1*ne0);
     tmp_dst -= i2 * (ne1*ne0);
-    const int64_t i1 = tmp_dst / ne0;
+    ಸ್ಥಿರಾಂಕ int64_t i1 = tmp_dst / ne0;
     tmp_dst -= i1 * ne0;
-    const int64_t i0 = tmp_dst;
+    ಸ್ಥಿರಾಂಕ int64_t i0 = tmp_dst;
 
-    float val = *(const float *) (x + i0*nb00 + i1*nb01 + i2*nb02 + i3*nb03);
-    if (src1_idx >= 0 && i10 < ne10 && i11 < ne11 && i12 < ne12 && i13 < ne13) {
-        val += *(const float *) (y + i10*nb10 + i11*nb11 + i12*nb12 + i13*nb13);
+    ದಶಮಾಂಶ val = *(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) (x + i0*nb00 + i1*nb01 + i2*nb02 + i3*nb03);
+    ಆದರೆ (src1_idx >= 0 && i10 < ne10 && i11 < ne11 && i12 < ne12 && i13 < ne13) {
+        val += *(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) (y + i10*nb10 + i11*nb11 + i12*nb12 + i13*nb13);
     }
     dst[i] = val;
 }
 
 /* Unary OP funcs */
-template<typename T>
-static __dpct_inline__ T op_sgn(T x) {
-    return x > static_cast<T>(0.f) ? static_cast<T>(1.f) : ((x < static_cast<T>(0.f) ? static_cast<T>(-1.f) : static_cast<T>(0.f)));
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_sgn(T x) {
+    ಹಿಂತಿರುಗಿ x > static_cast<T>(0.f) ? static_cast<T>(1.f) : ((x < static_cast<T>(0.f) ? static_cast<T>(-1.f) : static_cast<T>(0.f)));
 }
 
 
-template<typename T>
-static __dpct_inline__ T op_abs(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::fabs(x);  // or experimental namespace if needed
-    } else {
-        return sycl::fabs(x);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_abs(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::fabs(x);  // or experimental namespace if needed
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::fabs(x);
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_expm1(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return static_cast<sycl::ext::oneapi::bfloat16>(
-            sycl::expm1(static_cast<float>(x))
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_expm1(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ static_cast<sycl::ext::oneapi::bfloat16>(
+            sycl::expm1(static_cast<ದಶಮಾಂಶ>(x))
         );
-    } else {
-        return sycl::expm1(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::expm1(x);
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_elu(T x) {
-    return (x > static_cast<T>(0.f)) ? x : op_expm1(x);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_elu(T x) {
+    ಹಿಂತಿರುಗಿ (x > static_cast<T>(0.f)) ? x : op_expm1(x);
 }
 
-template<typename T>
-static __dpct_inline__ T op_erf(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return static_cast<sycl::ext::oneapi::bfloat16>(
-            sycl::erf(static_cast<float>(x))
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_erf(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ static_cast<sycl::ext::oneapi::bfloat16>(
+            sycl::erf(static_cast<ದಶಮಾಂಶ>(x))
         );
-    } else {
-        return sycl::erf(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::erf(x);
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_gelu_erf(T x) {
-    const T SQRT_2_INV = static_cast<T>(0.70710678118654752440084436210484f);
-    return static_cast<T>(0.5f) * x * (static_cast<T>(1.0f) + op_erf(x * SQRT_2_INV));
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_gelu_erf(T x) {
+    ಸ್ಥಿರಾಂಕ T SQRT_2_INV = static_cast<T>(0.70710678118654752440084436210484f);
+    ಹಿಂತಿರುಗಿ static_cast<T>(0.5f) * x * (static_cast<T>(1.0f) + op_erf(x * SQRT_2_INV));
 }
 
-template<typename T>
-static __dpct_inline__ T op_gelu_quick(T x) {
-    const T GELU_QUICK_COEF_LOCAL = static_cast<T>(-1.702f);
-    return x * (static_cast<T>(1.0f) / (static_cast<T>(1.0f) + op_exp(GELU_QUICK_COEF_LOCAL * x)));
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_gelu_ಶೀಘ್ರ(T x) {
+    ಸ್ಥಿರಾಂಕ T GELU_ಶೀಘ್ರ_COEF_LOCAL = static_cast<T>(-1.702f);
+    ಹಿಂತಿರುಗಿ x * (static_cast<T>(1.0f) / (static_cast<T>(1.0f) + op_exp(GELU_ಶೀಘ್ರ_COEF_LOCAL * x)));
 }
 
-template<typename T>
-static __dpct_inline__ T op_relu(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::fmax(x, static_cast<T>(0));
-    } else {
-        return sycl::fmax(x, static_cast<T>(0));
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_relu(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::fmax(x, static_cast<T>(0));
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::fmax(x, static_cast<T>(0));
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_sigmoid(T x) {
-    return static_cast<T>(1.0f) / (static_cast<T>(1.0f) + op_exp(-x));
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_sigmoid(T x) {
+    ಹಿಂತಿರುಗಿ static_cast<T>(1.0f) / (static_cast<T>(1.0f) + op_exp(-x));
 }
 
-template<typename T>
-static __dpct_inline__ T op_sqrt(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::sqrt(x);
-    } else {
-        return sycl::sqrt(x);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_sqrt(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::ವರ್ಗಮೂಲ(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::ವರ್ಗಮೂಲ(x);
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_sin(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::sin(x);
-    } else {
-        return sycl::sin(x);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_sin(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::ಜ್ಯಾ(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::ಜ್ಯಾ(x);
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_cos(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::cos(x);
-    } else {
-        return sycl::cos(x);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_cos(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::ಕೋಜ್ಯಾ(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::ಕೋಜ್ಯಾ(x);
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_hardsigmoid(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::fmin(
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_hardsigmoid(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::fmin(
             static_cast<T>(1.0f), sycl::ext::oneapi::experimental::fmax(
                                       static_cast<T>(0.0f), (x + static_cast<T>(3.0f)) / static_cast<T>(6.0f)));
-    } else {
-        return sycl::fmin(static_cast<T>(1.0f),
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::fmin(static_cast<T>(1.0f),
                           sycl::fmax(static_cast<T>(0.0f), (x + static_cast<T>(3.0f)) / static_cast<T>(6.0f)));
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_hardswish(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return x * sycl::ext::oneapi::experimental::fmin(static_cast<T>(1.0f), sycl::ext::oneapi::experimental::fmax(static_cast<T>(0.0f), (x + static_cast<T>(3.0f)) / static_cast<T>(6.0f)));
-    } else {
-        return x * sycl::fmin(static_cast<T>(1.0f), sycl::fmax(static_cast<T>(0.0f), (x + static_cast<T>(3.0f)) / static_cast<T>(6.0f)));
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_hardswish(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ x * sycl::ext::oneapi::experimental::fmin(static_cast<T>(1.0f), sycl::ext::oneapi::experimental::fmax(static_cast<T>(0.0f), (x + static_cast<T>(3.0f)) / static_cast<T>(6.0f)));
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ x * sycl::fmin(static_cast<T>(1.0f), sycl::fmax(static_cast<T>(0.0f), (x + static_cast<T>(3.0f)) / static_cast<T>(6.0f)));
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_log(T x) {
-    if (x <= static_cast<T>(0)) {
-        return neg_infinity<T>();
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_log(T x) {
+    ಆದರೆ (x <= static_cast<T>(0)) {
+        ಹಿಂತಿರುಗಿ neg_infinity<T>();
     }
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::log(x);
-    } else {
-        return sycl::log(x);
-    }
-}
-
-template<typename T>
-static __dpct_inline__ T op_softplus(T x) {
-    const float xf = (float) x;
-    const float ax = op_abs(xf);
-    const float m  = sycl::fmax(xf, 0.0f);
-    const float y  = m + sycl::log1p(sycl::exp(-ax));
-    return (T) y;
-}
-
-template<typename T>
-static __dpct_inline__ T op_neg(T x) {
-    return -x;
-}
-
-template<typename T>
-static __dpct_inline__ T op_step(T x) {
-    return (x > static_cast<T>(0.0f)) ? static_cast<T>(1.0f) : static_cast<T>(0.0f);
-}
-
-template<typename T>
-static __dpct_inline__ T op_leaky_relu(T x, float negative_slope) {
-    T neg_slope_T = static_cast<T>(negative_slope);
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::fmax(x, static_cast<T>(0)) +
-           sycl::ext::oneapi::experimental::fmin(x, static_cast<T>(0.0f)) * neg_slope_T;
-
-    } else {
-        return sycl::fmax(x, static_cast<T>(0)) +
-           sycl::fmin(x, static_cast<T>(0.0f)) * neg_slope_T;
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::ಲಘುಗಣಕ(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::ಲಘುಗಣಕ(x);
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_xielu(T x, float alpha_n, float alpha_p, float beta, float eps) {
-    const float xi        = static_cast<float>(x);
-    const float gate_pos  = (xi > 0.0f);
-    const float y_pos     = alpha_p * xi * xi + beta * xi;
-    const float min_v_eps = sycl::fmin(xi, eps);
-    const float y_neg     = (sycl::expm1(min_v_eps) - xi) * alpha_n + beta * xi;
-    const float out       = gate_pos * y_pos + (1.0f - gate_pos) * y_neg;
-    return static_cast<T>(out);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_softplus(T x) {
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ xf = (ದಶಮಾಂಶ) x;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ ax = op_abs(xf);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ m  = sycl::fmax(xf, 0.0f);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ y  = m + sycl::log1p(sycl::ಘಾತಾಂಕ(-ax));
+    ಹಿಂತಿರುಗಿ (T) y;
 }
 
-template<typename T>
-static __dpct_inline__ T op_sqr(T x) {
-    return x * x;
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_neg(T x) {
+    ಹಿಂತಿರುಗಿ -x;
 }
 
-template<typename T>
-static __dpct_inline__ T op_clamp(T x, float min_val, float max_val) {
-    return x < static_cast<T>(min_val) ? static_cast<T>(min_val) : (x > static_cast<T>(max_val) ? static_cast<T>(max_val) : x);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_ಹೆಜ್ಜೆ(T x) {
+    ಹಿಂತಿರುಗಿ (x > static_cast<T>(0.0f)) ? static_cast<T>(1.0f) : static_cast<T>(0.0f);
 }
 
-template<typename T>
-static __dpct_inline__ T op_floor(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::floor(x);
-    } else {
-        return sycl::floor(x);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_leaky_relu(T x, ದಶಮಾಂಶ negative_ಇಳಿಜಾರು) {
+    T neg_ಇಳಿಜಾರು_T = static_cast<T>(negative_ಇಳಿಜಾರು);
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::fmax(x, static_cast<T>(0)) +
+           sycl::ext::oneapi::experimental::fmin(x, static_cast<T>(0.0f)) * neg_ಇಳಿಜಾರು_T;
+
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::fmax(x, static_cast<T>(0)) +
+           sycl::fmin(x, static_cast<T>(0.0f)) * neg_ಇಳಿಜಾರು_T;
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_ceil(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::ceil(x);
-    } else {
-        return sycl::ceil(x);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_xielu(T x, ದಶಮಾಂಶ alpha_n, ದಶಮಾಂಶ alpha_p, ದಶಮಾಂಶ beta, ದಶಮಾಂಶ eps) {
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ xi        = static_cast<ದಶಮಾಂಶ>(x);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ gate_pos  = (xi > 0.0f);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ y_pos     = alpha_p * xi * xi + beta * xi;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ min_v_eps = sycl::fmin(xi, eps);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ y_neg     = (sycl::expm1(min_v_eps) - xi) * alpha_n + beta * xi;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ ಹೊರಹೋಗು       = gate_pos * y_pos + (1.0f - gate_pos) * y_neg;
+    ಹಿಂತಿರುಗಿ static_cast<T>(ಹೊರಹೋಗು);
+}
+
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_sqr(T x) {
+    ಹಿಂತಿರುಗಿ x * x;
+}
+
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_clamp(T x, ದಶಮಾಂಶ min_val, ದಶಮಾಂಶ max_val) {
+    ಹಿಂತಿರುಗಿ x < static_cast<T>(min_val) ? static_cast<T>(min_val) : (x > static_cast<T>(max_val) ? static_cast<T>(max_val) : x);
+}
+
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_floor(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::floor(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::floor(x);
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_round(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return static_cast<sycl::ext::oneapi::bfloat16>(
-            sycl::round(static_cast<float>(x))
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_ceil(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::ceil(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::ceil(x);
+    }
+}
+
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_ಸುತ್ತು(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ static_cast<sycl::ext::oneapi::bfloat16>(
+            sycl::round(static_cast<ದಶಮಾಂಶ>(x))
         );
-    } else {
-        return sycl::round(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::round(x);
     }
 }
 
-template<typename T>
-static __dpct_inline__ T op_trunc(T x) {
-    if constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::experimental::trunc(x);
-    } else {
-        return sycl::trunc(x);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ __dpct_inline__ T op_trunc(T x) {
+    ಆದರೆ constexpr (std::is_same_v<T, sycl::ext::oneapi::bfloat16>) {
+        ಹಿಂತಿರುಗಿ sycl::ext::oneapi::experimental::trunc(x);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಹಿಂತಿರುಗಿ sycl::trunc(x);
     }
 }
 
-template<typename T, typename F>
-static void unary_op_flat_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> & item_ct1, F func) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T, ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_flat_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> & ಅಂಶ_ct1, F func) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = func(x[i]);
     }
 }
 
-template<typename T, typename F>
-static void unary_op_generic_kernel(
-        const T * x,
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T, ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_generic_kernel(
+        ಸ್ಥಿರಾಂಕ T * x,
         T * dst,
-        const int k,
-        const sycl::uint3 ne0_fd, const sycl::uint3 ne1_fd, const sycl::uint3 ne2_fd,
-        const size_t nb0,  const size_t nb1,  const size_t nb2,  const size_t nb3,
-        const size_t nbd0, const size_t nbd1, const size_t nbd2, const size_t nbd3,
-        const sycl::nd_item<1> & item_ct1,
+        ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k,
+        ಸ್ಥಿರಾಂಕ sycl::uint3 ne0_fd, ಸ್ಥಿರಾಂಕ sycl::uint3 ne1_fd, ಸ್ಥಿರಾಂಕ sycl::uint3 ne2_fd,
+        ಸ್ಥಿರಾಂಕ size_t nb0,  ಸ್ಥಿರಾಂಕ size_t nb1,  ಸ್ಥಿರಾಂಕ size_t nb2,  ಸ್ಥಿರಾಂಕ size_t nb3,
+        ಸ್ಥಿರಾಂಕ size_t nbd0, ಸ್ಥಿರಾಂಕ size_t nbd1, ಸ್ಥಿರಾಂಕ size_t nbd2, ಸ್ಥಿರಾಂಕ size_t nbd3,
+        ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> & ಅಂಶ_ct1,
         F func) {
 
     // 32-bit index math: k is int, so every logical index fits u32. 64-bit integer div/mod is
@@ -292,121 +292,121 @@ static void unary_op_generic_kernel(
     // avoiding -- the divisors are launch-invariant, so the magic numbers are precomputed
     // host-side and each division becomes a multiply-high plus a shift.
     // Byte offsets are widened back to size_t only for the final address math.
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         sycl::uint2 dm = fast_div_modulo((uint32_t) i, ne0_fd);
-        const uint32_t i0 = dm.y();
+        ಸ್ಥಿರಾಂಕ uint32_t i0 = dm.y();
         dm = fast_div_modulo(dm.x(), ne1_fd);
-        const uint32_t i1 = dm.y();
+        ಸ್ಥಿರಾಂಕ uint32_t i1 = dm.y();
         dm = fast_div_modulo(dm.x(), ne2_fd);
-        const uint32_t i2 = dm.y();
-        const uint32_t i3 = dm.x();
+        ಸ್ಥಿರಾಂಕ uint32_t i2 = dm.y();
+        ಸ್ಥಿರಾಂಕ uint32_t i3 = dm.x();
 
-        const char * src_base = (const char *) x;
-        char       * dst_base = (char *) dst;
+        ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * src_ತಳ = (ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) x;
+        ಅಕ್ಷರ       * dst_ತಳ = (ಅಕ್ಷರ *) dst;
 
-        const T * srcp = (const T *)(src_base + (size_t) i0*nb0  + (size_t) i1*nb1  + (size_t) i2*nb2  + (size_t) i3*nb3 );
-        T *       dstp = (T *)(dst_base + (size_t) i0*nbd0 + (size_t) i1*nbd1 + (size_t) i2*nbd2 + (size_t) i3*nbd3);
+        ಸ್ಥಿರಾಂಕ T * srcp = (ಸ್ಥಿರಾಂಕ T *)(src_ತಳ + (size_t) i0*nb0  + (size_t) i1*nb1  + (size_t) i2*nb2  + (size_t) i3*nb3 );
+        T *       dstp = (T *)(dst_ತಳ + (size_t) i0*nbd0 + (size_t) i1*nbd1 + (size_t) i2*nbd2 + (size_t) i3*nbd3);
 
         *dstp = func(*srcp);
     }
 }
 
-template<typename T>
-static void unary_op_sqrt_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_sqrt_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = op_sqrt(x[i]);
     }
 }
 
-template<typename T>
-static void unary_op_sin_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_sin_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = op_sin(x[i]);
     }
 }
 
-template<typename T>
-static void unary_op_cos_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_cos_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = op_cos(x[i]);
     }
 }
 
-template<typename T>
-static void unary_op_log_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_log_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = op_log(x[i]);
     }
 }
 
 
-template<typename T>
-static void unary_op_leaky_relu_kernel(const T * x, T * dst, const int k, float negative_slope, const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
-        dst[i] = op_leaky_relu(x[i], negative_slope);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_leaky_relu_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ದಶಮಾಂಶ negative_ಇಳಿಜಾರು, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
+        dst[i] = op_leaky_relu(x[i], negative_ಇಳಿಜಾರು);
     }
 }
 
-template<typename T>
-static void unary_op_xielu_kernel(const T * x, T * dst, const int k, float alpha_n, float alpha_p, float beta, float eps, const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_xielu_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ದಶಮಾಂಶ alpha_n, ದಶಮಾಂಶ alpha_p, ದಶಮಾಂಶ beta, ದಶಮಾಂಶ eps, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = op_xielu(x[i], alpha_n, alpha_p, beta, eps);
     }
 }
 
-template<typename T>
-static void unary_op_sqr_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_sqr_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = op_sqr(x[i]);
     }
 }
 
-template<typename T>
-static void unary_op_clamp_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1, float min_val, float max_val) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_clamp_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1, ದಶಮಾಂಶ min_val, ದಶಮಾಂಶ max_val) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = op_clamp(x[i], min_val, max_val);
     }
 }
 
-template<typename T>
-static void unary_op_ceil_kernel(const T * x, T * dst, const int k, const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_op_ceil_kernel(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = op_ceil(x[i]);
     }
 }
 
-template<typename T>
-static void clamp(const T * x, T * dst, const float min, const float max, const int k,
-                      const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ clamp(ಸ್ಥಿರಾಂಕ T * x, T * dst, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ min, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ max, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k,
+                      ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = x[i] < static_cast<T>(min) ? static_cast<T>(min) : (x[i] > static_cast<T>(max) ? static_cast<T>(max) : x[i]);
     }
 }
 
-template<typename T, typename F>
-static void unary_gated_op_flat_kernel(const T * x, const T * g, T * dst, const uint64_t k, const sycl::nd_item<1> & item_ct1, F func) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T, ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_gated_op_flat_kernel(ಸ್ಥಿರಾಂಕ T * x, ಸ್ಥಿರಾಂಕ T * g, T * dst, ಸ್ಥಿರಾಂಕ uint64_t k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> & ಅಂಶ_ct1, F func) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = func(x[i]) * g[i];
     }
 }
 
-template<typename T, typename F>
-static void unary_gated_op_generic_kernel(
-        const T * x,
-        const T * g,
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T, ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_gated_op_generic_kernel(
+        ಸ್ಥಿರಾಂಕ T * x,
+        ಸ್ಥಿರಾಂಕ T * g,
         T * dst,
-        const uint64_t k,
-        const sycl::uint3 n_fd,
-        const uint64_t o0,
-        const uint64_t o1,
-        const sycl::nd_item<1> & item_ct1,
+        ಸ್ಥಿರಾಂಕ uint64_t k,
+        ಸ್ಥಿರಾಂಕ sycl::uint3 n_fd,
+        ಸ್ಥಿರಾಂಕ uint64_t o0,
+        ಸ್ಥಿರಾಂಕ uint64_t o1,
+        ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> & ಅಂಶ_ct1,
         F func) {
 
     // rows of n columns at strides o0 and o1: two halves of one fused tensor, or two tensors
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
-        const sycl::uint2 rc = fast_div_modulo((uint32_t) i, n_fd);
-        const int64_t j0 = rc.x() * o0 + rc.y();
-        const int64_t j1 = o0 == o1 ? j0 : rc.x() * o1 + rc.y();
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
+        ಸ್ಥಿರಾಂಕ sycl::uint2 rc = fast_div_modulo((uint32_t) i, n_fd);
+        ಸ್ಥಿರಾಂಕ int64_t j0 = rc.x() * o0 + rc.y();
+        ಸ್ಥಿರಾಂಕ int64_t j1 = o0 == o1 ? j0 : rc.x() * o1 + rc.y();
         dst[i] = func(x[j0]) * g[j1];
     }
 }
@@ -414,159 +414,159 @@ static void unary_gated_op_generic_kernel(
 // Fused UNARY + MUL. Unlike the gated ops above, `x` and `g` are separate tensors of the
 // same shape; `o0`/`o1` are their row strides in elements, so a half-view needs no repack.
 // `dst` is contiguous and indexed flat. Math is done in f32, as the CPU and CUDA references do.
-template<typename T, typename F>
-static void unary_mul_flat_kernel(const T * x, const T * g, T * dst, const int64_t k, const sycl::nd_item<1> &item_ct1, F op) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
-        dst[i] = (T) (op((float) x[i]) * (float) g[i]);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T, ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_mul_flat_kernel(ಸ್ಥಿರಾಂಕ T * x, ಸ್ಥಿರಾಂಕ T * g, T * dst, ಸ್ಥಿರಾಂಕ int64_t k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1, F op) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
+        dst[i] = (T) (op((ದಶಮಾಂಶ) x[i]) * (ದಶಮಾಂಶ) g[i]);
     }
 }
 
-template<typename T, typename F>
-static void unary_mul_strided_kernel(const T * x, const T * g, T * dst, const int64_t k, const sycl::uint3 n_fd, const int64_t o0, const int64_t o1, const sycl::nd_item<1> &item_ct1, F op) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
-        const sycl::uint2 rc = fast_div_modulo((uint32_t) i, n_fd);
-        const int64_t j0 = rc.x() * o0 + rc.y();
-        const int64_t j1 = o0 == o1 ? j0 : rc.x() * o1 + rc.y();
-        dst[i] = (T) (op((float) x[j0]) * (float) g[j1]);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T, ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_mul_strided_kernel(ಸ್ಥಿರಾಂಕ T * x, ಸ್ಥಿರಾಂಕ T * g, T * dst, ಸ್ಥಿರಾಂಕ int64_t k, ಸ್ಥಿರಾಂಕ sycl::uint3 n_fd, ಸ್ಥಿರಾಂಕ int64_t o0, ಸ್ಥಿರಾಂಕ int64_t o1, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1, F op) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
+        ಸ್ಥಿರಾಂಕ sycl::uint2 rc = fast_div_modulo((uint32_t) i, n_fd);
+        ಸ್ಥಿರಾಂಕ int64_t j0 = rc.x() * o0 + rc.y();
+        ಸ್ಥಿರಾಂಕ int64_t j1 = o0 == o1 ? j0 : rc.x() * o1 + rc.y();
+        dst[i] = (T) (op((ದಶಮಾಂಶ) x[j0]) * (ದಶಮಾಂಶ) g[j1]);
     }
 }
 
-template<typename T, typename F>
-static void unary_mul_sycl(const T * x, const T * g, T * dst, const int64_t k, const int64_t n, const int64_t o0, const int64_t o1, queue_ptr main_stream, F op) {
-    const size_t            num_blocks = ceil_div((size_t) k, (size_t) SYCL_GLU_BLOCK_SIZE);
-    const sycl::nd_range<1> range(num_blocks * sycl::range<1>(SYCL_GLU_BLOCK_SIZE), sycl::range<1>(SYCL_GLU_BLOCK_SIZE));
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T, ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ unary_mul_sycl(ಸ್ಥಿರಾಂಕ T * x, ಸ್ಥಿರಾಂಕ T * g, T * dst, ಸ್ಥಿರಾಂಕ int64_t k, ಸ್ಥಿರಾಂಕ int64_t n, ಸ್ಥಿರಾಂಕ int64_t o0, ಸ್ಥಿರಾಂಕ int64_t o1, ಸರತಿ_ptr main_ಹರಿವು, F op) {
+    ಸ್ಥಿರಾಂಕ size_t            ಅಂಕೆ_ಖಂಡಗಳು = ceil_div((size_t) k, (size_t) SYCL_GLU_ಖಂಡ_ಗಾತ್ರ);
+    ಸ್ಥಿರಾಂಕ sycl::nd_range<1> range(ಅಂಕೆ_ಖಂಡಗಳು * sycl::range<1>(SYCL_GLU_ಖಂಡ_ಗಾತ್ರ), sycl::range<1>(SYCL_GLU_ಖಂಡ_ಗಾತ್ರ));
 
     // o0 == o1 == n makes (i/n)*o0 + (i%n) == i, so the strided kernel degenerates to the flat one
-    if (o0 == n && o1 == n) {
-        main_stream->parallel_for(range, [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            unary_mul_flat_kernel(x, g, dst, k, item_ct1, op);
+    ಆದರೆ (o0 == n && o1 == n) {
+        main_ಹರಿವು->parallel_for(range, [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+            unary_mul_flat_kernel(x, g, dst, k, ಅಂಶ_ct1, op);
         });
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
 
     // 32-bit fastdiv, exact only below 2^31; ggml_sycl_can_fuse() already declined past that
     GGML_ASSERT(k < ((int64_t) 1 << 31));
-    const sycl::uint3 n_fd = init_fastdiv_values((uint32_t) n);
-    main_stream->parallel_for(range, [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-        unary_mul_strided_kernel(x, g, dst, k, n_fd, o0, o1, item_ct1, op);
+    ಸ್ಥಿರಾಂಕ sycl::uint3 n_fd = init_fastdiv_ಮೌಲ್ಯಗಳು((uint32_t) n);
+    main_ಹರಿವು->parallel_for(range, [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+        unary_mul_strided_kernel(x, g, dst, k, n_fd, o0, o1, ಅಂಶ_ct1, op);
     });
 }
 
 // ADD(bias) + UNARY + MUL(scale) with both broadcast over dim 0, the delta-net alpha gate:
 // dst[i] = op(a[i] + bias[i % ne0]) * scale[i % ne0]. k == ne0 makes that the flat index.
-template<typename F>
-static void add_unary_mul_flat_kernel(const float * a, const float * bias, const float * scale, float * dst,
-                                      const int64_t k, const sycl::nd_item<1> &item_ct1, F op) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ ಕೂಡಿಸು_unary_mul_flat_kernel(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * a, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * bias, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * scale, ದಶಮಾಂಶ * dst,
+                                      ಸ್ಥಿರಾಂಕ int64_t k, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1, F op) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
         dst[i] = op(a[i] + bias[i]) * scale[i];
     }
 }
 
-template<typename F>
-static void add_unary_mul_bcast_kernel(const float * a, const float * bias, const float * scale, float * dst,
-                                       const int64_t k, const sycl::uint3 ne0_fd, const sycl::nd_item<1> &item_ct1, F op) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
-        const uint32_t h = fastmodulo((uint32_t) i, ne0_fd);
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ ಕೂಡಿಸು_unary_mul_bcast_kernel(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * a, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * bias, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * scale, ದಶಮಾಂಶ * dst,
+                                       ಸ್ಥಿರಾಂಕ int64_t k, ಸ್ಥಿರಾಂಕ sycl::uint3 ne0_fd, ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1, F op) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
+        ಸ್ಥಿರಾಂಕ uint32_t h = fastmodulo((uint32_t) i, ne0_fd);
         dst[i] = op(a[i] + bias[h]) * scale[h];
     }
 }
 
-template<typename F>
-static void add_unary_mul_sycl(const float * a, const float * bias, const float * scale, float * dst,
-                               const int64_t k, const int64_t ne0, queue_ptr main_stream, F op) {
-    const size_t            num_blocks = ceil_div((size_t) k, (size_t) SYCL_GLU_BLOCK_SIZE);
-    const sycl::nd_range<1> range(num_blocks * sycl::range<1>(SYCL_GLU_BLOCK_SIZE), sycl::range<1>(SYCL_GLU_BLOCK_SIZE));
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ ಕೂಡಿಸು_unary_mul_sycl(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * a, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * bias, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * scale, ದಶಮಾಂಶ * dst,
+                               ಸ್ಥಿರಾಂಕ int64_t k, ಸ್ಥಿರಾಂಕ int64_t ne0, ಸರತಿ_ptr main_ಹರಿವು, F op) {
+    ಸ್ಥಿರಾಂಕ size_t            ಅಂಕೆ_ಖಂಡಗಳು = ceil_div((size_t) k, (size_t) SYCL_GLU_ಖಂಡ_ಗಾತ್ರ);
+    ಸ್ಥಿರಾಂಕ sycl::nd_range<1> range(ಅಂಕೆ_ಖಂಡಗಳು * sycl::range<1>(SYCL_GLU_ಖಂಡ_ಗಾತ್ರ), sycl::range<1>(SYCL_GLU_ಖಂಡ_ಗಾತ್ರ));
 
-    if (k == ne0) {
-        main_stream->parallel_for(range, [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            add_unary_mul_flat_kernel(a, bias, scale, dst, k, item_ct1, op);
+    ಆದರೆ (k == ne0) {
+        main_ಹರಿವು->parallel_for(range, [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+            ಕೂಡಿಸು_unary_mul_flat_kernel(a, bias, scale, dst, k, ಅಂಶ_ct1, op);
         });
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
 
     // 32-bit fastdiv, exact only below 2^31; ggml_sycl_can_fuse() already declined past that
     GGML_ASSERT(k < ((int64_t) 1 << 31));
-    const sycl::uint3 ne0_fd = init_fastdiv_values((uint32_t) ne0);
-    main_stream->parallel_for(range, [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-        add_unary_mul_bcast_kernel(a, bias, scale, dst, k, ne0_fd, item_ct1, op);
+    ಸ್ಥಿರಾಂಕ sycl::uint3 ne0_fd = init_fastdiv_ಮೌಲ್ಯಗಳು((uint32_t) ne0);
+    main_ಹರಿವು->parallel_for(range, [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+        ಕೂಡಿಸು_unary_mul_bcast_kernel(a, bias, scale, dst, k, ne0_fd, ಅಂಶ_ct1, op);
     });
 }
 
-namespace ggml_sycl_detail {
-static void acc_f32_sycl(const char *x, const char *y, float *dst,
-                         const int64_t n_elements,
-                         const int64_t ne0, const int64_t ne1, const int64_t ne2,
-                         const int64_t nb00, const int64_t nb01, const int64_t nb02, const int64_t nb03,
-                         const int64_t ne10, const int64_t ne11, const int64_t ne12, const int64_t ne13,
-                         const int64_t nb10, const int64_t nb11, const int64_t nb12, const int64_t nb13,
-                         const int64_t s1, const int64_t s2, const int64_t s3,
-                         const int64_t offset, queue_ptr stream) {
-    const int num_blocks = (n_elements + SYCL_ACC_BLOCK_SIZE - 1) / SYCL_ACC_BLOCK_SIZE;
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_ACC_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_ACC_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+ನಾಮಾಕಾಶ ggml_sycl_detail {
+ಸ್ಥಿರ ಶೂನ್ಯ acc_f32_sycl(ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *x, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *y, ದಶಮಾಂಶ *dst,
+                         ಸ್ಥಿರಾಂಕ int64_t n_elements,
+                         ಸ್ಥಿರಾಂಕ int64_t ne0, ಸ್ಥಿರಾಂಕ int64_t ne1, ಸ್ಥಿರಾಂಕ int64_t ne2,
+                         ಸ್ಥಿರಾಂಕ int64_t nb00, ಸ್ಥಿರಾಂಕ int64_t nb01, ಸ್ಥಿರಾಂಕ int64_t nb02, ಸ್ಥಿರಾಂಕ int64_t nb03,
+                         ಸ್ಥಿರಾಂಕ int64_t ne10, ಸ್ಥಿರಾಂಕ int64_t ne11, ಸ್ಥಿರಾಂಕ int64_t ne12, ಸ್ಥಿರಾಂಕ int64_t ne13,
+                         ಸ್ಥಿರಾಂಕ int64_t nb10, ಸ್ಥಿರಾಂಕ int64_t nb11, ಸ್ಥಿರಾಂಕ int64_t nb12, ಸ್ಥಿರಾಂಕ int64_t nb13,
+                         ಸ್ಥಿರಾಂಕ int64_t s1, ಸ್ಥಿರಾಂಕ int64_t s2, ಸ್ಥಿರಾಂಕ int64_t s3,
+                         ಸ್ಥಿರಾಂಕ int64_t ಸ್ಥಾನಾಂತರ, ಸರತಿ_ptr stream) {
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = (n_elements + SYCL_ACC_ಖಂಡ_ಗಾತ್ರ - 1) / SYCL_ACC_ಖಂಡ_ಗಾತ್ರ;
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<3>(1, 1, SYCL_ACC_ಖಂಡ_ಗಾತ್ರ),
+                                           sycl::range<3>(1, 1, SYCL_ACC_ಖಂಡ_ಗಾತ್ರ)),
+                         [=](sycl::nd_ಅಂಶ<3> /*item_ct1*/) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
                             acc_f32(x, y, dst, n_elements,
                                 ne0, ne1, ne2,
                                 nb00, nb01, nb02, nb03,
                                 ne10, ne11, ne12, ne13,
                                 nb10, nb11, nb12, nb13,
-                                s1, s2, s3, offset);
+                                s1, s2, s3, ಸ್ಥಾನಾಂತರ);
                          });
 }
 
-template<typename T>
-static void arange_kernel(T * dst, const int k, T start, T step,
-                         const sycl::nd_item<1> &item_ct1) {
-    SYCL_GLOBAL_ID_LOOP(k, item_ct1) {
-        dst[i] = start + static_cast<T>(i) * step;
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ arange_kernel(T * dst, ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k, T start, T ಹೆಜ್ಜೆ,
+                         ಸ್ಥಿರಾಂಕ sycl::nd_ಅಂಶ<1> &ಅಂಶ_ct1) {
+    SYCL_GLOBAL_ID_LOOP(k, ಅಂಶ_ct1) {
+        dst[i] = start + static_cast<T>(i) * ಹೆಜ್ಜೆ;
     }
 }
 
-template<typename KernelInvoker, typename... Args>
-static inline void dispatch_ggml_sycl_op_unary(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, Args&&... args) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು KernelInvoker, ಬಗೆ_ಹೆಸರು... ವಾದಗಳು>
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dispatch_ggml_sycl_op_unary(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, ವಾದಗಳು&&... ವಾದಗಳು_2) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32 || dst->src[0]->type == GGML_TYPE_F16 || dst->src[0]->type == GGML_TYPE_BF16);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16 || dst->type == GGML_TYPE_BF16);
     GGML_ASSERT(dst->src[0]->type == dst->type);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    switch (dst->type) {
-        case GGML_TYPE_F16:
+    dpct::ಸರತಿ_ptr main_ಹರಿವು = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ಗಣ_device(ctx.device));
+    ಆಯ್ಕೆ (dst->type) {
+        ಸ್ಥಿತಿ GGML_TYPE_F16:
             {
-                auto data_pts = cast_data<sycl::half>(dst);
-                kernel_invoker(data_pts.src, data_pts.dst, (int)ggml_nelements(dst->src[0]), main_stream, std::forward<Args>(args)...);
-                break;
+                ಸ್ವಯಂಚಾಲಿತ ದತ್ತಾಂಶ_pts = cast_ದತ್ತಾಂಶ<sycl::half>(dst);
+                kernel_invoker(ದತ್ತಾಂಶ_pts.src, ದತ್ತಾಂಶ_pts.dst, (ಪೂರ್ಣಾಂಕ)ggml_nelements(dst->src[0]), main_ಹರಿವು, std::forward<ವಾದಗಳು>(ವಾದಗಳು_2)...);
+                ನಿಲ್ಲಿಸು;
             }
-#ifdef GGML_SYCL_HAS_BF16
-        case GGML_TYPE_BF16:
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ GGML_SYCL_HAS_BF16
+        ಸ್ಥಿತಿ GGML_TYPE_BF16:
             {
-                auto data_pts = cast_data<sycl::ext::oneapi::bfloat16>(dst);
-                kernel_invoker(data_pts.src, data_pts.dst, (int)ggml_nelements(dst->src[0]), main_stream, std::forward<Args>(args)...);
-                break;
+                ಸ್ವಯಂಚಾಲಿತ ದತ್ತಾಂಶ_pts = cast_ದತ್ತಾಂಶ<sycl::ext::oneapi::bfloat16>(dst);
+                kernel_invoker(ದತ್ತಾಂಶ_pts.src, ದತ್ತಾಂಶ_pts.dst, (ಪೂರ್ಣಾಂಕ)ggml_nelements(dst->src[0]), main_ಹರಿವು, std::forward<ವಾದಗಳು>(ವಾದಗಳು_2)...);
+                ನಿಲ್ಲಿಸು;
             }
-#endif
-        case GGML_TYPE_F32:
+#ಆದರೆ_ಅಂತ್ಯ
+        ಸ್ಥಿತಿ GGML_TYPE_F32:
             {
-                auto data_pts = cast_data<float>(dst);
-                kernel_invoker(data_pts.src, data_pts.dst, (int)ggml_nelements(dst->src[0]), main_stream, std::forward<Args>(args)...);
-                break;
+                ಸ್ವಯಂಚಾಲಿತ ದತ್ತಾಂಶ_pts = cast_ದತ್ತಾಂಶ<ದಶಮಾಂಶ>(dst);
+                kernel_invoker(ದತ್ತಾಂಶ_pts.src, ದತ್ತಾಂಶ_pts.dst, (ಪೂರ್ಣಾಂಕ)ggml_nelements(dst->src[0]), main_ಹರಿವು, std::forward<ವಾದಗಳು>(ವಾದಗಳು_2)...);
+                ನಿಲ್ಲಿಸು;
             }
-        default:
+        ಪೂರ್ವನಿಯೋಜಿತ:
             GGML_ABORT("GGML tensor type not supported!\n");
     }
 }
 
-template<typename KernelInvoker, typename... Args>
-static inline void dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, Args&&... args) {
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು KernelInvoker, ಬಗೆ_ಹೆಸರು... ವಾದಗಳು>
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & ctx, ggml_tensor * dst, KernelInvoker kernel_invoker, ವಾದಗಳು&&... ವಾದಗಳು_2) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32 || dst->src[0]->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
     GGML_ASSERT(dst->src[0]->type == dst->type);
 
-    dpct::queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    const int64_t nc = src1 ? src0->ne[0] : src0->ne[0] / 2;;
+    dpct::ಸರತಿ_ptr main_ಹರಿವು = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ಗಣ_device(ctx.device));
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0 = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src1 = dst->src[1];
+    ಸ್ಥಿರಾಂಕ int64_t nc = src1 ? src0->ne[0] : src0->ne[0] / 2;;
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_is_contiguous_1(dst->src[0]));
     GGML_ASSERT(ggml_is_contiguous(dst));
@@ -574,25 +574,25 @@ static inline void dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & c
     // 2^31. A dst that large is ~8 GB at f32, and the grid sizing already narrows to 32 bits,
     // so assert the bound rather than carry a second code path for it.
     GGML_ASSERT(ggml_nelements(dst) < ((int64_t) 1 << 31));
-    const int32_t swapped = ((const int32_t *) dst->op_params)[1];
-    void * src0_d = src0->data;
-    void * src1_d = src1 ? src1->data : src0->data;
-    const int64_t src0_o = src0->nb[1];
-    const int64_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
-    void * dst_d = dst->data;
-    if (src1) {
+    ಸ್ಥಿರಾಂಕ int32_t swapped = ((ಸ್ಥಿರಾಂಕ int32_t *) dst->op_params)[1];
+    ಶೂನ್ಯ * src0_d = src0->ದತ್ತಾಂಶ;
+    ಶೂನ್ಯ * src1_d = src1 ? src1->ದತ್ತಾಂಶ : src0->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ int64_t src0_o = src0->nb[1];
+    ಸ್ಥಿರಾಂಕ int64_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    ಶೂನ್ಯ * dst_d = dst->ದತ್ತಾಂಶ;
+    ಆದರೆ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
-        GGML_ASSERT(src1->nb[0] == ggml_element_size(src1));
+        GGML_ASSERT(src1->nb[0] == ggml_element_ಗಾತ್ರ(src1));
         GGML_ASSERT(src1->ne[0] == nc);
         GGML_ASSERT(src0->type == src1->type);
     }
-    switch (dst->type) {
-        case GGML_TYPE_F16:
+    ಆಯ್ಕೆ (dst->type) {
+        ಸ್ಥಿತಿ GGML_TYPE_F16:
             {
                 sycl::half * src0_p = (sycl::half *) src0_d;
                 sycl::half * src1_p = (sycl::half *) src1_d;
 
-                    if (!src1) {
+                    ಆದರೆ (!src1) {
                         src0_p += swapped ? nc : 0;
                         src1_p += swapped ? 0 : nc;
                     }
@@ -601,90 +601,90 @@ static inline void dispatch_ggml_sycl_op_fused_glu(ggml_backend_sycl_context & c
                                (sycl::half *) dst_d,
                                ggml_nelements(dst),
                                nc,
-                               src0_o / sizeof(sycl::half),
-                               src1_o / sizeof(sycl::half),
-                               main_stream,
-                               std::forward<Args>(args)...);
-                break;
+                               src0_o / ಗಾತ್ರ(sycl::half),
+                               src1_o / ಗಾತ್ರ(sycl::half),
+                               main_ಹರಿವು,
+                               std::forward<ವಾದಗಳು>(ವಾದಗಳು_2)...);
+                ನಿಲ್ಲಿಸು;
             }
-        case GGML_TYPE_F32:
+        ಸ್ಥಿತಿ GGML_TYPE_F32:
             {
-                float * src0_p = (float *) src0_d;
-                float * src1_p = (float *) src1_d;
+                ದಶಮಾಂಶ * src0_p = (ದಶಮಾಂಶ *) src0_d;
+                ದಶಮಾಂಶ * src1_p = (ದಶಮಾಂಶ *) src1_d;
 
-                    if (!src1) {
+                    ಆದರೆ (!src1) {
                         src0_p += swapped ? nc : 0;
                         src1_p += swapped ? 0 : nc;
                     }
 
                 kernel_invoker(src0_p,
                                src1_p,
-                               (float *) dst_d,
+                               (ದಶಮಾಂಶ *) dst_d,
                                ggml_nelements(dst),
                                nc,
-                               src0_o / sizeof(float),
-                               src1_o / sizeof(float),
-                               main_stream,
-                               std::forward<Args>(args)...);
-                break;
+                               src0_o / ಗಾತ್ರ(ದಶಮಾಂಶ),
+                               src1_o / ಗಾತ್ರ(ದಶಮಾಂಶ),
+                               main_ಹರಿವು,
+                               std::forward<ವಾದಗಳು>(ವಾದಗಳು_2)...);
+                ನಿಲ್ಲಿಸು;
             }
-        default:
+        ಪೂರ್ವನಿಯೋಜಿತ:
             GGML_ABORT("GGML tensor type not supported!\n");
     }
 }
 
-template<typename F>
-static inline void ggml_sycl_op_unary(
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_unary(
         ggml_backend_sycl_context & ctx, ggml_tensor * dst, F func) {
 
     ggml_tensor * src0 = dst->src[0];
 
-    const int64_t ne0  = dst->ne[0];
-    const int64_t ne1  = dst->ne[1];
-    const int64_t ne2  = dst->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t ne0  = dst->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t ne1  = dst->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t ne2  = dst->ne[2];
 
-    const size_t  nb0  = src0->nb[0];
-    const size_t  nb1  = src0->nb[1];
-    const size_t  nb2  = src0->nb[2];
-    const size_t  nb3  = src0->nb[3];
+    ಸ್ಥಿರಾಂಕ size_t  nb0  = src0->nb[0];
+    ಸ್ಥಿರಾಂಕ size_t  nb1  = src0->nb[1];
+    ಸ್ಥಿರಾಂಕ size_t  nb2  = src0->nb[2];
+    ಸ್ಥಿರಾಂಕ size_t  nb3  = src0->nb[3];
 
-    const size_t  nbd0 = dst->nb[0];
-    const size_t  nbd1 = dst->nb[1];
-    const size_t  nbd2 = dst->nb[2];
-    const size_t  nbd3 = dst->nb[3];
+    ಸ್ಥಿರಾಂಕ size_t  nbd0 = dst->nb[0];
+    ಸ್ಥಿರಾಂಕ size_t  nbd1 = dst->nb[1];
+    ಸ್ಥಿರಾಂಕ size_t  nbd2 = dst->nb[2];
+    ಸ್ಥಿರಾಂಕ size_t  nbd3 = dst->nb[3];
 
     // Hot unary ops (FFN/GDN silu, sigmoid, ...) run on contiguous tensors;
     // skip the strided index math entirely for them.
-    const bool contiguous = ggml_is_contiguous(src0) && ggml_is_contiguous(dst);
+    ಸ್ಥಿರಾಂಕ ತಾರ್ಕಿಕ contiguous = ggml_is_contiguous(src0) && ggml_is_contiguous(dst);
 
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
-        [=](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
+        [=](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ* src, ಸ್ವಯಂಚಾಲಿತ* dst_ptr, ಪೂರ್ಣಾಂಕ k_elements, ಸರತಿ_ptr stream) {
 
-            const int num_blocks = ceil_div(k_elements, 256);
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k_elements, 256);
 
-            if (contiguous) {
+            ಆದರೆ (contiguous) {
                 stream->parallel_for(
-                    sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(256),
+                    sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(256),
                                       sycl::range<1>(256)),
-                    [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        unary_op_flat_kernel(src, dst_ptr, k_elements, item_ct1, func);
+                    [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                        unary_op_flat_kernel(src, dst_ptr, k_elements, ಅಂಶ_ct1, func);
                     });
-            } else {
+            } ಇಲ್ಲದಿದ್ದರೆ {
                 // Launch-invariant divisors: compute the magic numbers once on the host so the
                 // kernel never issues an integer divide. Only the strided path needs them.
-                const sycl::uint3 ne0_fd = init_fastdiv_values((uint32_t) ne0);
-                const sycl::uint3 ne1_fd = init_fastdiv_values((uint32_t) ne1);
-                const sycl::uint3 ne2_fd = init_fastdiv_values((uint32_t) ne2);
+                ಸ್ಥಿರಾಂಕ sycl::uint3 ne0_fd = init_fastdiv_ಮೌಲ್ಯಗಳು((uint32_t) ne0);
+                ಸ್ಥಿರಾಂಕ sycl::uint3 ne1_fd = init_fastdiv_ಮೌಲ್ಯಗಳು((uint32_t) ne1);
+                ಸ್ಥಿರಾಂಕ sycl::uint3 ne2_fd = init_fastdiv_ಮೌಲ್ಯಗಳು((uint32_t) ne2);
                 stream->parallel_for(
-                    sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(256),
+                    sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(256),
                                       sycl::range<1>(256)),
-                    [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
+                    [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
                         unary_op_generic_kernel(
                             src, dst_ptr, k_elements,
                             ne0_fd, ne1_fd, ne2_fd,
                             nb0, nb1, nb2, nb3,
                             nbd0, nbd1, nbd2, nbd3,
-                            item_ct1,
+                            ಅಂಶ_ct1,
                             func
                         );
                     });
@@ -692,52 +692,52 @@ static inline void ggml_sycl_op_unary(
         });
 }
 
-template<typename F>
-static inline void ggml_sycl_op_unary_gated(
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_unary_gated(
         ggml_backend_sycl_context & ctx, ggml_tensor * dst, F func) {
 
     dispatch_ggml_sycl_op_fused_glu(ctx, dst,
-        [func](const auto * x_ptr, const auto * g_ptr, auto * dst_ptr, uint64_t k, uint64_t n, uint64_t o0, uint64_t o1, queue_ptr main_stream) {
+        [func](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ * x_ptr, ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ * g_ptr, ಸ್ವಯಂಚಾಲಿತ * dst_ptr, uint64_t k, uint64_t n, uint64_t o0, uint64_t o1, ಸರತಿ_ptr main_ಹರಿವು) {
 
-            const uint32_t num_blocks = (uint32_t) ceil_div(k, SYCL_GLU_BLOCK_SIZE);
-            const sycl::nd_range<1> launch_range(num_blocks * sycl::range<1>(SYCL_GLU_BLOCK_SIZE),
-                                                 sycl::range<1>(SYCL_GLU_BLOCK_SIZE));
+            ಸ್ಥಿರಾಂಕ uint32_t ಅಂಕೆ_ಖಂಡಗಳು = (uint32_t) ceil_div(k, SYCL_GLU_ಖಂಡ_ಗಾತ್ರ);
+            ಸ್ಥಿರಾಂಕ sycl::nd_range<1> launch_range(ಅಂಕೆ_ಖಂಡಗಳು * sycl::range<1>(SYCL_GLU_ಖಂಡ_ಗಾತ್ರ),
+                                                 sycl::range<1>(SYCL_GLU_ಖಂಡ_ಗಾತ್ರ));
 
             // o0 == n and o1 == n make the index math the identity, so index flat
             // note: not ggml_is_contiguous - a fused [gate|up] src0 is contiguous with o0 == 2n
-            if (o0 == n && o1 == n) {
-                main_stream->parallel_for(launch_range,
-                    [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        unary_gated_op_flat_kernel(x_ptr, g_ptr, dst_ptr, k, item_ct1, func);
+            ಆದರೆ (o0 == n && o1 == n) {
+                main_ಹರಿವು->parallel_for(launch_range,
+                    [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                        unary_gated_op_flat_kernel(x_ptr, g_ptr, dst_ptr, k, ಅಂಶ_ct1, func);
                     });
-            } else {
+            } ಇಲ್ಲದಿದ್ದರೆ {
                 // launch-invariant divisor, and only this path needs it
-                const sycl::uint3 n_fd = init_fastdiv_values((uint32_t) n);
-                main_stream->parallel_for(launch_range,
-                    [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                        unary_gated_op_generic_kernel(x_ptr, g_ptr, dst_ptr, k, n_fd, o0, o1, item_ct1, func);
+                ಸ್ಥಿರಾಂಕ sycl::uint3 n_fd = init_fastdiv_ಮೌಲ್ಯಗಳು((uint32_t) n);
+                main_ಹರಿವು->parallel_for(launch_range,
+                    [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                        unary_gated_op_generic_kernel(x_ptr, g_ptr, dst_ptr, k, n_fd, o0, o1, ಅಂಶ_ct1, func);
                     });
             }
         });
 }
 
 
-static inline void ggml_sycl_op_arange(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_arange(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
-    float start, stop, step;
-    memcpy(&start, dst->op_params, sizeof(float));
-    memcpy(&stop, (float *) dst->op_params + 1, sizeof(float));
-    memcpy(&step, (float *) dst->op_params + 2, sizeof(float));
-    dpct::queue_ptr stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    float * dst_ptr = (float *)dst->data;
-    const int k = (int)ggml_nelements(dst);
-    const int num_blocks = ceil_div(k, SYCL_ARANGE_BLOCK_SIZE);
+    ದಶಮಾಂಶ start, stop, ಹೆಜ್ಜೆ;
+    ಸ್ಮರಣೆ_ನಕಲು(&start, dst->op_params, ಗಾತ್ರ(ದಶಮಾಂಶ));
+    ಸ್ಮರಣೆ_ನಕಲು(&stop, (ದಶಮಾಂಶ *) dst->op_params + 1, ಗಾತ್ರ(ದಶಮಾಂಶ));
+    ಸ್ಮರಣೆ_ನಕಲು(&ಹೆಜ್ಜೆ, (ದಶಮಾಂಶ *) dst->op_params + 2, ಗಾತ್ರ(ದಶಮಾಂಶ));
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ಗಣ_device(ctx.device));
+    ದಶಮಾಂಶ * dst_ptr = (ದಶಮಾಂಶ *)dst->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k = (ಪೂರ್ಣಾಂಕ)ggml_nelements(dst);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k, SYCL_ARANGE_ಖಂಡ_ಗಾತ್ರ);
     stream->parallel_for(
-        sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_ARANGE_BLOCK_SIZE),
-                          sycl::range<1>(SYCL_ARANGE_BLOCK_SIZE)),
-        [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-            arange_kernel(dst_ptr, k, start, step, item_ct1);
+        sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(SYCL_ARANGE_ಖಂಡ_ಗಾತ್ರ),
+                          sycl::range<1>(SYCL_ARANGE_ಖಂಡ_ಗಾತ್ರ)),
+        [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+            arange_kernel(dst_ptr, k, start, ಹೆಜ್ಜೆ, ಅಂಶ_ct1);
         });
 }
 
@@ -745,443 +745,443 @@ static inline void ggml_sycl_op_arange(ggml_backend_sycl_context & ctx, ggml_ten
 
 
 
-static inline void ggml_sycl_op_sgn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_sgn(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_sgn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_sgn(x);
     });
 }
 
 
-static inline void ggml_sycl_op_abs(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_abs(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_abs(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_abs(x);
     });
 }
 
-static inline void ggml_sycl_op_elu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_elu(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_elu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_elu(x);
     });
 }
-static inline void ggml_sycl_op_silu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_silu(x);
-    });
-}
-
-static inline void ggml_sycl_op_gelu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_gelu(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_silu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_silu(x);
     });
 }
 
-static inline void ggml_sycl_op_gelu_quick(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_gelu_quick(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_gelu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_gelu(x);
     });
 }
 
-static inline void ggml_sycl_op_gelu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_gelu_erf(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_gelu_ಶೀಘ್ರ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_gelu_ಶೀಘ್ರ(x);
     });
 }
 
-static inline void ggml_sycl_op_tanh(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_tanh(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_gelu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_gelu_erf(x);
     });
 }
 
-static inline void ggml_sycl_op_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_relu(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_tanh(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_tanh(x);
     });
 }
 
-static inline void ggml_sycl_op_hardsigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_hardsigmoid(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_relu(x);
     });
 }
 
-static inline void ggml_sycl_op_hardswish(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_hardswish(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_hardsigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_hardsigmoid(x);
     });
 }
 
-static inline void ggml_sycl_op_exp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_exp(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_hardswish(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_hardswish(x);
     });
 }
 
-static inline void ggml_sycl_op_expm1(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_expm1(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_exp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_exp(x);
     });
 }
 
-static inline void ggml_sycl_op_log(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_expm1(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_expm1(x);
+    });
+}
+
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_log(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
-        [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_EXP_BLOCK_SIZE); // Using EXP block size
+        [](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ* src, ಸ್ವಯಂಚಾಲಿತ* dst_ptr, ಪೂರ್ಣಾಂಕ k_elements, ಸರತಿ_ptr stream) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k_elements, SYCL_EXP_ಖಂಡ_ಗಾತ್ರ); // Using EXP block size
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_EXP_BLOCK_SIZE),
-                                  sycl::range<1>(SYCL_EXP_BLOCK_SIZE)),
-                [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    unary_op_log_kernel(src, dst_ptr, k_elements, item_ct1);
+                sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(SYCL_EXP_ಖಂಡ_ಗಾತ್ರ),
+                                  sycl::range<1>(SYCL_EXP_ಖಂಡ_ಗಾತ್ರ)),
+                [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    unary_op_log_kernel(src, dst_ptr, k_elements, ಅಂಶ_ct1);
                 });
         });
 }
 
-static inline void ggml_sycl_op_softplus(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_softplus(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_softplus(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_softplus(x);
     });
 }
 
-static inline void ggml_sycl_op_neg(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_neg(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_neg(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_neg(x);
     });
 }
 
 
-static inline void ggml_sycl_op_step(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_step(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_ಹೆಜ್ಜೆ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_ಹೆಜ್ಜೆ(x);
     });
 }
 
-static inline void ggml_sycl_op_sigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_sigmoid(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_sigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_sigmoid(x);
     });
 }
 
-static inline void ggml_sycl_op_sqrt(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_sqrt(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
-        [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_SQRT_BLOCK_SIZE);
+        [](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ* src, ಸ್ವಯಂಚಾಲಿತ* dst_ptr, ಪೂರ್ಣಾಂಕ k_elements, ಸರತಿ_ptr stream) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k_elements, SYCL_SQRT_ಖಂಡ_ಗಾತ್ರ);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_SQRT_BLOCK_SIZE),
-                                  sycl::range<1>(SYCL_SQRT_BLOCK_SIZE)),
-                [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    unary_op_sqrt_kernel(src, dst_ptr, k_elements, item_ct1);
+                sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(SYCL_SQRT_ಖಂಡ_ಗಾತ್ರ),
+                                  sycl::range<1>(SYCL_SQRT_ಖಂಡ_ಗಾತ್ರ)),
+                [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    unary_op_sqrt_kernel(src, dst_ptr, k_elements, ಅಂಶ_ct1);
                 });
         });
 }
 
-static inline void ggml_sycl_op_sin(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_sin(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
-        [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_SIN_BLOCK_SIZE);
+        [](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ* src, ಸ್ವಯಂಚಾಲಿತ* dst_ptr, ಪೂರ್ಣಾಂಕ k_elements, ಸರತಿ_ptr stream) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k_elements, SYCL_SIN_ಖಂಡ_ಗಾತ್ರ);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_SIN_BLOCK_SIZE),
-                                  sycl::range<1>(SYCL_SIN_BLOCK_SIZE)),
-                [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    unary_op_sin_kernel(src, dst_ptr, k_elements, item_ct1);
+                sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(SYCL_SIN_ಖಂಡ_ಗಾತ್ರ),
+                                  sycl::range<1>(SYCL_SIN_ಖಂಡ_ಗಾತ್ರ)),
+                [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    unary_op_sin_kernel(src, dst_ptr, k_elements, ಅಂಶ_ct1);
                 });
         });
 }
 
-static inline void ggml_sycl_op_cos(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_cos(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
-        [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_SIN_BLOCK_SIZE); // Using SIN block size
+        [](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ* src, ಸ್ವಯಂಚಾಲಿತ* dst_ptr, ಪೂರ್ಣಾಂಕ k_elements, ಸರತಿ_ptr stream) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k_elements, SYCL_SIN_ಖಂಡ_ಗಾತ್ರ); // Using SIN block size
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_SIN_BLOCK_SIZE),
-                                  sycl::range<1>(SYCL_SIN_BLOCK_SIZE)),
-                [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    unary_op_cos_kernel(src, dst_ptr, k_elements, item_ct1);
+                sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(SYCL_SIN_ಖಂಡ_ಗಾತ್ರ),
+                                  sycl::range<1>(SYCL_SIN_ಖಂಡ_ಗಾತ್ರ)),
+                [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    unary_op_cos_kernel(src, dst_ptr, k_elements, ಅಂಶ_ct1);
                 });
         });
 }
 
-static inline void ggml_sycl_op_leaky_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    float negative_slope;
-    memcpy(&negative_slope, dst->op_params, sizeof(float));
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_leaky_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ದಶಮಾಂಶ negative_ಇಳಿಜಾರು;
+    ಸ್ಮರಣೆ_ನಕಲು(&negative_ಇಳಿಜಾರು, dst->op_params, ಗಾತ್ರ(ದಶಮಾಂಶ));
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
-        [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream, float slope) {
-            const int num_blocks = ceil_div(k_elements, SYCL_RELU_BLOCK_SIZE);
+        [](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ* src, ಸ್ವಯಂಚಾಲಿತ* dst_ptr, ಪೂರ್ಣಾಂಕ k_elements, ಸರತಿ_ptr stream, ದಶಮಾಂಶ ಇಳಿಜಾರು) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k_elements, SYCL_RELU_ಖಂಡ_ಗಾತ್ರ);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_RELU_BLOCK_SIZE),
-                                  sycl::range<1>(SYCL_RELU_BLOCK_SIZE)),
-                [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    unary_op_leaky_relu_kernel(src, dst_ptr, k_elements, slope, item_ct1);
+                sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(SYCL_RELU_ಖಂಡ_ಗಾತ್ರ),
+                                  sycl::range<1>(SYCL_RELU_ಖಂಡ_ಗಾತ್ರ)),
+                [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    unary_op_leaky_relu_kernel(src, dst_ptr, k_elements, ಇಳಿಜಾರು, ಅಂಶ_ct1);
                 });
-        }, negative_slope);
+        }, negative_ಇಳಿಜಾರು);
 }
 
-static inline void ggml_sycl_op_sqr(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_sqr(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
-        [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream) {
-            const int num_blocks = ceil_div(k_elements, SYCL_SQR_BLOCK_SIZE);
+        [](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ* src, ಸ್ವಯಂಚಾಲಿತ* dst_ptr, ಪೂರ್ಣಾಂಕ k_elements, ಸರತಿ_ptr stream) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k_elements, SYCL_SQR_ಖಂಡ_ಗಾತ್ರ);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_SQR_BLOCK_SIZE),
-                                  sycl::range<1>(SYCL_SQR_BLOCK_SIZE)),
-                [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    unary_op_sqr_kernel(src, dst_ptr, k_elements, item_ct1);
+                sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(SYCL_SQR_ಖಂಡ_ಗಾತ್ರ),
+                                  sycl::range<1>(SYCL_SQR_ಖಂಡ_ಗಾತ್ರ)),
+                [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    unary_op_sqr_kernel(src, dst_ptr, k_elements, ಅಂಶ_ct1);
                 });
         });
 }
 
-static inline void ggml_sycl_op_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    float min_val;
-    float max_val;
-    memcpy(&min_val, dst->op_params, sizeof(float));
-    memcpy(&max_val, (float *) dst->op_params + 1, sizeof(float));
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ದಶಮಾಂಶ min_val;
+    ದಶಮಾಂಶ max_val;
+    ಸ್ಮರಣೆ_ನಕಲು(&min_val, dst->op_params, ಗಾತ್ರ(ದಶಮಾಂಶ));
+    ಸ್ಮರಣೆ_ನಕಲು(&max_val, (ದಶಮಾಂಶ *) dst->op_params + 1, ಗಾತ್ರ(ದಶಮಾಂಶ));
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
-        [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream, float min_arg, float max_arg) {
-            const int num_blocks = ceil_div(k_elements, SYCL_CLAMP_BLOCK_SIZE);
+        [](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ* src, ಸ್ವಯಂಚಾಲಿತ* dst_ptr, ಪೂರ್ಣಾಂಕ k_elements, ಸರತಿ_ptr stream, ದಶಮಾಂಶ min_arg, ದಶಮಾಂಶ max_arg) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k_elements, SYCL_CLAMP_ಖಂಡ_ಗಾತ್ರ);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_CLAMP_BLOCK_SIZE),
-                                  sycl::range<1>(SYCL_CLAMP_BLOCK_SIZE)),
-                [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    clamp(src, dst_ptr, min_arg, max_arg, k_elements, item_ct1);
+                sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(SYCL_CLAMP_ಖಂಡ_ಗಾತ್ರ),
+                                  sycl::range<1>(SYCL_CLAMP_ಖಂಡ_ಗಾತ್ರ)),
+                [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    clamp(src, dst_ptr, min_arg, max_arg, k_elements, ಅಂಶ_ct1);
                 });
         }, min_val, max_val);
 }
 
-static inline void ggml_sycl_op_xielu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const float alpha_n = ggml_get_op_params_f32(dst, 1);
-    const float alpha_p = ggml_get_op_params_f32(dst, 2);
-    const float beta    = ggml_get_op_params_f32(dst, 3);
-    const float eps     = ggml_get_op_params_f32(dst, 4);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_xielu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ alpha_n = ggml_get_op_params_f32(dst, 1);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ alpha_p = ggml_get_op_params_f32(dst, 2);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ beta    = ggml_get_op_params_f32(dst, 3);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ eps     = ggml_get_op_params_f32(dst, 4);
     ggml_sycl_detail::dispatch_ggml_sycl_op_unary(ctx, dst,
-        [](const auto* src, auto* dst_ptr, int k_elements, queue_ptr stream, float alpha_n_arg, float alpha_p_arg, float beta_arg, float eps_arg) {
-            const int num_blocks = ceil_div(k_elements, SYCL_RELU_BLOCK_SIZE);
+        [](ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ* src, ಸ್ವಯಂಚಾಲಿತ* dst_ptr, ಪೂರ್ಣಾಂಕ k_elements, ಸರತಿ_ptr stream, ದಶಮಾಂಶ alpha_n_arg, ದಶಮಾಂಶ alpha_p_arg, ದಶಮಾಂಶ beta_arg, ದಶಮಾಂಶ eps_arg) {
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಖಂಡಗಳು = ceil_div(k_elements, SYCL_RELU_ಖಂಡ_ಗಾತ್ರ);
             stream->parallel_for(
-                sycl::nd_range<1>(sycl::range<1>(num_blocks) * sycl::range<1>(SYCL_RELU_BLOCK_SIZE),
-                                  sycl::range<1>(SYCL_RELU_BLOCK_SIZE)),
-                [=](sycl::nd_item<1> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                    unary_op_xielu_kernel(src, dst_ptr, k_elements, alpha_n_arg, alpha_p_arg, beta_arg, eps_arg, item_ct1);
+                sycl::nd_range<1>(sycl::range<1>(ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<1>(SYCL_RELU_ಖಂಡ_ಗಾತ್ರ),
+                                  sycl::range<1>(SYCL_RELU_ಖಂಡ_ಗಾತ್ರ)),
+                [=](sycl::nd_ಅಂಶ<1> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                    unary_op_xielu_kernel(src, dst_ptr, k_elements, alpha_n_arg, alpha_p_arg, beta_arg, eps_arg, ಅಂಶ_ct1);
                 });
         }, alpha_n, alpha_p, beta, eps);
 }
 
-static inline void ggml_sycl_op_floor(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_floor(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_floor(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_floor(x);
     });
 }
 
-static inline void ggml_sycl_op_ceil(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_ceil(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_ceil(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_ceil(x);
     });
 }
 
-static inline void ggml_sycl_op_round(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_round(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_ಸುತ್ತು(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_ಸುತ್ತು(x);
     });
 }
 
-static inline void ggml_sycl_op_trunc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](auto x) {
-        return op_trunc(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_trunc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_trunc(x);
     });
 }
 
-static inline void ggml_sycl_op_acc(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_acc(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0 = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src1 = dst->src[1];
 
-    const char  * src0_d = (const char  *) src0->data;
-    const char  * src1_d = (const char  *) src1->data;
-    float       * dst_d  = (float       *)  dst->data;
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ  * src0_d = (ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ  *) src0->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ  * src1_d = (ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ  *) src1->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ       * dst_d  = (ದಶಮಾಂಶ       *)  dst->ದತ್ತಾಂಶ;
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
     GGML_ASSERT(src1->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
 
-    GGML_ASSERT(dst->nb[0] == ggml_element_size(dst));
+    GGML_ASSERT(dst->nb[0] == ggml_element_ಗಾತ್ರ(dst));
     GGML_ASSERT(ggml_is_contiguously_allocated(dst));
     GGML_ASSERT(ggml_are_same_shape(src0, dst));
 
-    const int64_t s1     = (int64_t) ((const int32_t *) dst->op_params)[0] / (int64_t) sizeof(float);
-    const int64_t s2     = (int64_t) ((const int32_t *) dst->op_params)[1] / (int64_t) sizeof(float);
-    const int64_t s3     = (int64_t) ((const int32_t *) dst->op_params)[2] / (int64_t) sizeof(float);
-    const int64_t offset = (int64_t) ((const int32_t *) dst->op_params)[3] / (int64_t) sizeof(float);
+    ಸ್ಥಿರಾಂಕ int64_t s1     = (int64_t) ((ಸ್ಥಿರಾಂಕ int32_t *) dst->op_params)[0] / (int64_t) ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t s2     = (int64_t) ((ಸ್ಥಿರಾಂಕ int32_t *) dst->op_params)[1] / (int64_t) ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t s3     = (int64_t) ((ಸ್ಥಿರಾಂಕ int32_t *) dst->op_params)[2] / (int64_t) ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಸ್ಥಿರಾಂಕ int64_t ಸ್ಥಾನಾಂತರ = (int64_t) ((ಸ್ಥಿರಾಂಕ int32_t *) dst->op_params)[3] / (int64_t) ಗಾತ್ರ(ದಶಮಾಂಶ);
 
     ggml_sycl_detail::acc_f32_sycl(src0_d, src1_d, dst_d, ggml_nelements(dst),
         dst->ne[0], dst->ne[1], dst->ne[2],
         src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3],
         src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
         src1->nb[0], src1->nb[1], src1->nb[2], src1->nb[3],
-        s1, s2, s3, offset, stream);
+        s1, s2, s3, ಸ್ಥಾನಾಂತರ, stream);
 }
 
-static inline void ggml_sycl_op_geglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](auto x) {
-        return op_gelu(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_geglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_gelu(x);
     });
 }
 
-static inline void ggml_sycl_op_reglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](auto x) {
-        return op_relu(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_reglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_relu(x);
     });
 }
 
-static inline void ggml_sycl_op_swiglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](auto x) {
-        return op_silu(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_swiglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_silu(x);
     });
 }
 
 // Hands `launch` the functor for the unary op of a fused unary chain. Anything else
 // ggml_sycl_can_fuse() has already declined, so the default is a dispatcher bug.
-template<typename F>
-static void dispatch_fused_unary_op(ggml_unary_op uop, F && launch) {
-    switch (uop) {
-        case GGML_UNARY_OP_SILU:     launch([](float v) { return op_silu(v); });     break;
-        case GGML_UNARY_OP_SIGMOID:  launch([](float v) { return op_sigmoid(v); });  break;
-        case GGML_UNARY_OP_SOFTPLUS: launch([](float v) { return op_softplus(v); }); break;
-        default:
+ಮಾದರಿ<ಬಗೆ_ಹೆಸರು F>
+ಸ್ಥಿರ ಶೂನ್ಯ dispatch_fused_unary_op(ggml_unary_op uop, F && launch) {
+    ಆಯ್ಕೆ (uop) {
+        ಸ್ಥಿತಿ GGML_UNARY_OP_SILU:     launch([](ದಶಮಾಂಶ v) { ಹಿಂತಿರುಗಿ op_silu(v); });     ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_UNARY_OP_SIGMOID:  launch([](ದಶಮಾಂಶ v) { ಹಿಂತಿರುಗಿ op_sigmoid(v); });  ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_UNARY_OP_SOFTPLUS: launch([](ದಶಮಾಂಶ v) { ಹಿಂತಿರುಗಿ op_softplus(v); }); ನಿಲ್ಲಿಸು;
+        ಪೂರ್ವನಿಯೋಜಿತ:
             GGML_ABORT("fused unary chain: unsupported unary op %s", ggml_unary_op_name(uop));
     }
 }
 
 // dst = op(unary_node->src[0]) * other, written straight to the MUL output, saving the
 // standalone unary launch. Preconditions come from ggml_sycl_can_fuse(); re-asserted here.
-void ggml_sycl_op_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * unary_node, ggml_tensor * mul_node) {
-    scope_op_debug_print scope_dbg_print(__func__, mul_node, /*num_src=*/2);
+ಶೂನ್ಯ ggml_sycl_op_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * unary_ಗಂಟು, ggml_tensor * mul_ಗಂಟು) {
+    scope_op_debug_print scope_dbg_print(__func__, mul_ಗಂಟು, /*num_src=*/2);
 
-    const ggml_tensor * x = unary_node->src[0];
-    const ggml_tensor * g = (mul_node->src[0] == unary_node) ? mul_node->src[1] : mul_node->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * x = unary_ಗಂಟು->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * g = (mul_ಗಂಟು->src[0] == unary_ಗಂಟು) ? mul_ಗಂಟು->src[1] : mul_ಗಂಟು->src[0];
 
     // g is picked by elimination; ggml_can_fuse()'s single-use rule rules out MUL(unary, unary)
-    GGML_ASSERT(g != unary_node);
-    GGML_ASSERT(x->type == g->type && x->type == mul_node->type);
-    GGML_ASSERT(ggml_are_same_shape(x, g) && ggml_are_same_shape(x, mul_node));
+    GGML_ASSERT(g != unary_ಗಂಟು);
+    GGML_ASSERT(x->type == g->type && x->type == mul_ಗಂಟು->type);
+    GGML_ASSERT(ggml_are_same_shape(x, g) && ggml_are_same_shape(x, mul_ಗಂಟು));
     GGML_ASSERT(ggml_is_contiguous_1(x) && ggml_is_contiguous_1(g));
     // dst is indexed flat
-    GGML_ASSERT(ggml_is_contiguous(mul_node));
+    GGML_ASSERT(ggml_is_contiguous(mul_ಗಂಟು));
 
-    queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    ಸರತಿ_ptr main_ಹರಿವು = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ಗಣ_device(ctx.device));
 
-    const int64_t k = ggml_nelements(mul_node);
-    const int64_t n = mul_node->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t k = ggml_nelements(mul_ಗಂಟು);
+    ಸ್ಥಿರಾಂಕ int64_t n = mul_ಗಂಟು->ne[0];
 
-    const auto dispatch_type = [&](auto op) {
-        switch (mul_node->type) {
-            case GGML_TYPE_F32:
-                unary_mul_sycl((const float *) x->data, (const float *) g->data, (float *) mul_node->data,
-                               k, n, x->nb[1] / sizeof(float), g->nb[1] / sizeof(float), main_stream, op);
-                break;
-            case GGML_TYPE_F16:
-                unary_mul_sycl((const sycl::half *) x->data, (const sycl::half *) g->data, (sycl::half *) mul_node->data,
-                               k, n, x->nb[1] / sizeof(sycl::half), g->nb[1] / sizeof(sycl::half), main_stream, op);
-                break;
-            default:
-                GGML_ABORT("fused unary+mul: unsupported type %s", ggml_type_name(mul_node->type));
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ dispatch_type = [&](ಸ್ವಯಂಚಾಲಿತ op) {
+        ಆಯ್ಕೆ (mul_ಗಂಟು->type) {
+            ಸ್ಥಿತಿ GGML_TYPE_F32:
+                unary_mul_sycl((ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) x->ದತ್ತಾಂಶ, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) g->ದತ್ತಾಂಶ, (ದಶಮಾಂಶ *) mul_ಗಂಟು->ದತ್ತಾಂಶ,
+                               k, n, x->nb[1] / ಗಾತ್ರ(ದಶಮಾಂಶ), g->nb[1] / ಗಾತ್ರ(ದಶಮಾಂಶ), main_ಹರಿವು, op);
+                ನಿಲ್ಲಿಸು;
+            ಸ್ಥಿತಿ GGML_TYPE_F16:
+                unary_mul_sycl((ಸ್ಥಿರಾಂಕ sycl::half *) x->ದತ್ತಾಂಶ, (ಸ್ಥಿರಾಂಕ sycl::half *) g->ದತ್ತಾಂಶ, (sycl::half *) mul_ಗಂಟು->ದತ್ತಾಂಶ,
+                               k, n, x->nb[1] / ಗಾತ್ರ(sycl::half), g->nb[1] / ಗಾತ್ರ(sycl::half), main_ಹರಿವು, op);
+                ನಿಲ್ಲಿಸು;
+            ಪೂರ್ವನಿಯೋಜಿತ:
+                GGML_ABORT("fused unary+mul: unsupported type %s", ggml_type_name(mul_ಗಂಟು->type));
         }
     };
 
-    dispatch_fused_unary_op(ggml_get_unary_op(unary_node), dispatch_type);
+    dispatch_fused_unary_op(ggml_get_unary_op(unary_ಗಂಟು), dispatch_type);
 }
 
 // dst = op(a + bias) * scale for an ADD + UNARY + MUL chain whose bias and scale broadcast
 // over dim 0. Preconditions come from ggml_sycl_can_fuse(); re-asserted here.
-void ggml_sycl_op_add_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * add_node,
-                                      ggml_tensor * unary_node, ggml_tensor * mul_node) {
+ಶೂನ್ಯ ggml_sycl_op_ಕೂಡಿಸು_unary_mul_fused(ggml_backend_sycl_context & ctx, ggml_tensor * ಕೂಡಿಸು_ಗಂಟು,
+                                      ggml_tensor * unary_ಗಂಟು, ggml_tensor * mul_ಗಂಟು) {
     // the dst-arity convention the other fusions follow; a and bias live on add_node
-    scope_op_debug_print scope_dbg_print(__func__, mul_node, /*num_src=*/2);
+    scope_op_debug_print scope_dbg_print(__func__, mul_ಗಂಟು, /*num_src=*/2);
 
-    const ggml_tensor * a     = add_node->src[0];
-    const ggml_tensor * bias  = add_node->src[1];
-    const ggml_tensor * scale = (mul_node->src[0] == unary_node) ? mul_node->src[1] : mul_node->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * a     = ಕೂಡಿಸು_ಗಂಟು->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * bias  = ಕೂಡಿಸು_ಗಂಟು->src[1];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * scale = (mul_ಗಂಟು->src[0] == unary_ಗಂಟು) ? mul_ಗಂಟು->src[1] : mul_ಗಂಟು->src[0];
 
     // scale is picked by elimination; ggml_can_fuse()'s single-use rule rules out MUL(unary, unary)
-    GGML_ASSERT(scale != unary_node);
+    GGML_ASSERT(scale != unary_ಗಂಟು);
     GGML_ASSERT(a->type == GGML_TYPE_F32 && bias->type == GGML_TYPE_F32);
-    GGML_ASSERT(scale->type == GGML_TYPE_F32 && mul_node->type == GGML_TYPE_F32);
-    GGML_ASSERT(ggml_are_same_shape(a, mul_node));
+    GGML_ASSERT(scale->type == GGML_TYPE_F32 && mul_ಗಂಟು->type == GGML_TYPE_F32);
+    GGML_ASSERT(ggml_are_same_shape(a, mul_ಗಂಟು));
     // a and dst are indexed flat
-    GGML_ASSERT(ggml_is_contiguous(a) && ggml_is_contiguous(mul_node));
+    GGML_ASSERT(ggml_is_contiguous(a) && ggml_is_contiguous(mul_ಗಂಟು));
     // bias and scale are one contiguous ne0-length row each, broadcast over the outer dims
     GGML_ASSERT(bias->ne[0] == a->ne[0] && scale->ne[0] == a->ne[0]);
     GGML_ASSERT(ggml_nrows(bias) == 1 && ggml_nrows(scale) == 1);
     GGML_ASSERT(ggml_is_contiguous(bias) && ggml_is_contiguous(scale));
 
-    queue_ptr main_stream = ctx.stream();
-    SYCL_CHECK(ggml_sycl_set_device(ctx.device));
+    ಸರತಿ_ptr main_ಹರಿವು = ctx.stream();
+    SYCL_CHECK(ggml_sycl_ಗಣ_device(ctx.device));
 
-    const auto dispatch_op = [&](auto op) {
-        add_unary_mul_sycl((const float *) a->data, (const float *) bias->data, (const float *) scale->data,
-                           (float *) mul_node->data, ggml_nelements(mul_node), mul_node->ne[0], main_stream, op);
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ dispatch_op = [&](ಸ್ವಯಂಚಾಲಿತ op) {
+        ಕೂಡಿಸು_unary_mul_sycl((ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) a->ದತ್ತಾಂಶ, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) bias->ದತ್ತಾಂಶ, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) scale->ದತ್ತಾಂಶ,
+                           (ದಶಮಾಂಶ *) mul_ಗಂಟು->ದತ್ತಾಂಶ, ggml_nelements(mul_ಗಂಟು), mul_ಗಂಟು->ne[0], main_ಹರಿವು, op);
     };
 
-    dispatch_fused_unary_op(ggml_get_unary_op(unary_node), dispatch_op);
+    dispatch_fused_unary_op(ggml_get_unary_op(unary_ಗಂಟು), dispatch_op);
 }
 
-__dpct_inline__ float ggml_sycl_op_swiglu_oai_single(float x, float g, float alpha = 1.702f, float limit = 7.0f) {
-    x = sycl::fmin(x, limit);
-    g = sycl::fmax(sycl::fmin(g, limit), -limit);
+__dpct_inline__ ದಶಮಾಂಶ ggml_sycl_op_swiglu_oai_single(ದಶಮಾಂಶ x, ದಶಮಾಂಶ g, ದಶಮಾಂಶ alpha = 1.702f, ದಶಮಾಂಶ ಎಲ್ಲೆ = 7.0f) {
+    x = sycl::fmin(x, ಎಲ್ಲೆ);
+    g = sycl::fmax(sycl::fmin(g, ಎಲ್ಲೆ), -ಎಲ್ಲೆ);
 
-    float out_glu = x / (1.0f + sycl::native::exp(-x * alpha));
-    out_glu = out_glu * (1.0f + g);
-    return out_glu;
+    ದಶಮಾಂಶ ಹೊರಹೋಗು_glu = x / (1.0f + sycl::native::ಘಾತಾಂಕ(-x * alpha));
+    ಹೊರಹೋಗು_glu = ಹೊರಹೋಗು_glu * (1.0f + g);
+    ಹಿಂತಿರುಗಿ ಹೊರಹೋಗು_glu;
 }
 
-template <typename T>
-static void swiglu_oai_kernel(const T * x, const T * g, T * dst, const int64_t k,
-                              const int64_t n, const int64_t o0, const int64_t o1,
-                              float alpha, float limit, sycl::nd_item<3> item_ct1) {
-    const int64_t i = int64_t(item_ct1.get_local_range(2)) * item_ct1.get_group(2) + item_ct1.get_local_id(2);
+ಮಾದರಿ <ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ swiglu_oai_kernel(ಸ್ಥಿರಾಂಕ T * x, ಸ್ಥಿರಾಂಕ T * g, T * dst, ಸ್ಥಿರಾಂಕ int64_t k,
+                              ಸ್ಥಿರಾಂಕ int64_t n, ಸ್ಥಿರಾಂಕ int64_t o0, ಸ್ಥಿರಾಂಕ int64_t o1,
+                              ದಶಮಾಂಶ alpha, ದಶಮಾಂಶ ಎಲ್ಲೆ, sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) {
+    ಸ್ಥಿರಾಂಕ int64_t i = int64_t(ಅಂಶ_ct1.get_local_range(2)) * ಅಂಶ_ct1.get_ಗುಂಪು(2) + ಅಂಶ_ct1.get_local_id(2);
 
-    if (i >= k) {
-        return;
+    ಆದರೆ (i >= k) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const int64_t j0 = (i / n) * o0 + (i % n);
-    const int64_t j1 = o0 == o1 ? j0 : (i / n) * o1 + (i % n);
+    ಸ್ಥಿರಾಂಕ int64_t j0 = (i / n) * o0 + (i % n);
+    ಸ್ಥಿರಾಂಕ int64_t j1 = o0 == o1 ? j0 : (i / n) * o1 + (i % n);
 
-    float xi = x[j0];
-    float gi = g[j1];
+    ದಶಮಾಂಶ xi = x[j0];
+    ದಶಮಾಂಶ gi = g[j1];
 
-    dst[i] = ggml_sycl_op_swiglu_oai_single(xi, gi, alpha, limit);
+    dst[i] = ggml_sycl_op_swiglu_oai_single(xi, gi, alpha, ಎಲ್ಲೆ);
 }
 
-template <typename T>
-static void swiglu_oai_sycl(const T *       x,
-                            const T *       g,
+ಮಾದರಿ <ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ swiglu_oai_sycl(ಸ್ಥಿರಾಂಕ T *       x,
+                            ಸ್ಥಿರಾಂಕ T *       g,
                             T *             dst,
-                            const int64_t   k,
-                            const int64_t   n,
-                            const int64_t   o0,
-                            const int64_t   o1,
-                            const float     alpha,
-                            const float     limit,
-                            dpct::queue_ptr stream) {
-    const int64_t num_blocks = (k + SYCL_GLU_BLOCK_SIZE - 1) / SYCL_GLU_BLOCK_SIZE;
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             swiglu_oai_kernel(x, g, dst, k, n, o0, o1, alpha, limit, item_ct1);
+                            ಸ್ಥಿರಾಂಕ int64_t   k,
+                            ಸ್ಥಿರಾಂಕ int64_t   n,
+                            ಸ್ಥಿರಾಂಕ int64_t   o0,
+                            ಸ್ಥಿರಾಂಕ int64_t   o1,
+                            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ     alpha,
+                            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ     ಎಲ್ಲೆ,
+                            dpct::ಸರತಿ_ptr stream) {
+    ಸ್ಥಿರಾಂಕ int64_t ಅಂಕೆ_ಖಂಡಗಳು = (k + SYCL_GLU_ಖಂಡ_ಗಾತ್ರ - 1) / SYCL_GLU_ಖಂಡ_ಗಾತ್ರ;
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<3>(1, 1, SYCL_GLU_ಖಂಡ_ಗಾತ್ರ),
+                                           sycl::range<3>(1, 1, SYCL_GLU_ಖಂಡ_ಗಾತ್ರ)),
+                         [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                             swiglu_oai_kernel(x, g, dst, k, n, o0, o1, alpha, ಎಲ್ಲೆ, ಅಂಶ_ct1);
                          });
 }
 
-static void ggml_sycl_op_swiglu_oai(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
-    void * src0_d = src0->data;
-    void * src1_d = src1 ? src1->data : src0->data;
-    const int64_t src0_o = src0->nb[1];
-    const int64_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
-    void * dst_d = dst->data;
-    const int64_t nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    dpct::queue_ptr     stream = ctx.stream();
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_sycl_op_swiglu_oai(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0 = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src1 = dst->src[1];
+    ಶೂನ್ಯ * src0_d = src0->ದತ್ತಾಂಶ;
+    ಶೂನ್ಯ * src1_d = src1 ? src1->ದತ್ತಾಂಶ : src0->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ int64_t src0_o = src0->nb[1];
+    ಸ್ಥಿರಾಂಕ int64_t src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    ಶೂನ್ಯ * dst_d = dst->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ int64_t nc = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    dpct::ಸರತಿ_ptr     stream = ctx.stream();
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
-    GGML_ASSERT(src0->nb[0] == ggml_element_size(src0));
+    GGML_ASSERT(src0->nb[0] == ggml_element_ಗಾತ್ರ(src0));
     GGML_ASSERT(ggml_is_contiguous(dst));
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
@@ -1190,324 +1190,324 @@ static void ggml_sycl_op_swiglu_oai(ggml_backend_sycl_context & ctx, ggml_tensor
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == ggml_nrows(src0));
 
-    if (src1) {
+    ಆದರೆ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
-        GGML_ASSERT(src1->nb[0] == ggml_element_size(src1));
+        GGML_ASSERT(src1->nb[0] == ggml_element_ಗಾತ್ರ(src1));
         GGML_ASSERT(src1->ne[0] == nc);
         GGML_ASSERT(src0->type == src1->type);
     }
 
     //const int32_t swapped = ((const int32_t *) dst->op_params)[1];
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
-    const float alpha = ggml_get_op_params_f32(dst, 2);
-    const float limit = ggml_get_op_params_f32(dst, 3);
+    ಸ್ಥಿರಾಂಕ int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ alpha = ggml_get_op_params_f32(dst, 2);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ ಎಲ್ಲೆ = ggml_get_op_params_f32(dst, 3);
 
-    float * src0_p = (float *) src0_d;
-    float * src1_p = (float *) src1_d;
+    ದಶಮಾಂಶ * src0_p = (ದಶಮಾಂಶ *) src0_d;
+    ದಶಮಾಂಶ * src1_p = (ದಶಮಾಂಶ *) src1_d;
 
-    if (!src1) {
+    ಆದರೆ (!src1) {
         src0_p += swapped ? nc : 0;
         src1_p += swapped ? 0 : nc;
     }
 
-    swiglu_oai_sycl(src0_p, src1_p, (float *)dst_d, ggml_nelements(dst), nc, src0_o / sizeof(float), src1_o / sizeof(float), alpha, limit, stream);
+    swiglu_oai_sycl(src0_p, src1_p, (ದಶಮಾಂಶ *)dst_d, ggml_nelements(dst), nc, src0_o / ಗಾತ್ರ(ದಶಮಾಂಶ), src1_o / ಗಾತ್ರ(ದಶಮಾಂಶ), alpha, ಎಲ್ಲೆ, stream);
 }
 
-template <typename T>
-static void swiglu_clamp_kernel(const T *        gate,
-                                const T *        up,
+ಮಾದರಿ <ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ swiglu_clamp_kernel(ಸ್ಥಿರಾಂಕ T *        gate,
+                                ಸ್ಥಿರಾಂಕ T *        ಮೇಲೆ,
                                 T *              dst,
-                                const int64_t    k,
-                                const int64_t    n,
-                                const int64_t    o0,
-                                const int64_t    o1,
-                                float            limit,
-                                sycl::nd_item<3> item_ct1) {
-    const int64_t i = int64_t(item_ct1.get_local_range(2)) * item_ct1.get_group(2) + item_ct1.get_local_id(2);
+                                ಸ್ಥಿರಾಂಕ int64_t    k,
+                                ಸ್ಥಿರಾಂಕ int64_t    n,
+                                ಸ್ಥಿರಾಂಕ int64_t    o0,
+                                ಸ್ಥಿರಾಂಕ int64_t    o1,
+                                ದಶಮಾಂಶ            ಎಲ್ಲೆ,
+                                sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) {
+    ಸ್ಥಿರಾಂಕ int64_t i = int64_t(ಅಂಶ_ct1.get_local_range(2)) * ಅಂಶ_ct1.get_ಗುಂಪು(2) + ಅಂಶ_ct1.get_local_id(2);
 
-    if (i >= k) {
-        return;
+    ಆದರೆ (i >= k) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    const int64_t j0 = (i / n) * o0 + (i % n);
-    const int64_t j1 = o0 == o1 ? j0 : (i / n) * o1 + (i % n);
+    ಸ್ಥಿರಾಂಕ int64_t j0 = (i / n) * o0 + (i % n);
+    ಸ್ಥಿರಾಂಕ int64_t j1 = o0 == o1 ? j0 : (i / n) * o1 + (i % n);
 
-    const float gate_value = sycl::fmin((float) gate[j0], limit);
-    const float up_value   = sycl::fmax(sycl::fmin((float) up[j1], limit), -limit);
-    dst[i]                 = (T) (gate_value / (1.0f + sycl::native::exp(-gate_value)) * up_value);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ gate_ಮೌಲ್ಯ = sycl::fmin((ದಶಮಾಂಶ) gate[j0], ಎಲ್ಲೆ);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ ಮೇಲೆ_ಮೌಲ್ಯ   = sycl::fmax(sycl::fmin((ದಶಮಾಂಶ) ಮೇಲೆ[j1], ಎಲ್ಲೆ), -ಎಲ್ಲೆ);
+    dst[i]                 = (T) (gate_ಮೌಲ್ಯ / (1.0f + sycl::native::ಘಾತಾಂಕ(-gate_ಮೌಲ್ಯ)) * ಮೇಲೆ_ಮೌಲ್ಯ);
 }
 
-template <typename T>
-static void swiglu_clamp_sycl(const T *       gate,
-                              const T *       up,
+ಮಾದರಿ <ಬಗೆ_ಹೆಸರು T>
+ಸ್ಥಿರ ಶೂನ್ಯ swiglu_clamp_sycl(ಸ್ಥಿರಾಂಕ T *       gate,
+                              ಸ್ಥಿರಾಂಕ T *       ಮೇಲೆ,
                               T *             dst,
-                              const int64_t   k,
-                              const int64_t   n,
-                              const int64_t   o0,
-                              const int64_t   o1,
-                              float           limit,
-                              dpct::queue_ptr stream) {
-    const int64_t num_blocks = (k + SYCL_GLU_BLOCK_SIZE - 1) / SYCL_GLU_BLOCK_SIZE;
-    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, num_blocks) * sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE),
-                                           sycl::range<3>(1, 1, SYCL_GLU_BLOCK_SIZE)),
-                         [=](sycl::nd_item<3> item_ct1) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
-                             swiglu_clamp_kernel(gate, up, dst, k, n, o0, o1, limit, item_ct1);
+                              ಸ್ಥಿರಾಂಕ int64_t   k,
+                              ಸ್ಥಿರಾಂಕ int64_t   n,
+                              ಸ್ಥಿರಾಂಕ int64_t   o0,
+                              ಸ್ಥಿರಾಂಕ int64_t   o1,
+                              ದಶಮಾಂಶ           ಎಲ್ಲೆ,
+                              dpct::ಸರತಿ_ptr stream) {
+    ಸ್ಥಿರಾಂಕ int64_t ಅಂಕೆ_ಖಂಡಗಳು = (k + SYCL_GLU_ಖಂಡ_ಗಾತ್ರ - 1) / SYCL_GLU_ಖಂಡ_ಗಾತ್ರ;
+    stream->parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, ಅಂಕೆ_ಖಂಡಗಳು) * sycl::range<3>(1, 1, SYCL_GLU_ಖಂಡ_ಗಾತ್ರ),
+                                           sycl::range<3>(1, 1, SYCL_GLU_ಖಂಡ_ಗಾತ್ರ)),
+                         [=](sycl::nd_ಅಂಶ<3> ಅಂಶ_ct1) [[sycl::reqd_sub_ಗುಂಪು_ಗಾತ್ರ(WARP_ಗಾತ್ರ)]] {
+                             swiglu_clamp_kernel(gate, ಮೇಲೆ, dst, k, n, o0, o1, ಎಲ್ಲೆ, ಅಂಶ_ct1);
                          });
 }
 
-static void ggml_sycl_op_swiglu_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0   = dst->src[0];
-    const ggml_tensor * src1   = dst->src[1];
-    void *              src0_d = src0->data;
-    void *              src1_d = src1 ? src1->data : src0->data;
-    const int64_t       src0_o = src0->nb[1];
-    const int64_t       src1_o = src1 ? src1->nb[1] : src0->nb[1];
-    void *              dst_d  = dst->data;
-    const int64_t       nc     = src1 ? src0->ne[0] : src0->ne[0] / 2;
-    dpct::queue_ptr     stream = ctx.stream();
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_sycl_op_swiglu_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src0   = dst->src[0];
+    ಸ್ಥಿರಾಂಕ ggml_tensor * src1   = dst->src[1];
+    ಶೂನ್ಯ *              src0_d = src0->ದತ್ತಾಂಶ;
+    ಶೂನ್ಯ *              src1_d = src1 ? src1->ದತ್ತಾಂಶ : src0->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ int64_t       src0_o = src0->nb[1];
+    ಸ್ಥಿರಾಂಕ int64_t       src1_o = src1 ? src1->nb[1] : src0->nb[1];
+    ಶೂನ್ಯ *              dst_d  = dst->ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ int64_t       nc     = src1 ? src0->ne[0] : src0->ne[0] / 2;
+    dpct::ಸರತಿ_ptr     stream = ctx.stream();
 
     GGML_ASSERT(ggml_is_contiguous_1(src0));
-    GGML_ASSERT(src0->nb[0] == ggml_element_size(src0));
+    GGML_ASSERT(src0->nb[0] == ggml_element_ಗಾತ್ರ(src0));
     GGML_ASSERT(ggml_is_contiguous(dst));
     GGML_ASSERT(src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16);
     GGML_ASSERT(src0->type == dst->type);
     GGML_ASSERT(dst->ne[0] == nc);
     GGML_ASSERT(ggml_nrows(dst) == ggml_nrows(src0));
 
-    if (src1) {
+    ಆದರೆ (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
-        GGML_ASSERT(src1->nb[0] == ggml_element_size(src1));
+        GGML_ASSERT(src1->nb[0] == ggml_element_ಗಾತ್ರ(src1));
         GGML_ASSERT(src1->ne[0] == nc);
         GGML_ASSERT(src0->type == src1->type);
     }
 
-    const int32_t swapped = ggml_get_op_params_i32(dst, 1);
-    const float   limit   = ggml_get_op_params_f32(dst, 3);
+    ಸ್ಥಿರಾಂಕ int32_t swapped = ggml_get_op_params_i32(dst, 1);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ   ಎಲ್ಲೆ   = ggml_get_op_params_f32(dst, 3);
 
-    if (src0->type == GGML_TYPE_F16) {
+    ಆದರೆ (src0->type == GGML_TYPE_F16) {
         sycl::half * src0_p = (sycl::half *) src0_d;
         sycl::half * src1_p = (sycl::half *) src1_d;
 
-        if (!src1) {
+        ಆದರೆ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        swiglu_clamp_sycl(src0_p, src1_p, (sycl::half *) dst_d, ggml_nelements(dst), nc, src0_o / sizeof(sycl::half),
-                          src1_o / sizeof(sycl::half), limit, stream);
-    } else {
-        float * src0_p = (float *) src0_d;
-        float * src1_p = (float *) src1_d;
+        swiglu_clamp_sycl(src0_p, src1_p, (sycl::half *) dst_d, ggml_nelements(dst), nc, src0_o / ಗಾತ್ರ(sycl::half),
+                          src1_o / ಗಾತ್ರ(sycl::half), ಎಲ್ಲೆ, stream);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ದಶಮಾಂಶ * src0_p = (ದಶಮಾಂಶ *) src0_d;
+        ದಶಮಾಂಶ * src1_p = (ದಶಮಾಂಶ *) src1_d;
 
-        if (!src1) {
+        ಆದರೆ (!src1) {
             src0_p += swapped ? nc : 0;
             src1_p += swapped ? 0 : nc;
         }
 
-        swiglu_clamp_sycl(src0_p, src1_p, (float *) dst_d, ggml_nelements(dst), nc, src0_o / sizeof(float),
-                          src1_o / sizeof(float), limit, stream);
+        swiglu_clamp_sycl(src0_p, src1_p, (ದಶಮಾಂಶ *) dst_d, ggml_nelements(dst), nc, src0_o / ಗಾತ್ರ(ದಶಮಾಂಶ),
+                          src1_o / ಗಾತ್ರ(ದಶಮಾಂಶ), ಎಲ್ಲೆ, stream);
     }
 }
 
-static inline void ggml_sycl_op_geglu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](auto x) {
-        return op_gelu_erf(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_geglu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_gelu_erf(x);
     });
 }
 
-static inline void ggml_sycl_op_geglu_quick(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](auto x) {
-        return op_gelu_quick(x);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ ggml_sycl_op_geglu_ಶೀಘ್ರ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ggml_sycl_detail::ggml_sycl_op_unary_gated(ctx, dst, [](ಸ್ವಯಂಚಾಲಿತ x) {
+        ಹಿಂತಿರುಗಿ op_gelu_ಶೀಘ್ರ(x);
     });
 }
 
 
-void ggml_sycl_sqrt(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_sqrt(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sqrt(ctx, dst);
 }
 
-void ggml_sycl_sin(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_sin(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sin(ctx, dst);
 }
 
-void ggml_sycl_cos(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_cos(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_cos(ctx, dst);
 }
 
-void ggml_sycl_acc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_acc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
     ggml_sycl_op_acc(ctx, dst);
 }
 
-void ggml_sycl_gelu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_gelu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_gelu(ctx, dst);
 }
 
-void ggml_sycl_silu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_silu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_silu(ctx, dst);
 }
 
-void ggml_sycl_gelu_quick(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_gelu_ಶೀಘ್ರ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
-    ggml_sycl_op_gelu_quick(ctx, dst);
+    ggml_sycl_op_gelu_ಶೀಘ್ರ(ctx, dst);
 }
 
-void ggml_sycl_gelu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_gelu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_gelu_erf(ctx, dst);
 }
 
-void ggml_sycl_tanh(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_tanh(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_tanh(ctx, dst);
 }
 
-void ggml_sycl_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_relu(ctx, dst);
 }
 
-void ggml_sycl_sigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_sigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sigmoid(ctx, dst);
 }
 
-void ggml_sycl_hardsigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_hardsigmoid(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_hardsigmoid(ctx, dst);
 }
 
-void ggml_sycl_hardswish(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_hardswish(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_hardswish(ctx, dst);
 }
 
-void ggml_sycl_exp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_exp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_exp(ctx, dst);
 }
 
-void ggml_sycl_expm1(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_expm1(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_expm1(ctx, dst);
 }
 
-void ggml_sycl_log(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_log(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_log(ctx, dst);
 }
 
-void ggml_sycl_softplus(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_softplus(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_softplus(ctx, dst);
 }
 
-void ggml_sycl_neg(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_neg(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_neg(ctx, dst);
 }
 
-void ggml_sycl_step(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_ಹೆಜ್ಜೆ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
-    ggml_sycl_op_step(ctx, dst);
+    ggml_sycl_op_ಹೆಜ್ಜೆ(ctx, dst);
 }
 
-void ggml_sycl_leaky_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_leaky_relu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_leaky_relu(ctx, dst);
 }
 
-void ggml_sycl_sqr(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_sqr(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sqr(ctx, dst);
 }
 
-void ggml_sycl_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_clamp(ctx, dst);
 }
 
-void ggml_sycl_xielu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_xielu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_xielu(ctx, dst);
 }
 
-void ggml_sycl_sgn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_sgn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_sgn(ctx, dst);
 }
 
-void ggml_sycl_abs(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_abs(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_abs(ctx, dst);
 }
 
-void ggml_sycl_elu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_elu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_elu(ctx, dst);
 }
 
-void ggml_sycl_geglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_geglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_geglu(ctx, dst);
 }
 
-void ggml_sycl_reglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_reglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_reglu(ctx, dst);
 }
 
-void ggml_sycl_swiglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_swiglu(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_swiglu(ctx, dst);
 }
 
-void ggml_sycl_swiglu_oai(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_swiglu_oai(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_swiglu_oai(ctx, dst);
 }
 
-void ggml_sycl_swiglu_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_swiglu_clamp(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_swiglu_clamp(ctx, dst);
 }
 
-void ggml_sycl_geglu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_geglu_erf(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_geglu_erf(ctx, dst);
 }
 
-void ggml_sycl_geglu_quick(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_geglu_ಶೀಘ್ರ(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
-    ggml_sycl_op_geglu_quick(ctx, dst);
+    ggml_sycl_op_geglu_ಶೀಘ್ರ(ctx, dst);
 }
 
-void ggml_sycl_arange(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_arange(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/0);
     ggml_sycl_detail::ggml_sycl_op_arange(ctx, dst);
 }
 
-void ggml_sycl_floor(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_floor(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_floor(ctx, dst);
 }
 
-void ggml_sycl_ceil(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_ceil(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_ceil(ctx, dst);
 }
 
-void ggml_sycl_round(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_ಸುತ್ತು(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
-    ggml_sycl_op_round(ctx, dst);
+    ggml_sycl_op_ಸುತ್ತು(ctx, dst);
 }
 
-void ggml_sycl_trunc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_trunc(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/1);
     ggml_sycl_op_trunc(ctx, dst);
 }

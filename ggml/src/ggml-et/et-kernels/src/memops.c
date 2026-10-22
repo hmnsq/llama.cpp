@@ -8,28 +8,28 @@
 // slower)
 //******************************************************************************
 
-#include "platform.h"
-#include "tensor.h"
+#ಅನ್ತರ್ಭಾವ "platform.h"
+#ಅನ್ತರ್ಭಾವ "tensor.h"
 
-#include <etsoc/common/utils.h>
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <etsoc/common/utils.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
 // Operation identifiers for memops kernel
-enum ggml_et_memop_type {
+ಎಣಿಕೆ ggml_et_memop_type {
     GGML_ET_MEMOP_MEMSET = 0,
 };
 
 // Memset operation parameters (must match host-side struct in ggml-et-memops.cpp)
-struct memset_params {
+ರಚನೆ memset_params {
     uint32_t op_type;
-    uint32_t value;
-    void *   dst_ptr;
-    size_t   size;
+    uint32_t ಮೌಲ್ಯ;
+    ಶೂನ್ಯ *   dst_ptr;
+    size_t   ಗಾತ್ರ_2;
 };
 
 // Fill all 32 f-regs with a replicated byte pattern
-static inline void __attribute__((always_inline)) fill_fregs(uint32_t fill32) {
-    register uint64_t val __asm__("a2") = fill32;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ __attribute__((always_inline)) fill_fregs(uint32_t fill32) {
+    ನೋಂದಣಿ uint64_t val __asm__("a2") = fill32;
     __asm__ __volatile__(
         "fbcx.ps f0, %[v]\n\t"
         "fbcx.ps f1, %[v]\n\t"
@@ -70,101 +70,101 @@ static inline void __attribute__((always_inline)) fill_fregs(uint32_t fill32) {
 // Fill a partial region [start, end) using tensor_store for 16-byte-aligned
 // chunks and byte stores for any remainder < 16 bytes.
 // Assumes f-regs are already loaded with the fill pattern.
-static void memset_tail(uint8_t * start, uint8_t * end, uint8_t val) {
-    uint8_t * cur = start;
+ಸ್ಥಿರ ಶೂನ್ಯ memset_ಬಾಲ(uint8_t * ಆರಂಭ, uint8_t * ಕೊನೆ, uint8_t val) {
+    uint8_t * cur = ಆರಂಭ;
 
     // Full 64-byte rows via tensor_store (up to 16 at a time = 1KB)
-    while (cur + 64 <= end) {
-        size_t rows = (end - cur) / 64;
-        if (rows > 16) {
-            rows = 16;
+    ಆಗ (cur + 64 <= ಕೊನೆ) {
+        size_t ಅಡ್ಡಸಾಲುಗಳು = (ಕೊನೆ - cur) / 64;
+        ಆದರೆ (ಅಡ್ಡಸಾಲುಗಳು > 16) {
+            ಅಡ್ಡಸಾಲುಗಳು = 16;
         }
-        tensor_store(0, 0, 3, rows - 1, (uintptr_t) cur, 0, 64);
-        cur += rows * 64;
+        tensor_store(0, 0, 3, ಅಡ್ಡಸಾಲುಗಳು - 1, (uintptr_t) cur, 0, 64);
+        cur += ಅಡ್ಡಸಾಲುಗಳು * 64;
     }
 
     // Remaining 16-byte aligned chunk (16, 32, or 48 bytes)
-    if (cur + 16 <= end) {
-        size_t cols = (end - cur) / 16;
-        tensor_store(0, 0, cols - 1, 0, (uintptr_t) cur, 0, 64);
-        cur += cols * 16;
+    ಆದರೆ (cur + 16 <= ಕೊನೆ) {
+        size_t ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ_2 = (ಕೊನೆ - cur) / 16;
+        tensor_store(0, 0, ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ_2 - 1, 0, (uintptr_t) cur, 0, 64);
+        cur += ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ_2 * 16;
     }
 
     tensor_wait(TENSOR_STORE_WAIT);
 
     // Final < 16 bytes with byte stores
-    while (cur < end) {
-        *(volatile uint8_t *) cur = val;
+    ಆಗ (cur < ಕೊನೆ) {
+        *(ಅಸ್ಥಿರ uint8_t *) cur = val;
         cur++;
     }
 }
 
-#define ALIGN_UP(ptr, align) ((uint8_t *) (((uintptr_t) (ptr) + (align) - 1) & ~((uintptr_t) (align) - 1)))
+#ವ್ಯಾಖ್ಯಾನಿಸು ALIGN_ಮೇಲೆ(ptr, align) ((uint8_t *) (((uintptr_t) (ptr) + (align) - 1) & ~((uintptr_t) (align) - 1)))
 
-int entry_point(struct memset_params * params, kernel_environment_t * env) {
+ಪೂರ್ಣಾಂಕ ನಮೂದು_ಬಿಂದು(ರಚನೆ memset_params * params, kernel_environment_t * env) {
     uint64_t hart_id = get_hart_id();
 
     // Only even harts have tensor engine access
-    if (hart_id & 1) {
-        return 0;
+    ಆದರೆ (hart_id & 1) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    if (!params || ((uintptr_t) params & 0x7) != 0) {
-        return -1;
+    ಆದರೆ (!params || ((uintptr_t) params & 0x7) != 0) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    if (params->op_type != GGML_ET_MEMOP_MEMSET) {
-        return -1;
+    ಆದರೆ (params->op_type != GGML_ET_MEMOP_MEMSET) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
     uint8_t * dst  = (uint8_t *) params->dst_ptr;
-    size_t    size = params->size;
+    size_t    ಗಾತ್ರ_2 = params->ಗಾತ್ರ_2;
 
-    if (!dst || size == 0) {
-        return -1;
+    ಆದರೆ (!dst || ಗಾತ್ರ_2 == 0) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
     // Dynamic hart count from shire_mask
-    int num_even_harts = manual_popcountll(env->shire_mask) * SOC_MINIONS_PER_SHIRE;
+    ಪೂರ್ಣಾಂಕ ಅಂಕೆ_even_harts = manual_popcountll(env->shire_ಮುಖವಾಡ) * SOC_MINIONS_ಪ್ರತಿ_SHIRE;
 
     // global_id: shire * 32 + minion (for even harts)
     uint64_t global_id = ((hart_id >> 6) << 5) + ((hart_id >> 1) & 0x1F);
 
-    uint8_t  val    = params->value & 0xFF;
+    uint8_t  val    = params->ಮೌಲ್ಯ & 0xFF;
     uint32_t fill32 = val | ((uint32_t) val << 8) | ((uint32_t) val << 16) | ((uint32_t) val << 24);
 
-    uint8_t * end = dst + size;
+    uint8_t * ಕೊನೆ = dst + ಗಾತ್ರ_2;
 
-    setup_cache_scp();
+    ಸಿದ್ಧತೆ_cache_scp();
     CLEAR_TENSOR_ERROR;
     fill_fregs(fill32);
 
     // Align to 16 bytes (tensor_store minimum alignment)
-    uint8_t * base = ALIGN_UP(dst, 16);
-    if (base > end) {
-        base = end;
+    uint8_t * ತಳ = ALIGN_ಮೇಲೆ(dst, 16);
+    ಆದರೆ (ತಳ > ಕೊನೆ) {
+        ತಳ = ಕೊನೆ;
     }
 
     // Hart 0 handles head bytes before alignment
-    if (global_id == 0) {
-        volatile uint8_t * p = dst;
-        while (p < (volatile uint8_t *) base) {
+    ಆದರೆ (global_id == 0) {
+        ಅಸ್ಥಿರ uint8_t * p = dst;
+        ಆಗ (p < (ಅಸ್ಥಿರ uint8_t *) ತಳ) {
             *p++ = val;
         }
     }
 
     // Bulk: 1KB blocks distributed across all harts (base is already 16-byte aligned)
-    size_t aligned_size = end - base;
-    size_t total_blocks = aligned_size / 1024;
+    size_t aligned_ಗಾತ್ರ = ಕೊನೆ - ತಳ;
+    size_t ಒಟ್ಟು_ಖಂಡಗಳು = aligned_ಗಾತ್ರ / 1024;
 
-    if (total_blocks > 0) {
-        size_t blocks_per_hart = total_blocks / num_even_harts;
-        size_t extra           = total_blocks % num_even_harts;
-        size_t my_start        = blocks_per_hart * global_id + (global_id < extra ? global_id : extra);
-        size_t my_count        = blocks_per_hart + (global_id < extra ? 1 : 0);
+    ಆದರೆ (ಒಟ್ಟು_ಖಂಡಗಳು > 0) {
+        size_t ಖಂಡಗಳು_ಪ್ರತಿ_hart = ಒಟ್ಟು_ಖಂಡಗಳು / ಅಂಕೆ_even_harts;
+        size_t extra           = ಒಟ್ಟು_ಖಂಡಗಳು % ಅಂಕೆ_even_harts;
+        size_t my_ಆರಂಭ        = ಖಂಡಗಳು_ಪ್ರತಿ_hart * global_id + (global_id < extra ? global_id : extra);
+        size_t my_ಎಣಿಕೆ        = ಖಂಡಗಳು_ಪ್ರತಿ_hart + (global_id < extra ? 1 : 0);
 
-        uint8_t * addr = base + my_start * 1024;
-        for (size_t b = 0; b < my_count; b++) {
+        uint8_t * addr = ತಳ + my_ಆರಂಭ * 1024;
+        ಗಾಗಿ (size_t b = 0; b < my_ಎಣಿಕೆ; b++) {
             tensor_store(0, 0, 3, 15, (uintptr_t) addr, 0, 64);
             addr += 1024;
         }
@@ -172,10 +172,10 @@ int entry_point(struct memset_params * params, kernel_environment_t * env) {
     }
 
     // Hart 0 handles the tail after the last full 1KB block
-    if (global_id == 0) {
-        memset_tail(base + total_blocks * 1024, end, val);
+    ಆದರೆ (global_id == 0) {
+        memset_ಬಾಲ(ತಳ + ಒಟ್ಟು_ಖಂಡಗಳು * 1024, ಕೊನೆ, val);
     }
 
     FENCE;
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }

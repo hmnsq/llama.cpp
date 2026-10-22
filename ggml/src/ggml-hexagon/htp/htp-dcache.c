@@ -1,360 +1,360 @@
-#include "htp-dcache.h"
+#ಅನ್ತರ್ಭಾವ "htp-dcache.h"
 
-#include <qurt.h>
-#include <qurt_memory.h>
-#include <HAP_farf.h>
+#ಅನ್ತರ್ಭಾವ <qurt.h>
+#ಅನ್ತರ್ಭಾವ <qurt_memory.h>
+#ಅನ್ತರ್ಭಾವ <HAP_farf.h>
 
-#include "hex-common.h"
-#include "hex-utils.h"
-#include "hex-fastdiv.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "work-queue.h"
+#ಅನ್ತರ್ಭಾವ "hex-common.h"
+#ಅನ್ತರ್ಭಾವ "hex-utils.h"
+#ಅನ್ತರ್ಭಾವ "hex-fastdiv.h"
+#ಅನ್ತರ್ಭಾವ "hex-profile.h"
+#ಅನ್ತರ್ಭಾವ "htp-ctx.h"
+#ಅನ್ತರ್ಭಾವ "work-queue.h"
 
-struct l2flush_range {
-    uint32_t start;       // line-aligned start address
-    uint32_t end;         // line-aligned end address
-    uint32_t block_first; // global block index of this range's first block
-    uint32_t n_blocks;    // number of HEX_L2_BLOCK_SIZE chunks (last may be partial)
+ರಚನೆ l2flush_range {
+    uint32_t ಆರಂಭ;       // line-aligned start address
+    uint32_t ಕೊನೆ;         // line-aligned end address
+    uint32_t ಖಂಡ_ಮೊದಲ; // global block index of this range's first block
+    uint32_t n_ಖಂಡಗಳು;    // number of HEX_L2_BLOCK_SIZE chunks (last may be partial)
 };
 
-struct l2flush_multi_task {
-    struct htp_thread_trace * trace;
-    struct l2flush_range      ranges[HTP_MAX_DIRTY_RANGES];
+ರಚನೆ l2flush_multi_task {
+    ರಚನೆ htp_thread_trace * trace;
+    ರಚನೆ l2flush_range      ranges[HTP_MAX_DIRTY_RANGES];
     uint32_t                  n_ranges;
-    uint32_t                  total_blocks;
-    uint32_t                  blocks_per_thread;
+    uint32_t                  ಒಟ್ಟು_ಖಂಡಗಳು;
+    uint32_t                  ಖಂಡಗಳು_ಪ್ರತಿ_thread;
 };
 
-static void flush_all_dcache(struct htp_context * ctx) {
-    struct htp_thread_trace * tr = &ctx->trace[0];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
+ಸ್ಥಿರ ಶೂನ್ಯ flush_all_dcache(ರಚನೆ htp_context * ctx) {
+    ರಚನೆ htp_thread_trace * tr = &ctx->trace[0];
+    htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     qurt_mem_cache_clean((qurt_addr_t) 0, 0, QURT_MEM_CACHE_FLUSH_INVALIDATE_ALL, QURT_MEM_DCACHE);
-    hex_l2fetch_block(ctx, ctx->footprint);
+    hex_l2fetch_ಖಂಡ(ctx, ctx->footprint);
     htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    memset(ctx->dirty_ranges, 0, ಗಾತ್ರ(ctx->dirty_ranges));
 }
 
-static void l2flush_multi_worker(unsigned int n, unsigned int i, void * data) {
-    struct l2flush_multi_task * task = (struct l2flush_multi_task *) data;
-    (void) n;
+ಸ್ಥಿರ ಶೂನ್ಯ l2flush_multi_ಕೆಲಸಗಾರ(ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ n, ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ i, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    ರಚನೆ l2flush_multi_task * task = (ರಚನೆ l2flush_multi_task *) ದತ್ತಾಂಶ;
+    (ಶೂನ್ಯ) n;
 
-    const uint32_t gb_first = i * task->blocks_per_thread;
-    uint32_t       gb_last  = gb_first + task->blocks_per_thread;
-    if (gb_last > task->total_blocks) {
-        gb_last = task->total_blocks;
+    ಸ್ಥಿರಾಂಕ uint32_t gb_ಮೊದಲ = i * task->ಖಂಡಗಳು_ಪ್ರತಿ_thread;
+    uint32_t       gb_ಕೊನೆಯ  = gb_ಮೊದಲ + task->ಖಂಡಗಳು_ಪ್ರತಿ_thread;
+    ಆದರೆ (gb_ಕೊನೆಯ > task->ಒಟ್ಟು_ಖಂಡಗಳು) {
+        gb_ಕೊನೆಯ = task->ಒಟ್ಟು_ಖಂಡಗಳು;
     }
-    if (gb_first >= gb_last) {
-        return;
+    ಆದರೆ (gb_ಮೊದಲ >= gb_ಕೊನೆಯ) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    struct htp_thread_trace * tr = &task->trace[i];
-    htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, gb_first);
+    ರಚನೆ htp_thread_trace * tr = &task->trace[i];
+    htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_L2FLUSH, gb_ಮೊದಲ);
 
-    for (uint32_t r = 0; r < task->n_ranges; r++) {
-        const struct l2flush_range * rg = &task->ranges[r];
-        const uint32_t rb_first = rg->block_first;
-        const uint32_t rb_last  = rg->block_first + rg->n_blocks;
+    ಗಾಗಿ (uint32_t r = 0; r < task->n_ranges; r++) {
+        ಸ್ಥಿರಾಂಕ ರಚನೆ l2flush_range * rg = &task->ranges[r];
+        ಸ್ಥಿರಾಂಕ uint32_t rb_ಮೊದಲ = rg->ಖಂಡ_ಮೊದಲ;
+        ಸ್ಥಿರಾಂಕ uint32_t rb_ಕೊನೆಯ  = rg->ಖಂಡ_ಮೊದಲ + rg->n_ಖಂಡಗಳು;
 
-        const uint32_t lo = gb_first > rb_first ? gb_first : rb_first;
-        const uint32_t hi = gb_last  < rb_last  ? gb_last  : rb_last;
-        if (lo >= hi) {
-            continue;
+        ಸ್ಥಿರಾಂಕ uint32_t lo = gb_ಮೊದಲ > rb_ಮೊದಲ ? gb_ಮೊದಲ : rb_ಮೊದಲ;
+        ಸ್ಥಿರಾಂಕ uint32_t hi = gb_ಕೊನೆಯ  < rb_ಕೊನೆಯ  ? gb_ಕೊನೆಯ  : rb_ಕೊನೆಯ;
+        ಆದರೆ (lo >= hi) {
+            ಮುಂದುವರಿ;
         }
 
-        const uint32_t s = rg->start + (lo - rb_first) * HEX_L2_BLOCK_SIZE;
-        uint32_t       e = rg->start + (hi - rb_first) * HEX_L2_BLOCK_SIZE;
-        if (e > rg->end) {
-            e = rg->end;
+        ಸ್ಥಿರಾಂಕ uint32_t s = rg->ಆರಂಭ + (lo - rb_ಮೊದಲ) * HEX_L2_ಖಂಡ_ಗಾತ್ರ;
+        uint32_t       e = rg->ಆರಂಭ + (hi - rb_ಮೊದಲ) * HEX_L2_ಖಂಡ_ಗಾತ್ರ;
+        ಆದರೆ (e > rg->ಕೊನೆ) {
+            e = rg->ಕೊನೆ;
         }
-        hex_l2flush((void *) (uintptr_t) s, e - s);
+        hex_l2flush((ಶೂನ್ಯ *) (uintptr_t) s, e - s);
     }
 
-    htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, gb_first);
+    htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, gb_ಮೊದಲ);
 }
 
-static void merge_dirty_ranges(struct htp_context * ctx) {
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+ಸ್ಥಿರ ಶೂನ್ಯ ವಿಲೀನ_dirty_ranges(ರಚನೆ htp_context * ctx) {
+    ಗಾಗಿ (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[i];
+        ಆದರೆ (!r->ಆರಂಭ) ಮುಂದುವರಿ;
 
-        for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES;) {
-            struct htp_dirty_range * s = &ctx->dirty_ranges[j];
-            if (i == j || !s->start || r->end < s->start || s->end < r->start) {
+        ಗಾಗಿ (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES;) {
+            ರಚನೆ htp_dirty_range * s = &ctx->dirty_ranges[j];
+            ಆದರೆ (i == j || !s->ಆರಂಭ || r->ಕೊನೆ < s->ಆರಂಭ || s->ಕೊನೆ < r->ಆರಂಭ) {
                 j++;
-                continue;
+                ಮುಂದುವರಿ;
             }
 
-            r->start = MIN(r->start, s->start);
-            r->end   = MAX(r->end, s->end);
-            s->start = 0;
-            s->end   = 0;
+            r->ಆರಂಭ = MIN(r->ಆರಂಭ, s->ಆರಂಭ);
+            r->ಕೊನೆ   = MAX(r->ಕೊನೆ, s->ಕೊನೆ);
+            s->ಆರಂಭ = 0;
+            s->ಕೊನೆ   = 0;
             j = 0;
         }
     }
 }
 
-void htp_dcache_mark_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n) {
-    const struct htp_tensor * pending[HTP_OP_MAX_OUTPUTS];
+ಶೂನ್ಯ htp_dcache_mark_dirty_tensors(ರಚನೆ htp_context * ctx, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * ಸ್ಥಿರಾಂಕ * tensors, uint32_t n) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * pending[HTP_OP_MAX_OUTPUTS];
     uint32_t n_pending = 0;
 
-    for (uint32_t i = 0; i < n; i++) {
-        const struct htp_tensor * t = tensors[i];
-        if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-            continue;
+    ಗಾಗಿ (uint32_t i = 0; i < n; i++) {
+        ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * t = tensors[i];
+        ಆದರೆ (!t || (t->flags & (HTP_TENSOR_ತೂಕ | HTP_TENSOR_FENCE))) {
+            ಮುಂದುವರಿ;
         }
 
-        uint32_t t_start = t->data;
-        uint32_t t_end   = t_start + t->size;
+        uint32_t t_ಆರಂಭ = t->ದತ್ತಾಂಶ;
+        uint32_t t_ಕೊನೆ   = t_ಆರಂಭ + t->ಗಾತ್ರ_2;
 
         bool merged = false;
-        for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
-            struct htp_dirty_range * r = &ctx->dirty_ranges[j];
-            if (!r->start) continue;
+        ಗಾಗಿ (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
+            ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[j];
+            ಆದರೆ (!r->ಆರಂಭ) ಮುಂದುವರಿ;
 
-            if (r->start <= t_end && t_start <= r->end) {
-                uint32_t new_start = (t_start < r->start) ? t_start : r->start;
-                uint32_t new_end   = (t_end > r->end)     ? t_end   : r->end;
-                r->start = new_start;
-                r->end   = new_end;
+            ಆದರೆ (r->ಆರಂಭ <= t_ಕೊನೆ && t_ಆರಂಭ <= r->ಕೊನೆ) {
+                uint32_t new_ಆರಂಭ = (t_ಆರಂಭ < r->ಆರಂಭ) ? t_ಆರಂಭ : r->ಆರಂಭ;
+                uint32_t new_ಕೊನೆ   = (t_ಕೊನೆ > r->ಕೊನೆ)     ? t_ಕೊನೆ   : r->ಕೊನೆ;
+                r->ಆರಂಭ = new_ಆರಂಭ;
+                r->ಕೊನೆ   = new_ಕೊನೆ;
                 merged   = true;
             }
         }
 
-        if (!merged) {
+        ಆದರೆ (!merged) {
             pending[n_pending++] = t;
         }
     }
 
-    merge_dirty_ranges(ctx);
+    ವಿಲೀನ_dirty_ranges(ctx);
 
-    if (n_pending == 0) {
-        return;
+    ಆದರೆ (n_pending == 0) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    uint32_t empty_indices[HTP_MAX_DIRTY_RANGES];
-    uint32_t active_indices[HTP_MAX_DIRTY_RANGES];
-    uint32_t n_active = 0;
-    uint32_t n_empty  = 0;
-    for (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
-        if (ctx->dirty_ranges[j].start) {
-            active_indices[n_active++] = j;
-        } else {
-            empty_indices[n_empty++]   = j;
+    uint32_t ಖಾಲಿಗಳು_indices[HTP_MAX_DIRTY_RANGES];
+    uint32_t ಸಕ್ರಿಯ_indices[HTP_MAX_DIRTY_RANGES];
+    uint32_t n_ಸಕ್ರಿಯ = 0;
+    uint32_t n_ಖಾಲಿಗಳು  = 0;
+    ಗಾಗಿ (uint32_t j = 0; j < HTP_MAX_DIRTY_RANGES; j++) {
+        ಆದರೆ (ctx->dirty_ranges[j].ಆರಂಭ) {
+            ಸಕ್ರಿಯ_indices[n_ಸಕ್ರಿಯ++] = j;
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            ಖಾಲಿಗಳು_indices[n_ಖಾಲಿಗಳು++]   = j;
         }
     }
 
-    if (n_pending <= n_empty) {
-        for (uint32_t i = 0; i < n_pending; i++) {
-            uint32_t idx = empty_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-            r->start = pending[i]->data;
-            r->end   = pending[i]->data + pending[i]->size;
+    ಆದರೆ (n_pending <= n_ಖಾಲಿಗಳು) {
+        ಗಾಗಿ (uint32_t i = 0; i < n_pending; i++) {
+            uint32_t idx = ಖಾಲಿಗಳು_indices[i];
+            ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[idx];
+            r->ಆರಂಭ = pending[i]->ದತ್ತಾಂಶ;
+            r->ಕೊನೆ   = pending[i]->ದತ್ತಾಂಶ + pending[i]->ಗಾತ್ರ_2;
         }
-        merge_dirty_ranges(ctx);
-        return;
+        ವಿಲೀನ_dirty_ranges(ctx);
+        ಹಿಂತಿರುಗಿ;
     }
 
-    uint32_t n_evict = n_pending - n_empty;
-    uint32_t total_evict_size = 0;
-    for (uint32_t i = 0; i < n_evict; i++) {
-        uint32_t idx = active_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-        total_evict_size += r->end - r->start;
+    uint32_t n_evict = n_pending - n_ಖಾಲಿಗಳು;
+    uint32_t ಒಟ್ಟು_evict_ಗಾತ್ರ = 0;
+    ಗಾಗಿ (uint32_t i = 0; i < n_evict; i++) {
+        uint32_t idx = ಸಕ್ರಿಯ_indices[i];
+        ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        ಒಟ್ಟು_evict_ಗಾತ್ರ += r->ಕೊನೆ - r->ಆರಂಭ;
     }
 
-    if (total_evict_size > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    ಆದರೆ (ಒಟ್ಟು_evict_ಗಾತ್ರ > HEX_L2_FLUSH_ALL_ಮಿತಿ) {
         flush_all_dcache(ctx);
-        for (uint32_t i = 0; i < n_pending; i++) {
-            struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-            r->start = pending[i]->data;
-            r->end   = pending[i]->data + pending[i]->size;
+        ಗಾಗಿ (uint32_t i = 0; i < n_pending; i++) {
+            ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[i];
+            r->ಆರಂಭ = pending[i]->ದತ್ತಾಂಶ;
+            r->ಕೊನೆ   = pending[i]->ದತ್ತಾಂಶ + pending[i]->ಗಾತ್ರ_2;
         }
-        merge_dirty_ranges(ctx);
-        return;
+        ವಿಲೀನ_dirty_ranges(ctx);
+        ಹಿಂತಿರುಗಿ;
     }
 
-    if (total_evict_size > HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1 && n_evict <= HTP_MAX_DIRTY_RANGES) {
-        struct l2flush_multi_task task;
+    ಆದರೆ (ಒಟ್ಟು_evict_ಗಾತ್ರ > HEX_L2_FLUSH_WQ_ಮಿತಿ && ctx->n_ಎಳೆಗಳು > 1 && n_evict <= HTP_MAX_DIRTY_RANGES) {
+        ರಚನೆ l2flush_multi_task task;
         task.trace    = ctx->trace;
         task.n_ranges = n_evict;
 
-        uint32_t block_acc = 0;
-        for (uint32_t i = 0; i < n_evict; i++) {
-            uint32_t idx = active_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        uint32_t ಖಂಡ_acc = 0;
+        ಗಾಗಿ (uint32_t i = 0; i < n_evict; i++) {
+            uint32_t idx = ಸಕ್ರಿಯ_indices[i];
+            ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[idx];
 
-            struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
-            rg->block_first = block_acc;
-            rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
-            block_acc += rg->n_blocks;
+            ರಚನೆ l2flush_range * rg = &task.ranges[i];
+            rg->ಆರಂಭ = hex_align_ಕೆಳಕ್ಕೆ((size_t) r->ಆರಂಭ, HEX_L2_ಸಾಲು_ಗಾತ್ರ);
+            rg->ಕೊನೆ   = hex_align_ಮೇಲೆ((size_t) r->ಕೊನೆ, HEX_L2_ಸಾಲು_ಗಾತ್ರ);
+            rg->ಖಂಡ_ಮೊದಲ = ಖಂಡ_acc;
+            rg->n_ಖಂಡಗಳು = (rg->ಕೊನೆ - rg->ಆರಂಭ + HEX_L2_ಖಂಡ_ಗಾತ್ರ - 1) / HEX_L2_ಖಂಡ_ಗಾತ್ರ;
+            ಖಂಡ_acc += rg->n_ಖಂಡಗಳು;
         }
 
-        task.total_blocks      = block_acc;
-        task.blocks_per_thread = fastdiv(block_acc + ctx->n_threads - 1, &ctx->n_threads_div);
+        task.ಒಟ್ಟು_ಖಂಡಗಳು      = ಖಂಡ_acc;
+        task.ಖಂಡಗಳು_ಪ್ರತಿ_thread = fastdiv(ಖಂಡ_acc + ctx->n_ಎಳೆಗಳು - 1, &ctx->n_ಎಳೆಗಳು_div);
 
-        work_queue_run(ctx->work_queue, l2flush_multi_worker, &task, ctx->n_threads);
-    } else {
-        struct htp_thread_trace * tr = &ctx->trace[0];
-        htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-        for (uint32_t i = 0; i < n_evict; i++) {
-            uint32_t idx = active_indices[i];
-            struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-            uint32_t size = r->end - r->start;
-            hex_l2flush((void *) (uintptr_t) r->start, size);
+        work_ಸರತಿ_ಸತತ(ctx->work_ಸರತಿ, l2flush_multi_ಕೆಲಸಗಾರ, &task, ctx->n_ಎಳೆಗಳು);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ರಚನೆ htp_thread_trace * tr = &ctx->trace[0];
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_L2FLUSH, 0);
+        ಗಾಗಿ (uint32_t i = 0; i < n_evict; i++) {
+            uint32_t idx = ಸಕ್ರಿಯ_indices[i];
+            ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[idx];
+            uint32_t ಗಾತ್ರ_2 = r->ಕೊನೆ - r->ಆರಂಭ;
+            hex_l2flush((ಶೂನ್ಯ *) (uintptr_t) r->ಆರಂಭ, ಗಾತ್ರ_2);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     }
 
-    for (uint32_t i = 0; i < n_evict; i++) {
-        uint32_t idx = active_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-        r->start = pending[i]->data;
-        r->end   = pending[i]->data + pending[i]->size;
+    ಗಾಗಿ (uint32_t i = 0; i < n_evict; i++) {
+        uint32_t idx = ಸಕ್ರಿಯ_indices[i];
+        ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        r->ಆರಂಭ = pending[i]->ದತ್ತಾಂಶ;
+        r->ಕೊನೆ   = pending[i]->ದತ್ತಾಂಶ + pending[i]->ಗಾತ್ರ_2;
     }
 
-    for (uint32_t i = 0; i < n_empty; i++) {
-        uint32_t idx = empty_indices[i];
-        struct htp_dirty_range * r = &ctx->dirty_ranges[idx];
-        r->start = pending[n_evict + i]->data;
-        r->end   = pending[n_evict + i]->data + pending[n_evict + i]->size;
+    ಗಾಗಿ (uint32_t i = 0; i < n_ಖಾಲಿಗಳು; i++) {
+        uint32_t idx = ಖಾಲಿಗಳು_indices[i];
+        ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[idx];
+        r->ಆರಂಭ = pending[n_evict + i]->ದತ್ತಾಂಶ;
+        r->ಕೊನೆ   = pending[n_evict + i]->ದತ್ತಾಂಶ + pending[n_evict + i]->ಗಾತ್ರ_2;
     }
 
-    merge_dirty_ranges(ctx);
+    ವಿಲೀನ_dirty_ranges(ctx);
 }
 
-static void make_tensor_clean(struct htp_context * ctx, const struct htp_tensor * t) {
-    if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-        return;
+ಸ್ಥಿರ ಶೂನ್ಯ make_tensor_clean(ರಚನೆ htp_context * ctx, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * t) {
+    ಆದರೆ (!t || (t->flags & (HTP_TENSOR_ತೂಕ | HTP_TENSOR_FENCE))) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    uint32_t t_start = t->data;
-    uint32_t t_end   = t_start + t->size;
+    uint32_t t_ಆರಂಭ = t->ದತ್ತಾಂಶ;
+    uint32_t t_ಕೊನೆ   = t_ಆರಂಭ + t->ಗಾತ್ರ_2;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+    ಗಾಗಿ (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[i];
+        ಆದರೆ (!r->ಆರಂಭ) ಮುಂದುವರಿ;
 
-        if (r->start < t_end && t_start < r->end) {
-            if (t_start <= r->start && r->end <= t_end) {
-                r->start = 0;
-                r->end   = 0;
-            } else if (t_start <= r->start) {
-                r->start = t_end;
-            } else if (r->end <= t_end) {
-                r->end = t_start;
+        ಆದರೆ (r->ಆರಂಭ < t_ಕೊನೆ && t_ಆರಂಭ < r->ಕೊನೆ) {
+            ಆದರೆ (t_ಆರಂಭ <= r->ಆರಂಭ && r->ಕೊನೆ <= t_ಕೊನೆ) {
+                r->ಆರಂಭ = 0;
+                r->ಕೊನೆ   = 0;
+            } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (t_ಆರಂಭ <= r->ಆರಂಭ) {
+                r->ಆರಂಭ = t_ಕೊನೆ;
+            } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (r->ಕೊನೆ <= t_ಕೊನೆ) {
+                r->ಕೊನೆ = t_ಆರಂಭ;
             }
         }
     }
 }
 
-static inline bool is_tensor_dirty(struct htp_context * ctx, const struct htp_tensor * t) {
-    if (!t || (t->flags & (HTP_TENSOR_WEIGHT | HTP_TENSOR_FENCE))) {
-        return false;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool is_tensor_dirty(ರಚನೆ htp_context * ctx, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * t) {
+    ಆದರೆ (!t || (t->flags & (HTP_TENSOR_ತೂಕ | HTP_TENSOR_FENCE))) {
+        ಹಿಂತಿರುಗಿ false;
     }
 
-    uint32_t t_start = t->data;
-    uint32_t t_end   = t_start + t->size;
+    uint32_t t_ಆರಂಭ = t->ದತ್ತಾಂಶ;
+    uint32_t t_ಕೊನೆ   = t_ಆರಂಭ + t->ಗಾತ್ರ_2;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) continue;
+    ಗಾಗಿ (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[i];
+        ಆದರೆ (!r->ಆರಂಭ) ಮುಂದುವರಿ;
 
-        if (r->start < t_end && t_start < r->end) {
-            return true;
+        ಆದರೆ (r->ಆರಂಭ < t_ಕೊನೆ && t_ಆರಂಭ < r->ಕೊನೆ) {
+            ಹಿಂತಿರುಗಿ true;
         }
     }
-    return false;
+    ಹಿಂತಿರುಗಿ false;
 }
 
-static void flush_dirty_ranges(struct htp_context * ctx, const struct htp_dirty_range * ranges, uint32_t n_ranges, uint64_t total_dirty) {
-    if (total_dirty >= HEX_L2_FLUSH_WQ_THRESHOLD && ctx->n_threads > 1) {
-        struct l2flush_multi_task task;
+ಸ್ಥಿರ ಶೂನ್ಯ flush_dirty_ranges(ರಚನೆ htp_context * ctx, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_dirty_range * ranges, uint32_t n_ranges, uint64_t ಒಟ್ಟು_dirty) {
+    ಆದರೆ (ಒಟ್ಟು_dirty >= HEX_L2_FLUSH_WQ_ಮಿತಿ && ctx->n_ಎಳೆಗಳು > 1) {
+        ರಚನೆ l2flush_multi_task task;
         task.trace    = ctx->trace;
         task.n_ranges = n_ranges;
 
-        uint32_t block_acc = 0;
-        for (uint32_t i = 0; i < n_ranges; i++) {
-            const struct htp_dirty_range * r = &ranges[i];
-            struct l2flush_range * rg = &task.ranges[i];
-            rg->start = hex_align_down((size_t) r->start, HEX_L2_LINE_SIZE);
-            rg->end   = hex_align_up((size_t) r->end, HEX_L2_LINE_SIZE);
-            rg->block_first = block_acc;
-            rg->n_blocks = (rg->end - rg->start + HEX_L2_BLOCK_SIZE - 1) / HEX_L2_BLOCK_SIZE;
-            block_acc += rg->n_blocks;
+        uint32_t ಖಂಡ_acc = 0;
+        ಗಾಗಿ (uint32_t i = 0; i < n_ranges; i++) {
+            ಸ್ಥಿರಾಂಕ ರಚನೆ htp_dirty_range * r = &ranges[i];
+            ರಚನೆ l2flush_range * rg = &task.ranges[i];
+            rg->ಆರಂಭ = hex_align_ಕೆಳಕ್ಕೆ((size_t) r->ಆರಂಭ, HEX_L2_ಸಾಲು_ಗಾತ್ರ);
+            rg->ಕೊನೆ   = hex_align_ಮೇಲೆ((size_t) r->ಕೊನೆ, HEX_L2_ಸಾಲು_ಗಾತ್ರ);
+            rg->ಖಂಡ_ಮೊದಲ = ಖಂಡ_acc;
+            rg->n_ಖಂಡಗಳು = (rg->ಕೊನೆ - rg->ಆರಂಭ + HEX_L2_ಖಂಡ_ಗಾತ್ರ - 1) / HEX_L2_ಖಂಡ_ಗಾತ್ರ;
+            ಖಂಡ_acc += rg->n_ಖಂಡಗಳು;
         }
 
-        task.total_blocks      = block_acc;
-        task.blocks_per_thread = fastdiv(block_acc + ctx->n_threads - 1, &ctx->n_threads_div);
+        task.ಒಟ್ಟು_ಖಂಡಗಳು      = ಖಂಡ_acc;
+        task.ಖಂಡಗಳು_ಪ್ರತಿ_thread = fastdiv(ಖಂಡ_acc + ctx->n_ಎಳೆಗಳು - 1, &ctx->n_ಎಳೆಗಳು_div);
 
-        work_queue_run(ctx->work_queue, l2flush_multi_worker, &task, ctx->n_threads);
-    } else {
-        struct htp_thread_trace * tr = &ctx->trace[0];
-        htp_trace_event_start(tr, HTP_TRACE_EVT_L2FLUSH, 0);
-        for (uint32_t i = 0; i < n_ranges; i++) {
-            const struct htp_dirty_range * r = &ranges[i];
-            hex_l2flush((void *) (uintptr_t) r->start, r->end - r->start);
+        work_ಸರತಿ_ಸತತ(ctx->work_ಸರತಿ, l2flush_multi_ಕೆಲಸಗಾರ, &task, ctx->n_ಎಳೆಗಳು);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ರಚನೆ htp_thread_trace * tr = &ctx->trace[0];
+        htp_trace_event_ಆರಂಭ(tr, HTP_TRACE_EVT_L2FLUSH, 0);
+        ಗಾಗಿ (uint32_t i = 0; i < n_ranges; i++) {
+            ಸ್ಥಿರಾಂಕ ರಚನೆ htp_dirty_range * r = &ranges[i];
+            hex_l2flush((ಶೂನ್ಯ *) (uintptr_t) r->ಆರಂಭ, r->ಕೊನೆ - r->ಆರಂಭ);
         }
         htp_trace_event_stop(tr, HTP_TRACE_EVT_L2FLUSH, 0);
     }
 }
 
-void htp_dcache_flush_dirty_ranges(struct htp_context * ctx) {
-    struct htp_dirty_range ranges[HTP_MAX_DIRTY_RANGES];
+ಶೂನ್ಯ htp_dcache_flush_dirty_ranges(ರಚನೆ htp_context * ctx) {
+    ರಚನೆ htp_dirty_range ranges[HTP_MAX_DIRTY_RANGES];
     uint32_t n_ranges = 0;
-    uint64_t total_dirty = 0;
+    uint64_t ಒಟ್ಟು_dirty = 0;
 
-    for (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
-        const struct htp_dirty_range * r = &ctx->dirty_ranges[i];
-        if (!r->start) {
-            continue;
+    ಗಾಗಿ (uint32_t i = 0; i < HTP_MAX_DIRTY_RANGES; i++) {
+        ಸ್ಥಿರಾಂಕ ರಚನೆ htp_dirty_range * r = &ctx->dirty_ranges[i];
+        ಆದರೆ (!r->ಆರಂಭ) {
+            ಮುಂದುವರಿ;
         }
         ranges[n_ranges++] = *r;
-        total_dirty += r->end - r->start;
+        ಒಟ್ಟು_dirty += r->ಕೊನೆ - r->ಆರಂಭ;
     }
 
-    if (total_dirty == 0) {
-        return;
+    ಆದರೆ (ಒಟ್ಟು_dirty == 0) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    if (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    ಆದರೆ (ಒಟ್ಟು_dirty > HEX_L2_FLUSH_ALL_ಮಿತಿ) {
         flush_all_dcache(ctx);
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
 
-    flush_dirty_ranges(ctx, ranges, n_ranges, total_dirty);
-    memset(ctx->dirty_ranges, 0, sizeof(ctx->dirty_ranges));
+    flush_dirty_ranges(ctx, ranges, n_ranges, ಒಟ್ಟು_dirty);
+    memset(ctx->dirty_ranges, 0, ಗಾತ್ರ(ctx->dirty_ranges));
 }
 
-void htp_dcache_flush_dirty_tensors(struct htp_context * ctx, const struct htp_tensor * const * tensors, uint32_t n) {
-    const struct htp_tensor * dirty_tensors[HTP_OP_MAX_INPUTS];
-    struct htp_dirty_range ranges[HTP_OP_MAX_INPUTS];
+ಶೂನ್ಯ htp_dcache_flush_dirty_tensors(ರಚನೆ htp_context * ctx, ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * ಸ್ಥಿರಾಂಕ * tensors, uint32_t n) {
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * dirty_tensors[HTP_OP_MAX_INPUTS];
+    ರಚನೆ htp_dirty_range ranges[HTP_OP_MAX_INPUTS];
     uint32_t n_dirty = 0;
-    uint64_t total_dirty = 0;
+    uint64_t ಒಟ್ಟು_dirty = 0;
 
-    for (uint32_t i = 0; i < n; i++) {
-        const struct htp_tensor * t = tensors[i];
-        if (is_tensor_dirty(ctx, t)) {
+    ಗಾಗಿ (uint32_t i = 0; i < n; i++) {
+        ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * t = tensors[i];
+        ಆದರೆ (is_tensor_dirty(ctx, t)) {
             dirty_tensors[n_dirty++] = t;
-            ranges[n_dirty - 1].start = t->data;
-            ranges[n_dirty - 1].end   = t->data + t->size;
-            total_dirty += t->size;
+            ranges[n_dirty - 1].ಆರಂಭ = t->ದತ್ತಾಂಶ;
+            ranges[n_dirty - 1].ಕೊನೆ   = t->ದತ್ತಾಂಶ + t->ಗಾತ್ರ_2;
+            ಒಟ್ಟು_dirty += t->ಗಾತ್ರ_2;
         }
     }
 
-    if (total_dirty == 0) {
-        return;
+    ಆದರೆ (ಒಟ್ಟು_dirty == 0) {
+        ಹಿಂತಿರುಗಿ;
     }
 
-    if (total_dirty > HEX_L2_FLUSH_ALL_THRESHOLD) {
+    ಆದರೆ (ಒಟ್ಟು_dirty > HEX_L2_FLUSH_ALL_ಮಿತಿ) {
         flush_all_dcache(ctx);
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
 
-    flush_dirty_ranges(ctx, ranges, n_dirty, total_dirty);
-    for (uint32_t i = 0; i < n_dirty; i++) {
+    flush_dirty_ranges(ctx, ranges, n_dirty, ಒಟ್ಟು_dirty);
+    ಗಾಗಿ (uint32_t i = 0; i < n_dirty; i++) {
         make_tensor_clean(ctx, dirty_tensors[i]);
     }
 }

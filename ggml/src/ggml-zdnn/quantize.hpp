@@ -1,14 +1,14 @@
-#ifndef GGML_ZDNN_QUANTIZE_HPP
-#define GGML_ZDNN_QUANTIZE_HPP
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ GGML_ZDNN_QUANTIZE_HPP
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_ZDNN_QUANTIZE_HPP
 
-#include "common.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
 
-void ggml_zdnn_quantize_inputs(int32_t       n_threads,
-                         const ggml_tensor * inputs,
-                               int64_t       group_size,
-                         const float       * channel_scales,
+ಶೂನ್ಯ ggml_zdnn_quantize_inputs(int32_t       n_ಎಳೆಗಳು,
+                         ಸ್ಥಿರಾಂಕ ggml_tensor * inputs,
+                               int64_t       ಗುಂಪು_ಗಾತ್ರ,
+                         ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ       * channel_scales,
                                int8_t      * quants,
                                int8_t      * residuals,
-                               float       * scales);
+                               ದಶಮಾಂಶ       * scales);
 
-#endif  // GGML_ZDNN_QUANTIZE_HPP
+#ಆದರೆ_ಅಂತ್ಯ  // GGML_ZDNN_QUANTIZE_HPP

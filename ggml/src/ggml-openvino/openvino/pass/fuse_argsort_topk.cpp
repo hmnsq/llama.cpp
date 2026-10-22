@@ -1,67 +1,67 @@
-#include "fuse_argsort_topk.h"
+#ಅನ್ತರ್ಭಾವ "fuse_argsort_topk.h"
 
-#include <openvino/op/constant.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/topk.hpp>
-#include <openvino/pass/pattern/op/wrap_type.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/constant.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/slice.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/op/topk.hpp>
+#ಅನ್ತರ್ಭಾವ <openvino/pass/pattern/op/wrap_type.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+ನಾಮಾಕಾಶ ov {
+ನಾಮಾಕಾಶ frontend {
+ನಾಮಾಕಾಶ ggml {
+ನಾಮಾಕಾಶ pass {
 
-FuseArgsortTopK::FuseArgsortTopK() {
+Fuse_Argsort_ತುದಿ_K::Fuse_Argsort_ತುದಿ_K() {
     // GGML argsort materializes the full ordering before a VIEW keeps the prefix.
     // Let TopK produce only that prefix when all index consumers are such views.
-    auto pattern = ov::pass::pattern::wrap_type<ov::op::v11::TopK>();
+    ಸ್ವಯಂಚಾಲಿತ pattern = ov::pass::pattern::wrap_type<ov::op::v11::ತುದಿ_K>();
 
-    const auto callback = [](ov::pass::pattern::Matcher & m) {
-        auto topk = ov::as_type_ptr<ov::op::v11::TopK>(m.get_match_root());
-        if (!topk->output(0).get_target_inputs().empty() || topk->output(1).get_target_inputs().empty() ||
-            topk->get_sort_type() != ov::op::v11::TopK::SortType::SORT_VALUES) {
-            return false;
+    ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ callback = [](ov::pass::pattern::Matcher & m) {
+        ಸ್ವಯಂಚಾಲಿತ topk = ov::as_type_ptr<ov::op::v11::ತುದಿ_K>(m.get_ಹೊಂದಿಕೆ_ಬೇರು());
+        ಆದರೆ (!topk->output(0).get_ಗುರಿ_inputs().ಖಾಲಿಗಳು() || topk->output(1).get_ಗುರಿ_inputs().ಖಾಲಿಗಳು() ||
+            topk->get_ವಿಂಗಡಿಸು_type() != ov::op::v11::ತುದಿ_K::ವಿಂಗಡಿಸು_Type::ವಿಂಗಡಿಸು_ಮೌಲ್ಯಗಳು) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
 
-        const auto shape = topk->get_output_partial_shape(1);
-        if (shape.rank().is_dynamic()) {
-            return false;
+        ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ shape = topk->get_output_partial_shape(1);
+        ಆದರೆ (shape.rank().is_dynamic()) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        const int64_t rank = shape.rank().get_length();
-        const int64_t axis = topk->get_axis();
-        if (shape[axis].is_dynamic()) {
-            return false;
+        ಸ್ಥಿರಾಂಕ int64_t rank = shape.rank().get_ಉದ್ದಳತೆ();
+        ಸ್ಥಿರಾಂಕ int64_t axis = topk->get_axis();
+        ಆದರೆ (shape[axis].is_dynamic()) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
 
         int64_t prefix = -1;
-        for (const auto & input : topk->output(1).get_target_inputs()) {
-            const auto * slice = ov::as_type<ov::op::v8::Slice>(input.get_node());
-            if (!slice || input.get_index() != 0 || slice->get_input_size() != 5) {
-                return false;
+        ಗಾಗಿ (ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ & ಒಳಹರಿವು : topk->output(1).get_ಗುರಿ_inputs()) {
+            ಸ್ಥಿರಾಂಕ ಸ್ವಯಂಚಾಲಿತ * ತುಂಡು_2 = ov::as_type<ov::op::v8::ತುಂಡು>(ಒಳಹರಿವು.get_ಗಂಟು());
+            ಆದರೆ (!ತುಂಡು_2 || ಒಳಹರಿವು.get_ಸೂಚ್ಯಂಕ() != 0 || ತುಂಡು_2->get_ಒಳಹರಿವು_ಗಾತ್ರ() != 5) {
+                ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
-            int64_t values[4];
-            for (size_t i = 0; i < 4; ++i) {
-                auto value = ov::as_type_ptr<ov::op::v0::Constant>(slice->get_input_node_shared_ptr(i + 1));
-                if (!value || ov::shape_size(value->get_shape()) != 1) {
-                    return false;
+            int64_t ಮೌಲ್ಯಗಳು[4];
+            ಗಾಗಿ (size_t i = 0; i < 4; ++i) {
+                ಸ್ವಯಂಚಾಲಿತ value = ov::as_type_ptr<ov::op::v0::Constant>(ತುಂಡು_2->get_ಒಳಹರಿವು_ಗಂಟು_shared_ptr(i + 1));
+                ಆದರೆ (!value || ov::shape_ಗಾತ್ರ(value->get_shape()) != 1) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                values[i] = value->cast_vector<int64_t>()[0];
+                ಮೌಲ್ಯಗಳು[i] = value->cast_ಸದಿಶ<int64_t>()[0];
             }
-            const int64_t slice_axis = values[3] < 0 ? values[3] + rank : values[3];
-            if (values[0] != 0 || values[2] != 1 || slice_axis != axis || values[1] <= 0 ||
-                values[1] >= shape[axis].get_length() || (prefix != -1 && prefix != values[1])) {
-                return false;
+            ಸ್ಥಿರಾಂಕ int64_t ತುಂಡು_axis = ಮೌಲ್ಯಗಳು[3] < 0 ? ಮೌಲ್ಯಗಳು[3] + rank : ಮೌಲ್ಯಗಳು[3];
+            ಆದರೆ (ಮೌಲ್ಯಗಳು[0] != 0 || ಮೌಲ್ಯಗಳು[2] != 1 || ತುಂಡು_axis != axis || ಮೌಲ್ಯಗಳು[1] <= 0 ||
+                ಮೌಲ್ಯಗಳು[1] >= shape[axis].get_ಉದ್ದಳತೆ() || (prefix != -1 && prefix != ಮೌಲ್ಯಗಳು[1])) {
+                ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
-            prefix = values[1];
+            prefix = ಮೌಲ್ಯಗಳು[1];
         }
 
         // ggml_argsort_top_k sorts the full row, then exposes only its first k indices.
         // Keep other TopK forms unchanged because their ordering can be observable.
-        topk->set_argument(1, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {prefix}));
+        topk->ಗಣ_ವಾದ(1, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {prefix}));
         topk->validate_and_infer_types();
-        return true;
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     };
 
-    register_matcher(std::make_shared<ov::pass::pattern::Matcher>(pattern, "ov::frontend::ggml::pass::FuseArgsortTopK"), callback);
+    ರಿಜಿಸ್ಟರ್_matcher(std::make_shared<ov::pass::pattern::Matcher>(pattern, "ov::frontend::ggml::pass::FuseArgsortTopK"), callback);
 }
 
 }  // namespace pass

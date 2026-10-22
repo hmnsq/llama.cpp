@@ -1,27 +1,27 @@
-#ifndef GGML_SYCL_MEMTRACE_HPP
-#define GGML_SYCL_MEMTRACE_HPP
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ GGML_SYCL_MEMTRACE_HPP
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_SYCL_MEMTRACE_HPP
 
-#include <cstddef>
+#ಅನ್ತರ್ಭಾವ <cstddef>
 
-#define GGML_SYCL_MEMTRACE_TAG "[SYCL-MEMTRACE]"
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_SYCL_MEMTRACE_ಟ್ಯಾಗ್ "[SYCL-MEMTRACE]"
 
-enum ggml_sycl_mem_type {
-    GGML_SYCL_MEM_BUFFER = 0,
+ಎಣಿಕೆ ggml_sycl_mem_type {
+    GGML_SYCL_MEM_ಬಫರ್ = 0,
     GGML_SYCL_MEM_POOL_LEG,
     GGML_SYCL_MEM_POOL_VMM,
     GGML_SYCL_MEM_ASYNC,
-    GGML_SYCL_MEM_DIRECT,
+    GGML_SYCL_MEM_ನೇರ,
 
-    GGML_SYCL_MEM_TYPE_COUNT,
+    GGML_SYCL_MEM_TYPE_ಎಣಿಕೆ,
 };
 
-bool ggml_sycl_memtrace_enabled();
+ತಾರ್ಕಿಕ ggml_sycl_memtrace_enabled();
 
-void ggml_sycl_memtrace_add(ggml_sycl_mem_type type, const void * ptr, size_t bytes);
-void ggml_sycl_memtrace_del(const void * ptr);
+ಶೂನ್ಯ ggml_sycl_memtrace_ಕೂಡಿಸು(ggml_sycl_mem_type type, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ptr, size_t ಬೈಟುಗಳು);
+ಶೂನ್ಯ ggml_sycl_memtrace_del(ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ptr);
 
-void ggml_sycl_memtrace_report(const char * tag);
-void ggml_sycl_memtrace_report_device(const char * tag, int device, size_t dev_free, size_t dev_total);
-void ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t bytes);
+ಶೂನ್ಯ ggml_sycl_memtrace_report(ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ಟ್ಯಾಗ್);
+ಶೂನ್ಯ ggml_sycl_memtrace_report_device(ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ಟ್ಯಾಗ್, ಪೂರ್ಣಾಂಕ device, size_t dev_free, size_t dev_ಒಟ್ಟು);
+ಶೂನ್ಯ ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t ಬೈಟುಗಳು);
 
-#endif  // GGML_SYCL_MEMTRACE_HPP
+#ಆದರೆ_ಅಂತ್ಯ  // GGML_SYCL_MEMTRACE_HPP

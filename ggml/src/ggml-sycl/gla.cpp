@@ -1,53 +1,53 @@
-#include <sycl/sycl.hpp>
+#ಅನ್ತರ್ಭಾವ <sycl/sycl.hpp>
 
-#include "common.hpp"
-#include "gla.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
+#ಅನ್ತರ್ಭಾವ "gla.hpp"
 
-template <u_int HEAD_SIZE>
-static void gated_linear_attn_f32_kernel(const dpct::queue_ptr stream, u_int B, u_int T, u_int C, u_int H, float scale,
-                                         const float * k, const float * v, const float * r, const float * td,
-                                         const float * s, float * dst) {
-    const u_int head_size    = HEAD_SIZE;
-    const u_int state_size   = C * head_size;
-    const u_int n_seq_tokens = T / B;
-    sycl::range<1> block_dims((C / H));
+ಮಾದರಿ <u_int ತಲೆ_ಗಾತ್ರ_2>
+ಸ್ಥಿರ ಶೂನ್ಯ gated_ರೇಖೀಯ_attn_f32_kernel(ಸ್ಥಿರಾಂಕ dpct::ಸರತಿ_ptr stream, u_int B, u_int T, u_int C, u_int H, ದಶಮಾಂಶ scale,
+                                         ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * k, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * v, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * r, ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * td,
+                                         ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * s, ದಶಮಾಂಶ * dst) {
+    ಸ್ಥಿರಾಂಕ u_int ತಲೆ_ಗಾತ್ರ    = ತಲೆ_ಗಾತ್ರ_2;
+    ಸ್ಥಿರಾಂಕ u_int state_ಗಾತ್ರ   = C * ತಲೆ_ಗಾತ್ರ;
+    ಸ್ಥಿರಾಂಕ u_int n_seq_ಟೋಕನುಗಳು = T / B;
+    sycl::range<1> ಖಂಡ_dims((C / H));
     sycl::range<1> grid_dims((B * H));
     stream->submit([&](sycl::handler & cgh) {
         /* local memory accessors*/
-        auto _k  = sycl::local_accessor<float, 1>(sycl::range<1>(head_size), cgh);
-        auto _r  = sycl::local_accessor<float, 1>(sycl::range<1>(head_size), cgh);
-        auto _td = sycl::local_accessor<float, 1>(sycl::range<1>(head_size), cgh);
+        ಸ್ವಯಂಚಾಲಿತ _k  = sycl::local_accessor<ದಶಮಾಂಶ, 1>(sycl::range<1>(ತಲೆ_ಗಾತ್ರ), cgh);
+        ಸ್ವಯಂಚಾಲಿತ _r  = sycl::local_accessor<ದಶಮಾಂಶ, 1>(sycl::range<1>(ತಲೆ_ಗಾತ್ರ), cgh);
+        ಸ್ವಯಂಚಾಲಿತ _td = sycl::local_accessor<ದಶಮಾಂಶ, 1>(sycl::range<1>(ತಲೆ_ಗಾತ್ರ), cgh);
 
-        cgh.parallel_for(sycl::nd_range<1>(grid_dims * block_dims, block_dims), [=](sycl::nd_item<1> item) {
-            u_int tid = item.get_local_id(0);
-            u_int bid = item.get_group(0);
+        cgh.parallel_for(sycl::nd_range<1>(grid_dims * ಖಂಡ_dims, ಖಂಡ_dims), [=](sycl::nd_ಅಂಶ<1> ಅಂಶ) {
+            u_int tid = ಅಂಶ.get_local_id(0);
+            u_int bid = ಅಂಶ.get_ಗುಂಪು(0);
 
             u_int batch_i = bid / H;
-            u_int head_i  = bid % H;
+            u_int ತಲೆ_i  = bid % H;
 
-            float state[head_size];
+            ದಶಮಾಂಶ state[ತಲೆ_ಗಾತ್ರ];
 
-#pragma unroll
-            for (u_int i = 0; i < head_size; i++) {
-                state[i] = s[batch_i * state_size + head_i * head_size * head_size + i * head_size + tid];
+#ಸೂಚನೆ unroll
+            ಗಾಗಿ (u_int i = 0; i < ತಲೆ_ಗಾತ್ರ; i++) {
+                state[i] = s[batch_i * state_ಗಾತ್ರ + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ * ತಲೆ_ಗಾತ್ರ + i * ತಲೆ_ಗಾತ್ರ + tid];
             }
 
-            for (u_int t = batch_i * n_seq_tokens * C + head_i * head_size + tid;
-                 t < (batch_i + 1) * n_seq_tokens * C + head_i * head_size + tid; t += C) {
+            ಗಾಗಿ (u_int t = batch_i * n_seq_ಟೋಕನುಗಳು * C + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ + tid;
+                 t < (batch_i + 1) * n_seq_ಟೋಕನುಗಳು * C + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ + tid; t += C) {
 
-                item.barrier(sycl::access::fence_space::local_space);  //sync threads
+                ಅಂಶ.barrier(sycl::access::fence_space::local_space);  //sync threads
                 _k[tid]  = k[t];
                 _r[tid]  = r[t];
                 _td[tid] = td[t];
-                item.barrier(sycl::access::fence_space::local_space);  //sync threads
+                ಅಂಶ.barrier(sycl::access::fence_space::local_space);  //sync threads
 
-                const float _v = v[t];
-                float       y  = 0;
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ _v = v[t];
+                ದಶಮಾಂಶ       y  = 0;
 
-                for (u_int j = 0; j < head_size; j += 4) {
-                    const sycl::float4 & k  = (sycl::float4 &) (_k[j]);
-                    const sycl::float4 & r  = (sycl::float4 &) (_r[j]);
-                    const sycl::float4 & td = (sycl::float4 &) (_td[j]);
+                ಗಾಗಿ (u_int j = 0; j < ತಲೆ_ಗಾತ್ರ; j += 4) {
+                    ಸ್ಥಿರಾಂಕ sycl::float4 & k  = (sycl::float4 &) (_k[j]);
+                    ಸ್ಥಿರಾಂಕ sycl::float4 & r  = (sycl::float4 &) (_r[j]);
+                    ಸ್ಥಿರಾಂಕ sycl::float4 & td = (sycl::float4 &) (_td[j]);
                     sycl::float4 &       s  = (sycl::float4 &) (state[j]);
                     sycl::float4         kv;
 
@@ -68,40 +68,40 @@ static void gated_linear_attn_f32_kernel(const dpct::queue_ptr stream, u_int B, 
                 }
                 dst[t] = y * scale;
             }
-#pragma unroll
-            for (u_int i = 0; i < head_size; i++) {
-                dst[T * C + batch_i * state_size + head_i * head_size * head_size + i * head_size + tid] = state[i];
+#ಸೂಚನೆ unroll
+            ಗಾಗಿ (u_int i = 0; i < ತಲೆ_ಗಾತ್ರ; i++) {
+                dst[T * C + batch_i * state_ಗಾತ್ರ + ತಲೆ_i * ತಲೆ_ಗಾತ್ರ * ತಲೆ_ಗಾತ್ರ + i * ತಲೆ_ಗಾತ್ರ + tid] = state[i];
             }
         });
     });
 }
 
-void ggml_sycl_op_gated_linear_attn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+ಶೂನ್ಯ ggml_sycl_op_gated_ರೇಖೀಯ_attn(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/5);
-    const float * k_d  = static_cast<const float *>(dst->src[0]->data);
-    const float * v_d  = static_cast<const float *>(dst->src[1]->data);
-    const float * r_d  = static_cast<const float *>(dst->src[2]->data);
-    const float * td_d = static_cast<const float *>(dst->src[3]->data);
-    const float * s_d  = static_cast<const float *>(dst->src[4]->data);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * k_d  = static_cast<ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *>(dst->src[0]->ದತ್ತಾಂಶ);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * v_d  = static_cast<ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *>(dst->src[1]->ದತ್ತಾಂಶ);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * r_d  = static_cast<ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *>(dst->src[2]->ದತ್ತಾಂಶ);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * td_d = static_cast<ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *>(dst->src[3]->ದತ್ತಾಂಶ);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * s_d  = static_cast<ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *>(dst->src[4]->ದತ್ತಾಂಶ);
 
-    const int64_t B = dst->src[4]->ne[1];
-    const int64_t T = dst->src[0]->ne[2];
-    const int64_t C = dst->ne[0];
-    const int64_t H = dst->src[0]->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t B = dst->src[4]->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t T = dst->src[0]->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t C = dst->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t H = dst->src[0]->ne[1];
 
-    dpct::queue_ptr stream = ctx.stream();
+    dpct::ಸರತಿ_ptr stream = ctx.stream();
     GGML_ASSERT(dst->src[4]->type == GGML_TYPE_F32);
     GGML_ASSERT(C % H == 0);
     GGML_ASSERT(C / H == 64 || C / H == 128);
 
-    float scale;
-    memcpy(&scale, dst->op_params, sizeof(float));
+    ದಶಮಾಂಶ scale;
+    ಸ್ಮರಣೆ_ನಕಲು(&scale, dst->op_params, ಗಾತ್ರ(ದಶಮಾಂಶ));
 
-    float * dst_d = (float *) dst->data;
+    ದಶಮಾಂಶ * dst_d = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
 
-    if (C / H == 64) {
-        gated_linear_attn_f32_kernel<64>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
-    } else {
-        gated_linear_attn_f32_kernel<128>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
+    ಆದರೆ (C / H == 64) {
+        gated_ರೇಖೀಯ_attn_f32_kernel<64>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        gated_ರೇಖೀಯ_attn_f32_kernel<128>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
     }
 }

@@ -20,35 +20,35 @@
  * IN THE SOFTWARE.
  */
 
-#include "ggml-cann.h"
+#ಅನ್ತರ್ಭಾವ "ggml-cann.h"
 
-#include "ggml-backend-impl.h"
-#include "ggml-cann/aclnn_ops.h"
-#include "ggml-cann/common.h"
-#include "ggml-impl.h"
-#include "ggml.h"
+#ಅನ್ತರ್ಭಾವ "ggml-backend-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml-cann/aclnn_ops.h"
+#ಅನ್ತರ್ಭಾವ "ggml-cann/common.h"
+#ಅನ್ತರ್ಭಾವ "ggml-impl.h"
+#ಅನ್ತರ್ಭಾವ "ggml.h"
 
-#include <acl/acl.h>
-#include <aclnnop/aclnn_trans_matmul_weight.h>
-#include <stdarg.h>
+#ಅನ್ತರ್ಭಾವ <acl/acl.h>
+#ಅನ್ತರ್ಭಾವ <aclnnop/aclnn_trans_matmul_weight.h>
+#ಅನ್ತರ್ಭಾವ <stdarg.h>
 
-#include <chrono>
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <queue>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#ಅನ್ತರ್ಭಾವ <chrono>
+#ಅನ್ತರ್ಭಾವ <cmath>
+#ಅನ್ತರ್ಭಾವ <cstdio>
+#ಅನ್ತರ್ಭಾವ <cstring>
+#ಅನ್ತರ್ಭಾವ <memory>
+#ಅನ್ತರ್ಭಾವ <mutex>
+#ಅನ್ತರ್ಭಾವ <optional>
+#ಅನ್ತರ್ಭಾವ <queue>
+#ಅನ್ತರ್ಭಾವ <unordered_map>
+#ಅನ್ತರ್ಭಾವ <unordered_set>
+#ಅನ್ತರ್ಭಾವ <vector>
 
-#define GGML_COMMON_DECL_C
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_COMMON_DECL_C
 
-#include "ggml-common.h"
+#ಅನ್ತರ್ಭಾವ "ggml-common.h"
 
-#define GGML_CANN_NAME "CANN"
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_CANN_NAME "CANN"
 
 /**
  * @brief Handles CANN errors by printing an error message and aborting.
@@ -59,38 +59,38 @@
  * @param line The line number where the error occurred.
  * @param msg The error message.
  */
-[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int line, const char * msg) {
+[[noreturn]] ಶೂನ್ಯ ggml_cann_error(ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * stmt, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * func, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * file, ಪೂರ್ಣಾಂಕ ಸಾಲು, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ಸಂದೇಶ_2) {
     int32_t id = -1;
     aclrtGetDevice(&id);
 
-    GGML_LOG_ERROR("CANN error: %s\n", msg);
-    GGML_LOG_ERROR("  current device: %d, in function %s at %s:%d\n", id, func, file, line);
+    GGML_LOG_ERROR("CANN error: %s\n", ಸಂದೇಶ_2);
+    GGML_LOG_ERROR("  current device: %d, in function %s at %s:%d\n", id, func, file, ಸಾಲು);
     GGML_LOG_ERROR("  %s\n", stmt);
     // abort with GGML_ASSERT to get a stack trace
     GGML_ABORT("CANN error");
 }
 
 // Thread-local variable to record the current device of this thread.
-thread_local int g_current_cann_device = -1;
+thread_local ಪೂರ್ಣಾಂಕ g_current_cann_device = -1;
 
 /**
  * @brief Set the CANN device to be used.
  *
  * @param device The target device ID to set.
  */
-void ggml_cann_set_device(const int32_t device) {
+ಶೂನ್ಯ ggml_cann_ಗಣ_device(ಸ್ಥಿರಾಂಕ int32_t device) {
     // int current_device = -1;
     // Note: In some CANN versions, if no device has been set yet,
     //       aclrtGetDevice(&current_device) may return 0 by default.
     // aclrtGetDevice(&current_device);
 
     // If the current device is already the target one, no need to switch.
-    if (device == g_current_cann_device) {
-        return;
+    ಆದರೆ (device == g_current_cann_device) {
+        ಹಿಂತಿರುಗಿ;
     }
 
     // Switch to the new device.
-    ACL_CHECK(aclrtSetDevice(device));
+    ACL_CHECK(aclrt_ಗಣ_Device(device));
 
     // Update the global device record.
     g_current_cann_device = device;
@@ -100,22 +100,22 @@ void ggml_cann_set_device(const int32_t device) {
  * @brief Get the value of the specified environment variable (name) as lowercase.
  *        if not empty, return a std::string object
  */
-std::optional<std::string> get_env_as_lowercase(const std::string & name) {
-    const char * val = std::getenv(name.c_str());
-    if (!val) {
-        return std::nullopt;
+std::optional<std::string> get_env_as_lowercase(ಸ್ಥಿರಾಂಕ std::string & name) {
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * val = std::getenv(name.c_str());
+    ಆದರೆ (!val) {
+        ಹಿಂತಿರುಗಿ std::nullopt;
     }
     std::string res = std::string(val);
     std::transform(res.begin(), res.end(), res.begin(), ::tolower);
-    return res;
+    ಹಿಂತಿರುಗಿ res;
 }
 
 /**
  * @brief Verify whether the environment variable is a valid value.
  */
-bool parse_bool(const std::string & value) {
-    static const std::unordered_set<std::string> valid_values = { "on", "1", "yes", "y", "enable", "true" };
-    return valid_values.find(value) != valid_values.end();
+ತಾರ್ಕಿಕ parse_bool(ಸ್ಥಿರಾಂಕ std::string & value) {
+    ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ std::unordered_set<std::string> valid_ಮೌಲ್ಯಗಳು = { "on", "1", "yes", "y", "enable", "true" };
+    ಹಿಂತಿರುಗಿ valid_ಮೌಲ್ಯಗಳು.find(value) != valid_ಮೌಲ್ಯಗಳು.end();
 }
 
 /**
@@ -128,11 +128,11 @@ bool parse_bool(const std::string & value) {
  * @param value The string to parse.
  * @return The parsed integer, or 0 if conversion fails.
  */
-int parse_integer(const std::string & value) {
-    try {
-        return std::stoi(value);
-    } catch (...) {
-        return 0;
+ಪೂರ್ಣಾಂಕ parse_integer(ಸ್ಥಿರಾಂಕ std::string & value) {
+    ಪ್ರಯತ್ನಿಸು {
+        ಹಿಂತಿರುಗಿ std::stoi(value);
+    } ಹಿಡಿ (...) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 }
 
@@ -144,37 +144,37 @@ int parse_integer(const std::string & value) {
  *
  * @return A structure containing the device information.
  */
-static ggml_cann_device_info ggml_cann_init() {
+ಸ್ಥಿರ ggml_cann_device_info ggml_cann_init() {
     ggml_cann_device_info info = {};
 
-    aclError err = aclrtGetDeviceCount((uint32_t *) &info.device_count);
+    aclError err = aclrt_Get_Device_ಎಣಿಕೆ((uint32_t *) &info.device_ಎಣಿಕೆ);
 
-    if (err != ACL_SUCCESS) {
-        GGML_LOG_ERROR("%s: failed to initialize CANN: %s\n", __func__, aclGetRecentErrMsg());
-        return info;
+    ಆದರೆ (err != ACL_SUCCESS) {
+        GGML_LOG_ERROR("%s: failed to initialize CANN: %s\n", __func__, acl_Get_Recent_Err_ಸಂದೇಶ());
+        ಹಿಂತಿರುಗಿ info;
     }
 
-    GGML_ASSERT(info.device_count <= GGML_CANN_MAX_DEVICES);
+    GGML_ASSERT(info.device_ಎಣಿಕೆ <= GGML_CANN_MAX_DEVICES);
 
-    for (int id = 0; id < info.device_count; ++id) {
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ id = 0; id < info.device_ಎಣಿಕೆ; ++id) {
         aclrtPhysicalMemProp prop = {};
         prop.handleType           = ACL_MEM_HANDLE_TYPE_NONE;
-        prop.allocationType       = ACL_MEM_ALLOCATION_TYPE_PINNED;
+        prop.ಹಂಚಿಕೆ_Type       = ACL_MEM_ಹಂಚಿಕೆ_TYPE_PINNED;
         prop.memAttr              = ACL_HBM_MEM_HUGE;
         prop.location.type        = ACL_MEM_LOCATION_TYPE_DEVICE;
         prop.location.id          = id;
         prop.reserve              = 0;
-        err                       = aclrtMemGetAllocationGranularity(&prop, ACL_RT_MEM_ALLOC_GRANULARITY_RECOMMENDED,
+        err                       = aclrt_Mem_Get_ಹಂಚಿಕೆ_Granularity(&prop, ACL_RT_MEM_ALLOC_GRANULARITY_RECOMMENDED,
                                                                      &info.devices[id].vmm_granularity);
         info.devices[id].vmm      = err == ACL_SUCCESS;
 
-        size_t free, total;
-        ggml_backend_cann_get_device_memory(id, &free, &total);
-        info.devices[id].total_vram = free;
+        size_t ಬಿಡುಗಡೆ, ಒಟ್ಟು;
+        ggml_backend_cann_get_device_ಸ್ಮರಣೆ(id, &ಬಿಡುಗಡೆ, &ಒಟ್ಟು);
+        info.devices[id].ಒಟ್ಟು_vram = ಬಿಡುಗಡೆ;
     }
 
     // TODO: add more device info later.
-    return info;
+    ಹಿಂತಿರುಗಿ info;
 }
 
 /**
@@ -186,9 +186,9 @@ static ggml_cann_device_info ggml_cann_init() {
  *
  * @return A reference to the structure containing the device information.
  */
-const ggml_cann_device_info & ggml_cann_info() {
-    static ggml_cann_device_info info = ggml_cann_init();
-    return info;
+ಸ್ಥಿರಾಂಕ ggml_cann_device_info & ggml_cann_info() {
+    ಸ್ಥಿರ ggml_cann_device_info info = ggml_cann_init();
+    ಹಿಂತಿರುಗಿ info;
 }
 
 //#define DEBUG_CANN_MALLOC
@@ -197,60 +197,60 @@ const ggml_cann_device_info & ggml_cann_info() {
  *
  * This class manages a pool of CANN buffers for a specific device.
  */
-struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
+ರಚನೆ ggml_cann_pool_buf_prio : ಸಾರ್ವಜನಿಕ ggml_cann_pool {
     /**
      * @brief The maximum reuse margin for a buffer.
      */
-    static const size_t max_reuse_margin = 1ull << 22;  // 4MB
+    ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ size_t max_reuse_margin = 1ull << 22;  // 4MB
 
     /**
      * @brief The minimum free margin for a buffer.
      */
-    static const size_t min_free_margin = 1ull << 20;  // 1MB
+    ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ size_t min_free_margin = 1ull << 20;  // 1MB
 
     /**
      * @brief The alignment for buffer allocation.
      */
-    static const size_t alignment = 128;
+    ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ size_t alignment = 128;
 
     /**
      * @brief The device ID associated with this buffer pool.
      */
-    int device;
+    ಪೂರ್ಣಾಂಕ device;
 
     /**
      * @brief Whether to disable clean during buffer allocation.
      */
-    bool disable_clean = false;
+    ತಾರ್ಕಿಕ disable_clean = ಸುಳ್ಳು;
 
     /**
      * @brief Structure representing a CANN buffer.
      */
-    struct ggml_cann_buffer {
-        void *                                ptr  = nullptr;  ///< Pointer to the buffer.
+    ರಚನೆ ggml_cann_ಬಫರ್ {
+        ಶೂನ್ಯ *                                ptr  = ಶೂನ್ಯಸೂಚಕ;  ///< Pointer to the buffer.
         size_t                                size = 0;        ///< Size of the buffer.
-        std::chrono::steady_clock::time_point last_used;       ///< Last used time.
+        std::chrono::steady_clock::time_point ಕೊನೆಯ_ಬಳಸಿದ;       ///< Last used time.
 
-        bool operator>(const ggml_cann_buffer & other) const { return size > other.size; }
+        ತಾರ್ಕಿಕ ಕ್ರಿಯಾಕಾರಕ>(ಸ್ಥಿರಾಂಕ ggml_cann_ಬಫರ್ & other) ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ size > other.size; }
     };
 
     /**
      * @brief Array of CANN buffers in the pool.
      */
-    std::unordered_map<void *, size_t>                                                   buffer_pool;
-    std::priority_queue<ggml_cann_buffer, std::vector<ggml_cann_buffer>, std::greater<>> free_buffers;
+    std::unordered_map<ಶೂನ್ಯ *, size_t>                                                   ಬಫರ್_pool;
+    std::priority_queue<ggml_cann_ಬಫರ್, std::vector<ggml_cann_ಬಫರ್>, std::greater<>> free_buffers;
 
     /**
      * @brief Total size of all buffers in the pool.
      */
-    size_t pool_size = 0;
+    size_t pool_ಗಾತ್ರ = 0;
 
     /**
      * @brief Constructor to initialize the buffer pool for a specific device.
      *
      * @param device The device ID to associate with this buffer pool.
      */
-    explicit ggml_cann_pool_buf_prio(int device) : device(device) {
+    ಸ್ಪಷ್ಟ ggml_cann_pool_buf_prio(ಪೂರ್ಣಾಂಕ device) : device(device) {
         disable_clean = parse_bool(get_env_as_lowercase("GGML_CANN_DISABLE_BUF_POOL_CLEAN").value_or(""));
     }
 
@@ -258,13 +258,13 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
      * @brief Destructor to free all buffers in the pool.
      */
     ~ggml_cann_pool_buf_prio() {
-        ggml_cann_set_device(device);
-        for (auto & [b_ptr, b_size] : buffer_pool) {
+        ggml_cann_ಗಣ_device(device);
+        ಗಾಗಿ (ಸ್ವಯಂಚಾಲಿತ & [b_ptr, b_ಗಾತ್ರ] : ಬಫರ್_pool) {
             aclrtFree(b_ptr);
-            pool_size -= b_size;
+            pool_ಗಾತ್ರ -= b_ಗಾತ್ರ;
         }
-        buffer_pool.clear();
-        GGML_ASSERT(pool_size == 0);
+        ಬಫರ್_pool.clear();
+        GGML_ASSERT(pool_ಗಾತ್ರ == 0);
     }
 
     /**
@@ -275,87 +275,87 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
      * the allocated buffer.
      * @return A pointer to the allocated buffer.
      */
-    void * alloc(size_t size, size_t * actual_size) override {
+    ಶೂನ್ಯ * alloc(size_t size, size_t * actual_ಗಾತ್ರ) override {
         size = GGML_PAD(size, alignment);
-        if (size == 0) {
+        ಆದರೆ (size == 0) {
             size = alignment;
         }
 
-        void * ptr = nullptr;
-        auto   now = std::chrono::steady_clock::now();
+        ಶೂನ್ಯ * ptr = ಶೂನ್ಯಸೂಚಕ;
+        ಸ್ವಯಂಚಾಲಿತ   now = std::chrono::steady_clock::now();
 
-        std::vector<ggml_cann_buffer> free_buffers_rest;
+        std::vector<ggml_cann_ಬಫರ್> free_buffers_rest;
         free_buffers_rest.reserve(free_buffers.size());
-        while (!free_buffers.empty()) {
-            auto b = free_buffers.top();
-            free_buffers.pop();
+        ಆಗ (!free_buffers.ಖಾಲಿಗಳು()) {
+            ಸ್ವಯಂಚಾಲಿತ b = free_buffers.top();
+            free_buffers.ತೆಗೆ();
 
-            if (b.size >= size) {
+            ಆದರೆ (b.size >= size) {
                 // reuse the buffer if the size is enough
-                const size_t margin = b.size - size;
-                if (margin <= max_reuse_margin) {
-                    *actual_size = b.size;
+                ಸ್ಥಿರಾಂಕ size_t margin = b.size - size;
+                ಆದರೆ (margin <= max_reuse_margin) {
+                    *actual_ಗಾತ್ರ = b.size;
                     ptr          = b.ptr;
-#ifdef DEBUG_CANN_MALLOC
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
                     GGML_LOG_INFO(
                         "cann pool[%d]: reused   %p, "
                         "pool_size = %5u MB, "
                         "size = %5u MB, "
                         "margin = %5u MB\n",
-                        device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
+                        device, b.ptr, (uint32_t) (GGML_PAD(pool_ಗಾತ್ರ, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(size, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(margin, 1048576) / 1048576));
-#endif
-                    break;
+#ಆದರೆ_ಅಂತ್ಯ
+                    ನಿಲ್ಲಿಸು;
                 }
             }
 
-            bool should_clean = !disable_clean && b.size > min_free_margin &&
-                                std::chrono::duration_cast<std::chrono::milliseconds>(now - b.last_used).count() > 100;
-            if (should_clean) {
+            ತಾರ್ಕಿಕ should_clean = !disable_clean && b.size > min_free_margin &&
+                                std::chrono::duration_cast<std::chrono::milliseconds>(now - b.ಕೊನೆಯ_ಬಳಸಿದ).count() > 100;
+            ಆದರೆ (should_clean) {
                 // free the buffer if the size is needed to be freed
                 ACL_CHECK(aclrtFree(b.ptr));
-                pool_size -= b.size;
-                buffer_pool.erase(b.ptr);
-#ifdef DEBUG_CANN_MALLOC
+                pool_ಗಾತ್ರ -= b.size;
+                ಬಫರ್_pool.erase(b.ptr);
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
                 GGML_LOG_INFO(
                     "cann pool[%d]: clean    %p, "
                     "pool_size = %5u MB, "
                     "size = %5u MB\n",
-                    device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
+                    device, b.ptr, (uint32_t) (GGML_PAD(pool_ಗಾತ್ರ, 1048576) / 1048576),
                     (uint32_t) (GGML_PAD(b.size, 1048576) / 1048576));
-#endif
-                continue;
+#ಆದರೆ_ಅಂತ್ಯ
+                ಮುಂದುವರಿ;
             }
             free_buffers_rest.push_back(b);
         }
-        for (ggml_cann_buffer & b : free_buffers_rest) {
-            free_buffers.push(std::move(b));
+        ಗಾಗಿ (ggml_cann_ಬಫರ್ & b : free_buffers_rest) {
+            free_buffers.ತಳ್ಳು(std::move(b));
         }
 
-#ifdef DEBUG_CANN_MALLOC
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
         GGML_LOG_INFO("cann pool[%d] free pool_size = %5u MB\n\n", device,
-                      (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576));
-#endif
-        if (ptr != nullptr) {
-            return ptr;
+                      (uint32_t) (GGML_PAD(pool_ಗಾತ್ರ, 1048576) / 1048576));
+#ಆದರೆ_ಅಂತ್ಯ
+        ಆದರೆ (ptr != ಶೂನ್ಯಸೂಚಕ) {
+            ಹಿಂತಿರುಗಿ ptr;
         }
 
         // allocate a new buffer if no buffer can be reused
-        ggml_cann_set_device(device);
-        ACL_CHECK(aclrtMalloc(&ptr, size, ACL_MEM_MALLOC_HUGE_FIRST));
-        *actual_size = size;
-        pool_size += size;
-#ifdef DEBUG_CANN_MALLOC
+        ggml_cann_ಗಣ_device(device);
+        ACL_CHECK(aclrtMalloc(&ptr, size, ACL_MEM_MALLOC_HUGE_ಮೊದಲ));
+        *actual_ಗಾತ್ರ = size;
+        pool_ಗಾತ್ರ += size;
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
         GGML_LOG_INFO(
             "cann pool[%d]: allocate %p, "
             "pool_size = %5u MB, "
             "size = %5u MB\n",
-            device, ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
+            device, ptr, (uint32_t) (GGML_PAD(pool_ಗಾತ್ರ, 1048576) / 1048576),
             (uint32_t) (GGML_PAD(size, 1048576) / 1048576));
-#endif
-        buffer_pool.emplace(ptr, size);
-        return ptr;
+#ಆದರೆ_ಅಂತ್ಯ
+        ಬಫರ್_pool.emplace(ptr, size);
+        ಹಿಂತಿರುಗಿ ptr;
     }
 
     /**
@@ -364,21 +364,21 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
      * @param ptr Pointer to the buffer to free.
      * @param size Size of the buffer to free.
      */
-    void free(void * ptr, size_t size) override {
-        GGML_UNUSED(size);
-        auto it = buffer_pool.find(ptr);
-        if (it == buffer_pool.end()) {
+    ಶೂನ್ಯ ಬಿಡುಗಡೆ(ಶೂನ್ಯ * ptr, size_t size) override {
+        GGML_ಬಳಸದ(size);
+        ಸ್ವಯಂಚಾಲಿತ it = ಬಫರ್_pool.find(ptr);
+        ಆದರೆ (it == ಬಫರ್_pool.end()) {
             GGML_ABORT("cann pool[%d]: buffer %p not found in pool\n", device, ptr);
         }
 
-        auto now = std::chrono::steady_clock::now();
-        free_buffers.emplace(ggml_cann_buffer{ ptr, it->second, now });
-#ifdef DEBUG_CANN_MALLOC
+        ಸ್ವಯಂಚಾಲಿತ now = std::chrono::steady_clock::now();
+        free_buffers.emplace(ggml_cann_ಬಫರ್{ ptr, it->second, now });
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
         GGML_LOG_INFO(
             "cann pool[%d]: return   %p, "
             "pool_size = %5u MB\n",
-            device, ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576));
-#endif
+            device, ptr, (uint32_t) (GGML_PAD(pool_ಗಾತ್ರ, 1048576) / 1048576));
+#ಆದರೆ_ಅಂತ್ಯ
     }
 };
 
@@ -387,63 +387,63 @@ struct ggml_cann_pool_buf_prio : public ggml_cann_pool {
  *
  * This class manages a pool of CANN buffers for a specific device.
  */
-struct ggml_cann_pool_buf : public ggml_cann_pool {
+ರಚನೆ ggml_cann_pool_buf : ಸಾರ್ವಜನಿಕ ggml_cann_pool {
     /**
      * @brief The maximum reuse margin for a buffer.
      */
-    static const size_t max_reuse_margin = 1ull << 22;  // 4MB
+    ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ size_t max_reuse_margin = 1ull << 22;  // 4MB
 
     /**
      * @brief The minimum free margin for a buffer.
      */
-    static const size_t min_free_margin = 1ull << 20;  // 1MB
+    ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ size_t min_free_margin = 1ull << 20;  // 1MB
 
     /**
      * @brief The alignment for buffer allocation.
      */
-    static const size_t alignment = 128;
+    ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ size_t alignment = 128;
 
     /**
      * @brief The maximum number of buffers in the pool.
      */
-    static const int MAX_BUFFERS = 256;
+    ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ MAX_BUFFERS = 256;
 
     /**
      * @brief The device ID associated with this buffer pool.
      */
-    int device;
+    ಪೂರ್ಣಾಂಕ device;
 
     /**
      * @brief Whether to disable clean during buffer allocation.
      */
-    bool disable_clean = false;
+    ತಾರ್ಕಿಕ disable_clean = ಸುಳ್ಳು;
 
     /**
      * @brief Structure representing a CANN buffer.
      */
-    struct ggml_cann_buffer {
-        void *                                ptr  = nullptr;  ///< Pointer to the buffer memory.
+    ರಚನೆ ggml_cann_ಬಫರ್ {
+        ಶೂನ್ಯ *                                ptr  = ಶೂನ್ಯಸೂಚಕ;  ///< Pointer to the buffer memory.
         size_t                                size = 0;        ///< Size of the buffer.
-        bool                                  used = false;    ///< Whether the buffer is currently in use.
-        std::chrono::steady_clock::time_point last_used;       ///< Last used time.
+        ತಾರ್ಕಿಕ                                  ಬಳಸಿದ = ಸುಳ್ಳು;    ///< Whether the buffer is currently in use.
+        std::chrono::steady_clock::time_point ಕೊನೆಯ_ಬಳಸಿದ;       ///< Last used time.
     };
 
     /**
      * @brief Array of CANN buffers in the pool.
      */
-    ggml_cann_buffer buffer_pool[MAX_BUFFERS] = {};
+    ggml_cann_ಬಫರ್ ಬಫರ್_pool[MAX_BUFFERS] = {};
 
     /**
      * @brief Total size of all buffers in the pool.
      */
-    size_t pool_size = 0;
+    size_t pool_ಗಾತ್ರ = 0;
 
     /**
      * @brief Constructor to initialize the buffer pool for a specific device.
      *
      * @param device The device ID to associate with this buffer pool.
      */
-    explicit ggml_cann_pool_buf(int device) : device(device) {
+    ಸ್ಪಷ್ಟ ggml_cann_pool_buf(ಪೂರ್ಣಾಂಕ device) : device(device) {
         disable_clean = parse_bool(get_env_as_lowercase("GGML_CANN_DISABLE_BUF_POOL_CLEAN").value_or(""));
     }
 
@@ -451,15 +451,15 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
      * @brief Destructor to free all buffers in the pool.
      */
     ~ggml_cann_pool_buf() {
-        ggml_cann_set_device(device);
-        for (int i = 0; i < MAX_BUFFERS; ++i) {
-            ggml_cann_buffer & b = buffer_pool[i];
-            if (b.ptr != nullptr) {
+        ggml_cann_ಗಣ_device(device);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < MAX_BUFFERS; ++i) {
+            ggml_cann_ಬಫರ್ & b = ಬಫರ್_pool[i];
+            ಆದರೆ (b.ptr != ಶೂನ್ಯಸೂಚಕ) {
                 aclrtFree(b.ptr);
-                pool_size -= b.size;
+                pool_ಗಾತ್ರ -= b.size;
             }
         }
-        GGML_ASSERT(pool_size == 0);
+        GGML_ASSERT(pool_ಗಾತ್ರ == 0);
     }
 
     /**
@@ -470,87 +470,87 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
      * the allocated buffer.
      * @return A pointer to the allocated buffer.
      */
-    void * alloc(size_t size, size_t * actual_size) override {
+    ಶೂನ್ಯ * alloc(size_t size, size_t * actual_ಗಾತ್ರ) override {
         size = GGML_PAD(size, alignment);
-        if (size == 0) {
+        ಆದರೆ (size == 0) {
             size = alignment;
         }
 
-        void * ptr = nullptr;
-        auto   now = std::chrono::steady_clock::now();
+        ಶೂನ್ಯ * ptr = ಶೂನ್ಯಸೂಚಕ;
+        ಸ್ವಯಂಚಾಲಿತ   now = std::chrono::steady_clock::now();
 
-        int i = 0;
-        for (; i < MAX_BUFFERS; ++i) {
-            ggml_cann_buffer & b = buffer_pool[i];
-            if (b.ptr == nullptr) {
-                break;
+        ಪೂರ್ಣಾಂಕ i = 0;
+        ಗಾಗಿ (; i < MAX_BUFFERS; ++i) {
+            ggml_cann_ಬಫರ್ & b = ಬಫರ್_pool[i];
+            ಆದರೆ (b.ptr == ಶೂನ್ಯಸೂಚಕ) {
+                ನಿಲ್ಲಿಸು;
             }
-            if (b.used) {
-                continue;
+            ಆದರೆ (b.ಬಳಸಿದ) {
+                ಮುಂದುವರಿ;
             }
-            if (b.size >= size) {
+            ಆದರೆ (b.size >= size) {
                 // reuse the buffer if the size is enough
-                const size_t margin = b.size - size;
-                if (margin <= max_reuse_margin) {
-                    *actual_size = b.size;
-                    b.used       = true;
+                ಸ್ಥಿರಾಂಕ size_t margin = b.size - size;
+                ಆದರೆ (margin <= max_reuse_margin) {
+                    *actual_ಗಾತ್ರ = b.size;
+                    b.ಬಳಸಿದ       = ನಿಜ;
                     ptr          = b.ptr;
-#ifdef DEBUG_CANN_MALLOC
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
                     GGML_LOG_INFO(
                         "cann pool[%d]: reused   %p, "
                         "pool_size = %5u MB, "
                         "size = %5u MB, "
                         "margin = %5u MB\n",
-                        device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
+                        device, b.ptr, (uint32_t) (GGML_PAD(pool_ಗಾತ್ರ, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(size, 1048576) / 1048576),
                         (uint32_t) (GGML_PAD(margin, 1048576) / 1048576));
-#endif
-                    break;
+#ಆದರೆ_ಅಂತ್ಯ
+                    ನಿಲ್ಲಿಸು;
                 }
             }
 
-            bool should_clean = !disable_clean && b.size > min_free_margin &&
-                                std::chrono::duration_cast<std::chrono::milliseconds>(now - b.last_used).count() > 100;
-            if (should_clean) {
+            ತಾರ್ಕಿಕ should_clean = !disable_clean && b.size > min_free_margin &&
+                                std::chrono::duration_cast<std::chrono::milliseconds>(now - b.ಕೊನೆಯ_ಬಳಸಿದ).count() > 100;
+            ಆದರೆ (should_clean) {
                 // free the buffer if the size is needed to be freed
                 ACL_CHECK(aclrtFree(b.ptr));
-                pool_size -= b.size;
-#ifdef DEBUG_CANN_MALLOC
+                pool_ಗಾತ್ರ -= b.size;
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
                 GGML_LOG_INFO(
                     "cann pool[%d]: clean    %p, "
                     "pool_size = %5u MB, "
                     "size = %5u MB\n",
-                    device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
+                    device, b.ptr, (uint32_t) (GGML_PAD(pool_ಗಾತ್ರ, 1048576) / 1048576),
                     (uint32_t) (GGML_PAD(b.size, 1048576) / 1048576));
-#endif
-                b.ptr = nullptr;
+#ಆದರೆ_ಅಂತ್ಯ
+                b.ptr = ಶೂನ್ಯಸೂಚಕ;
             }
         }
-        if (ptr != nullptr) {
-            return ptr;
+        ಆದರೆ (ptr != ಶೂನ್ಯಸೂಚಕ) {
+            ಹಿಂತಿರುಗಿ ptr;
         }
 
-        if (i < MAX_BUFFERS) {
+        ಆದರೆ (i < MAX_BUFFERS) {
             // allocate a new buffer if no buffer can be reused
-            ggml_cann_buffer & b = buffer_pool[i];
-            ggml_cann_set_device(device);
-            ACL_CHECK(aclrtMalloc(&b.ptr, size, ACL_MEM_MALLOC_HUGE_FIRST));
-            pool_size += size;
-            *actual_size = size;
+            ggml_cann_ಬಫರ್ & b = ಬಫರ್_pool[i];
+            ggml_cann_ಗಣ_device(device);
+            ACL_CHECK(aclrtMalloc(&b.ptr, size, ACL_MEM_MALLOC_HUGE_ಮೊದಲ));
+            pool_ಗಾತ್ರ += size;
+            *actual_ಗಾತ್ರ = size;
             b.size       = size;
-            b.used       = true;
-            if (i >= MAX_BUFFERS - 8) {
+            b.ಬಳಸಿದ       = ನಿಜ;
+            ಆದರೆ (i >= MAX_BUFFERS - 8) {
                 GGML_LOG_WARN("cann pool[%d]: slots almost full\n", device);
             }
-#ifdef DEBUG_CANN_MALLOC
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
             GGML_LOG_INFO(
                 "cann pool[%d]: allocate %p, "
                 "pool_size = %5u MB, "
                 "size = %5u MB\n",
-                device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576),
+                device, b.ptr, (uint32_t) (GGML_PAD(pool_ಗಾತ್ರ, 1048576) / 1048576),
                 (uint32_t) (GGML_PAD(b.size, 1048576) / 1048576));
-#endif
-            return b.ptr;
+#ಆದರೆ_ಅಂತ್ಯ
+            ಹಿಂತಿರುಗಿ b.ptr;
         }
 
         GGML_ABORT("cann pool[%d]: slots full\n", device);
@@ -562,22 +562,22 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
      * @param ptr Pointer to the buffer to free.
      * @param size Size of the buffer to free.
      */
-    void free(void * ptr, size_t size) override {
-        GGML_UNUSED(size);
-        for (int i = 0; i < MAX_BUFFERS; ++i) {
-            ggml_cann_buffer & b = buffer_pool[i];
-            if (b.ptr != ptr) {
-                continue;
+    ಶೂನ್ಯ ಬಿಡುಗಡೆ(ಶೂನ್ಯ * ptr, size_t size) override {
+        GGML_ಬಳಸದ(size);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < MAX_BUFFERS; ++i) {
+            ggml_cann_ಬಫರ್ & b = ಬಫರ್_pool[i];
+            ಆದರೆ (b.ptr != ptr) {
+                ಮುಂದುವರಿ;
             }
-            b.used      = false;
-            b.last_used = std::chrono::steady_clock::now();
-#ifdef DEBUG_CANN_MALLOC
+            b.ಬಳಸಿದ      = ಸುಳ್ಳು;
+            b.ಕೊನೆಯ_ಬಳಸಿದ = std::chrono::steady_clock::now();
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
             GGML_LOG_INFO(
                 "cann pool[%d]: return   %p, "
                 "pool_size = %5u MB\n",
-                device, b.ptr, (uint32_t) (GGML_PAD(pool_size, 1048576) / 1048576));
-#endif
-            return;
+                device, b.ptr, (uint32_t) (GGML_PAD(pool_ಗಾತ್ರ, 1048576) / 1048576));
+#ಆದರೆ_ಅಂತ್ಯ
+            ಹಿಂತಿರುಗಿ;
         }
         GGML_ABORT("cann pool[%d]: slots full\n", device);
     }
@@ -589,7 +589,7 @@ struct ggml_cann_pool_buf : public ggml_cann_pool {
  * This class manages a pool of CANN buffers with virtual memory for a specific
  * device.
  */
-struct ggml_cann_pool_vmm : public ggml_cann_pool {
+ರಚನೆ ggml_cann_pool_vmm : ಸಾರ್ವಜನಿಕ ggml_cann_pool {
     /**
      * @brief The maximum size of the virtual memory pool (32 GB).
      */
@@ -598,22 +598,22 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
     /**
      * @brief The device ID associated with this buffer pool.
      */
-    int device;
+    ಪೂರ್ಣಾಂಕ device;
 
     /**
      * @brief Pointer to the start of the virtual memory pool.
      */
-    void * pool_addr = 0;
+    ಶೂನ್ಯ * pool_addr = 0;
 
     /**
      * @brief Amount of virtual memory used in the pool.
      */
-    size_t pool_used = 0;
+    size_t pool_ಬಳಸಿದ = 0;
 
     /**
      * @brief Total size of the virtual memory pool.
      */
-    size_t pool_size = 0;
+    size_t pool_ಗಾತ್ರ = 0;
 
     /**
      * @brief Allocation granularity for the virtual memory pool.
@@ -628,7 +628,7 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
     /**
      * @brief Offsets for the mapped memory regions.
      */
-    std::vector<void *> map_offsets;
+    std::vector<ಶೂನ್ಯ *> map_offsets;
 
     /**
      * @brief Constructor to initialize the buffer pool with virtual memory for
@@ -636,24 +636,24 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
      *
      * @param device The device ID to associate with this buffer pool.
      */
-    explicit ggml_cann_pool_vmm(int device) : device(device) {
-        auto dev    = ggml_cann_info().devices[device];
+    ಸ್ಪಷ್ಟ ggml_cann_pool_vmm(ಪೂರ್ಣಾಂಕ device) : device(device) {
+        ಸ್ವಯಂಚಾಲಿತ dev    = ggml_cann_info().devices[device];
         granularity = dev.vmm_granularity;
-        max_size    = dev.total_vram;
+        max_size    = dev.ಒಟ್ಟು_vram;
     }
 
     /**
      * @brief Destructor to free all buffers in the virtual memory pool.
      */
     ~ggml_cann_pool_vmm() {
-        if (pool_addr != 0) {
-            for (auto & offset : map_offsets) {
-                ACL_CHECK(aclrtUnmapMem(offset));
+        ಆದರೆ (pool_addr != 0) {
+            ಗಾಗಿ (ಸ್ವಯಂಚಾಲಿತ & ಸ್ಥಾನಾಂತರ : map_offsets) {
+                ACL_CHECK(aclrtUnmapMem(ಸ್ಥಾನಾಂತರ));
             }
-            for (auto & handle : handles) {
+            ಗಾಗಿ (ಸ್ವಯಂಚಾಲಿತ & handle : handles) {
                 ACL_CHECK(aclrtFreePhysical(handle));
             }
-            ACL_CHECK(aclrtReleaseMemAddress(pool_addr));
+            ACL_CHECK(aclrt_Release_Mem_ವಿಳಾಸ(pool_addr));
         }
     }
 
@@ -665,67 +665,67 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
      * the allocated buffer.
      * @return A pointer to the allocated buffer.
      */
-    void * alloc(size_t size, size_t * actual_size) override {
+    ಶೂನ್ಯ * alloc(size_t size, size_t * actual_ಗಾತ್ರ) override {
         // round up the allocation size to the alignment to ensure that all
         // allocations are aligned for all data types
-        const size_t alignment = 128;
+        ಸ್ಥಿರಾಂಕ size_t alignment = 128;
         size                   = GGML_PAD(size, alignment);
-        if (size == 0) {
+        ಆದರೆ (size == 0) {
             size = alignment;
         }
 
-        size_t avail = pool_size - pool_used;
+        size_t avail = pool_ಗಾತ್ರ - pool_ಬಳಸಿದ;
 
-        if (size > avail) {
+        ಆದರೆ (size > avail) {
             // round up to the next multiple of the granularity
-            size_t reserve_size = size - avail;
-            reserve_size        = GGML_PAD(reserve_size, granularity);
+            size_t reserve_ಗಾತ್ರ = size - avail;
+            reserve_ಗಾತ್ರ        = GGML_PAD(reserve_ಗಾತ್ರ, granularity);
 
-            GGML_ASSERT(pool_size + reserve_size <= max_size);
+            GGML_ASSERT(pool_ಗಾತ್ರ + reserve_ಗಾತ್ರ <= max_size);
 
             // allocate more physical memory
             aclrtPhysicalMemProp prop = {};
             prop.handleType           = ACL_MEM_HANDLE_TYPE_NONE;
-            prop.allocationType       = ACL_MEM_ALLOCATION_TYPE_PINNED;
+            prop.ಹಂಚಿಕೆ_Type       = ACL_MEM_ಹಂಚಿಕೆ_TYPE_PINNED;
             prop.memAttr              = ACL_HBM_MEM_HUGE;
             prop.location.type        = ACL_MEM_LOCATION_TYPE_DEVICE;
             prop.location.id          = device;
             prop.reserve              = 0;
             aclrtDrvMemHandle handle;
-            ACL_CHECK(aclrtMallocPhysical(&handle, reserve_size, &prop, 0));
+            ACL_CHECK(aclrtMallocPhysical(&handle, reserve_ಗಾತ್ರ, &prop, 0));
 
             // reserve virtual address space (if not already reserved)
-            if (pool_addr == 0) {
-                ACL_CHECK(aclrtReserveMemAddress(&pool_addr, max_size, 0, NULL, 1));
+            ಆದರೆ (pool_addr == 0) {
+                ACL_CHECK(aclrt_Reserve_Mem_ವಿಳಾಸ(&pool_addr, max_size, 0, ಖಾಲಿ, 1));
             }
 
             // map at the end of the pool
-            ACL_CHECK(aclrtMapMem((char *) pool_addr + pool_size, reserve_size, 0, handle, 0));
+            ACL_CHECK(aclrtMapMem((ಅಕ್ಷರ *) pool_addr + pool_ಗಾತ್ರ, reserve_ಗಾತ್ರ, 0, handle, 0));
 
             handles.push_back(handle);
-            map_offsets.push_back((char *) pool_addr + pool_size);
+            map_offsets.push_back((ಅಕ್ಷರ *) pool_addr + pool_ಗಾತ್ರ);
 
             // add to the pool
-            pool_size += reserve_size;
+            pool_ಗಾತ್ರ += reserve_ಗಾತ್ರ;
 
-#ifdef DEBUG_CANN_MALLOC
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
             GGML_LOG_INFO("cann pool[%d]: size increased to %llu MB (reserved %llu MB)\n", device,
-                          (unsigned long long) (pool_size / 1024 / 1024),
-                          (unsigned long long) (reserve_size / 1024 / 1024));
-#endif
+                          (ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ದೀರ್ಘ) (pool_ಗಾತ್ರ / 1024 / 1024),
+                          (ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ದೀರ್ಘ) (reserve_ಗಾತ್ರ / 1024 / 1024));
+#ಆದರೆ_ಅಂತ್ಯ
         }
 
         GGML_ASSERT(pool_addr != 0);
 
-        void * ptr   = (void *) ((char *) pool_addr + pool_used);
-        *actual_size = size;
-        pool_used += size;
+        ಶೂನ್ಯ * ptr   = (ಶೂನ್ಯ *) ((ಅಕ್ಷರ *) pool_addr + pool_ಬಳಸಿದ);
+        *actual_ಗಾತ್ರ = size;
+        pool_ಬಳಸಿದ += size;
 
-#ifdef DEBUG_CANN_MALLOC
-        GGML_LOG_INFO("cann pool[%d]: allocated %llu bytes at %llx\n", device, (unsigned long long) size,
-                      (unsigned long long) ptr);
-#endif
-        return ptr;
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
+        GGML_LOG_INFO("cann pool[%d]: allocated %llu bytes at %llx\n", device, (ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ದೀರ್ಘ) size,
+                      (ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ದೀರ್ಘ) ptr);
+#ಆದರೆ_ಅಂತ್ಯ
+        ಹಿಂತಿರುಗಿ ptr;
     }
 
     /**
@@ -734,16 +734,16 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
      * @param ptr Pointer to the buffer to free.
      * @param size Size of the buffer to free.
      */
-    void free(void * ptr, size_t size) override {
-#ifdef DEBUG_CANN_MALLOC
-        GGML_LOG_INFO("cann pool[%d]: freed %llu bytes at %llx\n", device, (unsigned long long) size,
-                      (unsigned long long) ptr);
-#endif
+    ಶೂನ್ಯ ಬಿಡುಗಡೆ(ಶೂನ್ಯ * ptr, size_t size) override {
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ DEBUG_CANN_MALLOC
+        GGML_LOG_INFO("cann pool[%d]: freed %llu bytes at %llx\n", device, (ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ದೀರ್ಘ) size,
+                      (ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ದೀರ್ಘ) ptr);
+#ಆದರೆ_ಅಂತ್ಯ
 
-        pool_used -= size;
+        pool_ಬಳಸಿದ -= size;
 
         // all deallocations must be in reverse order of the allocations
-        GGML_ASSERT(ptr == (void *) ((char *) pool_addr + pool_used));
+        GGML_ASSERT(ptr == (ಶೂನ್ಯ *) ((ಅಕ್ಷರ *) pool_addr + pool_ಬಳಸಿದ));
     }
 };
 
@@ -755,21 +755,21 @@ struct ggml_cann_pool_vmm : public ggml_cann_pool {
  * @param device The device ID for which to create the pool.
  * @return A unique pointer to the created CANN pool.
  */
-std::unique_ptr<ggml_cann_pool> ggml_backend_cann_context::new_pool_for_device(int device) {
+std::unique_ptr<ggml_cann_pool> ggml_backend_cann_context::new_pool_for_device(ಪೂರ್ಣಾಂಕ device) {
     std::string mem_pool_type = get_env_as_lowercase("GGML_CANN_MEM_POOL").value_or("");
 
-    if (mem_pool_type == "prio") {
+    ಆದರೆ (mem_pool_type == "prio") {
         GGML_LOG_INFO("%s: device %d use buffer pool with priority queue\n", __func__, device);
-        return std::unique_ptr<ggml_cann_pool>(new ggml_cann_pool_buf_prio(device));
+        ಹಿಂತಿರುಗಿ std::unique_ptr<ggml_cann_pool>(ಹೊಸ ggml_cann_pool_buf_prio(device));
     }
 
-    if (ggml_cann_info().devices[device].vmm && mem_pool_type != "leg") {
+    ಆದರೆ (ggml_cann_info().devices[device].vmm && mem_pool_type != "leg") {
         GGML_LOG_INFO("%s: device %d use vmm pool\n", __func__, device);
-        return std::unique_ptr<ggml_cann_pool>(new ggml_cann_pool_vmm(device));
+        ಹಿಂತಿರುಗಿ std::unique_ptr<ggml_cann_pool>(ಹೊಸ ggml_cann_pool_vmm(device));
     }
 
     GGML_LOG_INFO("%s: device %d use buffer pool\n", __func__, device);
-    return std::unique_ptr<ggml_cann_pool>(new ggml_cann_pool_buf(device));
+    ಹಿಂತಿರುಗಿ std::unique_ptr<ggml_cann_pool>(ಹೊಸ ggml_cann_pool_buf(device));
 }
 
 // cann buffer
@@ -781,11 +781,11 @@ std::unique_ptr<ggml_cann_pool> ggml_backend_cann_context::new_pool_for_device(i
  * this tracker accumulates progress and defers post-processing (quantized format
  * transform or ND-to-NZ conversion) until all data has been written.
  */
-struct TensorSetTracker {
+ರಚನೆ Tensor_ಗಣ_Tracker {
     std::mutex mtx;                   ///< Protects concurrent access to this tracker
-    size_t bytes_written = 0;         ///< Accumulated bytes written so far
-    size_t total_bytes = 0;           ///< Target size (full tensor)
-    std::vector<uint8_t> host_buffer; ///< Host staging buffer for quantized tensors
+    size_t ಬೈಟುಗಳು_written = 0;         ///< Accumulated bytes written so far
+    size_t ಒಟ್ಟು_ಬೈಟುಗಳು = 0;           ///< Target size (full tensor)
+    std::vector<uint8_t> host_ಬಫರ್; ///< Host staging buffer for quantized tensors
 };
 
 /**
@@ -794,12 +794,12 @@ struct TensorSetTracker {
  * This structure holds information about a CANN buffer, including the device
  * ID, device pointer, and a name derived from GGML_CANN_NAME and the device ID.
  */
-struct ggml_backend_cann_buffer_context {
+ರಚನೆ ggml_backend_cann_ಬಫರ್_context {
     int32_t device;             ///< The device ID associated with this buffer context.
-    void *  dev_ptr = nullptr;  ///< Pointer to the device memory allocated for the buffer.
+    ಶೂನ್ಯ *  dev_ptr = ಶೂನ್ಯಸೂಚಕ;  ///< Pointer to the device memory allocated for the buffer.
 
     std::mutex tracker_mutex;   ///< Protects the trackers map
-    std::unordered_map<void *, std::unique_ptr<TensorSetTracker>> trackers;
+    std::unordered_map<ಶೂನ್ಯ *, std::unique_ptr<Tensor_ಗಣ_Tracker>> trackers;
 
     /**
      * @brief Constructor to initialize the CANN buffer context.
@@ -807,36 +807,36 @@ struct ggml_backend_cann_buffer_context {
      * @param device The device ID associated with this buffer context.
      * @param dev_ptr Pointer to the device memory allocated for the buffer.
      */
-    ggml_backend_cann_buffer_context(int32_t device, void * dev_ptr) : device(device), dev_ptr(dev_ptr) {}
+    ggml_backend_cann_ಬಫರ್_context(int32_t device, ಶೂನ್ಯ * dev_ptr) : device(device), dev_ptr(dev_ptr) {}
 
     /**
      * @brief Destructor to free the device memory allocated for the buffer.
      */
-    ~ggml_backend_cann_buffer_context() { ACL_CHECK(aclrtFree(dev_ptr)); }
+    ~ggml_backend_cann_ಬಫರ್_context() { ACL_CHECK(aclrtFree(dev_ptr)); }
 
     /**
      * @brief Get or create a tracker for the given tensor.
      */
-    TensorSetTracker * get_or_create_tracker(ggml_tensor * tensor) {
-        std::lock_guard<std::mutex> lock(tracker_mutex);
-        auto key = tensor->data;
-        auto it = trackers.find(key);
-        if (it == trackers.end()) {
-            auto tracker = std::make_unique<TensorSetTracker>();
-            tracker->total_bytes = ggml_nbytes(tensor);
-            auto * ptr = tracker.get();
-            trackers[key] = std::move(tracker);
-            return ptr;
+    Tensor_ಗಣ_Tracker * get_or_create_tracker(ggml_tensor * tensor) {
+        std::lock_guard<std::mutex> ಬೀಗ(tracker_mutex);
+        ಸ್ವಯಂಚಾಲಿತ ಕೀಲಿ = tensor->ದತ್ತಾಂಶ;
+        ಸ್ವಯಂಚಾಲಿತ it = trackers.find(ಕೀಲಿ);
+        ಆದರೆ (it == trackers.end()) {
+            ಸ್ವಯಂಚಾಲಿತ tracker = std::make_unique<Tensor_ಗಣ_Tracker>();
+            tracker->ಒಟ್ಟು_ಬೈಟುಗಳು = ggml_nbytes(tensor);
+            ಸ್ವಯಂಚಾಲಿತ * ptr = tracker.get();
+            trackers[ಕೀಲಿ] = std::move(tracker);
+            ಹಿಂತಿರುಗಿ ptr;
         }
-        return it->second.get();
+        ಹಿಂತಿರುಗಿ it->second.get();
     }
 
     /**
      * @brief Remove the tracker for the given tensor.
      */
-    void remove_tracker(ggml_tensor * tensor) {
-        std::lock_guard<std::mutex> lock(tracker_mutex);
-        trackers.erase(tensor->data);
+    ಶೂನ್ಯ remove_tracker(ggml_tensor * tensor) {
+        std::lock_guard<std::mutex> ಬೀಗ(tracker_mutex);
+        trackers.erase(tensor->ದತ್ತಾಂಶ);
     }
 };
 
@@ -845,7 +845,7 @@ struct ggml_backend_cann_buffer_context {
  * @brief Structure representing context information for a specific backend
  * buffer type.
  */
-struct ggml_backend_cann_buffer_type_context {
+ರಚನೆ ggml_backend_cann_ಬಫರ್_type_context {
     int32_t     device; /**< Device identifier associated with the buffer context. */
     std::string name;   /**< Name associated with the buffer context. */
 };
@@ -859,10 +859,10 @@ struct ggml_backend_cann_buffer_type_context {
  * @param buft Pointer to the buffer type context.
  * @return Const pointer to the C-style string containing the name.
  */
-static const char * ggml_backend_cann_buffer_type_name(ggml_backend_buffer_type_t buft) {
-    ggml_backend_cann_buffer_type_context * buft_ctx = (ggml_backend_cann_buffer_type_context *) buft->context;
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cann_ಬಫರ್_type_name(ggml_backend_ಬಫರ್_type_t buft) {
+    ggml_backend_cann_ಬಫರ್_type_context * buft_ctx = (ggml_backend_cann_ಬಫರ್_type_context *) buft->context;
 
-    return buft_ctx->name.c_str();
+    ಹಿಂತಿರುಗಿ buft_ctx->name.c_str();
 }
 
 /**
@@ -876,8 +876,8 @@ static const char * ggml_backend_cann_buffer_type_name(ggml_backend_buffer_type_
  * @return bool Returns true if the buffer type is associated with the CANN
  * backend, otherwise false.
  */
-static bool ggml_backend_buft_is_cann(ggml_backend_buffer_type_t buft) {
-    return buft->iface.get_name == ggml_backend_cann_buffer_type_name;
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_buft_is_cann(ggml_backend_ಬಫರ್_type_t buft) {
+    ಹಿಂತಿರುಗಿ buft->iface.get_name == ggml_backend_cann_ಬಫರ್_type_name;
 }
 
 /**
@@ -888,9 +888,9 @@ static bool ggml_backend_buft_is_cann(ggml_backend_buffer_type_t buft) {
  *
  * @param buffer The CANN buffer to free.
  */
-static void ggml_backend_cann_buffer_free_buffer(ggml_backend_buffer_t buffer) {
-    ggml_backend_cann_buffer_context * ctx = (ggml_backend_cann_buffer_context *) buffer->context;
-    delete ctx;
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_ಬಫರ್_free_ಬಫರ್(ggml_backend_ಬಫರ್_t ಬಫರ್) {
+    ggml_backend_cann_ಬಫರ್_context * ctx = (ggml_backend_cann_ಬಫರ್_context *) ಬಫರ್->context;
+    ಅಳಿಸು ctx;
 }
 
 /**
@@ -902,9 +902,9 @@ static void ggml_backend_cann_buffer_free_buffer(ggml_backend_buffer_t buffer) {
  * @param buffer The CANN buffer whose base pointer is to be retrieved.
  * @return A pointer to the base of the device memory allocated for the buffer.
  */
-static void * ggml_backend_cann_buffer_get_base(ggml_backend_buffer_t buffer) {
-    ggml_backend_cann_buffer_context * ctx = (ggml_backend_cann_buffer_context *) buffer->context;
-    return ctx->dev_ptr;
+ಸ್ಥಿರ ಶೂನ್ಯ * ggml_backend_cann_ಬಫರ್_get_ತಳ(ggml_backend_ಬಫರ್_t ಬಫರ್) {
+    ggml_backend_cann_ಬಫರ್_context * ctx = (ggml_backend_cann_ಬಫರ್_context *) ಬಫರ್->context;
+    ಹಿಂತಿರುಗಿ ctx->dev_ptr;
 }
 
 /**
@@ -920,37 +920,37 @@ static void * ggml_backend_cann_buffer_get_base(ggml_backend_buffer_t buffer) {
  * @param dst Pointer to the destination buffer where transformed data will be
  * stored.
  */
-static void ggml_backend_cann_transform_q4_0(ggml_tensor * tensor, const void * src, void * dst) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_transform_q4_0(ggml_tensor * tensor, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * src, ಶೂನ್ಯ * dst) {
     int64_t n_elems     = ggml_nelements(tensor);
     int64_t groups      = n_elems / QK4_0;
-    size_t  quant_bytes = n_elems * sizeof(uint8_t) / 2;
+    size_t  quant_ಬೈಟುಗಳು = n_elems * ಗಾತ್ರ(uint8_t) / 2;
 
-    uint8_t *  quant_offset = (uint8_t *) dst;
-    uint16_t * scale_offset = (uint16_t *) ((char *) dst + quant_bytes);
+    uint8_t *  quant_ಸ್ಥಾನಾಂತರ = (uint8_t *) dst;
+    uint16_t * scale_ಸ್ಥಾನಾಂತರ = (uint16_t *) ((ಅಕ್ಷರ *) dst + quant_ಬೈಟುಗಳು);
 
-    for (int i = 0; i < groups; i++) {
-        const block_q4_0 * group = (const block_q4_0 *) ((const char *) src + i * sizeof(block_q4_0));
-        *scale_offset            = group->d;
-        scale_offset++;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < groups; i++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_0 * ಗುಂಪು = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q4_0 *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src + i * ಗಾತ್ರ(ಖಂಡ_q4_0));
+        *scale_ಸ್ಥಾನಾಂತರ            = ಗುಂಪು->d;
+        scale_ಸ್ಥಾನಾಂತರ++;
 
         // 0-15
-        for (int j = 0; j < QK4_0 / 2; j += 2) {
-            (*quant_offset) = (group->qs[j] & 0x0F);
-            (*quant_offset) |= ((group->qs[j + 1] << 4));
-            quant_offset++;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < QK4_0 / 2; j += 2) {
+            (*quant_ಸ್ಥಾನಾಂತರ) = (ಗುಂಪು->qs[j] & 0x0F);
+            (*quant_ಸ್ಥಾನಾಂತರ) |= ((ಗುಂಪು->qs[j + 1] << 4));
+            quant_ಸ್ಥಾನಾಂತರ++;
         }
 
         // 16-31
-        for (int j = 0; j < QK4_0 / 2; j += 2) {
-            (*quant_offset) = (group->qs[j] >> 4);
-            (*quant_offset) |= (group->qs[j + 1] & 0xF0);
-            quant_offset++;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < QK4_0 / 2; j += 2) {
+            (*quant_ಸ್ಥಾನಾಂತರ) = (ಗುಂಪು->qs[j] >> 4);
+            (*quant_ಸ್ಥಾನಾಂತರ) |= (ಗುಂಪು->qs[j + 1] & 0xF0);
+            quant_ಸ್ಥಾನಾಂತರ++;
         }
     }
 
     // put (uint4b_t -8) into int4b_t
-    for (quant_offset = (uint8_t *) dst; quant_offset < (uint8_t *) dst + quant_bytes; quant_offset++) {
-        (*quant_offset) ^= 0x88;
+    ಗಾಗಿ (quant_ಸ್ಥಾನಾಂತರ = (uint8_t *) dst; quant_ಸ್ಥಾನಾಂತರ < (uint8_t *) dst + quant_ಬೈಟುಗಳು; quant_ಸ್ಥಾನಾಂತರ++) {
+        (*quant_ಸ್ಥಾನಾಂತರ) ^= 0x88;
     }
 }
 
@@ -967,36 +967,36 @@ static void ggml_backend_cann_transform_q4_0(ggml_tensor * tensor, const void * 
  * @param dst Pointer to the destination buffer where the Q4.0 formatted data
  * will be stored.
  */
-static void ggml_backend_cann_transform_back_q4_0(const ggml_tensor * tensor, void * src, void * dst) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_transform_ಹಿಂಭಾಗ_q4_0(ಸ್ಥಿರಾಂಕ ggml_tensor * tensor, ಶೂನ್ಯ * src, ಶೂನ್ಯ * dst) {
     int64_t n_elems     = ggml_nelements(tensor);
     int64_t groups      = n_elems / QK4_0;
-    size_t  quant_bytes = n_elems * sizeof(uint8_t) / 2;
+    size_t  quant_ಬೈಟುಗಳು = n_elems * ಗಾತ್ರ(uint8_t) / 2;
 
-    uint8_t *  quant_offset = (uint8_t *) src;
-    uint16_t * scale_offset = (uint16_t *) ((char *) src + quant_bytes);
+    uint8_t *  quant_ಸ್ಥಾನಾಂತರ = (uint8_t *) src;
+    uint16_t * scale_ಸ್ಥಾನಾಂತರ = (uint16_t *) ((ಅಕ್ಷರ *) src + quant_ಬೈಟುಗಳು);
 
-    for (; quant_offset < (uint8_t *) src + quant_bytes; quant_offset++) {
-        (*quant_offset) ^= 0x88;
+    ಗಾಗಿ (; quant_ಸ್ಥಾನಾಂತರ < (uint8_t *) src + quant_ಬೈಟುಗಳು; quant_ಸ್ಥಾನಾಂತರ++) {
+        (*quant_ಸ್ಥಾನಾಂತರ) ^= 0x88;
     }
-    quant_offset = (uint8_t *) src;
+    quant_ಸ್ಥಾನಾಂತರ = (uint8_t *) src;
 
-    for (int i = 0; i < groups; i++) {
-        block_q4_0 * group = (block_q4_0 *) ((char *) dst + i * sizeof(block_q4_0));
-        group->d           = *scale_offset;
-        scale_offset++;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < groups; i++) {
+        ಖಂಡ_q4_0 * ಗುಂಪು = (ಖಂಡ_q4_0 *) ((ಅಕ್ಷರ *) dst + i * ಗಾತ್ರ(ಖಂಡ_q4_0));
+        ಗುಂಪು->d           = *scale_ಸ್ಥಾನಾಂತರ;
+        scale_ಸ್ಥಾನಾಂತರ++;
 
         // 0-15
-        for (int j = 0; j < QK4_0 / 2; j += 2) {
-            group->qs[j]     = ((*quant_offset) & 0x0F);
-            group->qs[j + 1] = ((*quant_offset) >> 4);
-            quant_offset++;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < QK4_0 / 2; j += 2) {
+            ಗುಂಪು->qs[j]     = ((*quant_ಸ್ಥಾನಾಂತರ) & 0x0F);
+            ಗುಂಪು->qs[j + 1] = ((*quant_ಸ್ಥಾನಾಂತರ) >> 4);
+            quant_ಸ್ಥಾನಾಂತರ++;
         }
 
         // 16-31
-        for (int j = 0; j < QK4_0 / 2; j += 2) {
-            group->qs[j] |= ((*quant_offset) << 4);
-            group->qs[j + 1] |= ((*quant_offset) & 0xF0);
-            quant_offset++;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < QK4_0 / 2; j += 2) {
+            ಗುಂಪು->qs[j] |= ((*quant_ಸ್ಥಾನಾಂತರ) << 4);
+            ಗುಂಪು->qs[j + 1] |= ((*quant_ಸ್ಥಾನಾಂತರ) & 0xF0);
+            quant_ಸ್ಥಾನಾಂತರ++;
         }
     }
 }
@@ -1014,21 +1014,21 @@ static void ggml_backend_cann_transform_back_q4_0(const ggml_tensor * tensor, vo
  * @param dst Pointer to the destination buffer where transformed data will be
  * stored.
  */
-static void ggml_backend_cann_transform_q8_0(ggml_tensor * tensor, const void * src, void * dst) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_transform_q8_0(ggml_tensor * tensor, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * src, ಶೂನ್ಯ * dst) {
     int64_t n_elems     = ggml_nelements(tensor);
     int64_t groups      = n_elems / QK8_0;
-    size_t  quant_bytes = n_elems * sizeof(uint8_t);
+    size_t  quant_ಬೈಟುಗಳು = n_elems * ಗಾತ್ರ(uint8_t);
 
-    uint8_t *  quant_offset = (uint8_t *) dst;
-    uint16_t * scale_offset = (uint16_t *) ((char *) dst + quant_bytes);
+    uint8_t *  quant_ಸ್ಥಾನಾಂತರ = (uint8_t *) dst;
+    uint16_t * scale_ಸ್ಥಾನಾಂತರ = (uint16_t *) ((ಅಕ್ಷರ *) dst + quant_ಬೈಟುಗಳು);
 
-    for (int i = 0; i < groups; i++) {
-        const block_q8_0 * group = (const block_q8_0 *) ((const char *) src + i * sizeof(block_q8_0));
-        *scale_offset            = group->d;
-        scale_offset++;
-        size_t group_quant_size = QK8_0 * sizeof(uint8_t);
-        memcpy(quant_offset, group->qs, group_quant_size);
-        quant_offset += group_quant_size;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < groups; i++) {
+        ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 * ಗುಂಪು = (ಸ್ಥಿರಾಂಕ ಖಂಡ_q8_0 *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src + i * ಗಾತ್ರ(ಖಂಡ_q8_0));
+        *scale_ಸ್ಥಾನಾಂತರ            = ಗುಂಪು->d;
+        scale_ಸ್ಥಾನಾಂತರ++;
+        size_t ಗುಂಪು_quant_ಗಾತ್ರ = QK8_0 * ಗಾತ್ರ(uint8_t);
+        ಸ್ಮರಣೆ_ನಕಲು(quant_ಸ್ಥಾನಾಂತರ, ಗುಂಪು->qs, ಗುಂಪು_quant_ಗಾತ್ರ);
+        quant_ಸ್ಥಾನಾಂತರ += ಗುಂಪು_quant_ಗಾತ್ರ;
     }
 }
 
@@ -1045,21 +1045,21 @@ static void ggml_backend_cann_transform_q8_0(ggml_tensor * tensor, const void * 
  * @param dst Pointer to the destination buffer where the Q8.0 formatted data
  * will be stored.
  */
-static void ggml_backend_cann_transform_back_q8_0(const ggml_tensor * tensor, const void * src, void * dst) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_transform_ಹಿಂಭಾಗ_q8_0(ಸ್ಥಿರಾಂಕ ggml_tensor * tensor, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * src, ಶೂನ್ಯ * dst) {
     int64_t n_elems     = ggml_nelements(tensor);
     int64_t groups      = n_elems / QK8_0;
-    size_t  quant_bytes = n_elems * sizeof(uint8_t);
+    size_t  quant_ಬೈಟುಗಳು = n_elems * ಗಾತ್ರ(uint8_t);
 
-    const uint8_t *  quant_offset = (const uint8_t *) src;
-    const uint16_t * scale_offset = (const uint16_t *) ((const char *) src + quant_bytes);
+    ಸ್ಥಿರಾಂಕ uint8_t *  quant_ಸ್ಥಾನಾಂತರ = (ಸ್ಥಿರಾಂಕ uint8_t *) src;
+    ಸ್ಥಿರಾಂಕ uint16_t * scale_ಸ್ಥಾನಾಂತರ = (ಸ್ಥಿರಾಂಕ uint16_t *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src + quant_ಬೈಟುಗಳು);
 
-    for (int i = 0; i < groups; i++) {
-        block_q8_0 * group = (block_q8_0 *) ((char *) dst + i * sizeof(block_q8_0));
-        group->d           = *scale_offset;
-        scale_offset++;
-        size_t group_quant_size = QK8_0 * sizeof(uint8_t);
-        memcpy(group->qs, quant_offset, group_quant_size);
-        quant_offset += group_quant_size;
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < groups; i++) {
+        ಖಂಡ_q8_0 * ಗುಂಪು = (ಖಂಡ_q8_0 *) ((ಅಕ್ಷರ *) dst + i * ಗಾತ್ರ(ಖಂಡ_q8_0));
+        ಗುಂಪು->d           = *scale_ಸ್ಥಾನಾಂತರ;
+        scale_ಸ್ಥಾನಾಂತರ++;
+        size_t ಗುಂಪು_quant_ಗಾತ್ರ = QK8_0 * ಗಾತ್ರ(uint8_t);
+        ಸ್ಮರಣೆ_ನಕಲು(ಗುಂಪು->qs, quant_ಸ್ಥಾನಾಂತರ, ಗುಂಪು_quant_ಗಾತ್ರ);
+        quant_ಸ್ಥಾನಾಂತರ += ಗುಂಪು_quant_ಗಾತ್ರ;
     }
 }
 
@@ -1075,16 +1075,16 @@ static void ggml_backend_cann_transform_back_q8_0(const ggml_tensor * tensor, co
  * @param dst Pointer to the destination buffer where transformed data will be
  * stored.
  */
-static void ggml_backend_cann_transform(ggml_tensor * tensor, const void * src, void * dst) {
-    switch (tensor->type) {
-        case GGML_TYPE_Q4_0:
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_transform(ggml_tensor * tensor, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * src, ಶೂನ್ಯ * dst) {
+    ಆಯ್ಕೆ (tensor->type) {
+        ಸ್ಥಿತಿ GGML_TYPE_Q4_0:
             ggml_backend_cann_transform_q4_0(tensor, src, dst);
-            break;
-        case GGML_TYPE_Q8_0:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_TYPE_Q8_0:
             ggml_backend_cann_transform_q8_0(tensor, src, dst);
-            break;
-        default:
-            break;
+            ನಿಲ್ಲಿಸು;
+        ಪೂರ್ವನಿಯೋಜಿತ:
+            ನಿಲ್ಲಿಸು;
     }
 }
 
@@ -1100,16 +1100,16 @@ static void ggml_backend_cann_transform(ggml_tensor * tensor, const void * src, 
  * @param dst Pointer to the destination buffer where transformed tensor data
  * will be stored.
  */
-static void ggml_backend_cann_transform_back(const ggml_tensor * tensor, void * src, void * dst) {
-    switch (tensor->type) {
-        case GGML_TYPE_Q4_0:
-            ggml_backend_cann_transform_back_q4_0(tensor, src, dst);
-            break;
-        case GGML_TYPE_Q8_0:
-            ggml_backend_cann_transform_back_q8_0(tensor, src, dst);
-            break;
-        default:
-            break;
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_transform_ಹಿಂಭಾಗ(ಸ್ಥಿರಾಂಕ ggml_tensor * tensor, ಶೂನ್ಯ * src, ಶೂನ್ಯ * dst) {
+    ಆಯ್ಕೆ (tensor->type) {
+        ಸ್ಥಿತಿ GGML_TYPE_Q4_0:
+            ggml_backend_cann_transform_ಹಿಂಭಾಗ_q4_0(tensor, src, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_TYPE_Q8_0:
+            ggml_backend_cann_transform_ಹಿಂಭಾಗ_q8_0(tensor, src, dst);
+            ನಿಲ್ಲಿಸು;
+        ಪೂರ್ವನಿಯೋಜಿತ:
+            ನಿಲ್ಲಿಸು;
     }
 }
 
@@ -1122,13 +1122,13 @@ static void ggml_backend_cann_transform_back(const ggml_tensor * tensor, void * 
  * @param type The tensor type to check.
  * @return true if transformation is needed, false otherwise.
  */
-static bool need_transform(ggml_type type) {
-    switch (type) {
-        case GGML_TYPE_Q4_0:
-        case GGML_TYPE_Q8_0:
-            return true;
-        default:
-            return false;
+ಸ್ಥಿರ ತಾರ್ಕಿಕ need_transform(ggml_type type) {
+    ಆಯ್ಕೆ (type) {
+        ಸ್ಥಿತಿ GGML_TYPE_Q4_0:
+        ಸ್ಥಿತಿ GGML_TYPE_Q8_0:
+            ಹಿಂತಿರುಗಿ ನಿಜ;
+        ಪೂರ್ವನಿಯೋಜಿತ:
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 }
 
@@ -1141,25 +1141,25 @@ static bool need_transform(ggml_type type) {
  * @param buffer The CANN buffer from which to initialize the tensor.
  * @param tensor Pointer to the tensor to be initialized.
  */
-static enum ggml_status ggml_backend_cann_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
-    if (tensor->view_src != NULL && tensor->view_offs == 0) {
-        GGML_ASSERT(tensor->view_src->buffer->buft == buffer->buft);
-        return GGML_STATUS_SUCCESS;
+ಸ್ಥಿರ ಎಣಿಕೆ ggml_ಸ್ಥಿತಿ ggml_backend_cann_ಬಫರ್_init_tensor(ggml_backend_ಬಫರ್_t ಬಫರ್, ggml_tensor * tensor) {
+    ಆದರೆ (tensor->view_src != ಖಾಲಿ && tensor->view_offs == 0) {
+        GGML_ASSERT(tensor->view_src->ಬಫರ್->buft == ಬಫರ್->buft);
+        ಹಿಂತಿರುಗಿ GGML_ಸ್ಥಿತಿ_SUCCESS;
     }
 
     // TODO: cann backend doesn't support quantized yet. Just leave the code
     // here.
-    if (ggml_is_quantized(tensor->type)) {
+    ಆದರೆ (ggml_is_quantized(tensor->type)) {
         // Initialize padding to 0 to avoid possible NaN values
-        size_t original_size = ggml_nbytes(tensor);
-        size_t padded_size   = ggml_backend_buft_get_alloc_size(buffer->buft, tensor);
+        size_t original_ಗಾತ್ರ = ggml_nbytes(tensor);
+        size_t padded_ಗಾತ್ರ   = ggml_backend_buft_get_alloc_ಗಾತ್ರ(ಬಫರ್->buft, tensor);
 
-        if (padded_size > original_size && tensor->view_src == nullptr) {
-            size_t memset_size = padded_size - original_size;
-            ACL_CHECK(aclrtMemset((char *) tensor->data + original_size, memset_size, 0, memset_size));
+        ಆದರೆ (padded_ಗಾತ್ರ > original_ಗಾತ್ರ && tensor->view_src == ಶೂನ್ಯಸೂಚಕ) {
+            size_t memset_ಗಾತ್ರ = padded_ಗಾತ್ರ - original_ಗಾತ್ರ;
+            ACL_CHECK(aclrtMemset((ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + original_ಗಾತ್ರ, memset_ಗಾತ್ರ, 0, memset_ಗಾತ್ರ));
         }
     }
-    return GGML_STATUS_SUCCESS;
+    ಹಿಂತಿರುಗಿ GGML_ಸ್ಥಿತಿ_SUCCESS;
 }
 
 /**
@@ -1169,15 +1169,15 @@ static enum ggml_status ggml_backend_cann_buffer_init_tensor(ggml_backend_buffer
  * allocation, reallocation, and clearing of cached memory. The struct is
  * designed to be used with a global array, one per device.
  */
-struct ggml_cann_nz_workspace {
+ರಚನೆ ggml_cann_nz_workspace {
     std::mutex mtx;    // Protects ptr/allocated from concurrent access
-    void * ptr;        // Pointer to allocated device buffer
+    ಶೂನ್ಯ * ptr;        // Pointer to allocated device buffer
     size_t allocated;  // Size of currently allocated buffer in bytes
 
     /**
      * @brief Constructor. Initializes the workspace with no allocated memory.
      */
-    ggml_cann_nz_workspace() : ptr(nullptr), allocated(0) {}
+    ggml_cann_nz_workspace() : ptr(ಶೂನ್ಯಸೂಚಕ), allocated(0) {}
 
     /**
      * @brief Free cached memory and reset the workspace.
@@ -1185,10 +1185,10 @@ struct ggml_cann_nz_workspace {
      * If a buffer has been allocated, this function releases it using
      * aclrtFree and resets internal state.
      */
-    void clear() {
-        if (ptr) {
+    ಶೂನ್ಯ clear() {
+        ಆದರೆ (ptr) {
             ACL_CHECK(aclrtFree(ptr));
-            ptr       = nullptr;
+            ptr       = ಶೂನ್ಯಸೂಚಕ;
             allocated = 0;
         }
     }
@@ -1202,11 +1202,11 @@ struct ggml_cann_nz_workspace {
      *
      * @param new_size Size in bytes to allocate for the workspace.
      */
-    void realloc(size_t new_size) {
-        if (new_size > allocated) {
+    ಶೂನ್ಯ realloc(size_t new_ಗಾತ್ರ) {
+        ಆದರೆ (new_ಗಾತ್ರ > allocated) {
             clear();
-            ACL_CHECK(aclrtMalloc(&ptr, new_size, ACL_MEM_MALLOC_HUGE_FIRST));
-            allocated = new_size;
+            ACL_CHECK(aclrtMalloc(&ptr, new_ಗಾತ್ರ, ACL_MEM_MALLOC_HUGE_ಮೊದಲ));
+            allocated = new_ಗಾತ್ರ;
         }
     }
 
@@ -1215,13 +1215,13 @@ struct ggml_cann_nz_workspace {
      *
      * @return Pointer to the allocated buffer, or nullptr if not allocated.
      */
-    void * get() const { return ptr; }
+    ಶೂನ್ಯ * get() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ ptr; }
 };
 
 /**
  * @brief Global array of NZ workspaces, one per device.
  */
-static ggml_cann_nz_workspace g_nz_workspaces[GGML_CANN_MAX_DEVICES];
+ಸ್ಥಿರ ggml_cann_nz_workspace g_nz_workspaces[GGML_CANN_MAX_DEVICES];
 
 /**
  * @brief Convert tensor weights to NZ format using Ascend CANN API.
@@ -1237,21 +1237,21 @@ static ggml_cann_nz_workspace g_nz_workspaces[GGML_CANN_MAX_DEVICES];
  * @note The workspace buffer used in this function is managed globally and reused
  *       across calls. This reduces overhead from repeated memory allocation and deallocation.
  */
-static void weight_format_to_nz(ggml_tensor * tensor, int device) {
-    acl_tensor_ptr weightTransposed = ggml_cann_create_tensor(tensor, tensor->ne, tensor->nb, 2, ACL_FORMAT_ND, 0);
-    uint64_t       workspaceSize    = 0;
+ಸ್ಥಿರ ಶೂನ್ಯ ತೂಕ_format_ಗಮ್ಯ_nz(ggml_tensor * tensor, ಪೂರ್ಣಾಂಕ device) {
+    acl_tensor_ptr ತೂಕ_Transposed = ggml_cann_create_tensor(tensor, tensor->ne, tensor->nb, 2, ACL_FORMAT_ND, 0);
+    uint64_t       workspace_ಗಾತ್ರ    = 0;
     aclOpExecutor * executor;
 
     // TransMatmulWeight
-    ACL_CHECK(aclnnTransMatmulWeightGetWorkspaceSize(weightTransposed.get(), &workspaceSize, &executor));
+    ACL_CHECK(aclnn_Trans_Matmul_ತೂಕ_Get_Workspace_ಗಾತ್ರ(ತೂಕ_Transposed.get(), &workspace_ಗಾತ್ರ, &executor));
 
-    std::lock_guard<std::mutex> lock(g_nz_workspaces[device].mtx);
+    std::lock_guard<std::mutex> ಬೀಗ(g_nz_workspaces[device].mtx);
     // Avoid frequent malloc/free of the workspace.
-    g_nz_workspaces[device].realloc(workspaceSize);
+    g_nz_workspaces[device].realloc(workspace_ಗಾತ್ರ);
 
-    void * g_nz_workspace = g_nz_workspaces[device].get();
+    ಶೂನ್ಯ * g_nz_workspace = g_nz_workspaces[device].get();
 
-    ACL_CHECK(aclnnTransMatmulWeight(g_nz_workspace, workspaceSize, executor, nullptr));
+    ACL_CHECK(aclnn_Trans_Matmul_ತೂಕ(g_nz_workspace, workspace_ಗಾತ್ರ, executor, ಶೂನ್ಯಸೂಚಕ));
 }
 
 // TODO: need handle tensor which has paddings.
@@ -1273,79 +1273,79 @@ static void weight_format_to_nz(ggml_tensor * tensor, int device) {
  * @param offset Offset in the source data from where to start copying.
  * @param size Size of the data to be copied, in bytes.
  */
-static void ggml_backend_cann_buffer_set_tensor(ggml_backend_buffer_t buffer,
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_ಬಫರ್_ಗಣ_tensor(ggml_backend_ಬಫರ್_t ಬಫರ್,
                                                 ggml_tensor *         tensor,
-                                                const void *          data,
-                                                size_t                offset,
+                                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ *          ದತ್ತಾಂಶ,
+                                                size_t                ಸ್ಥಾನಾಂತರ,
                                                 size_t                size) {
-    ggml_backend_cann_buffer_context * ctx = (ggml_backend_cann_buffer_context *) buffer->context;
+    ggml_backend_cann_ಬಫರ್_context * ctx = (ggml_backend_cann_ಬಫರ್_context *) ಬಫರ್->context;
 
-    ggml_cann_set_device(ctx->device);
+    ggml_cann_ಗಣ_device(ctx->device);
 
     // Only check env once.
-    static bool weight_to_nz = parse_bool(get_env_as_lowercase("GGML_CANN_WEIGHT_NZ").value_or("on"));
+    ಸ್ಥಿರ ತಾರ್ಕಿಕ ತೂಕ_ಗಮ್ಯ_nz = parse_bool(get_env_as_lowercase("GGML_CANN_WEIGHT_NZ").value_or("on"));
 
-    bool is_quantized = need_transform(tensor->type);
-    bool is_nz        = !is_quantized && tensor->type != GGML_TYPE_BF16 && weight_to_nz &&
-                 is_matmul_weight((const ggml_tensor *) tensor);
+    ತಾರ್ಕಿಕ is_quantized = need_transform(tensor->type);
+    ತಾರ್ಕಿಕ is_nz        = !is_quantized && tensor->type != GGML_TYPE_BF16 && ತೂಕ_ಗಮ್ಯ_nz &&
+                 is_matmul_ತೂಕ((ಸ್ಥಿರಾಂಕ ggml_tensor *) tensor);
 
     // Plain tensor (not quantized, not NZ): direct copy, no tracking needed
-    if (!is_quantized && !is_nz) {
-        ACL_CHECK(aclrtMemcpy((char *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
-        return;
+    ಆದರೆ (!is_quantized && !is_nz) {
+        ACL_CHECK(aclrtMemcpy((ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + ಸ್ಥಾನಾಂತರ, size, ದತ್ತಾಂಶ, size, ACL_MEMCPY_HOST_ಗಮ್ಯ_DEVICE));
+        ಹಿಂತಿರುಗಿ;
     }
 
     // Single-shot write (full tensor at once): handle directly without tracking overhead
-    if (offset == 0 && size == ggml_nbytes(tensor)) {
-        if (is_quantized) {
-            void * transform_buffer = malloc(size);
-            ggml_backend_cann_transform(tensor, data, transform_buffer);
-            ACL_CHECK(aclrtMemcpy(tensor->data, size, transform_buffer, size, ACL_MEMCPY_HOST_TO_DEVICE));
-            free(transform_buffer);
-        } else {
+    ಆದರೆ (ಸ್ಥಾನಾಂತರ == 0 && size == ggml_nbytes(tensor)) {
+        ಆದರೆ (is_quantized) {
+            ಶೂನ್ಯ * transform_ಬಫರ್ = ಸ್ಮರಣೆ_ಕೊಡು(size);
+            ggml_backend_cann_transform(tensor, ದತ್ತಾಂಶ, transform_ಬಫರ್);
+            ACL_CHECK(aclrtMemcpy(tensor->ದತ್ತಾಂಶ, size, transform_ಬಫರ್, size, ACL_MEMCPY_HOST_ಗಮ್ಯ_DEVICE));
+            ಬಿಡುಗಡೆ(transform_ಬಫರ್);
+        } ಇಲ್ಲದಿದ್ದರೆ {
             // NZ weight
             GGML_ASSERT(tensor->ne[2] == 1);
             GGML_ASSERT(tensor->ne[3] == 1);
-            ACL_CHECK(aclrtMemcpy(tensor->data, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
-            weight_format_to_nz(tensor, ctx->device);
+            ACL_CHECK(aclrtMemcpy(tensor->ದತ್ತಾಂಶ, size, ದತ್ತಾಂಶ, size, ACL_MEMCPY_HOST_ಗಮ್ಯ_DEVICE));
+            ತೂಕ_format_ಗಮ್ಯ_nz(tensor, ctx->device);
         }
-        return;
+        ಹಿಂತಿರುಗಿ;
     }
 
     // Chunked write: use tracker to accumulate progress and defer transform/conversion
-    TensorSetTracker * tracker = ctx->get_or_create_tracker(tensor);
-    std::unique_lock<std::mutex> lock(tracker->mtx);
+    Tensor_ಗಣ_Tracker * tracker = ctx->get_or_create_tracker(tensor);
+    std::unique_lock<std::mutex> ಬೀಗ(tracker->mtx);
 
-    if (is_quantized) {
+    ಆದರೆ (is_quantized) {
         // Stage data in host buffer; transform requires full tensor data
-        if (tracker->host_buffer.empty()) {
-            tracker->host_buffer.resize(tracker->total_bytes);
+        ಆದರೆ (tracker->host_ಬಫರ್.ಖಾಲಿಗಳು()) {
+            tracker->host_ಬಫರ್.resize(tracker->ಒಟ್ಟು_ಬೈಟುಗಳು);
         }
-        memcpy(tracker->host_buffer.data() + offset, data, size);
-    } else {
+        ಸ್ಮರಣೆ_ನಕಲು(tracker->host_ಬಫರ್.ದತ್ತಾಂಶ() + ಸ್ಥಾನಾಂತರ, ದತ್ತಾಂಶ, size);
+    } ಇಲ್ಲದಿದ್ದರೆ {
         // NZ weight: upload chunk to device immediately, defer conversion
-        ACL_CHECK(aclrtMemcpy((char *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE));
+        ACL_CHECK(aclrtMemcpy((ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + ಸ್ಥಾನಾಂತರ, size, ದತ್ತಾಂಶ, size, ACL_MEMCPY_HOST_ಗಮ್ಯ_DEVICE));
     }
 
-    tracker->bytes_written += size;
+    tracker->ಬೈಟುಗಳು_written += size;
 
     // All chunks received: perform deferred transform/conversion
-    if (tracker->bytes_written >= tracker->total_bytes) {
-        if (is_quantized) {
-            void * transform_buffer = malloc(tracker->total_bytes);
-            ggml_backend_cann_transform(tensor, tracker->host_buffer.data(), transform_buffer);
-            ACL_CHECK(aclrtMemcpy(tensor->data, tracker->total_bytes, transform_buffer, tracker->total_bytes, ACL_MEMCPY_HOST_TO_DEVICE));
-            free(transform_buffer);
+    ಆದರೆ (tracker->ಬೈಟುಗಳು_written >= tracker->ಒಟ್ಟು_ಬೈಟುಗಳು) {
+        ಆದರೆ (is_quantized) {
+            ಶೂನ್ಯ * transform_ಬಫರ್ = ಸ್ಮರಣೆ_ಕೊಡು(tracker->ಒಟ್ಟು_ಬೈಟುಗಳು);
+            ggml_backend_cann_transform(tensor, tracker->host_ಬಫರ್.ದತ್ತಾಂಶ(), transform_ಬಫರ್);
+            ACL_CHECK(aclrtMemcpy(tensor->ದತ್ತಾಂಶ, tracker->ಒಟ್ಟು_ಬೈಟುಗಳು, transform_ಬಫರ್, tracker->ಒಟ್ಟು_ಬೈಟುಗಳು, ACL_MEMCPY_HOST_ಗಮ್ಯ_DEVICE));
+            ಬಿಡುಗಡೆ(transform_ಬಫರ್);
         }
 
-        if (is_nz) {
+        ಆದರೆ (is_nz) {
             GGML_ASSERT(tensor->ne[2] == 1);
             GGML_ASSERT(tensor->ne[3] == 1);
-            weight_format_to_nz(tensor, ctx->device);
+            ತೂಕ_format_ಗಮ್ಯ_nz(tensor, ctx->device);
         }
 
         // Unlock before removing tracker, as remove_tracker destroys the mutex
-        lock.unlock();
+        ಬೀಗ.unlock();
         ctx->remove_tracker(tensor);
     }
 }
@@ -1363,22 +1363,22 @@ static void ggml_backend_cann_buffer_set_tensor(ggml_backend_buffer_t buffer,
  * @param offset Offset in the destination buffer where to start copying.
  * @param size Size of the data to be copied, in bytes.
  */
-static void ggml_backend_cann_buffer_get_tensor(ggml_backend_buffer_t buffer,
-                                                const ggml_tensor *   tensor,
-                                                void *                data,
-                                                size_t                offset,
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_ಬಫರ್_get_tensor(ggml_backend_ಬಫರ್_t ಬಫರ್,
+                                                ಸ್ಥಿರಾಂಕ ggml_tensor *   tensor,
+                                                ಶೂನ್ಯ *                ದತ್ತಾಂಶ,
+                                                size_t                ಸ್ಥಾನಾಂತರ,
                                                 size_t                size) {
-    ggml_backend_cann_buffer_context * ctx = (ggml_backend_cann_buffer_context *) buffer->context;
+    ggml_backend_cann_ಬಫರ್_context * ctx = (ggml_backend_cann_ಬಫರ್_context *) ಬಫರ್->context;
 
-    ggml_cann_set_device(ctx->device);
+    ggml_cann_ಗಣ_device(ctx->device);
 
-    if (!need_transform(tensor->type)) {
-        ACL_CHECK(aclrtMemcpy(data, size, (char *) tensor->data + offset, size, ACL_MEMCPY_DEVICE_TO_HOST));
-    } else {
-        void * transform_buffer = malloc(size);
-        ACL_CHECK(aclrtMemcpy(transform_buffer, size, (char *) tensor->data + offset, size, ACL_MEMCPY_DEVICE_TO_HOST));
-        ggml_backend_cann_transform_back(tensor, transform_buffer, data);
-        free(transform_buffer);
+    ಆದರೆ (!need_transform(tensor->type)) {
+        ACL_CHECK(aclrtMemcpy(ದತ್ತಾಂಶ, size, (ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + ಸ್ಥಾನಾಂತರ, size, ACL_MEMCPY_DEVICE_ಗಮ್ಯ_HOST));
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಶೂನ್ಯ * transform_ಬಫರ್ = ಸ್ಮರಣೆ_ಕೊಡು(size);
+        ACL_CHECK(aclrtMemcpy(transform_ಬಫರ್, size, (ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + ಸ್ಥಾನಾಂತರ, size, ACL_MEMCPY_DEVICE_ಗಮ್ಯ_HOST));
+        ggml_backend_cann_transform_ಹಿಂಭಾಗ(tensor, transform_ಬಫರ್, ದತ್ತಾಂಶ);
+        ಬಿಡುಗಡೆ(transform_ಬಫರ್);
     }
 }
 
@@ -1395,37 +1395,37 @@ static void ggml_backend_cann_buffer_get_tensor(ggml_backend_buffer_t buffer,
  * @param dst Pointer to the destination tensor where the data will be copied.
  * @return true if the copy operation succeeded, false otherwise.
  */
-static bool ggml_backend_cann_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
-                                                const ggml_tensor *   src,
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cann_ಬಫರ್_cpy_tensor(ggml_backend_ಬಫರ್_t ಬಫರ್,
+                                                ಸ್ಥಿರಾಂಕ ggml_tensor *   src,
                                                 ggml_tensor *         dst) {
-    if (ggml_backend_buft_is_cann(src->buffer->buft)) {
-        ggml_backend_cann_buffer_context * src_ctx = (ggml_backend_cann_buffer_context *) src->buffer->context;
-        ggml_backend_cann_buffer_context * dst_ctx = (ggml_backend_cann_buffer_context *) buffer->context;
+    ಆದರೆ (ggml_backend_buft_is_cann(src->ಬಫರ್->buft)) {
+        ggml_backend_cann_ಬಫರ್_context * src_ctx = (ggml_backend_cann_ಬಫರ್_context *) src->ಬಫರ್->context;
+        ggml_backend_cann_ಬಫರ್_context * dst_ctx = (ggml_backend_cann_ಬಫರ್_context *) ಬಫರ್->context;
 
-        size_t memcpy_size = ggml_nbytes(src);
+        size_t memcpy_ಗಾತ್ರ = ggml_nbytes(src);
         // Same device.
-        if (src_ctx->device == dst_ctx->device) {
-            ACL_CHECK(aclrtMemcpy((char *) dst->data, memcpy_size, (const char *) src->data, memcpy_size,
-                                  ACL_MEMCPY_DEVICE_TO_DEVICE));
-            return true;
-        } else {
-#ifdef ASCEND_310P
+        ಆದರೆ (src_ctx->device == dst_ctx->device) {
+            ACL_CHECK(aclrtMemcpy((ಅಕ್ಷರ *) dst->ದತ್ತಾಂಶ, memcpy_ಗಾತ್ರ, (ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src->ದತ್ತಾಂಶ, memcpy_ಗಾತ್ರ,
+                                  ACL_MEMCPY_DEVICE_ಗಮ್ಯ_DEVICE));
+            ಹಿಂತಿರುಗಿ ನಿಜ;
+        } ಇಲ್ಲದಿದ್ದರೆ {
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ ASCEND_310P
             // TODO: Support 310p P2P copy
-            return false;
-#endif
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
+#ಆದರೆ_ಅಂತ್ಯ
             // Different device but can access by peer.
             int32_t canAccessPeer = 0;
             ACL_CHECK(aclrtDeviceCanAccessPeer(&canAccessPeer, src_ctx->device, dst_ctx->device));
-            if (canAccessPeer) {
-                ggml_cann_set_device(src_ctx->device);
+            ಆದರೆ (canAccessPeer) {
+                ggml_cann_ಗಣ_device(src_ctx->device);
                 ACL_CHECK(aclrtDeviceEnablePeerAccess(dst_ctx->device, 0));
-                ACL_CHECK(aclrtMemcpy((char *) dst->data, memcpy_size, (const char *) src->data, memcpy_size,
-                                      ACL_MEMCPY_DEVICE_TO_DEVICE));
-                return true;
+                ACL_CHECK(aclrtMemcpy((ಅಕ್ಷರ *) dst->ದತ್ತಾಂಶ, memcpy_ಗಾತ್ರ, (ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src->ದತ್ತಾಂಶ, memcpy_ಗಾತ್ರ,
+                                      ACL_MEMCPY_DEVICE_ಗಮ್ಯ_DEVICE));
+                ಹಿಂತಿರುಗಿ ನಿಜ;
             }
         }
     }
-    return false;
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }
 
 /**
@@ -1437,11 +1437,11 @@ static bool ggml_backend_cann_buffer_cpy_tensor(ggml_backend_buffer_t buffer,
  * @param offset Byte offset within the tensor's data to start setting.
  * @param size Number of bytes to set.
  */
-static void ggml_backend_cann_buffer_memset_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, uint8_t value, size_t offset, size_t size) {
-    ggml_backend_cann_buffer_context * ctx = (ggml_backend_cann_buffer_context *) buffer->context;
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_ಬಫರ್_memset_tensor(ggml_backend_ಬಫರ್_t ಬಫರ್, ggml_tensor * tensor, uint8_t value, size_t ಸ್ಥಾನಾಂತರ, size_t size) {
+    ggml_backend_cann_ಬಫರ್_context * ctx = (ggml_backend_cann_ಬಫರ್_context *) ಬಫರ್->context;
 
-    ggml_cann_set_device(ctx->device);
-    ACL_CHECK(aclrtMemset((char *) tensor->data + offset, size, value, size));
+    ggml_cann_ಗಣ_device(ctx->device);
+    ACL_CHECK(aclrtMemset((ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + ಸ್ಥಾನಾಂತರ, size, value, size));
 }
 
 /**
@@ -1453,11 +1453,11 @@ static void ggml_backend_cann_buffer_memset_tensor(ggml_backend_buffer_t buffer,
  * @param buffer The CANN buffer to be cleared.
  * @param value The value to which each byte in the buffer will be set.
  */
-static void ggml_backend_cann_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
-    ggml_backend_cann_buffer_context * ctx = (ggml_backend_cann_buffer_context *) buffer->context;
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_ಬಫರ್_clear(ggml_backend_ಬಫರ್_t ಬಫರ್, uint8_t value) {
+    ggml_backend_cann_ಬಫರ್_context * ctx = (ggml_backend_cann_ಬಫರ್_context *) ಬಫರ್->context;
 
-    ggml_cann_set_device(ctx->device);
-    ACL_CHECK(aclrtMemset(ctx->dev_ptr, buffer->size, value, buffer->size));
+    ggml_cann_ಗಣ_device(ctx->device);
+    ACL_CHECK(aclrtMemset(ctx->dev_ptr, ಬಫರ್->size, value, ಬಫರ್->size));
 }
 
 /**
@@ -1466,18 +1466,18 @@ static void ggml_backend_cann_buffer_clear(ggml_backend_buffer_t buffer, uint8_t
  * This structure defines function pointers to operations that can be performed
  * on a CANN buffer within the backend.
  */
-static const ggml_backend_buffer_i ggml_backend_cann_buffer_interface = {
-    /* .free_buffer     = */ ggml_backend_cann_buffer_free_buffer,
-    /* .get_base        = */ ggml_backend_cann_buffer_get_base,
-    /* .init_tensor     = */ ggml_backend_cann_buffer_init_tensor,
-    /* .memset_tensor   = */ ggml_backend_cann_buffer_memset_tensor,
-    /* .set_tensor      = */ ggml_backend_cann_buffer_set_tensor,
-    /* .get_tensor      = */ ggml_backend_cann_buffer_get_tensor,
-    /* .set_tensor_2d   = */ NULL,
-    /* .get_tensor_2d   = */ NULL,
-    /* .cpy_tensor      = */ ggml_backend_cann_buffer_cpy_tensor,
-    /* .clear           = */ ggml_backend_cann_buffer_clear,
-    /* .reset           = */ NULL,
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ggml_backend_ಬಫರ್_i ggml_backend_cann_ಬಫರ್_interface = {
+    /* .free_buffer     = */ ggml_backend_cann_ಬಫರ್_free_ಬಫರ್,
+    /* .get_base        = */ ggml_backend_cann_ಬಫರ್_get_ತಳ,
+    /* .init_tensor     = */ ggml_backend_cann_ಬಫರ್_init_tensor,
+    /* .memset_tensor   = */ ggml_backend_cann_ಬಫರ್_memset_tensor,
+    /* .set_tensor      = */ ggml_backend_cann_ಬಫರ್_ಗಣ_tensor,
+    /* .get_tensor      = */ ggml_backend_cann_ಬಫರ್_get_tensor,
+    /* .set_tensor_2d   = */ ಖಾಲಿ,
+    /* .get_tensor_2d   = */ ಖಾಲಿ,
+    /* .cpy_tensor      = */ ggml_backend_cann_ಬಫರ್_cpy_tensor,
+    /* .clear           = */ ggml_backend_cann_ಬಫರ್_clear,
+    /* .reset           = */ ಖಾಲಿ,
 };
 
 /**
@@ -1490,27 +1490,27 @@ static const ggml_backend_buffer_i ggml_backend_cann_buffer_interface = {
  * @param size Size in bytes of the buffer to allocate.
  * @return Pointer to the allocated buffer, or nullptr if allocation fails.
  */
-static ggml_backend_buffer_t ggml_backend_cann_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
-    ggml_backend_cann_buffer_type_context * buft_ctx = (ggml_backend_cann_buffer_type_context *) buft->context;
+ಸ್ಥಿರ ggml_backend_ಬಫರ್_t ggml_backend_cann_ಬಫರ್_type_alloc_ಬಫರ್(ggml_backend_ಬಫರ್_type_t buft, size_t size) {
+    ggml_backend_cann_ಬಫರ್_type_context * buft_ctx = (ggml_backend_cann_ಬಫರ್_type_context *) buft->context;
 
-    ggml_cann_set_device(buft_ctx->device);
+    ggml_cann_ಗಣ_device(buft_ctx->device);
 
-    const size_t alignment = 128;
+    ಸ್ಥಿರಾಂಕ size_t alignment = 128;
     size                   = GGML_PAD(size, alignment);
-    if (size == 0) {
+    ಆದರೆ (size == 0) {
         size = alignment;
     }
-    void *   dev_ptr;
-    aclError err = aclrtMalloc(&dev_ptr, size, ACL_MEM_MALLOC_HUGE_FIRST);
-    if (err != ACL_SUCCESS) {
+    ಶೂನ್ಯ *   dev_ptr;
+    aclError err = aclrtMalloc(&dev_ptr, size, ACL_MEM_MALLOC_HUGE_ಮೊದಲ);
+    ಆದರೆ (err != ACL_SUCCESS) {
         GGML_LOG_ERROR("%s: allocating %.2f MiB on device %d: aclrtMalloc failed: %s\n", __func__,
-                       size / 1024.0 / 1024.0, buft_ctx->device, aclGetRecentErrMsg());
-        return nullptr;
+                       size / 1024.0 / 1024.0, buft_ctx->device, acl_Get_Recent_Err_ಸಂದೇಶ());
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
 
-    ggml_backend_cann_buffer_context * ctx = new ggml_backend_cann_buffer_context(buft_ctx->device, dev_ptr);
+    ggml_backend_cann_ಬಫರ್_context * ctx = ಹೊಸ ggml_backend_cann_ಬಫರ್_context(buft_ctx->device, dev_ptr);
 
-    return ggml_backend_buffer_init(buft, ggml_backend_cann_buffer_interface, ctx, size);
+    ಹಿಂತಿರುಗಿ ggml_backend_ಬಫರ್_init(buft, ggml_backend_cann_ಬಫರ್_interface, ctx, size);
 }
 
 /**
@@ -1525,10 +1525,10 @@ static ggml_backend_buffer_t ggml_backend_cann_buffer_type_alloc_buffer(ggml_bac
  * @return The alignment requirement in bytes (fixed at 128 bytes for CANN
  * buffers).
  */
-static size_t ggml_backend_cann_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return 128;
+ಸ್ಥಿರ size_t ggml_backend_cann_ಬಫರ್_type_get_alignment(ggml_backend_ಬಫರ್_type_t buft) {
+    ಹಿಂತಿರುಗಿ 128;
 
-    GGML_UNUSED(buft);
+    GGML_ಬಳಸದ(buft);
 }
 
 /**
@@ -1545,13 +1545,13 @@ static size_t ggml_backend_cann_buffer_type_get_alignment(ggml_backend_buffer_ty
  * @return The total allocation size in bytes required for the tensor in the
  * CANN buffer.
  */
-static size_t ggml_backend_cann_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft,
-                                                           const ggml_tensor *        tensor) {
+ಸ್ಥಿರ size_t ggml_backend_cann_ಬಫರ್_type_get_alloc_ಗಾತ್ರ(ggml_backend_ಬಫರ್_type_t buft,
+                                                           ಸ್ಥಿರಾಂಕ ggml_tensor *        tensor) {
     size_t  size = ggml_nbytes(tensor);
     int64_t ne0  = tensor->ne[0];
 
     // Only check env once.
-    static bool weight_to_nz = parse_bool(get_env_as_lowercase("GGML_CANN_WEIGHT_NZ").value_or("on"));
+    ಸ್ಥಿರ ತಾರ್ಕಿಕ ತೂಕ_ಗಮ್ಯ_nz = parse_bool(get_env_as_lowercase("GGML_CANN_WEIGHT_NZ").value_or("on"));
 
     // last line must bigger than 32, because every single op deal at
     // least 32 bytes.
@@ -1559,33 +1559,33 @@ static size_t ggml_backend_cann_buffer_type_get_alloc_size(ggml_backend_buffer_t
     // int64_t line_size = ne0 * ggml_element_size(tensor);
     // int64_t line_size_align_32 = (line_size + 31) & ~31;
     // size += (line_size_align_32 - line_size);
-    if (ggml_is_quantized(tensor->type)) {
-        if (ne0 % MATRIX_ROW_PADDING != 0) {
-            size += ggml_row_size(tensor->type, MATRIX_ROW_PADDING - ne0 % MATRIX_ROW_PADDING);
+    ಆದರೆ (ggml_is_quantized(tensor->type)) {
+        ಆದರೆ (ne0 % ಮಾತೃಕೆ_ಅಡ್ಡಸಾಲು_PADDING != 0) {
+            size += ggml_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ(tensor->type, ಮಾತೃಕೆ_ಅಡ್ಡಸಾಲು_PADDING - ne0 % ಮಾತೃಕೆ_ಅಡ್ಡಸಾಲು_PADDING);
         }
-    } else if (weight_to_nz && tensor->type != GGML_TYPE_BF16
-               && is_matmul_weight((const ggml_tensor *) tensor)) {
+    } ಇಲ್ಲದಿದ್ದರೆ ಆದರೆ (ತೂಕ_ಗಮ್ಯ_nz && tensor->type != GGML_TYPE_BF16
+               && is_matmul_ತೂಕ((ಸ್ಥಿರಾಂಕ ggml_tensor *) tensor)) {
         // NZ format weight are not support quantized yet.
         // If ND tensor transform to NZ, size may changed.
         int64_t shape[] = { tensor->ne[1], tensor->ne[0] };
         GGML_ASSERT(tensor->ne[2] == 1);
         GGML_ASSERT(tensor->ne[3] == 1);
-        const aclIntArray * acl_shape = aclCreateIntArray(shape, 2);
-        size_t              new_size;
-        ACL_CHECK(aclnnCalculateMatmulWeightSizeV2(acl_shape, ggml_cann_type_mapping(tensor->type), &new_size));
+        ಸ್ಥಿರಾಂಕ aclIntArray * acl_shape = aclCreateIntArray(shape, 2);
+        size_t              new_ಗಾತ್ರ;
+        ACL_CHECK(aclnn_Calculate_Matmul_ತೂಕ_ಗಾತ್ರ_V2(acl_shape, ggml_cann_type_mapping(tensor->type), &new_ಗಾತ್ರ));
         ACL_CHECK(aclDestroyIntArray(acl_shape));
-        size = std::max(size, new_size);
+        size = std::max(size, new_ಗಾತ್ರ);
     }
 
-    return size;
+    ಹಿಂತಿರುಗಿ size;
 
-    GGML_UNUSED(buft);
+    GGML_ಬಳಸದ(buft);
 }
 
-static bool ggml_backend_cann_buffer_type_is_host(ggml_backend_buffer_type_t buft) {
-    return false;
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cann_ಬಫರ್_type_is_host(ggml_backend_ಬಫರ್_type_t buft) {
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 
-    GGML_UNUSED(buft);
+    GGML_ಬಳಸದ(buft);
 }
 
 /**
@@ -1594,15 +1594,15 @@ static bool ggml_backend_cann_buffer_type_is_host(ggml_backend_buffer_type_t buf
  * Provides function pointers for allocating, querying properties, and managing
  * memory for CANN buffer types in the GGML backend.
  */
-static const ggml_backend_buffer_type_i ggml_backend_cann_buffer_type_interface = {
-    /* .get_name            = */ ggml_backend_cann_buffer_type_name,
-    /* .alloc_buffer        = */ ggml_backend_cann_buffer_type_alloc_buffer,
-    /* .alloc_buffer_n      = */ NULL,
-    /* .get_alignment       = */ ggml_backend_cann_buffer_type_get_alignment,
-    /* .get_max_size        = */ NULL,  // defaults to SIZE_MAX
-    /* .get_alloc_size      = */ ggml_backend_cann_buffer_type_get_alloc_size,
-    /* .get_alloc_size_n    = */ NULL,
-    /* .is_host             = */ ggml_backend_cann_buffer_type_is_host,
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ggml_backend_ಬಫರ್_type_i ggml_backend_cann_ಬಫರ್_type_interface = {
+    /* .get_name            = */ ggml_backend_cann_ಬಫರ್_type_name,
+    /* .alloc_buffer        = */ ggml_backend_cann_ಬಫರ್_type_alloc_ಬಫರ್,
+    /* .alloc_buffer_n      = */ ಖಾಲಿ,
+    /* .get_alignment       = */ ggml_backend_cann_ಬಫರ್_type_get_alignment,
+    /* .get_max_size        = */ ಖಾಲಿ,  // defaults to SIZE_MAX
+    /* .get_alloc_size      = */ ggml_backend_cann_ಬಫರ್_type_get_alloc_ಗಾತ್ರ,
+    /* .get_alloc_size_n    = */ ಖಾಲಿ,
+    /* .is_host             = */ ggml_backend_cann_ಬಫರ್_type_is_host,
 };
 
 /**
@@ -1615,31 +1615,31 @@ static const ggml_backend_buffer_type_i ggml_backend_cann_buffer_type_interface 
  * @return A pointer to the buffer type interface for the specified device, or
  * nullptr if the device index is out of range.
  */
-ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
-    static std::mutex           mutex;
-    std::lock_guard<std::mutex> lock(mutex);
+ggml_backend_ಬಫರ್_type_t ggml_backend_cann_ಬಫರ್_type(int32_t device) {
+    ಸ್ಥಿರ std::mutex           mutex;
+    std::lock_guard<std::mutex> ಬೀಗ(mutex);
 
-    if (device >= ggml_backend_cann_get_device_count()) {
-        return nullptr;
+    ಆದರೆ (device >= ggml_backend_cann_get_device_ಎಣಿಕೆ()) {
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
 
-    static ggml_backend_buffer_type ggml_backend_cann_buffer_types[GGML_CANN_MAX_DEVICES];
+    ಸ್ಥಿರ ggml_backend_ಬಫರ್_type ggml_backend_cann_ಬಫರ್_types[GGML_CANN_MAX_DEVICES];
 
-    static bool ggml_backend_cann_buffer_type_initialized = false;
+    ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cann_ಬಫರ್_type_initialized = ಸುಳ್ಳು;
 
-    if (!ggml_backend_cann_buffer_type_initialized) {
-        for (int32_t i = 0; i < ggml_cann_info().device_count; i++) {
-            ggml_backend_cann_buffer_types[i] = {
-                /* .iface    = */ ggml_backend_cann_buffer_type_interface,
+    ಆದರೆ (!ggml_backend_cann_ಬಫರ್_type_initialized) {
+        ಗಾಗಿ (int32_t i = 0; i < ggml_cann_info().device_ಎಣಿಕೆ; i++) {
+            ggml_backend_cann_ಬಫರ್_types[i] = {
+                /* .iface    = */ ggml_backend_cann_ಬಫರ್_type_interface,
                 /* .device    = */ ggml_backend_reg_dev_get(ggml_backend_cann_reg(), i),
                 /* .context  = */
-                new ggml_backend_cann_buffer_type_context{ i, "CANN" + std::to_string(i) },
+                ಹೊಸ ggml_backend_cann_ಬಫರ್_type_context{ i, "CANN" + std::to_string(i) },
             };
         }
-        ggml_backend_cann_buffer_type_initialized = true;
+        ggml_backend_cann_ಬಫರ್_type_initialized = ನಿಜ;
     }
 
-    return &ggml_backend_cann_buffer_types[device];
+    ಹಿಂತಿರುಗಿ &ggml_backend_cann_ಬಫರ್_types[device];
 }
 
 /**
@@ -1651,10 +1651,10 @@ ggml_backend_buffer_type_t ggml_backend_cann_buffer_type(int32_t device) {
  * @param buft Pointer to the host buffer type context.
  * @return Const pointer to the C-style string containing the name.
  */
-static const char * ggml_backend_cann_host_buffer_type_name(ggml_backend_buffer_type_t buft) {
-    return "CANN_Host";
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cann_host_ಬಫರ್_type_name(ggml_backend_ಬಫರ್_type_t buft) {
+    ಹಿಂತಿರುಗಿ "CANN_Host";
 
-    GGML_UNUSED(buft);
+    GGML_ಬಳಸದ(buft);
 }
 
 /**
@@ -1666,10 +1666,10 @@ static const char * ggml_backend_cann_host_buffer_type_name(ggml_backend_buffer_
  * @param buft Pointer to the host buffer context.
  * @return Const pointer to the C-style string containing the name.
  */
-static const char * ggml_backend_cann_host_buffer_name(ggml_backend_buffer_t buffer) {
-    return "CANN_Host";
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cann_host_ಬಫರ್_name(ggml_backend_ಬಫರ್_t ಬಫರ್) {
+    ಹಿಂತಿರುಗಿ "CANN_Host";
 
-    GGML_UNUSED(buffer);
+    GGML_ಬಳಸದ(ಬಫರ್);
 }
 
 /**
@@ -1680,8 +1680,8 @@ static const char * ggml_backend_cann_host_buffer_name(ggml_backend_buffer_t buf
  *
  * @param buffer The CANN host buffer to free.
  */
-static void ggml_backend_cann_host_buffer_free(ggml_backend_buffer_t buffer) {
-    ACL_CHECK(aclrtFreeHost(buffer->context));
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_host_ಬಫರ್_free(ggml_backend_ಬಫರ್_t ಬಫರ್) {
+    ACL_CHECK(aclrtFreeHost(ಬಫರ್->context));
 }
 
 /**
@@ -1691,25 +1691,25 @@ static void ggml_backend_cann_host_buffer_free(ggml_backend_buffer_t buffer) {
  * @param size Size in bytes of the host buffer to allocate.
  * @return Pointer to the allocated host buffer, or nullptr if allocation fails.
  */
-static void * ggml_cann_host_malloc(size_t size) {
-    if (getenv("GGML_CANN_NO_PINNED") != nullptr) {
-        return nullptr;
+ಸ್ಥಿರ ಶೂನ್ಯ * ggml_cann_host_malloc(size_t size) {
+    ಆದರೆ (getenv("GGML_CANN_NO_PINNED") != ಶೂನ್ಯಸೂಚಕ) {
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
 
-    const size_t alignment = 128;
+    ಸ್ಥಿರಾಂಕ size_t alignment = 128;
     size                   = GGML_PAD(size, alignment);
-    if (size == 0) {
+    ಆದರೆ (size == 0) {
         size = alignment;
     }
 
-    void *   hostPtr = nullptr;
-    aclError err     = aclrtMallocHost((void **) &hostPtr, size);
-    if (err != ACL_SUCCESS) {
+    ಶೂನ್ಯ *   hostPtr = ಶೂನ್ಯಸೂಚಕ;
+    aclError err     = aclrtMallocHost((ಶೂನ್ಯ **) &hostPtr, size);
+    ಆದರೆ (err != ACL_SUCCESS) {
         GGML_LOG_WARN("%s: failed to allocate %.2f MiB of pinned memory: %s\n", __func__, size / 1024.0 / 1024.0,
-                      aclGetRecentErrMsg());
-        return nullptr;
+                      acl_Get_Recent_Err_ಸಂದೇಶ());
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
-    return hostPtr;
+    ಹಿಂತಿರುಗಿ hostPtr;
 }
 
 /**
@@ -1719,20 +1719,20 @@ static void * ggml_cann_host_malloc(size_t size) {
  * @param size Size in bytes of the host buffer to allocate.
  * @return Pointer to the allocated host buffer, or CPU buffer pointer if allocation fails.
  */
-static ggml_backend_buffer_t ggml_backend_cann_host_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft,
+ಸ್ಥಿರ ggml_backend_ಬಫರ್_t ggml_backend_cann_host_ಬಫರ್_type_alloc_ಬಫರ್(ggml_backend_ಬಫರ್_type_t buft,
                                                                              size_t                     size) {
-    void * hostPtr = ggml_cann_host_malloc(size);
+    ಶೂನ್ಯ * hostPtr = ggml_cann_host_malloc(size);
 
-    if (hostPtr == nullptr) {
+    ಆದರೆ (hostPtr == ಶೂನ್ಯಸೂಚಕ) {
         // fallback to cpu buffer
-        return ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
+        ಹಿಂತಿರುಗಿ ggml_backend_buft_alloc_ಬಫರ್(ggml_backend_cpu_ಬಫರ್_type(), size);
     }
 
-    ggml_backend_buffer_t buffer = ggml_backend_cpu_buffer_from_ptr(hostPtr, size);
-    buffer->buft                 = buft;
-    buffer->iface.free_buffer    = ggml_backend_cann_host_buffer_free;
+    ggml_backend_ಬಫರ್_t ಬಫರ್ = ggml_backend_cpu_ಬಫರ್_from_ptr(hostPtr, size);
+    ಬಫರ್->buft                 = buft;
+    ಬಫರ್->iface.free_ಬಫರ್    = ggml_backend_cann_host_ಬಫರ್_free;
 
-    return buffer;
+    ಹಿಂತಿರುಗಿ ಬಫರ್;
 }
 
 /**
@@ -1741,24 +1741,24 @@ static ggml_backend_buffer_t ggml_backend_cann_host_buffer_type_alloc_buffer(ggm
  * Provides function pointers for allocating, querying properties, and managing
  * memory for CANN buffer types in the GGML backend.
  */
-ggml_backend_buffer_type_t ggml_backend_cann_host_buffer_type() {
-    static struct ggml_backend_buffer_type ggml_backend_cann_buffer_type_host = {
+ggml_backend_ಬಫರ್_type_t ggml_backend_cann_host_ಬಫರ್_type() {
+    ಸ್ಥಿರ ರಚನೆ ggml_backend_ಬಫರ್_type ggml_backend_cann_ಬಫರ್_type_host = {
         /* .iface    = */ {
-                           /* .get_name             = */ ggml_backend_cann_host_buffer_type_name,
-                           /* .alloc_buffer         = */ ggml_backend_cann_host_buffer_type_alloc_buffer,
-                           /* .alloc_buffer_n       = */ NULL,
-                           /* .get_alignment        = */ ggml_backend_cpu_buffer_type()->iface.get_alignment,
-                           /* .get_max_size         = */ NULL,  // defaults to SIZE_MAX
-                           /* .get_alloc_size       = */ ggml_backend_cpu_buffer_type()->iface.get_alloc_size,
-                           /* .get_alloc_size_n     = */ NULL,
-                           /* .is_host              = */ ggml_backend_cpu_buffer_type()->iface.is_host,
+                           /* .get_name             = */ ggml_backend_cann_host_ಬಫರ್_type_name,
+                           /* .alloc_buffer         = */ ggml_backend_cann_host_ಬಫರ್_type_alloc_ಬಫರ್,
+                           /* .alloc_buffer_n       = */ ಖಾಲಿ,
+                           /* .get_alignment        = */ ggml_backend_cpu_ಬಫರ್_type()->iface.get_alignment,
+                           /* .get_max_size         = */ ಖಾಲಿ,  // defaults to SIZE_MAX
+                           /* .get_alloc_size       = */ ggml_backend_cpu_ಬಫರ್_type()->iface.get_alloc_ಗಾತ್ರ,
+                           /* .get_alloc_size_n     = */ ಖಾಲಿ,
+                           /* .is_host              = */ ggml_backend_cpu_ಬಫರ್_type()->iface.is_host,
                            },
         /* .device   = */
         ggml_backend_reg_dev_get(ggml_backend_cann_reg(), 0),
-        /* .context  = */ nullptr,
+        /* .context  = */ ಶೂನ್ಯಸೂಚಕ,
     };
 
-    return &ggml_backend_cann_buffer_type_host;
+    ಹಿಂತಿರುಗಿ &ggml_backend_cann_ಬಫರ್_type_host;
 }
 
 /**
@@ -1774,266 +1774,266 @@ ggml_backend_buffer_type_t ggml_backend_cann_host_buffer_type() {
  * stored.
  * @return true if the computation was successful; false otherwise.
  */
-static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct ggml_tensor * dst) {
-    switch (dst->op) {
-        case GGML_OP_REPEAT:
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_cann_compute_forward(ggml_backend_cann_context & ctx, ರಚನೆ ggml_tensor * dst) {
+    ಆಯ್ಕೆ (dst->op) {
+        ಸ್ಥಿತಿ GGML_OP_REPEAT:
             ggml_cann_repeat(ctx, dst);
-            break;
-        case GGML_OP_GET_ROWS:
-            ggml_cann_get_rows(ctx, dst);
-            break;
-        case GGML_OP_SET_ROWS:
-            ggml_cann_set_rows(ctx, dst);
-            break;
-        case GGML_OP_DUP:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_GET_ಅಡ್ಡಸಾಲುಗಳು:
+            ggml_cann_get_ಅಡ್ಡಸಾಲುಗಳು(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಗಣ_ಅಡ್ಡಸಾಲುಗಳು:
+            ggml_cann_ಗಣ_ಅಡ್ಡಸಾಲುಗಳು(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_DUP:
             ggml_cann_dup(ctx, dst);
-            break;
-        case GGML_OP_ADD:
-        case GGML_OP_ADD1:
-            ggml_cann_binary_op<aclnn_add>(ctx, dst);
-            break;
-        case GGML_OP_SUB:
-            ggml_cann_binary_op<aclnn_sub>(ctx, dst);
-            break;
-        case GGML_OP_ACC:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಕೂಡಿಸು:
+        ಸ್ಥಿತಿ GGML_OP_ADD1:
+            ggml_cann_ದ್ವಿಮಾನ_op<aclnn_ಕೂಡಿಸು>(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_SUB:
+            ggml_cann_ದ್ವಿಮಾನ_op<aclnn_sub>(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ACC:
             ggml_cann_acc(ctx, dst);
-            break;
-        case GGML_OP_MUL:
-            ggml_cann_binary_op<aclnn_mul>(ctx, dst);
-            break;
-        case GGML_OP_DIV:
-            ggml_cann_binary_op<aclnn_div>(ctx, dst);
-            break;
-        case GGML_OP_UNARY:
-            switch (ggml_get_unary_op(dst)) {
-                case GGML_UNARY_OP_ABS:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_MUL:
+            ggml_cann_ದ್ವಿಮಾನ_op<aclnn_mul>(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_DIV:
+            ggml_cann_ದ್ವಿಮಾನ_op<aclnn_div>(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_UNARY:
+            ಆಯ್ಕೆ (ggml_get_unary_op(dst)) {
+                ಸ್ಥಿತಿ GGML_UNARY_OP_ABS:
                     GGML_CANN_CALL_OP_UNARY(Abs);
-                    break;
-                case GGML_UNARY_OP_NEG:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_NEG:
                     GGML_CANN_CALL_OP_UNARY(Neg);
-                    break;
-                case GGML_UNARY_OP_GELU:
-                case GGML_UNARY_OP_GELU_ERF:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_GELU:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_GELU_ERF:
                     // aclnnGelu internally uses the erf-based approximation.
                     GGML_CANN_CALL_OP_UNARY(Gelu);
-                    break;
-                case GGML_UNARY_OP_SILU:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_SILU:
                     GGML_CANN_CALL_OP_UNARY(Silu);
-                    break;
-                case GGML_UNARY_OP_GELU_QUICK:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_GELU_ಶೀಘ್ರ:
                     {
-                        auto lambda = [](ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst) {
+                        ಸ್ವಯಂಚಾಲಿತ lambda = [](ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst) {
                             GGML_CANN_CALL_ACLNN_OP(ctx, GeluV2, acl_src, 0, acl_dst);
                         };
                         ggml_cann_op_unary(lambda, ctx, dst);
                     }
-                    break;
-                case GGML_UNARY_OP_TANH:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_TANH:
                     GGML_CANN_CALL_OP_UNARY(Tanh);
-                    break;
-                case GGML_UNARY_OP_RELU:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_RELU:
                     GGML_CANN_CALL_OP_UNARY(Relu);
-                    break;
-                case GGML_UNARY_OP_SIGMOID:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_SIGMOID:
                     GGML_CANN_CALL_OP_UNARY(Sigmoid);
-                    break;
-                case GGML_UNARY_OP_HARDSIGMOID:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_HARDSIGMOID:
                     GGML_CANN_CALL_OP_UNARY(Hardsigmoid);
-                    break;
-                case GGML_UNARY_OP_HARDSWISH:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_HARDSWISH:
                     GGML_CANN_CALL_OP_UNARY(Hardswish);
-                    break;
-                case GGML_UNARY_OP_EXP:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_EXP:
                     GGML_CANN_CALL_OP_UNARY(Exp);
-                    break;
-                case GGML_UNARY_OP_ELU:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_ELU:
                     ggml_cann_elu(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SGN:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_SGN:
                     GGML_CANN_CALL_OP_UNARY(Sign);
-                    break;
-                case GGML_UNARY_OP_STEP:
-                    ggml_cann_step(ctx, dst);
-                    break;
-                case GGML_UNARY_OP_SOFTPLUS:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_ಹೆಜ್ಜೆ:
+                    ggml_cann_ಹೆಜ್ಜೆ(ctx, dst);
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_UNARY_OP_SOFTPLUS:
                     ggml_cann_softplus(ctx, dst);
-                    break;
-                default:
-                    return false;
+                    ನಿಲ್ಲಿಸು;
+                ಪೂರ್ವನಿಯೋಜಿತ:
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
-            break;
-        case GGML_OP_GLU:
-            switch (ggml_get_glu_op(dst)) {
-                case GGML_GLU_OP_REGLU:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_GLU:
+            ಆಯ್ಕೆ (ggml_get_glu_op(dst)) {
+                ಸ್ಥಿತಿ GGML_GLU_OP_REGLU:
                     GGML_CANN_CALL_OP_UNARY_GATED(Relu);
-                    break;
-                case GGML_GLU_OP_GEGLU:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_GLU_OP_GEGLU:
                     ggml_cann_geglu(ctx, dst, 0);  // approximate=0 → tanh
-                    break;
-                case GGML_GLU_OP_GEGLU_ERF:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_GLU_OP_GEGLU_ERF:
                     ggml_cann_geglu(ctx, dst, 1);  // approximate=1 → erf
-                    break;
-                case GGML_GLU_OP_SWIGLU:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_GLU_OP_SWIGLU:
                     ggml_cann_swiglu(ctx, dst);
-                    break;
-                case GGML_GLU_OP_SWIGLU_CLAMP:
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_GLU_OP_SWIGLU_CLAMP:
                     ggml_cann_swiglu_clamp(ctx, dst);
-                    break;
-                case GGML_GLU_OP_GEGLU_QUICK:
-                    ggml_cann_geglu_quick(ctx, dst);
-                    break;
-                default:
-                    return false;
+                    ನಿಲ್ಲಿಸು;
+                ಸ್ಥಿತಿ GGML_GLU_OP_GEGLU_ಶೀಘ್ರ:
+                    ggml_cann_geglu_ಶೀಘ್ರ(ctx, dst);
+                    ನಿಲ್ಲಿಸು;
+                ಪೂರ್ವನಿಯೋಜಿತ:
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
-            break;
-        case GGML_OP_NORM:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_NORM:
             ggml_cann_norm(ctx, dst);
-            break;
-        case GGML_OP_GROUP_NORM:
-            ggml_cann_group_norm(ctx, dst);
-            break;
-        case GGML_OP_L2_NORM:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಗುಂಪು_NORM:
+            ggml_cann_ಗುಂಪು_norm(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_L2_NORM:
             ggml_cann_l2_norm(ctx, dst);
-            break;
-        case GGML_OP_CROSS_ENTROPY_LOSS:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_CROSS_ENTROPY_LOSS:
             ggml_cann_cross_entropy_loss(ctx, dst);
-            break;
-        case GGML_OP_CONCAT:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_CONCAT:
             ggml_cann_concat(ctx, dst);
-            break;
-        case GGML_OP_UPSCALE:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_UPSCALE:
             ggml_cann_upsample_nearest2d(ctx, dst);
-            break;
-        case GGML_OP_PAD:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_PAD:
             ggml_cann_pad(ctx, dst);
-            break;
-        case GGML_OP_ARANGE:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ARANGE:
             ggml_cann_arange(ctx, dst);
-            break;
-        case GGML_OP_TIMESTEP_EMBEDDING:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_TIMESTEP_EMBEDDING:
             ggml_cann_timestep_embedding(ctx, dst);
-            break;
-        case GGML_OP_LEAKY_RELU:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_LEAKY_RELU:
             ggml_cann_leaky_relu(ctx, dst);
-            break;
-        case GGML_OP_RMS_NORM:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_RMS_NORM:
             ggml_cann_rms_norm(ctx, dst);
-            break;
-        case GGML_OP_MUL_MAT:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_MUL_MAT:
             ggml_cann_mul_mat(ctx, dst);
-            break;
-        case GGML_OP_MUL_MAT_ID:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_MUL_MAT_ID:
             ggml_cann_mul_mat_id(ctx, dst);
-            break;
-        case GGML_OP_SCALE:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_SCALE:
             ggml_cann_scale(ctx, dst);
-            break;
-        case GGML_OP_SQR:
-            GGML_ASSERT(dst->src[1] == nullptr);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_SQR:
+            GGML_ASSERT(dst->src[1] == ಶೂನ್ಯಸೂಚಕ);
             dst->src[1] = dst->src[0];
-            ggml_cann_binary_op<aclnn_mul>(ctx, dst);
-            break;
-        case GGML_OP_SQRT:
+            ggml_cann_ದ್ವಿಮಾನ_op<aclnn_mul>(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_SQRT:
             GGML_CANN_CALL_OP_UNARY(Sqrt);
-            break;
-        case GGML_OP_CLAMP:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_CLAMP:
             ggml_cann_clamp(ctx, dst);
-            break;
-        case GGML_OP_CPY:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_CPY:
             ggml_cann_cpy(ctx, dst);
-            break;
-        case GGML_OP_SET:
-            ggml_cann_set(ctx, dst);
-            break;
-        case GGML_OP_CONT:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಗಣ:
+            ggml_cann_ಗಣ(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_CONT:
             ggml_cann_dup(ctx, dst);
-            break;
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-            break;
-        case GGML_OP_DIAG_MASK_INF:
-            ggml_cann_diag_mask(ctx, dst, -INFINITY);
-            break;
-        case GGML_OP_SOFT_MAX:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_NONE:
+        ಸ್ಥಿತಿ GGML_OP_RESHAPE:
+        ಸ್ಥಿತಿ GGML_OP_VIEW:
+        ಸ್ಥಿತಿ GGML_OP_ಕ್ರಮಬದಲಾವಣೆ:
+        ಸ್ಥಿತಿ GGML_OP_TRANSPOSE:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_DIAG_ಮುಖವಾಡ_INF:
+            ggml_cann_diag_ಮುಖವಾಡ(ctx, dst, -INFINITY);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_SOFT_MAX:
             ggml_cann_softmax(ctx, dst);
-            break;
-        case GGML_OP_ROPE:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ROPE:
             ggml_cann_rope(ctx, dst);
-            break;
-        case GGML_OP_IM2COL:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_IM2_ಲಂಬಸಾಲು:
             ggml_cann_im2col(ctx, dst);
-            break;
-        case GGML_OP_POOL_2D:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_POOL_2D:
             ggml_cann_pool2d(ctx, dst);
-            break;
-        case GGML_OP_SUM:
-            ggml_cann_sum(ctx, dst);
-            break;
-        case GGML_OP_SUM_ROWS:
-            ggml_cann_sum_rows(ctx, dst);
-            break;
-        case GGML_OP_ARGSORT:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಮೊತ್ತ:
+            ggml_cann_ಮೊತ್ತ(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಮೊತ್ತ_ಅಡ್ಡಸಾಲುಗಳು:
+            ggml_cann_ಮೊತ್ತ_ಅಡ್ಡಸಾಲುಗಳು(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ARGSORT:
             ggml_cann_argsort(ctx, dst);
-            break;
-        case GGML_OP_ARGMAX:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ARGMAX:
             ggml_cann_argmax(ctx, dst);
-            break;
-        case GGML_OP_COS:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_COS:
             ggml_cann_op_unary<aclnn_cos>(ctx, dst);
-            break;
-        case GGML_OP_SIN:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_SIN:
             ggml_cann_op_unary<aclnn_sin>(ctx, dst);
-            break;
-        case GGML_OP_CONV_TRANSPOSE_1D:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_CONV_TRANSPOSE_1D:
             ggml_cann_conv_transpose_1d(ctx, dst);
-            break;
-        case GGML_OP_LOG:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_LOG:
             GGML_CANN_CALL_OP_UNARY(Log);
-            break;
-        case GGML_OP_MEAN:
-            ggml_cann_mean(ctx, dst);
-            break;
-        case GGML_OP_PAD_REFLECT_1D:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಸರಾಸರಿ:
+            ggml_cann_ಸರಾಸರಿ(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_PAD_REFLECT_1D:
             ggml_cann_pad_reflect_1d(ctx, dst);
-            break;
-        case GGML_OP_COUNT_EQUAL:
-            ggml_cann_count_equal(ctx, dst);
-            break;
-        case GGML_OP_FLASH_ATTN_EXT:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಎಣಿಕೆ_EQUAL:
+            ggml_cann_ಎಣಿಕೆ_equal(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_FLASH_ATTN_EXT:
             ggml_cann_flash_attn_ext(ctx, dst);
-            break;
-        case GGML_OP_OUT_PROD:
-            ggml_cann_out_prod(ctx, dst);
-            break;
-        case GGML_OP_GATED_LINEAR_ATTN:
-            ggml_cann_gated_linear_attn(ctx, dst);
-            break;
-        case GGML_OP_SSM_CONV:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಹೊರಹೋಗು_PROD:
+            ggml_cann_ಹೊರಹೋಗು_prod(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_GATED_ರೇಖೀಯ_ATTN:
+            ggml_cann_gated_ರೇಖೀಯ_attn(ctx, dst);
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_SSM_CONV:
             ggml_cann_ssm_conv(ctx, dst);
-            break;
-        case GGML_OP_CUMSUM:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_CUMSUM:
             ggml_cann_cumsum(ctx, dst);
-            break;
-        case GGML_OP_TRI:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_TRI:
             ggml_cann_tri(ctx, dst);
-            break;
-        case GGML_OP_FILL:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_FILL:
             ggml_cann_fill(ctx, dst);
-            break;
-        case GGML_OP_DIAG:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_DIAG:
             ggml_cann_diag(ctx, dst);
-            break;
-        case GGML_OP_SOLVE_TRI:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_SOLVE_TRI:
             ggml_cann_solve_tri(ctx, dst);
-            break;
-        default:
-            return false;
+            ನಿಲ್ಲಿಸು;
+        ಪೂರ್ವನಿಯೋಜಿತ:
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 
-    return true;
+    ಹಿಂತಿರುಗಿ ನಿಜ;
 }
 
 // backend
@@ -2046,10 +2046,10 @@ static bool ggml_cann_compute_forward(ggml_backend_cann_context & ctx, struct gg
  * @param backend Pointer to the CANN backend structure.
  * @return A pointer to a constant string representing the backend name.
  */
-static const char * ggml_backend_cann_name(ggml_backend_t backend) {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cann_name(ggml_backend_t backend) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
 
-    return cann_ctx->name.c_str();
+    ಹಿಂತಿರುಗಿ cann_ctx->name.c_str();
 }
 
 /**
@@ -2060,13 +2060,13 @@ static const char * ggml_backend_cann_name(ggml_backend_t backend) {
  *
  * @param backend Pointer to the CANN backend structure to be freed.
  */
-static void ggml_backend_cann_free(ggml_backend_t backend) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_free(ggml_backend_t backend) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
     ACL_CHECK(aclrtSynchronizeDevice());
     ACL_CHECK(aclrtResetDevice(cann_ctx->device));
 
-    delete cann_ctx;
-    delete backend;
+    ಅಳಿಸು cann_ctx;
+    ಅಳಿಸು backend;
 }
 
 /**
@@ -2080,18 +2080,18 @@ static void ggml_backend_cann_free(ggml_backend_t backend) {
  * @param offset Offset in bytes within the host data.
  * @param size Size of the data to copy in bytes.
  */
-static void ggml_backend_cann_set_tensor_async(ggml_backend_t backend,
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_ಗಣ_tensor_async(ggml_backend_t backend,
                                                ggml_tensor *  tensor,
-                                               const void *   data,
-                                               size_t         offset,
+                                               ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ *   ದತ್ತಾಂಶ,
+                                               size_t         ಸ್ಥಾನಾಂತರ,
                                                size_t         size) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
-    ggml_backend_buffer_t       buf      = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
+    ggml_backend_ಬಫರ್_t       buf      = tensor->view_src ? tensor->view_src->ಬಫರ್ : tensor->ಬಫರ್;
 
-    GGML_ASSERT(buf->buft == ggml_backend_cann_buffer_type(cann_ctx->device) && "unsupported buffer type");
+    GGML_ASSERT(buf->buft == ggml_backend_cann_ಬಫರ್_type(cann_ctx->device) && "unsupported buffer type");
     GGML_ASSERT(!ggml_is_quantized(tensor->type));
 
-    ACL_CHECK(aclrtMemcpyAsync((char *) tensor->data + offset, size, data, size, ACL_MEMCPY_HOST_TO_DEVICE,
+    ACL_CHECK(aclrtMemcpyAsync((ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + ಸ್ಥಾನಾಂತರ, size, ದತ್ತಾಂಶ, size, ACL_MEMCPY_HOST_ಗಮ್ಯ_DEVICE,
                                cann_ctx->stream()));
 }
 
@@ -2106,18 +2106,18 @@ static void ggml_backend_cann_set_tensor_async(ggml_backend_t backend,
  * @param offset Offset in bytes within the host data.
  * @param size Size of the data to copy in bytes.
  */
-static void ggml_backend_cann_get_tensor_async(ggml_backend_t      backend,
-                                               const ggml_tensor * tensor,
-                                               void *              data,
-                                               size_t              offset,
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_get_tensor_async(ggml_backend_t      backend,
+                                               ಸ್ಥಿರಾಂಕ ggml_tensor * tensor,
+                                               ಶೂನ್ಯ *              ದತ್ತಾಂಶ,
+                                               size_t              ಸ್ಥಾನಾಂತರ,
                                                size_t              size) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
-    ggml_backend_buffer_t       buf      = tensor->view_src ? tensor->view_src->buffer : tensor->buffer;
+    ggml_backend_ಬಫರ್_t       buf      = tensor->view_src ? tensor->view_src->ಬಫರ್ : tensor->ಬಫರ್;
 
-    GGML_ASSERT(buf->buft == ggml_backend_cann_buffer_type(cann_ctx->device) && "unsupported buffer type");
+    GGML_ASSERT(buf->buft == ggml_backend_cann_ಬಫರ್_type(cann_ctx->device) && "unsupported buffer type");
     GGML_ASSERT(!ggml_is_quantized(tensor->type));
 
-    ACL_CHECK(aclrtMemcpyAsync(data, size, (char *) tensor->data + offset, size, ACL_MEMCPY_DEVICE_TO_HOST,
+    ACL_CHECK(aclrtMemcpyAsync(ದತ್ತಾಂಶ, size, (ಅಕ್ಷರ *) tensor->ದತ್ತಾಂಶ + ಸ್ಥಾನಾಂತರ, size, ACL_MEMCPY_DEVICE_ಗಮ್ಯ_HOST,
                                cann_ctx->stream()));
 }
 
@@ -2134,52 +2134,52 @@ static void ggml_backend_cann_get_tensor_async(ggml_backend_t      backend,
  * @param dst Pointer to the destination tensor to copy data to.
  * @return true if the copy operation succeeds, false otherwise.
  */
-static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
                                                ggml_backend_t      backend_dst,
-                                               const ggml_tensor * src,
+                                               ಸ್ಥಿರಾಂಕ ggml_tensor * src,
                                                ggml_tensor *       dst) {
     GGML_ASSERT(ggml_backend_is_cann(backend_src) || ggml_backend_is_cann(backend_dst));
 
-    GGML_ASSERT(!is_matmul_weight((const ggml_tensor *) src));
+    GGML_ASSERT(!is_matmul_ತೂಕ((ಸ್ಥಿರಾಂಕ ggml_tensor *) src));
 
-    if (!ggml_backend_buft_is_cann(src->buffer->buft) || !ggml_backend_buft_is_cann(dst->buffer->buft)) {
-        return false;
+    ಆದರೆ (!ggml_backend_buft_is_cann(src->ಬಫರ್->buft) || !ggml_backend_buft_is_cann(dst->ಬಫರ್->buft)) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 
-    ggml_backend_buffer_t buf_src = src->view_src ? src->view_src->buffer : src->buffer;
-    ggml_backend_buffer_t buf_dst = dst->view_src ? dst->view_src->buffer : dst->buffer;
+    ggml_backend_ಬಫರ್_t buf_src = src->view_src ? src->view_src->ಬಫರ್ : src->ಬಫರ್;
+    ggml_backend_ಬಫರ್_t buf_dst = dst->view_src ? dst->view_src->ಬಫರ್ : dst->ಬಫರ್;
 
     ggml_backend_cann_context * cann_ctx_src = (ggml_backend_cann_context *) backend_src->context;
     ggml_backend_cann_context * cann_ctx_dst = (ggml_backend_cann_context *) backend_dst->context;
 
-    size_t copy_size = ggml_nbytes(dst);
-    if (copy_size == 0) {
-        return true;
+    size_t copy_ಗಾತ್ರ = ggml_nbytes(dst);
+    ಆದರೆ (copy_ಗಾತ್ರ == 0) {
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
-    if (backend_src != backend_dst) {
-#ifdef ASCEND_310P
+    ಆದರೆ (backend_src != backend_dst) {
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ ASCEND_310P
         // TODO: Support 310p P2P copy
-        return false;
-#endif
-        ggml_backend_cann_buffer_context * buf_ctx_src = (ggml_backend_cann_buffer_context *) buf_src->context;
-        ggml_backend_cann_buffer_context * buf_ctx_dst = (ggml_backend_cann_buffer_context *) buf_dst->context;
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
+#ಆದರೆ_ಅಂತ್ಯ
+        ggml_backend_cann_ಬಫರ್_context * buf_ctx_src = (ggml_backend_cann_ಬಫರ್_context *) buf_src->context;
+        ggml_backend_cann_ಬಫರ್_context * buf_ctx_dst = (ggml_backend_cann_ಬಫರ್_context *) buf_dst->context;
 
         GGML_ASSERT(cann_ctx_src->device == buf_ctx_src->device);
         GGML_ASSERT(cann_ctx_dst->device == buf_ctx_dst->device);
 
         int32_t canAccessPeer = 0;
         ACL_CHECK(aclrtDeviceCanAccessPeer(&canAccessPeer, cann_ctx_src->device, cann_ctx_dst->device));
-        if (!canAccessPeer) {
-            return false;
+        ಆದರೆ (!canAccessPeer) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
 
         // need open both directions for memcpyasync between devices.
         ACL_CHECK(aclrtDeviceEnablePeerAccess(cann_ctx_src->device, 0));
-        ggml_cann_set_device(cann_ctx_src->device);
+        ggml_cann_ಗಣ_device(cann_ctx_src->device);
         ACL_CHECK(aclrtDeviceEnablePeerAccess(cann_ctx_dst->device, 0));
 
         // wait for task_queue empty to keep task order.
-        ACL_CHECK(aclrtMemcpyAsync(dst->data, copy_size, src->data, copy_size, ACL_MEMCPY_DEVICE_TO_DEVICE,
+        ACL_CHECK(aclrtMemcpyAsync(dst->ದತ್ತಾಂಶ, copy_ಗಾತ್ರ, src->ದತ್ತಾಂಶ, copy_ಗಾತ್ರ, ACL_MEMCPY_DEVICE_ಗಮ್ಯ_DEVICE,
                                    cann_ctx_src->stream()));
         // record event on src stream after the copy
         // TODO: this event is not effective with acl graph mode, change to use aclrtSynchronizeStream
@@ -2191,14 +2191,14 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
         // // wait on dst stream for the copy to complete
         // ggml_cann_set_device(cann_ctx_dst->device);
         // ACL_CHECK(aclrtStreamWaitEvent(cann_ctx_dst->stream(), cann_ctx_src->copy_event));
-        ACL_CHECK(aclrtSynchronizeStream(cann_ctx_src->stream()));
-    } else {
+        ACL_CHECK(aclrt_Synchronize_ಹರಿವು(cann_ctx_src->stream()));
+    } ಇಲ್ಲದಿದ್ದರೆ {
         // src and dst are on the same backend
-        ACL_CHECK(aclrtMemcpyAsync(dst->data, copy_size, src->data, copy_size, ACL_MEMCPY_DEVICE_TO_DEVICE,
+        ACL_CHECK(aclrtMemcpyAsync(dst->ದತ್ತಾಂಶ, copy_ಗಾತ್ರ, src->ದತ್ತಾಂಶ, copy_ಗಾತ್ರ, ACL_MEMCPY_DEVICE_ಗಮ್ಯ_DEVICE,
                                    cann_ctx_dst->stream()));
     }
 
-    return true;
+    ಹಿಂತಿರುಗಿ ನಿಜ;
 }
 
 /**
@@ -2209,10 +2209,10 @@ static bool ggml_backend_cann_cpy_tensor_async(ggml_backend_t      backend_src,
  *
  * @param backend Pointer to the CANN backend structure to synchronize.
  */
-static void ggml_backend_cann_synchronize(ggml_backend_t backend) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_synchronize(ggml_backend_t backend) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
-    ggml_cann_set_device(cann_ctx->device);
-    ACL_CHECK(aclrtSynchronizeStream(cann_ctx->stream()));
+    ggml_cann_ಗಣ_device(cann_ctx->device);
+    ACL_CHECK(aclrt_Synchronize_ಹರಿವು(cann_ctx->stream()));
 }
 
 /**
@@ -2228,25 +2228,25 @@ static void ggml_backend_cann_synchronize(ggml_backend_t backend) {
  * @return true if the operations can be fused
  * @return false if the operations cannot be fused
  */
-static bool ggml_cann_can_fuse(const struct ggml_cgraph *          cgraph,
-                               int                                 node_idx,
-                               std::initializer_list<enum ggml_op> ops) {
-    if (!ggml_can_fuse(cgraph, node_idx, ops)) {
-        return false;
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_cann_can_fuse(ಸ್ಥಿರಾಂಕ ರಚನೆ ggml_cgraph *          cgraph,
+                               ಪೂರ್ಣಾಂಕ                                 ಗಂಟು_idx,
+                               std::initializer_list<ಎಣಿಕೆ ggml_op> ops) {
+    ಆದರೆ (!ggml_can_fuse(cgraph, ಗಂಟು_idx, ops)) {
+        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 
     // CANN backend supports fusing ADD + RMS_NORM operations
-    if ((ops.size() == 2) && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_RMS_NORM) {
-        ggml_tensor * add_node = cgraph->nodes[node_idx];
+    ಆದರೆ ((ops.size() == 2) && ops.begin()[0] == GGML_OP_ಕೂಡಿಸು && ops.begin()[1] == GGML_OP_RMS_NORM) {
+        ggml_tensor * ಕೂಡಿಸು_ಗಂಟು = cgraph->nodes[ಗಂಟು_idx];
         // TODO: support broadcast for ADD + RMS_NORM
-        if (add_node->src[0]->ne[0] != add_node->src[1]->ne[0] || add_node->src[0]->ne[1] != add_node->src[1]->ne[1] ||
-            add_node->src[0]->ne[2] != add_node->src[1]->ne[2] || add_node->src[0]->ne[3] != add_node->src[1]->ne[3]) {
-            return false;
+        ಆದರೆ (ಕೂಡಿಸು_ಗಂಟು->src[0]->ne[0] != ಕೂಡಿಸು_ಗಂಟು->src[1]->ne[0] || ಕೂಡಿಸು_ಗಂಟು->src[0]->ne[1] != ಕೂಡಿಸು_ಗಂಟು->src[1]->ne[1] ||
+            ಕೂಡಿಸು_ಗಂಟು->src[0]->ne[2] != ಕೂಡಿಸು_ಗಂಟು->src[1]->ne[2] || ಕೂಡಿಸು_ಗಂಟು->src[0]->ne[3] != ಕೂಡಿಸು_ಗಂಟು->src[1]->ne[3]) {
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
         }
-        return true;
+        ಹಿಂತಿರುಗಿ ನಿಜ;
     }
 
-    return false;
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }
 
 /**
@@ -2262,60 +2262,60 @@ static bool ggml_cann_can_fuse(const struct ggml_cgraph *          cgraph,
  * @param use_cann_graph               Whether to use CANN graph execution.
  * @param cann_graph_capture_required  Whether graph capture is needed due to graph changes.
  */
-static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx,
+ಸ್ಥಿರ ಶೂನ್ಯ evaluate_and_capture_cann_ನಕ್ಷೆ(ggml_backend_cann_context * cann_ctx,
                                             ggml_cgraph *               cgraph,
-                                            bool                        use_cann_graph,
-                                            bool                        cann_graph_capture_required) {
-#ifdef USE_ACL_GRAPH
-    if (use_cann_graph && cann_graph_capture_required) {  // Begin CANN graph capture
-        ACL_CHECK(aclmdlRICaptureBegin(cann_ctx->stream(), ACL_MODEL_RI_CAPTURE_MODE_GLOBAL));
+                                            ತಾರ್ಕಿಕ                        use_cann_ನಕ್ಷೆ,
+                                            ತಾರ್ಕಿಕ                        cann_ನಕ್ಷೆ_capture_required) {
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ USE_ACL_ನಕ್ಷೆ
+    ಆದರೆ (use_cann_ನಕ್ಷೆ && cann_ನಕ್ಷೆ_capture_required) {  // Begin CANN graph capture
+        ACL_CHECK(aclmdlRICaptureBegin(cann_ctx->stream(), ACL_MODEL_RI_CAPTURE_ಬಹುಲಕ_GLOBAL));
     }
-#endif  // USE_ACL_GRAPH
+#ಆದರೆ_ಅಂತ್ಯ  // USE_ACL_GRAPH
     // Only perform the graph execution if CANN graphs are not enabled, or we are capturing the graph.
     // With the use of CANN graphs, the execution will be performed by the graph launch.
-    static bool opt_fusion = parse_bool(get_env_as_lowercase("GGML_CANN_OPERATOR_FUSION").value_or(""));
+    ಸ್ಥಿರ ತಾರ್ಕಿಕ opt_fusion = parse_bool(get_env_as_lowercase("GGML_CANN_OPERATOR_FUSION").value_or(""));
 
-    if (!use_cann_graph || cann_graph_capture_required) {
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            ggml_tensor * node = cgraph->nodes[i];
-            if (opt_fusion) {
-                if (ggml_cann_can_fuse(cgraph, i, { GGML_OP_ADD, GGML_OP_RMS_NORM })) {
-                    ggml_cann_op_add_rms_norm_fused(*cann_ctx, node, cgraph->nodes[i + 1]);
+    ಆದರೆ (!use_cann_ನಕ್ಷೆ || cann_ನಕ್ಷೆ_capture_required) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < cgraph->n_nodes; i++) {
+            ggml_tensor * ಗಂಟು = cgraph->nodes[i];
+            ಆದರೆ (opt_fusion) {
+                ಆದರೆ (ggml_cann_can_fuse(cgraph, i, { GGML_OP_ಕೂಡಿಸು, GGML_OP_RMS_NORM })) {
+                    ggml_cann_op_ಕೂಡಿಸು_rms_norm_fused(*cann_ctx, ಗಂಟು, cgraph->nodes[i + 1]);
                     i++;
-                    continue;
+                    ಮುಂದುವರಿ;
                 }
             }
 
-            if (ggml_is_empty(node) || node->op == GGML_OP_RESHAPE || node->op == GGML_OP_TRANSPOSE ||
-                node->op == GGML_OP_VIEW || node->op == GGML_OP_PERMUTE || node->op == GGML_OP_NONE) {
-                continue;
+            ಆದರೆ (ggml_is_ಖಾಲಿಗಳು(ಗಂಟು) || ಗಂಟು->op == GGML_OP_RESHAPE || ಗಂಟು->op == GGML_OP_TRANSPOSE ||
+                ಗಂಟು->op == GGML_OP_VIEW || ಗಂಟು->op == GGML_OP_ಕ್ರಮಬದಲಾವಣೆ || ಗಂಟು->op == GGML_OP_NONE) {
+                ಮುಂದುವರಿ;
             }
 
-            if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-                continue;
+            ಆದರೆ ((ಗಂಟು->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+                ಮುಂದುವರಿ;
             }
 
-            bool ok = ggml_cann_compute_forward(*cann_ctx, node);
-            if (!ok) {
-                GGML_LOG_ERROR("%s: op not supported %s (%s)\n", __func__, node->name, ggml_op_name(node->op));
+            ತಾರ್ಕಿಕ ok = ggml_cann_compute_forward(*cann_ctx, ಗಂಟು);
+            ಆದರೆ (!ok) {
+                GGML_LOG_ERROR("%s: op not supported %s (%s)\n", __func__, ಗಂಟು->name, ggml_op_name(ಗಂಟು->op));
             }
             GGML_ASSERT(ok);
         }
     }
 
-#ifdef USE_ACL_GRAPH
-    if (use_cann_graph) {
-        GGML_ASSERT(!cann_ctx->graph_lru_cache.cache_list.empty());
-        ggml_cann_graph * matched_graph = cann_ctx->graph_lru_cache.cache_list.front();
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ USE_ACL_ನಕ್ಷೆ
+    ಆದರೆ (use_cann_ನಕ್ಷೆ) {
+        GGML_ASSERT(!cann_ctx->ನಕ್ಷೆ_lru_cache.cache_list.ಖಾಲಿಗಳು());
+        ggml_cann_ನಕ್ಷೆ * matched_ನಕ್ಷೆ = cann_ctx->ನಕ್ಷೆ_lru_cache.cache_list.front();
 
-        if (cann_graph_capture_required) {  // End CANN graph capture
-            ACL_CHECK(aclmdlRICaptureEnd(cann_ctx->stream(), &matched_graph->graph));
+        ಆದರೆ (cann_ನಕ್ಷೆ_capture_required) {  // End CANN graph capture
+            ACL_CHECK(aclmdl_RICapture_ಕೊನೆ(cann_ctx->stream(), &matched_ನಕ್ಷೆ->graph));
         }
 
         // Execute CANN graph
-        ACL_CHECK(aclmdlRIExecuteAsync(matched_graph->graph, cann_ctx->stream()));
+        ACL_CHECK(aclmdlRIExecuteAsync(matched_ನಕ್ಷೆ->graph, cann_ctx->stream()));
     }
-#endif  // USE_ACL_GRAPH
+#ಆದರೆ_ಅಂತ್ಯ  // USE_ACL_GRAPH
 }
 
 /**
@@ -2330,66 +2330,66 @@ static void evaluate_and_capture_cann_graph(ggml_backend_cann_context * cann_ctx
  * @return enum ggml_status Returns GGML_STATUS_SUCCESS if computation
  *         completes successfully, otherwise an appropriate error status.
  */
-static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+ಸ್ಥಿರ ಎಣಿಕೆ ggml_ಸ್ಥಿತಿ ggml_backend_cann_ನಕ್ಷೆ_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
-    ggml_cann_set_device(cann_ctx->device);
+    ggml_cann_ಗಣ_device(cann_ctx->device);
     g_nz_workspaces[cann_ctx->device].clear();
 
     // calculate rope cache for fist layer in current device.
-    cann_ctx->rope_cache.cached = false;
+    cann_ctx->rope_cache.cached = ಸುಳ್ಳು;
 
-    bool graph_capture_required = false;
-#ifdef USE_ACL_GRAPH
-    bool use_cann_graph = true;
+    ತಾರ್ಕಿಕ ನಕ್ಷೆ_capture_required = ಸುಳ್ಳು;
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ USE_ACL_ನಕ್ಷೆ
+    ತಾರ್ಕಿಕ use_cann_ನಕ್ಷೆ = ನಿಜ;
 
-    static bool prefill_use_graph = parse_bool(get_env_as_lowercase("GGML_CANN_PREFILL_USE_GRAPH").value_or(""));
-    if (!prefill_use_graph) {
+    ಸ್ಥಿರ ತಾರ್ಕಿಕ prefill_use_ನಕ್ಷೆ = parse_bool(get_env_as_lowercase("GGML_CANN_PREFILL_USE_GRAPH").value_or(""));
+    ಆದರೆ (!prefill_use_ನಕ್ಷೆ) {
         // Do not use acl_graph for prefill.
-        for (int i = 0; i < cgraph->n_nodes; i++) {
-            ggml_tensor * node = cgraph->nodes[i];
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < cgraph->n_nodes; i++) {
+            ggml_tensor * ಗಂಟು = cgraph->nodes[i];
             // TODO: Optimize here. Currently, we can only
             // get seq_len by FA's input.
-            if (node->op == GGML_OP_FLASH_ATTN_EXT) {
+            ಆದರೆ (ಗಂಟು->op == GGML_OP_FLASH_ATTN_EXT) {
                 // Q -> src[0], shape: [B, S, N, D]
-                use_cann_graph = (node->src[0]->ne[1] == 1);
-                break;
+                use_cann_ನಕ್ಷೆ = (ಗಂಟು->src[0]->ne[1] == 1);
+                ನಿಲ್ಲಿಸು;
             }
         }
     }
 
-    if (!cann_ctx->acl_graph_mode) {
-        use_cann_graph = false;
+    ಆದರೆ (!cann_ctx->acl_ನಕ್ಷೆ_ಬಹುಲಕ) {
+        use_cann_ನಕ್ಷೆ = ಸುಳ್ಳು;
     }
 
-    if (use_cann_graph) {
+    ಆದರೆ (use_cann_ನಕ್ಷೆ) {
         // If no matching graph is found, the graph needs to be recaptured.
-        graph_capture_required = !cann_ctx->graph_lru_cache.find_and_move_to_front(cgraph);
+        ನಕ್ಷೆ_capture_required = !cann_ctx->ನಕ್ಷೆ_lru_cache.ಕಂಡುಹಿಡಿ_and_move_ಗಮ್ಯ_front(cgraph);
 
-        if (graph_capture_required) {
+        ಆದರೆ (ನಕ್ಷೆ_capture_required) {
             // If no matching graph is found, add a new ACL graph.
-            ggml_cann_graph * new_graph = ggml_cann_graph::create_from_cgraph(cgraph);
-            cann_ctx->graph_lru_cache.push(new_graph);
+            ggml_cann_ನಕ್ಷೆ * new_ನಕ್ಷೆ = ggml_cann_ನಕ್ಷೆ::create_from_cgraph(cgraph);
+            cann_ctx->ನಕ್ಷೆ_lru_cache.ತಳ್ಳು(new_ನಕ್ಷೆ);
 
             // Pre-load rope cache before graph capture.  During capture the
             // stream cannot perform host-to-device memcpy or device memory
             // malloc/free.  Running the full cache init now populates the
             // cache metadata so these branches are skipped during capture,
             // while also warming up the memory pool.
-            for (int i = 0; i < cgraph->n_nodes; i++) {
-                ggml_tensor * node = cgraph->nodes[i];
-                if (node->op == GGML_OP_ROPE) {
-                    ggml_cann_rope_cache_preload(*cann_ctx, node);
-                    break;
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < cgraph->n_nodes; i++) {
+                ggml_tensor * ಗಂಟು = cgraph->nodes[i];
+                ಆದರೆ (ಗಂಟು->op == GGML_OP_ROPE) {
+                    ggml_cann_rope_cache_preload(*cann_ctx, ಗಂಟು);
+                    ನಿಲ್ಲಿಸು;
                 }
             }
         }
     }
-#else
-    bool use_cann_graph = false;
-#endif  // USE_ACL_GRAPH
-    evaluate_and_capture_cann_graph(cann_ctx, cgraph, use_cann_graph, graph_capture_required);
+#ಇಲ್ಲದಿದ್ದರೆ
+    ತಾರ್ಕಿಕ use_cann_ನಕ್ಷೆ = ಸುಳ್ಳು;
+#ಆದರೆ_ಅಂತ್ಯ  // USE_ACL_GRAPH
+    evaluate_and_capture_cann_ನಕ್ಷೆ(cann_ctx, cgraph, use_cann_ನಕ್ಷೆ, ನಕ್ಷೆ_capture_required);
 
-    return GGML_STATUS_SUCCESS;
+    ಹಿಂತಿರುಗಿ GGML_ಸ್ಥಿತಿ_SUCCESS;
 }
 
 /**
@@ -2404,317 +2404,317 @@ static enum ggml_status ggml_backend_cann_graph_compute(ggml_backend_t backend, 
  * @return bool Returns true if the operation is supported by the backend,
  *              otherwise false.
  */
-static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
-    switch (op->op) {
-        case GGML_OP_UNARY:
-            switch (ggml_get_unary_op(op)) {
-                case GGML_UNARY_OP_ABS:
-                case GGML_UNARY_OP_NEG:
-                case GGML_UNARY_OP_GELU:
-                case GGML_UNARY_OP_SILU:
-                case GGML_UNARY_OP_RELU:
-                case GGML_UNARY_OP_SIGMOID:
-                case GGML_UNARY_OP_HARDSIGMOID:
-                case GGML_UNARY_OP_HARDSWISH:
-                case GGML_UNARY_OP_GELU_QUICK:
-                case GGML_UNARY_OP_TANH:
-                case GGML_UNARY_OP_EXP:
-                case GGML_UNARY_OP_ELU:
-                case GGML_UNARY_OP_SGN:
-                case GGML_UNARY_OP_STEP:
-                case GGML_UNARY_OP_GELU_ERF:
-                case GGML_UNARY_OP_SOFTPLUS:
-                    return true;
-                default:
-                    return false;
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cann_supports_op(ggml_backend_dev_t dev, ಸ್ಥಿರಾಂಕ ggml_tensor * op) {
+    ಆಯ್ಕೆ (op->op) {
+        ಸ್ಥಿತಿ GGML_OP_UNARY:
+            ಆಯ್ಕೆ (ggml_get_unary_op(op)) {
+                ಸ್ಥಿತಿ GGML_UNARY_OP_ABS:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_NEG:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_GELU:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_SILU:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_RELU:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_SIGMOID:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_HARDSIGMOID:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_HARDSWISH:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_GELU_ಶೀಘ್ರ:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_TANH:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_EXP:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_ELU:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_SGN:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_ಹೆಜ್ಜೆ:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_GELU_ERF:
+                ಸ್ಥಿತಿ GGML_UNARY_OP_SOFTPLUS:
+                    ಹಿಂತಿರುಗಿ ನಿಜ;
+                ಪೂರ್ವನಿಯೋಜಿತ:
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
-        case GGML_OP_GLU:
-            switch (ggml_get_glu_op(op)) {
-                case GGML_GLU_OP_REGLU:
-                case GGML_GLU_OP_GEGLU:
-                case GGML_GLU_OP_SWIGLU:
-                case GGML_GLU_OP_GEGLU_ERF:
-                case GGML_GLU_OP_GEGLU_QUICK:
-                case GGML_GLU_OP_SWIGLU_CLAMP:
-                    return true;
-                default:
-                    return false;
+        ಸ್ಥಿತಿ GGML_OP_GLU:
+            ಆಯ್ಕೆ (ggml_get_glu_op(op)) {
+                ಸ್ಥಿತಿ GGML_GLU_OP_REGLU:
+                ಸ್ಥಿತಿ GGML_GLU_OP_GEGLU:
+                ಸ್ಥಿತಿ GGML_GLU_OP_SWIGLU:
+                ಸ್ಥಿತಿ GGML_GLU_OP_GEGLU_ERF:
+                ಸ್ಥಿತಿ GGML_GLU_OP_GEGLU_ಶೀಘ್ರ:
+                ಸ್ಥಿತಿ GGML_GLU_OP_SWIGLU_CLAMP:
+                    ಹಿಂತಿರುಗಿ ನಿಜ;
+                ಪೂರ್ವನಿಯೋಜಿತ:
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
-            break;
-        case GGML_OP_MUL_MAT:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_MUL_MAT:
             {
-                switch (op->src[0]->type) {
-#ifndef ASCEND_310P
-                    case GGML_TYPE_BF16:
-#endif
-                    case GGML_TYPE_F16:
-                    case GGML_TYPE_F32:
-                        return true;
-                    case GGML_TYPE_Q8_0:
-                    case GGML_TYPE_Q4_0:
-#ifdef ASCEND_310P
+                ಆಯ್ಕೆ (op->src[0]->type) {
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ ASCEND_310P
+                    ಸ್ಥಿತಿ GGML_TYPE_BF16:
+#ಆದರೆ_ಅಂತ್ಯ
+                    ಸ್ಥಿತಿ GGML_TYPE_F16:
+                    ಸ್ಥಿತಿ GGML_TYPE_F32:
+                        ಹಿಂತಿರುಗಿ ನಿಜ;
+                    ಸ್ಥಿತಿ GGML_TYPE_Q8_0:
+                    ಸ್ಥಿತಿ GGML_TYPE_Q4_0:
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ ASCEND_310P
                         // Q4 && Q8 per group is not support on 310p device
-                        return false;
-#else
+                        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
+#ಇಲ್ಲದಿದ್ದರೆ
                         // only support contiguous for quantized types.
-                        return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
-#endif
-                    default:
-                        return false;
+                        ಹಿಂತಿರುಗಿ ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
+#ಆದರೆ_ಅಂತ್ಯ
+                    ಪೂರ್ವನಿಯೋಜಿತ:
+                        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
             }
-        case GGML_OP_MUL_MAT_ID:
-            switch (op->src[0]->type) {
-                case GGML_TYPE_F16:
-                case GGML_TYPE_F32:
-                    return true;
-                case GGML_TYPE_Q8_0:
-                case GGML_TYPE_Q4_0:
-#ifdef ASCEND_310P
+        ಸ್ಥಿತಿ GGML_OP_MUL_MAT_ID:
+            ಆಯ್ಕೆ (op->src[0]->type) {
+                ಸ್ಥಿತಿ GGML_TYPE_F16:
+                ಸ್ಥಿತಿ GGML_TYPE_F32:
+                    ಹಿಂತಿರುಗಿ ನಿಜ;
+                ಸ್ಥಿತಿ GGML_TYPE_Q8_0:
+                ಸ್ಥಿತಿ GGML_TYPE_Q4_0:
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ ASCEND_310P
                     // Q4 && Q8 per group is not support on 310p device
-                    return false;
-#else
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
+#ಇಲ್ಲದಿದ್ದರೆ
                     // only support contiguous for quantized types.
-                    return ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
-#endif
-                default:
-                    return false;
+                    ಹಿಂತಿರುಗಿ ggml_is_contiguous(op->src[0]) && ggml_is_contiguous(op->src[1]);
+#ಆದರೆ_ಅಂತ್ಯ
+                ಪೂರ್ವನಿಯೋಜಿತ:
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
         // embedding
-        case GGML_OP_GET_ROWS:
+        ಸ್ಥಿತಿ GGML_OP_GET_ಅಡ್ಡಸಾಲುಗಳು:
             {
-                switch (op->src[0]->type) {
-                    case GGML_TYPE_F32:
-                    case GGML_TYPE_F16:
-#ifndef ASCEND_310P
-                    case GGML_TYPE_BF16:
-#endif
-                    case GGML_TYPE_Q8_0:
-                        return true;
-                    default:
-                        return false;
+                ಆಯ್ಕೆ (op->src[0]->type) {
+                    ಸ್ಥಿತಿ GGML_TYPE_F32:
+                    ಸ್ಥಿತಿ GGML_TYPE_F16:
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ ASCEND_310P
+                    ಸ್ಥಿತಿ GGML_TYPE_BF16:
+#ಆದರೆ_ಅಂತ್ಯ
+                    ಸ್ಥಿತಿ GGML_TYPE_Q8_0:
+                        ಹಿಂತಿರುಗಿ ನಿಜ;
+                    ಪೂರ್ವನಿಯೋಜಿತ:
+                        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
             }
-            break;
-        case GGML_OP_SET_ROWS:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_ಗಣ_ಅಡ್ಡಸಾಲುಗಳು:
             {
-                switch (op->type) {
-                    case GGML_TYPE_F32:
-                    case GGML_TYPE_F16:
-#ifndef ASCEND_310P
-                    case GGML_TYPE_BF16:
-#endif
-                        return true;
-                    default:
-                        return false;
+                ಆಯ್ಕೆ (op->type) {
+                    ಸ್ಥಿತಿ GGML_TYPE_F32:
+                    ಸ್ಥಿತಿ GGML_TYPE_F16:
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ ASCEND_310P
+                    ಸ್ಥಿತಿ GGML_TYPE_BF16:
+#ಆದರೆ_ಅಂತ್ಯ
+                        ಹಿಂತಿರುಗಿ ನಿಜ;
+                    ಪೂರ್ವನಿಯೋಜಿತ:
+                        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
             }
-            break;
-        case GGML_OP_CPY:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_CPY:
             {
                 ggml_tensor * src = op->src[0];
-#ifdef ASCEND_310P
-                if ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16) ||
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ ASCEND_310P
+                ಆದರೆ ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16) ||
                     (src->type != GGML_TYPE_F32 && src->type != GGML_TYPE_F16)) {
                     // only support F32 and F16 on 310P.
-                    return false;
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-#else
-                if ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_BF16) ||
+#ಇಲ್ಲದಿದ್ದರೆ
+                ಆದರೆ ((op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_BF16) ||
                     (src->type != GGML_TYPE_F32 && src->type != GGML_TYPE_F16 && src->type != GGML_TYPE_BF16)) {
                     // only support F32, F16 and BF16.
-                    return false;
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-#endif
-                return true;
+#ಆದರೆ_ಅಂತ್ಯ
+                ಹಿಂತಿರುಗಿ ನಿಜ;
             }
-            break;
-        case GGML_OP_CONT:
+            ನಿಲ್ಲಿಸು;
+        ಸ್ಥಿತಿ GGML_OP_CONT:
             {
-                switch (op->src[0]->type) {
-                    case GGML_TYPE_F32:
-                    case GGML_TYPE_F16:
-#ifndef ASCEND_310P
-                    case GGML_TYPE_BF16:
-#endif
-                        return true;
-                    default:
-                        return false;
+                ಆಯ್ಕೆ (op->src[0]->type) {
+                    ಸ್ಥಿತಿ GGML_TYPE_F32:
+                    ಸ್ಥಿತಿ GGML_TYPE_F16:
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ ASCEND_310P
+                    ಸ್ಥಿತಿ GGML_TYPE_BF16:
+#ಆದರೆ_ಅಂತ್ಯ
+                        ಹಿಂತಿರುಗಿ ನಿಜ;
+                    ಪೂರ್ವನಿಯೋಜಿತ:
+                        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
             }
-        case GGML_OP_ROPE:
+        ಸ್ಥಿತಿ GGML_OP_ROPE:
             {
-                if (((const int32_t *) op->op_params)[15] != 0) {
-                    return false; // FIXME: support ggml_rope_set_offset
+                ಆದರೆ (((ಸ್ಥಿರಾಂಕ int32_t *) op->op_params)[15] != 0) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು; // FIXME: support ggml_rope_set_offset
                 }
-                if (op->src[0]->ne[0] > 896) {
-                    return false;
+                ಆದರೆ (op->src[0]->ne[0] > 896) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-#ifdef ASCEND_310P
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ ASCEND_310P
                 // TODO: Support rope_dim < ne00(dim)
-                if (op->src[0]->ne[0] != op->op_params[1]) {
-                    return false;
+                ಆದರೆ (op->src[0]->ne[0] != op->op_params[1]) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                if (!ggml_is_contiguous(op->src[0])) {
-                    return false;
+                ಆದರೆ (!ggml_is_contiguous(op->src[0])) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-#endif
-                return true;
+#ಆದರೆ_ಅಂತ್ಯ
+                ಹಿಂತಿರುಗಿ ನಿಜ;
             }
-        case GGML_OP_UPSCALE:
+        ಸ್ಥಿತಿ GGML_OP_UPSCALE:
             {
                 // aclnnUpsampleNearest2dGetWorkspaceSize not support
                 // selfDimN[2]/outDimN[2] or selfDimC[3]/outDimC[3] not equal
-                if (op->src[0]->ne[2] * op->ne[3] != op->src[0]->ne[3] * op->ne[2]) {
-                    return false;
+                ಆದರೆ (op->src[0]->ne[2] * op->ne[3] != op->src[0]->ne[3] * op->ne[2]) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                if (op->op_params[0] != GGML_SCALE_MODE_NEAREST) {
-                    return false;
+                ಆದರೆ (op->op_params[0] != GGML_SCALE_ಬಹುಲಕ_ಹತ್ತಿರದ) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                if (op->op_params[0] & GGML_SCALE_FLAG_ANTIALIAS) {
-                    return false;
+                ಆದರೆ (op->op_params[0] & GGML_SCALE_FLAG_ANTIALIAS) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                return true;
+                ಹಿಂತಿರುಗಿ ನಿಜ;
             }
-        case GGML_OP_POOL_2D:
+        ಸ್ಥಿತಿ GGML_OP_POOL_2D:
             {
-                const int32_t * opts = (const int32_t *) op->op_params;
-#ifdef ASCEND_310P
-                enum ggml_op_pool opt = static_cast<ggml_op_pool>(opts[0]);
-                if (opt == GGML_OP_POOL_MAX) {
-                    return false;
+                ಸ್ಥಿರಾಂಕ int32_t * opts = (ಸ್ಥಿರಾಂಕ int32_t *) op->op_params;
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ ASCEND_310P
+                ಎಣಿಕೆ ggml_op_pool opt = static_cast<ggml_op_pool>(opts[0]);
+                ಆದರೆ (opt == GGML_OP_POOL_MAX) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-#endif
-                const int k0 = opts[1];
-                const int k1 = opts[2];
-                const int p0 = opts[5];
-                const int p1 = opts[6];
+#ಆದರೆ_ಅಂತ್ಯ
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k0 = opts[1];
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ k1 = opts[2];
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ p0 = opts[5];
+                ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ p1 = opts[6];
                 // value of paddingH should be at most half of kernelH
                 // value of paddingW should be at most half of kernelW
-                return (p0 <= (k0 / 2)) && (p1 <= (k1 / 2));
+                ಹಿಂತಿರುಗಿ (p0 <= (k0 / 2)) && (p1 <= (k1 / 2));
             }
-        case GGML_OP_SUM:
-            return ggml_is_contiguous_rows(op->src[0]);
-        case GGML_OP_L2_NORM:
-        case GGML_OP_CROSS_ENTROPY_LOSS:
-        case GGML_OP_DUP:
-        case GGML_OP_IM2COL:
-        case GGML_OP_CONCAT:
-        case GGML_OP_REPEAT:
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_NORM:
-        case GGML_OP_ADD:
-        case GGML_OP_ADD1:
-        case GGML_OP_SUB:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
-        case GGML_OP_RMS_NORM:
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_CLAMP:
-        case GGML_OP_DIAG_MASK_INF:
-        case GGML_OP_SUM_ROWS:
-        case GGML_OP_ARGSORT:
-        case GGML_OP_ACC:
-        case GGML_OP_SET:
-        case GGML_OP_GROUP_NORM:
-            return true;
-        case GGML_OP_PAD:
+        ಸ್ಥಿತಿ GGML_OP_ಮೊತ್ತ:
+            ಹಿಂತಿರುಗಿ ggml_is_contiguous_ಅಡ್ಡಸಾಲುಗಳು(op->src[0]);
+        ಸ್ಥಿತಿ GGML_OP_L2_NORM:
+        ಸ್ಥಿತಿ GGML_OP_CROSS_ENTROPY_LOSS:
+        ಸ್ಥಿತಿ GGML_OP_DUP:
+        ಸ್ಥಿತಿ GGML_OP_IM2_ಲಂಬಸಾಲು:
+        ಸ್ಥಿತಿ GGML_OP_CONCAT:
+        ಸ್ಥಿತಿ GGML_OP_REPEAT:
+        ಸ್ಥಿತಿ GGML_OP_NONE:
+        ಸ್ಥಿತಿ GGML_OP_RESHAPE:
+        ಸ್ಥಿತಿ GGML_OP_VIEW:
+        ಸ್ಥಿತಿ GGML_OP_ಕ್ರಮಬದಲಾವಣೆ:
+        ಸ್ಥಿತಿ GGML_OP_TRANSPOSE:
+        ಸ್ಥಿತಿ GGML_OP_NORM:
+        ಸ್ಥಿತಿ GGML_OP_ಕೂಡಿಸು:
+        ಸ್ಥಿತಿ GGML_OP_ADD1:
+        ಸ್ಥಿತಿ GGML_OP_SUB:
+        ಸ್ಥಿತಿ GGML_OP_MUL:
+        ಸ್ಥಿತಿ GGML_OP_DIV:
+        ಸ್ಥಿತಿ GGML_OP_RMS_NORM:
+        ಸ್ಥಿತಿ GGML_OP_SQR:
+        ಸ್ಥಿತಿ GGML_OP_SQRT:
+        ಸ್ಥಿತಿ GGML_OP_CLAMP:
+        ಸ್ಥಿತಿ GGML_OP_DIAG_ಮುಖವಾಡ_INF:
+        ಸ್ಥಿತಿ GGML_OP_ಮೊತ್ತ_ಅಡ್ಡಸಾಲುಗಳು:
+        ಸ್ಥಿತಿ GGML_OP_ARGSORT:
+        ಸ್ಥಿತಿ GGML_OP_ACC:
+        ಸ್ಥಿತಿ GGML_OP_ಗಣ:
+        ಸ್ಥಿತಿ GGML_OP_ಗುಂಪು_NORM:
+            ಹಿಂತಿರುಗಿ ನಿಜ;
+        ಸ್ಥಿತಿ GGML_OP_PAD:
             // TODO: add circular padding support for cann, see https://github.com/ggml-org/llama.cpp/pull/16985
-            return ggml_get_op_params_i32(op, 8) == 0;
-        case GGML_OP_ARANGE:
-        case GGML_OP_TIMESTEP_EMBEDDING:
-        case GGML_OP_LEAKY_RELU:
-        case GGML_OP_ARGMAX:
-        case GGML_OP_COS:
-        case GGML_OP_SIN:
-        case GGML_OP_LOG:
-        case GGML_OP_MEAN:
-        case GGML_OP_PAD_REFLECT_1D:
-        case GGML_OP_COUNT_EQUAL:
-        case GGML_OP_GATED_LINEAR_ATTN:
-            return true;
-        case GGML_OP_OUT_PROD:
+            ಹಿಂತಿರುಗಿ ggml_get_op_params_i32(op, 8) == 0;
+        ಸ್ಥಿತಿ GGML_OP_ARANGE:
+        ಸ್ಥಿತಿ GGML_OP_TIMESTEP_EMBEDDING:
+        ಸ್ಥಿತಿ GGML_OP_LEAKY_RELU:
+        ಸ್ಥಿತಿ GGML_OP_ARGMAX:
+        ಸ್ಥಿತಿ GGML_OP_COS:
+        ಸ್ಥಿತಿ GGML_OP_SIN:
+        ಸ್ಥಿತಿ GGML_OP_LOG:
+        ಸ್ಥಿತಿ GGML_OP_ಸರಾಸರಿ:
+        ಸ್ಥಿತಿ GGML_OP_PAD_REFLECT_1D:
+        ಸ್ಥಿತಿ GGML_OP_ಎಣಿಕೆ_EQUAL:
+        ಸ್ಥಿತಿ GGML_OP_GATED_ರೇಖೀಯ_ATTN:
+            ಹಿಂತಿರುಗಿ ನಿಜ;
+        ಸ್ಥಿತಿ GGML_OP_ಹೊರಹೋಗು_PROD:
             {
-#ifdef ASCEND_310P
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ ASCEND_310P
                 // Ger is not supported on 310p device
-                return false;
-#else
-                switch (op->src[0]->type) {
-                    case GGML_TYPE_F16:
-                    case GGML_TYPE_F32:
-                        return true;
-                    default:
-                        return false;
+                ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
+#ಇಲ್ಲದಿದ್ದರೆ
+                ಆಯ್ಕೆ (op->src[0]->type) {
+                    ಸ್ಥಿತಿ GGML_TYPE_F16:
+                    ಸ್ಥಿತಿ GGML_TYPE_F32:
+                        ಹಿಂತಿರುಗಿ ನಿಜ;
+                    ಪೂರ್ವನಿಯೋಜಿತ:
+                        ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
             }
-        case GGML_OP_CONV_TRANSPOSE_1D:
-            return true;
-        case GGML_OP_SCALE:
-            float bias;
-            memcpy(&bias, (const float *) (op->op_params) + 1, sizeof(float));
-            return bias == 0.0f;  // TODO: support bias != 0.0f
-        case GGML_OP_SOFT_MAX:
+        ಸ್ಥಿತಿ GGML_OP_CONV_TRANSPOSE_1D:
+            ಹಿಂತಿರುಗಿ ನಿಜ;
+        ಸ್ಥಿತಿ GGML_OP_SCALE:
+            ದಶಮಾಂಶ bias;
+            ಸ್ಮರಣೆ_ನಕಲು(&bias, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) (op->op_params) + 1, ಗಾತ್ರ(ದಶಮಾಂಶ));
+            ಹಿಂತಿರುಗಿ bias == 0.0f;  // TODO: support bias != 0.0f
+        ಸ್ಥಿತಿ GGML_OP_SOFT_MAX:
             // TODO: support attention sinks [TAG_ATTN_SINKS]
-            if (op->src[2]) {
-                return false;
+            ಆದರೆ (op->src[2]) {
+                ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
             }
-            return true;
-        case GGML_OP_FLASH_ATTN_EXT:
+            ಹಿಂತಿರುಗಿ ನಿಜ;
+        ಸ್ಥಿತಿ GGML_OP_FLASH_ATTN_EXT:
             {
-#ifdef ASCEND_310P
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ ASCEND_310P
                 // FA not support on 310p device
-                return false;
-#else
+                ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
+#ಇಲ್ಲದಿದ್ದರೆ
                 // derived from [ggml-cuda.cu]
-                if (op->src[1]->type != GGML_TYPE_F16 || op->src[2]->type != GGML_TYPE_F16) {
-                    return false;
+                ಆದರೆ (op->src[1]->type != GGML_TYPE_F16 || op->src[2]->type != GGML_TYPE_F16) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                if (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_F32 &&
+                ಆದರೆ (op->src[1]->type != GGML_TYPE_F16 && op->src[1]->type != GGML_TYPE_F32 &&
                     op->src[1]->type != GGML_TYPE_BF16) {
-                    return false;
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                if (op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_BF16) {
-                    return false;
+                ಆದರೆ (op->type != GGML_TYPE_F16 && op->type != GGML_TYPE_F32 && op->type != GGML_TYPE_BF16) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
                 // TODO: support attention sinks [TAG_ATTN_SINKS]
-                if (op->src[4]) {
-                    return false;
+                ಆದರೆ (op->src[4]) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                if (op->src[1]->ne[0] != op->src[2]->ne[0]) {
+                ಆದರೆ (op->src[1]->ne[0] != op->src[2]->ne[0]) {
                     // different head sizes of K and V are not supported yet
-                    return false;
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                float logitSoftcap = 0.0f;
-                memcpy(&logitSoftcap, (const float *) (op->op_params) + 2, sizeof(float));
-                if (logitSoftcap != 0.0f) {
-                    return false;
+                ದಶಮಾಂಶ logitSoftcap = 0.0f;
+                ಸ್ಮರಣೆ_ನಕಲು(&logitSoftcap, (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) (op->op_params) + 2, ಗಾತ್ರ(ದಶಮಾಂಶ));
+                ಆದರೆ (logitSoftcap != 0.0f) {
+                    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
                 }
-                return true;
-#endif
+                ಹಿಂತಿರುಗಿ ನಿಜ;
+#ಆದರೆ_ಅಂತ್ಯ
             }
-        case GGML_OP_SSM_CONV:
-            return true;
-        case GGML_OP_CUMSUM:
-            return op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_TRI:
-            return op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_FILL:
-            return op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_DIAG:
-            return op->src[0]->type == GGML_TYPE_F32;
-        case GGML_OP_SOLVE_TRI:
-            return op->src[0]->type == GGML_TYPE_F32;
-        default:
-            return false;
+        ಸ್ಥಿತಿ GGML_OP_SSM_CONV:
+            ಹಿಂತಿರುಗಿ ನಿಜ;
+        ಸ್ಥಿತಿ GGML_OP_CUMSUM:
+            ಹಿಂತಿರುಗಿ op->src[0]->type == GGML_TYPE_F32;
+        ಸ್ಥಿತಿ GGML_OP_TRI:
+            ಹಿಂತಿರುಗಿ op->src[0]->type == GGML_TYPE_F32;
+        ಸ್ಥಿತಿ GGML_OP_FILL:
+            ಹಿಂತಿರುಗಿ op->src[0]->type == GGML_TYPE_F32;
+        ಸ್ಥಿತಿ GGML_OP_DIAG:
+            ಹಿಂತಿರುಗಿ op->src[0]->type == GGML_TYPE_F32;
+        ಸ್ಥಿತಿ GGML_OP_SOLVE_TRI:
+            ಹಿಂತಿರುಗಿ op->src[0]->type == GGML_TYPE_F32;
+        ಪೂರ್ವನಿಯೋಜಿತ:
+            ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
     }
 
-    GGML_UNUSED(dev);
+    GGML_ಬಳಸದ(dev);
 }
 
 /**
@@ -2725,9 +2725,9 @@ static bool ggml_backend_cann_supports_op(ggml_backend_dev_t dev, const ggml_ten
  *
  * @param event Pointer to the event structure to be recorded.
  */
-static void ggml_backend_cann_event_record(ggml_backend_t backend, ggml_backend_event_t event) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_event_ದಾಖಲೆ(ggml_backend_t backend, ggml_backend_event_t event) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
-    ACL_CHECK(aclrtRecordEvent((aclrtEvent) event->context, cann_ctx->stream()));
+    ACL_CHECK(aclrt_ದಾಖಲೆ_Event((aclrtEvent) event->context, cann_ctx->stream()));
 }
 
 /**
@@ -2740,11 +2740,11 @@ static void ggml_backend_cann_event_record(ggml_backend_t backend, ggml_backend_
  * @param event Pointer to the event structure that the backend needs to wait
  * for.
  */
-static void ggml_backend_cann_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_event_wait(ggml_backend_t backend, ggml_backend_event_t event) {
     ggml_backend_cann_context * cann_ctx = (ggml_backend_cann_context *) backend->context;
-    if (ggml_backend_is_cann(backend)) {
-        ACL_CHECK(aclrtStreamWaitEvent(cann_ctx->stream(), (aclrtEvent) event->context));
-    } else {
+    ಆದರೆ (ggml_backend_is_cann(backend)) {
+        ACL_CHECK(aclrt_ಹರಿವು_Wait_Event(cann_ctx->stream(), (aclrtEvent) event->context));
+    } ಇಲ್ಲದಿದ್ದರೆ {
         GGML_ABORT("fatal error");
     }
 }
@@ -2756,23 +2756,23 @@ static void ggml_backend_cann_event_wait(ggml_backend_t backend, ggml_backend_ev
  * supported by the CANN backend, including name retrieval, memory
  * management, tensor operations, synchronization, and event handling.
  */
-static const ggml_backend_i ggml_backend_cann_interface = {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ggml_backend_i ggml_backend_cann_interface = {
     /* .get_name                = */ ggml_backend_cann_name,
     /* .free                    = */ ggml_backend_cann_free,
-    /* .set_tensor_async        = */ ggml_backend_cann_set_tensor_async,
+    /* .set_tensor_async        = */ ggml_backend_cann_ಗಣ_tensor_async,
     /* .get_tensor_async        = */ ggml_backend_cann_get_tensor_async,
-    /* .set_tensor_2d_async     = */ NULL,
-    /* .get_tensor_2d_async     = */ NULL,
+    /* .set_tensor_2d_async     = */ ಖಾಲಿ,
+    /* .get_tensor_2d_async     = */ ಖಾಲಿ,
     /* .cpy_tensor_async        = */ ggml_backend_cann_cpy_tensor_async,
     /* .synchronize             = */ ggml_backend_cann_synchronize,
-    /* .graph_plan_create       = */ NULL,
-    /* .graph_plan_free         = */ NULL,
-    /* .graph_plan_update       = */ NULL,
-    /* .graph_plan_compute      = */ NULL,
-    /* .graph_compute           = */ ggml_backend_cann_graph_compute,
-    /* .event_record            = */ ggml_backend_cann_event_record,
+    /* .graph_plan_create       = */ ಖಾಲಿ,
+    /* .graph_plan_free         = */ ಖಾಲಿ,
+    /* .graph_plan_update       = */ ಖಾಲಿ,
+    /* .graph_plan_compute      = */ ಖಾಲಿ,
+    /* .graph_compute           = */ ggml_backend_cann_ನಕ್ಷೆ_compute,
+    /* .event_record            = */ ggml_backend_cann_event_ದಾಖಲೆ,
     /* .event_wait              = */ ggml_backend_cann_event_wait,
-    /* .graph_optimize          = */ NULL,
+    /* .graph_optimize          = */ ಖಾಲಿ,
 };
 
 /**
@@ -2783,61 +2783,61 @@ static const ggml_backend_i ggml_backend_cann_interface = {
  *
  * @return A pointer to the static GUID.
  */
-static ggml_guid_t ggml_backend_cann_guid() {
-    static ggml_guid guid = { 0xa1, 0x94, 0xaf, 0xac, 0xbd, 0x4f, 0x47, 0x34,
+ಸ್ಥಿರ ggml_guid_t ggml_backend_cann_guid() {
+    ಸ್ಥಿರ ggml_guid guid = { 0xa1, 0x94, 0xaf, 0xac, 0xbd, 0x4f, 0x47, 0x34,
                               0xbe, 0x1a, 0x9e, 0x71, 0x1f, 0x9e, 0xed, 0x64 };
-    return &guid;
+    ಹಿಂತಿರುಗಿ &guid;
 }
 
 // backend device
-struct ggml_backend_cann_device_context {
-    int         device;
+ರಚನೆ ggml_backend_cann_device_context {
+    ಪೂರ್ಣಾಂಕ         device;
     std::string name;
     std::string description;
-    int op_offload_min_batch_size;
+    ಪೂರ್ಣಾಂಕ op_offload_min_batch_ಗಾತ್ರ;
 };
 
-static const char * ggml_backend_cann_device_get_name(ggml_backend_dev_t dev) {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cann_device_get_name(ggml_backend_dev_t dev) {
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ctx->name.c_str();
+    ಹಿಂತಿರುಗಿ ctx->name.c_str();
 }
 
-static const char * ggml_backend_cann_device_get_description(ggml_backend_dev_t dev) {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cann_device_get_description(ggml_backend_dev_t dev) {
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ctx->description.c_str();
+    ಹಿಂತಿರುಗಿ ctx->description.c_str();
 }
 
-static void ggml_backend_cann_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_device_get_ಸ್ಮರಣೆ(ggml_backend_dev_t dev, size_t * ಬಿಡುಗಡೆ, size_t * ಒಟ್ಟು) {
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    ggml_backend_cann_get_device_memory(ctx->device, free, total);
+    ggml_backend_cann_get_device_ಸ್ಮರಣೆ(ctx->device, ಬಿಡುಗಡೆ, ಒಟ್ಟು);
 }
 
-static enum ggml_backend_dev_type ggml_backend_cann_device_get_type(ggml_backend_dev_t dev) {
-    GGML_UNUSED(dev);
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+ಸ್ಥಿರ ಎಣಿಕೆ ggml_backend_dev_type ggml_backend_cann_device_get_type(ggml_backend_dev_t dev) {
+    GGML_ಬಳಸದ(dev);
+    ಹಿಂತಿರುಗಿ GGML_BACKEND_DEVICE_TYPE_GPU;
 }
 
-static void ggml_backend_cann_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_device_get_props(ggml_backend_dev_t dev, ggml_backend_dev_props * props) {
     props->name        = ggml_backend_cann_device_get_name(dev);
     props->description = ggml_backend_cann_device_get_description(dev);
     props->type        = ggml_backend_cann_device_get_type(dev);
-    ggml_backend_cann_device_get_memory(dev, &props->memory_free, &props->memory_total);
+    ggml_backend_cann_device_get_ಸ್ಮರಣೆ(dev, &props->ಸ್ಮರಣೆ_free, &props->ಸ್ಮರಣೆ_ಒಟ್ಟು);
 
-    bool host_buffer = getenv("GGML_CANN_NO_PINNED") == nullptr;
+    ತಾರ್ಕಿಕ host_ಬಫರ್ = getenv("GGML_CANN_NO_PINNED") == ಶೂನ್ಯಸೂಚಕ;
 
     props->caps = {
-        /* .async                 = */ false,
-        /* .host_buffer           = */ host_buffer,
-        /* .buffer_from_host_ptr  = */ false,
-        /* .events                = */ true,
-        /* .mmap_support          = */ true,
+        /* .async                 = */ ಸುಳ್ಳು,
+        /* .host_buffer           = */ host_ಬಫರ್,
+        /* .buffer_from_host_ptr  = */ ಸುಳ್ಳು,
+        /* .events                = */ ನಿಜ,
+        /* .mmap_support          = */ ನಿಜ,
     };
 }
 
-static ggml_backend_t ggml_backend_cann_device_init(ggml_backend_dev_t dev, const char * params) {
-    GGML_UNUSED(params);
+ಸ್ಥಿರ ggml_backend_t ggml_backend_cann_device_init(ggml_backend_dev_t dev, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * params) {
+    GGML_ಬಳಸದ(params);
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ggml_backend_cann_init(ctx->device);
+    ಹಿಂತಿರುಗಿ ggml_backend_cann_init(ctx->device);
 }
 
 /**
@@ -2853,23 +2853,23 @@ static ggml_backend_t ggml_backend_cann_device_init(ggml_backend_dev_t dev, cons
  * @return bool Returns true if the CANN backend supports the buffer type,
  *              otherwise false.
  */
-static bool ggml_backend_cann_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    if (ggml_backend_buft_is_cann(buft)) {
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cann_supports_buft(ggml_backend_dev_t dev, ggml_backend_ಬಫರ್_type_t buft) {
+    ಆದರೆ (ggml_backend_buft_is_cann(buft)) {
         ggml_backend_cann_device_context *      dev_ctx  = (ggml_backend_cann_device_context *) dev->context;
-        ggml_backend_cann_buffer_type_context * buft_ctx = (ggml_backend_cann_buffer_type_context *) buft->context;
-        return buft_ctx->device == dev_ctx->device;
+        ggml_backend_cann_ಬಫರ್_type_context * buft_ctx = (ggml_backend_cann_ಬಫರ್_type_context *) buft->context;
+        ಹಿಂತಿರುಗಿ buft_ctx->device == dev_ctx->device;
     }
-    return false;
+    ಹಿಂತಿರುಗಿ ಸುಳ್ಳು;
 }
 
-static ggml_backend_buffer_type_t ggml_backend_cann_device_get_buffer_type(ggml_backend_dev_t dev) {
+ಸ್ಥಿರ ggml_backend_ಬಫರ್_type_t ggml_backend_cann_device_get_ಬಫರ್_type(ggml_backend_dev_t dev) {
     ggml_backend_cann_device_context * ctx = (ggml_backend_cann_device_context *) dev->context;
-    return ggml_backend_cann_buffer_type(ctx->device);
+    ಹಿಂತಿರುಗಿ ggml_backend_cann_ಬಫರ್_type(ctx->device);
 }
 
-static ggml_backend_buffer_type_t ggml_backend_cann_device_get_host_buffer_type(ggml_backend_dev_t dev) {
-    GGML_UNUSED(dev);
-    return ggml_backend_cann_host_buffer_type();
+ಸ್ಥಿರ ggml_backend_ಬಫರ್_type_t ggml_backend_cann_device_get_host_ಬಫರ್_type(ggml_backend_dev_t dev) {
+    GGML_ಬಳಸದ(dev);
+    ಹಿಂತಿರುಗಿ ggml_backend_cann_host_ಬಫರ್_type();
 }
 
 /**
@@ -2886,10 +2886,10 @@ static ggml_backend_buffer_type_t ggml_backend_cann_device_get_host_buffer_type(
  * @return bool Returns true if the operation should be offloaded, otherwise
  * false.
  */
-static bool ggml_backend_cann_offload_op(ggml_backend_dev_t dev, const ggml_tensor * op) {
+ಸ್ಥಿರ ತಾರ್ಕಿಕ ggml_backend_cann_offload_op(ggml_backend_dev_t dev, ಸ್ಥಿರಾಂಕ ggml_tensor * op) {
     ggml_backend_cann_device_context * dev_ctx = (ggml_backend_cann_device_context *)dev->context;
 
-    return op->ne[1] >= dev_ctx->op_offload_min_batch_size && op->op != GGML_OP_GET_ROWS;
+    ಹಿಂತಿರುಗಿ op->ne[1] >= dev_ctx->op_offload_min_batch_ಗಾತ್ರ && op->op != GGML_OP_GET_ಅಡ್ಡಸಾಲುಗಳು;
 }
 
 /**
@@ -2902,15 +2902,15 @@ static bool ggml_backend_cann_offload_op(ggml_backend_dev_t dev, const ggml_tens
  * @param backend Pointer to the CANN backend.
  * @return ggml_backend_event_t Returns a pointer to the new event structure.
  */
-static ggml_backend_event_t ggml_backend_cann_device_event_new(ggml_backend_dev_t dev) {
+ಸ್ಥಿರ ggml_backend_event_t ggml_backend_cann_device_event_new(ggml_backend_dev_t dev) {
     ggml_backend_cann_device_context * dev_ctx = (ggml_backend_cann_device_context *) dev->context;
 
-    ggml_cann_set_device(dev_ctx->device);
+    ggml_cann_ಗಣ_device(dev_ctx->device);
 
     aclrtEvent event;
     ACL_CHECK(aclrtCreateEvent(&event));
 
-    return new ggml_backend_event{
+    ಹಿಂತಿರುಗಿ ಹೊಸ ggml_backend_event{
         /* .device = */ ggml_backend_reg_dev_get(ggml_backend_cann_reg(), dev_ctx->device),
         /* .context = */ event,
     };
@@ -2924,11 +2924,11 @@ static ggml_backend_event_t ggml_backend_cann_device_event_new(ggml_backend_dev_
  *
  * @param event Pointer to the event structure to be freed.
  */
-static void ggml_backend_cann_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
     ACL_CHECK(aclrtDestroyEvent((aclrtEvent) event->context));
 
-    delete event;
-    GGML_UNUSED(dev);
+    ಅಳಿಸು event;
+    GGML_ಬಳಸದ(dev);
 }
 
 /**
@@ -2938,22 +2938,22 @@ static void ggml_backend_cann_device_event_free(ggml_backend_dev_t dev, ggml_bac
  *
  * @param event Pointer to the event structure to be synchronized.
  */
-static void ggml_backend_cann_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) {
+ಸ್ಥಿರ ಶೂನ್ಯ ggml_backend_cann_device_event_synchronize(ggml_backend_dev_t dev, ggml_backend_event_t event) {
     ACL_CHECK(aclrtSynchronizeEvent((aclrtEvent) event->context));
 
-    GGML_UNUSED(dev);
+    GGML_ಬಳಸದ(dev);
 }
 
-static const ggml_backend_device_i ggml_backend_cann_device_interface = {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ggml_backend_device_i ggml_backend_cann_device_interface = {
     /* .get_name                = */ ggml_backend_cann_device_get_name,
     /* .get_description         = */ ggml_backend_cann_device_get_description,
-    /* .get_memory              = */ ggml_backend_cann_device_get_memory,
+    /* .get_memory              = */ ggml_backend_cann_device_get_ಸ್ಮರಣೆ,
     /* .get_type                = */ ggml_backend_cann_device_get_type,
     /* .get_props               = */ ggml_backend_cann_device_get_props,
     /* .init_backend            = */ ggml_backend_cann_device_init,  // called for every card
-    /* .get_buffer_type         = */ ggml_backend_cann_device_get_buffer_type,
-    /* .get_host_buffer_type    = */ ggml_backend_cann_device_get_host_buffer_type,
-    /* .buffer_from_host_ptr    = */ NULL,  // not supported for CANN
+    /* .get_buffer_type         = */ ggml_backend_cann_device_get_ಬಫರ್_type,
+    /* .get_host_buffer_type    = */ ggml_backend_cann_device_get_host_ಬಫರ್_type,
+    /* .buffer_from_host_ptr    = */ ಖಾಲಿ,  // not supported for CANN
     /* .supports_op             = */ ggml_backend_cann_supports_op,
     /* .supports_buft           = */ ggml_backend_cann_supports_buft,
     /* .offload_op              = */ ggml_backend_cann_offload_op,
@@ -2963,116 +2963,116 @@ static const ggml_backend_device_i ggml_backend_cann_device_interface = {
 };
 
 // backend reg
-struct ggml_backend_cann_reg_context {
+ರಚನೆ ggml_backend_cann_reg_context {
     std::vector<ggml_backend_dev_t> devices;
 };
 
-static const char * ggml_backend_cann_reg_get_name(ggml_backend_reg_t reg) {
-    GGML_UNUSED(reg);
-    return GGML_CANN_NAME;
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * ggml_backend_cann_reg_get_name(ggml_backend_reg_t reg) {
+    GGML_ಬಳಸದ(reg);
+    ಹಿಂತಿರುಗಿ GGML_CANN_NAME;
 }
 
-static size_t ggml_backend_cann_reg_get_device_count(ggml_backend_reg_t reg) {
+ಸ್ಥಿರ size_t ggml_backend_cann_reg_get_device_ಎಣಿಕೆ(ggml_backend_reg_t reg) {
     ggml_backend_cann_reg_context * ctx = (ggml_backend_cann_reg_context *) reg->context;
-    return ctx->devices.size();
+    ಹಿಂತಿರುಗಿ ctx->devices.size();
 }
 
-static ggml_backend_dev_t ggml_backend_cann_reg_get_device(ggml_backend_reg_t reg, size_t index) {
+ಸ್ಥಿರ ggml_backend_dev_t ggml_backend_cann_reg_get_device(ggml_backend_reg_t reg, size_t ಸೂಚ್ಯಂಕ) {
     ggml_backend_cann_reg_context * ctx = (ggml_backend_cann_reg_context *) reg->context;
-    GGML_ASSERT(index < ctx->devices.size());
-    return ctx->devices[index];
+    GGML_ASSERT(ಸೂಚ್ಯಂಕ < ctx->devices.size());
+    ಹಿಂತಿರುಗಿ ctx->devices[ಸೂಚ್ಯಂಕ];
 }
 
-static void * ggml_backend_cann_reg_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    GGML_UNUSED(reg);
-    GGML_UNUSED(name);
+ಸ್ಥಿರ ಶೂನ್ಯ * ggml_backend_cann_reg_get_proc_ವಿಳಾಸ(ggml_backend_reg_t reg, ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * name) {
+    GGML_ಬಳಸದ(reg);
+    GGML_ಬಳಸದ(name);
     // reserved for future use
-    return nullptr;
+    ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
 }
 
-static const ggml_backend_reg_i ggml_backend_cann_reg_interface = {
+ಸ್ಥಿರ ಸ್ಥಿರಾಂಕ ggml_backend_reg_i ggml_backend_cann_reg_interface = {
     /* .get_name          = */ ggml_backend_cann_reg_get_name,
-    /* .get_device_count  = */ ggml_backend_cann_reg_get_device_count,
+    /* .get_device_count  = */ ggml_backend_cann_reg_get_device_ಎಣಿಕೆ,
     /* .get_device        = */ ggml_backend_cann_reg_get_device,
-    /* .get_proc_address  = */ ggml_backend_cann_reg_get_proc_address,
+    /* .get_proc_address  = */ ggml_backend_cann_reg_get_proc_ವಿಳಾಸ,
 };
 
 // backend registry, called only once for cann backend
 ggml_backend_reg_t ggml_backend_cann_reg() {
-    static ggml_backend_reg reg;
-    static bool             initialized = false;
+    ಸ್ಥಿರ ggml_backend_reg reg;
+    ಸ್ಥಿರ ತಾರ್ಕಿಕ             initialized = ಸುಳ್ಳು;
 
     {
-        static std::mutex           mutex;
-        std::lock_guard<std::mutex> lock(mutex);
-        if (!initialized) {
-            aclInit(nullptr);
-            ggml_backend_cann_reg_context * ctx = new ggml_backend_cann_reg_context;
-            const int min_batch_size = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
+        ಸ್ಥಿರ std::mutex           mutex;
+        std::lock_guard<std::mutex> ಬೀಗ(mutex);
+        ಆದರೆ (!initialized) {
+            aclInit(ಶೂನ್ಯಸೂಚಕ);
+            ggml_backend_cann_reg_context * ctx = ಹೊಸ ggml_backend_cann_reg_context;
+            ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ min_batch_ಗಾತ್ರ = getenv("GGML_OP_OFFLOAD_MIN_BATCH") ? atoi(getenv("GGML_OP_OFFLOAD_MIN_BATCH")) : 32;
 
-            for (int i = 0; i < ggml_cann_info().device_count; i++) {
-                ggml_backend_cann_device_context * dev_ctx = new ggml_backend_cann_device_context();
+            ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ggml_cann_info().device_ಎಣಿಕೆ; i++) {
+                ggml_backend_cann_device_context * dev_ctx = ಹೊಸ ggml_backend_cann_device_context();
                 dev_ctx->description                       = aclrtGetSocName();
                 dev_ctx->device                            = i;
                 dev_ctx->name                              = GGML_CANN_NAME + std::to_string(i);
-                dev_ctx->op_offload_min_batch_size         = min_batch_size;
-                ggml_cann_set_device(i);
-                ggml_backend_dev_t dev = new ggml_backend_device{ /* .iface   = */ ggml_backend_cann_device_interface,
+                dev_ctx->op_offload_min_batch_ಗಾತ್ರ         = min_batch_ಗಾತ್ರ;
+                ggml_cann_ಗಣ_device(i);
+                ggml_backend_dev_t dev = ಹೊಸ ggml_backend_device{ /* .iface   = */ ggml_backend_cann_device_interface,
                                                                   /* .reg     = */ &reg,
                                                                   /* .context = */ dev_ctx };
                 ctx->devices.push_back(dev);
             }
 
-            reg = ggml_backend_reg{ /* .api_version = */ GGML_BACKEND_API_VERSION,
+            reg = ggml_backend_reg{ /* .api_version = */ GGML_BACKEND_API_ಆವೃತ್ತಿ,
                                     /* .iface       = */ ggml_backend_cann_reg_interface,
                                     /* .context     = */ ctx };
         }
 
-        initialized = true;
+        initialized = ನಿಜ;
     }
 
-    return &reg;
+    ಹಿಂತಿರುಗಿ &reg;
 }
 
 ggml_backend_t ggml_backend_cann_init(int32_t device) {
-    aclInit(nullptr);
-    if (device < 0 || device >= ggml_backend_cann_get_device_count()) {
+    aclInit(ಶೂನ್ಯಸೂಚಕ);
+    ಆದರೆ (device < 0 || device >= ggml_backend_cann_get_device_ಎಣಿಕೆ()) {
         GGML_LOG_ERROR("%s: error: invalid device %d\n", __func__, device);
-        return nullptr;
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
 
-    ggml_backend_cann_context * ctx = new ggml_backend_cann_context(device);
-    if (ctx == nullptr) {
+    ggml_backend_cann_context * ctx = ಹೊಸ ggml_backend_cann_context(device);
+    ಆದರೆ (ctx == ಶೂನ್ಯಸೂಚಕ) {
         GGML_LOG_ERROR("%s: error: failed to allocate context\n", __func__);
-        return nullptr;
+        ಹಿಂತಿರುಗಿ ಶೂನ್ಯಸೂಚಕ;
     }
-    ggml_cann_set_device(ctx->device);
+    ggml_cann_ಗಣ_device(ctx->device);
     ggml_backend_t cann_backend =
-        new ggml_backend{ /* .guid      = */ ggml_backend_cann_guid(),
+        ಹೊಸ ggml_backend{ /* .guid      = */ ggml_backend_cann_guid(),
                           /* .interface = */ ggml_backend_cann_interface,
                           /* .device    = */ ggml_backend_reg_dev_get(ggml_backend_cann_reg(), device),
                           /* .context   = */ ctx };
 
-    return cann_backend;
+    ಹಿಂತಿರುಗಿ cann_backend;
 }
 
-bool ggml_backend_is_cann(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_cann_guid());
+ತಾರ್ಕಿಕ ggml_backend_is_cann(ggml_backend_t backend) {
+    ಹಿಂತಿರುಗಿ backend != ಖಾಲಿ && ggml_guid_matches(backend->guid, ggml_backend_cann_guid());
 }
 
-int32_t ggml_backend_cann_get_device_count() {
-    return ggml_cann_info().device_count;
+int32_t ggml_backend_cann_get_device_ಎಣಿಕೆ() {
+    ಹಿಂತಿರುಗಿ ggml_cann_info().device_ಎಣಿಕೆ;
 }
 
-void ggml_backend_cann_get_device_description(int32_t device, char * description, size_t description_size) {
-    ggml_cann_set_device(device);
-    const char * soc_name = aclrtGetSocName();
-    snprintf(description, description_size, "%s", soc_name);
+ಶೂನ್ಯ ggml_backend_cann_get_device_description(int32_t device, ಅಕ್ಷರ * description, size_t description_ಗಾತ್ರ) {
+    ggml_cann_ಗಣ_device(device);
+    ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ * soc_name = aclrtGetSocName();
+    snprintf(description, description_ಗಾತ್ರ, "%s", soc_name);
 }
 
-void ggml_backend_cann_get_device_memory(int32_t device, size_t * free, size_t * total) {
-    ggml_cann_set_device(device);
-    ACL_CHECK(aclrtGetMemInfo(ACL_HBM_MEM, free, total));
+ಶೂನ್ಯ ggml_backend_cann_get_device_ಸ್ಮರಣೆ(int32_t device, size_t * ಬಿಡುಗಡೆ, size_t * ಒಟ್ಟು) {
+    ggml_cann_ಗಣ_device(device);
+    ACL_CHECK(aclrtGetMemInfo(ACL_HBM_MEM, ಬಿಡುಗಡೆ, ಒಟ್ಟು));
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_cann_reg)

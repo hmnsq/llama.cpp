@@ -11,79 +11,79 @@
 //
 // \note MOE op classes are under development and subject to change.
 
-#pragma once
+#ಸೂಚನೆ once
 
-#include <optional>
+#ಅನ್ತರ್ಭಾವ <optional>
 
-#include "openvino/core/type/element_type.hpp"
-#include "openvino/op/op.hpp"
+#ಅನ್ತರ್ಭಾವ "openvino/core/type/element_type.hpp"
+#ಅನ್ತರ್ಭಾವ "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+ನಾಮಾಕಾಶ ov::op::internal {
 
-class OPENVINO_API MOE : public ov::op::Op {
-public:
+ವರ್ಗ OPENVINO_API MOE : ಸಾರ್ವಜನಿಕ ov::op::Op {
+ಸಾರ್ವಜನಿಕ:
     OPENVINO_OP("MOE")
 
-    MOE() = default;
+    MOE() = ಪೂರ್ವನಿಯೋಜಿತ;
 
-    MOE(const OutputVector & args) : Op(args) {}
+    MOE(ಸ್ಥಿರಾಂಕ Output_ಸದಿಶ & ವಾದಗಳು_2) : Op(ವಾದಗಳು_2) {}
 
-    enum class Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
+    ಎಣಿಕೆ ವರ್ಗ Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
 
-    enum class Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
+    ಎಣಿಕೆ ವರ್ಗ Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
 
-    struct Config {
+    ರಚನೆ Config {
         Expert_type expert_type{ Expert_type::GEMM2_BIAS_SWIGLU_CLAMP };
-        float expert_alpha{ 0.0f };
-        float expert_beta{ 1.0f };
+        ದಶಮಾಂಶ expert_alpha{ 0.0f };
+        ದಶಮಾಂಶ expert_beta{ 1.0f };
         size_t gate_idx{ 0 };
         Activation_type activation_type{ Activation_type::SWIGLU };
     };
 
-    MOE(const OutputVector & args, const Config & config);
+    MOE(ಸ್ಥಿರಾಂಕ Output_ಸದಿಶ & ವಾದಗಳು_2, ಸ್ಥಿರಾಂಕ Config & config);
 
-    const Config & get_config() const;
-    void set_config(const Config & config);
+    ಸ್ಥಿರಾಂಕ Config & get_config() ಸ್ಥಿರಾಂಕ;
+    ಶೂನ್ಯ ಗಣ_config(ಸ್ಥಿರಾಂಕ Config & config);
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    ತಾರ್ಕಿಕ ಭೇಟಿ_ಗುಣಲಕ್ಷಣಗಳು(AttributeVisitor & visitor) override;
+    ಶೂನ್ಯ validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ಸ್ಥಿರಾಂಕ Output_ಸದಿಶ & new_ವಾದಗಳು) ಸ್ಥಿರಾಂಕ override;
 
-private:
+ಖಾಸಗಿ:
     Config m_config;
 };
 
-class OPENVINO_API MOECompressed : public MOE {
-public:
+ವರ್ಗ OPENVINO_API MOECompressed : ಸಾರ್ವಜನಿಕ MOE {
+ಸಾರ್ವಜನಿಕ:
     OPENVINO_OP("MOECompressed", "", ov::op::internal::MOE)
 
-    MOECompressed() = default;
+    MOECompressed() = ಪೂರ್ವನಿಯೋಜಿತ;
 
-    struct Config : public MOE::Config {
-        size_t hidden_size = 0;
-        size_t inter_size = 0;
-        size_t num_expert = 0;
-        size_t num_shared_expert = 0;
-        size_t top_k = 0;
+    ರಚನೆ Config : ಸಾರ್ವಜನಿಕ MOE::Config {
+        size_t hidden_ಗಾತ್ರ = 0;
+        size_t inter_ಗಾತ್ರ = 0;
+        size_t ಅಂಕೆ_expert = 0;
+        size_t ಅಂಕೆ_shared_expert = 0;
+        size_t ತುದಿ_k = 0;
         // numeric_limits<size_t>::max() means per_channel compression (single group)
-        size_t group_size = 0;
-        bool has_batch_dim = false;
-        bool has_zp = false;
-        ov::element::Type out_type = ov::element::dynamic;
-        std::optional<float> scale_factor;
+        size_t ಗುಂಪು_ಗಾತ್ರ = 0;
+        ತಾರ್ಕಿಕ has_batch_dim = ಸುಳ್ಳು;
+        ತಾರ್ಕಿಕ has_zp = ಸುಳ್ಳು;
+        ov::element::Type ಹೊರಹೋಗು_type = ov::element::dynamic;
+        std::optional<ದಶಮಾಂಶ> scale_ಗುಣಕ;
     };
 
-    MOECompressed(const OutputVector & args, const Config & config);
+    MOECompressed(ಸ್ಥಿರಾಂಕ Output_ಸದಿಶ & ವಾದಗಳು_2, ಸ್ಥಿರಾಂಕ Config & config);
 
-    const Config & get_config() const { return m_config; }
+    ಸ್ಥಿರಾಂಕ Config & get_config() ಸ್ಥಿರಾಂಕ { ಹಿಂತಿರುಗಿ m_config; }
 
-    void set_scale_factor(float scale_factor) { m_config.scale_factor = scale_factor; }
+    ಶೂನ್ಯ ಗಣ_scale_ಗುಣಕ(ದಶಮಾಂಶ scale_ಗುಣಕ) { m_config.scale_ಗುಣಕ = scale_ಗುಣಕ; }
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    ತಾರ್ಕಿಕ ಭೇಟಿ_ಗುಣಲಕ್ಷಣಗಳು(AttributeVisitor & visitor) override;
+    ಶೂನ್ಯ validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ಸ್ಥಿರಾಂಕ Output_ಸದಿಶ & new_ವಾದಗಳು) ಸ್ಥಿರಾಂಕ override;
 
-protected:
+ಸಂರಕ್ಷಿತ:
     Config m_config;
 };
 

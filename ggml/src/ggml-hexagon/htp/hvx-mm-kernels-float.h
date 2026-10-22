@@ -1,546 +1,546 @@
-#ifndef HVX_MM_KERNELS_FLOAT_H
-#define HVX_MM_KERNELS_FLOAT_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ HVX_MM_KERNELS_FLOAT_H
+#ವ್ಯಾಖ್ಯಾನಿಸು HVX_MM_KERNELS_FLOAT_H
 
-#include "hvx-utils.h"
-#include "htp-tensor.h"
+#ಅನ್ತರ್ಭಾವ "hvx-utils.h"
+#ಅನ್ತರ್ಭಾವ "htp-tensor.h"
 
 // Float activation copy/quantization kernels (DDR -> VTCM)
 
-static inline void quantize_f32_f32_kernel(
-    const uint8_t * restrict src_data,
-    uint8_t * restrict dst_data,
-    uint8_t * restrict tmp_data,
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ quantize_f32_f32_kernel(
+    ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ src_ದತ್ತಾಂಶ,
+    uint8_t * ಸೀಮಿತ dst_ದತ್ತಾಂಶ,
+    uint8_t * ಸೀಮಿತ tmp_ದತ್ತಾಂಶ,
     uint32_t ne0,
     uint32_t nrows,
     size_t src_stride,
     size_t dst_stride
 ) {
-    (void) tmp_data;
-    const size_t src_row_size = ne0 * sizeof(float);
-    for (uint32_t i = 0; i < nrows; ++i) {
-        hex_l2fetch(src_data, src_row_size, src_stride, 2);
-        hvx_copy_f32_au(dst_data, src_data, ne0);
+    (ಶೂನ್ಯ) tmp_ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ size_t src_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = ne0 * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಗಾಗಿ (uint32_t i = 0; i < nrows; ++i) {
+        hex_l2fetch(src_ದತ್ತಾಂಶ, src_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, src_stride, 2);
+        hvx_copy_f32_au(dst_ದತ್ತಾಂಶ, src_ದತ್ತಾಂಶ, ne0);
 
-        dst_data += dst_stride;
-        src_data += src_stride;
+        dst_ದತ್ತಾಂಶ += dst_stride;
+        src_ದತ್ತಾಂಶ += src_stride;
     }
 }
 
-static inline void quantize_f32_f16_kernel(
-    const uint8_t * restrict src_data,
-    uint8_t * restrict dst_data,
-    uint8_t * restrict tmp_data,
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ quantize_f32_f16_kernel(
+    ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ src_ದತ್ತಾಂಶ,
+    uint8_t * ಸೀಮಿತ dst_ದತ್ತಾಂಶ,
+    uint8_t * ಸೀಮಿತ tmp_ದತ್ತಾಂಶ,
     uint32_t ne0,
     uint32_t nrows,
     size_t src_stride,
     size_t dst_stride
 ) {
-    (void) tmp_data;
-    const size_t src_row_size = ne0 * sizeof(float);
-    for (uint32_t i = 0; i < nrows; ++i) {
-        hex_l2fetch(src_data, src_row_size, src_stride, 2);
-        hvx_copy_f16_f32_au(dst_data, src_data, ne0);
+    (ಶೂನ್ಯ) tmp_ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ size_t src_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = ne0 * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಗಾಗಿ (uint32_t i = 0; i < nrows; ++i) {
+        hex_l2fetch(src_ದತ್ತಾಂಶ, src_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, src_stride, 2);
+        hvx_copy_f16_f32_au(dst_ದತ್ತಾಂಶ, src_ದತ್ತಾಂಶ, ne0);
 
-        dst_data += dst_stride;
-        src_data += src_stride;
+        dst_ದತ್ತಾಂಶ += dst_stride;
+        src_ದತ್ತಾಂಶ += src_stride;
     }
 }
 
-static inline void quantize_f16_f16_kernel(
-    const uint8_t * restrict src_data,
-    uint8_t * restrict dst_data,
-    uint8_t * restrict tmp_data,
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ quantize_f16_f16_kernel(
+    ಸ್ಥಿರಾಂಕ uint8_t * ಸೀಮಿತ src_ದತ್ತಾಂಶ,
+    uint8_t * ಸೀಮಿತ dst_ದತ್ತಾಂಶ,
+    uint8_t * ಸೀಮಿತ tmp_ದತ್ತಾಂಶ,
     uint32_t ne0,
     uint32_t nrows,
     size_t src_stride,
     size_t dst_stride
 ) {
-    (void) tmp_data;
-    const size_t src_row_size = ne0 * sizeof(float);
-    for (uint32_t i = 0; i < nrows; ++i) {
-        hex_l2fetch(src_data, src_row_size, src_stride, 2);
-        hvx_copy_f16_au(dst_data, src_data, ne0);
+    (ಶೂನ್ಯ) tmp_ದತ್ತಾಂಶ;
+    ಸ್ಥಿರಾಂಕ size_t src_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ = ne0 * ಗಾತ್ರ(ದಶಮಾಂಶ);
+    ಗಾಗಿ (uint32_t i = 0; i < nrows; ++i) {
+        hex_l2fetch(src_ದತ್ತಾಂಶ, src_ಅಡ್ಡಸಾಲು_ಗಾತ್ರ, src_stride, 2);
+        hvx_copy_f16_au(dst_ದತ್ತಾಂಶ, src_ದತ್ತಾಂಶ, ne0);
 
-        dst_data += dst_stride;
-        src_data += src_stride;
+        dst_ದತ್ತಾಂಶ += dst_stride;
+        src_ದತ್ತಾಂಶ += src_stride;
     }
 }
 
 // Float dot product kernels (HVX)
 
-#if __HVX_ARCH__ < 79
-#define HVX_OP_ADD_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b))
-#define HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
-#else
-#define HVX_OP_ADD_F32(a, b) Q6_Vsf_vadd_VsfVsf(a, b)
-#define HVX_OP_MUL_F32(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
-#endif
+#ಆದರೆ __HVX_ARCH__ < 79
+#ವ್ಯಾಖ್ಯಾನಿಸು HVX_OP_ಕೂಡಿಸು_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b))
+#ವ್ಯಾಖ್ಯಾನಿಸು HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
+#ಇಲ್ಲದಿದ್ದರೆ
+#ವ್ಯಾಖ್ಯಾನಿಸು HVX_OP_ಕೂಡಿಸು_F32(a, b) Q6_Vsf_vadd_VsfVsf(a, b)
+#ವ್ಯಾಖ್ಯಾನಿಸು HVX_OP_MUL_F32(a, b) Q6_Vsf_vmpy_VsfVsf(a, b)
+#ಆದರೆ_ಅಂತ್ಯ
 
-static inline void flat_vec_dot_f32_f32_aa_1x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy) {
-    const HVX_Vector * restrict x = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict y = (const HVX_Vector *) vy;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ flat_vec_dot_f32_f32_aa_1x1(ಸ್ಥಿರಾಂಕ uint32_t n, ದಶಮಾಂಶ * ಸೀಮಿತ s, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy) {
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy;
 
     uint32_t nvec = n / VLEN_FP32; // num full fp32 hvx vectors
     uint32_t nloe = n % VLEN_FP32; // leftover elements
 
-    HVX_Vector rsum = Q6_V_vzero();
+    HVX_ಸದಿಶ rsum = Q6_V_vzero();
 
     uint32_t i = 0;
 
-    #pragma unroll(4)
-    for (i = 0; i < nvec; i++) {
-        HVX_Vector prod = HVX_OP_MUL_F32(x[i], y[i]);
-        rsum = HVX_OP_ADD_F32(rsum, prod);
+    #ಸೂಚನೆ unroll(4)
+    ಗಾಗಿ (i = 0; i < nvec; i++) {
+        HVX_ಸದಿಶ prod = HVX_OP_MUL_F32(x[i], y[i]);
+        rsum = HVX_OP_ಕೂಡಿಸು_F32(rsum, prod);
     }
 
-    if (nloe) {
-        HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 4);
-        HVX_Vector x_sf = Q6_V_vand_QV(bmask, x[i]);
-        HVX_Vector y_sf = Q6_V_vand_QV(bmask, y[i]);
-        HVX_Vector prod = HVX_OP_MUL_F32(x_sf, y_sf);
-        rsum = HVX_OP_ADD_F32(rsum, prod);
+    ಆದರೆ (nloe) {
+        HVX_ಸದಿಶ_Pred bmask = Q6_Q_vsetq_R(nloe * 4);
+        HVX_ಸದಿಶ x_sf = Q6_V_vand_QV(bmask, x[i]);
+        HVX_ಸದಿಶ y_sf = Q6_V_vand_QV(bmask, y[i]);
+        HVX_ಸದಿಶ prod = HVX_OP_MUL_F32(x_sf, y_sf);
+        rsum = HVX_OP_ಕೂಡಿಸು_F32(rsum, prod);
     }
 
-    *s = hvx_vec_get_f32(hvx_vec_reduce_sum_f32(rsum));
+    *s = hvx_vec_get_f32(hvx_vec_reduce_ಮೊತ್ತ_f32(rsum));
 }
 
-static inline void flat_vec_dot_f32_f32_aa_2x1(const uint32_t n, float * restrict s0,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y  = (const HVX_Vector *) vy0;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ flat_vec_dot_f32_f32_aa_2x1(ಸ್ಥಿರಾಂಕ uint32_t n, ದಶಮಾಂಶ * ಸೀಮಿತ s0,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx1,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy0) {
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x0 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx0;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x1 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx1;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y  = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy0;
 
     uint32_t nvec = n / VLEN_FP32;
     uint32_t nloe = n % VLEN_FP32;
 
-    HVX_Vector rsum0 = Q6_V_vzero();
-    HVX_Vector rsum1 = Q6_V_vzero();
+    HVX_ಸದಿಶ rsum0 = Q6_V_vzero();
+    HVX_ಸದಿಶ rsum1 = Q6_V_vzero();
 
     uint32_t i = 0;
 
-    #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
-        HVX_Vector y_sf = y[i];
-        HVX_Vector prod0 = HVX_OP_MUL_F32(x0[i], y_sf);
-        HVX_Vector prod1 = HVX_OP_MUL_F32(x1[i], y_sf);
-        rsum0 = HVX_OP_ADD_F32(rsum0, prod0);
-        rsum1 = HVX_OP_ADD_F32(rsum1, prod1);
+    #ಸೂಚನೆ unroll(2)
+    ಗಾಗಿ (i = 0; i < nvec; i++) {
+        HVX_ಸದಿಶ y_sf = y[i];
+        HVX_ಸದಿಶ prod0 = HVX_OP_MUL_F32(x0[i], y_sf);
+        HVX_ಸದಿಶ prod1 = HVX_OP_MUL_F32(x1[i], y_sf);
+        rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, prod0);
+        rsum1 = HVX_OP_ಕೂಡಿಸು_F32(rsum1, prod1);
     }
 
-    if (nloe) {
-        HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 4);
-        HVX_Vector y_sf  = Q6_V_vand_QV(bmask, y[i]);
-        HVX_Vector x0_sf = Q6_V_vand_QV(bmask, x0[i]);
-        HVX_Vector x1_sf = Q6_V_vand_QV(bmask, x1[i]);
-        HVX_Vector prod0 = HVX_OP_MUL_F32(x0_sf, y_sf);
-        HVX_Vector prod1 = HVX_OP_MUL_F32(x1_sf, y_sf);
-        rsum0 = HVX_OP_ADD_F32(rsum0, prod0);
-        rsum1 = HVX_OP_ADD_F32(rsum1, prod1);
+    ಆದರೆ (nloe) {
+        HVX_ಸದಿಶ_Pred bmask = Q6_Q_vsetq_R(nloe * 4);
+        HVX_ಸದಿಶ y_sf  = Q6_V_vand_QV(bmask, y[i]);
+        HVX_ಸದಿಶ x0_sf = Q6_V_vand_QV(bmask, x0[i]);
+        HVX_ಸದಿಶ x1_sf = Q6_V_vand_QV(bmask, x1[i]);
+        HVX_ಸದಿಶ prod0 = HVX_OP_MUL_F32(x0_sf, y_sf);
+        HVX_ಸದಿಶ prod1 = HVX_OP_MUL_F32(x1_sf, y_sf);
+        rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, prod0);
+        rsum1 = HVX_OP_ಕೂಡಿಸು_F32(rsum1, prod1);
     }
 
-    HVX_Vector rsum = hvx_vec_reduce_sum_f32x2(rsum0, rsum1);
+    HVX_ಸದಿಶ rsum = hvx_vec_reduce_ಮೊತ್ತ_f32x2(rsum0, rsum1);
     hvx_vec_store_u(s0, 8, rsum);
 }
 
-static inline void flat_vec_dot_f32_f32_aa_2x2(const uint32_t n, float * restrict s0, float * restrict s1,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0, const void * restrict vy1) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y0 = (const HVX_Vector *) vy0;
-    const HVX_Vector * restrict y1 = (const HVX_Vector *) vy1;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ flat_vec_dot_f32_f32_aa_2x2(ಸ್ಥಿರಾಂಕ uint32_t n, ದಶಮಾಂಶ * ಸೀಮಿತ s0, ದಶಮಾಂಶ * ಸೀಮಿತ s1,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx1,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy1) {
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x0 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx0;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x1 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx1;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y0 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy0;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y1 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy1;
 
     uint32_t nvec = n / VLEN_FP32;
     uint32_t nloe = n % VLEN_FP32;
 
-    HVX_Vector r0_c0_sum = Q6_V_vzero();
-    HVX_Vector r0_c1_sum = Q6_V_vzero();
-    HVX_Vector r1_c0_sum = Q6_V_vzero();
-    HVX_Vector r1_c1_sum = Q6_V_vzero();
+    HVX_ಸದಿಶ r0_c0_ಮೊತ್ತ = Q6_V_vzero();
+    HVX_ಸದಿಶ r0_c1_ಮೊತ್ತ = Q6_V_vzero();
+    HVX_ಸದಿಶ r1_c0_ಮೊತ್ತ = Q6_V_vzero();
+    HVX_ಸದಿಶ r1_c1_ಮೊತ್ತ = Q6_V_vzero();
 
     uint32_t i = 0;
 
-    #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
-        HVX_Vector r0_sf = x0[i];
-        HVX_Vector r1_sf = x1[i];
-        HVX_Vector c0_sf = y0[i];
-        HVX_Vector c1_sf = y1[i];
+    #ಸೂಚನೆ unroll(2)
+    ಗಾಗಿ (i = 0; i < nvec; i++) {
+        HVX_ಸದಿಶ r0_sf = x0[i];
+        HVX_ಸದಿಶ r1_sf = x1[i];
+        HVX_ಸದಿಶ c0_sf = y0[i];
+        HVX_ಸದಿಶ c1_sf = y1[i];
 
-        r0_c0_sum = HVX_OP_ADD_F32(r0_c0_sum, HVX_OP_MUL_F32(r0_sf, c0_sf));
-        r0_c1_sum = HVX_OP_ADD_F32(r0_c1_sum, HVX_OP_MUL_F32(r0_sf, c1_sf));
-        r1_c0_sum = HVX_OP_ADD_F32(r1_c0_sum, HVX_OP_MUL_F32(r1_sf, c0_sf));
-        r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(r1_sf, c1_sf));
+        r0_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(r0_sf, c0_sf));
+        r0_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(r0_sf, c1_sf));
+        r1_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(r1_sf, c0_sf));
+        r1_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(r1_sf, c1_sf));
     }
 
-    if (nloe) {
-        HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 4);
+    ಆದರೆ (nloe) {
+        HVX_ಸದಿಶ_Pred bmask = Q6_Q_vsetq_R(nloe * 4);
 
-        HVX_Vector r0_sf = Q6_V_vand_QV(bmask, x0[i]);
-        HVX_Vector r1_sf = Q6_V_vand_QV(bmask, x1[i]);
-        HVX_Vector c0_sf = Q6_V_vand_QV(bmask, y0[i]);
-        HVX_Vector c1_sf = Q6_V_vand_QV(bmask, y1[i]);
+        HVX_ಸದಿಶ r0_sf = Q6_V_vand_QV(bmask, x0[i]);
+        HVX_ಸದಿಶ r1_sf = Q6_V_vand_QV(bmask, x1[i]);
+        HVX_ಸದಿಶ c0_sf = Q6_V_vand_QV(bmask, y0[i]);
+        HVX_ಸದಿಶ c1_sf = Q6_V_vand_QV(bmask, y1[i]);
 
-        r0_c0_sum = HVX_OP_ADD_F32(r0_c0_sum, HVX_OP_MUL_F32(r0_sf, c0_sf));
-        r0_c1_sum = HVX_OP_ADD_F32(r0_c1_sum, HVX_OP_MUL_F32(r0_sf, c1_sf));
-        r1_c0_sum = HVX_OP_ADD_F32(r1_c0_sum, HVX_OP_MUL_F32(r1_sf, c0_sf));
-        r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(r1_sf, c1_sf));
+        r0_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(r0_sf, c0_sf));
+        r0_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(r0_sf, c1_sf));
+        r1_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(r1_sf, c0_sf));
+        r1_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(r1_sf, c1_sf));
     }
 
     // Reduce and store results
-    HVX_Vector r0_r1_c0_sum = hvx_vec_reduce_sum_f32x2(r0_c0_sum, r1_c0_sum);
-    HVX_Vector r0_r1_c1_sum = hvx_vec_reduce_sum_f32x2(r0_c1_sum, r1_c1_sum);
+    HVX_ಸದಿಶ r0_r1_c0_ಮೊತ್ತ = hvx_vec_reduce_ಮೊತ್ತ_f32x2(r0_c0_ಮೊತ್ತ, r1_c0_ಮೊತ್ತ);
+    HVX_ಸದಿಶ r0_r1_c1_ಮೊತ್ತ = hvx_vec_reduce_ಮೊತ್ತ_f32x2(r0_c1_ಮೊತ್ತ, r1_c1_ಮೊತ್ತ);
 
-    hvx_vec_store_u(s0, 8, r0_r1_c0_sum);
-    hvx_vec_store_u(s1, 8, r0_r1_c1_sum);
+    hvx_vec_store_u(s0, 8, r0_r1_c0_ಮೊತ್ತ);
+    hvx_vec_store_u(s1, 8, r0_r1_c1_ಮೊತ್ತ);
 }
 
-static inline void flat_vec_dot_bf16_f32_aa_1x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy) {
-    const HVX_Vector * restrict x = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict y = (const HVX_Vector *) vy;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ flat_vec_dot_bf16_f32_aa_1x1(ಸ್ಥಿರಾಂಕ uint32_t n, ದಶಮಾಂಶ * ಸೀಮಿತ s, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy) {
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy;
 
     uint32_t nvec = n / 64;
     uint32_t rem  = n % 64;
 
-    HVX_Vector rsum0 = Q6_V_vzero();
-    HVX_Vector rsum1 = Q6_V_vzero();
+    HVX_ಸದಿಶ rsum0 = Q6_V_vzero();
+    HVX_ಸದಿಶ rsum1 = Q6_V_vzero();
 
     uint32_t i = 0;
-    #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
-        HVX_Vector v_bf16 = x[i];
-        HVX_VectorPair p = Q6_Ww_vunpack_Vh(v_bf16);
-        HVX_Vector w0_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
-        HVX_Vector w1_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p), 16);
+    #ಸೂಚನೆ unroll(2)
+    ಗಾಗಿ (i = 0; i < nvec; i++) {
+        HVX_ಸದಿಶ v_bf16 = x[i];
+        HVX_ಸದಿಶ_Pair p = Q6_Ww_vunpack_Vh(v_bf16);
+        HVX_ಸದಿಶ w0_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
+        HVX_ಸದಿಶ w1_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p), 16);
 
-        rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w0_f32, y[2 * i + 0]));
-        rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w1_f32, y[2 * i + 1]));
+        rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, HVX_OP_MUL_F32(w0_f32, y[2 * i + 0]));
+        rsum1 = HVX_OP_ಕೂಡಿಸು_F32(rsum1, HVX_OP_MUL_F32(w1_f32, y[2 * i + 1]));
     }
 
-    if (rem) {
-        HVX_VectorPred bmask = Q6_Q_vsetq2_R(rem * 2);
-        HVX_Vector v_bf16 = Q6_V_vand_QV(bmask, x[i]);
-        HVX_VectorPair p = Q6_Ww_vunpack_Vh(v_bf16);
-        HVX_Vector w0_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
-        HVX_Vector w1_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p), 16);
+    ಆದರೆ (rem) {
+        HVX_ಸದಿಶ_Pred bmask = Q6_Q_vsetq2_R(rem * 2);
+        HVX_ಸದಿಶ v_bf16 = Q6_V_vand_QV(bmask, x[i]);
+        HVX_ಸದಿಶ_Pair p = Q6_Ww_vunpack_Vh(v_bf16);
+        HVX_ಸದಿಶ w0_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
+        HVX_ಸದಿಶ w1_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p), 16);
 
-        if (rem <= 32) {
-            HVX_VectorPred a_mask = Q6_Q_vsetq2_R(rem * 4);
-            HVX_Vector y0 = Q6_V_vand_QV(a_mask, y[2 * i + 0]);
-            rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w0_f32, y0));
-        } else {
-            HVX_Vector y0 = y[2 * i + 0];
-            rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w0_f32, y0));
+        ಆದರೆ (rem <= 32) {
+            HVX_ಸದಿಶ_Pred a_ಮುಖವಾಡ = Q6_Q_vsetq2_R(rem * 4);
+            HVX_ಸದಿಶ y0 = Q6_V_vand_QV(a_ಮುಖವಾಡ, y[2 * i + 0]);
+            rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, HVX_OP_MUL_F32(w0_f32, y0));
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            HVX_ಸದಿಶ y0 = y[2 * i + 0];
+            rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, HVX_OP_MUL_F32(w0_f32, y0));
 
-            HVX_VectorPred a_mask = Q6_Q_vsetq2_R((rem - 32) * 4);
-            HVX_Vector y1 = Q6_V_vand_QV(a_mask, y[2 * i + 1]);
-            rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w1_f32, y1));
+            HVX_ಸದಿಶ_Pred a_ಮುಖವಾಡ = Q6_Q_vsetq2_R((rem - 32) * 4);
+            HVX_ಸದಿಶ y1 = Q6_V_vand_QV(a_ಮುಖವಾಡ, y[2 * i + 1]);
+            rsum1 = HVX_OP_ಕೂಡಿಸು_F32(rsum1, HVX_OP_MUL_F32(w1_f32, y1));
         }
     }
 
-    HVX_Vector rsum = HVX_OP_ADD_F32(rsum0, rsum1);
-    *s = hvx_vec_get_f32(hvx_vec_reduce_sum_f32(rsum));
+    HVX_ಸದಿಶ rsum = HVX_OP_ಕೂಡಿಸು_F32(rsum0, rsum1);
+    *s = hvx_vec_get_f32(hvx_vec_reduce_ಮೊತ್ತ_f32(rsum));
 }
 
-static inline void flat_vec_dot_bf16_f32_aa_2x1(const uint32_t n, float * restrict s0,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y  = (const HVX_Vector *) vy0;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ flat_vec_dot_bf16_f32_aa_2x1(ಸ್ಥಿರಾಂಕ uint32_t n, ದಶಮಾಂಶ * ಸೀಮಿತ s0,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx1,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy0) {
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x0 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx0;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x1 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx1;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y  = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy0;
 
     uint32_t nvec = n / 64;
     uint32_t rem  = n % 64;
 
-    HVX_Vector rsum0 = Q6_V_vzero();
-    HVX_Vector rsum1 = Q6_V_vzero();
+    HVX_ಸದಿಶ rsum0 = Q6_V_vzero();
+    HVX_ಸದಿಶ rsum1 = Q6_V_vzero();
 
     uint32_t i = 0;
-    #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
-        HVX_VectorPair p0 = Q6_Ww_vunpack_Vh(x0[i]);
-        HVX_VectorPair p1 = Q6_Ww_vunpack_Vh(x1[i]);
-        HVX_Vector w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
-        HVX_Vector w01_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p0), 16);
-        HVX_Vector w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
-        HVX_Vector w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
+    #ಸೂಚನೆ unroll(2)
+    ಗಾಗಿ (i = 0; i < nvec; i++) {
+        HVX_ಸದಿಶ_Pair p0 = Q6_Ww_vunpack_Vh(x0[i]);
+        HVX_ಸದಿಶ_Pair p1 = Q6_Ww_vunpack_Vh(x1[i]);
+        HVX_ಸದಿಶ w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
+        HVX_ಸದಿಶ w01_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p0), 16);
+        HVX_ಸದಿಶ w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
+        HVX_ಸದಿಶ w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
 
-        HVX_Vector y0 = y[2 * i + 0];
-        HVX_Vector y1 = y[2 * i + 1];
+        HVX_ಸದಿಶ y0 = y[2 * i + 0];
+        HVX_ಸದಿಶ y1 = y[2 * i + 1];
 
-        rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w00_f32, y0));
-        rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w10_f32, y0));
-        rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w01_f32, y1));
-        rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w11_f32, y1));
+        rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, HVX_OP_MUL_F32(w00_f32, y0));
+        rsum1 = HVX_OP_ಕೂಡಿಸು_F32(rsum1, HVX_OP_MUL_F32(w10_f32, y0));
+        rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, HVX_OP_MUL_F32(w01_f32, y1));
+        rsum1 = HVX_OP_ಕೂಡಿಸು_F32(rsum1, HVX_OP_MUL_F32(w11_f32, y1));
     }
 
-    if (rem) {
-        HVX_VectorPred bmask = Q6_Q_vsetq2_R(rem * 2);
-        HVX_VectorPair p0 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x0[i]));
-        HVX_VectorPair p1 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x1[i]));
-        HVX_Vector w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
-        HVX_Vector w01_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p0), 16);
-        HVX_Vector w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
-        HVX_Vector w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
+    ಆದರೆ (rem) {
+        HVX_ಸದಿಶ_Pred bmask = Q6_Q_vsetq2_R(rem * 2);
+        HVX_ಸದಿಶ_Pair p0 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x0[i]));
+        HVX_ಸದಿಶ_Pair p1 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x1[i]));
+        HVX_ಸದಿಶ w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
+        HVX_ಸದಿಶ w01_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p0), 16);
+        HVX_ಸದಿಶ w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
+        HVX_ಸದಿಶ w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
 
-        if (rem <= 32) {
-            HVX_VectorPred a_mask = Q6_Q_vsetq2_R(rem * 4);
-            HVX_Vector y0 = Q6_V_vand_QV(a_mask, y[2 * i + 0]);
-            rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w00_f32, y0));
-            rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w10_f32, y0));
-        } else {
-            HVX_Vector y0 = y[2 * i + 0];
-            rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w00_f32, y0));
-            rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w10_f32, y0));
+        ಆದರೆ (rem <= 32) {
+            HVX_ಸದಿಶ_Pred a_ಮುಖವಾಡ = Q6_Q_vsetq2_R(rem * 4);
+            HVX_ಸದಿಶ y0 = Q6_V_vand_QV(a_ಮುಖವಾಡ, y[2 * i + 0]);
+            rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, HVX_OP_MUL_F32(w00_f32, y0));
+            rsum1 = HVX_OP_ಕೂಡಿಸು_F32(rsum1, HVX_OP_MUL_F32(w10_f32, y0));
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            HVX_ಸದಿಶ y0 = y[2 * i + 0];
+            rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, HVX_OP_MUL_F32(w00_f32, y0));
+            rsum1 = HVX_OP_ಕೂಡಿಸು_F32(rsum1, HVX_OP_MUL_F32(w10_f32, y0));
 
-            HVX_VectorPred a_mask = Q6_Q_vsetq2_R((rem - 32) * 4);
-            HVX_Vector y1 = Q6_V_vand_QV(a_mask, y[2 * i + 1]);
-            rsum0 = HVX_OP_ADD_F32(rsum0, HVX_OP_MUL_F32(w01_f32, y1));
-            rsum1 = HVX_OP_ADD_F32(rsum1, HVX_OP_MUL_F32(w11_f32, y1));
+            HVX_ಸದಿಶ_Pred a_ಮುಖವಾಡ = Q6_Q_vsetq2_R((rem - 32) * 4);
+            HVX_ಸದಿಶ y1 = Q6_V_vand_QV(a_ಮುಖವಾಡ, y[2 * i + 1]);
+            rsum0 = HVX_OP_ಕೂಡಿಸು_F32(rsum0, HVX_OP_MUL_F32(w01_f32, y1));
+            rsum1 = HVX_OP_ಕೂಡಿಸು_F32(rsum1, HVX_OP_MUL_F32(w11_f32, y1));
         }
     }
 
-    HVX_Vector rsum = hvx_vec_reduce_sum_f32x2(rsum0, rsum1);
+    HVX_ಸದಿಶ rsum = hvx_vec_reduce_ಮೊತ್ತ_f32x2(rsum0, rsum1);
     hvx_vec_store_u(s0, 8, rsum);
 }
 
-static inline void flat_vec_dot_bf16_f32_aa_2x2(const uint32_t n, float * restrict s0, float * restrict s1,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0, const void * restrict vy1) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y0 = (const HVX_Vector *) vy0;
-    const HVX_Vector * restrict y1 = (const HVX_Vector *) vy1;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ flat_vec_dot_bf16_f32_aa_2x2(ಸ್ಥಿರಾಂಕ uint32_t n, ದಶಮಾಂಶ * ಸೀಮಿತ s0, ದಶಮಾಂಶ * ಸೀಮಿತ s1,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx1,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy1) {
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x0 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx0;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x1 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx1;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y0 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy0;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y1 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy1;
 
     uint32_t nvec = n / 64;
     uint32_t rem  = n % 64;
 
-    HVX_Vector r0_c0_sum = Q6_V_vzero();
-    HVX_Vector r0_c1_sum = Q6_V_vzero();
-    HVX_Vector r1_c0_sum = Q6_V_vzero();
-    HVX_Vector r1_c1_sum = Q6_V_vzero();
+    HVX_ಸದಿಶ r0_c0_ಮೊತ್ತ = Q6_V_vzero();
+    HVX_ಸದಿಶ r0_c1_ಮೊತ್ತ = Q6_V_vzero();
+    HVX_ಸದಿಶ r1_c0_ಮೊತ್ತ = Q6_V_vzero();
+    HVX_ಸದಿಶ r1_c1_ಮೊತ್ತ = Q6_V_vzero();
 
     uint32_t i = 0;
-    #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
-        HVX_VectorPair p0 = Q6_Ww_vunpack_Vh(x0[i]);
-        HVX_VectorPair p1 = Q6_Ww_vunpack_Vh(x1[i]);
-        HVX_Vector w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
-        HVX_Vector w01_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p0), 16);
-        HVX_Vector w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
-        HVX_Vector w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
+    #ಸೂಚನೆ unroll(2)
+    ಗಾಗಿ (i = 0; i < nvec; i++) {
+        HVX_ಸದಿಶ_Pair p0 = Q6_Ww_vunpack_Vh(x0[i]);
+        HVX_ಸದಿಶ_Pair p1 = Q6_Ww_vunpack_Vh(x1[i]);
+        HVX_ಸದಿಶ w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
+        HVX_ಸದಿಶ w01_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p0), 16);
+        HVX_ಸದಿಶ w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
+        HVX_ಸದಿಶ w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
 
-        HVX_Vector c0_0 = y0[2 * i + 0];
-        HVX_Vector c0_1 = y0[2 * i + 1];
-        HVX_Vector c1_0 = y1[2 * i + 0];
-        HVX_Vector c1_1 = y1[2 * i + 1];
+        HVX_ಸದಿಶ c0_0 = y0[2 * i + 0];
+        HVX_ಸದಿಶ c0_1 = y0[2 * i + 1];
+        HVX_ಸದಿಶ c1_0 = y1[2 * i + 0];
+        HVX_ಸದಿಶ c1_1 = y1[2 * i + 1];
 
-        r0_c0_sum = HVX_OP_ADD_F32(r0_c0_sum, HVX_OP_MUL_F32(w00_f32, c0_0));
-        r0_c1_sum = HVX_OP_ADD_F32(r0_c1_sum, HVX_OP_MUL_F32(w00_f32, c1_0));
-        r1_c0_sum = HVX_OP_ADD_F32(r1_c0_sum, HVX_OP_MUL_F32(w10_f32, c0_0));
-        r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(w10_f32, c1_0));
+        r0_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w00_f32, c0_0));
+        r0_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w00_f32, c1_0));
+        r1_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w10_f32, c0_0));
+        r1_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w10_f32, c1_0));
 
-        r0_c0_sum = HVX_OP_ADD_F32(r0_c0_sum, HVX_OP_MUL_F32(w01_f32, c0_1));
-        r0_c1_sum = HVX_OP_ADD_F32(r0_c1_sum, HVX_OP_MUL_F32(w01_f32, c1_1));
-        r1_c0_sum = HVX_OP_ADD_F32(r1_c0_sum, HVX_OP_MUL_F32(w11_f32, c0_1));
-        r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(w11_f32, c1_1));
+        r0_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w01_f32, c0_1));
+        r0_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w01_f32, c1_1));
+        r1_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w11_f32, c0_1));
+        r1_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w11_f32, c1_1));
     }
 
-    if (rem) {
-        HVX_VectorPred bmask = Q6_Q_vsetq2_R(rem * 2);
-        HVX_VectorPair p0 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x0[i]));
-        HVX_VectorPair p1 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x1[i]));
-        HVX_Vector w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
-        HVX_Vector w01_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p0), 16);
-        HVX_Vector w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
-        HVX_Vector w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
+    ಆದರೆ (rem) {
+        HVX_ಸದಿಶ_Pred bmask = Q6_Q_vsetq2_R(rem * 2);
+        HVX_ಸದಿಶ_Pair p0 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x0[i]));
+        HVX_ಸದಿಶ_Pair p1 = Q6_Ww_vunpack_Vh(Q6_V_vand_QV(bmask, x1[i]));
+        HVX_ಸದಿಶ w00_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p0), 16);
+        HVX_ಸದಿಶ w01_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p0), 16);
+        HVX_ಸದಿಶ w10_f32 = Q6_Vw_vasl_VwR(Q6_V_lo_W(p1), 16);
+        HVX_ಸದಿಶ w11_f32 = Q6_Vw_vasl_VwR(Q6_V_hi_W(p1), 16);
 
-        if (rem <= 32) {
-            HVX_VectorPred a_mask = Q6_Q_vsetq2_R(rem * 4);
-            HVX_Vector c0_0 = Q6_V_vand_QV(a_mask, y0[2 * i + 0]);
-            HVX_Vector c1_0 = Q6_V_vand_QV(a_mask, y1[2 * i + 0]);
-            r0_c0_sum = HVX_OP_ADD_F32(r0_c0_sum, HVX_OP_MUL_F32(w00_f32, c0_0));
-            r0_c1_sum = HVX_OP_ADD_F32(r0_c1_sum, HVX_OP_MUL_F32(w00_f32, c1_0));
-            r1_c0_sum = HVX_OP_ADD_F32(r1_c0_sum, HVX_OP_MUL_F32(w10_f32, c0_0));
-            r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(w10_f32, c1_0));
-        } else {
-            HVX_Vector c0_0 = y0[2 * i + 0];
-            HVX_Vector c1_0 = y1[2 * i + 0];
-            r0_c0_sum = HVX_OP_ADD_F32(r0_c0_sum, HVX_OP_MUL_F32(w00_f32, c0_0));
-            r0_c1_sum = HVX_OP_ADD_F32(r0_c1_sum, HVX_OP_MUL_F32(w00_f32, c1_0));
-            r1_c0_sum = HVX_OP_ADD_F32(r1_c0_sum, HVX_OP_MUL_F32(w10_f32, c0_0));
-            r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(w10_f32, c1_0));
+        ಆದರೆ (rem <= 32) {
+            HVX_ಸದಿಶ_Pred a_ಮುಖವಾಡ = Q6_Q_vsetq2_R(rem * 4);
+            HVX_ಸದಿಶ c0_0 = Q6_V_vand_QV(a_ಮುಖವಾಡ, y0[2 * i + 0]);
+            HVX_ಸದಿಶ c1_0 = Q6_V_vand_QV(a_ಮುಖವಾಡ, y1[2 * i + 0]);
+            r0_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w00_f32, c0_0));
+            r0_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w00_f32, c1_0));
+            r1_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w10_f32, c0_0));
+            r1_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w10_f32, c1_0));
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            HVX_ಸದಿಶ c0_0 = y0[2 * i + 0];
+            HVX_ಸದಿಶ c1_0 = y1[2 * i + 0];
+            r0_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w00_f32, c0_0));
+            r0_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w00_f32, c1_0));
+            r1_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w10_f32, c0_0));
+            r1_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w10_f32, c1_0));
 
-            HVX_VectorPred a_mask = Q6_Q_vsetq2_R((rem - 32) * 4);
-            HVX_Vector c0_1 = Q6_V_vand_QV(a_mask, y0[2 * i + 1]);
-            HVX_Vector c1_1 = Q6_V_vand_QV(a_mask, y1[2 * i + 1]);
-            r0_c0_sum = HVX_OP_ADD_F32(r0_c0_sum, HVX_OP_MUL_F32(w01_f32, c0_1));
-            r0_c1_sum = HVX_OP_ADD_F32(r0_c1_sum, HVX_OP_MUL_F32(w01_f32, c1_1));
-            r1_c0_sum = HVX_OP_ADD_F32(r1_c0_sum, HVX_OP_MUL_F32(w11_f32, c0_1));
-            r1_c1_sum = HVX_OP_ADD_F32(r1_c1_sum, HVX_OP_MUL_F32(w11_f32, c1_1));
+            HVX_ಸದಿಶ_Pred a_ಮುಖವಾಡ = Q6_Q_vsetq2_R((rem - 32) * 4);
+            HVX_ಸದಿಶ c0_1 = Q6_V_vand_QV(a_ಮುಖವಾಡ, y0[2 * i + 1]);
+            HVX_ಸದಿಶ c1_1 = Q6_V_vand_QV(a_ಮುಖವಾಡ, y1[2 * i + 1]);
+            r0_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w01_f32, c0_1));
+            r0_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r0_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w01_f32, c1_1));
+            r1_c0_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c0_ಮೊತ್ತ, HVX_OP_MUL_F32(w11_f32, c0_1));
+            r1_c1_ಮೊತ್ತ = HVX_OP_ಕೂಡಿಸು_F32(r1_c1_ಮೊತ್ತ, HVX_OP_MUL_F32(w11_f32, c1_1));
         }
     }
 
-    HVX_Vector r0_r1_c0_sum = hvx_vec_reduce_sum_f32x2(r0_c0_sum, r1_c0_sum);
-    HVX_Vector r0_r1_c1_sum = hvx_vec_reduce_sum_f32x2(r0_c1_sum, r1_c1_sum);
+    HVX_ಸದಿಶ r0_r1_c0_ಮೊತ್ತ = hvx_vec_reduce_ಮೊತ್ತ_f32x2(r0_c0_ಮೊತ್ತ, r1_c0_ಮೊತ್ತ);
+    HVX_ಸದಿಶ r0_r1_c1_ಮೊತ್ತ = hvx_vec_reduce_ಮೊತ್ತ_f32x2(r0_c1_ಮೊತ್ತ, r1_c1_ಮೊತ್ತ);
 
-    hvx_vec_store_u(s0, 8, r0_r1_c0_sum);
-    hvx_vec_store_u(s1, 8, r0_r1_c1_sum);
+    hvx_vec_store_u(s0, 8, r0_r1_c0_ಮೊತ್ತ);
+    hvx_vec_store_u(s1, 8, r0_r1_c1_ಮೊತ್ತ);
 }
 
-#undef HVX_OP_ADD_F32
-#undef HVX_OP_MUL_F32
+#ವ್ಯಾಖ್ಯಾನ_ರದ್ದು HVX_OP_ಕೂಡಿಸು_F32
+#ವ್ಯಾಖ್ಯಾನ_ರದ್ದು HVX_OP_MUL_F32
 
-static inline void flat_vec_dot_f16_f16_aa_1x1(const uint32_t n, float * restrict s, const void * restrict vx, const void * restrict vy) {
-    const HVX_Vector * restrict x = (const HVX_Vector *) vx;
-    const HVX_Vector * restrict y = (const HVX_Vector *) vy;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ flat_vec_dot_f16_f16_aa_1x1(ಸ್ಥಿರಾಂಕ uint32_t n, ದಶಮಾಂಶ * ಸೀಮಿತ s, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy) {
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy;
 
     uint32_t nvec = n / VLEN_FP16; // num full fp16 hvx vectors
     uint32_t nloe = n % VLEN_FP16; // leftover elements
 
-    HVX_VectorPair rsum_p = Q6_W_vzero();
+    HVX_ಸದಿಶ_Pair rsum_p = Q6_W_vzero();
 
     uint32_t i = 0;
 
-    #pragma unroll(4)
-    for (i = 0; i < nvec; i++) {
+    #ಸೂಚನೆ unroll(4)
+    ಗಾಗಿ (i = 0; i < nvec; i++) {
         rsum_p = hvx_vec_mpyacc_f32_f16(rsum_p, x[i], y[i]);
     }
 
-    if (nloe) {
-        HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 2);
-        HVX_Vector x_hf = Q6_V_vand_QV(bmask, x[i]);
-        HVX_Vector y_hf = Q6_V_vand_QV(bmask, y[i]);
+    ಆದರೆ (nloe) {
+        HVX_ಸದಿಶ_Pred bmask = Q6_Q_vsetq_R(nloe * 2);
+        HVX_ಸದಿಶ x_hf = Q6_V_vand_QV(bmask, x[i]);
+        HVX_ಸದಿಶ y_hf = Q6_V_vand_QV(bmask, y[i]);
         rsum_p = hvx_vec_mpyacc_f32_f16(rsum_p, x_hf, y_hf);
     }
 
-    HVX_Vector rsum = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(rsum_p), Q6_V_hi_W(rsum_p)));
-    hvx_vec_store_u(s, 4, hvx_vec_reduce_sum_f32(rsum));
+    HVX_ಸದಿಶ rsum = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(rsum_p), Q6_V_hi_W(rsum_p)));
+    hvx_vec_store_u(s, 4, hvx_vec_reduce_ಮೊತ್ತ_f32(rsum));
 }
 
-static inline void flat_vec_dot_f16_f16_aa_2x1(const uint32_t n, float * restrict s0,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y  = (const HVX_Vector *) vy0;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ flat_vec_dot_f16_f16_aa_2x1(ಸ್ಥಿರಾಂಕ uint32_t n, ದಶಮಾಂಶ * ಸೀಮಿತ s0,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx1,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy0) {
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x0 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx0;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x1 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx1;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y  = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy0;
 
     uint32_t nvec = n / VLEN_FP16;
     uint32_t nloe = n % VLEN_FP16;
 
-    HVX_VectorPair rsum0_p = Q6_W_vzero();
-    HVX_VectorPair rsum1_p = Q6_W_vzero();
+    HVX_ಸದಿಶ_Pair rsum0_p = Q6_W_vzero();
+    HVX_ಸದಿಶ_Pair rsum1_p = Q6_W_vzero();
 
     uint32_t i = 0;
 
-    #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
-        HVX_Vector y_hf = y[i];
+    #ಸೂಚನೆ unroll(2)
+    ಗಾಗಿ (i = 0; i < nvec; i++) {
+        HVX_ಸದಿಶ y_hf = y[i];
         rsum0_p = hvx_vec_mpyacc_f32_f16(rsum0_p, x0[i], y_hf);
         rsum1_p = hvx_vec_mpyacc_f32_f16(rsum1_p, x1[i], y_hf);
     }
 
-    if (nloe) {
-        HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 2);
-        HVX_Vector y_hf  = Q6_V_vand_QV(bmask, y[i]);
-        HVX_Vector x0_hf = Q6_V_vand_QV(bmask, x0[i]);
-        HVX_Vector x1_hf = Q6_V_vand_QV(bmask, x1[i]);
+    ಆದರೆ (nloe) {
+        HVX_ಸದಿಶ_Pred bmask = Q6_Q_vsetq_R(nloe * 2);
+        HVX_ಸದಿಶ y_hf  = Q6_V_vand_QV(bmask, y[i]);
+        HVX_ಸದಿಶ x0_hf = Q6_V_vand_QV(bmask, x0[i]);
+        HVX_ಸದಿಶ x1_hf = Q6_V_vand_QV(bmask, x1[i]);
         rsum0_p = hvx_vec_mpyacc_f32_f16(rsum0_p, x0_hf, y_hf);
         rsum1_p = hvx_vec_mpyacc_f32_f16(rsum1_p, x1_hf, y_hf);
     }
 
-    HVX_Vector rsum0 = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(rsum0_p), Q6_V_hi_W(rsum0_p)));
-    HVX_Vector rsum1 = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(rsum1_p), Q6_V_hi_W(rsum1_p)));
-    HVX_Vector rsum  = hvx_vec_reduce_sum_f32x2(rsum0, rsum1);
+    HVX_ಸದಿಶ rsum0 = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(rsum0_p), Q6_V_hi_W(rsum0_p)));
+    HVX_ಸದಿಶ rsum1 = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(rsum1_p), Q6_V_hi_W(rsum1_p)));
+    HVX_ಸದಿಶ rsum  = hvx_vec_reduce_ಮೊತ್ತ_f32x2(rsum0, rsum1);
     hvx_vec_store_u(s0, 8, rsum);
 }
 
-static inline void flat_vec_dot_f16_f16_aa_2x2(const uint32_t n, float * restrict s0, float * restrict s1,
-                                const void * restrict vx0, const void * restrict vx1,
-                                const void * restrict vy0, const void * restrict vy1) {
-    const HVX_Vector * restrict x0 = (const HVX_Vector *) vx0;
-    const HVX_Vector * restrict x1 = (const HVX_Vector *) vx1;
-    const HVX_Vector * restrict y0 = (const HVX_Vector *) vy0;
-    const HVX_Vector * restrict y1 = (const HVX_Vector *) vy1;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ flat_vec_dot_f16_f16_aa_2x2(ಸ್ಥಿರಾಂಕ uint32_t n, ದಶಮಾಂಶ * ಸೀಮಿತ s0, ದಶಮಾಂಶ * ಸೀಮಿತ s1,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vx1,
+                                ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy0, ಸ್ಥಿರಾಂಕ ಶೂನ್ಯ * ಸೀಮಿತ vy1) {
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x0 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx0;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ x1 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vx1;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y0 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy0;
+    ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ * ಸೀಮಿತ y1 = (ಸ್ಥಿರಾಂಕ HVX_ಸದಿಶ *) vy1;
 
     uint32_t nvec = n / VLEN_FP16;
     uint32_t nloe = n % VLEN_FP16;
 
     // Row sums (sf) - 4 accumulators for 2x2 tile
-    HVX_VectorPair r0_c0_sum_p = Q6_W_vzero();
-    HVX_VectorPair r0_c1_sum_p = Q6_W_vzero();
-    HVX_VectorPair r1_c0_sum_p = Q6_W_vzero();
-    HVX_VectorPair r1_c1_sum_p = Q6_W_vzero();
+    HVX_ಸದಿಶ_Pair r0_c0_ಮೊತ್ತ_p = Q6_W_vzero();
+    HVX_ಸದಿಶ_Pair r0_c1_ಮೊತ್ತ_p = Q6_W_vzero();
+    HVX_ಸದಿಶ_Pair r1_c0_ಮೊತ್ತ_p = Q6_W_vzero();
+    HVX_ಸದಿಶ_Pair r1_c1_ಮೊತ್ತ_p = Q6_W_vzero();
 
     uint32_t i = 0;
 
-    #pragma unroll(2)
-    for (i = 0; i < nvec; i++) {
-        HVX_Vector r0_hf = x0[i];
-        HVX_Vector r1_hf = x1[i];
-        HVX_Vector c0_hf = y0[i];
-        HVX_Vector c1_hf = y1[i];
+    #ಸೂಚನೆ unroll(2)
+    ಗಾಗಿ (i = 0; i < nvec; i++) {
+        HVX_ಸದಿಶ r0_hf = x0[i];
+        HVX_ಸದಿಶ r1_hf = x1[i];
+        HVX_ಸದಿಶ c0_hf = y0[i];
+        HVX_ಸದಿಶ c1_hf = y1[i];
 
         // Compute 4 dot products: r0xc0, r0xc1, r1xc0, r1xc1
-        r0_c0_sum_p = hvx_vec_mpyacc_f32_f16(r0_c0_sum_p, r0_hf, c0_hf);
-        r0_c1_sum_p = hvx_vec_mpyacc_f32_f16(r0_c1_sum_p, r0_hf, c1_hf);
-        r1_c0_sum_p = hvx_vec_mpyacc_f32_f16(r1_c0_sum_p, r1_hf, c0_hf);
-        r1_c1_sum_p = hvx_vec_mpyacc_f32_f16(r1_c1_sum_p, r1_hf, c1_hf);
+        r0_c0_ಮೊತ್ತ_p = hvx_vec_mpyacc_f32_f16(r0_c0_ಮೊತ್ತ_p, r0_hf, c0_hf);
+        r0_c1_ಮೊತ್ತ_p = hvx_vec_mpyacc_f32_f16(r0_c1_ಮೊತ್ತ_p, r0_hf, c1_hf);
+        r1_c0_ಮೊತ್ತ_p = hvx_vec_mpyacc_f32_f16(r1_c0_ಮೊತ್ತ_p, r1_hf, c0_hf);
+        r1_c1_ಮೊತ್ತ_p = hvx_vec_mpyacc_f32_f16(r1_c1_ಮೊತ್ತ_p, r1_hf, c1_hf);
     }
 
-    if (nloe) {
-        HVX_VectorPred bmask = Q6_Q_vsetq_R(nloe * 2);
+    ಆದರೆ (nloe) {
+        HVX_ಸದಿಶ_Pred bmask = Q6_Q_vsetq_R(nloe * 2);
 
-        HVX_Vector r0_hf = Q6_V_vand_QV(bmask, x0[i]);
-        HVX_Vector r1_hf = Q6_V_vand_QV(bmask, x1[i]);
-        HVX_Vector c0_hf = Q6_V_vand_QV(bmask, y0[i]);
-        HVX_Vector c1_hf = Q6_V_vand_QV(bmask, y1[i]);
+        HVX_ಸದಿಶ r0_hf = Q6_V_vand_QV(bmask, x0[i]);
+        HVX_ಸದಿಶ r1_hf = Q6_V_vand_QV(bmask, x1[i]);
+        HVX_ಸದಿಶ c0_hf = Q6_V_vand_QV(bmask, y0[i]);
+        HVX_ಸದಿಶ c1_hf = Q6_V_vand_QV(bmask, y1[i]);
 
-        r0_c0_sum_p = hvx_vec_mpyacc_f32_f16(r0_c0_sum_p, r0_hf, c0_hf);
-        r0_c1_sum_p = hvx_vec_mpyacc_f32_f16(r0_c1_sum_p, r0_hf, c1_hf);
-        r1_c0_sum_p = hvx_vec_mpyacc_f32_f16(r1_c0_sum_p, r1_hf, c0_hf);
-        r1_c1_sum_p = hvx_vec_mpyacc_f32_f16(r1_c1_sum_p, r1_hf, c1_hf);
+        r0_c0_ಮೊತ್ತ_p = hvx_vec_mpyacc_f32_f16(r0_c0_ಮೊತ್ತ_p, r0_hf, c0_hf);
+        r0_c1_ಮೊತ್ತ_p = hvx_vec_mpyacc_f32_f16(r0_c1_ಮೊತ್ತ_p, r0_hf, c1_hf);
+        r1_c0_ಮೊತ್ತ_p = hvx_vec_mpyacc_f32_f16(r1_c0_ಮೊತ್ತ_p, r1_hf, c0_hf);
+        r1_c1_ಮೊತ್ತ_p = hvx_vec_mpyacc_f32_f16(r1_c1_ಮೊತ್ತ_p, r1_hf, c1_hf);
     }
 
-    HVX_Vector r0_c0_sum = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(r0_c0_sum_p), Q6_V_hi_W(r0_c0_sum_p)));
-    HVX_Vector r0_c1_sum = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(r0_c1_sum_p), Q6_V_hi_W(r0_c1_sum_p)));
-    HVX_Vector r1_c0_sum = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(r1_c0_sum_p), Q6_V_hi_W(r1_c0_sum_p)));
-    HVX_Vector r1_c1_sum = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(r1_c1_sum_p), Q6_V_hi_W(r1_c1_sum_p)));
+    HVX_ಸದಿಶ r0_c0_ಮೊತ್ತ = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(r0_c0_ಮೊತ್ತ_p), Q6_V_hi_W(r0_c0_ಮೊತ್ತ_p)));
+    HVX_ಸದಿಶ r0_c1_ಮೊತ್ತ = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(r0_c1_ಮೊತ್ತ_p), Q6_V_hi_W(r0_c1_ಮೊತ್ತ_p)));
+    HVX_ಸದಿಶ r1_c0_ಮೊತ್ತ = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(r1_c0_ಮೊತ್ತ_p), Q6_V_hi_W(r1_c0_ಮೊತ್ತ_p)));
+    HVX_ಸದಿಶ r1_c1_ಮೊತ್ತ = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(Q6_V_lo_W(r1_c1_ಮೊತ್ತ_p), Q6_V_hi_W(r1_c1_ಮೊತ್ತ_p)));
 
     // Reduce and store results
-    HVX_Vector r0_r1_c0_sum = hvx_vec_reduce_sum_f32x2(r0_c0_sum, r1_c0_sum);
-    HVX_Vector r0_r1_c1_sum = hvx_vec_reduce_sum_f32x2(r0_c1_sum, r1_c1_sum);
+    HVX_ಸದಿಶ r0_r1_c0_ಮೊತ್ತ = hvx_vec_reduce_ಮೊತ್ತ_f32x2(r0_c0_ಮೊತ್ತ, r1_c0_ಮೊತ್ತ);
+    HVX_ಸದಿಶ r0_r1_c1_ಮೊತ್ತ = hvx_vec_reduce_ಮೊತ್ತ_f32x2(r0_c1_ಮೊತ್ತ, r1_c1_ಮೊತ್ತ);
 
-    hvx_vec_store_u(&s0[0], 8, r0_r1_c0_sum);  // row0,col0 row1,col0
-    hvx_vec_store_u(&s1[0], 8, r0_r1_c1_sum);  // row0,col1 row1,col1
+    hvx_vec_store_u(&s0[0], 8, r0_r1_c0_ಮೊತ್ತ);  // row0,col0 row1,col0
+    hvx_vec_store_u(&s1[0], 8, r0_r1_c1_ಮೊತ್ತ);  // row0,col1 row1,col1
 }
 
 
 
-static inline void hvx_tensor_add_f32_grid(
-    const struct htp_tensor * restrict dst,
-    const struct htp_tensor * restrict src2,
-    uint32_t start_row,
-    uint32_t end_row,
-    uint32_t start_col,
-    uint32_t end_col,
-    const struct fastdiv_values * div_ne11_12,
-    const struct fastdiv_values * div_ne11
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hvx_tensor_ಕೂಡಿಸು_f32_grid(
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * ಸೀಮಿತ dst,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ htp_tensor * ಸೀಮಿತ src2,
+    uint32_t ಆರಂಭ_ಅಡ್ಡಸಾಲು,
+    uint32_t ಕೊನೆ_ಅಡ್ಡಸಾಲು,
+    uint32_t ಆರಂಭ_ಲಂಬಸಾಲು,
+    uint32_t ಕೊನೆ_ಲಂಬಸಾಲು,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು * div_ne11_12,
+    ಸ್ಥಿರಾಂಕ ರಚನೆ fastdiv_ಮೌಲ್ಯಗಳು * div_ne11
 ) {
-    if (start_row >= end_row || start_col >= end_col) return;
-    const uint32_t nb1 = dst->nb[1]; // row stride in bytes
+    ಆದರೆ (ಆರಂಭ_ಅಡ್ಡಸಾಲು >= ಕೊನೆ_ಅಡ್ಡಸಾಲು || ಆರಂಭ_ಲಂಬಸಾಲು >= ಕೊನೆ_ಲಂಬಸಾಲು) ಹಿಂತಿರುಗಿ;
+    ಸ್ಥಿರಾಂಕ uint32_t nb1 = dst->nb[1]; // row stride in bytes
 
-    const uint32_t ne11 = dst->ne[1];
-    const uint32_t ne12 = dst->ne[2];
-    const uint32_t ne11_12 = ne11 * ne12;
+    ಸ್ಥಿರಾಂಕ uint32_t ne11 = dst->ne[1];
+    ಸ್ಥಿರಾಂಕ uint32_t ne12 = dst->ne[2];
+    ಸ್ಥಿರಾಂಕ uint32_t ne11_12 = ne11 * ne12;
 
-    const bool is_broadcast1 = (src2->ne[1] == 1);
-    const bool is_broadcast2 = (src2->ne[2] == 1);
-    const bool is_broadcast3 = (src2->ne[3] == 1);
+    ಸ್ಥಿರಾಂಕ bool is_broadcast1 = (src2->ne[1] == 1);
+    ಸ್ಥಿರಾಂಕ bool is_broadcast2 = (src2->ne[2] == 1);
+    ಸ್ಥಿರಾಂಕ bool is_broadcast3 = (src2->ne[3] == 1);
 
-    for (uint32_t r = start_row; r < end_row; r++) {
-        float * dst_row = (float *) ((uint8_t *) dst->data + (size_t) r * nb1);
+    ಗಾಗಿ (uint32_t r = ಆರಂಭ_ಅಡ್ಡಸಾಲು; r < ಕೊನೆ_ಅಡ್ಡಸಾಲು; r++) {
+        ದಶಮಾಂಶ * dst_ಅಡ್ಡಸಾಲು = (ದಶಮಾಂಶ *) ((uint8_t *) dst->ದತ್ತಾಂಶ + (size_t) r * nb1);
 
         uint32_t i13 = fastdiv(r, div_ne11_12);
         uint32_t i12 = fastdiv(r - i13 * ne11_12, div_ne11);
@@ -550,26 +550,26 @@ static inline void hvx_tensor_add_f32_grid(
         uint32_t i22 = is_broadcast2 ? 0 : i12;
         uint32_t i21 = is_broadcast1 ? 0 : i11;
 
-        const float * src2_row = (const float *) ((const uint8_t *) src2->data +
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src2_ಅಡ್ಡಸಾಲು = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) ((ಸ್ಥಿರಾಂಕ uint8_t *) src2->ದತ್ತಾಂಶ +
                                   (size_t) i21 * src2->nb[1] + (size_t) i22 * src2->nb[2] + (size_t) i23 * src2->nb[3]);
 
-        float * dst_ptr = &dst_row[start_col];
-        const float * src2_ptr = &src2_row[start_col];
-        int remaining = end_col - start_col;
-        while (remaining >= 32) {
-            HVX_Vector v_out = hvx_vmemu(dst_ptr);
-            HVX_Vector v_z   = hvx_vmemu(src2_ptr);
-            hvx_vmemu(dst_ptr) = hvx_vec_add_f32_f32(v_out, v_z);
+        ದಶಮಾಂಶ * dst_ptr = &dst_ಅಡ್ಡಸಾಲು[ಆರಂಭ_ಲಂಬಸಾಲು];
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src2_ptr = &src2_ಅಡ್ಡಸಾಲು[ಆರಂಭ_ಲಂಬಸಾಲು];
+        ಪೂರ್ಣಾಂಕ ಉಳಿದ = ಕೊನೆ_ಲಂಬಸಾಲು - ಆರಂಭ_ಲಂಬಸಾಲು;
+        ಆಗ (ಉಳಿದ >= 32) {
+            HVX_ಸದಿಶ v_ಹೊರಹೋಗು = hvx_vmemu(dst_ptr);
+            HVX_ಸದಿಶ v_z   = hvx_vmemu(src2_ptr);
+            hvx_vmemu(dst_ptr) = hvx_vec_ಕೂಡಿಸು_f32_f32(v_ಹೊರಹೋಗು, v_z);
             dst_ptr += 32;
             src2_ptr += 32;
-            remaining -= 32;
+            ಉಳಿದ -= 32;
         }
-        if (remaining > 0) {
-            HVX_Vector v_out = hvx_vmemu(dst_ptr);
-            HVX_Vector v_z   = hvx_vmemu(src2_ptr);
-            hvx_vec_store_u(dst_ptr, remaining * sizeof(float), hvx_vec_add_f32_f32(v_out, v_z));
+        ಆದರೆ (ಉಳಿದ > 0) {
+            HVX_ಸದಿಶ v_ಹೊರಹೋಗು = hvx_vmemu(dst_ptr);
+            HVX_ಸದಿಶ v_z   = hvx_vmemu(src2_ptr);
+            hvx_vec_store_u(dst_ptr, ಉಳಿದ * ಗಾತ್ರ(ದಶಮಾಂಶ), hvx_vec_ಕೂಡಿಸು_f32_f32(v_ಹೊರಹೋಗು, v_z));
         }
     }
 }
 
-#endif // HVX_MM_KERNELS_FLOAT_H
+#ಆದರೆ_ಅಂತ್ಯ // HVX_MM_KERNELS_FLOAT_H

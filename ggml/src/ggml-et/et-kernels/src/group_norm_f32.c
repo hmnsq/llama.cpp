@@ -9,163 +9,163 @@
 //   destination write footprint still spans an integer number of cache lines.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ಅನ್ತರ್ಭಾವ "ggml_tensor.h"
+#ಅನ್ತರ್ಭಾವ "math_fp.h"
+#ಅನ್ತರ್ಭಾವ "platform.h"
 
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
-struct ggml_et_group_norm_params {
-    struct ggml_tensor src0;
-    struct ggml_tensor dst;
+ರಚನೆ ggml_et_ಗುಂಪು_norm_params {
+    ರಚನೆ ggml_tensor src0;
+    ರಚನೆ ggml_tensor dst;
     int32_t            n_groups;
-    float              eps;
+    ದಶಮಾಂಶ              eps;
 };
 
-int entry_point(struct ggml_et_group_norm_params * params, void * env) {
+ಪೂರ್ಣಾಂಕ ನಮೂದು_ಬಿಂದು(ರಚನೆ ggml_et_ಗುಂಪು_norm_params * params, ಶೂನ್ಯ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ಆದರೆ (!kernel_env) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ಪೂರ್ಣಾಂಕ thread_id   = get_relative_thread_id(kernel_env->shire_ಮುಖವಾಡ);
+    ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಎಳೆಗಳು = get_ಅಂಕೆ_ಎಳೆಗಳು(kernel_env->shire_ಮುಖವಾಡ);
 
-    if (thread_id < 0) {
-        return 0;
+    ಆದರೆ (thread_id < 0) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ಆದರೆ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    ರಚನೆ ggml_tensor * src0 = &params->src0;
+    ರಚನೆ ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ಆದರೆ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    const float * src0_data = (const float *) src0->data;
-    float *       dst_data  = (float *) dst->data;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src0_ದತ್ತಾಂಶ = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) src0->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ *       dst_ದತ್ತಾಂಶ  = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ಆದರೆ (!src0_ದತ್ತಾಂಶ || !dst_ದತ್ತಾಂಶ) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    const int32_t n_groups = params->n_groups;
-    const float   eps      = params->eps;
+    ಸ್ಥಿರಾಂಕ int32_t n_groups = params->n_groups;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ   eps      = params->eps;
 
-    if (n_groups <= 0 || eps < 0.0f) {
-        return -1;
+    ಆದರೆ (n_groups <= 0 || eps < 0.0f) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    const int64_t ne0 = dst->ne[0];
-    const int64_t ne1 = dst->ne[1];
-    const int64_t ne2 = dst->ne[2];
-    const int64_t ne3 = dst->ne[3];
+    ಸ್ಥಿರಾಂಕ int64_t ne0 = dst->ne[0];
+    ಸ್ಥಿರಾಂಕ int64_t ne1 = dst->ne[1];
+    ಸ್ಥಿರಾಂಕ int64_t ne2 = dst->ne[2];
+    ಸ್ಥಿರಾಂಕ int64_t ne3 = dst->ne[3];
 
-    if (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
-        return -1;
+    ಆದರೆ (src0->ne[0] != ne0 || src0->ne[1] != ne1 || src0->ne[2] != ne2 || src0->ne[3] != ne3) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    const int64_t nb1  = dst->nb[1];
-    const int64_t nb2  = dst->nb[2];
-    const int64_t nb3  = dst->nb[3];
-    const int64_t nb01 = src0->nb[1];
-    const int64_t nb02 = src0->nb[2];
-    const int64_t nb03 = src0->nb[3];
+    ಸ್ಥಿರಾಂಕ int64_t nb1  = dst->nb[1];
+    ಸ್ಥಿರಾಂಕ int64_t nb2  = dst->nb[2];
+    ಸ್ಥಿರಾಂಕ int64_t nb3  = dst->nb[3];
+    ಸ್ಥಿರಾಂಕ int64_t nb01 = src0->nb[1];
+    ಸ್ಥಿರಾಂಕ int64_t nb02 = src0->nb[2];
+    ಸ್ಥಿರಾಂಕ int64_t nb03 = src0->nb[3];
 
-    const int64_t channels_per_group = (ne2 + n_groups - 1) / n_groups;
-    if (channels_per_group <= 0) {
-        return -1;
+    ಸ್ಥಿರಾಂಕ int64_t channels_ಪ್ರತಿ_ಗುಂಪು = (ne2 + n_groups - 1) / n_groups;
+    ಆದರೆ (channels_ಪ್ರತಿ_ಗುಂಪು <= 0) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
-    const int64_t active_groups        = (ne2 + channels_per_group - 1) / channels_per_group;
-    const int64_t total_work           = active_groups * ne3;
-    const int64_t rows_per_write_group = et_rows_per_cacheline_group(ne0, sizeof(float));
+    ಸ್ಥಿರಾಂಕ int64_t ಸಕ್ರಿಯ_groups        = (ne2 + channels_ಪ್ರತಿ_ಗುಂಪು - 1) / channels_ಪ್ರತಿ_ಗುಂಪು;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_work           = ಸಕ್ರಿಯ_groups * ne3;
+    ಸ್ಥಿರಾಂಕ int64_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_write_ಗುಂಪು = et_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_cacheline_ಗುಂಪು(ne0, ಗಾತ್ರ(ದಶಮಾಂಶ));
 
-    for (int64_t work = thread_id; work < total_work; work += num_threads) {
-        const int64_t i3        = work / active_groups;
-        const int64_t group_idx = work % active_groups;
+    ಗಾಗಿ (int64_t work = thread_id; work < ಒಟ್ಟು_work; work += ಅಂಕೆ_ಎಳೆಗಳು) {
+        ಸ್ಥಿರಾಂಕ int64_t i3        = work / ಸಕ್ರಿಯ_groups;
+        ಸ್ಥಿರಾಂಕ int64_t ಗುಂಪು_idx = work % ಸಕ್ರಿಯ_groups;
 
-        const int64_t channel_start = group_idx * channels_per_group;
-        int64_t       channel_end   = channel_start + channels_per_group;
-        if (channel_end > ne2) {
-            channel_end = ne2;
+        ಸ್ಥಿರಾಂಕ int64_t channel_ಆರಂಭ = ಗುಂಪು_idx * channels_ಪ್ರತಿ_ಗುಂಪು;
+        int64_t       channel_ಕೊನೆ   = channel_ಆರಂಭ + channels_ಪ್ರತಿ_ಗುಂಪು;
+        ಆದರೆ (channel_ಕೊನೆ > ne2) {
+            channel_ಕೊನೆ = ne2;
         }
 
-        const int64_t channel_count = channel_end - channel_start;
-        if (channel_count <= 0) {
-            continue;
+        ಸ್ಥಿರಾಂಕ int64_t channel_ಎಣಿಕೆ = channel_ಕೊನೆ - channel_ಆರಂಭ;
+        ಆದರೆ (channel_ಎಣಿಕೆ <= 0) {
+            ಮುಂದುವರಿ;
         }
 
-        float sum   = 0.0f;
-        float denom = 0.0f;
-        for (int64_t i2 = channel_start; i2 < channel_end; ++i2) {
-            for (int64_t i1 = 0; i1 < ne1; ++i1) {
-                const float * src_row = (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                    sum += src_row[i0];
+        ದಶಮಾಂಶ ಮೊತ್ತ   = 0.0f;
+        ದಶಮಾಂಶ denom = 0.0f;
+        ಗಾಗಿ (int64_t i2 = channel_ಆರಂಭ; i2 < channel_ಕೊನೆ; ++i2) {
+            ಗಾಗಿ (int64_t i1 = 0; i1 < ne1; ++i1) {
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಅಡ್ಡಸಾಲು = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src0_ದತ್ತಾಂಶ + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                ಗಾಗಿ (int64_t i0 = 0; i0 < ne0; ++i0) {
+                    ಮೊತ್ತ += src_ಅಡ್ಡಸಾಲು[i0];
                     denom += 1.0f;
                 }
             }
         }
 
-        const float mean = et_fdiv(sum, denom);
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ ಸರಾಸರಿ_2 = et_fdiv(ಮೊತ್ತ, denom);
 
-        float var_sum = 0.0f;
-        for (int64_t i2 = channel_start; i2 < channel_end; ++i2) {
-            for (int64_t i1 = 0; i1 < ne1; ++i1) {
-                const float * src_row = (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                    const float centered = src_row[i0] - mean;
-                    var_sum += centered * centered;
+        ದಶಮಾಂಶ var_ಮೊತ್ತ = 0.0f;
+        ಗಾಗಿ (int64_t i2 = channel_ಆರಂಭ; i2 < channel_ಕೊನೆ; ++i2) {
+            ಗಾಗಿ (int64_t i1 = 0; i1 < ne1; ++i1) {
+                ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಅಡ್ಡಸಾಲು = (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src0_ದತ್ತಾಂಶ + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                ಗಾಗಿ (int64_t i0 = 0; i0 < ne0; ++i0) {
+                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ centered = src_ಅಡ್ಡಸಾಲು[i0] - ಸರಾಸರಿ_2;
+                    var_ಮೊತ್ತ += centered * centered;
                 }
             }
         }
 
-        const float variance = et_fdiv(var_sum, denom);
-        const float scale    = et_fdiv(1.0f, et_sqrtf(variance + eps));
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ variance = et_fdiv(var_ಮೊತ್ತ, denom);
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ scale    = et_fdiv(1.0f, et_sqrtf(variance + eps));
 
-        if (ne0 % 16 == 0) {
-            for (int64_t i2 = channel_start; i2 < channel_end; ++i2) {
-                for (int64_t i1 = 0; i1 < ne1; ++i1) {
-                    const float * src_row =
-                        (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                    float * dst_row = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
-                    for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                        dst_row[i0] = (src_row[i0] - mean) * scale;
+        ಆದರೆ (ne0 % 16 == 0) {
+            ಗಾಗಿ (int64_t i2 = channel_ಆರಂಭ; i2 < channel_ಕೊನೆ; ++i2) {
+                ಗಾಗಿ (int64_t i1 = 0; i1 < ne1; ++i1) {
+                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಅಡ್ಡಸಾಲು =
+                        (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src0_ದತ್ತಾಂಶ + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                    ದಶಮಾಂಶ * dst_ಅಡ್ಡಸಾಲು = (ದಶಮಾಂಶ *) ((ಅಕ್ಷರ *) dst_ದತ್ತಾಂಶ + i3 * nb3 + i2 * nb2 + i1 * nb1);
+                    ಗಾಗಿ (int64_t i0 = 0; i0 < ne0; ++i0) {
+                        dst_ಅಡ್ಡಸಾಲು[i0] = (src_ಅಡ್ಡಸಾಲು[i0] - ಸರಾಸರಿ_2) * scale;
                     }
                 }
             }
-        } else {
-            const int64_t total_rows_in_group = channel_count * ne1;
-            const int64_t total_write_groups  = (total_rows_in_group + rows_per_write_group - 1) / rows_per_write_group;
+        } ಇಲ್ಲದಿದ್ದರೆ {
+            ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು_ಒಳ_ಗುಂಪು = channel_ಎಣಿಕೆ * ne1;
+            ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_write_groups  = (ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು_ಒಳ_ಗುಂಪು + ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_write_ಗುಂಪು - 1) / ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_write_ಗುಂಪು;
 
-            for (int64_t write_group = 0; write_group < total_write_groups; ++write_group) {
-                const int64_t row_start = write_group * rows_per_write_group;
-                int64_t       row_end   = row_start + rows_per_write_group;
-                if (row_end > total_rows_in_group) {
-                    row_end = total_rows_in_group;
+            ಗಾಗಿ (int64_t write_ಗುಂಪು = 0; write_ಗುಂಪು < ಒಟ್ಟು_write_groups; ++write_ಗುಂಪು) {
+                ಸ್ಥಿರಾಂಕ int64_t ಅಡ್ಡಸಾಲು_ಆರಂಭ = write_ಗುಂಪು * ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_write_ಗುಂಪು;
+                int64_t       ಅಡ್ಡಸಾಲು_ಕೊನೆ   = ಅಡ್ಡಸಾಲು_ಆರಂಭ + ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_write_ಗುಂಪು;
+                ಆದರೆ (ಅಡ್ಡಸಾಲು_ಕೊನೆ > ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು_ಒಳ_ಗುಂಪು) {
+                    ಅಡ್ಡಸಾಲು_ಕೊನೆ = ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು_ಒಳ_ಗುಂಪು;
                 }
 
-                for (int64_t row = row_start; row < row_end; ++row) {
-                    const int64_t local_i2 = row / ne1;
-                    const int64_t i1       = row % ne1;
-                    const int64_t i2       = channel_start + local_i2;
+                ಗಾಗಿ (int64_t ಅಡ್ಡಸಾಲು = ಅಡ್ಡಸಾಲು_ಆರಂಭ; ಅಡ್ಡಸಾಲು < ಅಡ್ಡಸಾಲು_ಕೊನೆ; ++ಅಡ್ಡಸಾಲು) {
+                    ಸ್ಥಿರಾಂಕ int64_t local_i2 = ಅಡ್ಡಸಾಲು / ne1;
+                    ಸ್ಥಿರಾಂಕ int64_t i1       = ಅಡ್ಡಸಾಲು % ne1;
+                    ಸ್ಥಿರಾಂಕ int64_t i2       = channel_ಆರಂಭ + local_i2;
 
-                    const float * src_row =
-                        (const float *) ((const char *) src0_data + i3 * nb03 + i2 * nb02 + i1 * nb01);
-                    float * dst_row = (float *) ((char *) dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
-                    for (int64_t i0 = 0; i0 < ne0; ++i0) {
-                        dst_row[i0] = (src_row[i0] - mean) * scale;
+                    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಅಡ್ಡಸಾಲು =
+                        (ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *) ((ಸ್ಥಿರಾಂಕ ಅಕ್ಷರ *) src0_ದತ್ತಾಂಶ + i3 * nb03 + i2 * nb02 + i1 * nb01);
+                    ದಶಮಾಂಶ * dst_ಅಡ್ಡಸಾಲು = (ದಶಮಾಂಶ *) ((ಅಕ್ಷರ *) dst_ದತ್ತಾಂಶ + i3 * nb3 + i2 * nb2 + i1 * nb1);
+                    ಗಾಗಿ (int64_t i0 = 0; i0 < ne0; ++i0) {
+                        dst_ಅಡ್ಡಸಾಲು[i0] = (src_ಅಡ್ಡಸಾಲು[i0] - ಸರಾಸರಿ_2) * scale;
                     }
                 }
             }
         }
     }
 
-    return 0;
+    ಹಿಂತಿರುಗಿ 0;
 }

@@ -1,160 +1,160 @@
-#ifndef HMX_QUEUE_H
-#define HMX_QUEUE_H
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ HMX_ಸರತಿ_H
+#ವ್ಯಾಖ್ಯಾನಿಸು HMX_ಸರತಿ_H
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdatomic.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
+#ಅನ್ತರ್ಭಾವ <stdatomic.h>
 
-#include <hexagon_types.h>
-#include <qurt_thread.h>
-#include <qurt_futex.h>
-#include <HAP_farf.h>
+#ಅನ್ತರ್ಭಾವ <hexagon_types.h>
+#ಅನ್ತರ್ಭಾವ <qurt_thread.h>
+#ಅನ್ತರ್ಭಾವ <qurt_futex.h>
+#ಅನ್ತರ್ಭಾವ <HAP_farf.h>
 
-#include "hex-utils.h"
-#include "hex-profile.h"
+#ಅನ್ತರ್ಭಾವ "hex-utils.h"
+#ಅನ್ತರ್ಭಾವ "hex-profile.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __cplusplus
+ಬಾಹ್ಯ "C" {
+#ಆದರೆ_ಅಂತ್ಯ
 
-#if __HVX_ARCH__ > 79
-#define HMX_QUEUE_POLL_COUNT 2000
-#else
-#define HMX_QUEUE_POLL_COUNT 1
-#endif
+#ಆದರೆ __HVX_ARCH__ > 79
+#ವ್ಯಾಖ್ಯಾನಿಸು HMX_ಸರತಿ_POLL_ಎಣಿಕೆ 2000
+#ಇಲ್ಲದಿದ್ದರೆ
+#ವ್ಯಾಖ್ಯಾನಿಸು HMX_ಸರತಿ_POLL_ಎಣಿಕೆ 1
+#ಆದರೆ_ಅಂತ್ಯ
 
-typedef void (*hmx_queue_func)(void *);
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ಶೂನ್ಯ (*hmx_ಸರತಿ_func)(ಶೂನ್ಯ *);
 
 // Dummy funcs used as signals
-enum hmx_queue_signal {
-    HMX_QUEUE_NOOP = 0, // aka NULL
-    HMX_QUEUE_WAKEUP,
-    HMX_QUEUE_SUSPEND,
-    HMX_QUEUE_KILL
+ಎಣಿಕೆ hmx_ಸರತಿ_signal {
+    HMX_ಸರತಿ_NOOP = 0, // aka NULL
+    HMX_ಸರತಿ_WAKEUP,
+    HMX_ಸರತಿ_SUSPEND,
+    HMX_ಸರತಿ_KILL
 };
 
-struct hmx_queue_desc {
-    hmx_queue_func   func;
-    void *           data;
-    atomic_uint      done;
+ರಚನೆ hmx_ಸರತಿ_desc {
+    hmx_ಸರತಿ_func   func;
+    ಶೂನ್ಯ *           ದತ್ತಾಂಶ;
+    atomic_uint      ಮುಗಿದ;
 };
 
-struct hmx_queue_s {
-    struct hmx_queue_desc * desc;
+ರಚನೆ hmx_ಸರತಿ_s {
+    ರಚನೆ hmx_ಸರತಿ_desc * desc;
     atomic_uint      idx_write; // updated by producer (push)
     atomic_uint      idx_read;  // updated by consumer (process)
-    unsigned int     idx_pop;   // updated by producer (pop)
-    uint32_t         idx_mask;
-    uint32_t         capacity;
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ     idx_ತೆಗೆ;   // updated by producer (pop)
+    uint32_t         idx_ಮುಖವಾಡ;
+    uint32_t         ಸಾಮರ್ಥ್ಯ;
 
     atomic_uint      seqn;      // incremented for all pushes, used with futex
     qurt_thread_t    thread;
-    void *           stack;
+    ಶೂನ್ಯ *           ರಾಶಿ;
     uint32_t         hap_rctx;
     bool             hmx_locked;
-    struct htp_thread_trace * trace;
+    ರಚನೆ htp_thread_trace * trace;
     bool             external_mem; // memory owned externally
 };
 
-typedef struct hmx_queue_s * hmx_queue_t;
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ hmx_ಸರತಿ_s * hmx_ಸರತಿ_t;
 
-size_t      hmx_queue_sizeof(size_t capacity, uint32_t stack_size);
-size_t      hmx_queue_alignof(void);
-hmx_queue_t hmx_queue_init(void * ptr, size_t capacity, uint32_t stack_size, uint32_t hap_rctx, struct htp_thread_trace * trace);
-void        hmx_queue_free(hmx_queue_t q);
+size_t      hmx_ಸರತಿ_sizeof(size_t ಸಾಮರ್ಥ್ಯ, uint32_t ರಾಶಿ_ಗಾತ್ರ);
+size_t      hmx_ಸರತಿ_alignof(ಶೂನ್ಯ);
+hmx_ಸರತಿ_t hmx_ಸರತಿ_init(ಶೂನ್ಯ * ptr, size_t ಸಾಮರ್ಥ್ಯ, uint32_t ರಾಶಿ_ಗಾತ್ರ, uint32_t hap_rctx, ರಚನೆ htp_thread_trace * trace);
+ಶೂನ್ಯ        hmx_ಸರತಿ_free(hmx_ಸರತಿ_t q);
 
-static inline struct hmx_queue_desc hmx_queue_make_desc(hmx_queue_func func, void * data) {
-    struct hmx_queue_desc d = { func, data };
-    return d;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ರಚನೆ hmx_ಸರತಿ_desc hmx_ಸರತಿ_make_desc(hmx_ಸರತಿ_func func, ಶೂನ್ಯ * ದತ್ತಾಂಶ) {
+    ರಚನೆ hmx_ಸರತಿ_desc d = { func, ದತ್ತಾಂಶ };
+    ಹಿಂತಿರುಗಿ d;
 }
 
-static inline bool hmx_queue_push(hmx_queue_t q, struct hmx_queue_desc d) {
-    unsigned int ir = atomic_load(&q->idx_read);
-    unsigned int iw = atomic_load(&q->idx_write);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool hmx_ಸರತಿ_ತಳ್ಳು(hmx_ಸರತಿ_t q, ರಚನೆ hmx_ಸರತಿ_desc d) {
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ir = atomic_ತುಂಬು(&q->idx_read);
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ iw = atomic_ತುಂಬು(&q->idx_write);
 
-    if (((iw + 1) & q->idx_mask) == ir) {
-        FARF(HIGH, "hmx-queue-push: queue is full\n");
-        return false;
+    ಆದರೆ (((iw + 1) & q->idx_ಮುಖವಾಡ) == ir) {
+        FARF(ಮೇಲಿನ_2, "hmx-queue-push: queue is full\n");
+        ಹಿಂತಿರುಗಿ false;
     }
 
-    atomic_store(&d.done, 0);
+    atomic_store(&d.ಮುಗಿದ, 0);
 
-    FARF(HIGH, "hmx-queue-push: iw %u func %p data %p\n", iw, d.func, d.data);
+    FARF(ಮೇಲಿನ_2, "hmx-queue-push: iw %u func %p data %p\n", iw, d.func, d.ದತ್ತಾಂಶ);
 
     q->desc[iw] = d;
-    atomic_store(&q->idx_write, (iw + 1) & q->idx_mask);
+    atomic_store(&q->idx_write, (iw + 1) & q->idx_ಮುಖವಾಡ);
     // wake up our thread
-    atomic_fetch_add(&q->seqn, 1);
+    atomic_fetch_ಕೂಡಿಸು(&q->seqn, 1);
     qurt_futex_wake(&q->seqn, 1);
 
-    return true;
+    ಹಿಂತಿರುಗಿ true;
 }
 
-static inline bool hmx_queue_signal(hmx_queue_t q, enum hmx_queue_signal sig) {
-    return hmx_queue_push(q, hmx_queue_make_desc((hmx_queue_func) sig, NULL));
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool hmx_ಸರತಿ_signal(hmx_ಸರತಿ_t q, ಎಣಿಕೆ hmx_ಸರತಿ_signal sig) {
+    ಹಿಂತಿರುಗಿ hmx_ಸರತಿ_ತಳ್ಳು(q, hmx_ಸರತಿ_make_desc((hmx_ಸರತಿ_func) sig, ಖಾಲಿ));
 }
 
-static inline bool hmx_queue_empty(hmx_queue_t q) {
-    return q->idx_pop == atomic_load(&q->idx_write);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool hmx_ಸರತಿ_ಖಾಲಿಗಳು(hmx_ಸರತಿ_t q) {
+    ಹಿಂತಿರುಗಿ q->idx_ತೆಗೆ == atomic_ತುಂಬು(&q->idx_write);
 }
 
-static inline uint32_t hmx_queue_depth(hmx_queue_t q) {
-    return (atomic_load(&q->idx_write) - atomic_load(&q->idx_read)) & q->idx_mask;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint32_t hmx_ಸರತಿ_ಆಳ(hmx_ಸರತಿ_t q) {
+    ಹಿಂತಿರುಗಿ (atomic_ತುಂಬು(&q->idx_write) - atomic_ತುಂಬು(&q->idx_read)) & q->idx_ಮುಖವಾಡ;
 }
 
-static inline uint32_t hmx_queue_capacity(hmx_queue_t q) {
-    return q->capacity;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ uint32_t hmx_ಸರತಿ_ಸಾಮರ್ಥ್ಯ(hmx_ಸರತಿ_t q) {
+    ಹಿಂತಿರುಗಿ q->ಸಾಮರ್ಥ್ಯ;
 }
 
-static inline struct hmx_queue_desc hmx_queue_pop_one(hmx_queue_t q) {
-    unsigned int ip = q->idx_pop;
-    unsigned int iw = atomic_load(&q->idx_write);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ರಚನೆ hmx_ಸರತಿ_desc hmx_ಸರತಿ_ತೆಗೆ_one(hmx_ಸರತಿ_t q) {
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ ip = q->idx_ತೆಗೆ;
+    ಚಿಹ್ನೆರಹಿತ ಪೂರ್ಣಾಂಕ iw = atomic_ತುಂಬು(&q->idx_write);
 
-    struct hmx_queue_desc rd = { NULL, NULL };
-    if (ip == iw) {
-        return rd;
+    ರಚನೆ hmx_ಸರತಿ_desc rd = { ಖಾಲಿ, ಖಾಲಿ };
+    ಆದರೆ (ip == iw) {
+        ಹಿಂತಿರುಗಿ rd;
     }
 
     // Wait for desc to complete
-    struct hmx_queue_desc * d = &q->desc[ip];
-    while (!atomic_load(&d->done)) {
-        FARF(HIGH, "hmx-queue-pop: waiting for HMX queue : %u\n", ip);
+    ರಚನೆ hmx_ಸರತಿ_desc * d = &q->desc[ip];
+    ಆಗ (!atomic_ತುಂಬು(&d->ಮುಗಿದ)) {
+        FARF(ಮೇಲಿನ_2, "hmx-queue-pop: waiting for HMX queue : %u\n", ip);
         hex_pause();
     }
 
     rd = *d;
-    q->idx_pop = (ip + 1) & q->idx_mask;
+    q->idx_ತೆಗೆ = (ip + 1) & q->idx_ಮುಖವಾಡ;
 
-    FARF(HIGH, "hmx-queue-pop: ip %u func %p data %p\n", ip, rd.func, rd.data);
-    return rd;
+    FARF(ಮೇಲಿನ_2, "hmx-queue-pop: ip %u func %p data %p\n", ip, rd.func, rd.ದತ್ತಾಂಶ);
+    ಹಿಂತಿರುಗಿ rd;
 }
 
-static inline struct hmx_queue_desc hmx_queue_pop(hmx_queue_t q) {
-    while (1) {
-        struct hmx_queue_desc d = hmx_queue_pop_one(q);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ರಚನೆ hmx_ಸರತಿ_desc hmx_ಸರತಿ_ತೆಗೆ(hmx_ಸರತಿ_t q) {
+    ಆಗ (1) {
+        ರಚನೆ hmx_ಸರತಿ_desc d = hmx_ಸರತಿ_ತೆಗೆ_one(q);
 
         uint32_t sig = (uint32_t) d.func;
-        if (sig && sig <= HMX_QUEUE_KILL)
-            continue;
+        ಆದರೆ (sig && sig <= HMX_ಸರತಿ_KILL)
+            ಮುಂದುವರಿ;
 
-        return d;
+        ಹಿಂತಿರುಗಿ d;
     }
 }
 
-static inline void hmx_queue_flush(hmx_queue_t q) {
-    while (hmx_queue_pop_one(q).func != NULL) ;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hmx_ಸರತಿ_flush(hmx_ಸರತಿ_t q) {
+    ಆಗ (hmx_ಸರತಿ_ತೆಗೆ_one(q).func != ಖಾಲಿ) ;
 }
 
-static inline void hmx_queue_wakeup(hmx_queue_t q) {
-    hmx_queue_signal(q, HMX_QUEUE_WAKEUP);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hmx_ಸರತಿ_wakeup(hmx_ಸರತಿ_t q) {
+    hmx_ಸರತಿ_signal(q, HMX_ಸರತಿ_WAKEUP);
 }
 
-static inline void hmx_queue_suspend(hmx_queue_t q) {
-    hmx_queue_signal(q, HMX_QUEUE_SUSPEND);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ hmx_ಸರತಿ_suspend(hmx_ಸರತಿ_t q) {
+    hmx_ಸರತಿ_signal(q, HMX_ಸರತಿ_SUSPEND);
 }
 
-#ifdef __cplusplus
+#ವ್ಯಾಖ್ಯಾನಿತವಾದರೆ __cplusplus
 }  // extern "C"
-#endif
+#ಆದರೆ_ಅಂತ್ಯ
 
-#endif /* HMX_QUEUE_H */
+#ಆದರೆ_ಅಂತ್ಯ /* HMX_QUEUE_H */

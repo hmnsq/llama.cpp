@@ -24,43 +24,43 @@
 // - Dimension 3: input.ne[3] % mask.ne[3] == 0 (modulo broadcasting)
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
+#ಅನ್ತರ್ಭಾವ "ggml_tensor.h"
+#ಅನ್ತರ್ಭಾವ "math_fp.h"
+#ಅನ್ತರ್ಭಾವ "platform.h"
 
-#include <assert.h>
-#include <math.h>
-#include <stdbool.h>
-#include <stdint.h>
+#ಅನ್ತರ್ಭಾವ <assert.h>
+#ಅನ್ತರ್ಭಾವ <math.h>
+#ಅನ್ತರ್ಭಾವ <stdbool.h>
+#ಅನ್ತರ್ಭಾವ <stdint.h>
 
 // Softmax kernel parameters structure (from ggml-et-ops.h)
-struct ggml_et_softmax_params {
-    struct ggml_tensor src0;      // F32 input tensor
-    struct ggml_tensor src1;      // F32 mask tensor (optional, may be zeroed if not used)
-    struct ggml_tensor src2;      // F32 sinks tensor (optional, may be zeroed if not used)
-    struct ggml_tensor dst;       // F32 output tensor
-    float              scale;     // Scale factor (temperature scaling)
-    float              max_bias;  // Max bias for ALiBi (0.0f if not used)
+ರಚನೆ ggml_et_softmax_params {
+    ರಚನೆ ggml_tensor src0;      // F32 input tensor
+    ರಚನೆ ggml_tensor src1;      // F32 mask tensor (optional, may be zeroed if not used)
+    ರಚನೆ ggml_tensor src2;      // F32 sinks tensor (optional, may be zeroed if not used)
+    ರಚನೆ ggml_tensor dst;       // F32 output tensor
+    ದಶಮಾಂಶ              scale;     // Scale factor (temperature scaling)
+    ದಶಮಾಂಶ              max_bias;  // Max bias for ALiBi (0.0f if not used)
 };
 
-#define LOG2E_F 1.4426950408889634f
+#ವ್ಯಾಖ್ಯಾನಿಸು LOG2E_F 1.4426950408889634f
 
-typedef struct {
-    float    max_val;
-    float    sum_val;
-    uint32_t valid_mask;
+ಪ್ರಕಾರವ್ಯಾಖ್ಯೆ ರಚನೆ {
+    ದಶಮಾಂಶ    max_val;
+    ದಶಮಾಂಶ    ಮೊತ್ತ_val;
+    uint32_t valid_ಮುಖವಾಡ;
 } softmax_params_t;
 
-static inline bool softmax_lane_is_valid(float x) {
-    return (x == x) && (x != -INFINITY) && (x != INFINITY);
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ bool softmax_lane_is_valid(ದಶಮಾಂಶ x) {
+    ಹಿಂತಿರುಗಿ (x == x) && (x != -INFINITY) && (x != INFINITY);
 }
 
-static inline softmax_params_t softmax_params_empty(void) {
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ softmax_params_t softmax_params_ಖಾಲಿಗಳು(ಶೂನ್ಯ) {
     softmax_params_t p;
     p.max_val    = -INFINITY;
-    p.sum_val    = 0.0f;
-    p.valid_mask = 0;
-    return p;
+    p.ಮೊತ್ತ_val    = 0.0f;
+    p.valid_ಮುಖವಾಡ = 0;
+    ಹಿಂತಿರುಗಿ p;
 }
 
 // chunk_transform_ps_8_branchless_mask
@@ -71,17 +71,17 @@ static inline softmax_params_t softmax_params_empty(void) {
 //
 // Implemented branchlessly so masked and unmasked paths share the same
 // instruction stream. Used by pass1 and pass2 vector loops.
-static inline void chunk_transform_ps_8_branchless_mask(float *       tmp8,
-                                                        const float * src,
-                                                        const float * mask,
-                                                        float         scale,
-                                                        float         slope) {
-    unsigned long       ms;
-    const float         zero         = 0.0f;
-    const unsigned long mask_load_m0 = (mask != NULL) ? 0xFFul : 0x00ul;
-    const float *       mp           = (mask != NULL) ? mask : &zero;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ chunk_transform_ps_8_branchless_ಮುಖವಾಡ(ದಶಮಾಂಶ *       tmp8,
+                                                        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src,
+                                                        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಮುಖವಾಡ,
+                                                        ದಶಮಾಂಶ         scale,
+                                                        ದಶಮಾಂಶ         ಇಳಿಜಾರು) {
+    ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ       ms;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ         zero         = 0.0f;
+    ಸ್ಥಿರಾಂಕ ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ಮುಖವಾಡ_ತುಂಬು_m0 = (ಮುಖವಾಡ != ಖಾಲಿ) ? 0xFFul : 0x00ul;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *       mp           = (ಮುಖವಾಡ != ಖಾಲಿ) ? ಮುಖವಾಡ : &zero;
 
-    __asm__ volatile(
+    __asm__ ಅಸ್ಥಿರ(
         "mova.x.m  %[ms]                \n\t"
 
         "mov.m.x   m0, x0, 0xFF         \n\t"
@@ -103,7 +103,7 @@ static inline void chunk_transform_ps_8_branchless_mask(float *       tmp8,
         "mova.m.x  %[ms]                \n\t"
         : [ms] "=&r"(ms)
         : [tp] "r"(tmp8), [sp] "r"(src), [mp] "r"(mp), [p_zero] "r"(&zero), [p_scale] "r"(&scale),
-          [p_slope] "r"(&slope), [maskm0] "r"(mask_load_m0)
+          [p_ಇಳಿಜಾರು] "r"(&ಇಳಿಜಾರು), [maskm0] "r"(ಮುಖವಾಡ_ತುಂಬು_m0)
         : "f0", "f1", "f10", "f11", "memory");
 }
 
@@ -112,18 +112,18 @@ static inline void chunk_transform_ps_8_branchless_mask(float *       tmp8,
 // Same as chunk_transform_ps_8_branchless_mask but gates loads, compute,
 // and stores with a caller-supplied m0 mask so that only `count` elements
 // (1-7) are touched.  Used for the last sub-8 chunk of a non-aligned row.
-static inline void chunk_transform_ps_8_tail(float *       tmp8,
-                                             const float * src,
-                                             const float * mask,
-                                             float         scale,
-                                             float         slope,
-                                             unsigned long tail_m0) {
-    unsigned long       ms;
-    const float         zero         = 0.0f;
-    const unsigned long mask_load_m0 = (mask != NULL) ? tail_m0 : 0x00ul;
-    const float *       mp           = (mask != NULL) ? mask : &zero;
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ chunk_transform_ps_8_ಬಾಲ(ದಶಮಾಂಶ *       tmp8,
+                                             ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src,
+                                             ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಮುಖವಾಡ,
+                                             ದಶಮಾಂಶ         scale,
+                                             ದಶಮಾಂಶ         ಇಳಿಜಾರು,
+                                             ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ಬಾಲ_m0) {
+    ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ       ms;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ         zero         = 0.0f;
+    ಸ್ಥಿರಾಂಕ ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ಮುಖವಾಡ_ತುಂಬು_m0 = (ಮುಖವಾಡ != ಖಾಲಿ) ? ಬಾಲ_m0 : 0x00ul;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *       mp           = (ಮುಖವಾಡ != ಖಾಲಿ) ? ಮುಖವಾಡ : &zero;
 
-    __asm__ volatile(
+    __asm__ ಅಸ್ಥಿರ(
         "mova.x.m  %[ms]                \n\t"
 
         // Broadcast constants with all lanes enabled
@@ -148,7 +148,7 @@ static inline void chunk_transform_ps_8_tail(float *       tmp8,
         "mova.m.x  %[ms]                \n\t"
         : [ms] "=&r"(ms)
         : [tp] "r"(tmp8), [sp] "r"(src), [mp] "r"(mp), [p_zero] "r"(&zero), [p_scale] "r"(&scale),
-          [p_slope] "r"(&slope), [maskm0] "r"(mask_load_m0), [tailm0] "r"(tail_m0)
+          [p_ಇಳಿಜಾರು] "r"(&ಇಳಿಜಾರು), [maskm0] "r"(ಮುಖವಾಡ_ತುಂಬು_m0), [tailm0] "r"(ಬಾಲ_m0)
         : "f0", "f1", "f10", "f11", "memory");
 }
 
@@ -168,26 +168,26 @@ static inline void chunk_transform_ps_8_tail(float *       tmp8,
 //
 // These partial results can be merged with softmax_params_merge() to obtain
 // the result for the full row.
-static inline softmax_params_t softmax_pass1_range(const float * src,
-                                                   const float * mask,
-                                                   int           begin,
-                                                   int           end,
-                                                   float         scale,
-                                                   float         slope) {
-    __attribute__((aligned(32))) float lane_max[8];
-    __attribute__((aligned(32))) float lane_sum[8];
-    __attribute__((aligned(32))) float tmp[8];
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ softmax_params_t softmax_pass1_range(ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src,
+                                                   ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಮುಖವಾಡ,
+                                                   ಪೂರ್ಣಾಂಕ           begin,
+                                                   ಪೂರ್ಣಾಂಕ           ಕೊನೆ,
+                                                   ದಶಮಾಂಶ         scale,
+                                                   ದಶಮಾಂಶ         ಇಳಿಜಾರು) {
+    __attribute__((aligned(32))) ದಶಮಾಂಶ lane_max[8];
+    __attribute__((aligned(32))) ದಶಮಾಂಶ lane_ಮೊತ್ತ[8];
+    __attribute__((aligned(32))) ದಶಮಾಂಶ tmp[8];
 
-    uint8_t valid_mask = 0;
+    uint8_t valid_ಮುಖವಾಡ = 0;
 
-    const float one_f   = 1.0f;
-    const float zero_f  = 0.0f;
-    const float neg_inf = -INFINITY;
-    const float log2e   = LOG2E_F;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ one_f   = 1.0f;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ zero_f  = 0.0f;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ neg_inf = -INFINITY;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ log2e   = LOG2E_F;
 
-    unsigned long ms;
+    ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ms;
 
-    __asm__ volatile(
+    __asm__ ಅಸ್ಥಿರ(
         "mova.x.m  %[ms]                \n\t"
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "fbc.ps    f20, 0(%[p_ninf])    \n\t"
@@ -198,25 +198,25 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
         : [p_ninf] "r"(&neg_inf), [p_zero] "r"(&zero_f), [p_one] "r"(&one_f), [p_log2e] "r"(&log2e)
         : "f20", "f21", "f22", "f23");
 
-    const int aligned_end = begin + ((end - begin) & ~7);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ aligned_ಕೊನೆ = begin + ((ಕೊನೆ - begin) & ~7);
 
     // Process full 8-element chunks
-    int i = begin;
-    for (; i < aligned_end; i += 8) {
-        chunk_transform_ps_8_branchless_mask(tmp, src + i, mask ? (mask + i) : NULL, scale, slope);
+    ಪೂರ್ಣಾಂಕ i = begin;
+    ಗಾಗಿ (; i < aligned_ಕೊನೆ; i += 8) {
+        chunk_transform_ps_8_branchless_ಮುಖವಾಡ(tmp, src + i, ಮುಖವಾಡ ? (ಮುಖವಾಡ + i) : ಖಾಲಿ, scale, ಇಳಿಜಾರು);
 
-        uint8_t cur_mask = 0;
-        for (int j = 0; j < 8; ++j) {
-            if (softmax_lane_is_valid(tmp[j])) {
-                cur_mask |= (uint8_t) (1u << j);
+        uint8_t cur_ಮುಖವಾಡ = 0;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 8; ++j) {
+            ಆದರೆ (softmax_lane_is_valid(tmp[j])) {
+                cur_ಮುಖವಾಡ |= (uint8_t) (1u << j);
             }
         }
 
-        const uint8_t init_mask = (uint8_t) (cur_mask & ~valid_mask);
-        const uint8_t upd_mask  = (uint8_t) (cur_mask & valid_mask);
+        ಸ್ಥಿರಾಂಕ uint8_t init_ಮುಖವಾಡ = (uint8_t) (cur_ಮುಖವಾಡ & ~valid_ಮುಖವಾಡ);
+        ಸ್ಥಿರಾಂಕ uint8_t upd_ಮುಖವಾಡ  = (uint8_t) (cur_ಮುಖವಾಡ & valid_ಮುಖವಾಡ);
 
-        if (init_mask || upd_mask) {
-            __asm__ volatile(
+        ಆದರೆ (init_ಮುಖವಾಡ || upd_ಮುಖವಾಡ) {
+            __asm__ ಅಸ್ಥಿರ(
                 "flw.ps    f0, 0(%[p_tmp])       \n\t"
 
                 "mov.m.x   m0, %[initm], 0       \n\t"
@@ -240,36 +240,36 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
 
                 "mov.m.x   m0, x0, 0xFF          \n\t"
                 :
-                : [p_tmp] "r"(tmp), [initm] "r"((unsigned long) init_mask), [updm] "r"((unsigned long) upd_mask)
+                : [p_tmp] "r"(tmp), [initm] "r"((ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ) init_ಮುಖವಾಡ), [updm] "r"((ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ) upd_ಮುಖವಾಡ)
                 : "f0", "f1", "f2", "f3", "memory");
 
-            valid_mask |= cur_mask;
+            valid_ಮುಖವಾಡ |= cur_ಮುಖವಾಡ;
         }
     }
 
     // Tail chunk: m0-gated load/compute/store for remaining 1-7 elements
-    if (i < end) {
-        const unsigned long tail_m0 = (1ul << (end - i)) - 1;
+    ಆದರೆ (i < ಕೊನೆ) {
+        ಸ್ಥಿರಾಂಕ ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ಬಾಲ_m0 = (1ul << (ಕೊನೆ - i)) - 1;
 
         // Fill tmp with NaN so invalid lanes fail softmax_lane_is_valid
-        for (int j = 0; j < 8; j++) {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 8; j++) {
             tmp[j] = __builtin_nanf("");
         }
 
-        chunk_transform_ps_8_tail(tmp, src + i, mask ? (mask + i) : NULL, scale, slope, tail_m0);
+        chunk_transform_ps_8_ಬಾಲ(tmp, src + i, ಮುಖವಾಡ ? (ಮುಖವಾಡ + i) : ಖಾಲಿ, scale, ಇಳಿಜಾರು, ಬಾಲ_m0);
 
-        uint8_t cur_mask = 0;
-        for (int j = 0; j < 8; ++j) {
-            if (softmax_lane_is_valid(tmp[j])) {
-                cur_mask |= (uint8_t) (1u << j);
+        uint8_t cur_ಮುಖವಾಡ = 0;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ j = 0; j < 8; ++j) {
+            ಆದರೆ (softmax_lane_is_valid(tmp[j])) {
+                cur_ಮುಖವಾಡ |= (uint8_t) (1u << j);
             }
         }
 
-        const uint8_t init_mask = (uint8_t) (cur_mask & ~valid_mask);
-        const uint8_t upd_mask  = (uint8_t) (cur_mask & valid_mask);
+        ಸ್ಥಿರಾಂಕ uint8_t init_ಮುಖವಾಡ = (uint8_t) (cur_ಮುಖವಾಡ & ~valid_ಮುಖವಾಡ);
+        ಸ್ಥಿರಾಂಕ uint8_t upd_ಮುಖವಾಡ  = (uint8_t) (cur_ಮುಖವಾಡ & valid_ಮುಖವಾಡ);
 
-        if (init_mask || upd_mask) {
-            __asm__ volatile(
+        ಆದರೆ (init_ಮುಖವಾಡ || upd_ಮುಖವಾಡ) {
+            __asm__ ಅಸ್ಥಿರ(
                 "flw.ps    f0, 0(%[p_tmp])       \n\t"
 
                 "mov.m.x   m0, %[initm], 0       \n\t"
@@ -293,40 +293,40 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
 
                 "mov.m.x   m0, x0, 0xFF          \n\t"
                 :
-                : [p_tmp] "r"(tmp), [initm] "r"((unsigned long) init_mask), [updm] "r"((unsigned long) upd_mask)
+                : [p_tmp] "r"(tmp), [initm] "r"((ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ) init_ಮುಖವಾಡ), [updm] "r"((ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ) upd_ಮುಖವಾಡ)
                 : "f0", "f1", "f2", "f3", "memory");
 
-            valid_mask |= cur_mask;
+            valid_ಮುಖವಾಡ |= cur_ಮುಖವಾಡ;
         }
     }
 
-    __asm__ volatile(
+    __asm__ ಅಸ್ಥಿರ(
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "fsw.ps    f20, 0(%[p_lmax])    \n\t"
         "fsw.ps    f21, 0(%[p_lsum])    \n\t"
         "mova.m.x  %[ms]                \n\t"
         :
-        : [p_lmax] "r"(lane_max), [p_lsum] "r"(lane_sum), [ms] "r"(ms)
+        : [p_lmax] "r"(lane_max), [p_lsum] "r"(lane_ಮೊತ್ತ), [ms] "r"(ms)
         : "memory");
 
-    softmax_params_t out = softmax_params_empty();
-    out.valid_mask       = valid_mask;
+    softmax_params_t ಹೊರಹೋಗು = softmax_params_ಖಾಲಿಗಳು();
+    ಹೊರಹೋಗು.valid_ಮುಖವಾಡ       = valid_ಮುಖವಾಡ;
 
-    for (int k = 0; k < 8; ++k) {
-        if (valid_mask & (1u << k)) {
-            if (out.valid_mask == (1u << k) || out.max_val == -INFINITY || lane_max[k] > out.max_val) {
-                out.max_val = lane_max[k];
+    ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 8; ++k) {
+        ಆದರೆ (valid_ಮುಖವಾಡ & (1u << k)) {
+            ಆದರೆ (ಹೊರಹೋಗು.valid_ಮುಖವಾಡ == (1u << k) || ಹೊರಹೋಗು.max_val == -INFINITY || lane_max[k] > ಹೊರಹೋಗು.max_val) {
+                ಹೊರಹೋಗು.max_val = lane_max[k];
             }
         }
     }
 
-    if (out.max_val != -INFINITY) {
+    ಆದರೆ (ಹೊರಹೋಗು.max_val != -INFINITY) {
         // Compute lane correction factors via fexp.ps to stay consistent
         // with the fexp.ps used inside the online softmax loop above.
         // corr[k] = exp2((lane_max[k] - out.max_val) * LOG2E) = exp(lane_max[k] - out.max_val)
-        const float                        neg_max_l2 = -out.max_val * LOG2E_F;
-        __attribute__((aligned(32))) float corr[8];
-        __asm__ volatile(
+        ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ                        neg_max_l2 = -ಹೊರಹೋಗು.max_val * LOG2E_F;
+        __attribute__((aligned(32))) ದಶಮಾಂಶ corr[8];
+        __asm__ ಅಸ್ಥಿರ(
             "mova.x.m  %[ms]              \n\t"
             "mov.m.x   m0, x0, 0xFF       \n\t"
             "fbc.ps    f0, 0(%[p_nml2])   \n\t"
@@ -339,14 +339,14 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
             :
             : [p_nml2] "r"(&neg_max_l2), [p_l2e] "r"(&log2e), [p_lmax] "r"(lane_max), [p_corr] "r"(corr), [ms] "r"(ms)
             : "f0", "f1", "f2", "memory");
-        for (int k = 0; k < 8; ++k) {
-            if (valid_mask & (1u << k)) {
-                out.sum_val += lane_sum[k] * corr[k];
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ k = 0; k < 8; ++k) {
+            ಆದರೆ (valid_ಮುಖವಾಡ & (1u << k)) {
+                ಹೊರಹೋಗು.ಮೊತ್ತ_val += lane_ಮೊತ್ತ[k] * corr[k];
             }
         }
     }
 
-    return out;
+    ಹಿಂತಿರುಗಿ ಹೊರಹೋಗು;
 }
 
 // Pass 2 (normalize) over [begin, end).
@@ -355,38 +355,38 @@ static inline softmax_params_t softmax_pass1_range(const float * src,
 //
 // Uses fexp.ps for the numerator; the denominator (params.sum_val) must
 // already be fully computed by the caller (pass1 + any sink merge).
-static inline void softmax_pass2_range(float *          dst,
-                                       const float *    src,
-                                       const float *    mask,
-                                       int              begin,
-                                       int              end,
-                                       float            scale,
-                                       float            slope,
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ softmax_pass2_range(ದಶಮಾಂಶ *          dst,
+                                       ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *    src,
+                                       ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ *    ಮುಖವಾಡ,
+                                       ಪೂರ್ಣಾಂಕ              begin,
+                                       ಪೂರ್ಣಾಂಕ              ಕೊನೆ,
+                                       ದಶಮಾಂಶ            scale,
+                                       ದಶಮಾಂಶ            ಇಳಿಜಾರು,
                                        softmax_params_t params) {
-    const float s2      = scale * LOG2E_F;
-    const float sl2     = slope * LOG2E_F;
-    const float neg_ml2 = -params.max_val * LOG2E_F;
-    const float inv_sum = et_fdiv(1.0f, params.sum_val);
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ s2      = scale * LOG2E_F;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ sl2     = ಇಳಿಜಾರು * LOG2E_F;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ neg_ml2 = -params.max_val * LOG2E_F;
+    ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ inv_ಮೊತ್ತ = et_fdiv(1.0f, params.ಮೊತ್ತ_val);
 
-    unsigned long ms;
+    ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ms;
 
-    __asm__ volatile(
+    __asm__ ಅಸ್ಥಿರ(
         "mova.x.m  %[ms]                \n\t"
         "mov.m.x   m0, x0, 0xFF         \n\t"
         "fbc.ps    f10, 0(%[p_s2])      \n\t"
         "fbc.ps    f12, 0(%[p_nml2])    \n\t"
         "fbc.ps    f13, 0(%[p_inv])     \n\t"
         : [ms] "=&r"(ms)
-        : [p_s2] "r"(&s2), [p_nml2] "r"(&neg_ml2), [p_inv] "r"(&inv_sum)
+        : [p_s2] "r"(&s2), [p_nml2] "r"(&neg_ml2), [p_inv] "r"(&inv_ಮೊತ್ತ)
         : "f10", "f12", "f13");
 
-    const int aligned_end = begin + ((end - begin) & ~7);
+    ಸ್ಥಿರಾಂಕ ಪೂರ್ಣಾಂಕ aligned_ಕೊನೆ = begin + ((ಕೊನೆ - begin) & ~7);
 
-    if (mask != NULL) {
-        __asm__ volatile("fbc.ps    f11, 0(%[p_sl2]) \n\t" : : [p_sl2] "r"(&sl2) : "f11");
+    ಆದರೆ (ಮುಖವಾಡ != ಖಾಲಿ) {
+        __asm__ ಅಸ್ಥಿರ("fbc.ps    f11, 0(%[p_sl2]) \n\t" : : [p_sl2] "r"(&sl2) : "f11");
 
-        for (int c = begin; c < aligned_end; c += 8) {
-            __asm__ volatile(
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = begin; c < aligned_ಕೊನೆ; c += 8) {
+            __asm__ ಅಸ್ಥಿರ(
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "flw.ps    f1, 0(%[mp])           \n\t"
                 "fmadd.ps  f0, f0, f10, f12       \n\t"
@@ -395,14 +395,14 @@ static inline void softmax_pass2_range(float *          dst,
                 "fmul.ps   f0, f0, f13            \n\t"
                 "fsw.ps    f0, 0(%[dp])           \n\t"
                 :
-                : [sp] "r"(src + c), [mp] "r"(mask + c), [dp] "r"(dst + c)
+                : [sp] "r"(src + c), [mp] "r"(ಮುಖವಾಡ + c), [dp] "r"(dst + c)
                 : "f0", "f1", "memory");
         }
 
         // Tail chunk with m0 gating
-        if (aligned_end < end) {
-            const unsigned long tail_m0 = (1ul << (end - aligned_end)) - 1;
-            __asm__ volatile(
+        ಆದರೆ (aligned_ಕೊನೆ < ಕೊನೆ) {
+            ಸ್ಥಿರಾಂಕ ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ಬಾಲ_m0 = (1ul << (ಕೊನೆ - aligned_ಕೊನೆ)) - 1;
+            __asm__ ಅಸ್ಥಿರ(
                 "mov.m.x   m0, %[tm], 0              \n\t"
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "flw.ps    f1, 0(%[mp])           \n\t"
@@ -413,13 +413,13 @@ static inline void softmax_pass2_range(float *          dst,
                 "fsw.ps    f0, 0(%[dp])           \n\t"
                 "mov.m.x   m0, x0, 0xFF           \n\t"
                 :
-                : [sp] "r"(src + aligned_end), [mp] "r"(mask + aligned_end), [dp] "r"(dst + aligned_end),
-                  [tm] "r"(tail_m0)
+                : [sp] "r"(src + aligned_ಕೊನೆ), [mp] "r"(ಮುಖವಾಡ + aligned_ಕೊನೆ), [dp] "r"(dst + aligned_ಕೊನೆ),
+                  [tm] "r"(ಬಾಲ_m0)
                 : "f0", "f1", "memory");
         }
-    } else {
-        for (int c = begin; c < aligned_end; c += 8) {
-            __asm__ volatile(
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ c = begin; c < aligned_ಕೊನೆ; c += 8) {
+            __asm__ ಅಸ್ಥಿರ(
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "fmadd.ps  f0, f0, f10, f12       \n\t"
                 "fexp.ps   f0, f0                 \n\t"
@@ -431,9 +431,9 @@ static inline void softmax_pass2_range(float *          dst,
         }
 
         // Tail chunk with m0 gating
-        if (aligned_end < end) {
-            const unsigned long tail_m0 = (1ul << (end - aligned_end)) - 1;
-            __asm__ volatile(
+        ಆದರೆ (aligned_ಕೊನೆ < ಕೊನೆ) {
+            ಸ್ಥಿರಾಂಕ ಚಿಹ್ನೆರಹಿತ ದೀರ್ಘ ಬಾಲ_m0 = (1ul << (ಕೊನೆ - aligned_ಕೊನೆ)) - 1;
+            __asm__ ಅಸ್ಥಿರ(
                 "mov.m.x   m0, %[tm], 0              \n\t"
                 "flw.ps    f0, 0(%[sp])           \n\t"
                 "fmadd.ps  f0, f0, f10, f12       \n\t"
@@ -442,120 +442,120 @@ static inline void softmax_pass2_range(float *          dst,
                 "fsw.ps    f0, 0(%[dp])           \n\t"
                 "mov.m.x   m0, x0, 0xFF           \n\t"
                 :
-                : [sp] "r"(src + aligned_end), [dp] "r"(dst + aligned_end), [tm] "r"(tail_m0)
+                : [sp] "r"(src + aligned_ಕೊನೆ), [dp] "r"(dst + aligned_ಕೊನೆ), [tm] "r"(ಬಾಲ_m0)
                 : "f0", "memory");
         }
     }
 
-    __asm__ volatile("mova.m.x  %[ms] \n\t" ::[ms] "r"(ms));
+    __asm__ ಅಸ್ಥಿರ("mova.m.x  %[ms] \n\t" ::[ms] "r"(ms));
 }
 
 // Single-core row path.
 // pass1_range and pass2_range handle non-8-aligned cols internally via
 // m0-gated tail chunks, so this function just passes cols directly.
-static inline void compute_softmax_row(float *       dst,
-                                       const float * src,
-                                       const float * mask,
-                                       int           cols,
-                                       float         scale,
-                                       float         slope,
-                                       float         sink_value,
+ಸ್ಥಿರ ಸಾಲೊಳಗೆ ಶೂನ್ಯ compute_softmax_ಅಡ್ಡಸಾಲು(ದಶಮಾಂಶ *       dst,
+                                       ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src,
+                                       ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಮುಖವಾಡ,
+                                       ಪೂರ್ಣಾಂಕ           ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ_2,
+                                       ದಶಮಾಂಶ         scale,
+                                       ದಶಮಾಂಶ         ಇಳಿಜಾರು,
+                                       ದಶಮಾಂಶ         sink_ಮೌಲ್ಯ,
                                        bool          use_sinks) {
-    softmax_params_t params = softmax_pass1_range(src, mask, 0, cols, scale, slope);
+    softmax_params_t params = softmax_pass1_range(src, ಮುಖವಾಡ, 0, ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ_2, scale, ಇಳಿಜಾರು);
 
-    if (use_sinks) {
+    ಆದರೆ (use_sinks) {
         // For sinks, use fully scalar et_expf to match the reference CPU
         // backend's expf precision.  Sink tests use small arrays (ne<=32)
         // so the scalar path has negligible performance impact.
-        float max_val = params.max_val;
-        if (sink_value > max_val) {
-            max_val = sink_value;
+        ದಶಮಾಂಶ max_val = params.max_val;
+        ಆದರೆ (sink_ಮೌಲ್ಯ > max_val) {
+            max_val = sink_ಮೌಲ್ಯ;
         }
 
         // Compute sum = Σ exp(x'[i] - max) + exp(sink - max)  (scalar)
-        float sum = 0.0f;
-        for (int i = 0; i < cols; ++i) {
-            float x = src[i] * scale;
-            if (mask != NULL) {
-                x += mask[i] * slope;
+        ದಶಮಾಂಶ ಮೊತ್ತ = 0.0f;
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ_2; ++i) {
+            ದಶಮಾಂಶ x = src[i] * scale;
+            ಆದರೆ (ಮುಖವಾಡ != ಖಾಲಿ) {
+                x += ಮುಖವಾಡ[i] * ಇಳಿಜಾರು;
             }
-            sum += et_expf(x - max_val);
+            ಮೊತ್ತ += et_expf(x - max_val);
         }
-        sum += et_expf(sink_value - max_val);
+        ಮೊತ್ತ += et_expf(sink_ಮೌಲ್ಯ - max_val);
 
         // Normalize: dst[i] = exp(x'[i] - max) / sum  (scalar)
-        float inv_sum = et_fdiv(1.0f, sum);
-        for (int i = 0; i < cols; ++i) {
-            float x = src[i] * scale;
-            if (mask != NULL) {
-                x += mask[i] * slope;
+        ದಶಮಾಂಶ inv_ಮೊತ್ತ = et_fdiv(1.0f, ಮೊತ್ತ);
+        ಗಾಗಿ (ಪೂರ್ಣಾಂಕ i = 0; i < ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ_2; ++i) {
+            ದಶಮಾಂಶ x = src[i] * scale;
+            ಆದರೆ (ಮುಖವಾಡ != ಖಾಲಿ) {
+                x += ಮುಖವಾಡ[i] * ಇಳಿಜಾರು;
             }
-            dst[i] = et_expf(x - max_val) * inv_sum;
+            dst[i] = et_expf(x - max_val) * inv_ಮೊತ್ತ;
         }
-    } else {
-        if (!params.valid_mask) {
-            return;
+    } ಇಲ್ಲದಿದ್ದರೆ {
+        ಆದರೆ (!params.valid_ಮುಖವಾಡ) {
+            ಹಿಂತಿರುಗಿ;
         }
-        softmax_pass2_range(dst, src, mask, 0, cols, scale, slope, params);
+        softmax_pass2_range(dst, src, ಮುಖವಾಡ, 0, ಲಂಬಸಾಲು_ಸಂಖ್ಯೆ_2, scale, ಇಳಿಜಾರು, params);
     }
 }
 
 // Main entry point for Softmax kernel
-int entry_point(struct ggml_et_softmax_params * params, void * env) {
+ಪೂರ್ಣಾಂಕ ನಮೂದು_ಬಿಂದು(ರಚನೆ ggml_et_softmax_params * params, ಶೂನ್ಯ * env) {
     // Cast env to proper type
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
     // Validate environment pointer
-    if (!kernel_env) {
-        return -1;
+    ಆದರೆ (!kernel_env) {
+        ಹಿಂತಿರುಗಿ -1;
     }
 
     // Get thread info using shire mask from environment
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ಪೂರ್ಣಾಂಕ thread_id   = get_relative_thread_id(kernel_env->shire_ಮುಖವಾಡ);
+    ಪೂರ್ಣಾಂಕ ಅಂಕೆ_ಎಳೆಗಳು = get_ಅಂಕೆ_ಎಳೆಗಳು(kernel_env->shire_ಮುಖವಾಡ);
 
     // Return early if this hart is not active
-    if (thread_id < 0) {
-        return 0;
+    ಆದರೆ (thread_id < 0) {
+        ಹಿಂತಿರುಗಿ 0;
     }
 
     // Basic safety check on params
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ಆದರೆ (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        ಹಿಂತಿರುಗಿ -1;  // Invalid pointer
     }
 
     // Extract tensor references
-    struct ggml_tensor * src0     = &params->src0;     // Input tensor
-    struct ggml_tensor * src1     = &params->src1;     // Mask tensor (optional)
-    struct ggml_tensor * src2     = &params->src2;     // Sinks tensor (optional)
-    struct ggml_tensor * dst      = &params->dst;      // Output tensor
-    float                scale    = params->scale;     // Scale factor
-    float                max_bias = params->max_bias;  // ALiBi max bias
+    ರಚನೆ ggml_tensor * src0     = &params->src0;     // Input tensor
+    ರಚನೆ ggml_tensor * src1     = &params->src1;     // Mask tensor (optional)
+    ರಚನೆ ggml_tensor * src2     = &params->src2;     // Sinks tensor (optional)
+    ರಚನೆ ggml_tensor * dst      = &params->dst;      // Output tensor
+    ದಶಮಾಂಶ                scale    = params->scale;     // Scale factor
+    ದಶಮಾಂಶ                max_bias = params->max_bias;  // ALiBi max bias
 
     // Validate tensor types (F32 only)
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;  // Unsupported type combination
+    ಆದರೆ (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        ಹಿಂತಿರುಗಿ -1;  // Unsupported type combination
     }
 
     // Check if mask is used and validate type
-    bool use_mask = (src1->data != NULL && (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16));
+    bool use_ಮುಖವಾಡ = (src1->ದತ್ತಾಂಶ != ಖಾಲಿ && (src1->type == GGML_TYPE_F32 || src1->type == GGML_TYPE_F16));
 
-    bool use_sinks = (src2->data != NULL && src2->type == GGML_TYPE_F32);
+    bool use_sinks = (src2->ದತ್ತಾಂಶ != ಖಾಲಿ && src2->type == GGML_TYPE_F32);
 
-    float * src0_data  = (float *) src0->data;
-    float * dst_data   = (float *) dst->data;
-    float * mask_data  = use_mask ? (float *) src1->data : NULL;
-    float * sinks_data = use_sinks ? (float *) src2->data : NULL;
+    ದಶಮಾಂಶ * src0_ದತ್ತಾಂಶ  = (ದಶಮಾಂಶ *) src0->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ * dst_ದತ್ತಾಂಶ   = (ದಶಮಾಂಶ *) dst->ದತ್ತಾಂಶ;
+    ದಶಮಾಂಶ * ಮುಖವಾಡ_ದತ್ತಾಂಶ  = use_ಮುಖವಾಡ ? (ದಶಮಾಂಶ *) src1->ದತ್ತಾಂಶ : ಖಾಲಿ;
+    ದಶಮಾಂಶ * sinks_ದತ್ತಾಂಶ = use_sinks ? (ದಶಮಾಂಶ *) src2->ದತ್ತಾಂಶ : ಖಾಲಿ;
 
-    if (!src0_data || !dst_data) {
-        return -1;  // Null data pointer
+    ಆದರೆ (!src0_ದತ್ತಾಂಶ || !dst_ದತ್ತಾಂಶ) {
+        ಹಿಂತಿರುಗಿ -1;  // Null data pointer
     }
 
 
-    const int64_t ne00 = src0->ne[0];  // Sequence length (columns)
-    const int64_t ne01 = src0->ne[1];  // Number of rows
-    const int64_t ne02 = src0->ne[2];  // Batch/head dimension
-    const int64_t ne03 = src0->ne[3];  // Outer batch dimension
+    ಸ್ಥಿರಾಂಕ int64_t ne00 = src0->ne[0];  // Sequence length (columns)
+    ಸ್ಥಿರಾಂಕ int64_t ne01 = src0->ne[1];  // Number of rows
+    ಸ್ಥಿರಾಂಕ int64_t ne02 = src0->ne[2];  // Batch/head dimension
+    ಸ್ಥಿರಾಂಕ int64_t ne03 = src0->ne[3];  // Outer batch dimension
 
     // Fast path: softmax of a single element is always 1.0
     // (exp(x) / exp(x) == 1 for any x, regardless of scale/mask/bias)
@@ -564,64 +564,64 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     // Each output element is 4 bytes.  A cache line is 64 bytes = 16 floats.
     // L1 is not coherent across harts, so each thread must own whole cache
     // lines to avoid cross-hart conflicts.
-    if (ne00 == 1) {
-        const int64_t total_elems  = ne01 * ne02 * ne03;
-        const int64_t elems_per_cl = ET_CACHE_LINE_SIZE_BYTES / (int64_t) sizeof(float);  // 16
-        const int64_t total_cls    = (total_elems + elems_per_cl - 1) / elems_per_cl;
+    ಆದರೆ (ne00 == 1) {
+        ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_elems  = ne01 * ne02 * ne03;
+        ಸ್ಥಿರಾಂಕ int64_t elems_ಪ್ರತಿ_cl = ET_CACHE_ಸಾಲು_ಗಾತ್ರ_ಬೈಟುಗಳು / (int64_t) ಗಾತ್ರ(ದಶಮಾಂಶ);  // 16
+        ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_cls    = (ಒಟ್ಟು_elems + elems_ಪ್ರತಿ_cl - 1) / elems_ಪ್ರತಿ_cl;
 
-        for (int64_t cl = thread_id; cl < total_cls; cl += num_threads) {
-            const int64_t start = cl * elems_per_cl;
-            int64_t       end   = start + elems_per_cl;
-            if (end > total_elems) {
-                end = total_elems;
+        ಗಾಗಿ (int64_t cl = thread_id; cl < ಒಟ್ಟು_cls; cl += ಅಂಕೆ_ಎಳೆಗಳು) {
+            ಸ್ಥಿರಾಂಕ int64_t ಆರಂಭ = cl * elems_ಪ್ರತಿ_cl;
+            int64_t       ಕೊನೆ   = ಆರಂಭ + elems_ಪ್ರತಿ_cl;
+            ಆದರೆ (ಕೊನೆ > ಒಟ್ಟು_elems) {
+                ಕೊನೆ = ಒಟ್ಟು_elems;
             }
-            for (int64_t idx = start; idx < end; idx++) {
-                dst_data[idx] = 1.0f;
+            ಗಾಗಿ (int64_t idx = ಆರಂಭ; idx < ಕೊನೆ; idx++) {
+                dst_ದತ್ತಾಂಶ[idx] = 1.0f;
             }
         }
-        return 0;
+        ಹಿಂತಿರುಗಿ 0;
     }
 
-    const int64_t ne10 = use_mask ? src1->ne[0] : 0;  // Mask sequence length
-    const int64_t ne11 = use_mask ? src1->ne[1] : 0;  // Mask rows
-    const int64_t ne12 = use_mask ? src1->ne[2] : 0;  // Mask batch/head dimension
-    const int64_t ne13 = use_mask ? src1->ne[3] : 0;  // Mask outer batch dimension
+    ಸ್ಥಿರಾಂಕ int64_t ne10 = use_ಮುಖವಾಡ ? src1->ne[0] : 0;  // Mask sequence length
+    ಸ್ಥಿರಾಂಕ int64_t ne11 = use_ಮುಖವಾಡ ? src1->ne[1] : 0;  // Mask rows
+    ಸ್ಥಿರಾಂಕ int64_t ne12 = use_ಮುಖವಾಡ ? src1->ne[2] : 0;  // Mask batch/head dimension
+    ಸ್ಥಿರಾಂಕ int64_t ne13 = use_ಮುಖವಾಡ ? src1->ne[3] : 0;  // Mask outer batch dimension
 
-    if (use_mask) {
+    ಆದರೆ (use_ಮುಖವಾಡ) {
         // - Dimension 0: mask must equal input exactly
         // - Dimension 1: mask must be >= input (allows larger pre-allocated masks)
         // - Dimension 2: input must be divisible by mask (modulo broadcasting)
         // - Dimension 3: input must be divisible by mask (modulo broadcasting)
-        if (ne10 != ne00 ||                    // Dimension 0: exact match required
+        ಆದರೆ (ne10 != ne00 ||                    // Dimension 0: exact match required
             ne11 < ne01 ||                     // Dimension 1: mask >= input
             (ne12 > 0 && ne02 % ne12 != 0) ||  // Dimension 2: input % mask == 0
             (ne13 > 0 && ne03 % ne13 != 0)) {  // Dimension 3: input % mask == 0
-            return -1;                         // Incompatible dimensions for ggml softmax broadcasting
+            ಹಿಂತಿರುಗಿ -1;                         // Incompatible dimensions for ggml softmax broadcasting
         }
     }
 
     // ALiBi slope calculation - compute per attention head
-    const uint32_t n_head      = (uint32_t) ne02;
-    uint32_t       n_head_log2 = 0;
-    float          m0          = 1.0f;
-    float          m1          = 1.0f;
+    ಸ್ಥಿರಾಂಕ uint32_t n_ತಲೆ      = (uint32_t) ne02;
+    uint32_t       n_ತಲೆ_log2 = 0;
+    ದಶಮಾಂಶ          m0          = 1.0f;
+    ದಶಮಾಂಶ          m1          = 1.0f;
 
-    if (max_bias > 0.0f) {
+    ಆದರೆ (max_bias > 0.0f) {
         // This is equivalent to: 1 << floor(log2(n_head))
-        n_head_log2 = 1;
-        while (n_head_log2 < n_head) {
-            n_head_log2 <<= 1;
+        n_ತಲೆ_log2 = 1;
+        ಆಗ (n_ತಲೆ_log2 < n_ತಲೆ) {
+            n_ತಲೆ_log2 <<= 1;
         }
-        if (n_head_log2 > n_head) {
-            n_head_log2 >>= 1;
+        ಆದರೆ (n_ತಲೆ_log2 > n_ತಲೆ) {
+            n_ತಲೆ_log2 >>= 1;
         }
 
         // Compute base slopes for ALiBi
         // m0 = 2^(-max_bias / n_head_log2)
         // m1 = 2^(-max_bias / (2 * n_head_log2))
-        float inv_n_head_log2 = et_fdiv(1.0f, (float) n_head_log2);
-        m0                    = et_expf(-max_bias * 0.69314718f * inv_n_head_log2);  // 0.69314718 = ln(2)
-        m1                    = et_expf(-max_bias * 0.69314718f * inv_n_head_log2 * 0.5f);
+        ದಶಮಾಂಶ inv_n_ತಲೆ_log2 = et_fdiv(1.0f, (ದಶಮಾಂಶ) n_ತಲೆ_log2);
+        m0                    = et_expf(-max_bias * 0.69314718f * inv_n_ತಲೆ_log2);  // 0.69314718 = ln(2)
+        m1                    = et_expf(-max_bias * 0.69314718f * inv_n_ತಲೆ_log2 * 0.5f);
     }
 
     // Process tensor row by row in parallel across flattened rows.
@@ -633,66 +633,66 @@ int entry_point(struct ggml_et_softmax_params * params, void * env) {
     // lines, preventing cross-hart L1 coherency issues.  When rows ARE
     // cache-line aligned, rows_per_wg == 1 and this degenerates to the
     // original stride-by-num_threads distribution.
-    const int64_t rows_per_i03 = ne02 * ne01;
-    const int64_t total_rows   = ne03 * rows_per_i03;
-    const int64_t rows_per_wg  = et_rows_per_cacheline_group(ne00, sizeof(float));
-    const int64_t total_wgs    = (total_rows + rows_per_wg - 1) / rows_per_wg;
+    ಸ್ಥಿರಾಂಕ int64_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_i03 = ne02 * ne01;
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು   = ne03 * ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_i03;
+    ಸ್ಥಿರಾಂಕ int64_t ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_wg  = et_ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_cacheline_ಗುಂಪು(ne00, ಗಾತ್ರ(ದಶಮಾಂಶ));
+    ಸ್ಥಿರಾಂಕ int64_t ಒಟ್ಟು_wgs    = (ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು + ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_wg - 1) / ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_wg;
 
-    for (int64_t wg = thread_id; wg < total_wgs; wg += num_threads) {
-        const int64_t row_start = wg * rows_per_wg;
-        int64_t       row_end   = row_start + rows_per_wg;
-        if (row_end > total_rows) {
-            row_end = total_rows;
+    ಗಾಗಿ (int64_t wg = thread_id; wg < ಒಟ್ಟು_wgs; wg += ಅಂಕೆ_ಎಳೆಗಳು) {
+        ಸ್ಥಿರಾಂಕ int64_t ಅಡ್ಡಸಾಲು_ಆರಂಭ = wg * ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_wg;
+        int64_t       ಅಡ್ಡಸಾಲು_ಕೊನೆ   = ಅಡ್ಡಸಾಲು_ಆರಂಭ + ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_wg;
+        ಆದರೆ (ಅಡ್ಡಸಾಲು_ಕೊನೆ > ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು) {
+            ಅಡ್ಡಸಾಲು_ಕೊನೆ = ಒಟ್ಟು_ಅಡ್ಡಸಾಲುಗಳು;
         }
 
-        for (int64_t row = row_start; row < row_end; row++) {
-            const int64_t i03 = row / rows_per_i03;
-            const int64_t rem = row % rows_per_i03;
-            const int64_t i02 = rem / ne01;
-            const int64_t i01 = rem % ne01;
+        ಗಾಗಿ (int64_t ಅಡ್ಡಸಾಲು = ಅಡ್ಡಸಾಲು_ಆರಂಭ; ಅಡ್ಡಸಾಲು < ಅಡ್ಡಸಾಲು_ಕೊನೆ; ಅಡ್ಡಸಾಲು++) {
+            ಸ್ಥಿರಾಂಕ int64_t i03 = ಅಡ್ಡಸಾಲು / ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_i03;
+            ಸ್ಥಿರಾಂಕ int64_t rem = ಅಡ್ಡಸಾಲು % ಅಡ್ಡಸಾಲುಗಳು_ಪ್ರತಿ_i03;
+            ಸ್ಥಿರಾಂಕ int64_t i02 = rem / ne01;
+            ಸ್ಥಿರಾಂಕ int64_t i01 = rem % ne01;
 
             // Calculate ALiBi slope for this attention head
-            float slope = 1.0f;
-            if (max_bias > 0.0f) {
-                const uint32_t h = (uint32_t) i02;  // head index
-                if (h < n_head_log2) {
-                    slope = m0;
-                    for (uint32_t i = 0; i < h; i++) {
-                        slope *= m0;
+            ದಶಮಾಂಶ ಇಳಿಜಾರು = 1.0f;
+            ಆದರೆ (max_bias > 0.0f) {
+                ಸ್ಥಿರಾಂಕ uint32_t h = (uint32_t) i02;  // head index
+                ಆದರೆ (h < n_ತಲೆ_log2) {
+                    ಇಳಿಜಾರು = m0;
+                    ಗಾಗಿ (uint32_t i = 0; i < h; i++) {
+                        ಇಳಿಜಾರು *= m0;
                     }
-                } else {
-                    const uint32_t exp = 2 * (h - n_head_log2) + 1;
-                    slope              = m1;
-                    for (uint32_t i = 1; i < exp; i++) {
-                        slope *= m1;
+                } ಇಲ್ಲದಿದ್ದರೆ {
+                    ಸ್ಥಿರಾಂಕ uint32_t ಘಾತಾಂಕ = 2 * (h - n_ತಲೆ_log2) + 1;
+                    ಇಳಿಜಾರು              = m1;
+                    ಗಾಗಿ (uint32_t i = 1; i < ಘಾತಾಂಕ; i++) {
+                        ಇಳಿಜಾರು *= m1;
                     }
                 }
             }
 
-            float sink_value = 0.0f;
-            if (use_sinks && sinks_data) {
-                sink_value = sinks_data[i02];
+            ದಶಮಾಂಶ sink_ಮೌಲ್ಯ = 0.0f;
+            ಆದರೆ (use_sinks && sinks_ದತ್ತಾಂಶ) {
+                sink_ಮೌಲ್ಯ = sinks_ದತ್ತಾಂಶ[i02];
             }
 
-            const int64_t src_offset = i03 * ne02 * ne01 * ne00 + i02 * ne01 * ne00 + i01 * ne00;
+            ಸ್ಥಿರಾಂಕ int64_t src_ಸ್ಥಾನಾಂತರ = i03 * ne02 * ne01 * ne00 + i02 * ne01 * ne00 + i01 * ne00;
 
-            const float * src_row  = src0_data + src_offset;
-            float *       dst_row  = dst_data + src_offset;
-            const float * mask_row = NULL;
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * src_ಅಡ್ಡಸಾಲು  = src0_ದತ್ತಾಂಶ + src_ಸ್ಥಾನಾಂತರ;
+            ದಶಮಾಂಶ *       dst_ಅಡ್ಡಸಾಲು  = dst_ದತ್ತಾಂಶ + src_ಸ್ಥಾನಾಂತರ;
+            ಸ್ಥಿರಾಂಕ ದಶಮಾಂಶ * ಮುಖವಾಡ_ಅಡ್ಡಸಾಲು = ಖಾಲಿ;
 
-            if (use_mask && mask_data) {
-                const int64_t mask_i03 = (ne13 > 0) ? i03 % ne13 : 0;
-                const int64_t mask_i02 = (ne12 > 0) ? i02 % ne12 : 0;
-                const int64_t mask_i01 = i01;
+            ಆದರೆ (use_ಮುಖವಾಡ && ಮುಖವಾಡ_ದತ್ತಾಂಶ) {
+                ಸ್ಥಿರಾಂಕ int64_t ಮುಖವಾಡ_i03 = (ne13 > 0) ? i03 % ne13 : 0;
+                ಸ್ಥಿರಾಂಕ int64_t ಮುಖವಾಡ_i02 = (ne12 > 0) ? i02 % ne12 : 0;
+                ಸ್ಥಿರಾಂಕ int64_t ಮುಖವಾಡ_i01 = i01;
 
-                const int64_t mask_offset = mask_i03 * ne12 * ne11 * ne10 + mask_i02 * ne11 * ne10 + mask_i01 * ne10;
+                ಸ್ಥಿರಾಂಕ int64_t ಮುಖವಾಡ_ಸ್ಥಾನಾಂತರ = ಮುಖವಾಡ_i03 * ne12 * ne11 * ne10 + ಮುಖವಾಡ_i02 * ne11 * ne10 + ಮುಖವಾಡ_i01 * ne10;
 
-                mask_row = mask_data + mask_offset;
+                ಮುಖವಾಡ_ಅಡ್ಡಸಾಲು = ಮುಖವಾಡ_ದತ್ತಾಂಶ + ಮುಖವಾಡ_ಸ್ಥಾನಾಂತರ;
             }
 
-            compute_softmax_row(dst_row, src_row, mask_row, (int) ne00, scale, slope, sink_value, use_sinks);
+            compute_softmax_ಅಡ್ಡಸಾಲು(dst_ಅಡ್ಡಸಾಲು, src_ಅಡ್ಡಸಾಲು, ಮುಖವಾಡ_ಅಡ್ಡಸಾಲು, (ಪೂರ್ಣಾಂಕ) ne00, scale, ಇಳಿಜಾರು, sink_ಮೌಲ್ಯ, use_sinks);
         }
     }
 
-    return 0;  // Success
+    ಹಿಂತಿರುಗಿ 0;  // Success
 }

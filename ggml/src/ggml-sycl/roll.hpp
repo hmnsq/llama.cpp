@@ -10,11 +10,11 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#ifndef GGML_SYCL_ROLL_HPP
-#define GGML_SYCL_ROLL_HPP
+#ವ್ಯಾಖ್ಯಾನಿತವಾಗದಿದ್ದರೆ GGML_SYCL_ROLL_HPP
+#ವ್ಯಾಖ್ಯಾನಿಸು GGML_SYCL_ROLL_HPP
 
-#include "common.hpp"
+#ಅನ್ತರ್ಭಾವ "common.hpp"
 
-void ggml_sycl_roll(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
+ಶೂನ್ಯ ggml_sycl_roll(ggml_backend_sycl_context & ctx, ggml_tensor *dst);
 
-#endif // GGML_SYCL_ROLL_HPP
+#ಆದರೆ_ಅಂತ್ಯ // GGML_SYCL_ROLL_HPP
