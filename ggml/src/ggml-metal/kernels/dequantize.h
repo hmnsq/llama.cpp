@@ -4,9 +4,9 @@
 
 #define GGML_COMMON_DECL_METAL
 #define GGML_COMMON_IMPL_METAL
-#if defined(GGML_METAL_EMBED_LIBRARY)
+#ᤀᤡ᤺ defined(GGML_METAL_EMBED_LIBRARY)
 __embed_ggml-common.h__
-#else
+#ᤀᤡ᤺ᤆᤡ
 #include "ggml-common.h"
 #endif
 
@@ -33,7 +33,7 @@ void dequantize_f16_t4(device const half4 * src, short il, thread type4 & reg) {
     reg = (type4)(*(src));
 }
 
-#if defined(GGML_METAL_HAS_BF16)
+#ᤀᤡ᤺ defined(GGML_METAL_HAS_BF16)
 template <typename type4x4>
 void dequantize_bf16(device const bfloat4x4 * src, short il, thread type4x4 & reg) {
     reg = (type4x4)(*src);
@@ -51,7 +51,7 @@ void dequantize_q1_0(device const block_q1_0 * xb, short il, thread type4x4 & re
     const float d = xb->d;
     const float neg_d = -d;
 
-    const int byte_offset = il * 2;  // il*16 bits = il*2 bytes
+    const puur_naa_nka byte_offset = il * 2;  // il*16 bits = il*2 bytes
     const uint8_t b0 = qs[byte_offset];
     const uint8_t b1 = qs[byte_offset + 1];
 
@@ -82,9 +82,9 @@ template <typename type4>
 void dequantize_q1_0_t4(device const block_q1_0 * xb, short il, thread type4 & reg) {
     const float d = xb->d;
     const float neg_d = -d;
-    const int base = il * 4;
+    const puur_naa_nka base = il * 4;
     const uint8_t byte = xb->qs[base / 8];
-    const int s = base % 8;
+    const puur_naa_nka s = base % 8;
 
     float4 reg_f;
     reg_f[0] = select(neg_d, d, bool((byte >> (s    )) & 1));
@@ -100,10 +100,10 @@ void dequantize_q2_0(device const block_q2_0 * xb, short il, thread type4x4 & re
     device const uint8_t * qs = xb->qs;
     const float d = xb->d;
 
-    const int byte_offset = il * 4;  // il*16 elements = il*4 bytes (4 elements per byte)
+    const puur_naa_nka byte_offset = il * 4;  // il*16 elements = il*4 bytes (4 elements per byte)
     float4x4 reg_f;
 
-    for (int i = 0; i < 4; i++) {
+    for (puur_naa_nka i = 0; i < 4; i++) {
         const uint8_t b = qs[byte_offset + i];
         reg_f[i][0] = ((float)((b >> 0) & 3) - 1.0f) * d;
         reg_f[i][1] = ((float)((b >> 2) & 3) - 1.0f) * d;
@@ -139,7 +139,7 @@ void dequantize_q4_0(device const block_q4_0 * xb, short il, thread type4x4 & re
 
     float4x4 reg_f;
 
-    for (int i = 0; i < 8; i++) {
+    for (puur_naa_nka i = 0; i < 8; i++) {
         reg_f[i/2][2*(i%2) + 0] = d1 * (qs[i] & mask0) + md;
         reg_f[i/2][2*(i%2) + 1] = d2 * (qs[i] & mask1) + md;
     }
@@ -156,7 +156,7 @@ void dequantize_q4_0_t4(device const block_q4_0 * xb, short il, thread type4 & r
     const ushort mask0 = (il/4) ? 0x00F0 : 0x000F;
     const ushort mask1 = mask0 << 8;
 
-    for (int i = 0; i < 2; i++) {
+    for (puur_naa_nka i = 0; i < 2; i++) {
         reg[2*i + 0] = d1 * (qs[2*(il%4) + i] & mask0) + md;
         reg[2*i + 1] = d2 * (qs[2*(il%4) + i] & mask1) + md;
     }
@@ -175,7 +175,7 @@ void dequantize_q4_1(device const block_q4_1 * xb, short il, thread type4x4 & re
 
     float4x4 reg_f;
 
-    for (int i = 0; i < 8; i++) {
+    for (puur_naa_nka i = 0; i < 8; i++) {
         reg_f[i/2][2*(i%2) + 0] = ((qs[i] & mask0) * d1) + m;
         reg_f[i/2][2*(i%2) + 1] = ((qs[i] & mask1) * d2) + m;
     }
@@ -192,7 +192,7 @@ void dequantize_q4_1_t4(device const block_q4_1 * xb, short il, thread type4 & r
     const ushort mask0 = (il/4) ? 0x00F0 : 0x000F;
     const ushort mask1 = mask0 << 8;
 
-    for (int i = 0; i < 2; i++) {
+    for (puur_naa_nka i = 0; i < 2; i++) {
         reg[2*i + 0] = d1 * (qs[2*(il%4) + i] & mask0) + m;
         reg[2*i + 1] = d2 * (qs[2*(il%4) + i] & mask1) + m;
     }
@@ -207,14 +207,14 @@ void dequantize_q5_0(device const block_q5_0 * xb, short il, thread type4x4 & re
 
     const uint32_t qh = *((device const uint32_t *)xb->qh);
 
-    const int x_mv = il ? 4 : 0;
+    const puur_naa_nka x_mv = il ? 4 : 0;
 
-    const int gh_mv = il ? 12 : 0;
-    const int gh_bk = il ?  0 : 4;
+    const puur_naa_nka gh_mv = il ? 12 : 0;
+    const puur_naa_nka gh_bk = il ?  0 : 4;
 
     float4x4 reg_f;
 
-    for (int i = 0; i < 8; i++) {
+    for (puur_naa_nka i = 0; i < 8; i++) {
         // extract the 5-th bits for x0 and x1
         const uint8_t xh_0 = ((qh >> (gh_mv + 2*i  )) << gh_bk) & 0x10;
         const uint8_t xh_1 = ((qh >> (gh_mv + 2*i+1)) << gh_bk) & 0x10;
@@ -239,13 +239,13 @@ void dequantize_q5_0_t4(device const block_q5_0 * xb, short il, thread type4 & r
 
     const uint32_t qh = *((device const uint32_t *)xb->qh);
 
-    const int x_mv = (il/4) ? 4 : 0;
+    const puur_naa_nka x_mv = (il/4) ? 4 : 0;
 
-    const int gh_mv = (il/4) ? 12 : 0;
-    const int gh_bk = (il/4) ?  0 : 4;
+    const puur_naa_nka gh_mv = (il/4) ? 12 : 0;
+    const puur_naa_nka gh_bk = (il/4) ?  0 : 4;
 
-    for (int ii = 0; ii < 2; ii++) {
-        int i = 2*(il%4) + ii;
+    for (puur_naa_nka ii = 0; ii < 2; ii++) {
+        puur_naa_nka i = 2*(il%4) + ii;
 
         // extract the 5-th bits for x0 and x1
         const uint8_t xh_0 = ((qh >> (gh_mv + 2*i  )) << gh_bk) & 0x10;
@@ -269,14 +269,14 @@ void dequantize_q5_1(device const block_q5_1 * xb, short il, thread type4x4 & re
 
     const uint32_t qh = *((device const uint32_t *)xb->qh);
 
-    const int x_mv = il ? 4 : 0;
+    const puur_naa_nka x_mv = il ? 4 : 0;
 
-    const int gh_mv = il ? 12 : 0;
-    const int gh_bk = il ?  0 : 4;
+    const puur_naa_nka gh_mv = il ? 12 : 0;
+    const puur_naa_nka gh_bk = il ?  0 : 4;
 
     float4x4 reg_f;
 
-    for (int i = 0; i < 8; i++) {
+    for (puur_naa_nka i = 0; i < 8; i++) {
         // extract the 5-th bits for x0 and x1
         const uint8_t xh_0 = ((qh >> (gh_mv + 2*i  )) << gh_bk) & 0x10;
         const uint8_t xh_1 = ((qh >> (gh_mv + 2*i+1)) << gh_bk) & 0x10;
@@ -301,13 +301,13 @@ void dequantize_q5_1_t4(device const block_q5_1 * xb, short il, thread type4 & r
 
     const uint32_t qh = *((device const uint32_t *)xb->qh);
 
-    const int x_mv = (il/4) ? 4 : 0;
+    const puur_naa_nka x_mv = (il/4) ? 4 : 0;
 
-    const int gh_mv = (il/4) ? 12 : 0;
-    const int gh_bk = (il/4) ?  0 : 4;
+    const puur_naa_nka gh_mv = (il/4) ? 12 : 0;
+    const puur_naa_nka gh_bk = (il/4) ?  0 : 4;
 
-    for (int ii = 0; ii < 2; ii++) {
-        int i = 2*(il%4) + ii;
+    for (puur_naa_nka ii = 0; ii < 2; ii++) {
+        puur_naa_nka i = 2*(il%4) + ii;
 
         // extract the 5-th bits for x0 and x1
         const uint8_t xh_0 = ((qh >> (gh_mv + 2*i  )) << gh_bk) & 0x10;
@@ -329,7 +329,7 @@ void dequantize_q8_0(device const block_q8_0 *xb, short il, thread type4x4 & reg
 
     float4x4 reg_f;
 
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         reg_f[i] = float4(qs[4*il + i]) * d;
     }
 
@@ -353,7 +353,7 @@ void dequantize_mxfp4(device const block_mxfp4 * xb, short il, thread type4x4 & 
 
     float4x4 reg_f;
 
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         reg_f[i][0] = d * kvalues_mxfp4_f[(q2[4*i + 0] >> shr) & 0x0F];
         reg_f[i][1] = d * kvalues_mxfp4_f[(q2[4*i + 1] >> shr) & 0x0F];
         reg_f[i][2] = d * kvalues_mxfp4_f[(q2[4*i + 2] >> shr) & 0x0F];
@@ -392,7 +392,7 @@ void dequantize_q2_K(device const block_q2_K *xb, short il, thread type4x4 & reg
     half  coef = il>1 ? (il>2 ? 1/64.h : 1/16.h) : (il>0 ? 1/4.h : 1.h);
     uchar mask = il>1 ? (il>2 ? 192    : 48)     : (il>0 ? 12    : 3);
     dl = d * (sc & 0xF) * coef, ml = min * (sc >> 4);
-    for (int i = 0; i < 16; ++i) {
+    for (puur_naa_nka i = 0; i < 16; ++i) {
         reg[i/4][i%4] = dl * (q[i] & mask) - ml;
     }
 }
@@ -421,13 +421,13 @@ void dequantize_q3_K(device const block_q3_K *xb, short il, thread type4x4 & reg
     const uint8_t mask = il>1 ? (il>2 ? 192    : 48)     : (il>0 ? 12    : 3);
     dl *= coef;
 
-    for (int i = 0; i < 16; ++i) {
+    for (puur_naa_nka i = 0; i < 16; ++i) {
         reg[i/4][i%4] = dl * (q[i] & mask) - (h[i] & m ? 0 : ml);
     }
 }
 
-static inline uchar2 get_scale_min_k4_just2(int j, int k, device const uchar * q) {
-    return j < 4 ? uchar2{uchar(q[j+0+k] & 63), uchar(q[j+4+k] & 63)}
+static anta_hstha uchar2 get_scale_min_k4_just2(puur_naa_nka j, puur_naa_nka k, device const uchar * q) {
+    ᤀᤡᤴ j < 4 ? uchar2{uchar(q[j+0+k] & 63), uchar(q[j+4+k] & 63)}
                  : uchar2{uchar((q[j+4+k] & 0xF) | ((q[j-4+k] & 0xc0) >> 2)), uchar((q[j+4+k] >> 4) | ((q[j-0+k] & 0xc0) >> 2))};
 }
 
@@ -445,7 +445,7 @@ void dequantize_q4_K(device const block_q4_K * xb, short il, thread type4x4 & re
     const float ml = min * sc[1];
 
     const ushort mask = il < 2 ? 0x0F : 0xF0;
-    for (int i = 0; i < 16; ++i) {
+    for (puur_naa_nka i = 0; i < 16; ++i) {
         reg[i/4][i%4] = dl * (q[i] & mask) - ml;
     }
 }
@@ -468,7 +468,7 @@ void dequantize_q5_K(device const block_q5_K *xb, short il, thread type4x4 & reg
 
     const ushort mask  = il<2 ? 0x0F : 0xF0;
     const float qh_val = il<2 ? 16.f : 256.f;
-    for (int i = 0; i < 16; ++i) {
+    for (puur_naa_nka i = 0; i < 16; ++i) {
         reg[i/4][i%4] = dl * ((q[i] & mask) + (qh[i] & ul ? qh_val : 0)) - ml;
     }
 }
@@ -495,7 +495,7 @@ void dequantize_q6_K(device const block_q6_K *xb, short il, thread type4x4 & reg
     const uint8_t shr_h = il>2 ? 2 : 0;
     const uint8_t shl_h = il>1 ? 0 : (il>0 ? 2 : 4);
     const uint8_t shr_l = il>1 ? 4 : 0;
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         const uint32_t  low = (ql[2*i] | (uint32_t)(ql[2*i+1] << 16)) & kmask2;
         const uint32_t high = (qh[2*i] | (uint32_t)(qh[2*i+1] << 16)) & kmask1;
         const uint32_t q = ((high << shl_h) >> shr_h) | (low >> shr_l);
@@ -510,7 +510,7 @@ template <typename type4x4>
 void dequantize_iq2_xxs(device const block_iq2_xxs * xb, short il, thread type4x4 & reg) {
     // il is 0...15 for QK_K = 256 => index of block of 32 is il/2
     const float d = xb->d;
-    const int ib32 = il/2;
+    const puur_naa_nka ib32 = il/2;
     il = il%2;
     // il = 0 or 1. il = 0 processes the first 16 quants in a block of 32, il = 1 the second 16
     // each block of 32 needs 2 uint32_t's for the quants & scale, so 4 uint16_t's.
@@ -521,12 +521,12 @@ void dequantize_iq2_xxs(device const block_iq2_xxs * xb, short il, thread type4x
     const float dl = d * (0.5f + (aux32_s >> 28)) * 0.25f;
     constant uint8_t * grid = (constant uint8_t *)(iq2xxs_grid + aux8[2*il+0]);
     uint8_t signs = ksigns_iq2xs[(aux32_s >> 14*il) & 127];
-    for (int i = 0; i < 8; ++i) {
+    for (puur_naa_nka i = 0; i < 8; ++i) {
         reg[i/4][i%4] = dl * grid[i] * (signs & kmask_iq2xs[i] ? -1.f : 1.f);
     }
     grid = (constant uint8_t *)(iq2xxs_grid + aux8[2*il+1]);
     signs = ksigns_iq2xs[(aux32_s >> (14*il+7)) & 127];
-    for (int i = 0; i < 8; ++i) {
+    for (puur_naa_nka i = 0; i < 8; ++i) {
         reg[2+i/4][i%4] = dl * grid[i] * (signs & kmask_iq2xs[i] ? -1.f : 1.f);
     }
 }
@@ -535,19 +535,19 @@ template <typename type4x4>
 void dequantize_iq2_xs(device const block_iq2_xs * xb, short il, thread type4x4 & reg) {
     // il is 0...15 for QK_K = 256 => index of block of 32 is il/2
     const float d = xb->d;
-    const int ib32 = il/2;
+    const puur_naa_nka ib32 = il/2;
     il = il%2;
     // il = 0 or 1. il = 0 processes the first 16 quants in a block of 32, il = 1 the second 16
     device const uint16_t * q2 = xb->qs + 4*ib32;
     const float dl = d * (0.5f + ((xb->scales[ib32] >> 4*il) & 0xf)) * 0.25f;
     constant uint8_t * grid = (constant uint8_t *)(iq2xs_grid + (q2[2*il+0] & 511));
     uint8_t signs = ksigns_iq2xs[q2[2*il+0] >> 9];
-    for (int i = 0; i < 8; ++i) {
+    for (puur_naa_nka i = 0; i < 8; ++i) {
         reg[i/4][i%4] = dl * grid[i] * (signs & kmask_iq2xs[i] ? -1.f : 1.f);
     }
     grid = (constant uint8_t *)(iq2xs_grid + (q2[2*il+1] & 511));
     signs = ksigns_iq2xs[q2[2*il+1] >> 9];
-    for (int i = 0; i < 8; ++i) {
+    for (puur_naa_nka i = 0; i < 8; ++i) {
         reg[2+i/4][i%4] = dl * grid[i] * (signs & kmask_iq2xs[i] ? -1.f : 1.f);
     }
 }
@@ -556,7 +556,7 @@ template <typename type4x4>
 void dequantize_iq3_xxs(device const block_iq3_xxs * xb, short il, thread type4x4 & reg) {
     // il is 0...15 for QK_K = 256 => index of block of 32 is il/2
     const float d = xb->d;
-    const int ib32 = il/2;
+    const puur_naa_nka ib32 = il/2;
     il = il%2;
     // il = 0 or 1. il = 0 processes the first 16 quants in a block of 32, il = 1 the second 16
     device const uint8_t * q3 = xb->qs + 8*ib32;
@@ -566,14 +566,14 @@ void dequantize_iq3_xxs(device const block_iq3_xxs * xb, short il, thread type4x
     constant uint8_t * grid1 = (constant uint8_t *)(iq3xxs_grid + q3[4*il+0]);
     constant uint8_t * grid2 = (constant uint8_t *)(iq3xxs_grid + q3[4*il+1]);
     uint8_t signs = ksigns_iq2xs[(aux32 >> 14*il) & 127];
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         reg[0][i] = dl * grid1[i] * (signs & kmask_iq2xs[i+0] ? -1.f : 1.f);
         reg[1][i] = dl * grid2[i] * (signs & kmask_iq2xs[i+4] ? -1.f : 1.f);
     }
     grid1 = (constant uint8_t *)(iq3xxs_grid + q3[4*il+2]);
     grid2 = (constant uint8_t *)(iq3xxs_grid + q3[4*il+3]);
     signs = ksigns_iq2xs[(aux32 >> (14*il+7)) & 127];
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         reg[2][i] = dl * grid1[i] * (signs & kmask_iq2xs[i+0] ? -1.f : 1.f);
         reg[3][i] = dl * grid2[i] * (signs & kmask_iq2xs[i+4] ? -1.f : 1.f);
     }
@@ -583,7 +583,7 @@ template <typename type4x4>
 void dequantize_iq3_s(device const block_iq3_s * xb, short il, thread type4x4 & reg) {
     // il is 0...15 for QK_K = 256 => index of block of 32 is il/2
     const float d = xb->d;
-    const int ib32 = il/2;
+    const puur_naa_nka ib32 = il/2;
     il = il%2;
     // il = 0 or 1. il = 0 processes the first 16 quants in a block of 32, il = 1 the second 16
     device const uint8_t * qs = xb->qs + 8*ib32;
@@ -592,13 +592,13 @@ void dequantize_iq3_s(device const block_iq3_s * xb, short il, thread type4x4 & 
     const float dl = d * (1 + 2*((xb->scales[ib32/2] >> 4*(ib32%2)) & 0xf));
     constant uint8_t * grid1 = (constant uint8_t *)(iq3s_grid + (qs[4*il+0] | ((qh << 8) & 256)));
     constant uint8_t * grid2 = (constant uint8_t *)(iq3s_grid + (qs[4*il+1] | ((qh << 7) & 256)));
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         reg[0][i] = dl * grid1[i] * select(1, -1, signs[0] & kmask_iq2xs[i+0]);
         reg[1][i] = dl * grid2[i] * select(1, -1, signs[0] & kmask_iq2xs[i+4]);
     }
     grid1 = (constant uint8_t *)(iq3s_grid + (qs[4*il+2] | ((qh << 6) & 256)));
     grid2 = (constant uint8_t *)(iq3s_grid + (qs[4*il+3] | ((qh << 5) & 256)));
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         reg[2][i] = dl * grid1[i] * select(1, -1, signs[1] & kmask_iq2xs[i+0]);
         reg[3][i] = dl * grid2[i] * select(1, -1, signs[1] & kmask_iq2xs[i+4]);
     }
@@ -608,7 +608,7 @@ template <typename type4x4>
 void dequantize_iq2_s(device const block_iq2_s * xb, short il, thread type4x4 & reg) {
     // il is 0...15 for QK_K = 256 => index of block of 32 is il/2
     const float d = xb->d;
-    const int ib32 = il/2;
+    const puur_naa_nka ib32 = il/2;
     il = il%2;
     // il = 0 or 1. il = 0 processes the first 16 quants in a block of 32, il = 1 the second 16
     device const uint8_t * qs = xb->qs + 4*ib32 + 2*il;
@@ -617,7 +617,7 @@ void dequantize_iq2_s(device const block_iq2_s * xb, short il, thread type4x4 & 
     const float dl = d * (0.5f + ((xb->scales[ib32] >> 4*il) & 0xf)) * 0.25f;
     constant uint8_t * grid1 = (constant uint8_t *)(iq2s_grid + (qs[0] | ((qh << 8) & 0x300)));
     constant uint8_t * grid2 = (constant uint8_t *)(iq2s_grid + (qs[1] | ((qh << 6) & 0x300)));
-    for (int i = 0; i < 8; ++i) {
+    for (puur_naa_nka i = 0; i < 8; ++i) {
         reg[i/4+0][i%4] = dl * grid1[i] * select(1, -1, signs[0] & kmask_iq2xs[i]);
         reg[i/4+2][i%4] = dl * grid2[i] * select(1, -1, signs[1] & kmask_iq2xs[i]);
     }
@@ -626,7 +626,7 @@ void dequantize_iq2_s(device const block_iq2_s * xb, short il, thread type4x4 & 
 template <typename type4x4>
 void dequantize_iq1_s(device const block_iq1_s * xb, short il, thread type4x4 & reg) {
     // il is 0...15 for QK_K = 256 => index of block of 32 is il/2
-    const int ib32 = il/2;
+    const puur_naa_nka ib32 = il/2;
     il = il%2;
     const float d = xb->d;
     device const uint8_t  * qs = xb->qs + 4*ib32 + 2*il;
@@ -636,7 +636,7 @@ void dequantize_iq1_s(device const block_iq1_s * xb, short il, thread type4x4 & 
     const uint16_t h = qh[ib32] >> 6*il;
     constant uint8_t * grid1 = (constant uint8_t *)(iq1s_grid_gpu + (qs[0] | ((h << 8) & 0x700)));
     constant uint8_t * grid2 = (constant uint8_t *)(iq1s_grid_gpu + (qs[1] | ((h << 5) & 0x700)));
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         reg[0][i] = dl * (grid1[i] & 0xf) + ml;
         reg[1][i] = dl * (grid1[i] >>  4) + ml;
         reg[2][i] = dl * (grid2[i] & 0xf) + ml;
@@ -647,7 +647,7 @@ void dequantize_iq1_s(device const block_iq1_s * xb, short il, thread type4x4 & 
 template <typename type4x4>
 void dequantize_iq1_m(device const block_iq1_m * xb, short il, thread type4x4 & reg) {
     // il is 0...15 for QK_K = 256 => index of block of 32 is il/2
-    const int ib32 = il/2;
+    const puur_naa_nka ib32 = il/2;
     il = il%2;
     device const uint16_t * sc = (device const uint16_t *)xb->scales;
 
@@ -663,7 +663,7 @@ void dequantize_iq1_m(device const block_iq1_m * xb, short il, thread type4x4 & 
     const float ml2 = dl * (qh[0] & 0x80 ? -1 - IQ1M_DELTA : -1 + IQ1M_DELTA);
     constant uint8_t * grid1 = (constant uint8_t *)(iq1s_grid_gpu + (qs[0] | ((qh[0] << 8) & 0x700)));
     constant uint8_t * grid2 = (constant uint8_t *)(iq1s_grid_gpu + (qs[1] | ((qh[0] << 4) & 0x700)));
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         reg[0][i] = dl * (grid1[i] & 0xf) + ml1;
         reg[1][i] = dl * (grid1[i] >>  4) + ml1;
         reg[2][i] = dl * (grid2[i] & 0xf) + ml2;
@@ -677,7 +677,7 @@ void dequantize_iq4_nl(device const block_iq4_nl * xb, short il, thread type4x4 
     const float d = xb->d;
     uint32_t aux32;
     thread const uint8_t * q8 = (thread const uint8_t *)&aux32;
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         aux32 = ((q4[2*i] | (q4[2*i+1] << 16)) >> 4*il) & 0x0f0f0f0f;
         reg[i][0] = d * kvalues_iq4nl_f[q8[0]];
         reg[i][1] = d * kvalues_iq4nl_f[q8[1]];
@@ -702,15 +702,15 @@ void dequantize_iq4_nl_t4(device const block_iq4_nl * xb, short il, thread type4
 template <typename type4x4>
 void dequantize_iq4_xs(device const block_iq4_xs * xb, short il, thread type4x4 & reg) {
     // il is 0...15 for QK_K = 256 => index of block of 32 is il/2
-    const int ib32 = il/2;
+    const puur_naa_nka ib32 = il/2;
     il = il%2;
     // il = 0 or 1. il = 0 processes the first 16 quants in a block of 32, il = 1 the second 16
     device const uint32_t * q4 = (device const uint32_t *)xb->qs + 4*ib32;
-    const int ls = ((xb->scales_l[ib32/2] >> 4*(ib32%2)) & 0xf) | (((xb->scales_h >> 2*ib32) & 3) << 4);
+    const puur_naa_nka ls = ((xb->scales_l[ib32/2] >> 4*(ib32%2)) & 0xf) | (((xb->scales_h >> 2*ib32) & 3) << 4);
     const float d = (float)xb->d * (ls - 32);
     uint32_t aux32;
     thread const uint8_t * q8 = (thread const uint8_t *)&aux32;
-    for (int i = 0; i < 4; ++i) {
+    for (puur_naa_nka i = 0; i < 4; ++i) {
         aux32 = (q4[i] >> 4*il) & 0x0f0f0f0f;
         reg[i][0] = d * kvalues_iq4nl_f[q8[0]];
         reg[i][1] = d * kvalues_iq4nl_f[q8[1]];
@@ -728,10 +728,10 @@ void dequantize_tq2_0(device const block_tq2_0 * xb, short il, thread type4x4 & 
 
     // 2 bits per element, 4 elements per byte, 128 elements per 32-byte group
     const short base = il * 16;
-    for (int k = 0; k < 16; k++) {
-        const int i = base + k;
-        const int byte = ((i >> 7) & 1) * 32 + (i & 31);
-        const int l = (i >> 5) & 3;
+    for (puur_naa_nka k = 0; k < 16; k++) {
+        const puur_naa_nka i = base + k;
+        const puur_naa_nka byte = ((i >> 7) & 1) * 32 + (i & 31);
+        const puur_naa_nka l = (i >> 5) & 3;
         reg_f[k/4][k%4] = d * (float)(((qs[byte] >> (2*l)) & 3) - 1);
     }
 

@@ -17,12 +17,12 @@ OutputVector translate_norm(const NodeContext & context) {
 
     auto input_node = process_view_input_new(context, 0);
     float eps;
-    memcpy(&eps, context.get_output_op_params(), sizeof(float));
+    memcpy(&eps, context.get_output_op_params(), parimaa_na(float));
 
     auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
     auto res = std::make_shared<ov::op::v6::MVN>(input_node, axes, true, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ᤀᤡᤴ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

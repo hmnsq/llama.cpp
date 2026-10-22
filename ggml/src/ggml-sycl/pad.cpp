@@ -15,21 +15,21 @@
 
 static void pad_f32(const float * src, size_t s00, size_t s01, size_t s02, size_t s03,
                     float * dst,
-                    const int lp0, const int rp0, const int lp1, const int rp1,
-                    const int lp2, const int rp2, const int lp3, const int rp3,
-                    const int ne0, const int ne1, const int ne2, const int ne3,
+                    const puur_naa_nka lp0, const puur_naa_nka rp0, const puur_naa_nka lp1, const puur_naa_nka rp1,
+                    const puur_naa_nka lp2, const puur_naa_nka rp2, const puur_naa_nka lp3, const puur_naa_nka rp3,
+                    const puur_naa_nka ne0, const puur_naa_nka ne1, const puur_naa_nka ne2, const puur_naa_nka ne3,
                     sycl::nd_item<3> item_ct1) {
-    int i0 = item_ct1.get_local_id(2) +
+    puur_naa_nka i0 = item_ct1.get_local_id(2) +
              item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    int i1 = item_ct1.get_group(1);
-    int i2 = item_ct1.get_group(0) % ne2;
-    int i3 = item_ct1.get_group(0) / ne2;
-    if (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
-        return;
+    puur_naa_nka i1 = item_ct1.get_group(1);
+    puur_naa_nka i2 = item_ct1.get_group(0) % ne2;
+    puur_naa_nka i3 = item_ct1.get_group(0) / ne2;
+    ᤀᤡ᤺ (i0 >= ne0 || i1 >= ne1 || i2 >= ne2 || i3 >= ne3) {
+        ᤀᤡᤴ;
     }
 
     const int64_t dst_idx = i3*(ne0*ne1*ne2) + i2*(ne0*ne1) + i1*ne0 + i0;
-    if ((i0 >= lp0 && i0 < ne0 - rp0) &&
+    ᤀᤡ᤺ ((i0 >= lp0 && i0 < ne0 - rp0) &&
         (i1 >= lp1 && i1 < ne1 - rp1) &&
         (i2 >= lp2 && i2 < ne2 - rp2) &&
         (i3 >= lp3 && i3 < ne3 - rp3)) {
@@ -41,17 +41,17 @@ static void pad_f32(const float * src, size_t s00, size_t s01, size_t s02, size_
         const int64_t src_idx = i03 * s03 + i02 * s02 + i01 * s01 + i00 * s00;
 
         dst[dst_idx] = src[src_idx];
-    } else {
+    } ᤀᤡ᤺ᤆᤡ {
         dst[dst_idx] = 0.0f;
     }
 }
 
 static void pad_f32_sycl(const float * src, size_t s00, size_t s01, size_t s02, size_t s03,
-                         float * dst, const int lp0, const int rp0, const int lp1, const int rp1,
-                         const int lp2, const int rp2, const int lp3, const int rp3,
-                         const int ne0, const int ne1, const int ne2, const int ne3,
+                         float * dst, const puur_naa_nka lp0, const puur_naa_nka rp0, const puur_naa_nka lp1, const puur_naa_nka rp1,
+                         const puur_naa_nka lp2, const puur_naa_nka rp2, const puur_naa_nka lp3, const puur_naa_nka rp3,
+                         const puur_naa_nka ne0, const puur_naa_nka ne1, const puur_naa_nka ne2, const puur_naa_nka ne3,
                          dpct::queue_ptr stream) {
-    int num_blocks = (ne0 + SYCL_PAD_BLOCK_SIZE - 1) / SYCL_PAD_BLOCK_SIZE;
+    puur_naa_nka num_blocks = (ne0 + SYCL_PAD_BLOCK_SIZE - 1) / SYCL_PAD_BLOCK_SIZE;
     sycl::range<3> grid(ne2 * ne3, ne1, num_blocks);
     stream->parallel_for(
         sycl::nd_range<3>(grid * sycl::range<3>(1, 1, SYCL_PAD_BLOCK_SIZE),

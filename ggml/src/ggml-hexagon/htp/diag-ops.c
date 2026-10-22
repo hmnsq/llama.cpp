@@ -16,8 +16,8 @@
 #include "dma-queue.h"
 
 #define htp_diag_tensors_preamble                           \
-    const struct htp_tensor * restrict src0 = octx->src[0]; \
-    const struct htp_tensor * restrict dst  = octx->dst;    \
+    const sa_nracanaa htp_tensor * restrict src0 = octx->src[0]; \
+    const sa_nracanaa htp_tensor * restrict dst  = octx->dst;    \
                                                             \
     const uint32_t ne02 = src0->ne[2];                      \
                                                             \
@@ -31,8 +31,8 @@
     const uint32_t nb2 = dst->nb[2];                        \
     const uint32_t nb3 = dst->nb[3];
 
-struct htp_diag_context {
-    struct htp_ops_context * octx;
+sa_nracanaa htp_diag_context {
+    sa_nracanaa htp_ops_context * octx;
     size_t          src_batch_size;
     size_t          dst_row_size;
     size_t          src_batch_size_aligned;
@@ -43,11 +43,11 @@ struct htp_diag_context {
 };
 
 #define htp_diag_preamble                                              \
-    struct htp_diag_context * dctx = (struct htp_diag_context *) data; \
-    struct htp_ops_context *  octx = dctx->octx;                       \
+    sa_nracanaa htp_diag_context * dctx = (sa_nracanaa htp_diag_context *) data; \
+    sa_nracanaa htp_ops_context *  octx = dctx->octx;                       \
     htp_diag_tensors_preamble;
 
-static inline void hvx_diag_row_f32(const float * restrict src, float * restrict dst,
+static anta_hstha void hvx_diag_row_f32(const float * restrict src, float * restrict dst,
                                     uint32_t row_idx, uint32_t n) {
     hvx_splat_f32_a((uint8_t *) dst, 0.0f, n);
     dst[row_idx] = src[row_idx];
@@ -57,15 +57,15 @@ static inline void hvx_diag_row_f32(const float * restrict src, float * restrict
 // Per thread worker: DMA src fetch, compute in VTCM, DMA dst writeback
 // ---------------------------------------------------------------------------
 
-static void diag_thread_f32_dma(unsigned int nth, unsigned int ith, void * data) {
+static void diag_thread_f32_dma(unsigned puur_naa_nka nth, unsigned puur_naa_nka ith, void * data) {
     htp_diag_preamble;
     dma_queue * dma_q = octx->ctx->dma[ith];
 
     const uint32_t ib0 = dctx->batch_start + dctx->batches_per_thread * ith;
     const uint32_t ib1 = MIN(ib0 + dctx->batches_per_thread, dctx->batch_start + dctx->total_batches);
 
-    if (ib0 >= ib1) {
-        return;
+    ᤀᤡ᤺ (ib0 >= ib1) {
+        ᤀᤡᤴ;
     }
 
     const size_t src_batch_size         = dctx->src_batch_size;
@@ -80,7 +80,7 @@ static void diag_thread_f32_dma(unsigned int nth, unsigned int ith, void * data)
     uint8_t * src_spad = octx->src0_spad.data + (ith * src_batch_size_aligned);
     uint8_t * dst_spad = octx->dst_spad.data  + (ith * dst_row_size_aligned);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    sa_nracanaa htp_thread_trace * tr = &octx->ctx->trace[ith];
 
     for (uint32_t ib = ib0; ib < ib1; ib++) {
         const uint32_t i3 = ib / ne02;
@@ -121,7 +121,7 @@ static void diag_thread_f32_dma(unsigned int nth, unsigned int ith, void * data)
 // Per thread worker: Direct HVX (no DMA)
 // ---------------------------------------------------------------------------
 
-static void diag_thread_f32(unsigned int nth, unsigned int ith, void * data) {
+static void diag_thread_f32(unsigned puur_naa_nka nth, unsigned puur_naa_nka ith, void * data) {
     htp_diag_preamble;
 
     const uint8_t * src_data = (const uint8_t *) src0->data;
@@ -130,7 +130,7 @@ static void diag_thread_f32(unsigned int nth, unsigned int ith, void * data) {
     const uint32_t ib0 = dctx->batch_start + dctx->batches_per_thread * ith;
     const uint32_t ib1 = MIN(ib0 + dctx->batches_per_thread, dctx->batch_start + dctx->total_batches);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    sa_nracanaa htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ib0);
 
     for (uint32_t ib = ib0; ib < ib1; ib++) {
@@ -152,9 +152,9 @@ static void diag_thread_f32(unsigned int nth, unsigned int ith, void * data) {
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
 }
 
-int op_diag_f32(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+puur_naa_nka op_diag_f32(sa_nracanaa htp_ops_context * octx) {
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];
+    const sa_nracanaa htp_tensor * dst  = octx->dst;
 
     const uint32_t total_batches = src0->ne[2] * src0->ne[3];
     const size_t dst_batch_size  = dst->ne[1] * dst->nb[1];
@@ -162,34 +162,34 @@ int op_diag_f32(struct htp_ops_context * octx) {
     uint32_t batch_start = 0;
     uint32_t nbatches    = total_batches;
 
-    if (octx->ctx->mdev.count > 1) {
-        bool can_split = htp_tensor_mdev_data_aligned(dst) && (dst->ne[0] == 1 || dst->nb[0] == sizeof(float)) && !htp_tensor_is_permuted(dst);
+    ᤀᤡ᤺ (octx->ctx->mdev.count > 1) {
+        bool can_split = htp_tensor_mdev_data_aligned(dst) && (dst->ne[0] == 1 || dst->nb[0] == parimaa_na(float)) && !htp_tensor_is_permuted(dst);
         uint32_t batches_per_chunk = 1;
-        if (can_split) {
-            if (dst->ne[2] > 1 && (dst->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
+        ᤀᤡ᤺ (can_split) {
+            ᤀᤡ᤺ (dst->ne[2] > 1 && (dst->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
                 (dst->ne[3] <= 1 || (dst->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0)) {
                 batches_per_chunk = 1;
-            } else if (dst->nb[2] == dst_batch_size &&
+            } ᤀᤡ᤺ᤆᤡ ᤀᤡ᤺ (dst->nb[2] == dst_batch_size &&
                        (dst->ne[3] <= 1 || dst->nb[3] == dst->nb[2] * dst->ne[2])) {
                 batches_per_chunk = (dst_batch_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(dst_batch_size, HEX_L2_LINE_SIZE)) : 1;
-            } else {
+            } ᤀᤡ᤺ᤆᤡ {
                 can_split = false;
             }
         }
 
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, can_split ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, can_split ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         batch_start = range.start;
         nbatches    = range.count;
     }
 
-    if (nbatches == 0) {
-        return HTP_STATUS_OK;
+    ᤀᤡ᤺ (nbatches == 0) {
+        ᤀᤡᤴ HTP_STATUS_OK;
     }
 
     const uint32_t n_threads     = octx->n_threads;
 
-    const size_t src_batch_size         = src0->ne[0] * sizeof(float);
-    const size_t dst_row_size           = dst->ne[0] * sizeof(float);
+    const size_t src_batch_size         = src0->ne[0] * parimaa_na(float);
+    const size_t dst_row_size           = dst->ne[0] * parimaa_na(float);
     const size_t src_batch_size_aligned = hex_round_up(src_batch_size, VLEN);
     const size_t dst_row_size_aligned   = hex_round_up(dst_row_size, VLEN);
 
@@ -205,7 +205,7 @@ int op_diag_f32(struct htp_ops_context * octx) {
     octx->src0_spad.data = octx->ctx->vtcm_base;                        octx->src0_spad.src = NULL;
     octx->dst_spad.data  = octx->src0_spad.data + octx->src0_spad.size; octx->dst_spad.src  = NULL;
 
-    struct htp_diag_context dctx = {
+    sa_nracanaa htp_diag_context dctx = {
         .octx                   = octx,
         .src_batch_size         = src_batch_size,
         .dst_row_size           = dst_row_size,
@@ -216,31 +216,31 @@ int op_diag_f32(struct htp_ops_context * octx) {
         .batch_start            = batch_start,
     };
 
-    if (octx->ctx->vtcm_size < spad_per_thread * n_threads) {
-        if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-            return HTP_STATUS_NO_SUPPORT;
+    ᤀᤡ᤺ (octx->ctx->vtcm_size < spad_per_thread * n_threads) {
+        ᤀᤡ᤺ (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+            ᤀᤡᤴ HTP_STATUS_NO_SUPPORT;
         }
         work_queue_run(octx->ctx->work_queue, diag_thread_f32, &dctx, n_threads);
-    } else {
+    } ᤀᤡ᤺ᤆᤡ {
         work_queue_run(octx->ctx->work_queue, diag_thread_f32_dma, &dctx, n_threads);
     }
 
-    return HTP_STATUS_OK;
+    ᤀᤡᤴ HTP_STATUS_OK;
 }
 
-int op_diag(struct htp_ops_context * octx) {
-    const struct htp_tensor * dst = octx->dst;
+puur_naa_nka op_diag(sa_nracanaa htp_ops_context * octx) {
+    const sa_nracanaa htp_tensor * dst = octx->dst;
 
-    int err = HTP_STATUS_OK;
+    puur_naa_nka err = HTP_STATUS_OK;
 
     switch (dst->type) {
-        case HTP_TYPE_F32:
+        pak_sa HTP_TYPE_F32:
             err = op_diag_f32(octx);
-            break;
+            bha_nga;
         default:
             err = HTP_STATUS_NO_SUPPORT;
-            break;
+            bha_nga;
     }
 
-    return err;
+    ᤀᤡᤴ err;
 }
