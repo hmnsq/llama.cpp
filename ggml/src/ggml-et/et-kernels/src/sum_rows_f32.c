@@ -4,88 +4,88 @@
 // Vectorized 8-wide accumulation with horizontal reduction.
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#ضمن "ggml_tensor.h"
+#ضمن "platform.h"
 
-#include <stdint.h>
+#ضمن <stdint.h>
 
-struct ggml_et_sum_rows_params {
-    struct ggml_tensor src0;  // F32 input tensor [ne00, ne01, ne02, ne03]
-    struct ggml_tensor dst;   // F32 output tensor [1, ne01, ne02, ne03]
+بنية ggml_et_sum_rows_params {
+    بنية ggml_tensor src0;  // F32 input tensor [ne00, ne01, ne02, ne03]
+    بنية ggml_tensor dst;   // F32 output tensor [1, ne01, ne02, ne03]
 };
 
-int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
+صحيح entry_point(بنية ggml_et_sum_rows_params * params, فراغ * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    إذا (!kernel_env) {
+        أرجع -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    صحيح thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    صحيح عدد_threads = get_عدد_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    إذا (thread_id < 0) {
+        أرجع 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    إذا (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        أرجع -1;
     }
 
-    struct ggml_tensor * src0 = &params->src0;
-    struct ggml_tensor * dst  = &params->dst;
+    بنية ggml_tensor * src0 = &params->src0;
+    بنية ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    إذا (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        أرجع -1;
     }
 
-    float * src0_data = (float *) src0->data;
-    float * dst_data  = (float *) dst->data;
+    عائم * src0_data = (عائم *) src0->data;
+    عائم * dst_data  = (عائم *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    إذا (!src0_data || !dst_data) {
+        أرجع -1;
     }
 
 
-    const int64_t ne00 = src0->ne[0];  // Row length (to be summed)
-    const int64_t ne01 = src0->ne[1];
-    const int64_t ne02 = src0->ne[2];
-    const int64_t ne03 = src0->ne[3];
+    ثابت int64_t ne00 = src0->ne[0];  // Row length (to be summed)
+    ثابت int64_t ne01 = src0->ne[1];
+    ثابت int64_t ne02 = src0->ne[2];
+    ثابت int64_t ne03 = src0->ne[3];
 
-    const size_t nb01 = src0->nb[1];
-    const size_t nb02 = src0->nb[2];
-    const size_t nb03 = src0->nb[3];
+    ثابت size_t nb01 = src0->nb[1];
+    ثابت size_t nb02 = src0->nb[2];
+    ثابت size_t nb03 = src0->nb[3];
 
-    const size_t nb1 = dst->nb[1];
-    const size_t nb2 = dst->nb[2];
-    const size_t nb3 = dst->nb[3];
+    ثابت size_t nb1 = dst->nb[1];
+    ثابت size_t nb2 = dst->nb[2];
+    ثابت size_t nb3 = dst->nb[3];
 
     // Flatten rows across dimensions 1,2,3 and distribute across threads
-    const int64_t total_rows = ne01 * ne02 * ne03;
+    ثابت int64_t total_rows = ne01 * ne02 * ne03;
 
-    for (int64_t ir = thread_id; ir < total_rows; ir += num_threads) {
-        const int64_t i03 = ir / (ne02 * ne01);
-        const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
-        const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
+    لكل (int64_t ir = thread_id; ir < total_rows; ir += عدد_threads) {
+        ثابت int64_t i03 = ir / (ne02 * ne01);
+        ثابت int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
+        ثابت int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
 
-        const float * src_row = (const float *) ((const char *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
-        float *       dst_ptr = (float *) ((char *) dst_data + i01 * nb1 + i02 * nb2 + i03 * nb3);
+        ثابت عائم * src_row = (ثابت عائم *) ((ثابت حرف *) src0_data + i01 * nb01 + i02 * nb02 + i03 * nb03);
+        عائم *       dst_ptr = (عائم *) ((حرف *) dst_data + i01 * nb1 + i02 * nb2 + i03 * nb3);
 
         // Vectorized 8-wide sum accumulation
-        float zero = 0.0f;
-        __asm__ volatile("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
+        عائم zero = 0.0f;
+        __asm__ متطاير("fbc.ps f10, %[z]\n" : : [z] "m"(zero) : "f10");
 
-        for (int32_t i0 = 0; i0 < (int32_t) ne00; i0 += 8) {
-            __asm__ volatile(
+        لكل (int32_t i0 = 0; i0 < (int32_t) ne00; i0 += 8) {
+            __asm__ متطاير(
                 "flw.ps f11, %[x_vec]\n"
                 "fadd.ps f10, f10, f11\n"
                 :
-                : [x_vec] "m"(*(const float (*)[8]) & src_row[i0])
+                : [x_vec] "m"(*(ثابت عائم (*)[8]) & src_row[i0])
                 : "f10", "f11");
         }
 
         // Horizontal sum of 8 accumulated values in f10
-        float row_sum;
+        عائم row_sum;
         __asm__ __volatile__(
             "fswizz.ps f1, f10, 0xB1 \n\t"
             "fadd.ps   f2, f10, f1, rne \n\t"
@@ -99,5 +99,5 @@ int entry_point(struct ggml_et_sum_rows_params * params, void * env) {
         atomic_store_f32(dst_ptr, row_sum);
     }
 
-    return 0;
+    أرجع 0;
 }
