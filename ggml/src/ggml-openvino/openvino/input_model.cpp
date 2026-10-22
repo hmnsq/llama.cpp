@@ -1,15 +1,15 @@
-#include "input_model.h"
+#ضمن "input_model.h"
 
-#include "decoder.h"
+#ضمن "decoder.h"
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
 
-InputModel::InputModel(const std::shared_ptr<GgmlDecoder> & gdecoder) : m_decoder(gdecoder) {}
+كىرگۈزۈش_Model::كىرگۈزۈش_Model(ثابت std::shared_ptr<GgmlDecoder> & gdecoder) : m_decoder(gdecoder) {}
 
-const std::shared_ptr<GgmlDecoder> & InputModel::get_model_decoder() const {
-    return m_decoder;
+ثابت std::shared_ptr<GgmlDecoder> & كىرگۈزۈش_Model::get_model_decoder() ثابت {
+    أرجع m_decoder;
 }
 
 }  // namespace ggml

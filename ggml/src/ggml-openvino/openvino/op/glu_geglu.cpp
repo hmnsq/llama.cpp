@@ -1,37 +1,37 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <memory>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/clamp.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gelu.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/slice.hpp>
+#ضمن <memory>
+#ضمن <openvino/core/node_output.hpp>
+#ضمن <openvino/op/clamp.hpp>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/gelu.hpp>
+#ضمن <openvino/op/multiply.hpp>
+#ضمن <openvino/op/sigmoid.hpp>
+#ضمن <openvino/op/slice.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_glu_geglu(const NodeContext & context) {
-    num_inputs_check(context, 1, 2);
+OutputVector translate_glu_geglu(ثابت تۈگۈن_Context & context) {
+    رەقەم_inputs_check(context, 1, 2);
 
     ov::Output<ov::Node> src0;
     ov::Output<ov::Node> src1;
-    if (context.get_input_size() == 2) {
+    إذا (context.get_كىرگۈزۈش_size() == 2) {
         // Inputs may be VIEW slices of a combined gate_up tensor (MoE experts):
         // resolve them so each half has its real sliced shape, not the base tensor.
-        src0 = process_view_input_new(context, 0);
-        src1 = process_view_input_new(context, 1);
-    } else {
+        src0 = process_view_كىرگۈزۈش_new(context, 0);
+        src1 = process_view_كىرگۈزۈش_new(context, 1);
+    } وإلا {
         // GGML splits along ne[0] (OV last axis) using floor division: nc = ne[0] / 2.
         // Both halves are nc elements; if the dimension is odd, the last element is dropped.
         // Use Slice instead of Split to handle odd dimensions correctly.
         // Resolve a VIEW input (e.g. non-contiguous slice) to its real shape first.
-        auto combined = process_view_input_new(context, 0);
+        auto combined = process_view_كىرگۈزۈش_new(context, 0);
         auto combined_shape = combined.get_partial_shape();
         int64_t last_dim_val = combined_shape[combined_shape.rank().get_length() - 1].get_length();
         int64_t nc = last_dim_val / 2;
@@ -48,12 +48,12 @@ OutputVector translate_glu_geglu(const NodeContext & context) {
     }
 
     int32_t * params = context.get_output_op_params();
-    const int32_t swapped = params[1];
-    if (swapped) {
+    ثابت int32_t swapped = params[1];
+    إذا (swapped) {
         std::swap(src0, src1);
     }
 
-    if (context.is_static()) {
+    إذا (context.is_static()) {
         // TODO: Temporary solution for NPU accuracy issue due to fp16 overflow
         // To be removed once permanent solution is implemented
         // Justification:
@@ -66,7 +66,7 @@ OutputVector translate_glu_geglu(const NodeContext & context) {
     auto gelu = std::make_shared<ov::op::v7::Gelu>(src0);
     auto res = std::make_shared<ov::op::v1::Multiply>(gelu, src1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    أرجع rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

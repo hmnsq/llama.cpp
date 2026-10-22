@@ -1,8 +1,8 @@
 #pragma once
 
 /* device */
-uint32_t backend_device_get_device_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
-uint32_t backend_device_get_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
+uint32_t backend_device_get_device_سانى(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
+uint32_t backend_device_get_سانى(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
 uint32_t backend_device_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
 uint32_t backend_device_get_description(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
 uint32_t backend_device_get_type(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
@@ -32,13 +32,13 @@ uint32_t backend_buffer_free_buffer(apir_encoder * enc, apir_decoder * dec, virg
 /* backend */
 uint32_t backend_backend_graph_compute(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx);
 
-extern "C" {
-static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATCH_TABLE_COUNT] = {
+خارجي "C" {
+ساكن ثابت backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATCH_TABLE_سانى] = {
 
     /* device */
 
-    /* APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT  = */ backend_device_get_device_count,
-    /* APIR_COMMAND_TYPE_DEVICE_GET_COUNT  = */ backend_device_get_count,
+    /* APIR_COMMAND_TYPE_DEVICE_GET_DEVICE_COUNT  = */ backend_device_get_device_سانى,
+    /* APIR_COMMAND_TYPE_DEVICE_GET_COUNT  = */ backend_device_get_سانى,
     /* APIR_COMMAND_TYPE_DEVICE_GET_NAME  = */ backend_device_get_name,
     /* APIR_COMMAND_TYPE_DEVICE_GET_DESCRIPTION  = */ backend_device_get_description,
     /* APIR_COMMAND_TYPE_DEVICE_GET_TYPE  = */ backend_device_get_type,

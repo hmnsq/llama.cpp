@@ -1,27 +1,27 @@
 #pragma once
 
 // clang-format off
-#include "virtgpu-utils.h"
-#include "virtgpu-shm.h"
-#include "virtgpu-apir.h"
+#ضمن "virtgpu-utils.h"
+#ضمن "virtgpu-shm.h"
+#ضمن "virtgpu-apir.h"
 
-#include "backend/shared/api_remoting.h"
-#include "backend/shared/apir_cs.h"
+#ضمن "backend/shared/api_remoting.h"
+#ضمن "backend/shared/apir_cs.h"
 
-#include <fcntl.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
-#include <threads.h>
-#include <xf86drm.h>
+#ضمن <fcntl.h>
+#ضمن <stdbool.h>
+#ضمن <stdio.h>
+#ضمن <sys/stat.h>
+#ضمن <sys/sysmacros.h>
+#ضمن <threads.h>
+#ضمن <xf86drm.h>
 
-#include <cstring>
+#ضمن <cstring>
 
 #define VIRGL_RENDERER_UNSTABLE_APIS 1
-#include "apir_hw.h"
-#include <drm/virtgpu_drm.h>
-#include "venus_hw.h"
+#ضمن "apir_hw.h"
+#ضمن <drm/virtgpu_drm.h>
+#ضمن "venus_hw.h"
 // clang-format on
 
 #ifndef VIRTGPU_DRM_CAPSET_APIR
@@ -39,7 +39,7 @@
 #    define VIRTGPU_DRM_CAPSET_VENUS 4
 #endif
 
-typedef uint32_t virgl_renderer_capset;
+تعريفنوع uint32_t virgl_renderer_capset;
 
 /* from src/virtio/vulkan/vn_renderer_virtgpu.c */
 #define VIRTGPU_PCI_VENDOR_ID       0x1af4
@@ -50,21 +50,21 @@ typedef uint32_t virgl_renderer_capset;
 #define SHMEM_DATA_SIZE  0x1830000  // 24MiB
 #define SHMEM_REPLY_SIZE 0x4000
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#define ARRAY_SIZE(x) (حجم(x) / حجم((x)[0]))
 
-enum virt_gpu_result_t {
+تعداد virt_gpu_result_t {
     APIR_SUCCESS                     = 0,
     APIR_ERROR_INITIALIZATION_FAILED = -1,
 };
 
 #define PRINTFLIKE(f, a) __attribute__((format(__printf__, f, a)))
 
-struct virtgpu {
+بنية virtgpu {
     bool use_apir_capset;
 
-    int fd;
+    صحيح fd;
 
-    struct {
+    بنية {
         virgl_renderer_capset      id;
         uint32_t                   version;
         virgl_renderer_capset_apir data;
@@ -80,26 +80,26 @@ struct virtgpu {
     mtx_t data_shmem_mutex;
 
     /* Cached device information to prevent memory leaks and race conditions */
-    struct {
-        char *   description;
-        char *   name;
-        int32_t  device_count;
+    بنية {
+        حرف *   description;
+        حرف *   name;
+        int32_t  device_سانى;
         uint32_t type;
         size_t   memory_free;
         size_t   memory_total;
     } cached_device_info;
 
     /* Cached buffer type information to prevent memory leaks and race conditions */
-    struct {
+    بنية {
         apir_buffer_type_host_handle_t host_handle;
-        char *                         name;
+        حرف *                         name;
         size_t                         alignment;
         size_t                         max_size;
     } cached_buffer_type;
 };
 
-static inline int virtgpu_ioctl(virtgpu * gpu, unsigned long request, void * args) {
-    return drmIoctl(gpu->fd, request, args);
+ساكن مضمن صحيح virtgpu_ioctl(virtgpu * gpu, unsigned long request, فراغ * args) {
+    أرجع drmIoctl(gpu->fd, request, args);
 }
 
 virtgpu * create_virtgpu();
@@ -109,7 +109,7 @@ apir_encoder * remote_call_prepare(virtgpu * gpu, ApirCommandType apir_cmd_type,
 uint32_t remote_call(virtgpu *       gpu,
                      apir_encoder *  enc,
                      apir_decoder ** dec,
-                     float           max_wait_ms,
+                     عائم           max_wait_ms,
                      long long *     call_duration_ns);
 
-void remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec);
+فراغ remote_call_finish(virtgpu * gpu, apir_encoder * enc, apir_decoder * dec);

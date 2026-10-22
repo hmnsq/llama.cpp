@@ -10,47 +10,47 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "ggml-impl.h"
-#include "common.hpp"
-#include "dequantize.hpp"
-#include "getrows.hpp"
+#ضمن "ggml-impl.h"
+#ضمن "common.hpp"
+#ضمن "dequantize.hpp"
+#ضمن "getrows.hpp"
 
 
-template<int qk, int qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
-static void k_get_rows(
-            const void * src0, const int32_t * src1, dst_t * dst,
+template<صحيح qk, صحيح qr, dequantize_kernel_t dequantize_kernel, typename dst_t>
+ساكن فراغ k_get_rows(
+            ثابت فراغ * src0, ثابت int32_t * src1, dst_t * dst,
             int64_t ne00, /*int64_t ne01, int64_t ne02, int64_t ne03,*/
             /*int64_t ne10, int64_t ne11,*/ int64_t ne12, /*int64_t ne13,*/
             /*size_t s0,*/ size_t s1, size_t s2, size_t s3,
             /*size_t nb00,*/ size_t nb01, size_t nb02, size_t nb03,
             size_t s10, size_t s11, size_t s12,
-            const sycl::nd_item<3> &item_ct1/*, size_t s13*/) {
+            ثابت sycl::nd_item<3> &item_ct1/*, size_t s13*/) {
 
-    const int i00 = (item_ct1.get_group(2) * item_ct1.get_local_range(2) +
+    ثابت صحيح i00 = (item_ct1.get_group(2) * item_ct1.get_local_range(2) +
                      item_ct1.get_local_id(2)) *
                     2;
-    const int i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ثابت صحيح i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                     item_ct1.get_local_id(1);
-    const int i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
+    ثابت صحيح i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
                      item_ct1.get_local_id(0)) /
                     ne12;
-    const int i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
+    ثابت صحيح i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
                      item_ct1.get_local_id(0)) %
                     ne12;
 
-    if (i00 >= ne00) {
-        return;
+    إذا (i00 >= ne00) {
+        أرجع;
     }
 
-    const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
+    ثابت صحيح i01 = src1[i10*s10 + i11*s11 + i12*s12];
 
     dst_t * dst_row = dst + i10*s1 + i11*s2 + i12*s3;
-    const void * src0_row = (const char *)src0 + i01*nb01 + i11*nb02 + i12*nb03;
+    ثابت فراغ * src0_row = (ثابت حرف *)src0 + i01*nb01 + i11*nb02 + i12*nb03;
 
-    const int ib = i00/qk; // block index
-    const int iqs = (i00%qk)/qr; // quant index
-    const int iybs = i00 - i00%qk; // dst block start index
-    const int y_offset = qr == 1 ? 1 : qk/2;
+    ثابت صحيح ib = i00/qk; // block index
+    ثابت صحيح iqs = (i00%qk)/qr; // quant index
+    ثابت صحيح iybs = i00 - i00%qk; // dst block start index
+    ثابت صحيح y_offset = qr == 1 ? 1 : qk/2;
 
     // dequantize
     dfloat2 v;
@@ -60,44 +60,44 @@ static void k_get_rows(
     dst_row[iybs + iqs + y_offset] = v.y();
 }
 
-template<int qk, int qr, dequantize_kernel_f32_t dequantize_kernel, typename dst_t>
-static void k_get_rows_f32(
-            const void * src0, const int32_t * src1, dst_t * dst,
+template<صحيح qk, صحيح qr, dequantize_kernel_f32_t dequantize_kernel, typename dst_t>
+ساكن فراغ k_get_rows_f32(
+            ثابت فراغ * src0, ثابت int32_t * src1, dst_t * dst,
             int64_t ne00,
             int64_t ne12,
             size_t s1, size_t s2, size_t s3,
             size_t nb01, size_t nb02, size_t nb03,
             size_t s10, size_t s11, size_t s12,
-            const sycl::nd_item<3> &item_ct1) {
+            ثابت sycl::nd_item<3> &item_ct1) {
 
-    const int i00 = (item_ct1.get_group(2) * item_ct1.get_local_range(2) +
+    ثابت صحيح i00 = (item_ct1.get_group(2) * item_ct1.get_local_range(2) +
                      item_ct1.get_local_id(2)) *
                     2;
-    const int i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ثابت صحيح i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                     item_ct1.get_local_id(1);
-    const int i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
+    ثابت صحيح i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
                      item_ct1.get_local_id(0)) /
                     ne12;
-    const int i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
+    ثابت صحيح i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
                      item_ct1.get_local_id(0)) %
                     ne12;
 
-    if (i00 >= ne00) {
-        return;
+    إذا (i00 >= ne00) {
+        أرجع;
     }
 
-    const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
+    ثابت صحيح i01 = src1[i10*s10 + i11*s11 + i12*s12];
 
     dst_t * dst_row = dst + i10*s1 + i11*s2 + i12*s3;
-    const void * src0_row = (const char *)src0 + i01*nb01 + i11*nb02 + i12*nb03;
+    ثابت فراغ * src0_row = (ثابت حرف *)src0 + i01*nb01 + i11*nb02 + i12*nb03;
 
-    const int ib = i00/qk;
-    const int iqs = (i00%qk)/qr;
-    const int iybs = i00 - i00%qk;
-    const int y_offset = qr == 1 ? 1 : qk/2;
+    ثابت صحيح ib = i00/qk;
+    ثابت صحيح iqs = (i00%qk)/qr;
+    ثابت صحيح iybs = i00 - i00%qk;
+    ثابت صحيح y_offset = qr == 1 ? 1 : qk/2;
 
-    float v0;
-    float v1;
+    عائم v0;
+    عائم v1;
     dequantize_kernel(src0_row, ib, iqs, v0, v1);
 
     dst_row[iybs + iqs + 0] = (dst_t) v0;
@@ -105,71 +105,71 @@ static void k_get_rows_f32(
 }
 
 template<typename src0_t, typename dst_t>
-static void k_get_rows_float(
-            const src0_t * src0, const int32_t * src1, dst_t * dst,
+ساكن فراغ k_get_rows_float(
+            ثابت src0_t * src0, ثابت int32_t * src1, dst_t * dst,
             int64_t ne00, /*int64_t ne01, int64_t ne02, int64_t ne03,*/
             /*int64_t ne10, int64_t ne11,*/ int64_t ne12, /*int64_t ne13,*/
             /*size_t s0,*/ size_t s1, size_t s2, size_t s3,
             /*size_t nb00,*/ size_t nb01, size_t nb02, size_t nb03,
             size_t s10, size_t s11, size_t s12,
-            const sycl::nd_item<3> &item_ct1/*, size_t s13*/) {
+            ثابت sycl::nd_item<3> &item_ct1/*, size_t s13*/) {
 
-    const int i00 = item_ct1.get_group(2) * item_ct1.get_local_range(2) +
+    ثابت صحيح i00 = item_ct1.get_group(2) * item_ct1.get_local_range(2) +
                     item_ct1.get_local_id(2);
-    const int i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ثابت صحيح i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                     item_ct1.get_local_id(1);
-    const int i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
+    ثابت صحيح i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
                      item_ct1.get_local_id(0)) /
                     ne12;
-    const int i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
+    ثابت صحيح i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
                      item_ct1.get_local_id(0)) %
                     ne12;
 
-    if (i00 >= ne00) {
-        return;
+    إذا (i00 >= ne00) {
+        أرجع;
     }
 
-    const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
+    ثابت صحيح i01 = src1[i10*s10 + i11*s11 + i12*s12];
 
     dst_t * dst_row = dst + i10*s1 + i11*s2 + i12*s3;
-    const src0_t * src0_row = (const src0_t *)((const char *)src0 + i01*nb01 + i11*nb02 + i12*nb03);
+    ثابت src0_t * src0_row = (ثابت src0_t *)((ثابت حرف *)src0 + i01*nb01 + i11*nb02 + i12*nb03);
 
     dst_row[i00] = src0_row[i00];
 }
 
 // src0 is in reorder layout: all qs of the tensor, then all d
-template<int qk, int qr, dequantize_kernel_t_reorder dequantize_kernel, typename dst_t>
-static void k_get_rows_reorder(
-            const void * src0_qs, const void * src0_d, const int32_t * src1, dst_t * dst,
+template<صحيح qk, صحيح qr, dequantize_kernel_t_reorder dequantize_kernel, typename dst_t>
+ساكن فراغ k_get_rows_reorder(
+            ثابت فراغ * src0_qs, ثابت فراغ * src0_d, ثابت int32_t * src1, dst_t * dst,
             int64_t ne00, int64_t ne12,
             size_t s1, size_t s2, size_t s3,
             size_t s10, size_t s11, size_t s12,
-            const sycl::nd_item<3> &item_ct1) {
+            ثابت sycl::nd_item<3> &item_ct1) {
 
-    const int i00 = (item_ct1.get_group(2) * item_ct1.get_local_range(2) +
+    ثابت صحيح i00 = (item_ct1.get_group(2) * item_ct1.get_local_range(2) +
                      item_ct1.get_local_id(2)) *
                     2;
-    const int i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
+    ثابت صحيح i10 = item_ct1.get_local_range(1) * item_ct1.get_group(1) +
                     item_ct1.get_local_id(1);
-    const int i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
+    ثابت صحيح i11 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
                      item_ct1.get_local_id(0)) /
                     ne12;
-    const int i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
+    ثابت صحيح i12 = (item_ct1.get_group(0) * item_ct1.get_local_range(0) +
                      item_ct1.get_local_id(0)) %
                     ne12;
 
-    if (i00 >= ne00) {
-        return;
+    إذا (i00 >= ne00) {
+        أرجع;
     }
 
-    const int i01 = src1[i10*s10 + i11*s11 + i12*s12];
+    ثابت صحيح i01 = src1[i10*s10 + i11*s11 + i12*s12];
 
     dst_t * dst_row = dst + i10*s1 + i11*s2 + i12*s3;
 
-    const int64_t ib = (int64_t) i01*(ne00/qk) + i00/qk; // block index in the whole tensor
-    const int iqs = (i00%qk)/qr;
-    const int iybs = i00 - i00%qk;
-    const int y_offset = qr == 1 ? 1 : qk/2;
+    ثابت int64_t ib = (int64_t) i01*(ne00/qk) + i00/qk; // block index in the whole tensor
+    ثابت صحيح iqs = (i00%qk)/qr;
+    ثابت صحيح iybs = i00 - i00%qk;
+    ثابت صحيح y_offset = qr == 1 ? 1 : qk/2;
 
     dfloat2 v;
     dequantize_kernel(src0_d, ib, src0_qs, ib*(qk/qr) + iqs, v);
@@ -178,27 +178,27 @@ static void k_get_rows_reorder(
     dst_row[iybs + iqs + y_offset] = v.y();
 }
 
-template <int qk, int qr, dequantize_kernel_t dq>
-static void get_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor *src0, const ggml_tensor *src1,
-                          ggml_tensor *dst, const void *src0_dd,
-                          const int32_t *src1_dd, float *dst_dd,
+template <صحيح qk, صحيح qr, dequantize_kernel_t dq>
+ساكن فراغ get_rows_sycl(ggml_backend_sycl_context & ctx, ثابت ggml_tensor *src0, ثابت ggml_tensor *src1,
+                          ggml_tensor *dst, ثابت فراغ *src0_dd,
+                          ثابت int32_t *src1_dd, عائم *dst_dd,
                           queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ئىككىلىك_OP_LOCALS
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    ثابت sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
+    ثابت صحيح block_رەقەم_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
+    ثابت sycl::range<3> block_nums(ne11 * ne12, ne10, block_رەقەم_x);
 
     // strides in elements
     //const size_t s0 = nb0 / ggml_element_size(dst);
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    ثابت size_t s1 = nb1 / ggml_element_size(dst);
+    ثابت size_t s2 = nb2 / ggml_element_size(dst);
+    ثابت size_t s3 = nb3 / ggml_element_size(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    ثابت size_t s10 = nb10 / ggml_element_size(src1);
+    ثابت size_t s11 = nb11 / ggml_element_size(src1);
+    ثابت size_t s12 = nb12 / ggml_element_size(src1);
     //const size_t s13 = nb13 / ggml_element_size(src1);
 
     GGML_ASSERT(ne00 % 2 == 0);
@@ -214,31 +214,31 @@ static void get_rows_sycl(ggml_backend_sycl_context & ctx, const ggml_tensor *sr
     GGML_UNUSED(ctx);
 }
 
-template <int qk, int qr, dequantize_kernel_t_reorder dq>
-static void get_rows_sycl_reorder(const ggml_tensor *src0, const ggml_tensor *src1,
-                                  ggml_tensor *dst, const void *src0_dd,
-                                  const int32_t *src1_dd, float *dst_dd,
+template <صحيح qk, صحيح qr, dequantize_kernel_t_reorder dq>
+ساكن فراغ get_rows_sycl_reorder(ثابت ggml_tensor *src0, ثابت ggml_tensor *src1,
+                                  ggml_tensor *dst, ثابت فراغ *src0_dd,
+                                  ثابت int32_t *src1_dd, عائم *dst_dd,
                                   queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ئىككىلىك_OP_LOCALS
 
     // reorder is done only on 2D weights
     GGML_ASSERT(ne02 == 1 && ne03 == 1);
     GGML_ASSERT(ne00 % 2 == 0);
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    ثابت sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
+    ثابت صحيح block_رەقەم_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
+    ثابت sycl::range<3> block_nums(ne11 * ne12, ne10, block_رەقەم_x);
 
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    ثابت size_t s1 = nb1 / ggml_element_size(dst);
+    ثابت size_t s2 = nb2 / ggml_element_size(dst);
+    ثابت size_t s3 = nb3 / ggml_element_size(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    ثابت size_t s10 = nb10 / ggml_element_size(src1);
+    ثابت size_t s11 = nb11 / ggml_element_size(src1);
+    ثابت size_t s12 = nb12 / ggml_element_size(src1);
 
-    const void * src0_d = (const char *) src0_dd + ne00*ne01/qr;
+    ثابت فراغ * src0_d = (ثابت حرف *) src0_dd + ne00*ne01/qr;
 
     stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                          [=](sycl::nd_item<3> item_ct1) {
@@ -251,49 +251,49 @@ static void get_rows_sycl_reorder(const ggml_tensor *src0, const ggml_tensor *sr
 }
 
 // K-quants in reorder layout: one work-group dequantizes one QK_K block of one row
-template <int dims, int nthreads, int nlocal, typename F>
-static void get_rows_sycl_reorder_k(const ggml_tensor *src0, const ggml_tensor *src1,
-                                    ggml_tensor *dst, const int32_t *src1_dd, float *dst_dd,
+template <صحيح dims, صحيح nthreads, صحيح nlocal, typename F>
+ساكن فراغ get_rows_sycl_reorder_k(ثابت ggml_tensor *src0, ثابت ggml_tensor *src1,
+                                    ggml_tensor *dst, ثابت int32_t *src1_dd, عائم *dst_dd,
                                     queue_ptr stream, F dequantize_block) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ئىككىلىك_OP_LOCALS
 
     // reorder is done only on 2D weights
     GGML_ASSERT(ne02 == 1 && ne03 == 1);
     GGML_ASSERT(ne00 % QK_K == 0);
 
-    const int64_t nblk = ne00 / QK_K;
-    const int64_t nb = nblk * ne01; // blocks in the whole tensor
-    const int64_t ngroups = ne10 * ne11 * ne12 * nblk;
+    ثابت int64_t nblk = ne00 / QK_K;
+    ثابت int64_t nb = nblk * ne01; // blocks in the whole tensor
+    ثابت int64_t ngroups = ne10 * ne11 * ne12 * nblk;
 
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    ثابت size_t s1 = nb1 / ggml_element_size(dst);
+    ثابت size_t s2 = nb2 / ggml_element_size(dst);
+    ثابت size_t s3 = nb3 / ggml_element_size(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    ثابت size_t s10 = nb10 / ggml_element_size(src1);
+    ثابت size_t s11 = nb11 / ggml_element_size(src1);
+    ثابت size_t s12 = nb12 / ggml_element_size(src1);
 
     stream->submit([&](sycl::handler & cgh) {
         sycl::local_accessor<uint8_t, 1> scales_local(sycl::range<1>(nlocal), cgh);
 
         auto kernel = [=](sycl::nd_item<dims> item_ct1) {
-            const int64_t g   = item_ct1.get_group(dims - 1);
-            const int64_t b   = g % nblk;
-            const int64_t r   = g / nblk;
-            const int64_t i10 = r % ne10;
-            const int64_t i11 = (r / ne10) % ne11;
-            const int64_t i12 = r / (ne10 * ne11);
+            ثابت int64_t g   = item_ct1.get_group(dims - 1);
+            ثابت int64_t b   = g % nblk;
+            ثابت int64_t r   = g / nblk;
+            ثابت int64_t i10 = r % ne10;
+            ثابت int64_t i11 = (r / ne10) % ne11;
+            ثابت int64_t i12 = r / (ne10 * ne11);
 
-            const int64_t i01 = src1_dd[i10*s10 + i11*s11 + i12*s12];
+            ثابت int64_t i01 = src1_dd[i10*s10 + i11*s11 + i12*s12];
 
-            float * y = dst_dd + i10*s1 + i11*s2 + i12*s3 + b*QK_K;
+            عائم * y = dst_dd + i10*s1 + i11*s2 + i12*s3 + b*QK_K;
             dequantize_block(y, i01*nblk + b, get_pointer(scales_local), item_ct1, nb);
         };
 
-        if constexpr (dims == 1) {
+        إذا constexpr (dims == 1) {
             cgh.parallel_for(sycl::nd_range<1>(sycl::range<1>(ngroups * nthreads), sycl::range<1>(nthreads)), kernel);
-        } else {
+        } وإلا {
             cgh.parallel_for(sycl::nd_range<3>(sycl::range<3>(1, 1, ngroups * nthreads), sycl::range<3>(1, 1, nthreads)), kernel);
         }
     });
@@ -305,67 +305,67 @@ static void get_rows_sycl_reorder_k(const ggml_tensor *src0, const ggml_tensor *
 // dequantizes one QK_K block of one requested row, reusing the reorder-aware
 // block dequantizers that the dequantize-based mul_mat path already uses.
 template <typename F>
-static void get_rows_sycl_reorder_iq3(ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
-                                      const ggml_tensor * src1, ggml_tensor * dst,
-                                      const int32_t * src1_dd, float * dst_dd,
+ساكن فراغ get_rows_sycl_reorder_iq3(ggml_backend_sycl_context & ctx, ثابت ggml_tensor * src0,
+                                      ثابت ggml_tensor * src1, ggml_tensor * dst,
+                                      ثابت int32_t * src1_dd, عائم * dst_dd,
                                       F dequantize_block) {
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ئىككىلىك_OP_LOCALS
 
     // the persistent reorder is only installed for 2D weights
     GGML_ASSERT(ne02 == 1 && ne03 == 1);
     GGML_ASSERT(ne00 % QK_K == 0);
 
-    const int64_t nblk    = ne00 / QK_K;
-    const int64_t nb      = nblk * ne01; // blocks in the whole tensor
-    const int64_t ngroups = ne10 * ne11 * ne12 * nblk;
+    ثابت int64_t nblk    = ne00 / QK_K;
+    ثابت int64_t nb      = nblk * ne01; // blocks in the whole tensor
+    ثابت int64_t ngroups = ne10 * ne11 * ne12 * nblk;
 
-    const size_t s1  = nb1 / ggml_element_size(dst);
-    const size_t s2  = nb2 / ggml_element_size(dst);
-    const size_t s3  = nb3 / ggml_element_size(dst);
+    ثابت size_t s1  = nb1 / ggml_element_size(dst);
+    ثابت size_t s2  = nb2 / ggml_element_size(dst);
+    ثابت size_t s3  = nb3 / ggml_element_size(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    ثابت size_t s10 = nb10 / ggml_element_size(src1);
+    ثابت size_t s11 = nb11 / ggml_element_size(src1);
+    ثابت size_t s12 = nb12 / ggml_element_size(src1);
 
     queue_ptr stream = ctx.stream();
     stream->parallel_for(
         sycl::nd_range<3>(sycl::range<3>(1, 1, ngroups * 32), sycl::range<3>(1, 1, 32)),
         [=](sycl::nd_item<3> item_ct1) {
-            const int64_t g   = item_ct1.get_group(2);
-            const int64_t b   = g % nblk;
-            const int64_t r   = g / nblk;
-            const int64_t i10 = r % ne10;
-            const int64_t i11 = (r / ne10) % ne11;
-            const int64_t i12 = r / (ne10 * ne11);
+            ثابت int64_t g   = item_ct1.get_group(2);
+            ثابت int64_t b   = g % nblk;
+            ثابت int64_t r   = g / nblk;
+            ثابت int64_t i10 = r % ne10;
+            ثابت int64_t i11 = (r / ne10) % ne11;
+            ثابت int64_t i12 = r / (ne10 * ne11);
 
-            const int64_t i01 = src1_dd[i10*s10 + i11*s11 + i12*s12];
+            ثابت int64_t i01 = src1_dd[i10*s10 + i11*s11 + i12*s12];
 
-            float * y = dst_dd + i10*s1 + i11*s2 + i12*s3 + b*QK_K;
+            عائم * y = dst_dd + i10*s1 + i11*s2 + i12*s3 + b*QK_K;
             dequantize_block(y, i01*nblk + b, item_ct1, nb);
         });
 
     GGML_UNUSED(dst);
 }
 
-template <int qk, int qr, dequantize_kernel_f32_t dq>
-static void get_rows_sycl_f32(ggml_backend_sycl_context & ctx, const ggml_tensor *src0, const ggml_tensor *src1,
-                              ggml_tensor *dst, const void *src0_dd,
-                              const int32_t *src1_dd, float *dst_dd,
+template <صحيح qk, صحيح qr, dequantize_kernel_f32_t dq>
+ساكن فراغ get_rows_sycl_f32(ggml_backend_sycl_context & ctx, ثابت ggml_tensor *src0, ثابت ggml_tensor *src1,
+                              ggml_tensor *dst, ثابت فراغ *src0_dd,
+                              ثابت int32_t *src1_dd, عائم *dst_dd,
                               queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ئىككىلىك_OP_LOCALS
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    ثابت sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
+    ثابت صحيح block_رەقەم_x = (ne00 + 2*SYCL_GET_ROWS_BLOCK_SIZE - 1) / (2*SYCL_GET_ROWS_BLOCK_SIZE);
+    ثابت sycl::range<3> block_nums(ne11 * ne12, ne10, block_رەقەم_x);
 
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    ثابت size_t s1 = nb1 / ggml_element_size(dst);
+    ثابت size_t s2 = nb2 / ggml_element_size(dst);
+    ثابت size_t s3 = nb3 / ggml_element_size(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    ثابت size_t s10 = nb10 / ggml_element_size(src1);
+    ثابت size_t s11 = nb11 / ggml_element_size(src1);
+    ثابت size_t s12 = nb12 / ggml_element_size(src1);
 
     GGML_ASSERT(ne00 % 2 == 0);
 
@@ -381,26 +381,26 @@ static void get_rows_sycl_f32(ggml_backend_sycl_context & ctx, const ggml_tensor
 }
 
 template <typename src0_t, typename dst_t>
-static void get_rows_sycl_float(ggml_backend_sycl_context & ctx, const ggml_tensor *src0,
-                                const ggml_tensor *src1, ggml_tensor *dst,
-                                const src0_t *src0_dd, const int32_t *src1_dd,
+ساكن فراغ get_rows_sycl_float(ggml_backend_sycl_context & ctx, ثابت ggml_tensor *src0,
+                                ثابت ggml_tensor *src1, ggml_tensor *dst,
+                                ثابت src0_t *src0_dd, ثابت int32_t *src1_dd,
                                 dst_t *dst_dd, queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ئىككىلىك_OP_LOCALS
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int block_num_x = (ne00 + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
-    const sycl::range<3> block_nums(ne11 * ne12, ne10, block_num_x);
+    ثابت sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
+    ثابت صحيح block_رەقەم_x = (ne00 + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
+    ثابت sycl::range<3> block_nums(ne11 * ne12, ne10, block_رەقەم_x);
 
     // strides in elements
     //const size_t s0 = nb0 / ggml_element_size(dst);
-    const size_t s1 = nb1 / ggml_element_size(dst);
-    const size_t s2 = nb2 / ggml_element_size(dst);
-    const size_t s3 = nb3 / ggml_element_size(dst);
+    ثابت size_t s1 = nb1 / ggml_element_size(dst);
+    ثابت size_t s2 = nb2 / ggml_element_size(dst);
+    ثابت size_t s3 = nb3 / ggml_element_size(dst);
 
-    const size_t s10 = nb10 / ggml_element_size(src1);
-    const size_t s11 = nb11 / ggml_element_size(src1);
-    const size_t s12 = nb12 / ggml_element_size(src1);
+    ثابت size_t s10 = nb10 / ggml_element_size(src1);
+    ثابت size_t s11 = nb11 / ggml_element_size(src1);
+    ثابت size_t s12 = nb12 / ggml_element_size(src1);
     //const size_t s13 = nb13 / ggml_element_size(src1);
 
     {
@@ -420,30 +420,30 @@ static void get_rows_sycl_float(ggml_backend_sycl_context & ctx, const ggml_tens
 }
 
 template <typename src0_t>
-static void k_get_rows_back_float(const src0_t * src0, const int32_t * src1, float * dst,
-                                  const int64_t ncols, const int64_t nrows_grad_10, const int64_t nrows_grad_11, const int64_t nrows_dst,
-                                  const size_t s01, const size_t s02,
-                                  const size_t s10, const size_t s11,
-                                  const size_t s1,
-                                  const int64_t block_num_y,
-                                  const sycl::nd_item<3> & item_ct1) {
-    const int64_t col = item_ct1.get_group(2) * item_ct1.get_local_range(2) + item_ct1.get_local_id(2);
-    if (col >= ncols) {
-        return;
+ساكن فراغ k_get_rows_back_float(ثابت src0_t * src0, ثابت int32_t * src1, عائم * dst,
+                                  ثابت int64_t ncols, ثابت int64_t nrows_grad_10, ثابت int64_t nrows_grad_11, ثابت int64_t nrows_dst,
+                                  ثابت size_t s01, ثابت size_t s02,
+                                  ثابت size_t s10, ثابت size_t s11,
+                                  ثابت size_t s1,
+                                  ثابت int64_t block_رەقەم_y,
+                                  ثابت sycl::nd_item<3> & item_ct1) {
+    ثابت int64_t col = item_ct1.get_group(2) * item_ct1.get_local_range(2) + item_ct1.get_local_id(2);
+    إذا (col >= ncols) {
+        أرجع;
     }
 
     // block_num_y is clamped, so stride over destination rows like CUDA k_get_rows_back_float
-    for (int64_t dst_row = item_ct1.get_group(1); dst_row < nrows_dst; dst_row += block_num_y) {
-        float sum = 0.0f;
+    لكل (int64_t dst_row = item_ct1.get_group(1); dst_row < nrows_dst; dst_row += block_رەقەم_y) {
+        عائم sum = 0.0f;
 
-        const int64_t nrows_grad_total = nrows_grad_10 * nrows_grad_11;
-        for (int64_t i = 0; i < nrows_grad_total; ++i) {
-            const int64_t i10 = i % nrows_grad_10;
-            const int64_t i11 = i / nrows_grad_10;
-            if (src1[i10*s10 + i11*s11] != dst_row) {
-                continue;
+        ثابت int64_t nrows_grad_total = nrows_grad_10 * nrows_grad_11;
+        لكل (int64_t i = 0; i < nrows_grad_total; ++i) {
+            ثابت int64_t i10 = i % nrows_grad_10;
+            ثابت int64_t i11 = i / nrows_grad_10;
+            إذا (src1[i10*s10 + i11*s11] != dst_row) {
+                استمر;
             }
-            sum += (float) src0[col + i10*s01 + i11*s02];
+            sum += (عائم) src0[col + i10*s01 + i11*s02];
         }
 
         dst[col + dst_row*s1] = sum;
@@ -451,12 +451,12 @@ static void k_get_rows_back_float(const src0_t * src0, const int32_t * src1, flo
 }
 
 template <typename src0_t>
-static void get_rows_back_sycl_float(ggml_backend_sycl_context & ctx, const ggml_tensor * src0,
-                                     const ggml_tensor * src1, ggml_tensor * dst,
-                                     const src0_t * src0_dd, const int32_t * src1_dd,
-                                     float * dst_dd, queue_ptr stream) {
+ساكن فراغ get_rows_back_sycl_float(ggml_backend_sycl_context & ctx, ثابت ggml_tensor * src0,
+                                     ثابت ggml_tensor * src1, ggml_tensor * dst,
+                                     ثابت src0_t * src0_dd, ثابت int32_t * src1_dd,
+                                     عائم * dst_dd, queue_ptr stream) {
 
-    GGML_TENSOR_BINARY_OP_LOCALS
+    GGML_TENSOR_ئىككىلىك_OP_LOCALS
 
     GGML_ASSERT(ne02*ne03 == 1);
     GGML_ASSERT(ne12*ne13 == 1);
@@ -465,30 +465,30 @@ static void get_rows_back_sycl_float(ggml_backend_sycl_context & ctx, const ggml
     GGML_ASSERT(src1->nb[0] == ggml_type_size(src1->type));
     GGML_ASSERT(dst->nb[0]  == ggml_type_size(dst->type));
 
-    const int64_t ncols = ne00;
-    const int64_t nrows_grad_10 = ne10;
-    const int64_t nrows_grad_11 = ne11;
-    const int64_t nrows_dst = ne1;
+    ثابت int64_t ncols = ne00;
+    ثابت int64_t nrows_grad_10 = ne10;
+    ثابت int64_t nrows_grad_11 = ne11;
+    ثابت int64_t nrows_dst = ne1;
 
-    const size_t s01 = nb01 / sizeof(src0_t);
-    const size_t s02 = nb02 / sizeof(src0_t);
+    ثابت size_t s01 = nb01 / حجم(src0_t);
+    ثابت size_t s02 = nb02 / حجم(src0_t);
 
-    const size_t s10 = nb10 / sizeof(int32_t);
-    const size_t s11 = nb11 / sizeof(int32_t);
+    ثابت size_t s10 = nb10 / حجم(int32_t);
+    ثابت size_t s11 = nb11 / حجم(int32_t);
 
-    const size_t s1 = nb1 / sizeof(float);
+    ثابت size_t s1 = nb1 / حجم(عائم);
 
-    const sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
-    const int64_t block_num_x = (ncols + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
-    const int64_t block_num_y = std::min<int64_t>(nrows_dst, (int64_t) UINT16_MAX);
-    const sycl::range<3> block_nums(1, block_num_y, block_num_x);
+    ثابت sycl::range<3> block_dims(1, 1, SYCL_GET_ROWS_BLOCK_SIZE);
+    ثابت int64_t block_رەقەم_x = (ncols + SYCL_GET_ROWS_BLOCK_SIZE - 1) / SYCL_GET_ROWS_BLOCK_SIZE;
+    ثابت int64_t block_رەقەم_y = std::min<int64_t>(nrows_dst, (int64_t) UINT16_MAX);
+    ثابت sycl::range<3> block_nums(1, block_رەقەم_y, block_رەقەم_x);
 
     stream->parallel_for(sycl::nd_range<3>(block_nums * block_dims, block_dims),
                          [=](sycl::nd_item<3> item_ct1) {
                              k_get_rows_back_float(src0_dd, src1_dd, dst_dd,
                                                    ncols, nrows_grad_10, nrows_grad_11, nrows_dst,
                                                    s01, s02, s10, s11, s1,
-                                                   block_num_y, item_ct1);
+                                                   block_رەقەم_y, item_ct1);
                          });
 
     GGML_UNUSED(src0);
@@ -497,7 +497,7 @@ static void get_rows_back_sycl_float(ggml_backend_sycl_context & ctx, const ggml
     GGML_UNUSED(ctx);
 }
 
-void ggml_sycl_op_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+فراغ ggml_sycl_op_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[1]->type == GGML_TYPE_I32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_I32 );
 
@@ -505,199 +505,199 @@ void ggml_sycl_op_get_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[1]->nb[0] == ggml_type_size(dst->src[1]->type));
     GGML_ASSERT(dst->nb[0] == ggml_type_size(dst->type));
 
-    const int32_t * src1_i32 = (const int32_t *) dst->src[1]->data;
+    ثابت int32_t * src1_i32 = (ثابت int32_t *) dst->src[1]->data;
     // a weight shared with MUL_MAT (e.g. tied embeddings) can be in the
     // persistent reorder layout (incl. IQ3_S / IQ3_XXS since the SYCL IQ3
     // reorder work)
-    const bool src0_reordered = dst->src[0]->extra &&
-        ((const ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder;
+    ثابت منطقي src0_reordered = dst->src[0]->extra &&
+        ((ثابت ggml_tensor_extra_gpu *) dst->src[0]->extra)->optimized_feature.reorder;
     /* TODO: Refactor and remove duplicates */
-    switch (dst->src[0]->type) {
-        case GGML_TYPE_F16:
-            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (const sycl::half *)dst->src[0]->data,
-                                src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_BF16:
-            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (const sycl::ext::oneapi::bfloat16 *)dst->src[0]->data,
-                                src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_F32:
-            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_I32:
-            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (const int32_t *)dst->src[0]->data,
+    بدل (dst->src[0]->type) {
+        حالة GGML_TYPE_F16:
+            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (ثابت sycl::half *)dst->src[0]->data,
+                                src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_BF16:
+            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (ثابت sycl::ext::oneapi::bfloat16 *)dst->src[0]->data,
+                                src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_F32:
+            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_I32:
+            get_rows_sycl_float(ctx, dst->src[0], dst->src[1], dst, (ثابت int32_t *)dst->src[0]->data,
             src1_i32, (int32_t *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q1_0:
-            get_rows_sycl<QK1_0, 1, dequantize_q1_0>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_MXFP4:
-            get_rows_sycl<QK_MXFP4, 2, dequantize_mxfp4>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_NVFP4:
-            get_rows_sycl<QK_NVFP4, 1, dequantize_nvfp4>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ2_XXS:
-            get_rows_sycl<QK_K, 1, dequantize_iq2_xxs>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ2_XS:
-            get_rows_sycl<QK_K, 1, dequantize_iq2_xs>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ2_S:
-            get_rows_sycl<QK_K, 1, dequantize_iq2_s>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ3_XXS:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_iq3(ctx, dst->src[0], dst->src[1], dst, src1_i32, (float *) dst->data,
-                    [=](float * y, int64_t iblk, const sycl::nd_item<3> & item_ct1, int64_t nb) {
+            اكسر;
+        حالة GGML_TYPE_Q1_0:
+            get_rows_sycl<QK1_0, 1, dequantize_q1_0>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_MXFP4:
+            get_rows_sycl<QK_MXFP4, 2, dequantize_mxfp4>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_NVFP4:
+            get_rows_sycl<QK_NVFP4, 1, dequantize_nvfp4>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_IQ2_XXS:
+            get_rows_sycl<QK_K, 1, dequantize_iq2_xxs>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_IQ2_XS:
+            get_rows_sycl<QK_K, 1, dequantize_iq2_xs>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_IQ2_S:
+            get_rows_sycl<QK_K, 1, dequantize_iq2_s>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_IQ3_XXS:
+            إذا (src0_reordered) {
+                ثابت فراغ * vx = dst->src[0]->data;
+                get_rows_sycl_reorder_iq3(ctx, dst->src[0], dst->src[1], dst, src1_i32, (عائم *) dst->data,
+                    [=](عائم * y, int64_t iblk, ثابت sycl::nd_item<3> & item_ct1, int64_t nb) {
                         dequantize_block_iq3_xxs_reorder(vx, y, iblk, item_ct1, nb,
                                                          iq3xxs_grid, ksigns_iq2xs, kmask_iq2xs);
                     });
-                break;
+                اكسر;
             }
-            get_rows_sycl<QK_K, 1, dequantize_iq3_xxs>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ1_S:
-            get_rows_sycl<QK_K, 1, dequantize_iq1_s>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ1_M:
-            get_rows_sycl<QK_K, 1, dequantize_iq1_m>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ3_S:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_iq3(ctx, dst->src[0], dst->src[1], dst, src1_i32, (float *) dst->data,
-                    [=](float * y, int64_t iblk, const sycl::nd_item<3> & item_ct1, int64_t nb) {
+            get_rows_sycl<QK_K, 1, dequantize_iq3_xxs>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_IQ1_S:
+            get_rows_sycl<QK_K, 1, dequantize_iq1_s>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_IQ1_M:
+            get_rows_sycl<QK_K, 1, dequantize_iq1_m>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_IQ3_S:
+            إذا (src0_reordered) {
+                ثابت فراغ * vx = dst->src[0]->data;
+                get_rows_sycl_reorder_iq3(ctx, dst->src[0], dst->src[1], dst, src1_i32, (عائم *) dst->data,
+                    [=](عائم * y, int64_t iblk, ثابت sycl::nd_item<3> & item_ct1, int64_t nb) {
                         dequantize_block_iq3_s_reorder(vx, y, iblk, item_ct1, nb,
                                                        kmask_iq2xs, iq3s_grid);
                     });
-                break;
+                اكسر;
             }
-            get_rows_sycl<QK_K, 1, dequantize_iq3_s>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ4_NL:
-            get_rows_sycl<QK4_NL, 1, dequantize_iq4_nl>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_IQ4_XS:
-            get_rows_sycl<QK_K, 1, dequantize_iq4_xs>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q2_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<3> & item_ct1, int64_t nb) {
+            get_rows_sycl<QK_K, 1, dequantize_iq3_s>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_IQ4_NL:
+            get_rows_sycl<QK4_NL, 1, dequantize_iq4_nl>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_IQ4_XS:
+            get_rows_sycl<QK_K, 1, dequantize_iq4_xs>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q2_K:
+            إذا (src0_reordered) {
+                ثابت فراغ * vx = dst->src[0]->data;
+                get_rows_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (عائم *)dst->data, ctx.stream(),
+                    [=](عائم * y, int64_t ib, uint8_t * scales_local, ثابت sycl::nd_item<3> & item_ct1, int64_t nb) {
                         dequantize_block_q2_K_reorder(vx, y, ib, item_ct1, nb);
                         GGML_UNUSED(scales_local);
                     });
-                break;
+                اكسر;
             }
-            get_rows_sycl_f32<QK_K, 1, dequantize_q2_K_f32>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q3_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<3> & item_ct1, int64_t nb) {
+            get_rows_sycl_f32<QK_K, 1, dequantize_q2_K_f32>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q3_K:
+            إذا (src0_reordered) {
+                ثابت فراغ * vx = dst->src[0]->data;
+                get_rows_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (عائم *)dst->data, ctx.stream(),
+                    [=](عائم * y, int64_t ib, uint8_t * scales_local, ثابت sycl::nd_item<3> & item_ct1, int64_t nb) {
                         dequantize_block_q3_K_reorder(vx, y, ib, item_ct1, nb);
                         GGML_UNUSED(scales_local);
                     });
-                break;
+                اكسر;
             }
-            get_rows_sycl<QK_K, 1, dequantize_q3_K>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q4_0:
-            if (src0_reordered) {
+            get_rows_sycl<QK_K, 1, dequantize_q3_K>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q4_0:
+            إذا (src0_reordered) {
                 get_rows_sycl_reorder<QK4_0, QR4_0, dequantize_q4_0_reorder>(dst->src[0], dst->src[1], dst, dst->src[0]->data,
-                src1_i32, (float *)dst->data, ctx.stream());
-                break;
+                src1_i32, (عائم *)dst->data, ctx.stream());
+                اكسر;
             }
-            get_rows_sycl<QK4_0, QR4_0, dequantize_q4_0>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q4_1:
-            get_rows_sycl<QK4_1, QR4_1, dequantize_q4_1>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q4_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<1, 32, K_SCALE_SIZE>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<1> & item_ct1, int64_t nb) {
+            get_rows_sycl<QK4_0, QR4_0, dequantize_q4_0>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q4_1:
+            get_rows_sycl<QK4_1, QR4_1, dequantize_q4_1>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q4_K:
+            إذا (src0_reordered) {
+                ثابت فراغ * vx = dst->src[0]->data;
+                get_rows_sycl_reorder_k<1, 32, K_SCALE_SIZE>(dst->src[0], dst->src[1], dst, src1_i32, (عائم *)dst->data, ctx.stream(),
+                    [=](عائم * y, int64_t ib, uint8_t * scales_local, ثابت sycl::nd_item<1> & item_ct1, int64_t nb) {
                         dequantize_block_q4_K_reorder(vx, y, ib, scales_local, item_ct1, nb);
                     });
-                break;
+                اكسر;
             }
-            get_rows_sycl_f32<QK_K, 1, dequantize_q4_K_f32>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q5_0:
-            get_rows_sycl<QK5_0, QR5_0, dequantize_q5_0>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q5_1:
-            get_rows_sycl<QK5_1, QR5_1, dequantize_q5_1>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q5_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<3, 64, K_SCALE_SIZE>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<3> & item_ct1, int64_t nb) {
+            get_rows_sycl_f32<QK_K, 1, dequantize_q4_K_f32>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q5_0:
+            get_rows_sycl<QK5_0, QR5_0, dequantize_q5_0>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q5_1:
+            get_rows_sycl<QK5_1, QR5_1, dequantize_q5_1>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q5_K:
+            إذا (src0_reordered) {
+                ثابت فراغ * vx = dst->src[0]->data;
+                get_rows_sycl_reorder_k<3, 64, K_SCALE_SIZE>(dst->src[0], dst->src[1], dst, src1_i32, (عائم *)dst->data, ctx.stream(),
+                    [=](عائم * y, int64_t ib, uint8_t * scales_local, ثابت sycl::nd_item<3> & item_ct1, int64_t nb) {
                         dequantize_block_q5_K_reorder(vx, y, ib, scales_local, item_ct1, nb);
                     });
-                break;
+                اكسر;
             }
-            get_rows_sycl_f32<QK_K, 1, dequantize_q5_K_f32>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q6_K:
-            if (src0_reordered) {
-                const void * vx = dst->src[0]->data;
-                get_rows_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (float *)dst->data, ctx.stream(),
-                    [=](float * y, int64_t ib, uint8_t * scales_local, const sycl::nd_item<3> & item_ct1, int64_t nb) {
+            get_rows_sycl_f32<QK_K, 1, dequantize_q5_K_f32>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q6_K:
+            إذا (src0_reordered) {
+                ثابت فراغ * vx = dst->src[0]->data;
+                get_rows_sycl_reorder_k<3, 64, 1>(dst->src[0], dst->src[1], dst, src1_i32, (عائم *)dst->data, ctx.stream(),
+                    [=](عائم * y, int64_t ib, uint8_t * scales_local, ثابت sycl::nd_item<3> & item_ct1, int64_t nb) {
                         dequantize_block_q6_K_reorder(vx, y, ib, item_ct1, nb);
                         GGML_UNUSED(scales_local);
                     });
-                break;
+                اكسر;
             }
-            get_rows_sycl<QK_K, 1, dequantize_q6_K>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        case GGML_TYPE_Q8_0:
-            if (src0_reordered) {
+            get_rows_sycl<QK_K, 1, dequantize_q6_K>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        حالة GGML_TYPE_Q8_0:
+            إذا (src0_reordered) {
                 get_rows_sycl_reorder<QK8_0, QR8_0, dequantize_q8_0_reorder>(dst->src[0], dst->src[1], dst, dst->src[0]->data,
-                src1_i32, (float *)dst->data, ctx.stream());
-                break;
+                src1_i32, (عائم *)dst->data, ctx.stream());
+                اكسر;
             }
-            get_rows_sycl<QK8_0, QR8_0, dequantize_q8_0>(ctx, dst->src[0], dst->src[1], dst, (const float *)dst->src[0]->data,
-            src1_i32, (float *)dst->data, ctx.stream());
-            break;
-        default:
+            get_rows_sycl<QK8_0, QR8_0, dequantize_q8_0>(ctx, dst->src[0], dst->src[1], dst, (ثابت عائم *)dst->src[0]->data,
+            src1_i32, (عائم *)dst->data, ctx.stream());
+            اكسر;
+        افتراضي:
             // TODO: k-quants
             GGML_LOG_ERROR("%s: unsupported type: %s\n", __func__, ggml_type_name(dst->src[0]->type));
             GGML_ABORT("fatal error");
     }
 }
 
-void ggml_sycl_op_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
-    const ggml_tensor * src0 = dst->src[0];
-    const ggml_tensor * src1 = dst->src[1];
+فراغ ggml_sycl_op_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+    ثابت ggml_tensor * src0 = dst->src[0];
+    ثابت ggml_tensor * src1 = dst->src[1];
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16);
     GGML_ASSERT(src1->type == GGML_TYPE_I32);
@@ -705,18 +705,18 @@ void ggml_sycl_op_get_rows_back(ggml_backend_sycl_context & ctx, ggml_tensor * d
 
     GGML_ASSERT(ggml_is_contiguous(dst));
 
-    switch (src0->type) {
-        case GGML_TYPE_F16:
-            get_rows_back_sycl_float(ctx, src0, src1, dst, (const sycl::half *) src0->data,
-                                     (const int32_t *) src1->data, (float *) dst->data,
+    بدل (src0->type) {
+        حالة GGML_TYPE_F16:
+            get_rows_back_sycl_float(ctx, src0, src1, dst, (ثابت sycl::half *) src0->data,
+                                     (ثابت int32_t *) src1->data, (عائم *) dst->data,
                                      ctx.stream());
-            break;
-        case GGML_TYPE_F32:
-            get_rows_back_sycl_float(ctx, src0, src1, dst, (const float *) src0->data,
-                                     (const int32_t *) src1->data, (float *) dst->data,
+            اكسر;
+        حالة GGML_TYPE_F32:
+            get_rows_back_sycl_float(ctx, src0, src1, dst, (ثابت عائم *) src0->data,
+                                     (ثابت int32_t *) src1->data, (عائم *) dst->data,
                                      ctx.stream());
-            break;
-        default:
+            اكسر;
+        افتراضي:
             GGML_ABORT("%s: unsupported src0 type: %s\n", __func__, ggml_type_name(src0->type));
     }
 }
