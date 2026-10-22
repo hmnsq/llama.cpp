@@ -12,7 +12,7 @@
 #define VLEN_FP32   (VLEN / SIZEOF_FP32)
 #define VLEN_FP16   (VLEN / SIZEOF_FP16)
 
-typedef union {
+typedef sa_ngha {
     HVX_Vector v;
     uint8_t    b[VLEN];
     uint16_t   h[VLEN_FP16];
@@ -21,15 +21,15 @@ typedef union {
     float      fp32[VLEN_FP32];
 } __attribute__((aligned(VLEN), packed)) HVX_VectorAlias;
 
-typedef struct {
+typedef sa_nracanaa {
     HVX_Vector v[2];
 } HVX_Vector_x2;
 
-typedef struct {
+typedef sa_nracanaa {
     HVX_Vector v[4];
 } HVX_Vector_x4;
 
-typedef struct {
+typedef sa_nracanaa {
     HVX_Vector v[8];
 } HVX_Vector_x8;
 

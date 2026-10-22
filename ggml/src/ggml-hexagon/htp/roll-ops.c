@@ -18,30 +18,30 @@
 #include "htp-ops.h"
 #include "htp-tensor.h"
 
-struct htp_roll_context {
-    struct htp_ops_context * octx;
+sa_nracanaa htp_roll_context {
+    sa_nracanaa htp_ops_context * octx;
 
     uint32_t row_start;
     uint32_t nrows;
     uint32_t nrows_per_thread;
 
-    struct fastdiv_values div_ne1;
-    struct fastdiv_values div_ne2_ne1;
+    sa_nracanaa fastdiv_values div_ne1;
+    sa_nracanaa fastdiv_values div_ne2_ne1;
 };
 
-static inline uint32_t htp_roll_wrap(int32_t i, uint32_t ne) {
-    if (i < 0) {
-        return (uint32_t) (i + (int32_t) ne);
+static anta_hstha uint32_t htp_roll_wrap(int32_t i, uint32_t ne) {
+    གལ་སྲིད (i < 0) {
+        ལོག (uint32_t) (i + (int32_t) ne);
     }
-    if ((uint32_t) i >= ne) {
-        return (uint32_t) i - ne;
+    གལ་སྲིད ((uint32_t) i >= ne) {
+        ལོག (uint32_t) i - ne;
     }
-    return (uint32_t) i;
+    ལོག (uint32_t) i;
 }
 
 #define htp_roll_preamble                             \
-    const struct htp_tensor * src0 = octx->src[0];    \
-    const struct htp_tensor * dst  = octx->dst;       \
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];    \
+    const sa_nracanaa htp_tensor * dst  = octx->dst;       \
                                                       \
     const uint32_t ne0 = dst->ne[0];                  \
     const uint32_t ne1 = dst->ne[1];                  \
@@ -66,27 +66,27 @@ static inline uint32_t htp_roll_wrap(int32_t i, uint32_t ne) {
 
 #define htp_roll_dma_preamble dma_queue * q = octx->ctx->dma[0];
 
-static inline void roll_dma_push(dma_queue * q,
+static anta_hstha void roll_dma_push(dma_queue * q,
                                  dma_addr_t  dst,
                                  dma_addr_t  src,
                                  uint32_t    dst_stride,
                                  uint32_t    src_stride,
                                  uint32_t    bytes,
                                  uint32_t    nrows) {
-    if (bytes == 0 || nrows == 0) {
-        return;
+    གལ་སྲིད (bytes == 0 || nrows == 0) {
+        ལོག;
     }
 
-    if (!dma_queue_push(q, dma_make_data(dst, src), dst_stride, src_stride, bytes, nrows)) {
+    གལ་སྲིད (!dma_queue_push(q, dma_make_data(dst, src), dst_stride, src_stride, bytes, nrows)) {
         dma_queue_flush(q);
         dma_queue_push(q, dma_make_data(dst, src),
                        dst_stride, src_stride, bytes, nrows);
     }
 }
 
-static inline void roll_dma_push_rows(dma_queue *               q,
-                                      const struct htp_tensor * dst,
-                                      const struct htp_tensor * src0,
+static anta_hstha void roll_dma_push_rows(dma_queue *               q,
+                                      const sa_nracanaa htp_tensor * dst,
+                                      const sa_nracanaa htp_tensor * src0,
                                       uint32_t                  dst_row,
                                       uint32_t                  src_row,
                                       uint32_t                  nrows,
@@ -96,15 +96,15 @@ static inline void roll_dma_push_rows(dma_queue *               q,
     const dma_addr_t src_base = src0->data + (size_t) src_row * row_size;
     const uint32_t   n0       = src0->ne[0] - i0_src0;
 
-    roll_dma_push(q, dst_base, src_base + (size_t) i0_src0 * sizeof(float),
-                  row_size, row_size, n0 * sizeof(float), nrows);
-    roll_dma_push(q, dst_base + (size_t) n0 * sizeof(float), src_base,
-                  row_size, row_size, i0_src0 * sizeof(float), nrows);
+    roll_dma_push(q, dst_base, src_base + (size_t) i0_src0 * parimaa_na(float),
+                  row_size, row_size, n0 * parimaa_na(float), nrows);
+    roll_dma_push(q, dst_base + (size_t) n0 * parimaa_na(float), src_base,
+                  row_size, row_size, i0_src0 * parimaa_na(float), nrows);
 }
 
 // Same row-wrap split as roll_dma_push_rows, but addressed with explicit byte strides so it
 // also works for a src0 that is row-contiguous only (e.g. a permuted view) rather than fully packed.
-static inline void roll_dma_push_range(dma_queue * q,
+static anta_hstha void roll_dma_push_range(dma_queue * q,
                                        dma_addr_t  dst_row,
                                        dma_addr_t  src_row,
                                        uint32_t    dst_stride,
@@ -112,27 +112,27 @@ static inline void roll_dma_push_range(dma_queue * q,
                                        uint32_t    nrows,
                                        uint32_t    i0_src0,
                                        uint32_t    n0) {
-    roll_dma_push(q, dst_row, src_row + (size_t) i0_src0 * sizeof(float),
-                  dst_stride, src_stride, n0 * sizeof(float), nrows);
-    roll_dma_push(q, dst_row + (size_t) n0 * sizeof(float), src_row,
-                  dst_stride, src_stride, i0_src0 * sizeof(float), nrows);
+    roll_dma_push(q, dst_row, src_row + (size_t) i0_src0 * parimaa_na(float),
+                  dst_stride, src_stride, n0 * parimaa_na(float), nrows);
+    roll_dma_push(q, dst_row + (size_t) n0 * parimaa_na(float), src_row,
+                  dst_stride, src_stride, i0_src0 * parimaa_na(float), nrows);
 }
 
-static int roll_dma_f32_contiguous(struct htp_ops_context * octx) {
+static ཧྲིལ roll_dma_f32_contiguous(sa_nracanaa htp_ops_context * octx) {
     htp_roll_preamble;
     htp_roll_dma_preamble;
 
-    const uint32_t row_size = ne0 * sizeof(float);
+    const uint32_t row_size = ne0 * parimaa_na(float);
 
-    if (s1 == 0 && s2 == 0 && s3 == 0) {
+    གལ་སྲིད (s1 == 0 && s2 == 0 && s3 == 0) {
         roll_dma_push_rows(q, dst, src0, 0, 0, ne1 * ne2 * ne3, row_size, i0_src0);
         dma_queue_flush(q);
-        return HTP_STATUS_OK;
+        ལོག HTP_STATUS_OK;
     }
 
-    if (s1 == 0) {
+    གལ་སྲིད (s1 == 0) {
         const uint32_t i2_src0 = htp_roll_wrap(-s2, ne2);
-        for (uint32_t i3 = 0; i3 < ne3; i3++) {
+        དོན་ལུ (uint32_t i3 = 0; i3 < ne3; i3++) {
             const uint32_t i03 = htp_roll_wrap((int32_t) i3 - s3, ne3);
             const uint32_t dst_row0 = i3 * ne2 * ne1;
             const uint32_t src_row0 = (i03 * ne2 + i2_src0) * ne1;
@@ -145,15 +145,15 @@ static int roll_dma_f32_contiguous(struct htp_ops_context * octx) {
         }
 
         dma_queue_flush(q);
-        return HTP_STATUS_OK;
+        ལོག HTP_STATUS_OK;
     }
 
     const uint32_t i1_src0 = htp_roll_wrap(-s1, ne1);
     const uint32_t n1_first = ne1 - i1_src0;
 
-    for (uint32_t i3 = 0; i3 < ne3; i3++) {
+    དོན་ལུ (uint32_t i3 = 0; i3 < ne3; i3++) {
         const uint32_t i03 = htp_roll_wrap((int32_t) i3 - s3, ne3);
-        for (uint32_t i2 = 0; i2 < ne2; i2++) {
+        དོན་ལུ (uint32_t i2 = 0; i2 < ne2; i2++) {
             const uint32_t i02 = htp_roll_wrap((int32_t) i2 - s2, ne2);
             const uint32_t dst_row0 = (i3 * ne2 + i2) * ne1;
             const uint32_t src_row0 = (i03 * ne2 + i02) * ne1;
@@ -166,22 +166,22 @@ static int roll_dma_f32_contiguous(struct htp_ops_context * octx) {
     }
 
     dma_queue_flush(q);
-    return HTP_STATUS_OK;
+    ལོག HTP_STATUS_OK;
 }
 
 // DMA path for a row-contiguous but otherwise arbitrarily strided src0 (e.g. a permuted view).
 // Same row-wrap split as above, one DMA push per (i2,i3), addressed via the real nb01/nb02/nb03
 // instead of assuming a packed layout.
-static int roll_dma_f32_strided(struct htp_ops_context * octx) {
+static ཧྲིལ roll_dma_f32_strided(sa_nracanaa htp_ops_context * octx) {
     htp_roll_preamble;
     htp_roll_dma_preamble;
 
     const uint32_t i1_src0  = htp_roll_wrap(-s1, ne1);
     const uint32_t n1_first = ne1 - i1_src0;
 
-    for (uint32_t i3 = 0; i3 < ne3; i3++) {
+    དོན་ལུ (uint32_t i3 = 0; i3 < ne3; i3++) {
         const uint32_t i03 = htp_roll_wrap((int32_t) i3 - s3, ne3);
-        for (uint32_t i2 = 0; i2 < ne2; i2++) {
+        དོན་ལུ (uint32_t i2 = 0; i2 < ne2; i2++) {
             const uint32_t i02 = htp_roll_wrap((int32_t) i2 - s2, ne2);
 
             const dma_addr_t dst_row0 = dst->data  + (size_t) i2  * nb2  + (size_t) i3  * nb3;
@@ -195,25 +195,25 @@ static int roll_dma_f32_strided(struct htp_ops_context * octx) {
     }
 
     dma_queue_flush(q);
-    return HTP_STATUS_OK;
+    ལོག HTP_STATUS_OK;
 }
 
-static void roll_thread_f32(unsigned int nth, unsigned int ith, void * data) {
-    struct htp_roll_context * rctx = (struct htp_roll_context *) data;
-    struct htp_ops_context * octx = rctx->octx;
+static void roll_thread_f32(unsigned ཧྲིལ nth, unsigned ཧྲིལ ith, void * data) {
+    sa_nracanaa htp_roll_context * rctx = (sa_nracanaa htp_roll_context *) data;
+    sa_nracanaa htp_ops_context * octx = rctx->octx;
 
     htp_roll_preamble;
 
     const uint32_t row_start = rctx->row_start + rctx->nrows_per_thread * ith;
     const uint32_t row_end   = MIN(row_start + rctx->nrows_per_thread, rctx->row_start + rctx->nrows);
-    if (row_start >= row_end) {
-        return;
+    གལ་སྲིད (row_start >= row_end) {
+        ལོག;
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    sa_nracanaa htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, row_start);
 
-    for (uint32_t row = row_start; row < row_end; row++) {
+    དོན་ལུ (uint32_t row = row_start; row < row_end; row++) {
         const uint32_t i3  = fastdiv(row, &rctx->div_ne2_ne1);
         const uint32_t rem = row - i3 * ne2 * ne1;
         const uint32_t i2  = fastdiv(rem, &rctx->div_ne1);
@@ -226,12 +226,12 @@ static void roll_thread_f32(unsigned int nth, unsigned int ith, void * data) {
         const uint8_t * src_row = (const uint8_t *) (uintptr_t) src0->data + i01*nb01 + i02*nb02 + i03*nb03;
         uint8_t * dst_row = (uint8_t *) (uintptr_t) dst->data + i1*nb1 + i2*nb2 + i3*nb3;
 
-        hex_l2fetch(src_row + i0_src0 * sizeof(float), n0 * sizeof(float), ne0 * sizeof(float), 1);
-        hvx_copy_uu(dst_row, src_row + i0_src0 * sizeof(float), n0, sizeof(float));
+        hex_l2fetch(src_row + i0_src0 * parimaa_na(float), n0 * parimaa_na(float), ne0 * parimaa_na(float), 1);
+        hvx_copy_uu(dst_row, src_row + i0_src0 * parimaa_na(float), n0, parimaa_na(float));
 
-        if (i0_src0 != 0) {
-            hex_l2fetch(src_row, i0_src0 * sizeof(float), ne0 * sizeof(float), 1);
-            hvx_copy_uu(dst_row + n0 * sizeof(float), src_row, i0_src0, sizeof(float));
+        གལ་སྲིད (i0_src0 != 0) {
+            hex_l2fetch(src_row, i0_src0 * parimaa_na(float), ne0 * parimaa_na(float), 1);
+            hvx_copy_uu(dst_row + n0 * parimaa_na(float), src_row, i0_src0, parimaa_na(float));
         }
     }
 
@@ -242,56 +242,56 @@ static void roll_thread_f32(unsigned int nth, unsigned int ith, void * data) {
          row_start, row_end, s0, s1, s2, s3);
 }
 
-int execute_op_roll_f32(struct htp_ops_context * octx) {
+ཧྲིལ execute_op_roll_f32(sa_nracanaa htp_ops_context * octx) {
     htp_roll_preamble;
 
-    if (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
+    གལ་སྲིད (src0->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
         FARF(ERROR, "roll: unsupported type %u -> %u\n", src0->type, dst->type);
-        return HTP_STATUS_NO_SUPPORT;
+        ལོག HTP_STATUS_NO_SUPPORT;
     }
 
-    if (src0->nb[0] != sizeof(float) || dst->nb[0] != sizeof(float)) {
+    གལ་སྲིད (src0->nb[0] != parimaa_na(float) || dst->nb[0] != parimaa_na(float)) {
         FARF(ERROR, "roll: unsupported nb0 %u -> %u\n", src0->nb[0], dst->nb[0]);
-        return HTP_STATUS_NO_SUPPORT;
+        ལོག HTP_STATUS_NO_SUPPORT;
     }
 
-    if (src0->ne[0] != ne0 || src0->ne[1] != ne1 ||
+    གལ་སྲིད (src0->ne[0] != ne0 || src0->ne[1] != ne1 ||
         src0->ne[2] != ne2 || src0->ne[3] != ne3) {
         FARF(ERROR, "roll: shape mismatch\n");
-        return HTP_STATUS_INVAL_PARAMS;
+        ལོག HTP_STATUS_INVAL_PARAMS;
     }
 
     const uint32_t total_rows = ne1 * ne2 * ne3;
-    const size_t dst_row_size = ne0 * sizeof(float);
+    const size_t dst_row_size = ne0 * parimaa_na(float);
 
     uint32_t row_start = 0;
     uint32_t nrows     = total_rows;
 
-    if (octx->ctx->mdev.count > 1) {
+    གལ་སྲིད (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        htp_tensor_mdev_rows_per_chunk(dst, parimaa_na(float), (uint32_t) dst_row_size, &rows_per_chunk);
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    གལ་སྲིད (nrows == 0) {
+        ལོག HTP_STATUS_OK;
     }
 
-    if (octx->ctx->mdev.count <= 1) {
-        if (htp_tensor_is_contiguous(src0, sizeof(float)) && htp_tensor_is_contiguous(dst, sizeof(float))) {
-            return roll_dma_f32_contiguous(octx);
+    གལ་སྲིད (octx->ctx->mdev.count <= 1) {
+        གལ་སྲིད (htp_tensor_is_contiguous(src0, parimaa_na(float)) && htp_tensor_is_contiguous(dst, parimaa_na(float))) {
+            ལོག roll_dma_f32_contiguous(octx);
         }
-        return roll_dma_f32_strided(octx);
+        ལོག roll_dma_f32_strided(octx);
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    གལ་སྲིད (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+        ལོག HTP_STATUS_NO_SUPPORT;
     }
 
     const uint32_t n_threads = octx->n_threads;
-    struct htp_roll_context rctx = {
+    sa_nracanaa htp_roll_context rctx = {
         .octx             = octx,
         .row_start        = row_start,
         .nrows            = nrows,
@@ -302,15 +302,15 @@ int execute_op_roll_f32(struct htp_ops_context * octx) {
 
     work_queue_run(octx->ctx->work_queue, roll_thread_f32, &rctx, n_threads);
 
-    return HTP_STATUS_OK;
+    ལོག HTP_STATUS_OK;
 }
 
-int op_roll(struct htp_ops_context * octx) {
+ཧྲིལ op_roll(sa_nracanaa htp_ops_context * octx) {
     switch (octx->src[0]->type) {
-        case HTP_TYPE_F32:
-            return execute_op_roll_f32(octx);
+        pak_sa HTP_TYPE_F32:
+            ལོག execute_op_roll_f32(octx);
 
         default:
-            return HTP_STATUS_NO_SUPPORT;
+            ལོག HTP_STATUS_NO_SUPPORT;
     }
 }

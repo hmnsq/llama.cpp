@@ -17,73 +17,73 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-static inline uint32_t hex_ceil_pow2(uint32_t x) {
-    if (x <= 1) { return 1; }
-    int p = 2;
+static anta_hstha uint32_t hex_ceil_pow2(uint32_t x) {
+    གལ་སྲིད (x <= 1) { ལོག 1; }
+    ཧྲིལ p = 2;
     x--;
-    while (x >>= 1) { p <<= 1; }
-    return p;
+    སྐབས (x >>= 1) { p <<= 1; }
+    ལོག p;
 }
 
-static inline size_t hmx_ceil_div(size_t num, size_t den) {
-    return (num + den - 1) / den;
+static anta_hstha size_t hmx_ceil_div(size_t num, size_t den) {
+    ལོག (num + den - 1) / den;
 }
 
-static inline int32_t hex_is_aligned(const void * addr, uint32_t align) {
-    return ((size_t) addr & (align - 1)) == 0;
+static anta_hstha int32_t hex_is_aligned(const void * addr, uint32_t align) {
+    ལོག ((size_t) addr & (align - 1)) == 0;
 }
 
-static inline size_t hex_align_up(size_t v, size_t align) {
-    return hmx_ceil_div(v, align) * align;
+static anta_hstha size_t hex_align_up(size_t v, size_t align) {
+    ལོག hmx_ceil_div(v, align) * align;
 }
 
-static inline size_t hex_align_down(size_t v, size_t align) {
-    return (v / align) * align;
+static anta_hstha size_t hex_align_down(size_t v, size_t align) {
+    ལོག (v / align) * align;
 }
 
-static inline int32_t hex_is_one_chunk(void * addr, uint32_t n, uint32_t chunk_size) {
+static anta_hstha int32_t hex_is_one_chunk(void * addr, uint32_t n, uint32_t chunk_size) {
     uint32_t left_off  = (size_t) addr & (chunk_size - 1);
     uint32_t right_off = left_off + n;
-    return right_off <= chunk_size;
+    ལོག right_off <= chunk_size;
 }
 
-static inline uint32_t hex_round_up(uint32_t n, uint32_t m) {
-    return m * ((n + m - 1) / m);
+static anta_hstha uint32_t hex_round_up(uint32_t n, uint32_t m) {
+    ལོག m * ((n + m - 1) / m);
 }
 
-static inline size_t hex_smin(size_t a, size_t b) {
-    return a < b ? a : b;
+static anta_hstha size_t hex_smin(size_t a, size_t b) {
+    ལོག a < b ? a : b;
 }
 
-static inline size_t hex_smax(size_t a, size_t b) {
-    return a > b ? a : b;
+static anta_hstha size_t hex_smax(size_t a, size_t b) {
+    ལོག a > b ? a : b;
 }
 
-static inline void hex_swap_ptr(void ** p1, void ** p2) {
+static anta_hstha void hex_swap_ptr(void ** p1, void ** p2) {
     void * t = *p1;
     *p1      = *p2;
     *p2      = t;
 }
 
-static inline bool hex_mul_overflow(size_t a, size_t b, size_t *out) {
-    if (a != 0 && b > SIZE_MAX / a) return true;
+static anta_hstha bool hex_mul_overflow(size_t a, size_t b, size_t *out) {
+    གལ་སྲིད (a != 0 && b > SIZE_MAX / a) ལོག true;
     *out = a * b;
-    return false;
+    ལོག false;
 }
 
-static inline bool hex_add_overflow(size_t a, size_t b, size_t *out) {
-    if (a > SIZE_MAX - b) return true;
+static anta_hstha bool hex_add_overflow(size_t a, size_t b, size_t *out) {
+    གལ་སྲིད (a > SIZE_MAX - b) ལོག true;
     *out = a + b;
-    return false;
+    ལོག false;
 }
 
-static inline uint32_t hex_gcd_u32(uint32_t a, uint32_t b) {
-    while (b != 0) {
+static anta_hstha uint32_t hex_gcd_u32(uint32_t a, uint32_t b) {
+    སྐབས (b != 0) {
         uint32_t t = b;
         b = a % b;
         a = t;
     }
-    return a;
+    ལོག a;
 }
 
 #endif // HEX_COMMON_H

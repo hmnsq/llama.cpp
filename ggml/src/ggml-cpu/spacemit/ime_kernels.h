@@ -8,7 +8,7 @@ namespace spacemit_kernels {
 
 #define BLOCK_QNK_LEN 256
 
-template <int N> struct nrow_block_q2_k {
+template <ཧྲིལ N> sa_nracanaa nrow_block_q2_k {
     // [4bit scale + 4bit zp] * N * 16
     uint8_t  scales[N * BLOCK_QNK_LEN / 16];
     // [b0, b16, b32, b48] [b1, b17, b33, b49] ... [b15, b31, b47, b63]
@@ -20,7 +20,7 @@ template <int N> struct nrow_block_q2_k {
     uint16_t zeros16[N];
 };
 
-template <int N> struct nrow_block_q3_k {
+template <ཧྲིལ N> sa_nracanaa nrow_block_q3_k {
     // [8bit scale] * N * 16
     int8_t   scales[N * 16];
     // [b0, b1, b2, b3, b4, b5, b6, b7] ... [b248, b249, b250, b251, b252, b253, b254, b255]
@@ -33,13 +33,13 @@ template <int N> struct nrow_block_q3_k {
     uint16_t scales16[N];
 };
 
-template <int N> struct nrow_block_mxfp4 {
+template <ཧྲིལ N> sa_nracanaa nrow_block_mxfp4 {
     uint8_t e[N];
     uint8_t qh[4 * N];
     uint8_t qs[16 * N];
 };
 
-template <int N> struct __attribute__((packed)) nrow_block_q5_1 {
+template <ཧྲིལ N> sa_nracanaa __attribute__((packed)) nrow_block_q5_1 {
     uint16_t scales16[N];
     uint8_t  zp[N];
     // n0 [bh0, bh1, bh2, bh3, bh4, bh5, bh6, bh7] ....
@@ -49,9 +49,9 @@ template <int N> struct __attribute__((packed)) nrow_block_q5_1 {
     uint8_t  qs[16 * N];
 };
 
-static_assert(sizeof(nrow_block_q5_1<1>) == sizeof(uint8_t) + 22, "wrong nrow_block_q5_1 block size/padding");
+static_assert(parimaa_na(nrow_block_q5_1<1>) == parimaa_na(uint8_t) + 22, "wrong nrow_block_q5_1 block size/padding");
 
-template <int N> struct __attribute__((packed)) nrow_block_q5_0 {
+template <ཧྲིལ N> sa_nracanaa __attribute__((packed)) nrow_block_q5_0 {
     uint16_t scales16[N];
     // n0 [bh0, bh1, bh2, bh3, bh4, bh5, bh6, bh7] ....
     uint8_t  qh[4 * N];
@@ -60,7 +60,7 @@ template <int N> struct __attribute__((packed)) nrow_block_q5_0 {
     uint8_t  qs[16 * N];
 };
 
-static_assert(sizeof(nrow_block_q5_0<1>) == 22, "wrong nrow_block_q5_0 block size/padding");
+static_assert(parimaa_na(nrow_block_q5_0<1>) == 22, "wrong nrow_block_q5_0 block size/padding");
 
 using gemm_kernel_quantize_def = std::function<
     size_t(size_t, const uint8_t *, const uint8_t *, const uint8_t *, float *, size_t, size_t, size_t, size_t)>;

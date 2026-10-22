@@ -46,14 +46,14 @@ OutputVector translate_set_rows(const NodeContext & context) {
     auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {2});
 
     Output<Node> res;
-    if (context.is_stateful()) {
-        int concat_axis = 1;
+    གལ་སྲིད (context.is_stateful()) {
+        ཧྲིལ concat_axis = 1;
         int64_t dim2 = dst.get_partial_shape()[2].get_length();
         int64_t dim3 = dst.get_partial_shape()[3].get_length();
         data = std::make_shared<ov::op::v1::Reshape>(
             data, ov::op::v0::Constant::create(ov::element::i64, {4}, {(int64_t) 1, (int64_t) -1, dim2, dim3}), false);
         res = std::make_shared<ov::op::v0::Concat>(OutputVector{dst, data}, concat_axis);
-    } else if (multidim_indices) {
+    } དེ་མིན གལ་སྲིད (multidim_indices) {
         auto updates_shape = std::make_shared<ov::op::v3::ShapeOf>(data, ov::element::i64);
 
         auto indices_rank3 = std::make_shared<ov::op::v0::Squeeze>(
@@ -64,7 +64,7 @@ OutputVector translate_set_rows(const NodeContext & context) {
         auto broadcasted_indices = std::make_shared<ov::op::v3::Broadcast>(indices_rank4, updates_shape);
 
         res = std::make_shared<ov::op::v3::ScatterElementsUpdate>(dst, broadcasted_indices, data, axes);
-    } else {
+    } དེ་མིན {
         auto row_size = context.get_input_shape(2)[3].get_length();
         auto ind_squeezed = std::make_shared<ov::op::v0::Squeeze>(
             indices, ov::op::v0::Constant::create(ov::element::i64, {3}, {0, 1, 2}));
@@ -77,7 +77,7 @@ OutputVector translate_set_rows(const NodeContext & context) {
     }
 
     auto dst_reshape = ov::as_type_ptr<ov::op::v1::Reshape>(dst.get_node_shared_ptr());
-    if (!multidim_indices && dst_reshape) {
+    གལ་སྲིད (!multidim_indices && dst_reshape) {
         // Fix the case of multiple sequences, reshape back to original shape [1, n_seq, ctx_per_seq, emb]
         // ctx_per_seq is not fixed due to llama-bench compatibility
         auto dst_shape_partial = dst_reshape->get_input_partial_shape(0);
@@ -87,7 +87,7 @@ OutputVector translate_set_rows(const NodeContext & context) {
         res = std::make_shared<ov::op::v1::Reshape>(res, ov::op::v0::Constant::create(ov::element::i64, {4}, dst_shape),
                                                     false);
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ལོག rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

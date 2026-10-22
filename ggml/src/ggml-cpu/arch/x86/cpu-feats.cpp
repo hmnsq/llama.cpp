@@ -1,6 +1,6 @@
 #include "ggml-backend-impl.h"
 
-#if defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
+#གལ་སྲིད defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -13,95 +13,95 @@
 #include <string>
 
 // ref: https://cdrdv2-public.intel.com/782156/325383-sdm-vol-2abcd.pdf
-struct cpuid_x86 {
-    bool SSE3(void) { return f_1_ecx[0]; }
-    bool PCLMULQDQ(void) { return f_1_ecx[1]; }
-    bool MONITOR(void) { return f_1_ecx[3]; }
-    bool SSSE3(void) { return f_1_ecx[9]; }
-    bool FMA(void) { return f_1_ecx[12]; }
-    bool CMPXCHG16B(void) { return f_1_ecx[13]; }
-    bool SSE41(void) { return f_1_ecx[19]; }
-    bool SSE42(void) { return f_1_ecx[20]; }
-    bool MOVBE(void) { return f_1_ecx[22]; }
-    bool POPCNT(void) { return f_1_ecx[23]; }
-    bool AES(void) { return f_1_ecx[25]; }
-    bool XSAVE(void) { return f_1_ecx[26]; }
-    bool OSXSAVE(void) { return f_1_ecx[27]; }
-    bool AVX(void) { return f_1_ecx[28]; }
-    bool F16C(void) { return f_1_ecx[29]; }
-    bool RDRAND(void) { return f_1_ecx[30]; }
+sa_nracanaa cpuid_x86 {
+    bool SSE3(void) { ལོག f_1_ecx[0]; }
+    bool PCLMULQDQ(void) { ལོག f_1_ecx[1]; }
+    bool MONITOR(void) { ལོག f_1_ecx[3]; }
+    bool SSSE3(void) { ལོག f_1_ecx[9]; }
+    bool FMA(void) { ལོག f_1_ecx[12]; }
+    bool CMPXCHG16B(void) { ལོག f_1_ecx[13]; }
+    bool SSE41(void) { ལོག f_1_ecx[19]; }
+    bool SSE42(void) { ལོག f_1_ecx[20]; }
+    bool MOVBE(void) { ལོག f_1_ecx[22]; }
+    bool POPCNT(void) { ལོག f_1_ecx[23]; }
+    bool AES(void) { ལོག f_1_ecx[25]; }
+    bool XSAVE(void) { ལོག f_1_ecx[26]; }
+    bool OSXSAVE(void) { ལོག f_1_ecx[27]; }
+    bool AVX(void) { ལོག f_1_ecx[28]; }
+    bool F16C(void) { ལོག f_1_ecx[29]; }
+    bool RDRAND(void) { ལོག f_1_ecx[30]; }
 
-    bool MSR(void) { return f_1_edx[5]; }
-    bool CX8(void) { return f_1_edx[8]; }
-    bool SEP(void) { return f_1_edx[11]; }
-    bool CMOV(void) { return f_1_edx[15]; }
-    bool CLFSH(void) { return f_1_edx[19]; }
-    bool MMX(void) { return f_1_edx[23]; }
-    bool FXSR(void) { return f_1_edx[24]; }
-    bool SSE(void) { return f_1_edx[25]; }
-    bool SSE2(void) { return f_1_edx[26]; }
+    bool MSR(void) { ལོག f_1_edx[5]; }
+    bool CX8(void) { ལོག f_1_edx[8]; }
+    bool SEP(void) { ལོག f_1_edx[11]; }
+    bool CMOV(void) { ལོག f_1_edx[15]; }
+    bool CLFSH(void) { ལོག f_1_edx[19]; }
+    bool MMX(void) { ལོག f_1_edx[23]; }
+    bool FXSR(void) { ལོག f_1_edx[24]; }
+    bool SSE(void) { ལོག f_1_edx[25]; }
+    bool SSE2(void) { ལོག f_1_edx[26]; }
 
-    bool FSGSBASE(void) { return f_7_ebx[0]; }
-    bool BMI1(void) { return f_7_ebx[3]; }
-    bool HLE(void) { return is_intel && f_7_ebx[4]; }
-    bool AVX2(void) { return f_7_ebx[5]; }
-    bool BMI2(void) { return f_7_ebx[8]; }
-    bool ERMS(void) { return f_7_ebx[9]; }
-    bool INVPCID(void) { return f_7_ebx[10]; }
-    bool RTM(void) { return is_intel && f_7_ebx[11]; }
-    bool AVX512F(void) { return f_7_ebx[16]; }
-    bool AVX512DQ(void) { return f_7_ebx[17]; }
-    bool RDSEED(void) { return f_7_ebx[18]; }
-    bool ADX(void) { return f_7_ebx[19]; }
-    bool AVX512PF(void) { return f_7_ebx[26]; }
-    bool AVX512ER(void) { return f_7_ebx[27]; }
-    bool AVX512CD(void) { return f_7_ebx[28]; }
-    bool AVX512BW(void) { return f_7_ebx[30]; }
-    bool AVX512VL(void) { return f_7_ebx[31]; }
+    bool FSGSBASE(void) { ལོག f_7_ebx[0]; }
+    bool BMI1(void) { ལོག f_7_ebx[3]; }
+    bool HLE(void) { ལོག is_intel && f_7_ebx[4]; }
+    bool AVX2(void) { ལོག f_7_ebx[5]; }
+    bool BMI2(void) { ལོག f_7_ebx[8]; }
+    bool ERMS(void) { ལོག f_7_ebx[9]; }
+    bool INVPCID(void) { ལོག f_7_ebx[10]; }
+    bool RTM(void) { ལོག is_intel && f_7_ebx[11]; }
+    bool AVX512F(void) { ལོག f_7_ebx[16]; }
+    bool AVX512DQ(void) { ལོག f_7_ebx[17]; }
+    bool RDSEED(void) { ལོག f_7_ebx[18]; }
+    bool ADX(void) { ལོག f_7_ebx[19]; }
+    bool AVX512PF(void) { ལོག f_7_ebx[26]; }
+    bool AVX512ER(void) { ལོག f_7_ebx[27]; }
+    bool AVX512CD(void) { ལོག f_7_ebx[28]; }
+    bool AVX512BW(void) { ལོག f_7_ebx[30]; }
+    bool AVX512VL(void) { ལོག f_7_ebx[31]; }
 
-    bool SHA(void) { return f_7_ebx[29]; }
+    bool SHA(void) { ལོག f_7_ebx[29]; }
 
-    bool PREFETCHWT1(void) { return f_7_ecx[0]; }
+    bool PREFETCHWT1(void) { ལོག f_7_ecx[0]; }
 
-    bool LAHF(void) { return f_81_ecx[0]; }
-    bool LZCNT(void) { return is_intel && f_81_ecx[5]; }
-    bool ABM(void) { return is_amd && f_81_ecx[5]; }
-    bool SSE4a(void) { return is_amd && f_81_ecx[6]; }
-    bool XOP(void) { return is_amd && f_81_ecx[11]; }
-    bool TBM(void) { return is_amd && f_81_ecx[21]; }
+    bool LAHF(void) { ལོག f_81_ecx[0]; }
+    bool LZCNT(void) { ལོག is_intel && f_81_ecx[5]; }
+    bool ABM(void) { ལོག is_amd && f_81_ecx[5]; }
+    bool SSE4a(void) { ལོག is_amd && f_81_ecx[6]; }
+    bool XOP(void) { ལོག is_amd && f_81_ecx[11]; }
+    bool TBM(void) { ལོག is_amd && f_81_ecx[21]; }
 
-    bool SYSCALL(void) { return is_intel && f_81_edx[11]; }
-    bool MMXEXT(void) { return is_amd && f_81_edx[22]; }
-    bool RDTSCP(void) { return is_intel && f_81_edx[27]; }
-    bool _3DNOWEXT(void) { return is_amd && f_81_edx[30]; }
-    bool _3DNOW(void) { return is_amd && f_81_edx[31]; }
+    bool SYSCALL(void) { ལོག is_intel && f_81_edx[11]; }
+    bool MMXEXT(void) { ལོག is_amd && f_81_edx[22]; }
+    bool RDTSCP(void) { ལོག is_intel && f_81_edx[27]; }
+    bool _3DNOWEXT(void) { ལོག is_amd && f_81_edx[30]; }
+    bool _3DNOW(void) { ལོག is_amd && f_81_edx[31]; }
 
-    bool AVX512_VBMI(void) { return f_7_ecx[1]; }
-    bool AVX512_VNNI(void) { return f_7_ecx[11]; }
-    bool AVX512_FP16(void) { return f_7_edx[23]; }
-    bool AVX512_BF16(void) { return f_7_1_eax[5]; }
-    bool AVX_VNNI(void) { return f_7_1_eax[4]; }
+    bool AVX512_VBMI(void) { ལོག f_7_ecx[1]; }
+    bool AVX512_VNNI(void) { ལོག f_7_ecx[11]; }
+    bool AVX512_FP16(void) { ལོག f_7_edx[23]; }
+    bool AVX512_BF16(void) { ལོག f_7_1_eax[5]; }
+    bool AVX_VNNI(void) { ལོག f_7_1_eax[4]; }
 
-    bool AMX_TILE(void) { return f_7_edx[24]; }
-    bool AMX_INT8(void) { return f_7_edx[25]; }
-    bool AMX_FP16(void) { return f_7_1_eax[21]; }
-    bool AMX_BF16(void) { return f_7_edx[22]; }
+    bool AMX_TILE(void) { ལོག f_7_edx[24]; }
+    bool AMX_INT8(void) { ལོག f_7_edx[25]; }
+    bool AMX_FP16(void) { ལོག f_7_1_eax[21]; }
+    bool AMX_BF16(void) { ལོག f_7_edx[22]; }
 
 #ifdef _MSC_VER
-    static void cpuid(int cpu_info[4], int eax) {
+    static void cpuid(ཧྲིལ cpu_info[4], ཧྲིལ eax) {
         __cpuid(cpu_info, eax);
     }
-    static void cpuidex(int cpu_info[4], int eax, int ecx) {
+    static void cpuidex(ཧྲིལ cpu_info[4], ཧྲིལ eax, ཧྲིལ ecx) {
         __cpuidex(cpu_info, eax, ecx);
     }
-#else
-    static void cpuid(int cpu_info[4], int eax) {
+#དེ་མིན
+    static void cpuid(ཧྲིལ cpu_info[4], ཧྲིལ eax) {
         __asm__ __volatile__(
             "cpuid"
             : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
             : "a"(eax), "c"(0));
     }
-    static void cpuidex(int cpu_info[4], int eax, int ecx) {
+    static void cpuidex(ཧྲིལ cpu_info[4], ཧྲིལ eax, ཧྲིལ ecx) {
         __asm__ __volatile__(
             "cpuid"
             : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
@@ -110,39 +110,39 @@ struct cpuid_x86 {
 #endif
 
     cpuid_x86() {
-        std::array<int, 4> cpui;
-        std::vector<std::array<int, 4>> data;
+        std::array<ཧྲིལ, 4> cpui;
+        std::vector<std::array<ཧྲིལ, 4>> data;
 
         // calling __cpuid with 0x0 as the function_id argument
         // gets the number of the highest valid function ID.
         cpuid(cpui.data(), 0);
-        int n_ids = cpui[0];
+        ཧྲིལ n_ids = cpui[0];
 
-        for (int i = 0; i <= n_ids; ++i) {
+        དོན་ལུ (ཧྲིལ i = 0; i <= n_ids; ++i) {
             cpuidex(cpui.data(), i, 0);
             data.push_back(cpui);
         }
 
         // capture vendor string
-        char vendor[0x20] = {};
-        *reinterpret_cast<int *>(vendor)     = data[0][1];
-        *reinterpret_cast<int *>(vendor + 4) = data[0][3];
-        *reinterpret_cast<int *>(vendor + 8) = data[0][2];
+        var_na vendor[0x20] = {};
+        *reinterpret_cast<ཧྲིལ *>(vendor)     = data[0][1];
+        *reinterpret_cast<ཧྲིལ *>(vendor + 4) = data[0][3];
+        *reinterpret_cast<ཧྲིལ *>(vendor + 8) = data[0][2];
         this->vendor = vendor;
-        if (this->vendor == "GenuineIntel") {
+        གལ་སྲིད (this->vendor == "GenuineIntel") {
             is_intel = true;
-        } else if (this->vendor == "AuthenticAMD") {
+        } དེ་མིན གལ་སྲིད (this->vendor == "AuthenticAMD") {
             is_amd = true;
         }
 
         // load bitset with flags for function 0x00000001
-        if (n_ids >= 1) {
+        གལ་སྲིད (n_ids >= 1) {
             f_1_ecx = data[1][2];
             f_1_edx = data[1][3];
         }
 
         // load bitset with flags for function 0x00000007
-        if (n_ids >= 7) {
+        གལ་སྲིད (n_ids >= 7) {
             f_7_ebx = data[7][1];
             f_7_ecx = data[7][2];
             f_7_edx = data[7][3];
@@ -153,26 +153,26 @@ struct cpuid_x86 {
         // calling __cpuid with 0x80000000 as the function_id argument
         // gets the number of the highest valid extended ID.
         cpuid(cpui.data(), 0x80000000);
-        unsigned int n_ex_ids = cpui[0];
+        unsigned ཧྲིལ n_ex_ids = cpui[0];
 
-        std::vector<std::array<int, 4>> ext_data;
-        for (unsigned int i = 0x80000000; i <= n_ex_ids; ++i) {
+        std::vector<std::array<ཧྲིལ, 4>> ext_data;
+        དོན་ལུ (unsigned ཧྲིལ i = 0x80000000; i <= n_ex_ids; ++i) {
             cpuidex(cpui.data(), i, 0);
             ext_data.push_back(cpui);
         }
 
         // load bitset with flags for function 0x80000001
-        if (n_ex_ids >= 0x80000001) {
+        གལ་སྲིད (n_ex_ids >= 0x80000001) {
             f_81_ecx = ext_data[1][2];
             f_81_edx = ext_data[1][3];
         }
 
         // interpret CPU brand string if reported
-        char brand[0x40] = {};
-        if (n_ex_ids >= 0x80000004) {
-            std::memcpy(brand, ext_data[2].data(), sizeof(cpui));
-            std::memcpy(brand + 16, ext_data[3].data(), sizeof(cpui));
-            std::memcpy(brand + 32, ext_data[4].data(), sizeof(cpui));
+        var_na brand[0x40] = {};
+        གལ་སྲིད (n_ex_ids >= 0x80000004) {
+            std::memcpy(brand, ext_data[2].data(), parimaa_na(cpui));
+            std::memcpy(brand + 16, ext_data[3].data(), parimaa_na(cpui));
+            std::memcpy(brand + 32, ext_data[4].data(), parimaa_na(cpui));
             this->brand = brand;
         }
     }
@@ -191,7 +191,7 @@ struct cpuid_x86 {
     std::bitset<32> f_81_edx;
 };
 
-#if 0
+#གལ་སྲིད 0
 void test_x86_is() {
     cpuid_x86 is;
     printf("CPU Vendor: %s\n", is.vendor.c_str());
@@ -260,66 +260,66 @@ void test_x86_is() {
 }
 #endif
 
-static int ggml_backend_cpu_x86_score() {
+static ཧྲིལ ggml_backend_cpu_x86_score() {
     // FIXME: this does not check for OS support
 
-    int score = 1;
+    ཧྲིལ score = 1;
     cpuid_x86 is;
 
 #ifdef GGML_FMA
-    if (!is.FMA()) { return 0; }
+    གལ་སྲིད (!is.FMA()) { ལོག 0; }
     score += 1;
 #endif
 #ifdef GGML_F16C
-    if (!is.F16C()) { return 0; }
+    གལ་སྲིད (!is.F16C()) { ལོག 0; }
     score += 1<<1;
 #endif
 #ifdef GGML_SSE42
-    if (!is.SSE42()) { return 0; }
+    གལ་སྲིད (!is.SSE42()) { ལོག 0; }
     score += 1<<2;
 #endif
 #ifdef GGML_BMI2
-    if (!is.BMI2()) { return 0; }
+    གལ་སྲིད (!is.BMI2()) { ལོག 0; }
     score += 1<<3;
 #endif
 #ifdef GGML_AVX
-    if (!is.AVX()) { return 0; }
+    གལ་སྲིད (!is.AVX()) { ལོག 0; }
     score += 1<<4;
 #endif
 #ifdef GGML_AVX2
-    if (!is.AVX2()) { return 0; }
+    གལ་སྲིད (!is.AVX2()) { ལོག 0; }
     score += 1<<5;
 #endif
 #ifdef GGML_AVX_VNNI
-    if (!is.AVX_VNNI()) { return 0; }
+    གལ་སྲིད (!is.AVX_VNNI()) { ལོག 0; }
     score += 1<<6;
 #endif
 #ifdef GGML_AVX512
-    if (!is.AVX512F()) { return 0; }
-    if (!is.AVX512CD()) { return 0; }
-    if (!is.AVX512VL()) { return 0; }
-    if (!is.AVX512DQ()) { return 0; }
-    if (!is.AVX512BW()) { return 0; }
+    གལ་སྲིད (!is.AVX512F()) { ལོག 0; }
+    གལ་སྲིད (!is.AVX512CD()) { ལོག 0; }
+    གལ་སྲིད (!is.AVX512VL()) { ལོག 0; }
+    གལ་སྲིད (!is.AVX512DQ()) { ལོག 0; }
+    གལ་སྲིད (!is.AVX512BW()) { ལོག 0; }
     score += 1<<7;
 #endif
 #ifdef GGML_AVX512_VBMI
-    if (!is.AVX512_VBMI()) { return 0; }
+    གལ་སྲིད (!is.AVX512_VBMI()) { ལོག 0; }
     score += 1<<8;
 #endif
 #ifdef GGML_AVX512_BF16
-    if (!is.AVX512_BF16()) { return 0; }
+    གལ་སྲིད (!is.AVX512_BF16()) { ལོག 0; }
     score += 1<<9;
 #endif
 #ifdef GGML_AVX512_VNNI
-    if (!is.AVX512_VNNI()) { return 0; }
+    གལ་སྲིད (!is.AVX512_VNNI()) { ལོག 0; }
     score += 1<<10;
 #endif
 #ifdef GGML_AMX_INT8
-    if (!is.AMX_INT8()) { return 0; }
+    གལ་སྲིད (!is.AMX_INT8()) { ལོག 0; }
     score += 1<<11;
 #endif
 
-    return score;
+    ལོག score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_x86_score)

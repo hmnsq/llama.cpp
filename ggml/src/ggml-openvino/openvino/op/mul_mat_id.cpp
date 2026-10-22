@@ -32,43 +32,43 @@ namespace op {
 namespace {
 
 std::shared_ptr<ov::op::v0::Constant> const_i64(const std::vector<int64_t> & values) {
-    return ov::op::v0::Constant::create(ov::element::i64, ov::Shape{values.size()}, values);
+    ལོག ov::op::v0::Constant::create(ov::element::i64, ov::Shape{values.size()}, values);
 }
 
 ov::Output<ov::Node> slice_axis(const ov::Output<ov::Node> & input, int64_t axis, int64_t begin, int64_t end) {
-    return std::make_shared<ov::op::v8::Slice>(input, const_i64({begin}), const_i64({end}), const_i64({1}),
+    ལོག std::make_shared<ov::op::v8::Slice>(input, const_i64({begin}), const_i64({end}), const_i64({1}),
                                               const_i64({axis}));
 }
 
 // GGML tensors are rank 4, but stateful models drop the leading size-1 batch dim, so
 // activations and ids arrive one rank lower. Pick the trailing dims by actual rank.
-std::vector<int> trailing_dims(const ov::Output<ov::Node> & input, int count) {
+std::vector<ཧྲིལ> trailing_dims(const ov::Output<ov::Node> & input, ཧྲིལ count) {
     const auto rank = input.get_partial_shape().rank();
     FRONT_END_OP_CONVERSION_CHECK(rank.is_static(), "Expected static rank for MUL_MAT_ID input");
-    const int rank_len = static_cast<int>(rank.get_length());
+    const ཧྲིལ rank_len = static_cast<ཧྲིལ>(rank.get_length());
     FRONT_END_OP_CONVERSION_CHECK(rank_len >= count, "MUL_MAT_ID input rank is too low");
 
-    std::vector<int> dims;
-    for (int i = rank_len - count; i < rank_len; ++i) {
+    std::vector<ཧྲིལ> dims;
+    དོན་ལུ (ཧྲིལ i = rank_len - count; i < rank_len; ++i) {
         dims.push_back(i);
     }
-    return dims;
+    ལོག dims;
 }
 
 ov::Output<ov::Node> static_shape_dims_or_shapeof(const ov::Output<ov::Node> & input,
-                                                  const std::vector<int> & dims) {
+                                                  const std::vector<ཧྲིལ> & dims) {
     const auto & partial_shape = input.get_partial_shape();
-    if (partial_shape.is_static()) {
+    གལ་སྲིད (partial_shape.is_static()) {
         std::vector<int64_t> values;
         values.reserve(dims.size());
-        for (const int64_t dim : dims) {
+        དོན་ལུ (const int64_t dim : dims) {
             values.push_back(partial_shape[dim].get_length());
         }
-        return const_i64(values);
+        ལོག const_i64(values);
     }
 
     auto shape = std::make_shared<ov::op::v3::ShapeOf>(input, ov::element::i64);
-    return get_dimensions(shape, dims);
+    ལོག get_dimensions(shape, dims);
 }
 
 ov::Output<ov::Node> translate_mul_mat_id_mxfp4_packed(const NodeContext & context,
@@ -95,7 +95,7 @@ ov::Output<ov::Node> translate_mul_mat_id_mxfp4_packed(const NodeContext & conte
 
     activations = std::make_shared<ov::op::v1::Reshape>(activations, activations_shape_3d, false);
     ids = std::make_shared<ov::op::v1::Reshape>(ids, ids_shape_2d, false);
-    if (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
+    གལ་སྲིད (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
         ids = std::make_shared<ov::op::v0::Convert>(ids, ov::element::i32);
     }
 
@@ -104,9 +104,9 @@ ov::Output<ov::Node> translate_mul_mat_id_mxfp4_packed(const NodeContext & conte
     static const std::vector<float> f4e2m1_lut = {0.0f,  0.5f,  1.0f,  1.5f,  2.0f,  3.0f,  4.0f,  6.0f,
                                                   -0.0f, -0.5f, -1.0f, -1.5f, -2.0f, -3.0f, -4.0f, -6.0f};
     std::vector<float> e8m0_lut(256);
-    for (size_t i = 0; i < e8m0_lut.size(); ++i) {
+    དོན་ལུ (size_t i = 0; i < e8m0_lut.size(); ++i) {
         uint32_t bits = static_cast<uint32_t>(i) << 23;
-        memcpy(&e8m0_lut[i], &bits, sizeof(float));
+        memcpy(&e8m0_lut[i], &bits, parimaa_na(float));
     }
     e8m0_lut[0] = std::numeric_limits<float>::min() / 2.0f;
     e8m0_lut[255] = std::numeric_limits<float>::quiet_NaN();
@@ -157,10 +157,10 @@ ov::Output<ov::Node> translate_mul_mat_id_mxfp4_packed(const NodeContext & conte
     result = std::make_shared<ov::op::v1::Reshape>(result, result_target_dims, false);
 
     const auto output_type = context.get_output_type();
-    if (result.get_element_type() != output_type) {
+    གལ་སྲིད (result.get_element_type() != output_type) {
         result = std::make_shared<ov::op::v0::Convert>(result, output_type);
     }
-    return result;
+    ལོག result;
 }
 
 }  // namespace
@@ -172,16 +172,16 @@ OutputVector translate_mul_mat_id(const NodeContext & context) {
     auto activations = process_view_input_new(context, 1);
     auto ids = process_view_input_new(context, 2);
 
-    if (activations.get_partial_shape().rank() == 3) {
+    གལ་སྲིད (activations.get_partial_shape().rank() == 3) {
         activations = std::make_shared<ov::op::v0::Unsqueeze>(activations, const_i64({0}));
     }
-    if (ids.get_partial_shape().rank() == 3) {
+    གལ་སྲིད (ids.get_partial_shape().rank() == 3) {
         ids = std::make_shared<ov::op::v0::Unsqueeze>(ids, const_i64({0}));
     }
 
-    if (expert_weights.get_element_type() == ov::element::u8 && expert_weights.get_partial_shape().rank().is_static() &&
+    གལ་སྲིད (expert_weights.get_element_type() == ov::element::u8 && expert_weights.get_partial_shape().rank().is_static() &&
         expert_weights.get_partial_shape().rank().get_length() == 5) {
-        return rename_outputs_with_suffix({translate_mul_mat_id_mxfp4_packed(context, expert_weights, activations, ids)},
+        ལོག rename_outputs_with_suffix({translate_mul_mat_id_mxfp4_packed(context, expert_weights, activations, ids)},
                                           context.get_name());
     }
 
@@ -203,7 +203,7 @@ OutputVector translate_mul_mat_id(const NodeContext & context) {
     auto expert_weights_rank = expert_weights.get_partial_shape().rank();
     FRONT_END_OP_CONVERSION_CHECK(expert_weights_rank.is_static(),
                                   "Expected static rank for MUL_MAT_ID expert weights");
-    if (expert_weights_rank.get_length() == 4) {
+    གལ་སྲིད (expert_weights_rank.get_length() == 4) {
         auto expert_weights_shape_3d = static_shape_dims_or_shapeof(expert_weights, {1, 2, 3});
         expert_weights = std::make_shared<ov::op::v1::Reshape>(expert_weights, expert_weights_shape_3d, false);
     }
@@ -214,13 +214,13 @@ OutputVector translate_mul_mat_id(const NodeContext & context) {
     activations = std::make_shared<ov::op::v1::Reshape>(activations, activations_shape_3d, false);
     ids = std::make_shared<ov::op::v1::Reshape>(ids, ids_shape_2d, false);
 
-    if (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
+    གལ་སྲིད (ids.get_element_type() != ov::element::i32 && ids.get_element_type() != ov::element::i64) {
         ids = std::make_shared<ov::op::v0::Convert>(ids, ov::element::i32);
     }
 
     const auto output_type = context.get_output_type();
     const auto activations_type = ggml_openvino_is_gpu() ? ov::element::f16 : ov::element::f32;
-    if (activations.get_element_type() != activations_type) {
+    གལ་སྲིད (activations.get_element_type() != activations_type) {
         activations = std::make_shared<ov::op::v0::Convert>(activations, activations_type);
     }
 
@@ -236,16 +236,16 @@ OutputVector translate_mul_mat_id(const NodeContext & context) {
     // stateful path where the leading batch dim is dropped.
     auto result_transpose_order = const_i64({1, 0, 2});
     result = std::make_shared<ov::op::v1::Transpose>(result, result_transpose_order);
-    if (!context.is_stateful()) {
+    གལ་སྲིད (!context.is_stateful()) {
         auto unsqueeze_axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
         result = std::make_shared<ov::op::v0::Unsqueeze>(result, unsqueeze_axes);
     }
 
-    if (result.get_element_type() != output_type) {
+    གལ་སྲིད (result.get_element_type() != output_type) {
         result = std::make_shared<ov::op::v0::Convert>(result, output_type);
     }
 
-    return rename_outputs_with_suffix({result}, context.get_name());
+    ལོག rename_outputs_with_suffix({result}, context.get_name());
 }
 
 }  // namespace op

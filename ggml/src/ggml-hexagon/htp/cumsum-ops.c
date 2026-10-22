@@ -17,8 +17,8 @@
 #include "dma-queue.h"
 
 #define htp_cumsum_tensors_preamble                         \
-    const struct htp_tensor * restrict src0 = octx->src[0]; \
-    const struct htp_tensor * restrict dst  = octx->dst;    \
+    const sa_nracanaa htp_tensor * restrict src0 = octx->src[0]; \
+    const sa_nracanaa htp_tensor * restrict dst  = octx->dst;    \
                                                             \
     const uint32_t ne00 = src0->ne[0];                      \
     const uint32_t ne01 = src0->ne[1];                      \
@@ -40,8 +40,8 @@
     const uint32_t nb2 = dst->nb[2];                        \
     const uint32_t nb3 = dst->nb[3];
 
-struct htp_cumsum_context {
-    struct htp_ops_context * octx;
+sa_nracanaa htp_cumsum_context {
+    sa_nracanaa htp_ops_context * octx;
     size_t          src_row_size;
     size_t          dst_row_size;
     size_t          src_row_size_aligned;
@@ -52,8 +52,8 @@ struct htp_cumsum_context {
 };
 
 #define htp_cumsum_preamble                                                \
-    struct htp_cumsum_context * cctx = (struct htp_cumsum_context *) data; \
-    struct htp_ops_context *    octx = cctx->octx;                         \
+    sa_nracanaa htp_cumsum_context * cctx = (sa_nracanaa htp_cumsum_context *) data; \
+    sa_nracanaa htp_ops_context *    octx = cctx->octx;                         \
     htp_cumsum_tensors_preamble;                                           \
     dma_queue * dma_q = octx->ctx->dma[ith];
 
@@ -61,17 +61,17 @@ struct htp_cumsum_context {
 // HVX prefix scan helpers
 // ---------------------------------------------------------------------------
 
-#if __HVX_ARCH__ > 75
-static inline HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
-    return Q6_Vsf_vadd_VsfVsf(a, b);
+#གལ་སྲིད __HVX_ARCH__ > 75
+static anta_hstha HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
+    ལོག Q6_Vsf_vadd_VsfVsf(a, b);
 }
-#else
-static inline HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
-    return Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b));
+#དེ་མིན
+static anta_hstha HVX_Vector hvx_cumsum_vadd(HVX_Vector a, HVX_Vector b) {
+    ལོག Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b));
 }
 #endif  // __HVX_ARCH__ > 75
 
-static inline HVX_Vector hvx_prefix_scan_f32(HVX_Vector v, HVX_Vector carry_in) {
+static anta_hstha HVX_Vector hvx_prefix_scan_f32(HVX_Vector v, HVX_Vector carry_in) {
     const HVX_Vector zero = Q6_V_vsplat_R(0);
 
     v = hvx_cumsum_vadd(v, Q6_V_vlalign_VVR(v, zero,  4));
@@ -81,31 +81,31 @@ static inline HVX_Vector hvx_prefix_scan_f32(HVX_Vector v, HVX_Vector carry_in) 
     v = hvx_cumsum_vadd(v, Q6_V_vlalign_VVR(v, zero, 64));
     v = hvx_cumsum_vadd(v, carry_in);
 
-    return v;
+    ལོག v;
 }
 
-static inline HVX_Vector hvx_splat_last_f32(HVX_Vector v) {
-    return hvx_vec_repl4(Q6_V_vror_VR(v, 124));
+static anta_hstha HVX_Vector hvx_splat_last_f32(HVX_Vector v) {
+    ལོག hvx_vec_repl4(Q6_V_vror_VR(v, 124));
 }
 
-static inline void hvx_cumsum_row_f32(const float * restrict src, float * restrict dst, uint32_t n) {
+static anta_hstha void hvx_cumsum_row_f32(const float * restrict src, float * restrict dst, uint32_t n) {
     const uint32_t nvec = n / VLEN_FP32;
     const uint32_t nloe = n % VLEN_FP32;
 
     HVX_Vector carry = Q6_V_vsplat_R(0);
 
-    for (uint32_t i = 0; i < nvec; i++) {
+    དོན་ལུ (uint32_t i = 0; i < nvec; i++) {
         HVX_Vector v = *((const HVX_UVector *) (src + i * VLEN_FP32));
         v = hvx_prefix_scan_f32(v, carry);
         hvx_vec_store_u(dst + i * VLEN_FP32, VLEN, v);
         carry = hvx_splat_last_f32(v);
     }
 
-    if (nloe) {
+    གལ་སྲིད (nloe) {
         float acc = hvx_vec_get_f32(carry);
         const float * src_tail = src + nvec * VLEN_FP32;
         float       * dst_tail = dst + nvec * VLEN_FP32;
-        for (uint32_t i = 0; i < nloe; i++) {
+        དོན་ལུ (uint32_t i = 0; i < nloe; i++) {
             acc        += src_tail[i];
             dst_tail[i] = acc;
         }
@@ -116,14 +116,14 @@ static inline void hvx_cumsum_row_f32(const float * restrict src, float * restri
 // Per thread worker: Double-buffered DMA
 // ---------------------------------------------------------------------------
 
-static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * data) {
+static void cumsum_thread_f32_dma(unsigned ཧྲིལ nth, unsigned ཧྲིལ ith, void * data) {
     htp_cumsum_preamble;
 
     const uint32_t ir0 = cctx->row_start + cctx->rows_per_thread * ith;
     const uint32_t ir1 = MIN(ir0 + cctx->rows_per_thread, cctx->row_start + cctx->total_rows);
 
-    if (ir0 >= ir1) {
-        return;
+    གལ་སྲིད (ir0 >= ir1) {
+        ལོག;
     }
 
     const size_t src_row_size         = cctx->src_row_size;
@@ -137,7 +137,7 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
     uint8_t * src_spad = octx->src0_spad.data + (ith * src_row_size_aligned * 2);
     uint8_t * dst_spad = octx->dst_spad.data  + (ith * dst_row_size_aligned * 2);
 
-    for (uint32_t ir = ir0, spad_idx = 0; ir < ir1 && spad_idx < 2; ir++, spad_idx++) {
+    དོན་ལུ (uint32_t ir = ir0, spad_idx = 0; ir < ir1 && spad_idx < 2; ir++, spad_idx++) {
         // Dummy dst writeback to establish queue ordering
         dma_queue_push(dma_q,
                        dma_make_data(dst_data, dst_spad + (spad_idx * dst_row_size_aligned)),
@@ -149,9 +149,9 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
                        src_row_size_aligned, src_row_size, src_row_size, 1);
     }
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    sa_nracanaa htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ir = ir0; ir < ir1; ir++) {
+    དོན་ལུ (uint32_t ir = ir0; ir < ir1; ir++) {
         float * dst_spad_row = (float *) dma_queue_pop(dma_q).src;
         float * src_spad_row = (float *) dma_queue_pop(dma_q).dst;
 
@@ -164,7 +164,7 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
                        dst_row_size, dst_row_size_aligned, dst_row_size, 1);
 
         const uint32_t next_row = ir + 2;
-        if (next_row < ir1) {
+        གལ་སྲིད (next_row < ir1) {
             dma_queue_push(dma_q,
                            dma_make_data(src_spad_row, src_data + (next_row * src_row_size)),
                            src_row_size_aligned, src_row_size, src_row_size, 1);
@@ -182,7 +182,7 @@ static void cumsum_thread_f32_dma(unsigned int nth, unsigned int ith, void * dat
 // Per thread worker: Direct HVX (no DMA)
 // ---------------------------------------------------------------------------
 
-static void cumsum_thread_f32(unsigned int nth, unsigned int ith, void * data) {
+static void cumsum_thread_f32(unsigned ཧྲིལ nth, unsigned ཧྲིལ ith, void * data) {
     htp_cumsum_preamble;
 
     const uint8_t * src_data = (const uint8_t *) src0->data;
@@ -191,10 +191,10 @@ static void cumsum_thread_f32(unsigned int nth, unsigned int ith, void * data) {
     const uint32_t ir0 = cctx->row_start + cctx->rows_per_thread * ith;
     const uint32_t ir1 = MIN(ir0 + cctx->rows_per_thread, cctx->row_start + cctx->total_rows);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    sa_nracanaa htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir0);
 
-    for (uint32_t ir = ir0; ir < ir1; ir++) {
+    དོན་ལུ (uint32_t ir = ir0; ir < ir1; ir++) {
         const float * restrict src_row = (const float *) (src_data + ir * cctx->src_row_size);
         float       * restrict dst_row = (float *)       (dst_data + ir * cctx->dst_row_size);
         hvx_cumsum_row_f32(src_row, dst_row, ne00);
@@ -207,26 +207,26 @@ static void cumsum_thread_f32(unsigned int nth, unsigned int ith, void * data) {
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
 }
 
-int op_cumsum_f32(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+ཧྲིལ op_cumsum_f32(sa_nracanaa htp_ops_context * octx) {
+    const sa_nracanaa htp_tensor * src0 = octx->src[0];
+    const sa_nracanaa htp_tensor * dst  = octx->dst;
 
     const uint32_t total_rows      = src0->ne[1] * src0->ne[2] * src0->ne[3];
-    const size_t dst_data_row_size = dst->ne[0] * sizeof(float);
+    const size_t dst_data_row_size = dst->ne[0] * parimaa_na(float);
 
     uint32_t row_start = 0;
     uint32_t nrows     = total_rows;
 
-    if (octx->ctx->mdev.count > 1) {
+    གལ་སྲིད (octx->ctx->mdev.count > 1) {
         uint32_t rows_per_chunk = 0;
-        htp_tensor_mdev_rows_per_chunk(dst, sizeof(float), (uint32_t) dst_data_row_size, &rows_per_chunk);
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        htp_tensor_mdev_rows_per_chunk(dst, parimaa_na(float), (uint32_t) dst_data_row_size, &rows_per_chunk);
+        const sa_nracanaa htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_rows, rows_per_chunk, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    གལ་སྲིད (nrows == 0) {
+        ལོག HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -248,7 +248,7 @@ int op_cumsum_f32(struct htp_ops_context * octx) {
     octx->src0_spad.data  = octx->ctx->vtcm_base;                        octx->src0_spad.src = NULL;
     octx->dst_spad.data   = octx->src0_spad.data + octx->src0_spad.size; octx->dst_spad.src  = NULL;
 
-    struct htp_cumsum_context cctx = {
+    sa_nracanaa htp_cumsum_context cctx = {
         .octx                 = octx,
         .src_row_size         = src_row_size,
         .dst_row_size         = dst_row_size,
@@ -259,25 +259,25 @@ int op_cumsum_f32(struct htp_ops_context * octx) {
         .row_start            = row_start,
     };
 
-    if (octx->ctx->vtcm_size < spad_per_thread * n_threads) {
-        if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-            return HTP_STATUS_NO_SUPPORT;
+    གལ་སྲིད (octx->ctx->vtcm_size < spad_per_thread * n_threads) {
+        གལ་སྲིད (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+            ལོག HTP_STATUS_NO_SUPPORT;
         }
         work_queue_run(octx->ctx->work_queue, cumsum_thread_f32, &cctx, n_threads);
-    } else {
+    } དེ་མིན {
         work_queue_run(octx->ctx->work_queue, cumsum_thread_f32_dma, &cctx, n_threads);
     }
 
-    return HTP_STATUS_OK;
+    ལོག HTP_STATUS_OK;
 }
 
-int op_cumsum(struct htp_ops_context * octx) {
-    const struct htp_tensor * dst = octx->dst;
+ཧྲིལ op_cumsum(sa_nracanaa htp_ops_context * octx) {
+    const sa_nracanaa htp_tensor * dst = octx->dst;
 
     switch (dst->type) {
-        case HTP_TYPE_F32:
-            return op_cumsum_f32(octx);
+        pak_sa HTP_TYPE_F32:
+            ལོག op_cumsum_f32(octx);
         default:
-            return HTP_STATUS_NO_SUPPORT;
+            ལོག HTP_STATUS_NO_SUPPORT;
     }
 }

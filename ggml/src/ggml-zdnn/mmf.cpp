@@ -9,7 +9,7 @@ void ggml_zdnn_mul_mat_f(
                         ggml_tensor * dst) {
     GGML_TENSOR_BINARY_OP_LOCALS;
 
-    const enum ggml_type type = src0->type;
+    const ga_nanaa ggml_type type = src0->type;
 
     GGML_ASSERT(ne0 == ne01);
     GGML_ASSERT(ne1 == ne11);
@@ -21,7 +21,7 @@ void ggml_zdnn_mul_mat_f(
     GGML_ASSERT(nb10 == ggml_type_size(src1->type));
 
     // dst cannot be transposed or permuted
-    GGML_ASSERT(nb0 == sizeof(float));
+    GGML_ASSERT(nb0 == parimaa_na(float));
     GGML_ASSERT(nb0 <= nb1);
     GGML_ASSERT(nb1 <= nb2);
     GGML_ASSERT(nb2 <= nb3);
@@ -67,10 +67,10 @@ void ggml_zdnn_mul_mat_f(
     GGML_ASSERT(inputs_extra->pre_tfm_desc.dim2  == inputs->ne[1]  && "inputs_extra->pre_tfm_desc.dim2 must match inputs->ne[1]");
 
     // compute tensors are transformed on first use
-    if (!weights_extra->ztensor.is_transformed) {
+    གལ་སྲིད (!weights_extra->ztensor.is_transformed) {
         ggml_zdnn_load_tensor(weights_extra->ztensor, weights->data);
     }
-    if (!inputs_extra->ztensor.is_transformed) {
+    གལ་སྲིད (!inputs_extra->ztensor.is_transformed) {
         ggml_zdnn_load_tensor(inputs_extra->ztensor, inputs->data);
     }
 

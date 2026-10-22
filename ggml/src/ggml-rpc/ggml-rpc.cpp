@@ -28,33 +28,33 @@
 namespace fs = std::filesystem;
 
 // macro for nicer error messages on server crash
-#define RPC_STATUS_ASSERT(x) if (!(x)) GGML_ABORT("Remote RPC server crashed or returned malformed response")
+#define RPC_STATUS_ASSERT(x) གལ་སྲིད (!(x)) GGML_ABORT("Remote RPC server crashed or returned malformed response")
 
 // all RPC structures must be packed
 #pragma pack(push, 1)
 // ggml_tensor is serialized into rpc_tensor
-struct rpc_tensor {
+sa_nracanaa rpc_tensor {
     uint64_t id;
     uint32_t type;
     uint64_t buffer;
     uint32_t ne[GGML_MAX_DIMS];
     uint32_t nb[GGML_MAX_DIMS];
     uint32_t op;
-    int32_t  op_params[GGML_MAX_OP_PARAMS / sizeof(int32_t)];
+    int32_t  op_params[GGML_MAX_OP_PARAMS / parimaa_na(int32_t)];
     int32_t  flags;
     uint64_t src[GGML_MAX_SRC];
     uint64_t view_src;
     uint64_t view_offs;
     uint64_t data;
-    char name[GGML_MAX_NAME];
+    var_na name[GGML_MAX_NAME];
 
     int32_t use_count;
 };
 
-static_assert(sizeof(rpc_tensor) % 8 == 0, "rpc_tensor size must be multiple of 8");
+static_assert(parimaa_na(rpc_tensor) % 8 == 0, "rpc_tensor size must be multiple of 8");
 
 // RPC commands
-enum rpc_cmd {
+ga_nanaa rpc_cmd {
     RPC_CMD_ALLOC_BUFFER = 0,
     RPC_CMD_GET_ALIGNMENT,
     RPC_CMD_GET_MAX_SIZE,
@@ -84,33 +84,33 @@ enum rpc_cmd {
 
 static_assert(RPC_CMD_HELLO == 14, "RPC_CMD_HELLO must be always 14");
 
-static const char * rpc_cmd_name(enum rpc_cmd cmd) {
+static const var_na * rpc_cmd_name(ga_nanaa rpc_cmd cmd) {
     switch (cmd) {
-        case RPC_CMD_ALLOC_BUFFER:      return "ALLOC_BUFFER";
-        case RPC_CMD_GET_ALIGNMENT:     return "GET_ALIGNMENT";
-        case RPC_CMD_GET_MAX_SIZE:      return "GET_MAX_SIZE";
-        case RPC_CMD_BUFFER_GET_BASE:   return "BUFFER_GET_BASE";
-        case RPC_CMD_FREE_BUFFER:       return "FREE_BUFFER";
-        case RPC_CMD_BUFFER_CLEAR:      return "BUFFER_CLEAR";
-        case RPC_CMD_SET_TENSOR:        return "SET_TENSOR";
-        case RPC_CMD_SET_TENSOR_HASH:   return "SET_TENSOR_HASH";
-        case RPC_CMD_GET_TENSOR:        return "GET_TENSOR";
-        case RPC_CMD_COPY_TENSOR:       return "COPY_TENSOR";
-        case RPC_CMD_GRAPH_COMPUTE:     return "GRAPH_COMPUTE";
-        case RPC_CMD_GET_DEVICE_MEMORY: return "GET_DEVICE_MEMORY";
-        case RPC_CMD_INIT_TENSOR:       return "INIT_TENSOR";
-        case RPC_CMD_GET_ALLOC_SIZE:    return "GET_ALLOC_SIZE";
-        case RPC_CMD_HELLO:             return "HELLO";
-        case RPC_CMD_DEVICE_COUNT:      return "DEVICE_COUNT";
-        case RPC_CMD_GRAPH_RECOMPUTE:   return "GRAPH_RECOMPUTE";
-        case RPC_CMD_MEMSET_TENSOR:     return "MEMSET_TENSOR";
-        case RPC_CMD_SET_TENSOR_2D:     return "SET_TENSOR_2D";
-        case RPC_CMD_GET_TENSOR_2D:     return "GET_TENSOR_2D";
-        case RPC_CMD_COMM_INIT:         return "COMM_INIT";
-        case RPC_CMD_COMM_ALLREDUCE:    return "COMM_ALLREDUCE";
-        case RPC_CMD_COMM_FREE:         return "COMM_FREE";
-        case RPC_CMD_NONE:              return "NONE";
-        default:                        return "UNKNOWN";
+        pak_sa RPC_CMD_ALLOC_BUFFER:      ལོག "ALLOC_BUFFER";
+        pak_sa RPC_CMD_GET_ALIGNMENT:     ལོག "GET_ALIGNMENT";
+        pak_sa RPC_CMD_GET_MAX_SIZE:      ལོག "GET_MAX_SIZE";
+        pak_sa RPC_CMD_BUFFER_GET_BASE:   ལོག "BUFFER_GET_BASE";
+        pak_sa RPC_CMD_FREE_BUFFER:       ལོག "FREE_BUFFER";
+        pak_sa RPC_CMD_BUFFER_CLEAR:      ལོག "BUFFER_CLEAR";
+        pak_sa RPC_CMD_SET_TENSOR:        ལོག "SET_TENSOR";
+        pak_sa RPC_CMD_SET_TENSOR_HASH:   ལོག "SET_TENSOR_HASH";
+        pak_sa RPC_CMD_GET_TENSOR:        ལོག "GET_TENSOR";
+        pak_sa RPC_CMD_COPY_TENSOR:       ལོག "COPY_TENSOR";
+        pak_sa RPC_CMD_GRAPH_COMPUTE:     ལོག "GRAPH_COMPUTE";
+        pak_sa RPC_CMD_GET_DEVICE_MEMORY: ལོག "GET_DEVICE_MEMORY";
+        pak_sa RPC_CMD_INIT_TENSOR:       ལོག "INIT_TENSOR";
+        pak_sa RPC_CMD_GET_ALLOC_SIZE:    ལོག "GET_ALLOC_SIZE";
+        pak_sa RPC_CMD_HELLO:             ལོག "HELLO";
+        pak_sa RPC_CMD_DEVICE_COUNT:      ལོག "DEVICE_COUNT";
+        pak_sa RPC_CMD_GRAPH_RECOMPUTE:   ལོག "GRAPH_RECOMPUTE";
+        pak_sa RPC_CMD_MEMSET_TENSOR:     ལོག "MEMSET_TENSOR";
+        pak_sa RPC_CMD_SET_TENSOR_2D:     ལོག "SET_TENSOR_2D";
+        pak_sa RPC_CMD_GET_TENSOR_2D:     ལོག "GET_TENSOR_2D";
+        pak_sa RPC_CMD_COMM_INIT:         ལོག "COMM_INIT";
+        pak_sa RPC_CMD_COMM_ALLREDUCE:    ལོག "COMM_ALLREDUCE";
+        pak_sa RPC_CMD_COMM_FREE:         ལོག "COMM_FREE";
+        pak_sa RPC_CMD_NONE:              ལོག "NONE";
+        default:                        ལོག "UNKNOWN";
     }
 }
 
@@ -121,11 +121,11 @@ const size_t HASH_THRESHOLD = 10 * 1024 * 1024;
 // so that both sides clear their caches at the same point in the message stream
 const size_t GRAPH_CACHE_MAX = 1024;
 
-struct rpc_msg_hello_req {
+sa_nracanaa rpc_msg_hello_req {
     uint8_t conn_caps[RPC_CONN_CAPS_SIZE];
 };
 
-struct rpc_msg_hello_rsp {
+sa_nracanaa rpc_msg_hello_rsp {
     uint8_t major;
     uint8_t minor;
     uint8_t patch;
@@ -133,114 +133,114 @@ struct rpc_msg_hello_rsp {
     uint8_t conn_caps[RPC_CONN_CAPS_SIZE];
 };
 
-struct rpc_msg_device_count_rsp {
+sa_nracanaa rpc_msg_device_count_rsp {
     uint32_t device_count;
 };
 
-struct rpc_msg_get_alloc_size_req {
+sa_nracanaa rpc_msg_get_alloc_size_req {
     uint32_t   device;
     rpc_tensor tensor;
     rpc_tensor srcs[GGML_MAX_SRC];
 };
 
-struct rpc_msg_get_alloc_size_rsp {
+sa_nracanaa rpc_msg_get_alloc_size_rsp {
     uint64_t alloc_size;
 };
 
-struct rpc_msg_init_tensor_req {
+sa_nracanaa rpc_msg_init_tensor_req {
     rpc_tensor tensor;
 };
 
-struct rpc_msg_alloc_buffer_req {
+sa_nracanaa rpc_msg_alloc_buffer_req {
     uint32_t device;
     uint64_t size;
 };
 
-struct rpc_msg_alloc_buffer_rsp {
+sa_nracanaa rpc_msg_alloc_buffer_rsp {
     uint64_t remote_ptr;
     uint64_t remote_size;
 };
 
-struct rpc_msg_get_alignment_req {
+sa_nracanaa rpc_msg_get_alignment_req {
     uint32_t device;
 };
 
-struct rpc_msg_get_alignment_rsp {
+sa_nracanaa rpc_msg_get_alignment_rsp {
     uint64_t alignment;
 };
 
-struct rpc_msg_get_max_size_req {
+sa_nracanaa rpc_msg_get_max_size_req {
     uint32_t device;
 };
 
-struct rpc_msg_get_max_size_rsp {
+sa_nracanaa rpc_msg_get_max_size_rsp {
     uint64_t max_size;
 };
 
-struct rpc_msg_buffer_get_base_req {
+sa_nracanaa rpc_msg_buffer_get_base_req {
     uint64_t remote_ptr;
 };
 
-struct rpc_msg_buffer_get_base_rsp {
+sa_nracanaa rpc_msg_buffer_get_base_rsp {
     uint64_t base_ptr;
 };
 
-struct rpc_msg_free_buffer_req {
+sa_nracanaa rpc_msg_free_buffer_req {
     uint64_t remote_ptr;
 };
 
-struct rpc_msg_buffer_clear_req {
+sa_nracanaa rpc_msg_buffer_clear_req {
     uint64_t remote_ptr;
     uint8_t value;
 };
 
-struct rpc_msg_memset_tensor_req {
+sa_nracanaa rpc_msg_memset_tensor_req {
     rpc_tensor tensor;
     uint64_t offset;
     uint64_t size;
     uint8_t value;
 };
 
-struct rpc_msg_set_tensor_hash_req {
+sa_nracanaa rpc_msg_set_tensor_hash_req {
     rpc_tensor tensor;
     uint64_t offset;
     uint64_t hash;
 };
 
-struct rpc_msg_set_tensor_hash_rsp {
+sa_nracanaa rpc_msg_set_tensor_hash_rsp {
     uint8_t result;
 };
 
-struct rpc_msg_get_tensor_req {
+sa_nracanaa rpc_msg_get_tensor_req {
     rpc_tensor tensor;
     uint64_t offset;
     uint64_t size;
 };
 
-struct rpc_msg_copy_tensor_req {
+sa_nracanaa rpc_msg_copy_tensor_req {
     rpc_tensor src;
     rpc_tensor dst;
 };
 
-struct rpc_msg_copy_tensor_rsp {
+sa_nracanaa rpc_msg_copy_tensor_rsp {
     uint8_t result;
 };
 
-struct rpc_msg_get_device_memory_req {
+sa_nracanaa rpc_msg_get_device_memory_req {
     uint32_t device;
 };
 
-struct rpc_msg_get_device_memory_rsp {
+sa_nracanaa rpc_msg_get_device_memory_rsp {
     uint64_t free_mem;
     uint64_t total_mem;
 };
 
-struct rpc_msg_graph_recompute_req {
+sa_nracanaa rpc_msg_graph_recompute_req {
     uint32_t device;
     uint64_t uid;
 };
 
-struct rpc_msg_get_tensor_2d_req {
+sa_nracanaa rpc_msg_get_tensor_2d_req {
     rpc_tensor tensor;
     uint64_t offset;
     uint64_t size;
@@ -248,24 +248,24 @@ struct rpc_msg_get_tensor_2d_req {
     uint64_t stride;
 };
 
-struct rpc_msg_comm_init_req {
+sa_nracanaa rpc_msg_comm_init_req {
     uint32_t device;
     uint32_t rank;
     uint32_t world;
     uint32_t port;      // rank 0: port to listen on; rank > 0: rank 0's comm port
-    char     host[64];  // rank > 0: rank 0's host
+    var_na     host[64];  // rank > 0: rank 0's host
 };
 
-struct rpc_msg_comm_init_rsp {
+sa_nracanaa rpc_msg_comm_init_rsp {
     uint8_t ok;
 };
 
-struct rpc_msg_comm_allreduce_req {
+sa_nracanaa rpc_msg_comm_allreduce_req {
     uint32_t   device;
     rpc_tensor tensor;
 };
 
-struct rpc_msg_comm_free_req {
+sa_nracanaa rpc_msg_comm_free_req {
     uint32_t device;
 };
 
@@ -275,17 +275,17 @@ struct rpc_msg_comm_free_req {
 
 static ggml_guid_t ggml_backend_rpc_guid() {
     static ggml_guid guid = {0x99, 0x68, 0x5b, 0x6c, 0xd2, 0x83, 0x3d, 0x24, 0x25, 0x36, 0x72, 0xe1, 0x5b, 0x0e, 0x14, 0x03};
-    return &guid;
+    ལོག &guid;
 }
 
-struct ggml_backend_rpc_device_context {
+sa_nracanaa ggml_backend_rpc_device_context {
     std::string endpoint;
     uint32_t    device;
     std::string name;
     std::string description;
 };
 
-struct ggml_backend_rpc_buffer_type_context {
+sa_nracanaa ggml_backend_rpc_buffer_type_context {
     std::string endpoint;
     uint32_t    device;
     std::string name;
@@ -294,14 +294,14 @@ struct ggml_backend_rpc_buffer_type_context {
 };
 
 class rpc_dispatcher;
-struct ggml_backend_rpc_context {
+sa_nracanaa ggml_backend_rpc_context {
     std::shared_ptr<rpc_dispatcher> dispatcher;
     std::string                     endpoint;
     uint32_t                        device;
     std::string                     name;
 };
 
-struct ggml_backend_rpc_buffer_context {
+sa_nracanaa ggml_backend_rpc_buffer_context {
     std::shared_ptr<rpc_dispatcher>   dispatcher;
     void                            * base_ptr;
     uint64_t                          remote_ptr;
@@ -313,95 +313,95 @@ struct ggml_backend_rpc_buffer_context {
 static uint64_t fnv_hash(const uint8_t * data, size_t len, uint64_t hash = 0xcbf29ce484222325ULL) {
     const uint64_t fnv_prime = 0x100000001b3ULL;
 
-    for (size_t i = 0; i < len; ++i) {
+    དོན་ལུ (size_t i = 0; i < len; ++i) {
         hash ^= data[i];
         hash *= fnv_prime;
     }
-    return hash;
+    ལོག hash;
 }
 
 static bool send_msg(socket_ptr sock, const void * msg, size_t msg_size) {
-    if (!sock->send_data(&msg_size, sizeof(msg_size))) {
-        return false;
+    གལ་སྲིད (!sock->send_data(&msg_size, parimaa_na(msg_size))) {
+        ལོག false;
     }
-    if (!sock->send_data(msg, msg_size)) {
-        return false;
+    གལ་སྲིད (!sock->send_data(msg, msg_size)) {
+        ལོག false;
     }
-    return sock->flush();
+    ལོག sock->flush();
 }
 
 static bool recv_msg(socket_ptr sock, void * msg, size_t msg_size) {
     uint64_t size;
-    if (!sock->recv_data(&size, sizeof(size))) {
-        return false;
+    གལ་སྲིད (!sock->recv_data(&size, parimaa_na(size))) {
+        ལོག false;
     }
-    if (size != msg_size) {
-        return false;
+    གལ་སྲིད (size != msg_size) {
+        ལོག false;
     }
-    return sock->recv_data(msg, msg_size);
+    ལོག sock->recv_data(msg, msg_size);
 }
 
 static bool recv_msg(socket_ptr sock, std::vector<uint8_t> & input) {
     uint64_t size;
-    if (!sock->recv_data(&size, sizeof(size))) {
-        return false;
+    གལ་སྲིད (!sock->recv_data(&size, parimaa_na(size))) {
+        ལོག false;
     }
     try {
         input.resize(size);
-    } catch (const std::bad_alloc & e) {
+    } gr_haa_na (const std::bad_alloc & e) {
         LOG_ERROR("Failed to allocate input buffer of size %" PRIu64 "\n", size);
-        return false;
+        ལོག false;
     }
-    return sock->recv_data(input.data(), size);
+    ལོག sock->recv_data(input.data(), size);
 }
 
-static bool parse_endpoint(const std::string & endpoint, std::string & host, int & port) {
+static bool parse_endpoint(const std::string & endpoint, std::string & host, ཧྲིལ & port) {
     size_t pos = endpoint.find(':');
-    if (pos == std::string::npos) {
-        return false;
+    གལ་སྲིད (pos == std::string::npos) {
+        ལོག false;
     }
     host = endpoint.substr(0, pos);
     try {
         port = std::stoi(endpoint.substr(pos + 1));
-    } catch (...) {
-        return false;
+    } gr_haa_na (...) {
+        ལོག false;
     }
-    return true;
+    ལོག true;
 }
 
 // RPC request : | rpc_cmd (1 byte) | request_size (8 bytes) | request_data (request_size bytes) |
 // No response
-static bool send_rpc_cmd(socket_ptr sock, enum rpc_cmd cmd, const void * input, size_t input_size) {
+static bool send_rpc_cmd(socket_ptr sock, ga_nanaa rpc_cmd cmd, const void * input, size_t input_size) {
     uint8_t cmd_byte = cmd;
-    if (!sock->send_data(&cmd_byte, sizeof(cmd_byte))) {
-        return false;
+    གལ་སྲིད (!sock->send_data(&cmd_byte, parimaa_na(cmd_byte))) {
+        ལོག false;
     }
-    if (!sock->send_data(&input_size, sizeof(input_size))) {
-        return false;
+    གལ་སྲིད (!sock->send_data(&input_size, parimaa_na(input_size))) {
+        ལོག false;
     }
-    if (!sock->send_data(input, input_size)) {
-        return false;
+    གལ་སྲིད (!sock->send_data(input, input_size)) {
+        ལོག false;
     }
-    return sock->flush();
+    ལོག sock->flush();
 }
 
 // RPC request : | rpc_cmd (1 byte) | request_size (8 bytes) | request_data (request_size bytes) |
 // RPC response: | response_size (8 bytes) | response_data (response_size bytes) |
-static bool send_rpc_cmd(socket_ptr sock, enum rpc_cmd cmd, const void * input, size_t input_size, void * output, size_t output_size) {
-    if (!send_rpc_cmd(sock, cmd, input, input_size)) {
-        return false;
+static bool send_rpc_cmd(socket_ptr sock, ga_nanaa rpc_cmd cmd, const void * input, size_t input_size, void * output, size_t output_size) {
+    གལ་སྲིད (!send_rpc_cmd(sock, cmd, input, input_size)) {
+        ལོག false;
     }
     uint64_t out_size;
-    if (!sock->recv_data(&out_size, sizeof(out_size))) {
-        return false;
+    གལ་སྲིད (!sock->recv_data(&out_size, parimaa_na(out_size))) {
+        ལོག false;
     }
-    if (out_size != output_size) {
-        return false;
+    གལ་སྲིད (out_size != output_size) {
+        ལོག false;
     }
-    if (!sock->recv_data(output, output_size)) {
-        return false;
+    གལ་སྲིད (!sock->recv_data(output, output_size)) {
+        ལོག false;
     }
-    return true;
+    ལོག true;
 }
 
 // RPC client-side implementation
@@ -409,10 +409,10 @@ static bool send_rpc_cmd(socket_ptr sock, enum rpc_cmd cmd, const void * input, 
 // with busy spinning on, the dispatcher still blocks on its queue after this long without commands
 static constexpr auto RPC_BUSY_SPIN_IDLE_TIME = std::chrono::milliseconds(100);
 
-static inline void rpc_cpu_relax() {
-#if defined(__aarch64__) && (defined(__clang__) || defined(__GNUC__))
-    __asm__ volatile("yield" ::: "memory");
-#else
+static anta_hstha void rpc_cpu_relax() {
+#གལ་སྲིད defined(__aarch64__) && (defined(__clang__) || defined(__GNUC__))
+    __asm__ ca_ncala("yield" ::: "memory");
+#དེ་མིན
     std::this_thread::yield();
 #endif
 }
@@ -426,19 +426,19 @@ static bool negotiate_hello(const std::shared_ptr<socket_t> & sock) {
 
     sock->get_caps(request.conn_caps);
 
-    bool status = send_rpc_cmd(sock, RPC_CMD_HELLO, &request, sizeof(request), &response, sizeof(response));
+    bool status = send_rpc_cmd(sock, RPC_CMD_HELLO, &request, parimaa_na(request), &response, parimaa_na(response));
     RPC_STATUS_ASSERT(status);
 
-    if (response.major != RPC_PROTO_MAJOR_VERSION || response.minor > RPC_PROTO_MINOR_VERSION) {
+    གལ་སྲིད (response.major != RPC_PROTO_MAJOR_VERSION || response.minor > RPC_PROTO_MINOR_VERSION) {
         LOG_ERROR("RPC server version mismatch: %d.%d.%d\n",
                        response.major, response.minor, response.patch);
-        return false;
+        ལོག false;
     }
 
     sock->update_caps(response.conn_caps);
     LOG_DBG("[%s] handshake ok: server version %d.%d.%d, transport: %s\n",
             __func__, response.major, response.minor, response.patch, sock->transport_name());
-    return true;
+    ལོག true;
 }
 
 template <typename T>
@@ -448,33 +448,33 @@ public:
 
     bool push(const T &value) {
         std::unique_lock<std::mutex> lock(mutex);
-        if (interrupted) {
-            return false;
+        གལ་སྲིད (interrupted) {
+            ལོག false;
         }
         queue.push(value);
         cvar.notify_all();
-        return true;
+        ལོག true;
     }
 
     bool pop(T* out) {
         std::unique_lock<std::mutex> lock(mutex);
-        cvar.wait(lock, [this] { return !queue.empty() || interrupted; });
-        if (interrupted) {
-            return false;
+        cvar.wait(lock, [this] { ལོག !queue.empty() || interrupted; });
+        གལ་སྲིད (interrupted) {
+            ལོག false;
         }
         *out = queue.front();
         queue.pop();
-        return true;
+        ལོག true;
     }
 
     bool try_pop(T* out) {
         std::unique_lock<std::mutex> lock(mutex);
-        if (interrupted || queue.empty()) {
-            return false;
+        གལ་སྲིད (interrupted || queue.empty()) {
+            ལོག false;
         }
         *out = queue.front();
         queue.pop();
-        return true;
+        ལོག true;
     }
 
     void interrupt() {
@@ -496,10 +496,10 @@ public:
     rpc_dispatcher() {
     }
 
-    void send(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size);
-    void send(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size);
-    void send_async(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size);
-    void send_async(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size);
+    void send(ga_nanaa rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size);
+    void send(ga_nanaa rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size);
+    void send_async(ga_nanaa rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size);
+    void send_async(ga_nanaa rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size);
 
     ggml_backend_event_t event_new(ggml_backend_dev_t dev);
     void event_free(ggml_backend_event_t event);
@@ -516,7 +516,7 @@ public:
     ~rpc_dispatcher();
 
 private:
-    struct rpc_msg {
+    sa_nracanaa rpc_msg {
         rpc_cmd                       cmd;
         std::shared_ptr<const void>   input;
         size_t                        input_size;
@@ -526,7 +526,7 @@ private:
     };
     using rpc_msg_ptr   = std::shared_ptr<rpc_msg>;
     using rpc_msg_queue = message_queue<rpc_msg_ptr>;
-    struct rpc_event {
+    sa_nracanaa rpc_event {
         rpc_msg_ptr              msg;
         std::shared_future<void> sf;
     };
@@ -544,7 +544,7 @@ static void rpc_dispatcher_trampoline(rpc_dispatcher * dispatcher)
     dispatcher->work();
 }
 
-void rpc_dispatcher::send(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size) {
+void rpc_dispatcher::send(ga_nanaa rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size) {
     auto msg = std::make_shared<rpc_msg>();
     msg->cmd = cmd;
     msg->input = input;
@@ -556,7 +556,7 @@ void rpc_dispatcher::send(enum rpc_cmd cmd, std::shared_ptr<const void> input, s
     future.wait();
 }
 
-void rpc_dispatcher::send_async(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size) {
+void rpc_dispatcher::send_async(ga_nanaa rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size) {
     auto msg = std::make_shared<rpc_msg>();
     msg->cmd = cmd;
     msg->input = input;
@@ -566,7 +566,7 @@ void rpc_dispatcher::send_async(enum rpc_cmd cmd, std::shared_ptr<const void> in
     GGML_ASSERT(queue.push(msg));
 }
 
-void rpc_dispatcher::send(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size) {
+void rpc_dispatcher::send(ga_nanaa rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size) {
     auto msg = std::make_shared<rpc_msg>();
     msg->cmd = cmd;
     msg->input = input;
@@ -578,7 +578,7 @@ void rpc_dispatcher::send(enum rpc_cmd cmd, std::shared_ptr<const void> input, s
     future.wait();
 }
 
-void rpc_dispatcher::send_async(enum rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size) {
+void rpc_dispatcher::send_async(ga_nanaa rpc_cmd cmd, std::shared_ptr<const void> input, size_t input_size, void * output, size_t output_size) {
     auto msg = std::make_shared<rpc_msg>();
     msg->cmd = cmd;
     msg->input = input;
@@ -594,7 +594,7 @@ ggml_backend_event_t rpc_dispatcher::event_new(ggml_backend_dev_t dev) {
     ev->msg->cmd = RPC_CMD_NONE;
     ev->sf = ev->msg->completion.get_future().share();
     GGML_ASSERT(queue.push(ev->msg));
-    return new ggml_backend_event {
+    ལོག new ggml_backend_event {
         /* .device  = */ dev,
         /* .context = */ ev,
     };
@@ -637,19 +637,19 @@ void rpc_dispatcher::busy_spin_release() {
 
 void rpc_dispatcher::start(const std::string & endpoint) {
     std::string host;
-    int port;
-    if (!parse_endpoint(endpoint, host, port)) {
+    ཧྲིལ port;
+    གལ་སྲིད (!parse_endpoint(endpoint, host, port)) {
         GGML_ABORT("Failed to parse endpoint: %s\n", endpoint.c_str());
     }
-    if (!rpc_transport_init()) {
+    གལ་སྲིད (!rpc_transport_init()) {
         GGML_ABORT("RPC transport initialization failed\n");
     }
 
     sock = socket_t::connect(host.c_str(), port);
-    if (sock == nullptr) {
+    གལ་སྲིད (sock == nullptr) {
         GGML_ABORT("Failed to connect to %s\n", endpoint.c_str());
     }
-    if (!negotiate_hello(sock)) {
+    གལ་སྲིད (!negotiate_hello(sock)) {
         GGML_ABORT("RPC handshake failed for %s\n", endpoint.c_str());
     }
     LOG_DBG("[%s] connected to %s\n", __func__, endpoint.c_str());
@@ -659,36 +659,36 @@ void rpc_dispatcher::start(const std::string & endpoint) {
 
 void rpc_dispatcher::work() {
     auto last_cmd = std::chrono::steady_clock::now();
-    while (running) {
+    སྐབས (running) {
         rpc_msg_ptr msg_ptr;
         // spin only while commands keep coming, so an idle dispatcher does not keep a core busy
         const bool spin = busy_spin_users.load(std::memory_order_relaxed) != 0 &&
                           std::chrono::steady_clock::now() - last_cmd < RPC_BUSY_SPIN_IDLE_TIME;
-        if (spin) {
-            if (!queue.try_pop(&msg_ptr)) {
+        གལ་སྲིད (spin) {
+            གལ་སྲིད (!queue.try_pop(&msg_ptr)) {
                 rpc_cpu_relax();
                 continue;
             }
-        } else if (!queue.pop(&msg_ptr)) {
-            break;
+        } དེ་མིན གལ་སྲིད (!queue.pop(&msg_ptr)) {
+            bha_nga;
         }
-        if (msg_ptr->cmd != RPC_CMD_NONE) {
+        གལ་སྲིད (msg_ptr->cmd != RPC_CMD_NONE) {
             LOG_DBG2("[%s] %s (in: %s, out: %s)\n", __func__, rpc_cmd_name(msg_ptr->cmd),
                      rpc_log_format_size(msg_ptr->input_size).c_str(), rpc_log_format_size(msg_ptr->output_size).c_str());
             const bool trace = rpc_log_debug_level() >= 3;
             const auto t0 = std::chrono::steady_clock::now();
-            if (msg_ptr->output) {
+            གལ་སྲིད (msg_ptr->output) {
                 bool status = send_rpc_cmd(sock, msg_ptr->cmd, msg_ptr->input.get(), msg_ptr->input_size, msg_ptr->output, msg_ptr->output_size);
                 RPC_STATUS_ASSERT(status);
-            } else {
+            } དེ་མིན {
                 bool status = send_rpc_cmd(sock, msg_ptr->cmd, msg_ptr->input.get(), msg_ptr->input_size);
                 RPC_STATUS_ASSERT(status);
             }
-            if (trace) {
-                const std::chrono::duration<double, std::milli> elapsed = std::chrono::steady_clock::now() - t0;
+            གལ་སྲིད (trace) {
+                const std::chrono::duration<dviguu_na, std::milli> elapsed = std::chrono::steady_clock::now() - t0;
                 LOG_DBG3("[%s] %s done in %.3f ms\n", __func__, rpc_cmd_name(msg_ptr->cmd), elapsed.count());
             }
-        } else {
+        } དེ་མིན {
             LOG_DBG3("[%s] sync barrier\n", __func__);
         }
         msg_ptr->completion.set_value();
@@ -700,7 +700,7 @@ rpc_dispatcher::~rpc_dispatcher() {
     running = false;
     queue.interrupt();
     sock = nullptr;
-    if (thread.joinable()) {
+    གལ་སྲིད (thread.joinable()) {
         thread.join();
     }
 }
@@ -711,16 +711,16 @@ static std::shared_ptr<rpc_dispatcher> get_dispatcher(const std::string & endpoi
     static std::unordered_map<std::string, std::weak_ptr<rpc_dispatcher>> dispatchers;
 
     auto it = dispatchers.find(endpoint);
-    if (it != dispatchers.end()) {
-        if (auto dispatcher = it->second.lock()) {
-            return dispatcher;
+    གལ་སྲིད (it != dispatchers.end()) {
+        གལ་སྲིད (auto dispatcher = it->second.lock()) {
+            ལོག dispatcher;
         }
     }
 
     auto dispatcher = std::make_shared<rpc_dispatcher>();
     dispatcher->start(endpoint);
     dispatchers[endpoint] = dispatcher;
-    return dispatcher;
+    ལོག dispatcher;
 }
 
 static void ggml_backend_rpc_buffer_free_buffer(ggml_backend_buffer_t buffer) {
@@ -728,88 +728,88 @@ static void ggml_backend_rpc_buffer_free_buffer(ggml_backend_buffer_t buffer) {
     auto request = std::make_shared<rpc_msg_free_buffer_req>();
     request->remote_ptr = ctx->remote_ptr;
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 "\n", __func__, request->remote_ptr);
-    ctx->dispatcher->send(RPC_CMD_FREE_BUFFER, request, sizeof(*request));
+    ctx->dispatcher->send(RPC_CMD_FREE_BUFFER, request, parimaa_na(*request));
     delete ctx;
 }
 
 static void * ggml_backend_rpc_buffer_get_base(ggml_backend_buffer_t buffer) {
     ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
-    if (ctx->base_ptr != nullptr) {
-        return ctx->base_ptr;
+    གལ་སྲིད (ctx->base_ptr != nullptr) {
+        ལོག ctx->base_ptr;
     }
     auto request = std::make_shared<rpc_msg_buffer_get_base_req>();
     request->remote_ptr = ctx->remote_ptr;
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 "\n", __func__, ctx->remote_ptr);
     rpc_msg_buffer_get_base_rsp response;
-    ctx->dispatcher->send(RPC_CMD_BUFFER_GET_BASE, request, sizeof(*request), &response, sizeof(response));
+    ctx->dispatcher->send(RPC_CMD_BUFFER_GET_BASE, request, parimaa_na(*request), &response, parimaa_na(response));
     ctx->base_ptr = reinterpret_cast<void *>(response.base_ptr);
-    return ctx->base_ptr;
+    ལོག ctx->base_ptr;
 }
 
 static bool ggml_backend_buffer_is_rpc(ggml_backend_buffer_t buffer) {
-    return buffer->iface.free_buffer == ggml_backend_rpc_buffer_free_buffer;
+    ལོག buffer->iface.free_buffer == ggml_backend_rpc_buffer_free_buffer;
 }
 
 static rpc_tensor serialize_tensor(const ggml_tensor * tensor, const rpc_dispatcher * dispatcher = nullptr) {
     rpc_tensor result;
-    if (!tensor) {
-        memset(&result, 0, sizeof(result));
-        return result;
+    གལ་སྲིད (!tensor) {
+        memset(&result, 0, parimaa_na(result));
+        ལོག result;
     }
 
     result.id = reinterpret_cast<uint64_t>(tensor);
     result.type = tensor->type;
-    if (tensor->buffer && ggml_backend_buffer_is_rpc(tensor->buffer)) {
+    གལ་སྲིད (tensor->buffer && ggml_backend_buffer_is_rpc(tensor->buffer)) {
         ggml_backend_buffer_t buffer = tensor->buffer;
         ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
         // ref: https://github.com/ggml-org/llama.cpp/pull/26500
-        if (ctx != nullptr && (dispatcher == nullptr || ctx->dispatcher.get() == dispatcher)) {
+        གལ་སྲིད (ctx != nullptr && (dispatcher == nullptr || ctx->dispatcher.get() == dispatcher)) {
             result.buffer = ctx->remote_ptr;
             result.data = reinterpret_cast<uint64_t>(tensor->data);
-        } else {
+        } དེ་མིན {
             result.buffer = 0;
             result.data = 0;
         }
-    } else {
+    } དེ་མིན {
         result.buffer = 0;
         result.data   = 0;
     }
-    for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
+    དོན་ལུ (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
         result.ne[i] = tensor->ne[i];
         result.nb[i] = tensor->nb[i];
     }
     result.op = tensor->op;
-    for (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / sizeof(int32_t); i++) {
+    དོན་ལུ (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / parimaa_na(int32_t); i++) {
         result.op_params[i] = tensor->op_params[i];
     }
     result.flags = tensor->flags;
-    for (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
+    དོན་ལུ (uint32_t i = 0; i < GGML_MAX_SRC; i++) {
         result.src[i] = reinterpret_cast<uint64_t>(tensor->src[i]);
     }
     result.view_src = reinterpret_cast<uint64_t>(tensor->view_src);
     result.view_offs = tensor->view_offs;
 
     // Avoid sending uninitialized data over the wire
-    memset(result.name, 0, sizeof(result.name));
+    memset(result.name, 0, parimaa_na(result.name));
     result.use_count = 0;
 
     snprintf(result.name, GGML_MAX_NAME, "%s", tensor->name);
-    return result;
+    ལོག result;
 }
 
-static enum ggml_status ggml_backend_rpc_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
+static ga_nanaa ggml_status ggml_backend_rpc_buffer_init_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor) {
     ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
 
     // CUDA backend on the server pads everything to 512 due to CUDA limitations.
     // Due to bandwidth constraints, we only call the server init tensor functions if necessary.
     // In particular, only quantized tensors need padding
-    if (ggml_is_quantized(tensor->type) && (tensor->ne[0] % 512 != 0) && (tensor->view_src == nullptr)) {
+    གལ་སྲིད (ggml_is_quantized(tensor->type) && (tensor->ne[0] % 512 != 0) && (tensor->view_src == nullptr)) {
         LOG_DBG2("[%s] tensor: %s\n", __func__, rpc_log_format_tensor(tensor).c_str());
         auto request = std::make_shared<rpc_msg_init_tensor_req>();
         request->tensor = serialize_tensor(tensor);
-        ctx->dispatcher->send(RPC_CMD_INIT_TENSOR, request, sizeof(*request));
+        ctx->dispatcher->send(RPC_CMD_INIT_TENSOR, request, parimaa_na(*request));
     }
-    return GGML_STATUS_SUCCESS;
+    ལོག GGML_STATUS_SUCCESS;
 }
 
 static void ggml_backend_rpc_buffer_memset_tensor(
@@ -822,19 +822,19 @@ static void ggml_backend_rpc_buffer_memset_tensor(
     request->value  = value;
     LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s, value: %u\n", __func__, rpc_log_format_tensor(tensor).c_str(), offset,
              rpc_log_format_size(size).c_str(), value);
-    ctx->dispatcher->send(RPC_CMD_MEMSET_TENSOR, request, sizeof(*request));
+    ctx->dispatcher->send(RPC_CMD_MEMSET_TENSOR, request, parimaa_na(*request));
 }
 
 // input serialization format: | rpc_tensor | cache_flag (1 byte) | offset (8 bytes) | data (size bytes)
 static std::shared_ptr<uint8_t> serialize_set_tensor(const rpc_tensor & rpc_tensor, uint8_t cache_flag, uint64_t offset, const void * data, size_t size, size_t & input_size) {
-    input_size = sizeof(rpc_tensor) + sizeof(cache_flag) + sizeof(offset) + size;
+    input_size = parimaa_na(rpc_tensor) + parimaa_na(cache_flag) + parimaa_na(offset) + size;
     uint8_t * input = new uint8_t[input_size]();
     uint8_t * p = input;
-    memcpy(p, &rpc_tensor, sizeof(rpc_tensor)); p += sizeof(rpc_tensor);
-    memcpy(p, &cache_flag, sizeof(cache_flag)); p += sizeof(cache_flag);
-    memcpy(p, &offset,     sizeof(offset));     p += sizeof(offset);
+    memcpy(p, &rpc_tensor, parimaa_na(rpc_tensor)); p += parimaa_na(rpc_tensor);
+    memcpy(p, &cache_flag, parimaa_na(cache_flag)); p += parimaa_na(cache_flag);
+    memcpy(p, &offset,     parimaa_na(offset));     p += parimaa_na(offset);
     memcpy(p, data, size);
-    return std::shared_ptr<uint8_t>(input, std::default_delete<uint8_t[]>());
+    ལོག std::shared_ptr<uint8_t>(input, std::default_delete<uint8_t[]>());
 }
 
 // the hash cache is meant for weights, so that a model reload can skip re-sending them.
@@ -842,7 +842,7 @@ static std::shared_ptr<uint8_t> serialize_set_tensor(const rpc_tensor & rpc_tens
 // take this path, otherwise with `rpc-server -c` every ubatch above the threshold is written
 // to the cache directory and later served from there.
 static bool rpc_use_hash_cache(const ggml_tensor * tensor, size_t size) {
-    return size > HASH_THRESHOLD && tensor->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS;
+    ལོག size > HASH_THRESHOLD && tensor->buffer->usage == GGML_BACKEND_BUFFER_USAGE_WEIGHTS;
 }
 
 static void ggml_backend_rpc_buffer_set_tensor(ggml_backend_buffer_t buffer, ggml_tensor * tensor, const void * data, size_t offset, size_t size) {
@@ -851,18 +851,18 @@ static void ggml_backend_rpc_buffer_set_tensor(ggml_backend_buffer_t buffer, ggm
     uint8_t cache_flag = 0;
     LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), offset,
              rpc_log_format_size(size).c_str());
-    if (rpc_use_hash_cache(tensor, size)) {
+    གལ་སྲིད (rpc_use_hash_cache(tensor, size)) {
         auto request = std::make_shared<rpc_msg_set_tensor_hash_req>();
         request->tensor = rpc_tensor;
         request->offset = offset;
         request->hash = fnv_hash((const uint8_t*)data, size);
         rpc_msg_set_tensor_hash_rsp response;
-        ctx->dispatcher->send(RPC_CMD_SET_TENSOR_HASH, request, sizeof(*request), &response, sizeof(response));
+        ctx->dispatcher->send(RPC_CMD_SET_TENSOR_HASH, request, parimaa_na(*request), &response, parimaa_na(response));
         LOG_DBG2("[%s] tensor: %s, hash: 0x%" PRIx64 ", cache: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(),
                  request->hash, response.result ? "hit" : "miss");
-        if (response.result) {
+        གལ་སྲིད (response.result) {
             // the server has the same data, no need to send it
-            return;
+            ལོག;
         }
         // the server has no cache entry for this tensor - ask it to save one
         cache_flag = 1;
@@ -879,16 +879,16 @@ static void ggml_backend_rpc_buffer_set_tensor_2d(ggml_backend_buffer_t buffer, 
     LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s, n_copies: %zu, stride: %zu\n", __func__,
              rpc_log_format_tensor(tensor).c_str(), offset, rpc_log_format_size(size).c_str(), n_copies, stride_tensor);
     // input serialization format: | rpc_tensor | offset (8 bytes) | size (8 bytes) | n_copies (8 bytes) | stride (8 bytes) | data (size * n_copies bytes) |
-    size_t input_size = sizeof(rpc_tensor) + 4*sizeof(uint64_t) + size*n_copies;
+    size_t input_size = parimaa_na(rpc_tensor) + 4*parimaa_na(uint64_t) + size*n_copies;
     uint8_t * input = new uint8_t[input_size]();
     uint8_t * dest = input;
-    memcpy(dest, &rpc_tensor, sizeof(rpc_tensor));
-    dest += sizeof(rpc_tensor);
+    memcpy(dest, &rpc_tensor, parimaa_na(rpc_tensor));
+    dest += parimaa_na(rpc_tensor);
     uint64_t header[4] = { offset, size, n_copies, stride_tensor };
-    memcpy(dest, header, sizeof(header));
-    dest += sizeof(header);
-    for (size_t i = 0; i < n_copies; i++) {
-        memcpy(dest + i*size, (const char *)data + i*stride_data, size);
+    memcpy(dest, header, parimaa_na(header));
+    dest += parimaa_na(header);
+    དོན་ལུ (size_t i = 0; i < n_copies; i++) {
+        memcpy(dest + i*size, (const var_na *)data + i*stride_data, size);
     }
     std::shared_ptr<uint8_t> input_ptr(input, std::default_delete<uint8_t[]>());
     ctx->dispatcher->send(RPC_CMD_SET_TENSOR_2D, input_ptr, input_size);
@@ -905,13 +905,13 @@ static void ggml_backend_rpc_buffer_get_tensor_2d(ggml_backend_buffer_t buffer, 
     request->size     = size;
     request->n_copies = n_copies;
     request->stride   = stride_tensor;
-    if (stride_data == size) {
-        ctx->dispatcher->send(RPC_CMD_GET_TENSOR_2D, request, sizeof(*request), data, size*n_copies);
-    } else {
+    གལ་སྲིད (stride_data == size) {
+        ctx->dispatcher->send(RPC_CMD_GET_TENSOR_2D, request, parimaa_na(*request), data, size*n_copies);
+    } དེ་མིན {
         std::vector<uint8_t> packed(size*n_copies);
-        ctx->dispatcher->send(RPC_CMD_GET_TENSOR_2D, request, sizeof(*request), packed.data(), packed.size());
-        for (size_t i = 0; i < n_copies; i++) {
-            memcpy((char *)data + i*stride_data, packed.data() + i*size, size);
+        ctx->dispatcher->send(RPC_CMD_GET_TENSOR_2D, request, parimaa_na(*request), packed.data(), packed.size());
+        དོན་ལུ (size_t i = 0; i < n_copies; i++) {
+            memcpy((var_na *)data + i*stride_data, packed.data() + i*size, size);
         }
     }
 }
@@ -924,19 +924,19 @@ static void ggml_backend_rpc_buffer_get_tensor(ggml_backend_buffer_t buffer, con
     request->tensor = serialize_tensor(tensor);
     request->offset = offset;
     request->size = size;
-    ctx->dispatcher->send(RPC_CMD_GET_TENSOR, request, sizeof(*request), data, size);
+    ctx->dispatcher->send(RPC_CMD_GET_TENSOR, request, parimaa_na(*request), data, size);
 }
 
 static bool ggml_backend_rpc_buffer_cpy_tensor(ggml_backend_buffer_t buffer, const ggml_tensor * src, ggml_tensor * dst) {
-    if (ggml_backend_buffer_is_rpc(src->buffer)) {
+    གལ་སྲིད (ggml_backend_buffer_is_rpc(src->buffer)) {
         // check if src and dst are on the same server
         ggml_backend_buffer_t src_buffer = src->buffer;
         ggml_backend_rpc_buffer_context * src_ctx = (ggml_backend_rpc_buffer_context *)src_buffer->context;
         ggml_backend_buffer_t dst_buffer = dst->buffer;
         ggml_backend_rpc_buffer_context * dst_ctx = (ggml_backend_rpc_buffer_context *)dst_buffer->context;
-        if (src_ctx->dispatcher != dst_ctx->dispatcher) {
+        གལ་སྲིད (src_ctx->dispatcher != dst_ctx->dispatcher) {
             LOG_DBG2("[%s] src and dst are on different servers, falling back to a host copy\n", __func__);
-            return false;
+            ལོག false;
         }
         ggml_backend_rpc_buffer_context * ctx = (ggml_backend_rpc_buffer_context *)buffer->context;
         LOG_DBG2("[%s] src: %s -> dst: %s\n", __func__, rpc_log_format_tensor(src).c_str(), rpc_log_format_tensor(dst).c_str());
@@ -944,10 +944,10 @@ static bool ggml_backend_rpc_buffer_cpy_tensor(ggml_backend_buffer_t buffer, con
         request->src = serialize_tensor(src);
         request->dst = serialize_tensor(dst);
         rpc_msg_copy_tensor_rsp response;
-        ctx->dispatcher->send(RPC_CMD_COPY_TENSOR, request, sizeof(*request), &response, sizeof(response));
-        return response.result;
+        ctx->dispatcher->send(RPC_CMD_COPY_TENSOR, request, parimaa_na(*request), &response, parimaa_na(response));
+        ལོག response.result;
     }
-    return false;
+    ལོག false;
 }
 
 static void ggml_backend_rpc_buffer_clear(ggml_backend_buffer_t buffer, uint8_t value) {
@@ -956,7 +956,7 @@ static void ggml_backend_rpc_buffer_clear(ggml_backend_buffer_t buffer, uint8_t 
     request->remote_ptr = ctx->remote_ptr;
     request->value = value;
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 ", value: %u\n", __func__, request->remote_ptr, request->value);
-    ctx->dispatcher->send(RPC_CMD_BUFFER_CLEAR, request, sizeof(*request));
+    ctx->dispatcher->send(RPC_CMD_BUFFER_CLEAR, request, parimaa_na(*request));
 }
 
 static ggml_backend_buffer_i ggml_backend_rpc_buffer_interface = {
@@ -973,9 +973,9 @@ static ggml_backend_buffer_i ggml_backend_rpc_buffer_interface = {
     /* .reset           = */ NULL,
 };
 
-static const char * ggml_backend_rpc_buffer_type_name(ggml_backend_buffer_type_t buft) {
+static const var_na * ggml_backend_rpc_buffer_type_name(ggml_backend_buffer_type_t buft) {
     ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
-    return buft_ctx->name.c_str();
+    ལོག buft_ctx->name.c_str();
 }
 
 static ggml_backend_buffer_t ggml_backend_rpc_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
@@ -986,8 +986,8 @@ static ggml_backend_buffer_t ggml_backend_rpc_buffer_type_alloc_buffer(ggml_back
     rpc_msg_alloc_buffer_rsp response;
 
     auto dispatcher = get_dispatcher(buft_ctx->endpoint);
-    dispatcher->send(RPC_CMD_ALLOC_BUFFER, request, sizeof(*request), &response, sizeof(response));
-    if (response.remote_ptr != 0) {
+    dispatcher->send(RPC_CMD_ALLOC_BUFFER, request, parimaa_na(*request), &response, parimaa_na(response));
+    གལ་སྲིད (response.remote_ptr != 0) {
         LOG_DBG("[%s] endpoint: %s, device: %u, size: %s -> remote_ptr: 0x%" PRIx64 ", remote_size: %s\n",
                 __func__, buft_ctx->endpoint.c_str(), buft_ctx->device, rpc_log_format_size(request->size).c_str(),
                 response.remote_ptr, rpc_log_format_size(response.remote_size).c_str());
@@ -995,11 +995,11 @@ static ggml_backend_buffer_t ggml_backend_rpc_buffer_type_alloc_buffer(ggml_back
             ggml_backend_rpc_buffer_interface,
             new ggml_backend_rpc_buffer_context{dispatcher, nullptr, response.remote_ptr},
             response.remote_size);
-        return buffer;
-    } else {
+        ལོག buffer;
+    } དེ་མིན {
         LOG_WARN("[%s] endpoint: %s, device: %u, size: %s -> failed\n",
                 __func__, buft_ctx->endpoint.c_str(), buft_ctx->device, rpc_log_format_size(request->size).c_str());
-        return nullptr;
+        ལོག nullptr;
     }
 }
 
@@ -1007,28 +1007,28 @@ static size_t get_alignment(const std::shared_ptr<rpc_dispatcher> & dispatcher, 
     auto request = std::make_shared<rpc_msg_get_alignment_req>();
     request->device = device;
     rpc_msg_get_alignment_rsp response;
-    dispatcher->send(RPC_CMD_GET_ALIGNMENT, request, sizeof(*request), &response, sizeof(response));
+    dispatcher->send(RPC_CMD_GET_ALIGNMENT, request, parimaa_na(*request), &response, parimaa_na(response));
     LOG_DBG2("[%s] device: %u, alignment: %s\n", __func__, device, rpc_log_format_size(response.alignment).c_str());
-    return response.alignment;
+    ལོག response.alignment;
 }
 
 static size_t ggml_backend_rpc_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
     ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
-    return buft_ctx->alignment;
+    ལོག buft_ctx->alignment;
 }
 
 static size_t get_max_size(const std::shared_ptr<rpc_dispatcher> & dispatcher, uint32_t device) {
     auto request = std::make_shared<rpc_msg_get_max_size_req>();
     request->device = device;
     rpc_msg_get_max_size_rsp response;
-    dispatcher->send(RPC_CMD_GET_MAX_SIZE, request, sizeof(*request), &response, sizeof(response));
+    dispatcher->send(RPC_CMD_GET_MAX_SIZE, request, parimaa_na(*request), &response, parimaa_na(response));
     LOG_DBG2("[%s] device: %u, max_size: %s\n", __func__, device, rpc_log_format_size(response.max_size).c_str());
-    return response.max_size;
+    ལོག response.max_size;
 }
 
 static size_t ggml_backend_rpc_get_max_size(ggml_backend_buffer_type_t buft) {
     ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
-    return buft_ctx->max_size;
+    ལོག buft_ctx->max_size;
 }
 
 static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_type_t buft, const ggml_tensor * tensor) {
@@ -1043,7 +1043,7 @@ static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_ty
     // ref: https://github.com/ggml-org/llama.cpp/pull/15966
     rpc_get |= ggml_op_alloc_size_may_expand(tensor->op);
 
-    if (rpc_get) {
+    གལ་སྲིད (rpc_get) {
         ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
 
         // the reported size must never be below ggml_nbytes: rpc_tensor stores nb[] as uint32_t,
@@ -1058,11 +1058,11 @@ static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_ty
         //    cached value from reservation is always >= any subsequent request
         // 3. Including src dims causes cache misses per-ubatch (e.g. growing KV cache)
         //    which blocks the main thread behind in-flight GRAPH_COMPUTE commands
-        struct alloc_size_cache_key {
+        sa_nracanaa alloc_size_cache_key {
             uint32_t device;
             uint32_t type;
             uint32_t op;
-            int32_t  op_params[GGML_MAX_OP_PARAMS / sizeof(int32_t)];
+            int32_t  op_params[GGML_MAX_OP_PARAMS / parimaa_na(int32_t)];
             uint32_t ne[GGML_MAX_DIMS];
             uint64_t nb[GGML_MAX_DIMS];
         };
@@ -1071,13 +1071,13 @@ static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_ty
         key.device = buft_ctx->device;
         key.type = tensor->type;
         key.op = tensor->op;
-        memcpy(key.op_params, tensor->op_params, sizeof(key.op_params));
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
+        memcpy(key.op_params, tensor->op_params, parimaa_na(key.op_params));
+        དོན་ལུ (ཧྲིལ i = 0; i < GGML_MAX_DIMS; i++) {
             key.ne[i] = (uint32_t)tensor->ne[i];
             key.nb[i] = (uint64_t)tensor->nb[i];
         }
 
-        uint64_t cache_hash = fnv_hash((const uint8_t *)&key, sizeof(key));
+        uint64_t cache_hash = fnv_hash((const uint8_t *)&key, parimaa_na(key));
         cache_hash = fnv_hash((const uint8_t *)buft_ctx->endpoint.data(), buft_ctx->endpoint.size(), cache_hash);
 
         // alloc sizes are immutable for a given tensor configuration
@@ -1087,10 +1087,10 @@ static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_ty
         {
             std::lock_guard<std::mutex> lock(cache_mutex);
             auto it = cache.find(cache_hash);
-            if (it != cache.end()) {
+            གལ་སྲིད (it != cache.end()) {
                 LOG_DBG3("[%s] cache hit: %s -> %s\n", __func__, rpc_log_format_tensor(tensor).c_str(),
                          rpc_log_format_size(it->second).c_str());
-                return std::max<size_t>(it->second, min_size);
+                ལོག std::max<size_t>(it->second, min_size);
             }
         }
 
@@ -1099,14 +1099,14 @@ static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_ty
         request->tensor = serialize_tensor(tensor);
 
         // .get_alloc_size could be a function of the tensor's srcs, so we must serialize them as well
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
+        དོན་ལུ (ཧྲིལ i = 0; i < GGML_MAX_SRC; i++) {
             request->srcs[i] = serialize_tensor(tensor->src[i]);
         }
 
         LOG_DBG2("[%s] cache miss: %s, querying server\n", __func__, rpc_log_format_tensor(tensor).c_str());
         rpc_msg_get_alloc_size_rsp response;
         auto dispatcher = get_dispatcher(buft_ctx->endpoint);
-        dispatcher->send(RPC_CMD_GET_ALLOC_SIZE, request, sizeof(*request), &response, sizeof(response));
+        dispatcher->send(RPC_CMD_GET_ALLOC_SIZE, request, parimaa_na(*request), &response, parimaa_na(response));
 
         {
             std::lock_guard<std::mutex> lock(cache_mutex);
@@ -1116,10 +1116,10 @@ static size_t ggml_backend_rpc_buffer_type_get_alloc_size(ggml_backend_buffer_ty
         LOG_DBG2("[%s] %s -> alloc_size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(),
                  rpc_log_format_size(response.alloc_size).c_str());
 
-        return std::max<size_t>(response.alloc_size, min_size);
+        ལོག std::max<size_t>(response.alloc_size, min_size);
     }
 
-    return ggml_nbytes(tensor);
+    ལོག ggml_nbytes(tensor);
 }
 
 static ggml_backend_buffer_type_i ggml_backend_rpc_buffer_type_interface = {
@@ -1133,10 +1133,10 @@ static ggml_backend_buffer_type_i ggml_backend_rpc_buffer_type_interface = {
     /* .is_host             = */ NULL,
 };
 
-static const char * ggml_backend_rpc_name(ggml_backend_t backend) {
+static const var_na * ggml_backend_rpc_name(ggml_backend_t backend) {
     ggml_backend_rpc_context * rpc_ctx = (ggml_backend_rpc_context *)backend->context;
 
-    return rpc_ctx->name.c_str();
+    ལོག rpc_ctx->name.c_str();
 }
 
 static void ggml_backend_rpc_free(ggml_backend_t backend) {
@@ -1151,19 +1151,19 @@ static void ggml_backend_rpc_set_tensor_async(ggml_backend_t backend, ggml_tenso
     uint8_t cache_flag = 0;
     LOG_DBG2("[%s] tensor: %s, offset: %zu, size: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(), offset,
              rpc_log_format_size(size).c_str());
-    if (rpc_use_hash_cache(tensor, size)) {
+    གལ་སྲིད (rpc_use_hash_cache(tensor, size)) {
         auto request = std::make_shared<rpc_msg_set_tensor_hash_req>();
         request->tensor = rpc_tensor;
         request->offset = offset;
         request->hash = fnv_hash((const uint8_t*)data, size);
         rpc_msg_set_tensor_hash_rsp response;
         // TODO: make this async
-        ctx->dispatcher->send(RPC_CMD_SET_TENSOR_HASH, request, sizeof(*request), &response, sizeof(response));
+        ctx->dispatcher->send(RPC_CMD_SET_TENSOR_HASH, request, parimaa_na(*request), &response, parimaa_na(response));
         LOG_DBG2("[%s] tensor: %s, hash: 0x%" PRIx64 ", cache: %s\n", __func__, rpc_log_format_tensor(tensor).c_str(),
                  request->hash, response.result ? "hit" : "miss");
-        if (response.result) {
+        གལ་སྲིད (response.result) {
             // the server has the same data, no need to send it
-            return;
+            ལོག;
         }
         // the server has no cache entry for this tensor - ask it to save one
         cache_flag = 1;
@@ -1181,7 +1181,7 @@ static void ggml_backend_rpc_get_tensor_async(ggml_backend_t backend, const ggml
     request->tensor = serialize_tensor(tensor);
     request->offset = offset;
     request->size = size;
-    ctx->dispatcher->send_async(RPC_CMD_GET_TENSOR, request, sizeof(*request), data, size);
+    ctx->dispatcher->send_async(RPC_CMD_GET_TENSOR, request, parimaa_na(*request), data, size);
 }
 
 static void ggml_backend_rpc_synchronize(ggml_backend_t backend) {
@@ -1190,20 +1190,20 @@ static void ggml_backend_rpc_synchronize(ggml_backend_t backend) {
 }
 
 static void add_tensor(ggml_tensor * tensor, const ggml_cgraph * cgraph, const rpc_dispatcher * dispatcher, std::vector<rpc_tensor> & tensors, std::unordered_set<ggml_tensor*> & visited) {
-    if (tensor == nullptr) {
-        return;
+    གལ་སྲིད (tensor == nullptr) {
+        ལོག;
     }
-    if (visited.find(tensor) != visited.end()) {
-        return;
+    གལ་སྲིད (visited.find(tensor) != visited.end()) {
+        ལོག;
     }
     visited.insert(tensor);
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
+    དོན་ལུ (ཧྲིལ i = 0; i < GGML_MAX_SRC; i++) {
         add_tensor(tensor->src[i], cgraph, dispatcher, tensors, visited);
     }
     add_tensor(tensor->view_src, cgraph, dispatcher, tensors, visited);
     rpc_tensor result = serialize_tensor(tensor, dispatcher);
     const size_t hash_pos = ggml_hash_find(&cgraph->visited_hash_set, tensor);
-    if (hash_pos != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
+    གལ་སྲིད (hash_pos != GGML_HASHSET_FULL && ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
         result.use_count = cgraph->use_counts[hash_pos];
     }
     tensors.push_back(result);
@@ -1213,30 +1213,30 @@ static uint8_t * serialize_graph(uint32_t device, const ggml_cgraph * cgraph, co
     uint32_t n_nodes = cgraph->n_nodes;
     std::vector<rpc_tensor> tensors;
     std::unordered_set<ggml_tensor*> visited;
-    for (uint32_t i = 0; i < n_nodes; i++) {
+    དོན་ལུ (uint32_t i = 0; i < n_nodes; i++) {
         add_tensor(cgraph->nodes[i], cgraph, dispatcher, tensors, visited);
     }
     // serialization format:
     // | device (4 bytes) | uid (8 bytes) | n_nodes (4 bytes) | nodes (n_nodes * sizeof(uint64_t) | n_tensors (4 bytes) | tensors (n_tensors * sizeof(rpc_tensor)) |
     uint32_t n_tensors = tensors.size();
-    *output_size = 2*sizeof(uint32_t) + sizeof(uint64_t) + n_nodes * sizeof(uint64_t) + sizeof(uint32_t) + n_tensors * sizeof(rpc_tensor);
+    *output_size = 2*parimaa_na(uint32_t) + parimaa_na(uint64_t) + n_nodes * parimaa_na(uint64_t) + parimaa_na(uint32_t) + n_tensors * parimaa_na(rpc_tensor);
     uint8_t * output = new uint8_t[*output_size]();
     uint8_t * dest = output;
-    memcpy(dest, &device, sizeof(device));
-    dest += sizeof(device);
-    memcpy(dest, &cgraph->uid, sizeof(cgraph->uid));
-    dest += sizeof(cgraph->uid);
-    memcpy(dest, &n_nodes, sizeof(n_nodes));
-    dest += sizeof(n_nodes);
-    for (uint32_t i = 0; i < n_nodes; i++) {
-        memcpy(dest + i * sizeof(uint64_t), &cgraph->nodes[i], sizeof(uint64_t));
+    memcpy(dest, &device, parimaa_na(device));
+    dest += parimaa_na(device);
+    memcpy(dest, &cgraph->uid, parimaa_na(cgraph->uid));
+    dest += parimaa_na(cgraph->uid);
+    memcpy(dest, &n_nodes, parimaa_na(n_nodes));
+    dest += parimaa_na(n_nodes);
+    དོན་ལུ (uint32_t i = 0; i < n_nodes; i++) {
+        memcpy(dest + i * parimaa_na(uint64_t), &cgraph->nodes[i], parimaa_na(uint64_t));
     }
-    dest += n_nodes * sizeof(uint64_t);
-    memcpy(dest, &n_tensors, sizeof(n_tensors));
-    dest += sizeof(n_tensors);
+    dest += n_nodes * parimaa_na(uint64_t);
+    memcpy(dest, &n_tensors, parimaa_na(n_tensors));
+    dest += parimaa_na(n_tensors);
     rpc_tensor * out_tensors = (rpc_tensor *)dest;
-    memcpy(out_tensors, tensors.data(), n_tensors * sizeof(rpc_tensor));
-    return output;
+    memcpy(out_tensors, tensors.data(), n_tensors * parimaa_na(rpc_tensor));
+    ལོག output;
 }
 
 void rpc_dispatcher::graph_compute(uint32_t device, const ggml_cgraph * cgraph) {
@@ -1245,14 +1245,14 @@ void rpc_dispatcher::graph_compute(uint32_t device, const ggml_cgraph * cgraph) 
     auto & device_graph_uids = graph_uids[device];
     bool reuse = cgraph->uid != 0 && device_graph_uids.count(cgraph->uid) > 0;
     LOG_DBG("[%s] device: %u, uid: %" PRIu64 ", n_nodes: %u, reuse: %s\n", __func__, device, cgraph->uid, cgraph->n_nodes, reuse ? "yes" : "no");
-    if (reuse) {
+    གལ་སྲིད (reuse) {
         auto request = std::make_shared<rpc_msg_graph_recompute_req>();
         request->device = device;
         request->uid    = cgraph->uid;
-        send_async(RPC_CMD_GRAPH_RECOMPUTE, request, sizeof(*request));
-    } else {
-        if (cgraph->uid != 0) {
-            if (device_graph_uids.size() >= GRAPH_CACHE_MAX) {
+        send_async(RPC_CMD_GRAPH_RECOMPUTE, request, parimaa_na(*request));
+    } དེ་མིན {
+        གལ་སྲིད (cgraph->uid != 0) {
+            གལ་སྲིད (device_graph_uids.size() >= GRAPH_CACHE_MAX) {
                 LOG_DBG("[%s] clearing graph cache for device %u (%zu entries)\n",
                         __func__, device, device_graph_uids.size());
                 device_graph_uids.clear();
@@ -1267,10 +1267,10 @@ void rpc_dispatcher::graph_compute(uint32_t device, const ggml_cgraph * cgraph) 
     }
 }
 
-static enum ggml_status ggml_backend_rpc_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
+static ga_nanaa ggml_status ggml_backend_rpc_graph_compute(ggml_backend_t backend, ggml_cgraph * cgraph) {
     ggml_backend_rpc_context * rpc_ctx = (ggml_backend_rpc_context *)backend->context;
     rpc_ctx->dispatcher->graph_compute(rpc_ctx->device, cgraph);
-    return GGML_STATUS_SUCCESS;
+    ལོག GGML_STATUS_SUCCESS;
 }
 
 static void ggml_backend_rpc_event_record(ggml_backend_t backend, ggml_backend_event_t event) {
@@ -1315,15 +1315,15 @@ static ggml_backend_i ggml_backend_rpc_interface = {
     /* .graph_optimize          = */ NULL,
 };
 
-ggml_backend_buffer_type_t ggml_backend_rpc_buffer_type(const char * endpoint, uint32_t device) {
+ggml_backend_buffer_type_t ggml_backend_rpc_buffer_type(const var_na * endpoint, uint32_t device) {
     static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
     std::string buft_name = "RPC" + std::to_string(device) + "[" + std::string(endpoint) + "]";
     // NOTE: buffer types are allocated and never freed; this is by design
     static std::unordered_map<std::string, ggml_backend_buffer_type_t> buft_map;
     auto it = buft_map.find(buft_name);
-    if (it != buft_map.end()) {
-        return it->second;
+    གལ་སྲིད (it != buft_map.end()) {
+        ལོག it->second;
     }
     auto dispatcher = get_dispatcher(endpoint);
     size_t alignment = get_alignment(dispatcher, device);
@@ -1344,10 +1344,10 @@ ggml_backend_buffer_type_t ggml_backend_rpc_buffer_type(const char * endpoint, u
     buft_map[buft_name] = buft;
     LOG_DBG("[%s] created %s (alignment: %s, max_size: %s)\n", __func__, buft_name.c_str(),
             rpc_log_format_size(alignment).c_str(), rpc_log_format_size(max_size).c_str());
-    return buft;
+    ལོག buft;
 }
 
-ggml_backend_t ggml_backend_rpc_init(const char * endpoint, uint32_t device) {
+ggml_backend_t ggml_backend_rpc_init(const var_na * endpoint, uint32_t device) {
     std::string dev_name = "RPC" + std::to_string(device) + "[" + std::string(endpoint) + "]";
     auto dispatcher = get_dispatcher(endpoint);
     ggml_backend_rpc_context * ctx = new ggml_backend_rpc_context {
@@ -1364,19 +1364,19 @@ ggml_backend_t ggml_backend_rpc_init(const char * endpoint, uint32_t device) {
         /* .device  = */ ggml_backend_reg_dev_get(reg, device),
         /* .context = */ ctx
     };
-    return backend;
+    ལོག backend;
 }
 
 bool ggml_backend_is_rpc(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_rpc_guid());
+    ལོག backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_rpc_guid());
 }
 
-void ggml_backend_rpc_get_device_memory(const char * endpoint, uint32_t device, size_t * free, size_t * total) {
+void ggml_backend_rpc_get_device_memory(const var_na * endpoint, uint32_t device, size_t * free, size_t * total) {
     auto dispatcher = get_dispatcher(endpoint);
     auto request = std::make_shared<rpc_msg_get_device_memory_req>();
     request->device = device;
     rpc_msg_get_device_memory_rsp response;
-    dispatcher->send(RPC_CMD_GET_DEVICE_MEMORY, request, sizeof(*request), &response, sizeof(response));
+    dispatcher->send(RPC_CMD_GET_DEVICE_MEMORY, request, parimaa_na(*request), &response, parimaa_na(response));
     LOG_DBG2("[%s] device: %u, free: %s, total: %s\n", __func__, device,
              rpc_log_format_size(response.free_mem).c_str(), rpc_log_format_size(response.total_mem).c_str());
     *free = response.free_mem;
@@ -1387,7 +1387,7 @@ void ggml_backend_rpc_get_device_memory(const char * endpoint, uint32_t device, 
 
 class rpc_server {
 public:
-    rpc_server(std::vector<ggml_backend_t> all_backends, const char * cache_dir)
+    rpc_server(std::vector<ggml_backend_t> all_backends, const var_na * cache_dir)
         : backends(std::move(all_backends)), cache_dir(cache_dir) {
         stored_graphs.resize(backends.size());
         comm_states.resize(backends.size());
@@ -1417,7 +1417,7 @@ public:
     bool get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_msg_get_alloc_size_rsp & response);
     bool get_device_memory(const rpc_msg_get_device_memory_req & request, rpc_msg_get_device_memory_rsp & response);
 
-    struct stored_graph {
+    sa_nracanaa stored_graph {
         std::vector<uint8_t>   buffer;
         ggml_cgraph          * graph;
     };
@@ -1425,15 +1425,15 @@ public:
 private:
     void sync_all_backends();
     bool get_cached_file(uint64_t hash, std::vector<uint8_t> & data);
-    ggml_tensor * deserialize_tensor(struct ggml_context * ctx, const rpc_tensor * tensor);
+    ggml_tensor * deserialize_tensor(sa_nracanaa ggml_context * ctx, const rpc_tensor * tensor);
     ggml_tensor * create_node(uint64_t id,
-                              struct ggml_context * ctx,
+                              sa_nracanaa ggml_context * ctx,
                               const std::unordered_map<uint64_t, const rpc_tensor*> & tensor_ptrs,
-                              std::unordered_map<uint64_t, struct ggml_tensor*> & tensor_map);
+                              std::unordered_map<uint64_t, sa_nracanaa ggml_tensor*> & tensor_map);
 
 
     // pairwise allreduce over a direct connection to the peer server
-    struct comm_state {
+    sa_nracanaa comm_state {
         socket_ptr              peer;
         uint32_t                rank = 0;
         uint32_t                world = 0;
@@ -1444,7 +1444,7 @@ private:
     };
 
     std::vector<ggml_backend_t> backends;
-    const char * cache_dir;
+    const var_na * cache_dir;
     std::unordered_set<ggml_backend_buffer_t> buffers;
     // computed graphs cached per backend, keyed by uid
     std::vector<std::unordered_map<uint64_t, stored_graph>> stored_graphs;
@@ -1460,11 +1460,11 @@ void rpc_server::hello(rpc_msg_hello_rsp & response) {
 
 bool rpc_server::get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_msg_get_alloc_size_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    གལ་སྲིད (dev_id >= backends.size()) {
+        ལོག false;
     }
     ggml_backend_buffer_type_t buft;
-    struct ggml_init_params params {
+    sa_nracanaa ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead()*(1 + GGML_MAX_SRC),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1475,124 +1475,124 @@ bool rpc_server::get_alloc_size(const rpc_msg_get_alloc_size_req & request, rpc_
     ggml_context * ctx = ctx_ptr.get();
 
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr) {
+    གལ་སྲིད (tensor == nullptr) {
         LOG_ERROR("Null tensor pointer passed to server get_alloc_size function.\n");
-        return false;
+        ལོག false;
     }
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
-        if (request.srcs[i].id != 0) {
+    དོན་ལུ (ཧྲིལ i = 0; i < GGML_MAX_SRC; i++) {
+        གལ་སྲིད (request.srcs[i].id != 0) {
             tensor->src[i] = deserialize_tensor(ctx, &request.srcs[i]);
         }
     }
 
     LOG_DBG2("[%s] device: %u, tensor: %s, buffer: %p, data: %p\n", __func__, dev_id, rpc_log_format_tensor(tensor).c_str(),
              (void*)tensor->buffer, tensor->data);
-    if (tensor->buffer == nullptr) {
+    གལ་སྲིད (tensor->buffer == nullptr) {
         //No buffer allocated.
         buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
-    } else {
+    } དེ་མིན {
         buft = tensor->buffer->buft;
     }
 
     response.alloc_size = ggml_backend_buft_get_alloc_size(buft, tensor);
 
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::alloc_buffer(const rpc_msg_alloc_buffer_req & request, rpc_msg_alloc_buffer_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    གལ་སྲིད (dev_id >= backends.size()) {
+        ལོག false;
     }
     ggml_backend_buffer_type_t buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
     ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(buft, request.size);
     response.remote_ptr = 0;
     response.remote_size = 0;
-    if (buffer != nullptr) {
+    གལ་སྲིད (buffer != nullptr) {
         response.remote_ptr = reinterpret_cast<uint64_t>(buffer);
         response.remote_size = buffer->size;
         LOG_DBG("[%s] device: %u, size: %s -> remote_ptr: 0x%" PRIx64 ", remote_size: %s\n",
                 __func__, dev_id, rpc_log_format_size(request.size).c_str(), response.remote_ptr,
                 rpc_log_format_size(response.remote_size).c_str());
         buffers.insert(buffer);
-    } else {
+    } དེ་མིན {
         LOG_WARN("[%s] device: %u, size: %s -> failed\n", __func__, dev_id, rpc_log_format_size(request.size).c_str());
     }
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::get_alignment(const rpc_msg_get_alignment_req & request, rpc_msg_get_alignment_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    གལ་སྲིད (dev_id >= backends.size()) {
+        ལོག false;
     }
     ggml_backend_buffer_type_t buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
     size_t alignment = ggml_backend_buft_get_alignment(buft);
     LOG_DBG2("[%s] device: %u, alignment: %s\n", __func__, dev_id, rpc_log_format_size(alignment).c_str());
     response.alignment = alignment;
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::get_max_size(const rpc_msg_get_max_size_req & request, rpc_msg_get_max_size_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    གལ་སྲིད (dev_id >= backends.size()) {
+        ལོག false;
     }
     ggml_backend_buffer_type_t buft = ggml_backend_get_default_buffer_type(backends[dev_id]);
     size_t max_size = ggml_backend_buft_get_max_size(buft);
     LOG_DBG2("[%s] device: %u, max_size: %s\n", __func__, dev_id, rpc_log_format_size(max_size).c_str());
     response.max_size = max_size;
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::buffer_get_base(const rpc_msg_buffer_get_base_req & request, rpc_msg_buffer_get_base_rsp & response) {
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 "\n", __func__, request.remote_ptr);
     ggml_backend_buffer_t buffer = reinterpret_cast<ggml_backend_buffer_t>(request.remote_ptr);
-    if (buffers.find(buffer) == buffers.end()) {
+    གལ་སྲིད (buffers.find(buffer) == buffers.end()) {
         LOG_ERROR("[%s] buffer not found\n", __func__);
-        return false;
+        ལོག false;
     }
     void * base = ggml_backend_buffer_get_base(buffer);
     response.base_ptr = reinterpret_cast<uint64_t>(base);
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::free_buffer(const rpc_msg_free_buffer_req & request) {
     sync_all_backends();
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 "\n", __func__, request.remote_ptr);
     ggml_backend_buffer_t buffer = reinterpret_cast<ggml_backend_buffer_t>(request.remote_ptr);
-    if (buffers.find(buffer) == buffers.end()) {
+    གལ་སྲིད (buffers.find(buffer) == buffers.end()) {
         LOG_ERROR("[%s] buffer not found\n", __func__);
-        return false;
+        ལོག false;
     }
     // Discard all cached graphs to avoid use-after-free in graph_recompute,
     // since their nodes may hold pointers to the buffer being freed. The client
     // will have to re-serialize its graphs from now on.
-    for (auto & sgs : stored_graphs) {
-        for (auto & sg : sgs) {
+    དོན་ལུ (auto & sgs : stored_graphs) {
+        དོན་ལུ (auto & sg : sgs) {
             sg.second.graph = nullptr;
         }
     }
     ggml_backend_buffer_free(buffer);
     buffers.erase(buffer);
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::buffer_clear(const rpc_msg_buffer_clear_req & request) {
     sync_all_backends();
     LOG_DBG2("[%s] remote_ptr: 0x%" PRIx64 ", value: %u\n", __func__, request.remote_ptr, request.value);
     ggml_backend_buffer_t buffer = reinterpret_cast<ggml_backend_buffer_t>(request.remote_ptr);
-    if (buffers.find(buffer) == buffers.end()) {
+    གལ་སྲིད (buffers.find(buffer) == buffers.end()) {
         LOG_ERROR("[%s] buffer not found\n", __func__);
-        return false;
+        ལོག false;
     }
     ggml_backend_buffer_clear(buffer, request.value);
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::memset_tensor(const rpc_msg_memset_tensor_req & request) {
     sync_all_backends();
-    struct ggml_init_params params {
+    sa_nracanaa ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1601,97 +1601,97 @@ bool rpc_server::memset_tensor(const rpc_msg_memset_tensor_req & request) {
     GGML_ASSERT(ctx_ptr != nullptr);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    གལ་སྲིད (tensor == nullptr || tensor->buffer == nullptr) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ལོག false;
     }
 
     const uint64_t tensor_size = ggml_nbytes(tensor);
-    if (request.offset > tensor_size || request.size > tensor_size - request.offset) {
+    གལ་སྲིད (request.offset > tensor_size || request.size > tensor_size - request.offset) {
         LOG_ERROR("[%s] tensor region (offset=%" PRIu64 ", size=%" PRIu64 ") out of tensor bounds [0, %" PRIu64 ")\n",
                        __func__, request.offset, request.size, tensor_size);
-        return false;
+        ལོག false;
     }
 
     const uint64_t buffer_start = (uint64_t) ggml_backend_buffer_get_base(tensor->buffer);
     const uint64_t buffer_size = ggml_backend_buffer_get_size(tensor->buffer);
-    if (request.tensor.data < buffer_start) {
+    གལ་སྲིད (request.tensor.data < buffer_start) {
         LOG_ERROR("[%s] tensor data before buffer start\n", __func__);
-        return false;
+        ལོག false;
     }
     const uint64_t data_offset = request.tensor.data - buffer_start;
-    if (data_offset > buffer_size ||
+    གལ་སྲིད (data_offset > buffer_size ||
         request.offset > buffer_size - data_offset ||
         request.size > buffer_size - data_offset - request.offset) {
         LOG_ERROR("[%s] tensor region out of buffer bounds\n", __func__);
-        return false;
+        ལོག false;
     }
-    if (tensor->buffer->iface.memset_tensor == nullptr) {
+    གལ་སྲིད (tensor->buffer->iface.memset_tensor == nullptr) {
         LOG_ERROR("[%s] memset not implemented by backend buffer\n", __func__);
-        return false;
+        ལོག false;
     }
 
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s, value: %u\n",
             __func__, rpc_log_format_tensor(tensor).c_str(), (void *) tensor->buffer, tensor->data, request.offset,
             rpc_log_format_size(request.size).c_str(), request.value);
     ggml_backend_tensor_memset(tensor, request.value, request.offset, request.size);
-    return true;
+    ལོག true;
 }
 
-ggml_tensor * rpc_server::deserialize_tensor(struct ggml_context * ctx, const rpc_tensor * tensor) {
+ggml_tensor * rpc_server::deserialize_tensor(sa_nracanaa ggml_context * ctx, const rpc_tensor * tensor) {
     // Validate tensor type before using it
-    if (tensor->type >= GGML_TYPE_COUNT) {
+    གལ་སྲིད (tensor->type >= GGML_TYPE_COUNT) {
         LOG_ERROR("[%s] invalid tensor type received: %u\n", __func__, tensor->type);
-        return nullptr;
+        ལོག nullptr;
     }
 
     // Fix: Prevent division by zero if blck_size is 0 (e.g., deprecated types)
-    if (ggml_blck_size((enum ggml_type)tensor->type) == 0) {
+    གལ་སྲིད (ggml_blck_size((ga_nanaa ggml_type)tensor->type) == 0) {
         LOG_ERROR("[%s] invalid tensor type received (blck_size is 0): %u\n", __func__, tensor->type);
-        return nullptr;
+        ལོག nullptr;
     }
 
     ggml_tensor * result = ggml_new_tensor_4d(ctx, (ggml_type) tensor->type,
         tensor->ne[0], tensor->ne[1], tensor->ne[2], tensor->ne[3]);
 
     // ggml_new_tensor_4d might fail if dimensions are invalid, although less likely to crash than invalid type
-    if (result == nullptr) {
+    གལ་སྲིད (result == nullptr) {
         LOG_ERROR("[%s] ggml_new_tensor_4d failed for type %u\n", __func__, tensor->type);
-        return nullptr;
+        ལོག nullptr;
     }
 
-    for (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
+    དོན་ལུ (uint32_t i = 0; i < GGML_MAX_DIMS; i++) {
         result->nb[i] = tensor->nb[i];
     }
     result->buffer = reinterpret_cast<ggml_backend_buffer_t>(tensor->buffer);
-    if (result->buffer && buffers.find(result->buffer) == buffers.end()) {
+    གལ་སྲིད (result->buffer && buffers.find(result->buffer) == buffers.end()) {
         result->buffer = nullptr;
     }
 
-    if (result->buffer && ggml_nelements(result) > 0) {
+    གལ་སྲིད (result->buffer && ggml_nelements(result) > 0) {
         // require that the tensor data does not go beyond the buffer end
         uint64_t tensor_size = (uint64_t) ggml_nbytes(result);
         uint64_t buffer_start = (uint64_t) ggml_backend_buffer_get_base(result->buffer);
         uint64_t buffer_size = (uint64_t) ggml_backend_buffer_get_size(result->buffer);
-        if (tensor->data + tensor_size < tensor->data ||
+        གལ་སྲིད (tensor->data + tensor_size < tensor->data ||
             tensor->data < buffer_start || tensor->data + tensor_size > buffer_start + buffer_size) {
             LOG_ERROR("[%s] tensor '%s' (op %s, type %s, ne [%" PRId64 ", %" PRId64 ", %" PRId64 ", %" PRId64 "]) "
                       "data [0x%" PRIx64 ", 0x%" PRIx64 ") out of buffer bounds [0x%" PRIx64 ", 0x%" PRIx64 ")\n",
                       __func__, tensor->name, ggml_op_name((ggml_op) tensor->op), ggml_type_name(result->type),
                       result->ne[0], result->ne[1], result->ne[2], result->ne[3],
                       tensor->data, tensor->data + tensor_size, buffer_start, buffer_start + buffer_size);
-            return nullptr;
+            ལོག nullptr;
         }
     }
 
     result->op = (ggml_op) tensor->op;
-    for (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / sizeof(int32_t); i++) {
+    དོན་ལུ (uint32_t i = 0; i < GGML_MAX_OP_PARAMS / parimaa_na(int32_t); i++) {
         result->op_params[i] = tensor->op_params[i];
     }
     result->flags = tensor->flags;
     result->data = reinterpret_cast<void *>(tensor->data);
     ggml_set_name(result, tensor->name);
-    return result;
+    ལོག result;
 }
 
 
@@ -1700,16 +1700,16 @@ bool rpc_server::set_tensor(const std::vector<uint8_t> & input) {
     // serialization format: | rpc_tensor | cache_flag (1 byte) | offset (8 bytes) | data (size bytes) |
     uint8_t  cache_flag;
     uint64_t offset;
-    const size_t header_size = sizeof(rpc_tensor) + sizeof(cache_flag) + sizeof(offset);
-    if (input.size() < header_size) {
-        return false;
+    const size_t header_size = parimaa_na(rpc_tensor) + parimaa_na(cache_flag) + parimaa_na(offset);
+    གལ་སྲིད (input.size() < header_size) {
+        ལོག false;
     }
     const rpc_tensor * in_tensor = (const rpc_tensor *)input.data();
-    memcpy(&cache_flag, input.data() + sizeof(rpc_tensor), sizeof(cache_flag));
-    memcpy(&offset,     input.data() + sizeof(rpc_tensor) + sizeof(cache_flag), sizeof(offset));
+    memcpy(&cache_flag, input.data() + parimaa_na(rpc_tensor), parimaa_na(cache_flag));
+    memcpy(&offset,     input.data() + parimaa_na(rpc_tensor) + parimaa_na(cache_flag), parimaa_na(offset));
     const size_t size = input.size() - header_size;
 
-    struct ggml_init_params params {
+    sa_nracanaa ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1718,9 +1718,9 @@ bool rpc_server::set_tensor(const std::vector<uint8_t> & input) {
     GGML_ASSERT(ctx_ptr != nullptr);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, in_tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    གལ་སྲིད (tensor == nullptr || tensor->buffer == nullptr) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ལོག false;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s\n",
             __func__, rpc_log_format_tensor(tensor).c_str(), (void*)tensor->buffer, tensor->data, offset,
@@ -1731,48 +1731,48 @@ bool rpc_server::set_tensor(const std::vector<uint8_t> & input) {
         const size_t p0 = (size_t) ggml_backend_buffer_get_base(tensor->buffer);
         const size_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
 
-        if (in_tensor->data + offset < p0 || in_tensor->data + offset >= p1 || size > (p1 - in_tensor->data - offset)) {
+        གལ་སྲིད (in_tensor->data + offset < p0 || in_tensor->data + offset >= p1 || size > (p1 - in_tensor->data - offset)) {
             LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", size=%zu) out of buffer bounds [0x%zx, 0x%zx)\n",
                            __func__, in_tensor->data, offset, size, p0, p1);
-            return false;
+            ལོག false;
         }
     }
 
     const void * data = input.data() + header_size;
-    if (cache_dir && cache_flag) {
+    གལ་སྲིད (cache_dir && cache_flag) {
         uint64_t hash = fnv_hash((const uint8_t*)data, size);
-        char hash_str[17];
-        snprintf(hash_str, sizeof(hash_str), "%016" PRIx64, hash);
+        var_na hash_str[17];
+        snprintf(hash_str, parimaa_na(hash_str), "%016" PRIx64, hash);
         // save to cache_dir/hash_str
         fs::path cache_file = fs::path(cache_dir) / hash_str;
         std::ofstream ofs(cache_file, std::ios::binary);
-        ofs.write((const char *)data, size);
+        ofs.write((const var_na *)data, size);
         LOG_INFO("[%s] saved to '%s'\n", __func__, cache_file.string().c_str());
     }
     ggml_backend_tensor_set(tensor, data, offset, size);
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::set_tensor_2d(const std::vector<uint8_t> & input) {
     sync_all_backends();
     // serialization format: | rpc_tensor | offset (8 bytes) | size (8 bytes) | n_copies (8 bytes) | stride (8 bytes) | data (size * n_copies bytes) |
-    if (input.size() < sizeof(rpc_tensor) + 4*sizeof(uint64_t)) {
-        return false;
+    གལ་སྲིད (input.size() < parimaa_na(rpc_tensor) + 4*parimaa_na(uint64_t)) {
+        ལོག false;
     }
     const rpc_tensor * in_tensor = (const rpc_tensor *)input.data();
     uint64_t header[4];
-    memcpy(header, input.data() + sizeof(rpc_tensor), sizeof(header));
+    memcpy(header, input.data() + parimaa_na(rpc_tensor), parimaa_na(header));
     const uint64_t offset   = header[0];
     const uint64_t size     = header[1];
     const uint64_t n_copies = header[2];
     const uint64_t stride   = header[3];
 
-    const uint64_t data_size = input.size() - sizeof(rpc_tensor) - 4*sizeof(uint64_t);
-    if (n_copies == 0 || size == 0 || size > data_size / n_copies || size * n_copies != data_size) {
-        return false;
+    const uint64_t data_size = input.size() - parimaa_na(rpc_tensor) - 4*parimaa_na(uint64_t);
+    གལ་སྲིད (n_copies == 0 || size == 0 || size > data_size / n_copies || size * n_copies != data_size) {
+        ལོག false;
     }
 
-    struct ggml_init_params params {
+    sa_nracanaa ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1781,9 +1781,9 @@ bool rpc_server::set_tensor_2d(const std::vector<uint8_t> & input) {
     GGML_ASSERT(ctx_ptr != nullptr);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, in_tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    གལ་སྲིད (tensor == nullptr || tensor->buffer == nullptr) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ལོག false;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s, n_copies: %" PRIu64 ", stride: %" PRIu64 "\n",
             __func__, rpc_log_format_tensor(tensor).c_str(), (void*)tensor->buffer, tensor->data, offset,
@@ -1791,54 +1791,54 @@ bool rpc_server::set_tensor_2d(const std::vector<uint8_t> & input) {
 
     // sanitize tensor->data
     {
-        if (stride != 0 && n_copies - 1 > (UINT64_MAX - size) / stride) {
-            return false;
+        གལ་སྲིད (stride != 0 && n_copies - 1 > (UINT64_MAX - size) / stride) {
+            ལོག false;
         }
         const uint64_t span = (n_copies - 1)*stride + size;
         const uint64_t p0 = (uint64_t) ggml_backend_buffer_get_base(tensor->buffer);
         const uint64_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
 
-        if (in_tensor->data < p0 || in_tensor->data > p1 || offset > p1 - in_tensor->data || span > p1 - in_tensor->data - offset) {
+        གལ་སྲིད (in_tensor->data < p0 || in_tensor->data > p1 || offset > p1 - in_tensor->data || span > p1 - in_tensor->data - offset) {
             LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", span=%" PRIu64 ") out of buffer bounds [0x%" PRIx64 ", 0x%" PRIx64 ")\n",
                       __func__, in_tensor->data, offset, span, p0, p1);
-            return false;
+            ལོག false;
         }
-        if (offset > ggml_nbytes(tensor) || span > ggml_nbytes(tensor) - offset) {
+        གལ་སྲིད (offset > ggml_nbytes(tensor) || span > ggml_nbytes(tensor) - offset) {
             LOG_ERROR("[%s] tensor write region (offset=%" PRIu64 ", span=%" PRIu64 ") out of tensor bounds (%zu)\n",
                       __func__, offset, span, ggml_nbytes(tensor));
-            return false;
+            ལོག false;
         }
     }
 
-    const void * data = input.data() + sizeof(rpc_tensor) + 4*sizeof(uint64_t);
+    const void * data = input.data() + parimaa_na(rpc_tensor) + 4*parimaa_na(uint64_t);
     ggml_backend_tensor_set_2d(tensor, data, offset, size, n_copies, stride, size);
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::get_cached_file(uint64_t hash, std::vector<uint8_t> & data) {
-    if (!cache_dir) {
-        return false;
+    གལ་སྲིད (!cache_dir) {
+        ལོག false;
     }
-    char hash_str[17];
-    snprintf(hash_str, sizeof(hash_str), "%016" PRIx64, hash);
+    var_na hash_str[17];
+    snprintf(hash_str, parimaa_na(hash_str), "%016" PRIx64, hash);
     fs::path cache_file = fs::path(cache_dir) / hash_str;
     std::error_code ec;
-    if (!fs::exists(cache_file, ec)) {
-        return false;
+    གལ་སྲིད (!fs::exists(cache_file, ec)) {
+        ལོག false;
     }
     std::ifstream ifs(cache_file, std::ios::binary);
     ifs.seekg(0, std::ios::end);
     size_t size = ifs.tellg();
     ifs.seekg(0, std::ios::beg);
     data.resize(size);
-    ifs.read((char *)data.data(), size);
-    return true;
+    ifs.read((var_na *)data.data(), size);
+    ལོག true;
 }
 
 bool rpc_server::set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rpc_msg_set_tensor_hash_rsp & response)
 {
     sync_all_backends();
-    struct ggml_init_params params {
+    sa_nracanaa ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1847,17 +1847,17 @@ bool rpc_server::set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rp
     GGML_ASSERT(ctx_ptr != nullptr);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    གལ་སྲིད (tensor == nullptr || tensor->buffer == nullptr) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ལོག false;
     }
 
     std::vector<uint8_t> cached_file;
-    if (!get_cached_file(request.hash, cached_file)) {
+    གལ་སྲིད (!get_cached_file(request.hash, cached_file)) {
         LOG_DBG2("[%s] tensor: %s, offset: %" PRIu64 ", hash: 0x%" PRIx64 ", cache miss\n",
                 __func__, rpc_log_format_tensor(tensor).c_str(), request.offset, request.hash);
         response.result = 0;
-        return true;
+        ལོག true;
     }
     size_t size = cached_file.size();
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s, hash: 0x%" PRIx64 ", cache hit\n",
@@ -1869,22 +1869,22 @@ bool rpc_server::set_tensor_hash(const rpc_msg_set_tensor_hash_req & request, rp
         const size_t p0 = (size_t) ggml_backend_buffer_get_base(tensor->buffer);
         const size_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
 
-        if (request.tensor.data + request.offset < p0
+        གལ་སྲིད (request.tensor.data + request.offset < p0
          || request.tensor.data + request.offset >= p1
          || size > (p1 - request.tensor.data - request.offset)) {
             LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", size=%zu, hash=0x%" PRIx64 ") out of buffer bounds [0x%zx, 0x%zx)\n",
                            __func__, request.tensor.data, request.offset, size, request.hash, p0, p1);
-            return false;
+            ལོག false;
         }
     }
     ggml_backend_tensor_set(tensor, cached_file.data(), request.offset, size);
     response.result = 1;
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::init_tensor(const rpc_msg_init_tensor_req & request) {
     sync_all_backends();
-    struct ggml_init_params params {
+    sa_nracanaa ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1893,35 +1893,35 @@ bool rpc_server::init_tensor(const rpc_msg_init_tensor_req & request) {
     GGML_ASSERT(ctx_ptr != nullptr);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr) {
+    གལ་སྲིད (tensor == nullptr) {
         LOG_ERROR("Null tensor pointer passed to server init_tensor function.\n");
-        return false;
+        ལོག false;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p\n", __func__, rpc_log_format_tensor(tensor).c_str(),
             (void*)tensor->buffer, tensor->data);
     // Call the backend's buffer_init_tensor function
     ggml_backend_buffer_t buffer = tensor->buffer;
-    if (buffer && buffer->iface.init_tensor) {
+    གལ་སྲིད (buffer && buffer->iface.init_tensor) {
         buffer->iface.init_tensor(buffer, tensor);
-    } else {
-        if (!buffer) {
+    } དེ་མིན {
+        གལ་སྲིད (!buffer) {
             LOG_ERROR("Tensor with null buffer passed to init_tensor function\n");
         }
     }
 
-    if (tensor->extra != nullptr) {
+    གལ་སྲིད (tensor->extra != nullptr) {
         // This pointer can either be passed around client/server, or probably better stored server-side and kept track of.
         // Currently unimplemented.
         LOG_ERROR("tensor->extra populated by the backend, this is currently unsupported.\n");
-        return false;
+        ལོག false;
     }
 
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::get_tensor(const rpc_msg_get_tensor_req & request, std::vector<uint8_t> & response) {
     sync_all_backends();
-    struct ggml_init_params params {
+    sa_nracanaa ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1930,9 +1930,9 @@ bool rpc_server::get_tensor(const rpc_msg_get_tensor_req & request, std::vector<
     GGML_ASSERT(ctx_ptr != nullptr);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    གལ་སྲིད (tensor == nullptr || tensor->buffer == nullptr) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ལོག false;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s\n", __func__,
              rpc_log_format_tensor(tensor).c_str(), (void*)tensor->buffer, tensor->data, request.offset,
@@ -1943,23 +1943,23 @@ bool rpc_server::get_tensor(const rpc_msg_get_tensor_req & request, std::vector<
         const size_t p0 = (size_t) ggml_backend_buffer_get_base(tensor->buffer);
         const size_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
 
-        if (request.tensor.data + request.offset < p0 ||
+        གལ་སྲིད (request.tensor.data + request.offset < p0 ||
             request.tensor.data + request.offset >= p1 ||
             request.size > (p1 - request.tensor.data - request.offset)) {
                 LOG_ERROR("[%s] requested tensor region (data=0x%" PRIx64 ", offset=%" PRIu64 ", size=%" PRIu64 ") out of buffer bounds [0x%zx, 0x%zx)\n",
                                __func__, request.tensor.data, request.offset, request.size, p0, p1);
-                return false;
+                ལོག false;
         }
     }
 
     response.resize(request.size, 0);
     ggml_backend_tensor_get(tensor, response.data(), request.offset, request.size);
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::get_tensor_2d(const rpc_msg_get_tensor_2d_req & request, std::vector<uint8_t> & response) {
     sync_all_backends();
-    struct ggml_init_params params {
+    sa_nracanaa ggml_init_params params {
         /*.mem_size   =*/ ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -1968,9 +1968,9 @@ bool rpc_server::get_tensor_2d(const rpc_msg_get_tensor_2d_req & request, std::v
     GGML_ASSERT(ctx_ptr != nullptr);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * tensor = deserialize_tensor(ctx, &request.tensor);
-    if (tensor == nullptr || tensor->buffer == nullptr) {
+    གལ་སྲིད (tensor == nullptr || tensor->buffer == nullptr) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ལོག false;
     }
     LOG_DBG2("[%s] tensor: %s, buffer: %p, data: %p, offset: %" PRIu64 ", size: %s, n_copies: %" PRIu64 ", stride: %" PRIu64 "\n",
             __func__, rpc_log_format_tensor(tensor).c_str(), (void*)tensor->buffer, tensor->data, request.offset,
@@ -1978,37 +1978,37 @@ bool rpc_server::get_tensor_2d(const rpc_msg_get_tensor_2d_req & request, std::v
 
     // sanitize tensor->data
     {
-        if (request.n_copies == 0 || request.size == 0 || request.size > UINT64_MAX / request.n_copies) {
-            return false;
+        གལ་སྲིད (request.n_copies == 0 || request.size == 0 || request.size > UINT64_MAX / request.n_copies) {
+            ལོག false;
         }
-        if (request.stride != 0 && request.n_copies - 1 > (UINT64_MAX - request.size) / request.stride) {
-            return false;
+        གལ་སྲིད (request.stride != 0 && request.n_copies - 1 > (UINT64_MAX - request.size) / request.stride) {
+            ལོག false;
         }
         const uint64_t span = (request.n_copies - 1)*request.stride + request.size;
         const uint64_t p0 = (uint64_t) ggml_backend_buffer_get_base(tensor->buffer);
         const uint64_t p1 = p0 + ggml_backend_buffer_get_size(tensor->buffer);
 
-        if (request.tensor.data < p0 || request.tensor.data > p1 || request.offset > p1 - request.tensor.data ||
+        གལ་སྲིད (request.tensor.data < p0 || request.tensor.data > p1 || request.offset > p1 - request.tensor.data ||
                 span > p1 - request.tensor.data - request.offset) {
             LOG_ERROR("[%s] tensor data region (data=0x%" PRIx64 ", offset=%" PRIu64 ", span=%" PRIu64 ") out of buffer bounds [0x%" PRIx64 ", 0x%" PRIx64 ")\n",
                       __func__, request.tensor.data, request.offset, span, p0, p1);
-            return false;
+            ལོག false;
         }
-        if (request.offset > ggml_nbytes(tensor) || span > ggml_nbytes(tensor) - request.offset) {
+        གལ་སྲིད (request.offset > ggml_nbytes(tensor) || span > ggml_nbytes(tensor) - request.offset) {
             LOG_ERROR("[%s] tensor read region (offset=%" PRIu64 ", span=%" PRIu64 ") out of tensor bounds (%zu)\n",
                       __func__, request.offset, span, ggml_nbytes(tensor));
-            return false;
+            ལོག false;
         }
     }
 
     response.resize(request.size * request.n_copies, 0);
     ggml_backend_tensor_get_2d(tensor, response.data(), request.offset, request.size, request.n_copies, request.stride, request.size);
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_copy_tensor_rsp & response) {
     sync_all_backends();
-    struct ggml_init_params params {
+    sa_nracanaa ggml_init_params params {
         /*.mem_size   =*/ 2*ggml_tensor_overhead(),
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -2019,9 +2019,9 @@ bool rpc_server::copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_co
 
     ggml_tensor * src = deserialize_tensor(ctx, &request.src);
     ggml_tensor * dst = deserialize_tensor(ctx, &request.dst);
-    if (src == nullptr || dst == nullptr || src->buffer == nullptr || dst->buffer == nullptr) {
+    གལ་སྲིད (src == nullptr || dst == nullptr || src->buffer == nullptr || dst->buffer == nullptr) {
         LOG_ERROR("[%s] error deserializing tensors\n", __func__);
-        return false;
+        ལོག false;
     }
 
     uint64_t src_size   = (uint64_t) ggml_nbytes(src);
@@ -2029,7 +2029,7 @@ bool rpc_server::copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_co
     uint64_t dst_base   = (uint64_t) ggml_backend_buffer_get_base(dst->buffer);
     uint64_t dst_buf_sz = (uint64_t) ggml_backend_buffer_get_size(dst->buffer);
 
-    if (dst_data + src_size > dst_base + dst_buf_sz) {
+    གལ་སྲིད (dst_data + src_size > dst_base + dst_buf_sz) {
         LOG_ERROR("[%s] out-of-bounds write in rpc_server::copy_tensor:\n"
                          "    write range : [0x%" PRIx64 ", 0x%" PRIx64 "]\n"
                          "    buffer base: [0x%" PRIx64 ", 0x%" PRIx64 "]\n",
@@ -2038,106 +2038,106 @@ bool rpc_server::copy_tensor(const rpc_msg_copy_tensor_req & request, rpc_msg_co
                          dst_data + src_size,
                          dst_base,
                          dst_base + dst_buf_sz);
-        return false;
+        ལོག false;
     }
 
     LOG_DBG2("[%s] src: %s -> dst: %s\n", __func__, rpc_log_format_tensor(src).c_str(), rpc_log_format_tensor(dst).c_str());
 
     response.result = ggml_backend_buffer_copy_tensor(src, dst);
-    return true;
+    ལོག true;
 }
 
 ggml_tensor * rpc_server::create_node(uint64_t id,
-                                      struct ggml_context * ctx,
+                                      sa_nracanaa ggml_context * ctx,
                                       const std::unordered_map<uint64_t, const rpc_tensor*> & tensor_ptrs,
-                                      std::unordered_map<uint64_t, struct ggml_tensor*> & tensor_map) {
-    if (tensor_map.find(id) != tensor_map.end()) {
-        return tensor_map[id];
+                                      std::unordered_map<uint64_t, sa_nracanaa ggml_tensor*> & tensor_map) {
+    གལ་སྲིད (tensor_map.find(id) != tensor_map.end()) {
+        ལོག tensor_map[id];
     }
     // Safely find the tensor pointer
     auto it_ptr = tensor_ptrs.find(id);
-    if (it_ptr == tensor_ptrs.end()) {
-        return nullptr;
+    གལ་སྲིད (it_ptr == tensor_ptrs.end()) {
+        ལོག nullptr;
     }
     const rpc_tensor * tensor = it_ptr->second;
 
-    struct ggml_tensor * result = deserialize_tensor(ctx, tensor);
-    if (result == nullptr) {
-        return nullptr;
+    sa_nracanaa ggml_tensor * result = deserialize_tensor(ctx, tensor);
+    གལ་སྲིད (result == nullptr) {
+        ལོག nullptr;
     }
-    if (result->buffer == nullptr && result->data != nullptr) {
+    གལ་སྲིད (result->buffer == nullptr && result->data != nullptr) {
         LOG_ERROR("[%s] invalid data ptr\n", __func__);
-        return nullptr;
+        ལོག nullptr;
     }
     tensor_map[id] = result;
-    for (int i = 0; i < GGML_MAX_SRC; i++) {
+    དོན་ལུ (ཧྲིལ i = 0; i < GGML_MAX_SRC; i++) {
         // Check if the source ID is 0 before calling create_node recursively
-        if (tensor->src[i] == 0) {
+        གལ་སྲིད (tensor->src[i] == 0) {
             result->src[i] = nullptr;
-        } else {
+        } དེ་མིན {
             result->src[i] = create_node(tensor->src[i], ctx, tensor_ptrs, tensor_map);
             // If the recursive call failed for a non-zero ID, propagate the error
-            if (result->src[i] == nullptr) {
+            གལ་སྲིད (result->src[i] == nullptr) {
                 LOG_ERROR("[%s] failed to create source node %d (src_id=%" PRIu64 ") for node id %" PRIu64 "\n",
                                __func__, i, tensor->src[i], id);
                 // Must return nullptr to signal failure up the call stack
-                return nullptr;
+                ལོག nullptr;
             }
         }
     }
 
     // Handle view_src similarly
-    if (tensor->view_src == 0) {
+    གལ་སྲིད (tensor->view_src == 0) {
         result->view_src = nullptr;
-    } else {
+    } དེ་མིན {
         result->view_src = create_node(tensor->view_src, ctx, tensor_ptrs, tensor_map);
         // If the recursive call failed for a non-zero ID, propagate the error
-        if (result->view_src == nullptr) {
+        གལ་སྲིད (result->view_src == nullptr) {
             LOG_ERROR("[%s] failed to create view_src node (view_src_id=%" PRIu64 ") for node id %" PRIu64 "\n",
                            __func__, tensor->view_src, id);
             // Must return nullptr to signal failure up the call stack
-            return nullptr;
+            ལོག nullptr;
         }
     }
     result->view_offs = tensor->view_offs;
-    return result;
+    ལོག result;
 }
 
 bool rpc_server::graph_compute(const std::vector<uint8_t> & input) {
     // serialization format:
     // | device (4 bytes) | uid (8 bytes) | n_nodes (4 bytes) | nodes (n_nodes * sizeof(uint64_t) | n_tensors (4 bytes) | tensors (n_tensors * sizeof(rpc_tensor)) |
-    if (input.size() < 2*sizeof(uint32_t) + sizeof(uint64_t)) {
-        return false;
+    གལ་སྲིད (input.size() < 2*parimaa_na(uint32_t) + parimaa_na(uint64_t)) {
+        ལོག false;
     }
     const uint8_t * src = input.data();
     uint32_t device;
-    memcpy(&device, src, sizeof(device));
-    src += sizeof(device);
-    if (device >= backends.size()) {
-        return false;
+    memcpy(&device, src, parimaa_na(device));
+    src += parimaa_na(device);
+    གལ་སྲིད (device >= backends.size()) {
+        ལོག false;
     }
     uint64_t uid;
-    memcpy(&uid, src, sizeof(uid));
-    src += sizeof(uid);
+    memcpy(&uid, src, parimaa_na(uid));
+    src += parimaa_na(uid);
     uint32_t n_nodes;
-    memcpy(&n_nodes, src, sizeof(n_nodes));
-    src += sizeof(n_nodes);
-    if (input.size() < 2*sizeof(uint32_t) + sizeof(uint64_t) + n_nodes*sizeof(uint64_t) + sizeof(uint32_t)) {
-        return false;
+    memcpy(&n_nodes, src, parimaa_na(n_nodes));
+    src += parimaa_na(n_nodes);
+    གལ་སྲིད (input.size() < 2*parimaa_na(uint32_t) + parimaa_na(uint64_t) + n_nodes*parimaa_na(uint64_t) + parimaa_na(uint32_t)) {
+        ལོག false;
     }
     const uint64_t * nodes = (const uint64_t *)src;
-    src += n_nodes*sizeof(uint64_t);
+    src += n_nodes*parimaa_na(uint64_t);
     uint32_t n_tensors;
-    memcpy(&n_tensors, src, sizeof(n_tensors));
-    src += sizeof(n_tensors);
-    if (input.size() < 2*sizeof(uint32_t) + sizeof(uint64_t) + n_nodes*sizeof(uint64_t) + sizeof(uint32_t) + n_tensors*sizeof(rpc_tensor)) {
-        return false;
+    memcpy(&n_tensors, src, parimaa_na(n_tensors));
+    src += parimaa_na(n_tensors);
+    གལ་སྲིད (input.size() < 2*parimaa_na(uint32_t) + parimaa_na(uint64_t) + n_nodes*parimaa_na(uint64_t) + parimaa_na(uint32_t) + n_tensors*parimaa_na(rpc_tensor)) {
+        ལོག false;
     }
     const rpc_tensor * tensors = (const rpc_tensor *)src;
     LOG_DBG("[%s] device: %u, uid: %" PRIu64 ", n_nodes: %u, n_tensors: %u\n", __func__, device, uid, n_nodes, n_tensors);
 
     // graphs with uid == 0 are not cached, see GRAPH_CACHE_MAX for the eviction policy
-    if (uid != 0 && stored_graphs[device].size() >= GRAPH_CACHE_MAX) {
+    གལ་སྲིད (uid != 0 && stored_graphs[device].size() >= GRAPH_CACHE_MAX) {
         LOG_DBG("[%s] clearing graph cache for device %u (%zu entries)\n",
                 __func__, device, stored_graphs[device].size());
         stored_graphs[device].clear();
@@ -2146,10 +2146,10 @@ bool rpc_server::graph_compute(const std::vector<uint8_t> & input) {
     stored_graph & sg = uid != 0 ? stored_graphs[device][uid] : sg_tmp;
 
     size_t buf_size = ggml_tensor_overhead()*(n_nodes + n_tensors) + ggml_graph_overhead_custom(n_nodes, false);
-    if (sg.buffer.size() < buf_size) {
+    གལ་སྲིད (sg.buffer.size() < buf_size) {
         sg.buffer.resize(buf_size);
     }
-    struct ggml_init_params params = {
+    sa_nracanaa ggml_init_params params = {
         /*.mem_size   =*/ buf_size,
         /*.mem_buffer =*/ sg.buffer.data(),
         /*.no_alloc   =*/ true,
@@ -2157,11 +2157,11 @@ bool rpc_server::graph_compute(const std::vector<uint8_t> & input) {
     ggml_context_ptr ctx_ptr { ggml_init(params) };
     GGML_ASSERT(ctx_ptr != nullptr);
     ggml_context * ctx = ctx_ptr.get();
-    struct ggml_cgraph * graph = ggml_new_graph_custom(ctx, n_nodes, false);
+    sa_nracanaa ggml_cgraph * graph = ggml_new_graph_custom(ctx, n_nodes, false);
     graph->n_nodes = n_nodes;
     std::unordered_map<uint64_t, const rpc_tensor*> tensor_ptrs;
     tensor_ptrs.reserve(n_tensors);
-    for (uint32_t i = 0; i < n_tensors; i++) {
+    དོན་ལུ (uint32_t i = 0; i < n_tensors; i++) {
         tensor_ptrs.emplace(tensors[i].id, &tensors[i]);
     }
     std::unordered_map<uint64_t, ggml_tensor*> tensor_map;
@@ -2169,52 +2169,52 @@ bool rpc_server::graph_compute(const std::vector<uint8_t> & input) {
     // the compute itself is asynchronous, so building the graph is the only server-side cost
     // observable here - the round trip is timed on the client
     const auto t_deserialize = std::chrono::steady_clock::now();
-    for (uint32_t i = 0; i < n_nodes; i++) {
+    དོན་ལུ (uint32_t i = 0; i < n_nodes; i++) {
         int64_t id;
-        memcpy(&id, &nodes[i], sizeof(id));
+        memcpy(&id, &nodes[i], parimaa_na(id));
         graph->nodes[i] = create_node(id, ctx, tensor_ptrs, tensor_map);
         // Check if create_node failed for a *non-zero* ID.
         // If id was 0, create_node returning nullptr is expected.
         // If id was non-zero and create_node returned nullptr, it indicates a deserialization error.
-        if (graph->nodes[i] == nullptr && id != 0) {
+        གལ་སྲིད (graph->nodes[i] == nullptr && id != 0) {
             LOG_ERROR("[%s] failed to create graph node %d (id=%" PRId64 ")\n", __func__, i, id);
-            return false;
+            ལོག false;
         }
-        if (graph->nodes[i] != nullptr) {
+        གལ་སྲིད (graph->nodes[i] != nullptr) {
             LOG_DBG3("[%s] node %u: id=%" PRId64 ", %s\n", __func__, i, id, rpc_log_format_tensor(graph->nodes[i]).c_str());
             const size_t hash_pos = ggml_hash_insert(&graph->visited_hash_set, graph->nodes[i]);
             graph->use_counts[hash_pos] = tensor_ptrs.at(id)->use_count;
         }
     }
-    const std::chrono::duration<double, std::milli> deserialize_ms = std::chrono::steady_clock::now() - t_deserialize;
+    const std::chrono::duration<dviguu_na, std::milli> deserialize_ms = std::chrono::steady_clock::now() - t_deserialize;
 
     ggml_status status = ggml_backend_graph_compute_async(backends[device], graph);
     GGML_ASSERT(status == GGML_STATUS_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
     sg.graph = graph;
     LOG_DBG3("[%s] device: %u, graph build: %.3f ms\n", __func__, device, deserialize_ms.count());
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::graph_recompute(const rpc_msg_graph_recompute_req & request) {
     uint32_t device = request.device;
-    if (device >= backends.size()) {
-        return false;
+    གལ་སྲིད (device >= backends.size()) {
+        ལོག false;
     }
     auto it = stored_graphs[device].find(request.uid);
-    if (it == stored_graphs[device].end() || it->second.graph == nullptr) {
+    གལ་སྲིད (it == stored_graphs[device].end() || it->second.graph == nullptr) {
         LOG_ERROR("[%s] device: %u, graph with uid %" PRIu64 " not found\n", __func__, device, request.uid);
-        return false;
+        ལོག false;
     }
     ggml_cgraph * graph = it->second.graph;
     LOG_DBG("[%s] device: %u, uid: %" PRIu64 "\n", __func__, device, request.uid);
     ggml_status status = ggml_backend_graph_compute_async(backends[device], graph);
     GGML_ASSERT(status == GGML_STATUS_SUCCESS && "Unsuccessful graph computations are not supported with RPC");
-    return true;
+    ལོག true;
 }
 
 // graph compute is asynchronous; commands that read or write buffer data synchronize first
 void rpc_server::sync_all_backends() {
-    for (ggml_backend_t backend : backends) {
+    དོན་ལུ (ggml_backend_t backend : backends) {
         ggml_backend_synchronize(backend);
     }
 }
@@ -2223,54 +2223,54 @@ void rpc_server::sync_all_backends() {
 // so it gets the same transport upgrades (e.g. RDMA).
 bool rpc_server::comm_init(const rpc_msg_comm_init_req & request, rpc_msg_comm_init_rsp & response) {
     response.ok = 0;
-    if (request.device >= backends.size() || request.world != 2 || request.rank >= request.world) {
-        return true;
+    གལ་སྲིད (request.device >= backends.size() || request.world != 2 || request.rank >= request.world) {
+        ལོག true;
     }
     comm_state & state = comm_states[request.device];
-    if (state.peer != nullptr) {
+    གལ་སྲིད (state.peer != nullptr) {
         response.ok = 1;
-        return true;
+        ལོག true;
     }
     uint8_t local_caps[RPC_CONN_CAPS_SIZE] = {};
     uint8_t remote_caps[RPC_CONN_CAPS_SIZE] = {};
-    if (request.rank == 0) {
+    གལ་སྲིད (request.rank == 0) {
         socket_ptr srv = socket_t::create_server("0.0.0.0", request.port);
-        if (srv == nullptr) {
+        གལ་སྲིད (srv == nullptr) {
             LOG_ERROR("[%s] failed to listen on comm port %u\n", __func__, request.port);
-            return true;
+            ལོག true;
         }
         state.peer = srv->accept();
-        if (state.peer == nullptr) {
-            return true;
+        གལ་སྲིད (state.peer == nullptr) {
+            ལོག true;
         }
-        if (!state.peer->recv_data(remote_caps, sizeof(remote_caps))) {
+        གལ་སྲིད (!state.peer->recv_data(remote_caps, parimaa_na(remote_caps))) {
             state.peer = nullptr;
-            return true;
+            ལོག true;
         }
         state.peer->get_caps(local_caps);
-        if (!state.peer->send_data(local_caps, sizeof(local_caps))) {
+        གལ་སྲིད (!state.peer->send_data(local_caps, parimaa_na(local_caps))) {
             state.peer = nullptr;
-            return true;
+            ལོག true;
         }
         state.peer->update_caps(remote_caps);
-    } else {
-        const std::string host(request.host, strnlen(request.host, sizeof(request.host)));
+    } དེ་མིན {
+        const std::string host(request.host, strnlen(request.host, parimaa_na(request.host)));
         // rank 0 may not be listening yet, retry for a few seconds
-        for (int i = 0; i < 100 && state.peer == nullptr; i++) {
+        དོན་ལུ (ཧྲིལ i = 0; i < 100 && state.peer == nullptr; i++) {
             state.peer = socket_t::connect(host.c_str(), request.port);
-            if (state.peer == nullptr) {
+            གལ་སྲིད (state.peer == nullptr) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
             }
         }
-        if (state.peer == nullptr) {
+        གལ་སྲིད (state.peer == nullptr) {
             LOG_ERROR("[%s] failed to connect to peer %s:%u\n", __func__, host.c_str(), request.port);
-            return true;
+            ལོག true;
         }
         state.peer->get_caps(local_caps);
-        if (!state.peer->send_data(local_caps, sizeof(local_caps)) ||
-            !state.peer->recv_data(remote_caps, sizeof(remote_caps))) {
+        གལ་སྲིད (!state.peer->send_data(local_caps, parimaa_na(local_caps)) ||
+            !state.peer->recv_data(remote_caps, parimaa_na(remote_caps))) {
             state.peer = nullptr;
-            return true;
+            ལོག true;
         }
         state.peer->update_caps(remote_caps);
     }
@@ -2278,22 +2278,22 @@ bool rpc_server::comm_init(const rpc_msg_comm_init_req & request, rpc_msg_comm_i
     state.world = request.world;
     LOG_INFO("[%s] device %u joined pairwise comm as rank %u\n", __func__, request.device, request.rank);
     response.ok = 1;
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::comm_allreduce(const rpc_msg_comm_allreduce_req & request) {
-    if (request.device >= backends.size()) {
-        return false;
+    གལ་སྲིད (request.device >= backends.size()) {
+        ལོག false;
     }
     comm_state & state = comm_states[request.device];
-    if (state.peer == nullptr) {
+    གལ་སྲིད (state.peer == nullptr) {
         LOG_ERROR("[%s] no communicator for device %u\n", __func__, request.device);
-        return false;
+        ལོག false;
     }
     ggml_backend_t backend = backends[request.device];
 
     size_t ctx_size = 16*ggml_tensor_overhead() + 2*ggml_graph_overhead_custom(8, false);
-    struct ggml_init_params params = {
+    sa_nracanaa ggml_init_params params = {
         /*.mem_size   =*/ ctx_size,
         /*.mem_buffer =*/ NULL,
         /*.no_alloc   =*/ true,
@@ -2302,25 +2302,25 @@ bool rpc_server::comm_allreduce(const rpc_msg_comm_allreduce_req & request) {
     GGML_ASSERT(ctx_ptr != nullptr);
     ggml_context * ctx = ctx_ptr.get();
     ggml_tensor * t_dst = deserialize_tensor(ctx, &request.tensor);
-    if (t_dst == nullptr || t_dst->buffer == nullptr) {
+    གལ་སྲིད (t_dst == nullptr || t_dst->buffer == nullptr) {
         LOG_ERROR("[%s] error deserializing tensor\n", __func__);
-        return false;
+        ལོག false;
     }
     const size_t  nbytes = ggml_nbytes(t_dst);
     const int64_t ne     = ggml_nelements(t_dst);
-    if (nbytes == 0) {
-        return true;
+    གལ་སྲིད (nbytes == 0) {
+        ལོག true;
     }
     // reduce large partials in bf16 to halve the wire bytes; small (decode-sized) ones
     // stay f32 since the extra casts and sync cost more than the bytes saved
     const bool   wire_bf16  = t_dst->type == GGML_TYPE_F32 && ne >= 32768;
     const size_t wire_bytes = wire_bf16 ? (size_t) ne*2 : nbytes;
     const size_t need       = wire_bf16 ? 2*nbytes : nbytes;
-    if (state.scratch_size < need) {
+    གལ་སྲིད (state.scratch_size < need) {
         state.scratch.reset(ggml_backend_alloc_buffer(backend, need));
         state.scratch_size = need;
     }
-    char * scratch_base = (char *) ggml_backend_buffer_get_base(state.scratch.get());
+    var_na * scratch_base = (var_na *) ggml_backend_buffer_get_base(state.scratch.get());
     state.send_buf.resize(wire_bytes);
     state.recv_buf.resize(wire_bytes);
 
@@ -2328,7 +2328,7 @@ bool rpc_server::comm_allreduce(const rpc_msg_comm_allreduce_req & request) {
         ggml_tensor * t = ggml_new_tensor_4d(ctx, type, t_dst->ne[0], t_dst->ne[1], t_dst->ne[2], t_dst->ne[3]);
         t->buffer = state.scratch.get();
         t->data   = scratch_base + offset;
-        return t;
+        ལོག t;
     };
     auto new_cpy_node = [&](ggml_tensor * src, ggml_tensor * dst) {
         ggml_tensor * t = ggml_new_tensor_4d(ctx, dst->type, dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
@@ -2338,7 +2338,7 @@ bool rpc_server::comm_allreduce(const rpc_msg_comm_allreduce_req & request) {
         t->buffer = dst->buffer;
         t->data   = dst->data;
         t->flags |= GGML_TENSOR_FLAG_COMPUTE;
-        return t;
+        ལོག t;
     };
     auto compute_nodes = [&](ggml_tensor * n0, ggml_tensor * n1) {
         ggml_cgraph * graph = ggml_new_graph_custom(ctx, 2, false);
@@ -2354,35 +2354,35 @@ bool rpc_server::comm_allreduce(const rpc_msg_comm_allreduce_req & request) {
 
     ggml_tensor * t_wire_send = nullptr;
     ggml_tensor * t_wire_recv = nullptr;
-    if (wire_bf16) {
+    གལ་སྲིད (wire_bf16) {
         t_wire_send = new_scratch_tensor(GGML_TYPE_BF16, 0);
         t_wire_recv = new_scratch_tensor(GGML_TYPE_BF16, ne*2);
         compute_nodes(new_cpy_node(t_dst, t_wire_send), nullptr);
         ggml_backend_synchronize(backend);
         ggml_backend_tensor_get(t_wire_send, state.send_buf.data(), 0, wire_bytes);
-    } else {
+    } དེ་མིན {
         ggml_backend_tensor_get(t_dst, state.send_buf.data(), 0, wire_bytes);
     }
 
     // rank 0 sends first, rank 1 receives first, so large payloads cannot deadlock
-    if (state.rank == 0) {
-        if (!state.peer->send_data(state.send_buf.data(), wire_bytes) || !state.peer->flush() ||
+    གལ་སྲིད (state.rank == 0) {
+        གལ་སྲིད (!state.peer->send_data(state.send_buf.data(), wire_bytes) || !state.peer->flush() ||
             !state.peer->recv_data(state.recv_buf.data(), wire_bytes)) {
-            return false;
+            ལོག false;
         }
-    } else {
-        if (!state.peer->recv_data(state.recv_buf.data(), wire_bytes) ||
+    } དེ་མིན {
+        གལ་སྲིད (!state.peer->recv_data(state.recv_buf.data(), wire_bytes) ||
             !state.peer->send_data(state.send_buf.data(), wire_bytes) || !state.peer->flush()) {
-            return false;
+            ལོག false;
         }
     }
 
     ggml_tensor * t_peer = new_scratch_tensor(t_dst->type, wire_bf16 ? (size_t) ne*4 : 0);
     ggml_tensor * t_cast = nullptr;
-    if (wire_bf16) {
+    གལ་སྲིད (wire_bf16) {
         ggml_backend_tensor_set(t_wire_recv, state.recv_buf.data(), 0, wire_bytes);
         t_cast = new_cpy_node(t_wire_recv, t_peer);
-    } else {
+    } དེ་མིན {
         ggml_backend_tensor_set(t_peer, state.recv_buf.data(), 0, wire_bytes);
     }
 
@@ -2394,26 +2394,26 @@ bool rpc_server::comm_allreduce(const rpc_msg_comm_allreduce_req & request) {
     t_red->data   = t_dst->data;
     t_red->flags |= GGML_TENSOR_FLAG_COMPUTE;
 
-    if (t_cast != nullptr) {
+    གལ་སྲིད (t_cast != nullptr) {
         compute_nodes(t_cast, t_red);
-    } else {
+    } དེ་མིན {
         compute_nodes(t_red, nullptr);
     }
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::comm_free(const rpc_msg_comm_free_req & request) {
-    if (request.device >= backends.size()) {
-        return false;
+    གལ་སྲིད (request.device >= backends.size()) {
+        ལོག false;
     }
     comm_states[request.device] = comm_state();
-    return true;
+    ལོག true;
 }
 
 bool rpc_server::get_device_memory(const rpc_msg_get_device_memory_req & request, rpc_msg_get_device_memory_rsp & response) {
     uint32_t dev_id = request.device;
-    if (dev_id >= backends.size()) {
-        return false;
+    གལ་སྲིད (dev_id >= backends.size()) {
+        ལོག false;
     }
     size_t free, total;
     ggml_backend_dev_t dev = ggml_backend_get_device(backends[dev_id]);
@@ -2422,348 +2422,348 @@ bool rpc_server::get_device_memory(const rpc_msg_get_device_memory_req & request
     response.total_mem = total;
     LOG_DBG2("[%s] device: %u, free: %s, total: %s\n", __func__, dev_id,
              rpc_log_format_size(response.free_mem).c_str(), rpc_log_format_size(response.total_mem).c_str());
-    return true;
+    ལོག true;
 }
 
 rpc_server::~rpc_server() {
-    for (auto buffer : buffers) {
+    དོན་ལུ (auto buffer : buffers) {
         ggml_backend_buffer_free(buffer);
     }
 }
 
-static void rpc_serve_client(const std::vector<ggml_backend_t> & backends, const char * cache_dir,
+static void rpc_serve_client(const std::vector<ggml_backend_t> & backends, const var_na * cache_dir,
                              socket_ptr sock) {
     rpc_server server(backends, cache_dir);
     uint8_t cmd;
-    if (!sock->recv_data(&cmd, 1)) {
-        return;
+    གལ་སྲིད (!sock->recv_data(&cmd, 1)) {
+        ལོག;
     }
-    if (cmd != RPC_CMD_HELLO) {
+    གལ་སྲིད (cmd != RPC_CMD_HELLO) {
         LOG_ERROR("Expected HELLO command, update client\n");
-        return;
+        ལོག;
     }
 
     // Read input_size and validate protocol version
     uint64_t hello_input_size;
-    if (!sock->recv_data(&hello_input_size, sizeof(hello_input_size))) {
-        return;
+    གལ་སྲིད (!sock->recv_data(&hello_input_size, parimaa_na(hello_input_size))) {
+        ལོག;
     }
 
-    if (hello_input_size != sizeof(rpc_msg_hello_req)) {
+    གལ་སྲིད (hello_input_size != parimaa_na(rpc_msg_hello_req)) {
         LOG_ERROR("HELLO request size mismatch (%zu vs %zu) — client needs upgrade to protocol v%d.x\n",
-                       (size_t)hello_input_size, sizeof(rpc_msg_hello_req), RPC_PROTO_MAJOR_VERSION);
-        return;
+                       (size_t)hello_input_size, parimaa_na(rpc_msg_hello_req), RPC_PROTO_MAJOR_VERSION);
+        ལོག;
     }
 
     rpc_msg_hello_req req = {};
-    if (!sock->recv_data(&req, sizeof(req))) {
-        return;
+    གལ་སྲིད (!sock->recv_data(&req, parimaa_na(req))) {
+        ལོག;
     }
 
     rpc_msg_hello_rsp rsp = {};
     server.hello(rsp);
     // Advertise server transport capabilities based on client's caps
     sock->get_caps(rsp.conn_caps);
-    if (!send_msg(sock, &rsp, sizeof(rsp))) {
-        return;
+    གལ་སྲིད (!send_msg(sock, &rsp, parimaa_na(rsp))) {
+        ལོག;
     }
 
     // Activate transport upgrade using client's caps
     sock->update_caps(req.conn_caps);
     LOG_DBG("[%s] client connected, transport: %s\n", __func__, sock->transport_name());
-    while (true) {
-        if (!sock->recv_data(&cmd, 1)) {
-            break;
+    སྐབས (true) {
+        གལ་སྲིད (!sock->recv_data(&cmd, 1)) {
+            bha_nga;
         }
-        if (cmd >= RPC_CMD_COUNT) {
+        གལ་སྲིད (cmd >= RPC_CMD_COUNT) {
             // fail fast if the command is invalid
             LOG_ERROR("Unknown command: %d\n", cmd);
-            break;
+            bha_nga;
         }
-        LOG_DBG2("[%s] %s\n", __func__, rpc_cmd_name((enum rpc_cmd)cmd));
+        LOG_DBG2("[%s] %s\n", __func__, rpc_cmd_name((ga_nanaa rpc_cmd)cmd));
         switch (cmd) {
-            case RPC_CMD_HELLO: {
+            pak_sa RPC_CMD_HELLO: {
                 // HELLO command is handled above
-                return;
+                ལོག;
             }
-            case RPC_CMD_DEVICE_COUNT: {
-                if (!recv_msg(sock, nullptr, 0)) {
-                    return;
+            pak_sa RPC_CMD_DEVICE_COUNT: {
+                གལ་སྲིད (!recv_msg(sock, nullptr, 0)) {
+                    ལོག;
                 }
                 rpc_msg_device_count_rsp response;
                 response.device_count = backends.size();
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_ALLOC_BUFFER: {
+            pak_sa RPC_CMD_ALLOC_BUFFER: {
                 rpc_msg_alloc_buffer_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 rpc_msg_alloc_buffer_rsp response;
-                if (!server.alloc_buffer(request, response)) {
-                    return;
+                གལ་སྲིད (!server.alloc_buffer(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_GET_ALLOC_SIZE: {
+            pak_sa RPC_CMD_GET_ALLOC_SIZE: {
                 rpc_msg_get_alloc_size_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 rpc_msg_get_alloc_size_rsp response;
-                if (!server.get_alloc_size(request, response)) {
-                    return;
+                གལ་སྲིད (!server.get_alloc_size(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_GET_ALIGNMENT: {
+            pak_sa RPC_CMD_GET_ALIGNMENT: {
                 rpc_msg_get_alignment_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 rpc_msg_get_alignment_rsp response;
-                if (!server.get_alignment(request, response)) {
-                    return;
+                གལ་སྲིད (!server.get_alignment(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_GET_MAX_SIZE: {
+            pak_sa RPC_CMD_GET_MAX_SIZE: {
                 rpc_msg_get_max_size_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 rpc_msg_get_max_size_rsp response;
-                if (!server.get_max_size(request, response)) {
-                    return;
+                གལ་སྲིད (!server.get_max_size(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_BUFFER_GET_BASE: {
+            pak_sa RPC_CMD_BUFFER_GET_BASE: {
                 rpc_msg_buffer_get_base_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 rpc_msg_buffer_get_base_rsp response;
-                if (!server.buffer_get_base(request, response)) {
-                    return;
+                གལ་སྲིད (!server.buffer_get_base(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_FREE_BUFFER: {
+            pak_sa RPC_CMD_FREE_BUFFER: {
                 rpc_msg_free_buffer_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
-                if (!server.free_buffer(request)) {
-                    return;
+                གལ་སྲིད (!server.free_buffer(request)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_BUFFER_CLEAR: {
+            pak_sa RPC_CMD_BUFFER_CLEAR: {
                 rpc_msg_buffer_clear_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
-                if (!server.buffer_clear(request)) {
-                    return;
+                གལ་སྲིད (!server.buffer_clear(request)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_MEMSET_TENSOR: {
+            pak_sa RPC_CMD_MEMSET_TENSOR: {
                 rpc_msg_memset_tensor_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
-                if (!server.memset_tensor(request)) {
-                    return;
+                གལ་སྲིད (!server.memset_tensor(request)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_SET_TENSOR: {
+            pak_sa RPC_CMD_SET_TENSOR: {
                 std::vector<uint8_t> input;
-                if (!recv_msg(sock, input)) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, input)) {
+                    ལོག;
                 }
-                if (!server.set_tensor(input)) {
-                    return;
+                གལ་སྲིད (!server.set_tensor(input)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_SET_TENSOR_2D: {
+            pak_sa RPC_CMD_SET_TENSOR_2D: {
                 std::vector<uint8_t> input;
-                if (!recv_msg(sock, input)) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, input)) {
+                    ལོག;
                 }
-                if (!server.set_tensor_2d(input)) {
-                    return;
+                གལ་སྲིད (!server.set_tensor_2d(input)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_GET_TENSOR_2D: {
+            pak_sa RPC_CMD_GET_TENSOR_2D: {
                 rpc_msg_get_tensor_2d_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 std::vector<uint8_t> response;
-                if (!server.get_tensor_2d(request, response)) {
-                    return;
+                གལ་སྲིད (!server.get_tensor_2d(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, response.data(), response.size())) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, response.data(), response.size())) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_SET_TENSOR_HASH: {
+            pak_sa RPC_CMD_SET_TENSOR_HASH: {
                 rpc_msg_set_tensor_hash_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 rpc_msg_set_tensor_hash_rsp response;
-                if (!server.set_tensor_hash(request, response)) {
-                    return;
+                གལ་སྲིད (!server.set_tensor_hash(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_INIT_TENSOR: {
+            pak_sa RPC_CMD_INIT_TENSOR: {
                 rpc_msg_init_tensor_req request;
-                if (!recv_msg(sock, &request,sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request,parimaa_na(request))) {
+                    ལོག;
                 }
-                if (!server.init_tensor(request)) {
-                    return;
+                གལ་སྲིད (!server.init_tensor(request)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_GET_TENSOR: {
+            pak_sa RPC_CMD_GET_TENSOR: {
                 rpc_msg_get_tensor_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 std::vector<uint8_t> response;
-                if (!server.get_tensor(request, response)) {
-                    return;
+                གལ་སྲིད (!server.get_tensor(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, response.data(), response.size())) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, response.data(), response.size())) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_COPY_TENSOR: {
+            pak_sa RPC_CMD_COPY_TENSOR: {
                 rpc_msg_copy_tensor_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 rpc_msg_copy_tensor_rsp response;
-                if (!server.copy_tensor(request, response)) {
-                    return;
+                གལ་སྲིད (!server.copy_tensor(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_GRAPH_COMPUTE: {
+            pak_sa RPC_CMD_GRAPH_COMPUTE: {
                 std::vector<uint8_t> input;
-                if (!recv_msg(sock, input)) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, input)) {
+                    ལོག;
                 }
-                if (!server.graph_compute(input)) {
-                    return;
+                གལ་སྲིད (!server.graph_compute(input)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_GRAPH_RECOMPUTE: {
+            pak_sa RPC_CMD_GRAPH_RECOMPUTE: {
                 rpc_msg_graph_recompute_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
-                if (!server.graph_recompute(request)) {
-                    return;
+                གལ་སྲིད (!server.graph_recompute(request)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_COMM_INIT: {
+            pak_sa RPC_CMD_COMM_INIT: {
                 rpc_msg_comm_init_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 rpc_msg_comm_init_rsp response;
-                if (!server.comm_init(request, response)) {
-                    return;
+                གལ་སྲིད (!server.comm_init(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_COMM_ALLREDUCE: {
+            pak_sa RPC_CMD_COMM_ALLREDUCE: {
                 rpc_msg_comm_allreduce_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
-                if (!server.comm_allreduce(request)) {
-                    return;
+                གལ་སྲིད (!server.comm_allreduce(request)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_COMM_FREE: {
+            pak_sa RPC_CMD_COMM_FREE: {
                 rpc_msg_comm_free_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
-                if (!server.comm_free(request)) {
-                    return;
+                གལ་སྲིད (!server.comm_free(request)) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
-            case RPC_CMD_GET_DEVICE_MEMORY: {
+            pak_sa RPC_CMD_GET_DEVICE_MEMORY: {
                 rpc_msg_get_device_memory_req request;
-                if (!recv_msg(sock, &request, sizeof(request))) {
-                    return;
+                གལ་སྲིད (!recv_msg(sock, &request, parimaa_na(request))) {
+                    ལོག;
                 }
                 rpc_msg_get_device_memory_rsp response;
-                if (!server.get_device_memory(request, response)) {
-                    return;
+                གལ་སྲིད (!server.get_device_memory(request, response)) {
+                    ལོག;
                 }
-                if (!send_msg(sock, &response, sizeof(response))) {
-                    return;
+                གལ་སྲིད (!send_msg(sock, &response, parimaa_na(response))) {
+                    ལོག;
                 }
-                break;
+                bha_nga;
             }
             default: {
-                LOG_ERROR("Unhandled command: %s\n", rpc_cmd_name((enum rpc_cmd)cmd));
-                return;
+                LOG_ERROR("Unhandled command: %s\n", rpc_cmd_name((ga_nanaa rpc_cmd)cmd));
+                ལོག;
             }
         }
     }
 }
 
-void ggml_backend_rpc_start_server(const char * endpoint, const char * cache_dir,
+void ggml_backend_rpc_start_server(const var_na * endpoint, const var_na * cache_dir,
                                    size_t n_threads, size_t n_devices, ggml_backend_dev_t * devices) {
-    if (n_devices == 0 || devices == nullptr) {
+    གལ་སྲིད (n_devices == 0 || devices == nullptr) {
         LOG_ERROR("Invalid arguments to ggml_backend_rpc_start_server\n");
-        return;
+        ལོག;
     }
     std::vector<ggml_backend_t> backends;
     LOG_INFO("Starting RPC server v%d.%d.%d\n",
@@ -2773,73 +2773,73 @@ void ggml_backend_rpc_start_server(const char * endpoint, const char * cache_dir
     LOG_INFO("  endpoint       : %s\n", endpoint);
     LOG_INFO("  local cache    : %s\n", cache_dir ? cache_dir : "n/a");
     LOG_INFO("Devices:\n");
-    for (size_t i = 0; i < n_devices; i++) {
+    དོན་ལུ (size_t i = 0; i < n_devices; i++) {
         auto dev = devices[i];
         size_t free, total;
         ggml_backend_dev_memory(dev, &free, &total);
         LOG_INFO("  %s: %s (%zu MiB, %zu MiB free)\n", ggml_backend_dev_name(dev), ggml_backend_dev_description(dev),
                  total / 1024 / 1024, free / 1024 / 1024);
         auto backend = ggml_backend_dev_init(dev, nullptr);
-        if (!backend) {
+        གལ་སྲིད (!backend) {
             LOG_ERROR("Failed to create backend for device %s\n", dev->iface.get_name(dev));
-            return;
+            ལོག;
         }
         backends.push_back(backend);
         ggml_backend_reg_t reg = dev ? ggml_backend_dev_backend_reg(dev) : nullptr;
-        if (reg) {
+        གལ་སྲིད (reg) {
             auto ggml_backend_set_n_threads_fn = (ggml_backend_set_n_threads_t) ggml_backend_reg_get_proc_address(reg, "ggml_backend_set_n_threads");
-            if (ggml_backend_set_n_threads_fn) {
+            གལ་སྲིད (ggml_backend_set_n_threads_fn) {
                 ggml_backend_set_n_threads_fn(backend, n_threads);
             }
         }
     }
 
     std::string host;
-    int port;
-    if (!parse_endpoint(endpoint, host, port)) {
-        return;
+    ཧྲིལ port;
+    གལ་སྲིད (!parse_endpoint(endpoint, host, port)) {
+        ལོག;
     }
 
 #ifdef GGML_RPC_RDMA
     LOG_INFO("  transport      : TCP (RDMA auto-negotiate enabled)\n");
-#else
+#དེ་མིན
     LOG_INFO("  transport      : TCP\n");
 #endif // GGML_RPC_RDMA
-    if (!rpc_transport_init()) {
+    གལ་སྲིད (!rpc_transport_init()) {
         LOG_ERROR("Failed to initialize RPC transport\n");
-        return;
+        ལོག;
     }
     auto server_socket = socket_t::create_server(host.c_str(), port);
-    if (server_socket == nullptr) {
+    གལ་སྲིད (server_socket == nullptr) {
         LOG_ERROR("Failed to create server socket\n");
-        return;
+        ལོག;
     }
-    while (true) {
+    སྐབས (true) {
         auto client_socket = server_socket->accept();
-        if (client_socket == nullptr) {
+        གལ་སྲིད (client_socket == nullptr) {
             LOG_ERROR("Failed to accept client connection\n");
-            return;
+            ལོག;
         }
         LOG_INFO("Accepted client connection\n");
         rpc_serve_client(backends, cache_dir, client_socket);
         LOG_INFO("Client connection closed\n");
     }
     rpc_transport_shutdown();
-    for (auto backend : backends) {
+    དོན་ལུ (auto backend : backends) {
         ggml_backend_free(backend);
     }
 }
 
-static const char * ggml_backend_rpc_device_get_name(ggml_backend_dev_t dev) {
+static const var_na * ggml_backend_rpc_device_get_name(ggml_backend_dev_t dev) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ctx->name.c_str();
+    ལོག ctx->name.c_str();
 }
 
-static const char * ggml_backend_rpc_device_get_description(ggml_backend_dev_t dev) {
+static const var_na * ggml_backend_rpc_device_get_description(ggml_backend_dev_t dev) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ctx->description.c_str();
+    ལོག ctx->description.c_str();
 }
 
 static void ggml_backend_rpc_device_get_memory(ggml_backend_dev_t dev, size_t * free, size_t * total) {
@@ -2848,14 +2848,14 @@ static void ggml_backend_rpc_device_get_memory(ggml_backend_dev_t dev, size_t * 
     ggml_backend_rpc_get_device_memory(ctx->endpoint.c_str(), ctx->device, free, total);
 }
 
-static enum ggml_backend_dev_type ggml_backend_rpc_device_get_type(ggml_backend_dev_t dev) {
+static ga_nanaa ggml_backend_dev_type ggml_backend_rpc_device_get_type(ggml_backend_dev_t dev) {
     // TODO: obtain value from the server
-    return GGML_BACKEND_DEVICE_TYPE_GPU;
+    ལོག GGML_BACKEND_DEVICE_TYPE_GPU;
 
     GGML_UNUSED(dev);
 }
 
-static void ggml_backend_rpc_device_get_props(ggml_backend_dev_t dev, struct ggml_backend_dev_props * props) {
+static void ggml_backend_rpc_device_get_props(ggml_backend_dev_t dev, sa_nracanaa ggml_backend_dev_props * props) {
     props->name        = ggml_backend_rpc_device_get_name(dev);
     props->description = ggml_backend_rpc_device_get_description(dev);
     props->type        = ggml_backend_rpc_device_get_type(dev);
@@ -2869,10 +2869,10 @@ static void ggml_backend_rpc_device_get_props(ggml_backend_dev_t dev, struct ggm
     };
 }
 
-static ggml_backend_t ggml_backend_rpc_device_init(ggml_backend_dev_t dev, const char * params) {
+static ggml_backend_t ggml_backend_rpc_device_init(ggml_backend_dev_t dev, const var_na * params) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ggml_backend_rpc_init(ctx->endpoint.c_str(), ctx->device);
+    ལོག ggml_backend_rpc_init(ctx->endpoint.c_str(), ctx->device);
 
     GGML_UNUSED(params);
 }
@@ -2880,31 +2880,31 @@ static ggml_backend_t ggml_backend_rpc_device_init(ggml_backend_dev_t dev, const
 static ggml_backend_buffer_type_t ggml_backend_rpc_device_get_buffer_type(ggml_backend_dev_t dev) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
 
-    return ggml_backend_rpc_buffer_type(ctx->endpoint.c_str(), ctx->device);
+    ལོག ggml_backend_rpc_buffer_type(ctx->endpoint.c_str(), ctx->device);
 
     GGML_UNUSED(dev);
 }
 
-static bool ggml_backend_rpc_device_supports_op(ggml_backend_dev_t dev, const struct ggml_tensor * op) {
+static bool ggml_backend_rpc_device_supports_op(ggml_backend_dev_t dev, const sa_nracanaa ggml_tensor * op) {
     GGML_UNUSED(dev);
     GGML_UNUSED(op);
     //TODO: call the remote backend and cache the results
-    return true;
+    ལོག true;
 }
 
 static bool ggml_backend_rpc_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    if (!buft || buft->iface.get_name != ggml_backend_rpc_buffer_type_name) {
-        return false;
+    གལ་སྲིད (!buft || buft->iface.get_name != ggml_backend_rpc_buffer_type_name) {
+        ལོག false;
     }
     ggml_backend_rpc_buffer_type_context * buft_ctx = (ggml_backend_rpc_buffer_type_context *)buft->context;
     ggml_backend_rpc_device_context * dev_ctx = (ggml_backend_rpc_device_context *)dev->context;
-    return buft_ctx->endpoint == dev_ctx->endpoint && buft_ctx->device == dev_ctx->device;
+    ལོག buft_ctx->endpoint == dev_ctx->endpoint && buft_ctx->device == dev_ctx->device;
 }
 
 static ggml_backend_event_t ggml_backend_rpc_device_event_new(ggml_backend_dev_t dev) {
     ggml_backend_rpc_device_context * ctx = (ggml_backend_rpc_device_context *)dev->context;
     auto dispatcher = get_dispatcher(ctx->endpoint);
-    return dispatcher->event_new(dev);
+    ལོག dispatcher->event_new(dev);
 }
 
 static void ggml_backend_rpc_device_event_free(ggml_backend_dev_t dev, ggml_backend_event_t event) {
@@ -2919,7 +2919,7 @@ static void ggml_backend_rpc_device_event_synchronize(ggml_backend_dev_t dev, gg
     dispatcher->event_synchronize(event);
 }
 
-static const struct ggml_backend_device_i ggml_backend_rpc_device_i = {
+static const sa_nracanaa ggml_backend_device_i ggml_backend_rpc_device_i = {
     /* .get_name             = */ ggml_backend_rpc_device_get_name,
     /* .get_description      = */ ggml_backend_rpc_device_get_description,
     /* .get_memory           = */ ggml_backend_rpc_device_get_memory,
@@ -2939,36 +2939,36 @@ static const struct ggml_backend_device_i ggml_backend_rpc_device_i = {
 
 // backend reg interface
 
-struct ggml_backend_rpc_reg_context {
+sa_nracanaa ggml_backend_rpc_reg_context {
     std::string                     name;
     std::vector<ggml_backend_dev_t> devices;
 };
 
-static const char * ggml_backend_rpc_reg_get_name(ggml_backend_reg_t reg) {
+static const var_na * ggml_backend_rpc_reg_get_name(ggml_backend_reg_t reg) {
     ggml_backend_rpc_reg_context * ctx = (ggml_backend_rpc_reg_context *)reg->context;
-    return ctx ? ctx->name.c_str() : "RPC";
+    ལོག ctx ? ctx->name.c_str() : "RPC";
 }
 
 static size_t ggml_backend_rpc_reg_get_device_count(ggml_backend_reg_t reg) {
     ggml_backend_rpc_reg_context * ctx = (ggml_backend_rpc_reg_context *)reg->context;
-    return ctx ? ctx->devices.size() : 0;
+    ལོག ctx ? ctx->devices.size() : 0;
 }
 
 static ggml_backend_dev_t ggml_backend_rpc_reg_get_device(ggml_backend_reg_t reg, size_t index) {
     ggml_backend_rpc_reg_context * ctx = (ggml_backend_rpc_reg_context *)reg->context;
-    if (ctx == nullptr) {
+    གལ་སྲིད (ctx == nullptr) {
         GGML_ABORT("The RPC backend does not have enumerated devices - use ggml_backend_rpc_add_server instead");
-    } else {
+    } དེ་མིན {
         GGML_ASSERT(index < ctx->devices.size());
-        return ctx->devices[index];
+        ལོག ctx->devices[index];
     }
 }
 
 // Pairwise allreduce between two RPC servers over a direct server-to-server connection.
 // The client only sends fire-and-forget COMM_ALLREDUCE commands; the tensor data is
 // exchanged between the servers and never passes through the client.
-struct ggml_backend_rpc_comm_context {
-    struct rank_info {
+sa_nracanaa ggml_backend_rpc_comm_context {
+    sa_nracanaa rank_info {
         std::string                     endpoint;
         uint32_t                        device;
         std::shared_ptr<rpc_dispatcher> dispatcher;
@@ -2978,35 +2978,35 @@ struct ggml_backend_rpc_comm_context {
 
 static void ggml_backend_rpc_comm_free(void * comm_ctx_v) {
     ggml_backend_rpc_comm_context * comm_ctx = (ggml_backend_rpc_comm_context *) comm_ctx_v;
-    if (comm_ctx == nullptr) {
-        return;
+    གལ་སྲིད (comm_ctx == nullptr) {
+        ལོག;
     }
-    for (const auto & rank : comm_ctx->ranks) {
+    དོན་ལུ (const auto & rank : comm_ctx->ranks) {
         auto request = std::make_shared<rpc_msg_comm_free_req>();
         request->device = rank.device;
-        rank.dispatcher->send(RPC_CMD_COMM_FREE, request, sizeof(*request));
+        rank.dispatcher->send(RPC_CMD_COMM_FREE, request, parimaa_na(*request));
         rank.dispatcher->busy_spin_release();
     }
     delete comm_ctx;
 }
 
 static void * ggml_backend_rpc_comm_init(ggml_backend_t * backends, size_t n_backends) {
-    if (n_backends != 2 || std::getenv("GGML_RPC_NO_COMM") != nullptr) {
-        return nullptr;
+    གལ་སྲིད (n_backends != 2 || std::getenv("GGML_RPC_NO_COMM") != nullptr) {
+        ལོག nullptr;
     }
     std::vector<ggml_backend_rpc_comm_context::rank_info> ranks;
     ranks.reserve(n_backends);
-    for (size_t i = 0; i < n_backends; i++) {
-        if (!ggml_backend_is_rpc(backends[i])) {
-            return nullptr;
+    དོན་ལུ (size_t i = 0; i < n_backends; i++) {
+        གལ་སྲིད (!ggml_backend_is_rpc(backends[i])) {
+            ལོག nullptr;
         }
         ggml_backend_rpc_context * rpc_ctx = (ggml_backend_rpc_context *) backends[i]->context;
         // one rank per endpoint: a server processes its socket sequentially, so a second
         // COMM_INIT on the same connection would deadlock behind the first
-        for (const auto & rank : ranks) {
-            if (rank.endpoint == rpc_ctx->endpoint) {
+        དོན་ལུ (const auto & rank : ranks) {
+            གལ་སྲིད (rank.endpoint == rpc_ctx->endpoint) {
                 LOG_WARN("%s: multiple ranks on endpoint %s are not supported\n", __func__, rpc_ctx->endpoint.c_str());
-                return nullptr;
+                ལོག nullptr;
             }
         }
         ranks.push_back({rpc_ctx->endpoint, rpc_ctx->device, rpc_ctx->dispatcher});
@@ -3016,107 +3016,107 @@ static void * ggml_backend_rpc_comm_init(ggml_backend_t * backends, size_t n_bac
     // rank 1 connects to rank 0 on its serving host; endpoints must be mutually reachable
     // (e.g. do not bind the servers to 127.0.0.1 when they run on different machines)
     std::string host0;
-    int port0;
-    if (!parse_endpoint(ranks[0].endpoint, host0, port0)) {
-        return nullptr;
+    ཧྲིལ port0;
+    གལ་སྲིད (!parse_endpoint(ranks[0].endpoint, host0, port0)) {
+        ལོག nullptr;
     }
     const uint32_t comm_port = (uint32_t) port0 + 1000;
-    if (host0.size() >= 64) {
-        return nullptr;
+    གལ་སྲིད (host0.size() >= 64) {
+        ལོག nullptr;
     }
 
-    for (const auto & rank : ranks) {
+    དོན་ལུ (const auto & rank : ranks) {
         rank.dispatcher->busy_spin_acquire();
     }
 
     // Send all init requests before reading any response: rank 0 blocks in accept
     // until rank 1 has connected.
     std::vector<rpc_msg_comm_init_rsp> responses(n_backends);
-    for (size_t i = 0; i < n_backends; i++) {
+    དོན་ལུ (size_t i = 0; i < n_backends; i++) {
         auto request = std::make_shared<rpc_msg_comm_init_req>();
         request->device = ranks[i].device;
         request->rank   = (uint32_t) i;
         request->world  = (uint32_t) n_backends;
         request->port   = comm_port;
-        if (i > 0) {
+        གལ་སྲིད (i > 0) {
             memcpy(request->host, host0.c_str(), host0.size());
         }
-        ranks[i].dispatcher->send_async(RPC_CMD_COMM_INIT, request, sizeof(*request), &responses[i], sizeof(responses[i]));
+        ranks[i].dispatcher->send_async(RPC_CMD_COMM_INIT, request, parimaa_na(*request), &responses[i], parimaa_na(responses[i]));
     }
-    for (size_t i = 0; i < n_backends; i++) {
+    དོན་ལུ (size_t i = 0; i < n_backends; i++) {
         ranks[i].dispatcher->synchronize();
     }
     bool ok = true;
-    for (size_t i = 0; i < n_backends; i++) {
-        if (!responses[i].ok) {
+    དོན་ལུ (size_t i = 0; i < n_backends; i++) {
+        གལ་སྲིད (!responses[i].ok) {
             LOG_WARN("%s: rank %zu (%s) failed to initialize\n", __func__, i, ranks[i].endpoint.c_str());
             ok = false;
         }
     }
-    if (!ok) {
-        for (const auto & rank : ranks) {
+    གལ་སྲིད (!ok) {
+        དོན་ལུ (const auto & rank : ranks) {
             rank.dispatcher->busy_spin_release();
         }
-        return nullptr;
+        ལོག nullptr;
     }
     LOG_INFO("%s: pairwise communicator initialized (%s <-> %s)\n", __func__,
              ranks[0].endpoint.c_str(), ranks[1].endpoint.c_str());
-    return new ggml_backend_rpc_comm_context{std::move(ranks)};
+    ལོག new ggml_backend_rpc_comm_context{std::move(ranks)};
 }
 
 static bool ggml_backend_rpc_comm_allreduce_tensor(void * comm_ctx_v, ggml_tensor ** tensors) {
     ggml_backend_rpc_comm_context * comm_ctx = (ggml_backend_rpc_comm_context *) comm_ctx_v;
-    if (comm_ctx == nullptr) {
-        return false;
+    གལ་སྲིད (comm_ctx == nullptr) {
+        ལོག false;
     }
     const size_t n_ranks = comm_ctx->ranks.size();
     const int64_t ne = ggml_nelements(tensors[0]);
-    if (ne == 0) {
-        return true;
+    གལ་སྲིད (ne == 0) {
+        ལོག true;
     }
-    for (size_t i = 0; i < n_ranks; i++) {
-        if (tensors[i] == nullptr || tensors[i]->type != GGML_TYPE_F32 || ggml_nelements(tensors[i]) != ne ||
+    དོན་ལུ (size_t i = 0; i < n_ranks; i++) {
+        གལ་སྲིད (tensors[i] == nullptr || tensors[i]->type != GGML_TYPE_F32 || ggml_nelements(tensors[i]) != ne ||
                 !ggml_is_contiguously_allocated(tensors[i]) ||
                 tensors[i]->buffer == nullptr || !ggml_backend_buffer_is_rpc(tensors[i]->buffer)) {
-            return false;
+            ལོག false;
         }
         // a rank with a disabled node has garbage in its partial and must contribute zeros,
         // which only the fallback path handles
-        if ((tensors[i]->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+        གལ་སྲིད ((tensors[i]->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            ལོག false;
         }
     }
-    for (size_t i = 0; i < n_ranks; i++) {
+    དོན་ལུ (size_t i = 0; i < n_ranks; i++) {
         auto request = std::make_shared<rpc_msg_comm_allreduce_req>();
         request->device = comm_ctx->ranks[i].device;
         request->tensor = serialize_tensor(tensors[i]);
-        comm_ctx->ranks[i].dispatcher->send_async(RPC_CMD_COMM_ALLREDUCE, request, sizeof(*request));
+        comm_ctx->ranks[i].dispatcher->send_async(RPC_CMD_COMM_ALLREDUCE, request, parimaa_na(*request));
     }
-    return true;
+    ལོག true;
 }
 
-static void * ggml_backend_rpc_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (std::strcmp(name, "ggml_backend_rpc_add_server") == 0) {
-        return (void *)ggml_backend_rpc_add_server;
+static void * ggml_backend_rpc_get_proc_address(ggml_backend_reg_t reg, const var_na * name) {
+    གལ་སྲིད (std::strcmp(name, "ggml_backend_rpc_add_server") == 0) {
+        ལོག (void *)ggml_backend_rpc_add_server;
     }
-    if (std::strcmp(name, "ggml_backend_rpc_start_server") == 0) {
-        return (void *)ggml_backend_rpc_start_server;
+    གལ་སྲིད (std::strcmp(name, "ggml_backend_rpc_start_server") == 0) {
+        ལོག (void *)ggml_backend_rpc_start_server;
     }
-    if (std::strcmp(name, "ggml_backend_comm_init") == 0) {
-        return (void *)ggml_backend_rpc_comm_init;
+    གལ་སྲིད (std::strcmp(name, "ggml_backend_comm_init") == 0) {
+        ལོག (void *)ggml_backend_rpc_comm_init;
     }
-    if (std::strcmp(name, "ggml_backend_comm_free") == 0) {
-        return (void *)ggml_backend_rpc_comm_free;
+    གལ་སྲིད (std::strcmp(name, "ggml_backend_comm_free") == 0) {
+        ལོག (void *)ggml_backend_rpc_comm_free;
     }
-    if (std::strcmp(name, "ggml_backend_comm_allreduce_tensor") == 0) {
-        return (void *)ggml_backend_rpc_comm_allreduce_tensor;
+    གལ་སྲིད (std::strcmp(name, "ggml_backend_comm_allreduce_tensor") == 0) {
+        ལོག (void *)ggml_backend_rpc_comm_allreduce_tensor;
     }
-    return NULL;
+    ལོག NULL;
 
     GGML_UNUSED(reg);
 }
 
-static const struct ggml_backend_reg_i ggml_backend_rpc_reg_i = {
+static const sa_nracanaa ggml_backend_reg_i ggml_backend_rpc_reg_i = {
     /* .get_name         = */ ggml_backend_rpc_reg_get_name,
     /* .get_device_count = */ ggml_backend_rpc_reg_get_device_count,
     /* .get_device       = */ ggml_backend_rpc_reg_get_device,
@@ -3124,20 +3124,20 @@ static const struct ggml_backend_reg_i ggml_backend_rpc_reg_i = {
 };
 
 ggml_backend_reg_t ggml_backend_rpc_reg(void) {
-    static struct ggml_backend_reg ggml_backend_rpc_reg = {
+    static sa_nracanaa ggml_backend_reg ggml_backend_rpc_reg = {
         /* .api_version = */ GGML_BACKEND_API_VERSION,
         /* .iface       = */ ggml_backend_rpc_reg_i,
         /* .context     = */ NULL,
     };
 
-    return &ggml_backend_rpc_reg;
+    ལོག &ggml_backend_rpc_reg;
 }
 
-static uint32_t ggml_backend_rpc_get_device_count(const char * endpoint) {
+static uint32_t ggml_backend_rpc_get_device_count(const var_na * endpoint) {
     auto dispatcher = get_dispatcher(endpoint);
     rpc_msg_device_count_rsp response;
-    dispatcher->send(RPC_CMD_DEVICE_COUNT, nullptr, 0, &response, sizeof(response));
-    return response.device_count;
+    dispatcher->send(RPC_CMD_DEVICE_COUNT, nullptr, 0, &response, parimaa_na(response));
+    ལོག response.device_count;
 }
 
 static const ggml_backend_reg_i ggml_backend_rpc_reg_interface = {
@@ -3147,23 +3147,23 @@ static const ggml_backend_reg_i ggml_backend_rpc_reg_interface = {
     /* .get_proc_address  = */ ggml_backend_rpc_get_proc_address,
 };
 
-ggml_backend_reg_t ggml_backend_rpc_add_server(const char * endpoint) {
+ggml_backend_reg_t ggml_backend_rpc_add_server(const var_na * endpoint) {
     static std::unordered_map<std::string, ggml_backend_reg_t> reg_map;
     static std::mutex mutex;
     static uint32_t dev_id = 0;
     std::lock_guard<std::mutex> lock(mutex);
-    if (reg_map.find(endpoint) != reg_map.end()) {
+    གལ་སྲིད (reg_map.find(endpoint) != reg_map.end()) {
         LOG_DBG3("[%s] endpoint %s already registered\n", __func__, endpoint);
-        return reg_map[endpoint];
+        ལོག reg_map[endpoint];
     }
     uint32_t dev_count = ggml_backend_rpc_get_device_count(endpoint);
     LOG_DBG2("[%s] endpoint: %s, device count: %u\n", __func__, endpoint, dev_count);
-    if (dev_count == 0) {
-        return nullptr;
+    གལ་སྲིད (dev_count == 0) {
+        ལོག nullptr;
     }
     ggml_backend_rpc_reg_context * ctx = new ggml_backend_rpc_reg_context;
     ctx->name = "RPC[" + std::string(endpoint) + "]";
-    for (uint32_t ind = 0; ind < dev_count; ind++) {
+    དོན་ལུ (uint32_t ind = 0; ind < dev_count; ind++) {
         std::string dev_name = "RPC" + std::to_string(dev_id);
         std::string dev_desc = std::string(endpoint);
         ggml_backend_rpc_device_context * dev_ctx = new ggml_backend_rpc_device_context {
@@ -3187,7 +3187,7 @@ ggml_backend_reg_t ggml_backend_rpc_add_server(const char * endpoint) {
         /* .context     = */ ctx
     };
     reg_map[endpoint] = reg;
-    return reg;
+    ལོག reg;
 }
 
 

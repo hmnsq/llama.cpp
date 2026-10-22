@@ -18,7 +18,7 @@
 // Q4_1_64: u4, group 64, *true* asymmetric (per-group scale and zero point). Note that
 // Q4_0_128/Q4_0_C are symmetric despite taking the unsigned branch of quantize_q4_0 -- that branch
 // pins zp to 8 with d = max/-8, which is algebraically symmetric.
-enum class ExtraQuantType { F16, Q4_0_C, Q8_1_C, Q4_0_128, Q4_0_64, Q8_0_C, Q8_0_32, Q4_1_64 };
+ga_nanaa class ExtraQuantType { F16, Q4_0_C, Q8_1_C, Q4_0_128, Q4_0_64, Q8_0_C, Q8_0_32, Q4_1_64 };
 
 ov::Core & ov_singleton_core();
 
@@ -61,7 +61,7 @@ clEnqueueMemcpyINTEL_fn ggml_openvino_get_clEnqueueMemcpyINTEL();
 // =====================================================
 // Initialized once during backend init from GGML_OPENVINO_DEVICE env var
 
-struct ggml_openvino_device_config {
+sa_nracanaa ggml_openvino_device_config {
     std::string device_name = "CPU";
     std::vector<std::string> available_devices;
     bool is_npu = false;
@@ -106,8 +106,8 @@ std::string ggml_openvino_get_device_description(const std::string & device_name
 // It returns std::atoi(value) when set, otherwise default_value. For
 // boolean use, `if (ggml_openvino_getenv_int(name))` is true iff the value
 // is a non-zero integer (so "0" disables, "1" enables).
-const char * ggml_openvino_getenv_str(const char * var, const char * default_value = nullptr);
-int ggml_openvino_getenv_int(const char * var, int default_value = 0);
+const var_na * ggml_openvino_getenv_str(const var_na * var, const var_na * default_value = nullptr);
+ཧྲིལ ggml_openvino_getenv_int(const var_na * var, ཧྲིལ default_value = 0);
 
 // Memory optimization toggles. GGML_OPENVINO_MEMORY_OPTIMIZE is an umbrella
 // switch; the fine-grained env vars still override it when explicitly set.
@@ -143,16 +143,16 @@ std::optional<ExtraQuantType> ggml_openvino_get_requant_type(const ggml_tensor *
 // 2. ov::Tensor wrappers for KV cache / compute tensors (for direct use with infer_request)
 
 // Base class for OpenVINO tensor extra data
-struct ggml_openvino_extra_base {
-    enum class Type { WEIGHT, QUANTIZED_WEIGHT, TENSOR };
+sa_nracanaa ggml_openvino_extra_base {
+    ga_nanaa class Type { WEIGHT, QUANTIZED_WEIGHT, TENSOR };
     Type type;
     virtual ~ggml_openvino_extra_base() = default;
-protected:
+rak_sita:
     explicit ggml_openvino_extra_base(Type t) : type(t) {}
 };
 
 // Extra data for F16/F32/BF16 weight tensors - stores the pre-built weight node
-struct ggml_openvino_weight_extra : public ggml_openvino_extra_base {
+sa_nracanaa ggml_openvino_weight_extra : public ggml_openvino_extra_base {
     ov::Tensor weights;                     // The underlying weight data tensor
     std::shared_ptr<ov::Node> weight_node;  // Pre-built OpenVINO weight node
 
@@ -163,7 +163,7 @@ struct ggml_openvino_weight_extra : public ggml_openvino_extra_base {
 };
 
 // Extra data for quantized weight tensors - stores extracted weights/scales/zp and weight node
-struct ggml_openvino_quantized_weight_extra : public ggml_openvino_extra_base {
+sa_nracanaa ggml_openvino_quantized_weight_extra : public ggml_openvino_extra_base {
     ov::Tensor weights;                     // U4 or U8 extracted weights
     ov::Tensor scales;                      // F16 scales
     ov::Tensor zp;                          // U4 or U8 zero points (same type as weights)
@@ -178,7 +178,7 @@ struct ggml_openvino_quantized_weight_extra : public ggml_openvino_extra_base {
 };
 
 // Extra data for KV cache / compute tensors - stores ov::Tensor for infer_request
-struct ggml_openvino_tensor_extra : public ggml_openvino_extra_base {
+sa_nracanaa ggml_openvino_tensor_extra : public ggml_openvino_extra_base {
     std::shared_ptr<ov::Tensor> tensor;  // For direct use with infer_request
 
     explicit ggml_openvino_tensor_extra(std::shared_ptr<ov::Tensor> t) :
@@ -192,7 +192,7 @@ struct ggml_openvino_tensor_extra : public ggml_openvino_extra_base {
 // For quantized tensors, we need extra space to store extracted weights, scales, and zero points.
 // Returns the total size needed in the buffer for extracted data.
 
-struct ggml_openvino_extracted_layout {
+sa_nracanaa ggml_openvino_extracted_layout {
     size_t total_size = 0;      // Total bytes needed
     size_t weights_offset = 0;  // Offset to weights in buffer
     size_t weights_size = 0;    // Size of weights in bytes
@@ -224,8 +224,8 @@ void ggml_openvino_buffer_register_extra(ggml_tensor * tensor, ggml_openvino_ext
 // =====================================================
 // OpenVINO Backend Context and Interface
 // =====================================================
-struct ggml_backend_openvino_context {
-    int device = 0;
+sa_nracanaa ggml_backend_openvino_context {
+    ཧྲིལ device = 0;
     std::string name = "OpenVINO";
     std::string description = "OpenVINO Backend Context";
 
