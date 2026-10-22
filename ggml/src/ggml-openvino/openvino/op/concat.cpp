@@ -1,45 +1,45 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#अन्तर्भाव "../node_context.h"
+#अन्तर्भाव "../op_table.h"
+#अन्तर्भाव "../utils.h"
 
-#include <memory>
-#include <openvino/frontend/exception.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/convert.hpp>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/frontend/exception.hpp>
+#अन्तर्भाव <openvino/op/concat.hpp>
+#अन्तर्भाव <openvino/op/convert.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश op {
 
-OutputVector translate_concat(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_concat(ध्रुव ग्रन्थिः_Context & context) {
+    अङ्कः_inputs_check(context, 2, 2);
 
-    const int32_t * op_params = context.get_output_op_params();
+    ध्रुव int32_t * op_params = context.get_output_op_params();
     FRONT_END_CHECK_IMPLEMENTED(op_params != nullptr, "CONCAT requires output op params");
 
-    const auto output_shape = context.get_output_shape();
+    ध्रुव auto output_shape = context.get_output_shape();
     FRONT_END_CHECK_IMPLEMENTED(output_shape.rank().is_static(), "CONCAT requires static output rank");
 
-    const auto rank = output_shape.rank().get_length();
-    const int32_t ggml_dim = op_params[0];
+    ध्रुव auto rank = output_shape.rank().get_length();
+    ध्रुव int32_t ggml_dim = op_params[0];
     FRONT_END_CHECK_IMPLEMENTED(ggml_dim >= 0 && ggml_dim < rank, "CONCAT axis is out of range");
 
-    auto input_0 = process_view_input_new(context, 0);
-    auto input_1 = process_view_input_new(context, 1);
-    const auto output_type = context.get_output_type();
+    auto निवेशः_0 = process_view_निवेशः_new(context, 0);
+    auto निवेशः_1 = process_view_निवेशः_new(context, 1);
+    ध्रुव auto output_type = context.get_output_type();
 
-    if (input_0.get_element_type() != output_type) {
-        input_0 = std::make_shared<ov::op::v0::Convert>(input_0, output_type);
+    सचे (निवेशः_0.get_element_type() != output_type) {
+        निवेशः_0 = std::make_shared<ov::op::v0::Convert>(निवेशः_0, output_type);
     }
-    if (input_1.get_element_type() != output_type) {
-        input_1 = std::make_shared<ov::op::v0::Convert>(input_1, output_type);
+    सचे (निवेशः_1.get_element_type() != output_type) {
+        निवेशः_1 = std::make_shared<ov::op::v0::Convert>(निवेशः_1, output_type);
     }
 
-    const auto axis = static_cast<int64_t>(rank - 1 - ggml_dim);
-    auto res = std::make_shared<ov::op::v0::Concat>(OutputVector{input_0, input_1}, axis);
+    ध्रुव auto axis = static_cast<int64_t>(rank - 1 - ggml_dim);
+    auto res = std::make_shared<ov::op::v0::Concat>(OutputVector{निवेशः_0, निवेशः_1}, axis);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    पटिनिवत्त rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

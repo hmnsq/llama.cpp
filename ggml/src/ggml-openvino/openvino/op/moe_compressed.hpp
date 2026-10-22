@@ -13,77 +13,77 @@
 
 #pragma once
 
-#include <optional>
+#अन्तर्भाव <optional>
 
-#include "openvino/core/type/element_type.hpp"
-#include "openvino/op/op.hpp"
+#अन्तर्भाव "openvino/core/type/element_type.hpp"
+#अन्तर्भाव "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+नामाकाश ov::op::internal {
 
-class OPENVINO_API MOE : public ov::op::Op {
-public:
+वग्ग OPENVINO_API MOE : सार्वजनिक ov::op::Op {
+सार्वजनिक:
     OPENVINO_OP("MOE")
 
-    MOE() = default;
+    MOE() = स्वभाव;
 
-    MOE(const OutputVector & args) : Op(args) {}
+    MOE(ध्रुव OutputVector & args) : Op(args) {}
 
-    enum class Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
+    गणना वग्ग Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
 
-    enum class Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
+    गणना वग्ग Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
 
-    struct Config {
+    संरचना Config {
         Expert_type expert_type{ Expert_type::GEMM2_BIAS_SWIGLU_CLAMP };
-        float expert_alpha{ 0.0f };
-        float expert_beta{ 1.0f };
+        भिन्न expert_alpha{ 0.0f };
+        भिन्न expert_beta{ 1.0f };
         size_t gate_idx{ 0 };
         Activation_type activation_type{ Activation_type::SWIGLU };
     };
 
-    MOE(const OutputVector & args, const Config & config);
+    MOE(ध्रुव OutputVector & args, ध्रुव Config & config);
 
-    const Config & get_config() const;
-    void set_config(const Config & config);
+    ध्रुव Config & get_config() ध्रुव;
+    शून्य set_config(ध्रुव Config & config);
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    तार्किक visit_attributes(AttributeVisitor & visitor) override;
+    शून्य validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ध्रुव OutputVector & new_args) ध्रुव override;
 
-private:
+गुप्त:
     Config m_config;
 };
 
-class OPENVINO_API MOECompressed : public MOE {
-public:
+वग्ग OPENVINO_API MOECompressed : सार्वजनिक MOE {
+सार्वजनिक:
     OPENVINO_OP("MOECompressed", "", ov::op::internal::MOE)
 
-    MOECompressed() = default;
+    MOECompressed() = स्वभाव;
 
-    struct Config : public MOE::Config {
+    संरचना Config : सार्वजनिक MOE::Config {
         size_t hidden_size = 0;
         size_t inter_size = 0;
-        size_t num_expert = 0;
-        size_t num_shared_expert = 0;
-        size_t top_k = 0;
+        size_t अङ्कः_expert = 0;
+        size_t अङ्कः_shared_expert = 0;
+        size_t शिखरम्_k = 0;
         // numeric_limits<size_t>::max() means per_channel compression (single group)
         size_t group_size = 0;
-        bool has_batch_dim = false;
-        bool has_zp = false;
+        तार्किक has_batch_dim = मिच्छा;
+        तार्किक has_zp = मिच्छा;
         ov::element::Type out_type = ov::element::dynamic;
-        std::optional<float> scale_factor;
+        std::optional<भिन्न> scale_factor;
     };
 
-    MOECompressed(const OutputVector & args, const Config & config);
+    MOECompressed(ध्रुव OutputVector & args, ध्रुव Config & config);
 
-    const Config & get_config() const { return m_config; }
+    ध्रुव Config & get_config() ध्रुव { पटिनिवत्त m_config; }
 
-    void set_scale_factor(float scale_factor) { m_config.scale_factor = scale_factor; }
+    शून्य set_scale_factor(भिन्न scale_factor) { m_config.scale_factor = scale_factor; }
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    तार्किक visit_attributes(AttributeVisitor & visitor) override;
+    शून्य validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ध्रुव OutputVector & new_args) ध्रुव override;
 
-protected:
+रक्षित:
     Config m_config;
 };
 

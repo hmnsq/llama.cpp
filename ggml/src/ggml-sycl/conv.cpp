@@ -10,55 +10,55 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "conv.hpp"
+#अन्तर्भाव "conv.hpp"
 
-static  void conv_transpose_1d_kernel(
-        const int s0, const int output_size,
-        const int src0_ne0, const int src0_ne1, const int src0_ne2,
-        const int src1_ne0, const int dst_ne0,
-        const float * src0, const float * src1,  float * dst,
-        const sycl::nd_item<3> &item_ct1) {
-    int global_index = item_ct1.get_local_id(2) +
+स्थिर  शून्य conv_transpose_1d_kernel(
+        ध्रुव पूर्णाङ्क s0, ध्रुव पूर्णाङ्क output_size,
+        ध्रुव पूर्णाङ्क src0_ne0, ध्रुव पूर्णाङ्क src0_ne1, ध्रुव पूर्णाङ्क src0_ne2,
+        ध्रुव पूर्णाङ्क src1_ne0, ध्रुव पूर्णाङ्क dst_ne0,
+        ध्रुव भिन्न * src0, ध्रुव भिन्न * src1,  भिन्न * dst,
+        ध्रुव sycl::nd_item<3> &item_ct1) {
+    पूर्णाङ्क global_index = item_ct1.get_local_id(2) +
                        item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (global_index >= output_size) {
-        return;
+    सचे (global_index >= output_size) {
+        पटिनिवत्त;
     }
 
-    int out_index = global_index / dst_ne0;
+    पूर्णाङ्क out_index = global_index / dst_ne0;
 
-    float accumulator = 0;
+    भिन्न accumulator = 0;
 
-    for (int c = 0; c < src0_ne2; c++) {
-        int idx = global_index % dst_ne0;
+    अत्थाय (पूर्णाङ्क c = 0; c < src0_ne2; c++) {
+        पूर्णाङ्क idx = global_index % dst_ne0;
 
-        int kernel_offset = (src0_ne0 * src0_ne1 * c) + (out_index * src0_ne0);
-        int input_offset = src1_ne0 * c;
+        पूर्णाङ्क kernel_offset = (src0_ne0 * src0_ne1 * c) + (out_index * src0_ne0);
+        पूर्णाङ्क निवेशः_offset = src1_ne0 * c;
 
-        for (int i = 0; i < src1_ne0; i++) {
-            if (!(idx >= i*s0 && idx < i*s0 + src0_ne0)) {
-                continue;
+        अत्थाय (पूर्णाङ्क i = 0; i < src1_ne0; i++) {
+            सचे (!(idx >= i*s0 && idx < i*s0 + src0_ne0)) {
+                अनुवर्त;
             }
-            int weight_idx = idx - i*s0;
+            पूर्णाङ्क weight_idx = idx - i*s0;
 
-            float kernel_weight = src0[kernel_offset + weight_idx];
-            float input_value =  src1[input_offset+i];
+            भिन्न kernel_weight = src0[kernel_offset + weight_idx];
+            भिन्न निवेशः_मानम् =  src1[निवेशः_offset+i];
 
-            accumulator += kernel_weight * input_value;
+            accumulator += kernel_weight * निवेशः_मानम्;
         }
     }
     dst[global_index] = accumulator;
 }
 
-static void conv_transpose_1d_f32_f32_sycl(
-    const int s0, const int output_size,
-    const int src0_ne0, const int src0_ne1, const int src0_ne2,
-    const int src1_ne0, const int dst_ne0,
-    const float *src0, const float *src1, float *dst,
-    const queue_ptr& stream) {
+स्थिर शून्य conv_transpose_1d_f32_f32_sycl(
+    ध्रुव पूर्णाङ्क s0, ध्रुव पूर्णाङ्क output_size,
+    ध्रुव पूर्णाङ्क src0_ne0, ध्रुव पूर्णाङ्क src0_ne1, ध्रुव पूर्णाङ्क src0_ne2,
+    ध्रुव पूर्णाङ्क src1_ne0, ध्रुव पूर्णाङ्क dst_ne0,
+    ध्रुव भिन्न *src0, ध्रुव भिन्न *src1, भिन्न *dst,
+    ध्रुव queue_ptr& stream) {
 
-    const int num_blocks = (output_size + SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE - 1) / SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE;
-    const sycl::range<3> block_dims(1, 1, SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE);
-    const sycl::range<3> block_nums(1, 1, num_blocks);
+    ध्रुव पूर्णाङ्क अङ्कः_blocks = (output_size + SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE - 1) / SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE;
+    ध्रुव sycl::range<3> block_dims(1, 1, SYCL_CONV_TRANPOSE_1D_BLOCK_SIZE);
+    ध्रुव sycl::range<3> block_nums(1, 1, अङ्कः_blocks);
     stream->parallel_for(
         sycl::nd_range<3>(
             block_nums * block_dims, block_dims),
@@ -71,14 +71,14 @@ static void conv_transpose_1d_f32_f32_sycl(
         });
 }
 
-void ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
+शून्य ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor *dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/2);
-    const ggml_tensor *src0 = dst->src[0];
-    const ggml_tensor *src1 = dst->src[1];
-    const float * src0_d = (const float *)src0->data;
-    const float * src1_d = (const float *)src1->data;
+    ध्रुव ggml_tensor *src0 = dst->src[0];
+    ध्रुव ggml_tensor *src1 = dst->src[1];
+    ध्रुव भिन्न * src0_d = (ध्रुव भिन्न *)src0->data;
+    ध्रुव भिन्न * src1_d = (ध्रुव भिन्न *)src1->data;
 
-    float * dst_d = (float *)dst->data;
+    भिन्न * dst_d = (भिन्न *)dst->data;
     dpct::queue_ptr stream = ctx.stream();
 
     GGML_ASSERT(src0->type == GGML_TYPE_F32);
@@ -87,11 +87,11 @@ void ggml_sycl_op_conv_transpose_1d(ggml_backend_sycl_context & ctx, ggml_tensor
     GGML_ASSERT(ggml_is_contiguous(src0));
     GGML_ASSERT(ggml_is_contiguous(src1));
 
-    const int32_t * opts = (const int32_t *)dst->op_params;
+    ध्रुव int32_t * opts = (ध्रुव int32_t *)dst->op_params;
 
-    const int s0 = opts[0];
+    ध्रुव पूर्णाङ्क s0 = opts[0];
 
-    const int64_t output_size = ggml_nelements(dst);
+    ध्रुव int64_t output_size = ggml_nelements(dst);
 
     conv_transpose_1d_f32_f32_sycl(s0, output_size,
         src0->ne[0], src0->ne[1], src0->ne[2],

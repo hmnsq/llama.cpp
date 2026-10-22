@@ -1,20 +1,20 @@
-#include <sycl/sycl.hpp>
-#include "dpct/helper.hpp"
-#include "common.hpp"
-#include "ggml.h"
-#include "gated_delta_net.hpp"
-#include <cmath>
+#अन्तर्भाव <sycl/sycl.hpp>
+#अन्तर्भाव "dpct/helper.hpp"
+#अन्तर्भाव "common.hpp"
+#अन्तर्भाव "ggml.h"
+#अन्तर्भाव "gated_delta_net.hpp"
+#अन्तर्भाव <cmath>
 
 
-template <int S_v, bool KDA, bool keep_rs_t>
-void gated_delta_net_sycl(const float *     q,
-                          const float *     k,
-                          const float *     v,
-                          const float *     g,
-                          const float *     beta,
-                          const float *     curr_state,
-                          float *           dst,
-                          float *           state,
+template <पूर्णाङ्क S_v, तार्किक KDA, तार्किक keep_rs_t>
+शून्य gated_delta_net_sycl(ध्रुव भिन्न *     q,
+                          ध्रुव भिन्न *     k,
+                          ध्रुव भिन्न *     v,
+                          ध्रुव भिन्न *     g,
+                          ध्रुव भिन्न *     beta,
+                          ध्रुव भिन्न *     curr_state,
+                          भिन्न *           dst,
+                          भिन्न *           state,
                           int64_t           H,
                           int64_t           n_tokens,
                           int64_t           sq1,
@@ -26,112 +26,112 @@ void gated_delta_net_sycl(const float *     q,
                           int64_t           sb1,
                           int64_t           sb2,
                           int64_t           sb3,
-                          const sycl::uint3 neqk1_magic,
-                          const sycl::uint3 rq3_magic,
-                          float             scale,
+                          ध्रुव sycl::uint3 neqk1_magic,
+                          ध्रुव sycl::uint3 rq3_magic,
+                          भिन्न             scale,
                           int64_t           state_slot_stride,
-                          int               K) {
+                          पूर्णाङ्क               K) {
     auto           item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    const uint32_t h_idx    = item_ct1.get_group(2);
-    const uint32_t sequence = item_ct1.get_group(1);
+    ध्रुव uint32_t h_idx    = item_ct1.get_group(2);
+    ध्रुव uint32_t sequence = item_ct1.get_group(1);
     // each warp owns one column, using warp-level primitives to reduce across rows
-    const int      lane     = item_ct1.get_local_id(2);
-    const int      col      = item_ct1.get_group(0) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
+    ध्रुव पूर्णाङ्क      lane     = item_ct1.get_local_id(2);
+    ध्रुव पूर्णाङ्क      col      = item_ct1.get_group(0) * item_ct1.get_local_range(1) + item_ct1.get_local_id(1);
 
-    const uint32_t iq1 = fastmodulo(h_idx, neqk1_magic);
-    const uint32_t iq3 = fastdiv(sequence, rq3_magic);
+    ध्रुव uint32_t iq1 = fastmodulo(h_idx, neqk1_magic);
+    ध्रुव uint32_t iq3 = fastdiv(sequence, rq3_magic);
 
-    float *       attn_data        = dst;
+    भिन्न *       attn_data        = dst;
 
     // input state holds s0 only [S_v, S_v, H, n_seqs] — seq stride is D = H * S_v * S_v.
     // output state layout (per-slot D * n_seqs) — same per-(seq,head) offset as before.
-    const int64_t state_in_offset      = sequence * H * S_v * S_v + h_idx * S_v * S_v;
-    const int64_t state_out_offset     = (sequence * H + h_idx) * S_v * S_v;
+    ध्रुव int64_t state_in_offset      = sequence * H * S_v * S_v + h_idx * S_v * S_v;
+    ध्रुव int64_t state_out_offset     = (sequence * H + h_idx) * S_v * S_v;
     state += state_out_offset;
     curr_state += state_in_offset + col * S_v;
     attn_data += (sequence * n_tokens * H + h_idx) * S_v;
 
-    constexpr int warp_size = ggml_sycl_get_physical_warp_size() < S_v ? ggml_sycl_get_physical_warp_size() : S_v;
+    constexpr पूर्णाङ्क warp_size = ggml_sycl_get_physical_warp_size() < S_v ? ggml_sycl_get_physical_warp_size() : S_v;
     static_assert(S_v % warp_size == 0, "S_v must be a multiple of warp_size");
-    constexpr int rows_per_lane = (S_v + warp_size - 1) / warp_size;
-    float         s_shard[rows_per_lane];
+    constexpr पूर्णाङ्क rows_per_lane = (S_v + warp_size - 1) / warp_size;
+    भिन्न         s_shard[rows_per_lane];
 #pragma unroll
-    for (int r = 0; r < rows_per_lane; r++) {
-        const int i = r * warp_size + lane;
+    अत्थाय (पूर्णाङ्क r = 0; r < rows_per_lane; r++) {
+        ध्रुव पूर्णाङ्क i = r * warp_size + lane;
         s_shard[r]  = curr_state[i];
     }
 
     // snapshot slot mapping: slot 0 = most recent state, slot s = s tokens back.
     // When n_tokens < K only slots 0..n_tokens-1 are written; older slots are caller-owned.
 
-    for (int t = 0; t < n_tokens; t++) {
-        const float * q_t = q + iq3 * sq3 + t * sq2 + iq1 * sq1;
-        const float * k_t = k + iq3 * sq3 + t * sq2 + iq1 * sq1;
-        const float * v_t = v + sequence * sv3 + t * sv2 + h_idx * sv1;
+    अत्थाय (पूर्णाङ्क t = 0; t < n_tokens; t++) {
+        ध्रुव भिन्न * q_t = q + iq3 * sq3 + t * sq2 + iq1 * sq1;
+        ध्रुव भिन्न * k_t = k + iq3 * sq3 + t * sq2 + iq1 * sq1;
+        ध्रुव भिन्न * v_t = v + sequence * sv3 + t * sv2 + h_idx * sv1;
 
-        const int64_t gb_offset = sequence * sb3 + t * sb2 + h_idx * sb1;
-        const float * beta_t = beta + gb_offset;
-        const float * g_t    = g    + gb_offset * (KDA ? S_v : 1);
+        ध्रुव int64_t gb_offset = sequence * sb3 + t * sb2 + h_idx * sb1;
+        ध्रुव भिन्न * beta_t = beta + gb_offset;
+        ध्रुव भिन्न * g_t    = g    + gb_offset * (KDA ? S_v : 1);
 
-        const float beta_val = *beta_t;
+        ध्रुव भिन्न beta_val = *beta_t;
 
-        if constexpr (!KDA) {
-            const float g_val = sycl::native::exp(*g_t);
+        सचे constexpr (!KDA) {
+            ध्रुव भिन्न g_val = sycl::native::exp(*g_t);
 
             // kv[col] = (S^T @ k)[col] = sum_i S[i][col] * k[i]
-            float kv_shard = 0.0f;
+            भिन्न kv_shard = 0.0f;
 #pragma unroll
-            for (int r = 0; r < rows_per_lane; r++) {
-                const int i = r * warp_size + lane;
+            अत्थाय (पूर्णाङ्क r = 0; r < rows_per_lane; r++) {
+                ध्रुव पूर्णाङ्क i = r * warp_size + lane;
                 kv_shard += s_shard[r] * k_t[i];
             }
-            float kv_col = warp_reduce_sum<warp_size>(kv_shard);
+            भिन्न kv_col = warp_reduce_sum<warp_size>(kv_shard);
 
             // delta[col] = (v[col] - g * kv[col]) * beta
-            float delta_col = (v_t[col] - g_val * kv_col) * beta_val;
+            भिन्न delta_col = (v_t[col] - g_val * kv_col) * beta_val;
 
             // fused: S[i][col] = g * S[i][col] + k[i] * delta[col]
             // attn[col] = (S^T @ q)[col] = sum_i S[i][col] * q[i]
-            float attn_partial = 0.0f;
+            भिन्न attn_partial = 0.0f;
 #pragma unroll
-            for (int r = 0; r < rows_per_lane; r++) {
-                const int i = r * warp_size + lane;
+            अत्थाय (पूर्णाङ्क r = 0; r < rows_per_lane; r++) {
+                ध्रुव पूर्णाङ्क i = r * warp_size + lane;
                 s_shard[r]  = g_val * s_shard[r] + k_t[i] * delta_col;
                 attn_partial += s_shard[r] * q_t[i];
             }
 
-            float attn_col = warp_reduce_sum<warp_size>(attn_partial);
+            भिन्न attn_col = warp_reduce_sum<warp_size>(attn_partial);
 
-            if (lane == 0) {
+            सचे (lane == 0) {
                 attn_data[col] = attn_col * scale;
             }
-        } else {
+        } अञ्ञथा {
             // kv[col] = sum_i g[i] * S[i][col] * k[i]
-            float kv_shard = 0.0f;
+            भिन्न kv_shard = 0.0f;
 #pragma unroll
-            for (int r = 0; r < rows_per_lane; r++) {
-                const int i = r * warp_size + lane;
+            अत्थाय (पूर्णाङ्क r = 0; r < rows_per_lane; r++) {
+                ध्रुव पूर्णाङ्क i = r * warp_size + lane;
                 kv_shard += sycl::native::exp(g_t[i]) * s_shard[r] * k_t[i];
             }
 
-            float kv_col = warp_reduce_sum<warp_size>(kv_shard);
+            भिन्न kv_col = warp_reduce_sum<warp_size>(kv_shard);
 
             // delta[col] = (v[col] - kv[col]) * beta
-            float delta_col = (v_t[col] - kv_col) * beta_val;
+            भिन्न delta_col = (v_t[col] - kv_col) * beta_val;
 
             // fused: S[i][col] = g[i] * S[i][col] + k[i] * delta[col]
             // attn[col] = (S^T @ q)[col] = sum_i S[i][col] * q[i]
-            float attn_partial = 0.0f;
+            भिन्न attn_partial = 0.0f;
 #pragma unroll
-            for (int r = 0; r < rows_per_lane; r++) {
-                const int i = r * warp_size + lane;
+            अत्थाय (पूर्णाङ्क r = 0; r < rows_per_lane; r++) {
+                ध्रुव पूर्णाङ्क i = r * warp_size + lane;
                 s_shard[r]  = sycl::native::exp(g_t[i]) * s_shard[r] + k_t[i] * delta_col;
                 attn_partial += s_shard[r] * q_t[i];
             }
 
-            float attn_col = warp_reduce_sum<warp_size>(attn_partial);
+            भिन्न attn_col = warp_reduce_sum<warp_size>(attn_partial);
 
-            if (lane == 0) {
+            सचे (lane == 0) {
                 attn_data[col] = attn_col * scale;
             }
         }
@@ -140,37 +140,37 @@ void gated_delta_net_sycl(const float *     q,
 
 
     // Write state back to global memory
-        if constexpr (keep_rs_t) {
-            const int target_slot = (int) n_tokens - 1 - t;
-            if (target_slot >= 0 && target_slot < K) {
-                float * curr_state = state + target_slot * state_slot_stride;
+        सचे constexpr (keep_rs_t) {
+            ध्रुव पूर्णाङ्क target_slot = (पूर्णाङ्क) n_tokens - 1 - t;
+            सचे (target_slot >= 0 && target_slot < K) {
+                भिन्न * curr_state = state + target_slot * state_slot_stride;
 #pragma unroll
-                for (int r = 0; r < rows_per_lane; r++) {
-                    const int i = r * warp_size + lane;
+                अत्थाय (पूर्णाङ्क r = 0; r < rows_per_lane; r++) {
+                    ध्रुव पूर्णाङ्क i = r * warp_size + lane;
                     curr_state[col * S_v + i] = s_shard[r];
                 }
             }
         }
     }
 
-    if constexpr (!keep_rs_t) {
+    सचे constexpr (!keep_rs_t) {
 #pragma unroll
-        for (int r = 0; r < rows_per_lane; r++) {
-            const int i          = r * warp_size + lane;
+        अत्थाय (पूर्णाङ्क r = 0; r < rows_per_lane; r++) {
+            ध्रुव पूर्णाङ्क i          = r * warp_size + lane;
             state[col * S_v + i] = s_shard[r];
         }
     }
 }
 
-template <bool KDA, bool keep_rs_t>
-static void launch_gated_delta_net(const float *   q_d,
-                                   const float *   k_d,
-                                   const float *   v_d,
-                                   const float *   g_d,
-                                   const float *   b_d,
-                                   const float *   s_d,
-                                   float *         dst_d,
-                                   float *         state_d,
+template <तार्किक KDA, तार्किक keep_rs_t>
+स्थिर शून्य launch_gated_delta_net(ध्रुव भिन्न *   q_d,
+                                   ध्रुव भिन्न *   k_d,
+                                   ध्रुव भिन्न *   v_d,
+                                   ध्रुव भिन्न *   g_d,
+                                   ध्रुव भिन्न *   b_d,
+                                   ध्रुव भिन्न *   s_d,
+                                   भिन्न *         dst_d,
+                                   भिन्न *         state_d,
                                    int64_t         S_v,
                                    int64_t         H,
                                    int64_t         n_tokens,
@@ -186,24 +186,24 @@ static void launch_gated_delta_net(const float *   q_d,
                                    int64_t         sb3,
                                    int64_t         neqk1,
                                    int64_t         rq3,
-                                   float           scale,
+                                   भिन्न           scale,
                                    int64_t         state_slot_stride,
-                                   int             K,
+                                   पूर्णाङ्क             K,
                                    dpct::queue_ptr stream) {
     //TODO: Add chunked kernel for even faster pre-fill
-    const int warp_size = ggml_sycl_info().devices[ggml_sycl_get_device()].warp_size;
+    ध्रुव पूर्णाङ्क warp_size = ggml_sycl_info().devices[ggml_sycl_get_device()].warp_size;
 
-    const int num_warps = 4;
-    dpct::dim3 grid_dims(H, n_seqs, (S_v + num_warps - 1) / num_warps);
-    dpct::dim3 block_dims(warp_size <= S_v ? warp_size : S_v, num_warps, 1);
+    ध्रुव पूर्णाङ्क अङ्कः_warps = 4;
+    dpct::dim3 grid_dims(H, n_seqs, (S_v + अङ्कः_warps - 1) / अङ्कः_warps);
+    dpct::dim3 block_dims(warp_size <= S_v ? warp_size : S_v, अङ्कः_warps, 1);
 
-    const sycl::uint3 neqk1_magic = init_fastdiv_values(neqk1);
-    const sycl::uint3 rq3_magic   = init_fastdiv_values(rq3);
+    ध्रुव sycl::uint3 neqk1_magic = init_fastdiv_मानानि(neqk1);
+    ध्रुव sycl::uint3 rq3_magic   = init_fastdiv_मानानि(rq3);
 
-    switch (S_v) {
-        case 16:
+    विकल्प (S_v) {
+        पक्ष 16:
             {
-                constexpr int sv = 16;
+                constexpr पूर्णाङ्क sv = 16;
                 stream->parallel_for(sycl::nd_range<3>(grid_dims * block_dims, block_dims),
                                      [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                                          gated_delta_net_sycl<sv, KDA, keep_rs_t>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_tokens,
@@ -211,10 +211,10 @@ static void launch_gated_delta_net(const float *   q_d,
                                                                        sb3, neqk1_magic, rq3_magic, scale, state_slot_stride, K);
                                      });
             }
-            break;
-        case 32:
+            भङ्ग;
+        पक्ष 32:
             {
-                constexpr int sv = 32;
+                constexpr पूर्णाङ्क sv = 32;
                 stream->parallel_for(sycl::nd_range<3>(grid_dims * block_dims, block_dims),
                                      [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                                          gated_delta_net_sycl<sv, KDA, keep_rs_t>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d, H, n_tokens,
@@ -222,10 +222,10 @@ static void launch_gated_delta_net(const float *   q_d,
                                                                        sb3, neqk1_magic, rq3_magic, scale, state_slot_stride, K);
                                      });
             }
-            break;
-        case 64: {
+            भङ्ग;
+        पक्ष 64: {
             {
-                constexpr int sv = 64;
+                constexpr पूर्णाङ्क sv = 64;
                 stream->parallel_for(sycl::nd_range<3>(grid_dims * block_dims, block_dims),
                                         [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                                             gated_delta_net_sycl<sv, KDA, keep_rs_t>(
@@ -233,11 +233,11 @@ static void launch_gated_delta_net(const float *   q_d,
                                                 sq3, sv1, sv2, sv3, sb1, sb2, sb3, neqk1_magic, rq3_magic, scale, state_slot_stride, K);
                                         });
             }
-            break;
+            भङ्ग;
         }
-        case 128: {
+        पक्ष 128: {
             {
-                constexpr int sv = 128;
+                constexpr पूर्णाङ्क sv = 128;
                 stream->parallel_for(sycl::nd_range<3>(grid_dims * block_dims, block_dims),
                                         [=](sycl::nd_item<3> /*item_ct1*/) [[sycl::reqd_sub_group_size(WARP_SIZE)]] {
                                             gated_delta_net_sycl<sv, KDA, keep_rs_t>(
@@ -245,16 +245,16 @@ static void launch_gated_delta_net(const float *   q_d,
                                                 sq3, sv1, sv2, sv3, sb1, sb2, sb3, neqk1_magic, rq3_magic, scale, state_slot_stride, K);
                                         });
             }
-            break;
+            भङ्ग;
         }
-        default:
+        स्वभाव:
             GGML_ABORT("fatal error");
-            break;
+            भङ्ग;
     }
 }
 
-static void ggml_sycl_op_gated_delta_net_impl(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
-                                              const ggml_sycl_gated_delta_net_fused_cache * cache) {
+स्थिर शून्य ggml_sycl_op_gated_delta_net_impl(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
+                                              ध्रुव ggml_sycl_gated_delta_net_fused_cache * cache) {
     ggml_tensor * src_q     = dst->src[0];
     ggml_tensor * src_k     = dst->src[1];
     ggml_tensor * src_v     = dst->src[2];
@@ -270,26 +270,26 @@ static void ggml_sycl_op_gated_delta_net_impl(ggml_backend_sycl_context & ctx, g
     GGML_TENSOR_LOCALS(size_t,  nbv, src_v, nb);
     GGML_TENSOR_LOCALS(size_t,  nbb, src_beta, nb);
 
-    const int64_t S_v      = nev0;
-    const int64_t H        = nev1;
-    const int64_t n_tokens = nev2;
-    const int64_t n_seqs   = nev3;
+    ध्रुव int64_t S_v      = nev0;
+    ध्रुव int64_t H        = nev1;
+    ध्रुव int64_t n_tokens = nev2;
+    ध्रुव int64_t n_seqs   = nev3;
 
-    const bool kda = (src_g->ne[0] == S_v);
+    ध्रुव तार्किक kda = (src_g->ne[0] == S_v);
 
     GGML_ASSERT(neq1 == nek1);
-    const int64_t neqk1 = neq1;
+    ध्रुव int64_t neqk1 = neq1;
 
-    const int64_t rq3 = nev3 / neq3;
+    ध्रुव int64_t rq3 = nev3 / neq3;
 
-    const float * q_d = (const float *) src_q->data;
-    const float * k_d = (const float *) src_k->data;
-    const float * v_d = (const float *) src_v->data;
-    const float * g_d = (const float *) src_g->data;
-    const float * b_d = (const float *) src_beta->data;
+    ध्रुव भिन्न * q_d = (ध्रुव भिन्न *) src_q->data;
+    ध्रुव भिन्न * k_d = (ध्रुव भिन्न *) src_k->data;
+    ध्रुव भिन्न * v_d = (ध्रुव भिन्न *) src_v->data;
+    ध्रुव भिन्न * g_d = (ध्रुव भिन्न *) src_g->data;
+    ध्रुव भिन्न * b_d = (ध्रुव भिन्न *) src_beta->data;
 
-    const float * s_d   = (const float *) src_state->data;
-    float *       dst_d = (float *) dst->data;
+    ध्रुव भिन्न * s_d   = (ध्रुव भिन्न *) src_state->data;
+    भिन्न *       dst_d = (भिन्न *) dst->data;
 
     GGML_ASSERT(ggml_is_contiguous_rows(src_q));
     GGML_ASSERT(ggml_is_contiguous_rows(src_k));
@@ -301,65 +301,65 @@ static void ggml_sycl_op_gated_delta_net_impl(ggml_backend_sycl_context & ctx, g
     GGML_ASSERT(ggml_is_contiguous(src_state));
 
     // strides in floats (beta strides used for both g and beta offset computation)
-    const int64_t sq1 = nbq1 / sizeof(float);
-    const int64_t sq2 = nbq2 / sizeof(float);
-    const int64_t sq3 = nbq3 / sizeof(float);
-    const int64_t sv1 = nbv1 / sizeof(float);
-    const int64_t sv2 = nbv2 / sizeof(float);
-    const int64_t sv3 = nbv3 / sizeof(float);
-    const int64_t sb1 = nbb1 / sizeof(float);
-    const int64_t sb2 = nbb2 / sizeof(float);
-    const int64_t sb3 = nbb3 / sizeof(float);
+    ध्रुव int64_t sq1 = nbq1 / परिमाण(भिन्न);
+    ध्रुव int64_t sq2 = nbq2 / परिमाण(भिन्न);
+    ध्रुव int64_t sq3 = nbq3 / परिमाण(भिन्न);
+    ध्रुव int64_t sv1 = nbv1 / परिमाण(भिन्न);
+    ध्रुव int64_t sv2 = nbv2 / परिमाण(भिन्न);
+    ध्रुव int64_t sv3 = nbv3 / परिमाण(भिन्न);
+    ध्रुव int64_t sb1 = nbb1 / परिमाण(भिन्न);
+    ध्रुव int64_t sb2 = nbb2 / परिमाण(भिन्न);
+    ध्रुव int64_t sb3 = nbb3 / परिमाण(भिन्न);
 
-    const float scale = 1.0f / sqrtf((float) S_v);
+    ध्रुव भिन्न scale = 1.0f / sqrtf((भिन्न) S_v);
 
     dpct::queue_ptr stream = ctx.stream();
 
     // K (snapshot slot count) is an op param; state holds s0 only [S_v, S_v, H, n_seqs].
-    const int K = ggml_get_op_params_i32(dst, 0);
-    const bool keep_rs = K > 1;
+    ध्रुव पूर्णाङ्क K = ggml_get_op_params_i32(dst, 0);
+    ध्रुव तार्किक keep_rs = K > 1;
 
     // recurrent state -> dst tail (after attention scores), or the cache when fusing
-    float * state_d           = dst_d + S_v * H * n_tokens * n_seqs;
+    भिन्न * state_d           = dst_d + S_v * H * n_tokens * n_seqs;
     int64_t state_slot_stride = S_v * S_v * H * n_seqs;
-    if (cache != nullptr) {
+    सचे (cache != nullptr) {
         state_d           = cache->data;
         state_slot_stride = cache->slot_stride;
     }
 
-    if (kda) {
-        if (keep_rs) {
-            launch_gated_delta_net<true, true>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
+    सचे (kda) {
+        सचे (keep_rs) {
+            launch_gated_delta_net<सच्च, सच्च>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
                 S_v, H, n_tokens, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
                 sb1, sb2, sb3, neqk1, rq3, scale, state_slot_stride, K, stream);
-        } else {
-            launch_gated_delta_net<true, false>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
+        } अञ्ञथा {
+            launch_gated_delta_net<सच्च, मिच्छा>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
                 S_v, H, n_tokens, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
                 sb1, sb2, sb3, neqk1, rq3, scale, state_slot_stride, K, stream);
         }
-    } else {
-        if (keep_rs) {
-            launch_gated_delta_net<false, true>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
+    } अञ्ञथा {
+        सचे (keep_rs) {
+            launch_gated_delta_net<मिच्छा, सच्च>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
                 S_v, H, n_tokens, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
                 sb1, sb2, sb3, neqk1, rq3, scale, state_slot_stride, K, stream);
-        } else {
-            launch_gated_delta_net<false, false>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
+        } अञ्ञथा {
+            launch_gated_delta_net<मिच्छा, मिच्छा>(q_d, k_d, v_d, g_d, b_d, s_d, dst_d, state_d,
                 S_v, H, n_tokens, n_seqs, sq1, sq2, sq3, sv1, sv2, sv3,
                 sb1, sb2, sb3, neqk1, rq3, scale, state_slot_stride, K, stream);
         }
     }
 }
 
-void ggml_sycl_op_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+शून्य ggml_sycl_op_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     ggml_sycl_op_gated_delta_net_impl(ctx, dst, nullptr);
 }
 
-void ggml_sycl_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+शून्य ggml_sycl_gated_delta_net(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
     ggml_sycl_op_gated_delta_net(ctx, dst);
 }
 
-void ggml_sycl_op_gated_delta_net_fused_cache(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
+शून्य ggml_sycl_op_gated_delta_net_fused_cache(ggml_backend_sycl_context & ctx, ggml_tensor * dst,
                                               ggml_sycl_gated_delta_net_fused_cache cache) {
     scope_op_debug_print scope_dbg_print(__func__, dst, /*num_src=*/6);
     ggml_sycl_op_gated_delta_net_impl(ctx, dst, &cache);

@@ -1,37 +1,37 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#अन्तर्भाव "../node_context.h"
+#अन्तर्भाव "../op_table.h"
+#अन्तर्भाव "../utils.h"
 
-#include <memory>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/clamp.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gelu.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/sigmoid.hpp>
-#include <openvino/op/slice.hpp>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/core/node_output.hpp>
+#अन्तर्भाव <openvino/op/clamp.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/gelu.hpp>
+#अन्तर्भाव <openvino/op/multiply.hpp>
+#अन्तर्भाव <openvino/op/sigmoid.hpp>
+#अन्तर्भाव <openvino/op/slice.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश op {
 
-OutputVector translate_glu_geglu(const NodeContext & context) {
-    num_inputs_check(context, 1, 2);
+OutputVector translate_glu_geglu(ध्रुव ग्रन्थिः_Context & context) {
+    अङ्कः_inputs_check(context, 1, 2);
 
     ov::Output<ov::Node> src0;
     ov::Output<ov::Node> src1;
-    if (context.get_input_size() == 2) {
+    सचे (context.get_निवेशः_size() == 2) {
         // Inputs may be VIEW slices of a combined gate_up tensor (MoE experts):
         // resolve them so each half has its real sliced shape, not the base tensor.
-        src0 = process_view_input_new(context, 0);
-        src1 = process_view_input_new(context, 1);
-    } else {
+        src0 = process_view_निवेशः_new(context, 0);
+        src1 = process_view_निवेशः_new(context, 1);
+    } अञ्ञथा {
         // GGML splits along ne[0] (OV last axis) using floor division: nc = ne[0] / 2.
         // Both halves are nc elements; if the dimension is odd, the last element is dropped.
         // Use Slice instead of Split to handle odd dimensions correctly.
         // Resolve a VIEW input (e.g. non-contiguous slice) to its real shape first.
-        auto combined = process_view_input_new(context, 0);
+        auto combined = process_view_निवेशः_new(context, 0);
         auto combined_shape = combined.get_partial_shape();
         int64_t last_dim_val = combined_shape[combined_shape.rank().get_length() - 1].get_length();
         int64_t nc = last_dim_val / 2;
@@ -48,12 +48,12 @@ OutputVector translate_glu_geglu(const NodeContext & context) {
     }
 
     int32_t * params = context.get_output_op_params();
-    const int32_t swapped = params[1];
-    if (swapped) {
+    ध्रुव int32_t swapped = params[1];
+    सचे (swapped) {
         std::swap(src0, src1);
     }
 
-    if (context.is_static()) {
+    सचे (context.is_static()) {
         // TODO: Temporary solution for NPU accuracy issue due to fp16 overflow
         // To be removed once permanent solution is implemented
         // Justification:
@@ -66,7 +66,7 @@ OutputVector translate_glu_geglu(const NodeContext & context) {
     auto gelu = std::make_shared<ov::op::v7::Gelu>(src0);
     auto res = std::make_shared<ov::op::v1::Multiply>(gelu, src1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    पटिनिवत्त rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

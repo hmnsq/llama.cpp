@@ -1,50 +1,50 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#अन्तर्भाव "../node_context.h"
+#अन्तर्भाव "../op_table.h"
+#अन्तर्भाव "../utils.h"
 
-#include <openvino/op/avg_pool.hpp>
-#include <openvino/op/max_pool.hpp>
-#include <openvino/op/convert.hpp>
+#अन्तर्भाव <openvino/op/avg_pool.hpp>
+#अन्तर्भाव <openvino/op/max_pool.hpp>
+#अन्तर्भाव <openvino/op/convert.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश op {
 
-OutputVector translate_pool_2d(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
-    const int32_t * params = context.get_output_op_params();
+OutputVector translate_pool_2d(ध्रुव ग्रन्थिः_Context & context) {
+    अङ्कः_inputs_check(context, 1, 1);
+    ध्रुव int32_t * params = context.get_output_op_params();
 
-    const int k0 = params[1];
-    const int k1 = params[2];
-    const int s0 = params[3];
-    const int s1 = params[4];
-    const int p0 = params[5];
-    const int p1 = params[6];
+    ध्रुव पूर्णाङ्क k0 = params[1];
+    ध्रुव पूर्णाङ्क k1 = params[2];
+    ध्रुव पूर्णाङ्क s0 = params[3];
+    ध्रुव पूर्णाङ्क s1 = params[4];
+    ध्रुव पूर्णाङ्क p0 = params[5];
+    ध्रुव पूर्णाङ्क p1 = params[6];
 
-    const int op_case = context.get_op_case();
-    ov::Output<Node> input = context.get_input(0);
+    ध्रुव पूर्णाङ्क op_case = context.get_op_case();
+    ov::Output<Node> निवेशः = context.get_निवेशः(0);
     ov::Strides strides{static_cast<size_t>(s1), static_cast<size_t>(s0)};
     ov::Shape pads_begin{static_cast<size_t>(p1), static_cast<size_t>(p0)};
     ov::Shape pads_end{static_cast<size_t>(p1), static_cast<size_t>(p0)};
     ov::Shape kernel{static_cast<size_t>(k1), static_cast<size_t>(k0)};
     ov::Output<Node> res;
 
-    switch (op_case) {
-    case 1:  // GGML_OP_POOL_MAX
+    विकल्प (op_case) {
+    पक्ष 1:  // GGML_OP_POOL_MAX
     {
-        res = std::make_shared<ov::op::v1::MaxPool>(input, strides, pads_begin, pads_end, kernel);
-        break;
+        res = std::make_shared<ov::op::v1::MaxPool>(निवेशः, strides, pads_begin, pads_end, kernel);
+        भङ्ग;
     }
-    case 2:  // GGML_OP_POOL_AVG
+    पक्ष 2:  // GGML_OP_POOL_AVG
     {
-        res = std::make_shared<ov::op::v1::AvgPool>(input, strides, pads_begin, pads_end, kernel, false);
-        break;
+        res = std::make_shared<ov::op::v1::AvgPool>(निवेशः, strides, pads_begin, pads_end, kernel, मिच्छा);
+        भङ्ग;
     }
-    default:
-        break;
+    स्वभाव:
+        भङ्ग;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    पटिनिवत्त rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

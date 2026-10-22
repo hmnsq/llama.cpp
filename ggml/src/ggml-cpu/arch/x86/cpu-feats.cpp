@@ -1,107 +1,107 @@
-#include "ggml-backend-impl.h"
+#अन्तर्भाव "ggml-backend-impl.h"
 
-#if defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
+#सचे defined(__x86_64__) || (defined(_MSC_VER) && defined(_M_AMD64))
 
 #ifdef _MSC_VER
-#include <intrin.h>
+#अन्तर्भाव <intrin.h>
 #endif
 
-#include <cstring>
-#include <vector>
-#include <bitset>
-#include <array>
-#include <string>
+#अन्तर्भाव <cstring>
+#अन्तर्भाव <vector>
+#अन्तर्भाव <bitset>
+#अन्तर्भाव <array>
+#अन्तर्भाव <string>
 
 // ref: https://cdrdv2-public.intel.com/782156/325383-sdm-vol-2abcd.pdf
-struct cpuid_x86 {
-    bool SSE3(void) { return f_1_ecx[0]; }
-    bool PCLMULQDQ(void) { return f_1_ecx[1]; }
-    bool MONITOR(void) { return f_1_ecx[3]; }
-    bool SSSE3(void) { return f_1_ecx[9]; }
-    bool FMA(void) { return f_1_ecx[12]; }
-    bool CMPXCHG16B(void) { return f_1_ecx[13]; }
-    bool SSE41(void) { return f_1_ecx[19]; }
-    bool SSE42(void) { return f_1_ecx[20]; }
-    bool MOVBE(void) { return f_1_ecx[22]; }
-    bool POPCNT(void) { return f_1_ecx[23]; }
-    bool AES(void) { return f_1_ecx[25]; }
-    bool XSAVE(void) { return f_1_ecx[26]; }
-    bool OSXSAVE(void) { return f_1_ecx[27]; }
-    bool AVX(void) { return f_1_ecx[28]; }
-    bool F16C(void) { return f_1_ecx[29]; }
-    bool RDRAND(void) { return f_1_ecx[30]; }
+संरचना cpuid_x86 {
+    तार्किक SSE3(शून्य) { पटिनिवत्त f_1_ecx[0]; }
+    तार्किक PCLMULQDQ(शून्य) { पटिनिवत्त f_1_ecx[1]; }
+    तार्किक MONITOR(शून्य) { पटिनिवत्त f_1_ecx[3]; }
+    तार्किक SSSE3(शून्य) { पटिनिवत्त f_1_ecx[9]; }
+    तार्किक FMA(शून्य) { पटिनिवत्त f_1_ecx[12]; }
+    तार्किक CMPXCHG16B(शून्य) { पटिनिवत्त f_1_ecx[13]; }
+    तार्किक SSE41(शून्य) { पटिनिवत्त f_1_ecx[19]; }
+    तार्किक SSE42(शून्य) { पटिनिवत्त f_1_ecx[20]; }
+    तार्किक MOVBE(शून्य) { पटिनिवत्त f_1_ecx[22]; }
+    तार्किक POPCNT(शून्य) { पटिनिवत्त f_1_ecx[23]; }
+    तार्किक AES(शून्य) { पटिनिवत्त f_1_ecx[25]; }
+    तार्किक XSAVE(शून्य) { पटिनिवत्त f_1_ecx[26]; }
+    तार्किक OSXSAVE(शून्य) { पटिनिवत्त f_1_ecx[27]; }
+    तार्किक AVX(शून्य) { पटिनिवत्त f_1_ecx[28]; }
+    तार्किक F16C(शून्य) { पटिनिवत्त f_1_ecx[29]; }
+    तार्किक RDRAND(शून्य) { पटिनिवत्त f_1_ecx[30]; }
 
-    bool MSR(void) { return f_1_edx[5]; }
-    bool CX8(void) { return f_1_edx[8]; }
-    bool SEP(void) { return f_1_edx[11]; }
-    bool CMOV(void) { return f_1_edx[15]; }
-    bool CLFSH(void) { return f_1_edx[19]; }
-    bool MMX(void) { return f_1_edx[23]; }
-    bool FXSR(void) { return f_1_edx[24]; }
-    bool SSE(void) { return f_1_edx[25]; }
-    bool SSE2(void) { return f_1_edx[26]; }
+    तार्किक MSR(शून्य) { पटिनिवत्त f_1_edx[5]; }
+    तार्किक CX8(शून्य) { पटिनिवत्त f_1_edx[8]; }
+    तार्किक SEP(शून्य) { पटिनिवत्त f_1_edx[11]; }
+    तार्किक CMOV(शून्य) { पटिनिवत्त f_1_edx[15]; }
+    तार्किक CLFSH(शून्य) { पटिनिवत्त f_1_edx[19]; }
+    तार्किक MMX(शून्य) { पटिनिवत्त f_1_edx[23]; }
+    तार्किक FXSR(शून्य) { पटिनिवत्त f_1_edx[24]; }
+    तार्किक SSE(शून्य) { पटिनिवत्त f_1_edx[25]; }
+    तार्किक SSE2(शून्य) { पटिनिवत्त f_1_edx[26]; }
 
-    bool FSGSBASE(void) { return f_7_ebx[0]; }
-    bool BMI1(void) { return f_7_ebx[3]; }
-    bool HLE(void) { return is_intel && f_7_ebx[4]; }
-    bool AVX2(void) { return f_7_ebx[5]; }
-    bool BMI2(void) { return f_7_ebx[8]; }
-    bool ERMS(void) { return f_7_ebx[9]; }
-    bool INVPCID(void) { return f_7_ebx[10]; }
-    bool RTM(void) { return is_intel && f_7_ebx[11]; }
-    bool AVX512F(void) { return f_7_ebx[16]; }
-    bool AVX512DQ(void) { return f_7_ebx[17]; }
-    bool RDSEED(void) { return f_7_ebx[18]; }
-    bool ADX(void) { return f_7_ebx[19]; }
-    bool AVX512PF(void) { return f_7_ebx[26]; }
-    bool AVX512ER(void) { return f_7_ebx[27]; }
-    bool AVX512CD(void) { return f_7_ebx[28]; }
-    bool AVX512BW(void) { return f_7_ebx[30]; }
-    bool AVX512VL(void) { return f_7_ebx[31]; }
+    तार्किक FSGSBASE(शून्य) { पटिनिवत्त f_7_ebx[0]; }
+    तार्किक BMI1(शून्य) { पटिनिवत्त f_7_ebx[3]; }
+    तार्किक HLE(शून्य) { पटिनिवत्त is_intel && f_7_ebx[4]; }
+    तार्किक AVX2(शून्य) { पटिनिवत्त f_7_ebx[5]; }
+    तार्किक BMI2(शून्य) { पटिनिवत्त f_7_ebx[8]; }
+    तार्किक ERMS(शून्य) { पटिनिवत्त f_7_ebx[9]; }
+    तार्किक INVPCID(शून्य) { पटिनिवत्त f_7_ebx[10]; }
+    तार्किक RTM(शून्य) { पटिनिवत्त is_intel && f_7_ebx[11]; }
+    तार्किक AVX512F(शून्य) { पटिनिवत्त f_7_ebx[16]; }
+    तार्किक AVX512DQ(शून्य) { पटिनिवत्त f_7_ebx[17]; }
+    तार्किक RDSEED(शून्य) { पटिनिवत्त f_7_ebx[18]; }
+    तार्किक ADX(शून्य) { पटिनिवत्त f_7_ebx[19]; }
+    तार्किक AVX512PF(शून्य) { पटिनिवत्त f_7_ebx[26]; }
+    तार्किक AVX512ER(शून्य) { पटिनिवत्त f_7_ebx[27]; }
+    तार्किक AVX512CD(शून्य) { पटिनिवत्त f_7_ebx[28]; }
+    तार्किक AVX512BW(शून्य) { पटिनिवत्त f_7_ebx[30]; }
+    तार्किक AVX512VL(शून्य) { पटिनिवत्त f_7_ebx[31]; }
 
-    bool SHA(void) { return f_7_ebx[29]; }
+    तार्किक SHA(शून्य) { पटिनिवत्त f_7_ebx[29]; }
 
-    bool PREFETCHWT1(void) { return f_7_ecx[0]; }
+    तार्किक PREFETCHWT1(शून्य) { पटिनिवत्त f_7_ecx[0]; }
 
-    bool LAHF(void) { return f_81_ecx[0]; }
-    bool LZCNT(void) { return is_intel && f_81_ecx[5]; }
-    bool ABM(void) { return is_amd && f_81_ecx[5]; }
-    bool SSE4a(void) { return is_amd && f_81_ecx[6]; }
-    bool XOP(void) { return is_amd && f_81_ecx[11]; }
-    bool TBM(void) { return is_amd && f_81_ecx[21]; }
+    तार्किक LAHF(शून्य) { पटिनिवत्त f_81_ecx[0]; }
+    तार्किक LZCNT(शून्य) { पटिनिवत्त is_intel && f_81_ecx[5]; }
+    तार्किक ABM(शून्य) { पटिनिवत्त is_amd && f_81_ecx[5]; }
+    तार्किक SSE4a(शून्य) { पटिनिवत्त is_amd && f_81_ecx[6]; }
+    तार्किक XOP(शून्य) { पटिनिवत्त is_amd && f_81_ecx[11]; }
+    तार्किक TBM(शून्य) { पटिनिवत्त is_amd && f_81_ecx[21]; }
 
-    bool SYSCALL(void) { return is_intel && f_81_edx[11]; }
-    bool MMXEXT(void) { return is_amd && f_81_edx[22]; }
-    bool RDTSCP(void) { return is_intel && f_81_edx[27]; }
-    bool _3DNOWEXT(void) { return is_amd && f_81_edx[30]; }
-    bool _3DNOW(void) { return is_amd && f_81_edx[31]; }
+    तार्किक SYSCALL(शून्य) { पटिनिवत्त is_intel && f_81_edx[11]; }
+    तार्किक MMXEXT(शून्य) { पटिनिवत्त is_amd && f_81_edx[22]; }
+    तार्किक RDTSCP(शून्य) { पटिनिवत्त is_intel && f_81_edx[27]; }
+    तार्किक _3DNOWEXT(शून्य) { पटिनिवत्त is_amd && f_81_edx[30]; }
+    तार्किक _3DNOW(शून्य) { पटिनिवत्त is_amd && f_81_edx[31]; }
 
-    bool AVX512_VBMI(void) { return f_7_ecx[1]; }
-    bool AVX512_VNNI(void) { return f_7_ecx[11]; }
-    bool AVX512_FP16(void) { return f_7_edx[23]; }
-    bool AVX512_BF16(void) { return f_7_1_eax[5]; }
-    bool AVX_VNNI(void) { return f_7_1_eax[4]; }
+    तार्किक AVX512_VBMI(शून्य) { पटिनिवत्त f_7_ecx[1]; }
+    तार्किक AVX512_VNNI(शून्य) { पटिनिवत्त f_7_ecx[11]; }
+    तार्किक AVX512_FP16(शून्य) { पटिनिवत्त f_7_edx[23]; }
+    तार्किक AVX512_BF16(शून्य) { पटिनिवत्त f_7_1_eax[5]; }
+    तार्किक AVX_VNNI(शून्य) { पटिनिवत्त f_7_1_eax[4]; }
 
-    bool AMX_TILE(void) { return f_7_edx[24]; }
-    bool AMX_INT8(void) { return f_7_edx[25]; }
-    bool AMX_FP16(void) { return f_7_1_eax[21]; }
-    bool AMX_BF16(void) { return f_7_edx[22]; }
+    तार्किक AMX_TILE(शून्य) { पटिनिवत्त f_7_edx[24]; }
+    तार्किक AMX_INT8(शून्य) { पटिनिवत्त f_7_edx[25]; }
+    तार्किक AMX_FP16(शून्य) { पटिनिवत्त f_7_1_eax[21]; }
+    तार्किक AMX_BF16(शून्य) { पटिनिवत्त f_7_edx[22]; }
 
 #ifdef _MSC_VER
-    static void cpuid(int cpu_info[4], int eax) {
+    स्थिर शून्य cpuid(पूर्णाङ्क cpu_info[4], पूर्णाङ्क eax) {
         __cpuid(cpu_info, eax);
     }
-    static void cpuidex(int cpu_info[4], int eax, int ecx) {
+    स्थिर शून्य cpuidex(पूर्णाङ्क cpu_info[4], पूर्णाङ्क eax, पूर्णाङ्क ecx) {
         __cpuidex(cpu_info, eax, ecx);
     }
-#else
-    static void cpuid(int cpu_info[4], int eax) {
+#अञ्ञथा
+    स्थिर शून्य cpuid(पूर्णाङ्क cpu_info[4], पूर्णाङ्क eax) {
         __asm__ __volatile__(
             "cpuid"
             : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
             : "a"(eax), "c"(0));
     }
-    static void cpuidex(int cpu_info[4], int eax, int ecx) {
+    स्थिर शून्य cpuidex(पूर्णाङ्क cpu_info[4], पूर्णाङ्क eax, पूर्णाङ्क ecx) {
         __asm__ __volatile__(
             "cpuid"
             : "=a"(cpu_info[0]), "=b"(cpu_info[1]), "=c"(cpu_info[2]), "=d"(cpu_info[3])
@@ -110,39 +110,39 @@ struct cpuid_x86 {
 #endif
 
     cpuid_x86() {
-        std::array<int, 4> cpui;
-        std::vector<std::array<int, 4>> data;
+        std::array<पूर्णाङ्क, 4> cpui;
+        std::vector<std::array<पूर्णाङ्क, 4>> data;
 
         // calling __cpuid with 0x0 as the function_id argument
         // gets the number of the highest valid function ID.
         cpuid(cpui.data(), 0);
-        int n_ids = cpui[0];
+        पूर्णाङ्क n_ids = cpui[0];
 
-        for (int i = 0; i <= n_ids; ++i) {
+        अत्थाय (पूर्णाङ्क i = 0; i <= n_ids; ++i) {
             cpuidex(cpui.data(), i, 0);
             data.push_back(cpui);
         }
 
         // capture vendor string
-        char vendor[0x20] = {};
-        *reinterpret_cast<int *>(vendor)     = data[0][1];
-        *reinterpret_cast<int *>(vendor + 4) = data[0][3];
-        *reinterpret_cast<int *>(vendor + 8) = data[0][2];
-        this->vendor = vendor;
-        if (this->vendor == "GenuineIntel") {
-            is_intel = true;
-        } else if (this->vendor == "AuthenticAMD") {
-            is_amd = true;
+        वर्ण vendor[0x20] = {};
+        *reinterpret_cast<पूर्णाङ्क *>(vendor)     = data[0][1];
+        *reinterpret_cast<पूर्णाङ्क *>(vendor + 4) = data[0][3];
+        *reinterpret_cast<पूर्णाङ्क *>(vendor + 8) = data[0][2];
+        एतत्->vendor = vendor;
+        सचे (एतत्->vendor == "GenuineIntel") {
+            is_intel = सच्च;
+        } अञ्ञथा सचे (एतत्->vendor == "AuthenticAMD") {
+            is_amd = सच्च;
         }
 
         // load bitset with flags for function 0x00000001
-        if (n_ids >= 1) {
+        सचे (n_ids >= 1) {
             f_1_ecx = data[1][2];
             f_1_edx = data[1][3];
         }
 
         // load bitset with flags for function 0x00000007
-        if (n_ids >= 7) {
+        सचे (n_ids >= 7) {
             f_7_ebx = data[7][1];
             f_7_ecx = data[7][2];
             f_7_edx = data[7][3];
@@ -153,32 +153,32 @@ struct cpuid_x86 {
         // calling __cpuid with 0x80000000 as the function_id argument
         // gets the number of the highest valid extended ID.
         cpuid(cpui.data(), 0x80000000);
-        unsigned int n_ex_ids = cpui[0];
+        unsigned पूर्णाङ्क n_ex_ids = cpui[0];
 
-        std::vector<std::array<int, 4>> ext_data;
-        for (unsigned int i = 0x80000000; i <= n_ex_ids; ++i) {
+        std::vector<std::array<पूर्णाङ्क, 4>> ext_data;
+        अत्थाय (unsigned पूर्णाङ्क i = 0x80000000; i <= n_ex_ids; ++i) {
             cpuidex(cpui.data(), i, 0);
             ext_data.push_back(cpui);
         }
 
         // load bitset with flags for function 0x80000001
-        if (n_ex_ids >= 0x80000001) {
+        सचे (n_ex_ids >= 0x80000001) {
             f_81_ecx = ext_data[1][2];
             f_81_edx = ext_data[1][3];
         }
 
         // interpret CPU brand string if reported
-        char brand[0x40] = {};
-        if (n_ex_ids >= 0x80000004) {
-            std::memcpy(brand, ext_data[2].data(), sizeof(cpui));
-            std::memcpy(brand + 16, ext_data[3].data(), sizeof(cpui));
-            std::memcpy(brand + 32, ext_data[4].data(), sizeof(cpui));
-            this->brand = brand;
+        वर्ण brand[0x40] = {};
+        सचे (n_ex_ids >= 0x80000004) {
+            std::memcpy(brand, ext_data[2].data(), परिमाण(cpui));
+            std::memcpy(brand + 16, ext_data[3].data(), परिमाण(cpui));
+            std::memcpy(brand + 32, ext_data[4].data(), परिमाण(cpui));
+            एतत्->brand = brand;
         }
     }
 
-    bool is_intel = false;
-    bool is_amd = false;
+    तार्किक is_intel = मिच्छा;
+    तार्किक is_amd = मिच्छा;
     std::string vendor;
     std::string brand;
     std::bitset<32> f_1_ecx;
@@ -191,8 +191,8 @@ struct cpuid_x86 {
     std::bitset<32> f_81_edx;
 };
 
-#if 0
-void test_x86_is() {
+#सचे 0
+शून्य test_x86_is() {
     cpuid_x86 is;
     printf("CPU Vendor: %s\n", is.vendor.c_str());
     printf("Brand: %s\n", is.brand.c_str());
@@ -260,66 +260,66 @@ void test_x86_is() {
 }
 #endif
 
-static int ggml_backend_cpu_x86_score() {
+स्थिर पूर्णाङ्क ggml_backend_cpu_x86_score() {
     // FIXME: this does not check for OS support
 
-    int score = 1;
+    पूर्णाङ्क score = 1;
     cpuid_x86 is;
 
 #ifdef GGML_FMA
-    if (!is.FMA()) { return 0; }
+    सचे (!is.FMA()) { पटिनिवत्त 0; }
     score += 1;
 #endif
 #ifdef GGML_F16C
-    if (!is.F16C()) { return 0; }
+    सचे (!is.F16C()) { पटिनिवत्त 0; }
     score += 1<<1;
 #endif
 #ifdef GGML_SSE42
-    if (!is.SSE42()) { return 0; }
+    सचे (!is.SSE42()) { पटिनिवत्त 0; }
     score += 1<<2;
 #endif
 #ifdef GGML_BMI2
-    if (!is.BMI2()) { return 0; }
+    सचे (!is.BMI2()) { पटिनिवत्त 0; }
     score += 1<<3;
 #endif
 #ifdef GGML_AVX
-    if (!is.AVX()) { return 0; }
+    सचे (!is.AVX()) { पटिनिवत्त 0; }
     score += 1<<4;
 #endif
 #ifdef GGML_AVX2
-    if (!is.AVX2()) { return 0; }
+    सचे (!is.AVX2()) { पटिनिवत्त 0; }
     score += 1<<5;
 #endif
 #ifdef GGML_AVX_VNNI
-    if (!is.AVX_VNNI()) { return 0; }
+    सचे (!is.AVX_VNNI()) { पटिनिवत्त 0; }
     score += 1<<6;
 #endif
 #ifdef GGML_AVX512
-    if (!is.AVX512F()) { return 0; }
-    if (!is.AVX512CD()) { return 0; }
-    if (!is.AVX512VL()) { return 0; }
-    if (!is.AVX512DQ()) { return 0; }
-    if (!is.AVX512BW()) { return 0; }
+    सचे (!is.AVX512F()) { पटिनिवत्त 0; }
+    सचे (!is.AVX512CD()) { पटिनिवत्त 0; }
+    सचे (!is.AVX512VL()) { पटिनिवत्त 0; }
+    सचे (!is.AVX512DQ()) { पटिनिवत्त 0; }
+    सचे (!is.AVX512BW()) { पटिनिवत्त 0; }
     score += 1<<7;
 #endif
 #ifdef GGML_AVX512_VBMI
-    if (!is.AVX512_VBMI()) { return 0; }
+    सचे (!is.AVX512_VBMI()) { पटिनिवत्त 0; }
     score += 1<<8;
 #endif
 #ifdef GGML_AVX512_BF16
-    if (!is.AVX512_BF16()) { return 0; }
+    सचे (!is.AVX512_BF16()) { पटिनिवत्त 0; }
     score += 1<<9;
 #endif
 #ifdef GGML_AVX512_VNNI
-    if (!is.AVX512_VNNI()) { return 0; }
+    सचे (!is.AVX512_VNNI()) { पटिनिवत्त 0; }
     score += 1<<10;
 #endif
 #ifdef GGML_AMX_INT8
-    if (!is.AMX_INT8()) { return 0; }
+    सचे (!is.AMX_INT8()) { पटिनिवत्त 0; }
     score += 1<<11;
 #endif
 
-    return score;
+    पटिनिवत्त score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_x86_score)
