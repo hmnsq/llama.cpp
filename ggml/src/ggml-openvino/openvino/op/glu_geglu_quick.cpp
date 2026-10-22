@@ -1,30 +1,30 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#অন্তর্ভাব "../node_context.h"
+#অন্তর্ভাব "../op_table.h"
+#অন্তর্ভাব "../utils.h"
 
-#include <memory>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/swish.hpp>
+#অন্তর্ভাব <memory>
+#অন্তর্ভাব <openvino/core/node_output.hpp>
+#অন্তর্ভাব <openvino/op/constant.hpp>
+#অন্তর্ভাব <openvino/op/multiply.hpp>
+#অন্তর্ভাব <openvino/op/slice.hpp>
+#অন্তর্ভাব <openvino/op/swish.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+নামাকাশ ov {
+নামাকাশ frontend {
+নামাকাশ ggml {
+নামাকাশ op {
 
-OutputVector translate_glu_geglu_quick(const NodeContext & context) {
-    num_inputs_check(context, 1, 2);
+OutputVector translate_glu_geglu_quick(ধ্রুব গ্রন্থি_Context & context) {
+    অঙ্ক_inputs_check(context, 1, 2);
 
     ov::Output<ov::Node> src0;
     ov::Output<ov::Node> src1;
-    if (context.get_input_size() == 2) {
-        src0 = process_view_input_new(context, 0);
-        src1 = process_view_input_new(context, 1);
-    } else {
+    যদি (context.get_প্রবেশ_size() == 2) {
+        src0 = process_view_প্রবেশ_new(context, 0);
+        src1 = process_view_প্রবেশ_new(context, 1);
+    } অন্যথা {
         // split along last axis, nc = ne[0] / 2
-        auto combined = process_view_input_new(context, 0);
+        auto combined = process_view_প্রবেশ_new(context, 0);
         auto combined_shape = combined.get_partial_shape();
         int64_t last_dim_val = combined_shape[combined_shape.rank().get_length() - 1].get_length();
         int64_t nc = last_dim_val / 2;
@@ -41,19 +41,19 @@ OutputVector translate_glu_geglu_quick(const NodeContext & context) {
     }
 
     int32_t * params = context.get_output_op_params();
-    const int32_t swapped = params[1];
-    if (swapped) {
+    ধ্রুব int32_t swapped = params[1];
+    যদি (swapped) {
         std::swap(src0, src1);
     }
 
     // GELU_QUICK(x) = x * sigmoid(1.702 * x)
     // Create the constant in the same type as src0 to avoid f16/f32 mismatch.
-    auto input_type = src0.get_element_type();
-    auto coef = ov::op::v0::Constant::create(input_type, ov::Shape{}, {1.702f});
+    auto প্রবেশ_type = src0.get_element_type();
+    auto coef = ov::op::v0::Constant::create(প্রবেশ_type, ov::Shape{}, {1.702f});
     auto gated   = std::make_shared<ov::op::v4::Swish>(src0, coef);
     auto res     = std::make_shared<ov::op::v1::Multiply>(gated, src1);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    প্রত্যাগম rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

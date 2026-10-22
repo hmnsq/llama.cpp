@@ -10,55 +10,55 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 
-#include "pool.hpp"
-#include <float.h>
+#অন্তর্ভাব "pool.hpp"
+#অন্তর্ভাব <float.h>
 
 template <typename Ti, typename To>
-static void pool2d_nchw_kernel(
-        const int ih, const int iw, const int oh, const int ow,
-        const int kh, const int kw, const int sh, const int sw,
-        const int ph, const int pw, const int parallel_elements,
-        const Ti* src, To* dst, const enum ggml_op_pool op,
-        const sycl::nd_item<3> &item_ct1) {
-        int idx = item_ct1.get_local_id(2) +
+স্থির শূন্য pool2d_nchw_kernel(
+        ধ্রুব পূর্ণাঙ্ক ih, ধ্রুব পূর্ণাঙ্ক iw, ধ্রুব পূর্ণাঙ্ক oh, ধ্রুব পূর্ণাঙ্ক ow,
+        ধ্রুব পূর্ণাঙ্ক kh, ধ্রুব পূর্ণাঙ্ক kw, ধ্রুব পূর্ণাঙ্ক sh, ধ্রুব পূর্ণাঙ্ক sw,
+        ধ্রুব পূর্ণাঙ্ক ph, ধ্রুব পূর্ণাঙ্ক pw, ধ্রুব পূর্ণাঙ্ক parallel_elements,
+        ধ্রুব Ti* src, To* dst, ধ্রুব গণনা ggml_op_pool op,
+        ধ্রুব sycl::nd_item<3> &item_ct1) {
+        পূর্ণাঙ্ক idx = item_ct1.get_local_id(2) +
                   item_ct1.get_group(2) * item_ct1.get_local_range(2);
-        if (idx >= parallel_elements) {
-            return;
+        যদি (idx >= parallel_elements) {
+            প্রত্যাগম;
         }
 
-        const int I_HW = ih * iw;
-        const int O_HW = oh * ow;
-        const int nc = idx / O_HW;
-        const int cur_oh = idx % O_HW / ow;
-        const int cur_ow = idx % O_HW % ow;
-        const Ti* i_ptr = src + nc * I_HW;
+        ধ্রুব পূর্ণাঙ্ক I_HW = ih * iw;
+        ধ্রুব পূর্ণাঙ্ক O_HW = oh * ow;
+        ধ্রুব পূর্ণাঙ্ক nc = idx / O_HW;
+        ধ্রুব পূর্ণাঙ্ক cur_oh = idx % O_HW / ow;
+        ধ্রুব পূর্ণাঙ্ক cur_ow = idx % O_HW % ow;
+        ধ্রুব Ti* i_ptr = src + nc * I_HW;
         To* o_ptr = dst + nc * O_HW;
-        const int start_h = cur_oh * sh - ph;
-        const int bh = sycl::max(0, start_h);
-        const int eh = sycl::min(ih, start_h + kh);
-        const int start_w = cur_ow * sw - pw;
-        const int bw = sycl::max(0, start_w);
-        const int ew = sycl::min(iw, start_w + kw);
+        ধ্রুব পূর্ণাঙ্ক start_h = cur_oh * sh - ph;
+        ধ্রুব পূর্ণাঙ্ক bh = sycl::max(0, start_h);
+        ধ্রুব পূর্ণাঙ্ক eh = sycl::min(ih, start_h + kh);
+        ধ্রুব পূর্ণাঙ্ক start_w = cur_ow * sw - pw;
+        ধ্রুব পূর্ণাঙ্ক bw = sycl::max(0, start_w);
+        ধ্রুব পূর্ণাঙ্ক ew = sycl::min(iw, start_w + kw);
 
         To res = 0;
 
-        switch (op) {
-            case GGML_OP_POOL_AVG: res = 0; break;
-            case GGML_OP_POOL_MAX: res = -FLT_MAX; break;
-            default:
+        বিকল্প (op) {
+            পক্ষ GGML_OP_POOL_AVG: res = 0; ভঙ্গ;
+            পক্ষ GGML_OP_POOL_MAX: res = -FLT_MAX; ভঙ্গ;
+            স্বভাব:
                 res      = (To) sycl::nan(uint32_t(0));
-                break;
+                ভঙ্গ;
         }
 
-        for (int i = bh; i < eh; i += 1) {
-            for (int j = bw; j < ew; j += 1) {
+        প্রতি (পূর্ণাঙ্ক i = bh; i < eh; i += 1) {
+            প্রতি (পূর্ণাঙ্ক j = bw; j < ew; j += 1) {
                 Ti cur = i_ptr[i * iw + j];
-                switch (op) {
-                    case GGML_OP_POOL_AVG: res += (cur / (kh * kw)); break;
-                    case GGML_OP_POOL_MAX: res = sycl::max(res, (To)cur); break;
-                    default:
+                বিকল্প (op) {
+                    পক্ষ GGML_OP_POOL_AVG: res += (cur / (kh * kw)); ভঙ্গ;
+                    পক্ষ GGML_OP_POOL_MAX: res = sycl::max(res, (To)cur); ভঙ্গ;
+                    স্বভাব:
                         res = (To) sycl::nan(uint32_t(0));
-                        break;
+                        ভঙ্গ;
                 }
             }
         }
@@ -66,81 +66,81 @@ static void pool2d_nchw_kernel(
 }
 
 template <typename Ti, typename To>
-static void pool1d_ncw_kernel(
-        const int iw, const int ow,
-        const int k, const int s,
-        const int p, const int parallel_elements,
-        const Ti * src, To * dst, const enum ggml_op_pool op,
-        const sycl::nd_item<3> & item_ct1) {
-    int idx = item_ct1.get_local_id(2) +
+স্থির শূন্য pool1d_ncw_kernel(
+        ধ্রুব পূর্ণাঙ্ক iw, ধ্রুব পূর্ণাঙ্ক ow,
+        ধ্রুব পূর্ণাঙ্ক k, ধ্রুব পূর্ণাঙ্ক s,
+        ধ্রুব পূর্ণাঙ্ক p, ধ্রুব পূর্ণাঙ্ক parallel_elements,
+        ধ্রুব Ti * src, To * dst, ধ্রুব গণনা ggml_op_pool op,
+        ধ্রুব sycl::nd_item<3> & item_ct1) {
+    পূর্ণাঙ্ক idx = item_ct1.get_local_id(2) +
               item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (idx >= parallel_elements) {
-        return;
+    যদি (idx >= parallel_elements) {
+        প্রত্যাগম;
     }
 
-    const int nc     = idx / ow;
-    const int cur_ow = idx % ow;
-    const Ti * i_ptr = src + nc * iw;
+    ধ্রুব পূর্ণাঙ্ক nc     = idx / ow;
+    ধ্রুব পূর্ণাঙ্ক cur_ow = idx % ow;
+    ধ্রুব Ti * i_ptr = src + nc * iw;
     To *       o_ptr = dst + nc * ow;
-    const int  start = cur_ow * s - p;
-    const int  b     = sycl::max(0, start);
-    const int  e     = sycl::min(iw, start + k);
+    ধ্রুব পূর্ণাঙ্ক  start = cur_ow * s - p;
+    ধ্রুব পূর্ণাঙ্ক  b     = sycl::max(0, start);
+    ধ্রুব পূর্ণাঙ্ক  e     = sycl::min(iw, start + k);
 
     To res = 0;
-    switch (op) {
-        case GGML_OP_POOL_AVG: res = 0;        break;
-        case GGML_OP_POOL_MAX: res = -FLT_MAX; break;
-        default:
+    বিকল্প (op) {
+        পক্ষ GGML_OP_POOL_AVG: res = 0;        ভঙ্গ;
+        পক্ষ GGML_OP_POOL_MAX: res = -FLT_MAX; ভঙ্গ;
+        স্বভাব:
             res = (To) sycl::nan(uint32_t(0));
-            break;
+            ভঙ্গ;
     }
 
-    for (int j = b; j < e; j += 1) {
+    প্রতি (পূর্ণাঙ্ক j = b; j < e; j += 1) {
         Ti cur = i_ptr[j];
-        switch (op) {
-            case GGML_OP_POOL_AVG: res += cur; break;
-            case GGML_OP_POOL_MAX: res = sycl::max(res, (To) cur); break;
-            default:
+        বিকল্প (op) {
+            পক্ষ GGML_OP_POOL_AVG: res += cur; ভঙ্গ;
+            পক্ষ GGML_OP_POOL_MAX: res = sycl::max(res, (To) cur); ভঙ্গ;
+            স্বভাব:
                 res = (To) sycl::nan(uint32_t(0));
-                break;
+                ভঙ্গ;
         }
     }
 
-    const int count = e - b;
-    if (op == GGML_OP_POOL_AVG) {
+    ধ্রুব পূর্ণাঙ্ক count = e - b;
+    যদি (op == GGML_OP_POOL_AVG) {
         res = (count > 0) ? (res / count) : (To) 0;
     }
     o_ptr[cur_ow] = res;
 }
 
-void ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ধ্রুব ভিন্ন * src0_dd = static_cast<ধ্রুব ভিন্ন *>(dst->src[0]->data);
+    ভিন্ন *       dst_dd  = static_cast<ভিন্ন *>(dst->data);
 
-    const int32_t * opts = (const int32_t *)dst->op_params;
-    enum ggml_op_pool op = static_cast<ggml_op_pool>(opts[0]);
-    const int k0 = opts[1];
-    const int k1 = opts[2];
-    const int s0 = opts[3];
-    const int s1 = opts[4];
-    const int p0 = opts[5];
-    const int p1 = opts[6];
+    ধ্রুব int32_t * opts = (ধ্রুব int32_t *)dst->op_params;
+    গণনা ggml_op_pool op = static_cast<ggml_op_pool>(opts[0]);
+    ধ্রুব পূর্ণাঙ্ক k0 = opts[1];
+    ধ্রুব পূর্ণাঙ্ক k1 = opts[2];
+    ধ্রুব পূর্ণাঙ্ক s0 = opts[3];
+    ধ্রুব পূর্ণাঙ্ক s1 = opts[4];
+    ধ্রুব পূর্ণাঙ্ক p0 = opts[5];
+    ধ্রুব পূর্ণাঙ্ক p1 = opts[6];
 
-    const int64_t IH = dst->src[0]->ne[1];
-    const int64_t IW = dst->src[0]->ne[0];
+    ধ্রুব int64_t IH = dst->src[0]->ne[1];
+    ধ্রুব int64_t IW = dst->src[0]->ne[0];
 
-    const int64_t N = dst->ne[3];
-    const int64_t OC = dst->ne[2];
-    const int64_t OH = dst->ne[1];
-    const int64_t OW = dst->ne[0];
+    ধ্রুব int64_t N = dst->ne[3];
+    ধ্রুব int64_t OC = dst->ne[2];
+    ধ্রুব int64_t OH = dst->ne[1];
+    ধ্রুব int64_t OW = dst->ne[0];
 
-    const int parallel_elements = N * OC * OH * OW;
-    const int num_blocks = (parallel_elements + SYCL_POOL2D_BLOCK_SIZE - 1) / SYCL_POOL2D_BLOCK_SIZE;
-    sycl::range<3> block_nums(1, 1, num_blocks);
+    ধ্রুব পূর্ণাঙ্ক parallel_elements = N * OC * OH * OW;
+    ধ্রুব পূর্ণাঙ্ক অঙ্ক_blocks = (parallel_elements + SYCL_POOL2D_BLOCK_SIZE - 1) / SYCL_POOL2D_BLOCK_SIZE;
+    sycl::range<3> block_nums(1, 1, অঙ্ক_blocks);
     main_stream->parallel_for(
         sycl::nd_range<3>(block_nums *
                               sycl::range<3>(1, 1, SYCL_IM2COL_BLOCK_SIZE),
@@ -152,27 +152,27 @@ void ggml_sycl_op_pool2d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
         });
 }
 
-void ggml_sycl_op_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
+শূন্য ggml_sycl_op_pool1d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[0]->type == GGML_TYPE_F32);
     GGML_ASSERT( dst->type == GGML_TYPE_F32);
     dpct::queue_ptr main_stream = ctx.stream();
     SYCL_CHECK(ggml_sycl_set_device(ctx.device));
-    const float * src0_dd = static_cast<const float *>(dst->src[0]->data);
-    float *       dst_dd  = static_cast<float *>(dst->data);
+    ধ্রুব ভিন্ন * src0_dd = static_cast<ধ্রুব ভিন্ন *>(dst->src[0]->data);
+    ভিন্ন *       dst_dd  = static_cast<ভিন্ন *>(dst->data);
 
-    const int32_t * opts = (const int32_t *)dst->op_params;
-    enum ggml_op_pool op = static_cast<ggml_op_pool>(opts[0]);
-    const int k0 = opts[1];
-    const int s0 = opts[2];
-    const int p0 = opts[3];
+    ধ্রুব int32_t * opts = (ধ্রুব int32_t *)dst->op_params;
+    গণনা ggml_op_pool op = static_cast<ggml_op_pool>(opts[0]);
+    ধ্রুব পূর্ণাঙ্ক k0 = opts[1];
+    ধ্রুব পূর্ণাঙ্ক s0 = opts[2];
+    ধ্রুব পূর্ণাঙ্ক p0 = opts[3];
 
-    const int64_t IW = dst->src[0]->ne[0];
-    const int64_t OW = dst->ne[0];
-    const int64_t NC = dst->ne[3] * dst->ne[2] * dst->ne[1];
+    ধ্রুব int64_t IW = dst->src[0]->ne[0];
+    ধ্রুব int64_t OW = dst->ne[0];
+    ধ্রুব int64_t NC = dst->ne[3] * dst->ne[2] * dst->ne[1];
 
-    const int parallel_elements = NC * OW;
-    const int num_blocks = (parallel_elements + SYCL_POOL1D_BLOCK_SIZE - 1) / SYCL_POOL1D_BLOCK_SIZE;
-    sycl::range<3> block_nums(1, 1, num_blocks);
+    ধ্রুব পূর্ণাঙ্ক parallel_elements = NC * OW;
+    ধ্রুব পূর্ণাঙ্ক অঙ্ক_blocks = (parallel_elements + SYCL_POOL1D_BLOCK_SIZE - 1) / SYCL_POOL1D_BLOCK_SIZE;
+    sycl::range<3> block_nums(1, 1, অঙ্ক_blocks);
     main_stream->parallel_for(
         sycl::nd_range<3>(block_nums *
                               sycl::range<3>(1, 1, SYCL_POOL1D_BLOCK_SIZE),

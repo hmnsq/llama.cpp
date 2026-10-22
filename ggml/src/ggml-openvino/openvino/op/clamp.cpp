@@ -1,30 +1,30 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#অন্তর্ভাব "../node_context.h"
+#অন্তর্ভাব "../op_table.h"
+#অন্তর্ভাব "../utils.h"
 
-#include <cstring>
-#include <openvino/op/clamp.hpp>
+#অন্তর্ভাব <cstring>
+#অন্তর্ভাব <openvino/op/clamp.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+নামাকাশ ov {
+নামাকাশ frontend {
+নামাকাশ ggml {
+নামাকাশ op {
 
-OutputVector translate_clamp(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_clamp(ধ্রুব গ্রন্থি_Context & context) {
+    অঙ্ক_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
+    auto প্রবেশ = process_view_প্রবেশ_new(context, 0);
 
-    const int32_t * op_params = context.get_output_op_params();
+    ধ্রুব int32_t * op_params = context.get_output_op_params();
     FRONT_END_CHECK_IMPLEMENTED(op_params != nullptr, "CLAMP requires output op params");
 
-    float min;
-    float max;
-    std::memcpy(&min, reinterpret_cast<const float *>(op_params) + 0, sizeof(float));
-    std::memcpy(&max, reinterpret_cast<const float *>(op_params) + 1, sizeof(float));
+    ভিন্ন min;
+    ভিন্ন max;
+    std::memcpy(&min, reinterpret_cast<ধ্রুব ভিন্ন *>(op_params) + 0, পরিমাণ(ভিন্ন));
+    std::memcpy(&max, reinterpret_cast<ধ্রুব ভিন্ন *>(op_params) + 1, পরিমাণ(ভিন্ন));
 
-    auto res = std::make_shared<ov::op::v0::Clamp>(input, min, max);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    auto res = std::make_shared<ov::op::v0::Clamp>(প্রবেশ, min, max);
+    প্রত্যাগম rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

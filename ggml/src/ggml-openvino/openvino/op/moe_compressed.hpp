@@ -13,77 +13,77 @@
 
 #pragma once
 
-#include <optional>
+#অন্তর্ভাব <optional>
 
-#include "openvino/core/type/element_type.hpp"
-#include "openvino/op/op.hpp"
+#অন্তর্ভাব "openvino/core/type/element_type.hpp"
+#অন্তর্ভাব "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+নামাকাশ ov::op::internal {
 
-class OPENVINO_API MOE : public ov::op::Op {
-public:
+বর্গ OPENVINO_API MOE : সার্বজনিক ov::op::Op {
+সার্বজনিক:
     OPENVINO_OP("MOE")
 
-    MOE() = default;
+    MOE() = স্বভাব;
 
-    MOE(const OutputVector & args) : Op(args) {}
+    MOE(ধ্রুব OutputVector & args) : Op(args) {}
 
-    enum class Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
+    গণনা বর্গ Expert_type { GEMM2_BIAS_SWIGLU_CLAMP, GEMM3_SWIGLU };
 
-    enum class Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
+    গণনা বর্গ Activation_type { SWIGLU, GEGLU_TANH, GEGLU_ERF };
 
-    struct Config {
+    সংরচনা Config {
         Expert_type expert_type{ Expert_type::GEMM2_BIAS_SWIGLU_CLAMP };
-        float expert_alpha{ 0.0f };
-        float expert_beta{ 1.0f };
+        ভিন্ন expert_alpha{ 0.0f };
+        ভিন্ন expert_beta{ 1.0f };
         size_t gate_idx{ 0 };
         Activation_type activation_type{ Activation_type::SWIGLU };
     };
 
-    MOE(const OutputVector & args, const Config & config);
+    MOE(ধ্রুব OutputVector & args, ধ্রুব Config & config);
 
-    const Config & get_config() const;
-    void set_config(const Config & config);
+    ধ্রুব Config & get_config() ধ্রুব;
+    শূন্য set_config(ধ্রুব Config & config);
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    তার্কিক visit_attributes(AttributeVisitor & visitor) override;
+    শূন্য validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ধ্রুব OutputVector & new_args) ধ্রুব override;
 
-private:
+গুপ্ত:
     Config m_config;
 };
 
-class OPENVINO_API MOECompressed : public MOE {
-public:
+বর্গ OPENVINO_API MOECompressed : সার্বজনিক MOE {
+সার্বজনিক:
     OPENVINO_OP("MOECompressed", "", ov::op::internal::MOE)
 
-    MOECompressed() = default;
+    MOECompressed() = স্বভাব;
 
-    struct Config : public MOE::Config {
+    সংরচনা Config : সার্বজনিক MOE::Config {
         size_t hidden_size = 0;
         size_t inter_size = 0;
-        size_t num_expert = 0;
-        size_t num_shared_expert = 0;
-        size_t top_k = 0;
+        size_t অঙ্ক_expert = 0;
+        size_t অঙ্ক_shared_expert = 0;
+        size_t শীর্ষ_k = 0;
         // numeric_limits<size_t>::max() means per_channel compression (single group)
         size_t group_size = 0;
-        bool has_batch_dim = false;
-        bool has_zp = false;
+        তার্কিক has_batch_dim = অসত্য;
+        তার্কিক has_zp = অসত্য;
         ov::element::Type out_type = ov::element::dynamic;
-        std::optional<float> scale_factor;
+        std::optional<ভিন্ন> scale_factor;
     };
 
-    MOECompressed(const OutputVector & args, const Config & config);
+    MOECompressed(ধ্রুব OutputVector & args, ধ্রুব Config & config);
 
-    const Config & get_config() const { return m_config; }
+    ধ্রুব Config & get_config() ধ্রুব { প্রত্যাগম m_config; }
 
-    void set_scale_factor(float scale_factor) { m_config.scale_factor = scale_factor; }
+    শূন্য set_scale_factor(ভিন্ন scale_factor) { m_config.scale_factor = scale_factor; }
 
-    bool visit_attributes(AttributeVisitor & visitor) override;
-    void validate_and_infer_types() override;
-    std::shared_ptr<Node> clone_with_new_inputs(const OutputVector & new_args) const override;
+    তার্কিক visit_attributes(AttributeVisitor & visitor) override;
+    শূন্য validate_and_infer_types() override;
+    std::shared_ptr<Node> clone_with_new_inputs(ধ্রুব OutputVector & new_args) ধ্রুব override;
 
-protected:
+রক্ষিত:
     Config m_config;
 };
 

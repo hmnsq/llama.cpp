@@ -7,11 +7,11 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#অন্যথা
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
-#include <filesystem>
+#অন্তর্ভাব <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -19,18 +19,18 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+সংরচনা dl_handle_deleter {
+    শূন্য operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-#else
+#অন্যথা
 
-using dl_handle = void;
+using dl_handle = শূন্য;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+সংরচনা dl_handle_deleter {
+    শূন্য operator()(শূন্য * handle) {
         dlclose(handle);
     }
 };
@@ -39,7 +39,7 @@ struct dl_handle_deleter {
 
 using dl_handle_ptr = std::unique_ptr<dl_handle, dl_handle_deleter>;
 
-dl_handle * dl_load_library(const fs::path & path);
-void * dl_get_sym(dl_handle * handle, const char * name);
-const char * dl_error();
+dl_handle * dl_load_library(ধ্রুব fs::path & path);
+শূন্য * dl_get_sym(dl_handle * handle, ধ্রুব বর্ণ * name);
+ধ্রুব বর্ণ * dl_error();
 

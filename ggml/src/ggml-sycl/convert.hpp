@@ -13,50 +13,50 @@
 #ifndef GGML_SYCL_CONVERT_HPP
 #define GGML_SYCL_CONVERT_HPP
 
-#include "common.hpp"
+#অন্তর্ভাব "common.hpp"
 
 template <typename T>
-using to_t_sycl_t = void (*)(const void * __restrict__ x, T * __restrict__ y, int64_t k, dpct::queue_ptr stream);
-typedef to_t_sycl_t<float>      to_fp32_sycl_t;
-typedef to_t_sycl_t<sycl::half> to_fp16_sycl_t;
+using to_t_sycl_t = শূন্য (*)(ধ্রুব শূন্য * __restrict__ x, T * __restrict__ y, int64_t k, dpct::queue_ptr stream);
+প্রকারনির্দেশ to_t_sycl_t<ভিন্ন>      to_fp32_sycl_t;
+প্রকারনির্দেশ to_t_sycl_t<sycl::half> to_fp16_sycl_t;
 
 to_fp16_sycl_t ggml_get_to_fp16_sycl(ggml_type type, ggml_tensor * dst);
 to_fp32_sycl_t ggml_get_to_fp32_sycl(ggml_type type, ggml_tensor * dst);
 
 #ifdef GGML_SYCL_HAS_BF16
-typedef to_t_sycl_t<sycl::ext::oneapi::bfloat16> to_bf16_sycl_t;
+প্রকারনির্দেশ to_t_sycl_t<sycl::ext::oneapi::bfloat16> to_bf16_sycl_t;
 to_bf16_sycl_t ggml_get_to_bf16_sycl(ggml_type type, ggml_tensor * dst);
 #endif
 
 // Nc = Non-contiguous
 template <typename T>
-using to_t_nc_sycl_t = void (*)(const void * x, T * y, int64_t ne00, int64_t ne01, int64_t ne02, int64_t ne03,
+using to_t_nc_sycl_t = শূন্য (*)(ধ্রুব শূন্য * x, T * y, int64_t ne00, int64_t ne01, int64_t ne02, int64_t ne03,
                                    int64_t s01, int64_t s02, int64_t s03, dpct::queue_ptr queue);
 
-typedef to_t_nc_sycl_t<sycl::half> to_fp16_nc_sycl_t;
+প্রকারনির্দেশ to_t_nc_sycl_t<sycl::half> to_fp16_nc_sycl_t;
 to_fp16_nc_sycl_t ggml_get_to_fp16_nc_sycl(ggml_type type);
 
 template<typename dst_t, typename src_t>
- inline dst_t ggml_sycl_cast(src_t x) {
-    if constexpr (std::is_same_v<dst_t, src_t>) {
-        return x;
+ অন্তঃস্থ dst_t ggml_sycl_cast(src_t x) {
+    যদি constexpr (std::is_same_v<dst_t, src_t>) {
+        প্রত্যাগম x;
 #ifdef GGML_SYCL_HAS_BF16
-    } else if constexpr (std::is_same_v<dst_t, sycl::ext::oneapi::bfloat16>) {
-        return sycl::ext::oneapi::bfloat16(float(x));
-    } else if constexpr (std::is_same_v<src_t, sycl::ext::oneapi::bfloat16>) {
-        return static_cast<float>(x);
+    } অন্যথা যদি constexpr (std::is_same_v<dst_t, sycl::ext::oneapi::bfloat16>) {
+        প্রত্যাগম sycl::ext::oneapi::bfloat16(ভিন্ন(x));
+    } অন্যথা যদি constexpr (std::is_same_v<src_t, sycl::ext::oneapi::bfloat16>) {
+        প্রত্যাগম static_cast<ভিন্ন>(x);
 #endif
-    } else if constexpr (std::is_same_v<src_t, sycl::float2> && std::is_same_v<dst_t, sycl::half2>) {
-        return x.template convert<sycl::half, sycl::rounding_mode::rte>();
+    } অন্যথা যদি constexpr (std::is_same_v<src_t, sycl::float2> && std::is_same_v<dst_t, sycl::half2>) {
+        প্রত্যাগম x.template convert<sycl::half, sycl::rounding_mode::rte>();
 #ifdef GGML_SYCL_HAS_BF16
-    } else if constexpr (std::is_same_v<src_t, sycl::float2> &&
+    } অন্যথা যদি constexpr (std::is_same_v<src_t, sycl::float2> &&
                          std::is_same_v<dst_t, sycl::vec<sycl::ext::oneapi::bfloat16, 2>>) {
-        return {x.x, x.y};
+        প্রত্যাগম {x.x, x.y};
 #endif
-    } else if constexpr(std::is_same_v<dst_t, int32_t>) {
-        return int32_t(x);
-    } else {
-        return float(x);
+    } অন্যথা যদি constexpr(std::is_same_v<dst_t, int32_t>) {
+        প্রত্যাগম int32_t(x);
+    } অন্যথা {
+        প্রত্যাগম ভিন্ন(x);
     }
 }
 

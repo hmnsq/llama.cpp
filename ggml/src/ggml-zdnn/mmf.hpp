@@ -1,12 +1,12 @@
 #ifndef GGML_ZDNN_MMF_HPP
 #define GGML_ZDNN_MMF_HPP
 
-#include "common.hpp"
+#অন্তর্ভাব "common.hpp"
 
-void ggml_zdnn_mul_mat_f(
-    const ggml_backend_zdnn_context * ctx,
-    const               ggml_tensor * src0,
-    const               ggml_tensor * src1,
+শূন্য ggml_zdnn_mul_mat_f(
+    ধ্রুব ggml_backend_zdnn_context * ctx,
+    ধ্রুব               ggml_tensor * src0,
+    ধ্রুব               ggml_tensor * src1,
                         ggml_tensor * dst);
 
 #endif  // GGML_ZDNN_MMF_HPP
