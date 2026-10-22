@@ -13,14 +13,14 @@
 #ifndef GGML_SYCL_FATTN_HPP
 #define GGML_SYCL_FATTN_HPP
 
-#include "common.hpp"
+#अन्तर्भाव "common.hpp"
 
-void ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+शून्य ggml_sycl_flash_attn_ext(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
-bool ggml_sycl_flash_attn_ext_supported(int device, const ggml_tensor * dst);
+तार्किक ggml_sycl_flash_attn_ext_supported(पूर्णाङ्क device, ध्रुव ggml_tensor * dst);
 
 // Scratch that flash attention needs beyond the output tensor
-struct ggml_sycl_fattn_extra {
+संरचना ggml_sycl_fattn_extra {
     uintptr_t K_buffer_ptr     = 0;   // F16 copy of the K cache
     uintptr_t V_buffer_ptr     = 0;   // F16 copy of the V cache
     uintptr_t Q_buffer_ptr     = 0;   // dense F16 copy of Q, oneDNN only
@@ -33,10 +33,10 @@ struct ggml_sycl_fattn_extra {
 // the reservation and hands out the pointers, so the two cannot disagree.
 // Each field is the address of one reserved block, or 0 if that block was not reserved,
 // in which case the caller allocates from the scratch pool instead.
-ggml_sycl_fattn_extra ggml_sycl_fattn_get_extra(const ggml_tensor * dst);
+ggml_sycl_fattn_extra ggml_sycl_fattn_get_extra(ध्रुव ggml_tensor * dst);
 
-size_t ggml_sycl_flash_attn_ext_get_alloc_size(const ggml_tensor * dst);
+माप_प्रकार ggml_sycl_flash_attn_ext_get_alloc_size(ध्रुव ggml_tensor * dst);
 
-void ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
+शून्य ggml_sycl_flash_attn_ext_mkl(ggml_backend_sycl_context & ctx, ggml_tensor * dst);
 
 #endif // GGML_SYCL_FATTN_HPP

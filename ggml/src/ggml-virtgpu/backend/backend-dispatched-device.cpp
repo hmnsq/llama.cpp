@@ -1,57 +1,57 @@
-#include "backend-dispatched.h"
-#include "backend-virgl-apir.h"
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
+#अन्तर्भाव "backend-dispatched.h"
+#अन्तर्भाव "backend-virgl-apir.h"
+#अन्तर्भाव "ggml-backend-impl.h"
+#अन्तर्भाव "ggml-backend.h"
+#अन्तर्भाव "ggml-impl.h"
 
-#include <cstdint>
+#अन्तर्भाव <cstdint>
 
-uint32_t backend_device_get_device_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_device_get_device_गिनती(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(ctx);
     GGML_UNUSED(dec);
 
-    int32_t dev_count = reg->iface.get_device_count(reg);
-    apir_encode_int32_t(enc, &dev_count);
+    int32_t dev_गिनती = reg->iface.get_device_गिनती(reg);
+    apir_encode_int32_t(enc, &dev_गिनती);
 
-    return 0;
+    प्रत्यागम 0;
 }
 
-uint32_t backend_device_get_count(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
+uint32_t backend_device_get_गिनती(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(ctx);
     GGML_UNUSED(dec);
 
-    int32_t dev_count = reg->iface.get_device_count(reg);
-    apir_encode_int32_t(enc, &dev_count);
+    int32_t dev_गिनती = reg->iface.get_device_गिनती(reg);
+    apir_encode_int32_t(enc, &dev_गिनती);
 
-    return 0;
+    प्रत्यागम 0;
 }
 
 uint32_t backend_device_get_name(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(dec);
 
-    const char * string = dev->iface.get_name(dev);
+    ध्रुव वर्ण * string = dev->iface.get_name(dev);
 
-    const size_t string_size = strlen(string) + 1;
+    ध्रुव माप_प्रकार string_size = म_माप(string) + 1;
     apir_encode_array_size(enc, string_size);
     apir_encode_char_array(enc, string, string_size);
 
-    return 0;
+    प्रत्यागम 0;
 }
 
 uint32_t backend_device_get_description(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(dec);
 
-    const char * string = dev->iface.get_description(dev);
+    ध्रुव वर्ण * string = dev->iface.get_description(dev);
 
-    const size_t string_size = strlen(string) + 1;
+    ध्रुव माप_प्रकार string_size = म_माप(string) + 1;
     apir_encode_array_size(enc, string_size);
     apir_encode_char_array(enc, string, string_size);
 
-    return 0;
+    प्रत्यागम 0;
 }
 
 uint32_t backend_device_get_type(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -61,32 +61,32 @@ uint32_t backend_device_get_type(apir_encoder * enc, apir_decoder * dec, virgl_a
     uint32_t type = dev->iface.get_type(dev);
     apir_encode_uint32_t(enc, &type);
 
-    return 0;
+    प्रत्यागम 0;
 }
 
 uint32_t backend_device_get_memory(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
     GGML_UNUSED(dec);
 
-    size_t free, total;
-    dev->iface.get_memory(dev, &free, &total);
+    माप_प्रकार मुक्त, total;
+    dev->iface.get_memory(dev, &मुक्त, &total);
 
-    apir_encode_size_t(enc, &free);
+    apir_encode_size_t(enc, &मुक्त);
     apir_encode_size_t(enc, &total);
 
-    return 0;
+    प्रत्यागम 0;
 }
 
 uint32_t backend_device_supports_op(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
     GGML_UNUSED(ctx);
 
-    const ggml_tensor * op = apir_decode_ggml_tensor_inplace(dec);
+    ध्रुव ggml_tensor * op = apir_decode_ggml_tensor_inplace(dec);
 
-    bool supports_op = dev->iface.supports_op(dev, op);
+    तार्किक supports_op = dev->iface.supports_op(dev, op);
 
     apir_encode_bool_t(enc, &supports_op);
 
-    return 0;
+    प्रत्यागम 0;
 }
 
 uint32_t backend_device_get_buffer_type(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -97,7 +97,7 @@ uint32_t backend_device_get_buffer_type(apir_encoder * enc, apir_decoder * dec, 
 
     apir_encode_ggml_buffer_type(enc, bufft);
 
-    return 0;
+    प्रत्यागम 0;
 }
 
 uint32_t backend_device_get_props(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -113,7 +113,7 @@ uint32_t backend_device_get_props(apir_encoder * enc, apir_decoder * dec, virgl_
     apir_encode_bool_t(enc, &props.caps.events);
     apir_encode_bool_t(enc, &props.caps.mmap_support);
 
-    return 0;
+    प्रत्यागम 0;
 }
 
 uint32_t backend_device_buffer_from_ptr(apir_encoder * enc, apir_decoder * dec, virgl_apir_context * ctx) {
@@ -123,16 +123,16 @@ uint32_t backend_device_buffer_from_ptr(apir_encoder * enc, apir_decoder * dec, 
     uint32_t shmem_res_id;
     apir_decode_virtgpu_shmem_res_id(dec, &shmem_res_id);
 
-    void * shmem_ptr = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
-    if (!shmem_ptr) {
+    शून्य * shmem_ptr = ctx->iface->get_shmem_ptr(ctx->ctx_id, shmem_res_id);
+    यदि (!shmem_ptr) {
         GGML_LOG_ERROR(GGML_VIRTGPU_BCK "%s: Couldn't get the shmem addr from virgl\n", __func__);
         apir_decoder_set_fatal(dec);
-        return 1;
+        प्रत्यागम 1;
     }
 
-    size_t size;
+    माप_प्रकार size;
     apir_decode_size_t(dec, &size);
-    size_t max_tensor_size;
+    माप_प्रकार max_tensor_size;
     apir_decode_size_t(dec, &max_tensor_size);
 
     ggml_backend_buffer_t buffer;
@@ -141,9 +141,9 @@ uint32_t backend_device_buffer_from_ptr(apir_encoder * enc, apir_decoder * dec, 
     apir_encode_ggml_buffer(enc, buffer);
     apir_encode_ggml_buffer_type(enc, buffer->buft);
 
-    if (buffer) {
+    यदि (buffer) {
         apir_track_backend_buffer(buffer);
     }
 
-    return 0;
+    प्रत्यागम 0;
 }

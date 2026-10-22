@@ -2,35 +2,35 @@
 
 // GGML internal header
 
-#include "ggml.h"
-#include "gguf.h"
+#अन्तर्भाव "ggml.h"
+#अन्तर्भाव "gguf.h"
 
-#include <assert.h>
-#include <math.h>
-#include <stdlib.h> // load `stdlib.h` before other headers to work around MinGW bug: https://sourceforge.net/p/mingw-w64/bugs/192/
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
+#अन्तर्भाव <assert.h>
+#अन्तर्भाव <math.h>
+#अन्तर्भाव <stdlib.h> // load `stdlib.h` before other headers to work around MinGW bug: https://sourceforge.net/p/mingw-w64/bugs/192/
+#अन्तर्भाव <stdbool.h>
+#अन्तर्भाव <stdint.h>
+#अन्तर्भाव <string.h>
 
 #ifdef __ARM_FEATURE_SVE
-#include <arm_sve.h>
+#अन्तर्भाव <arm_sve.h>
 #endif // __ARM_FEATURE_SVE
 
-#if defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
+#यदि defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
 // if YCM cannot find <arm_neon.h>, make a symbolic link to it, for example:
 //
 //   $ ln -sfn /Library/Developer/CommandLineTools/usr/lib/clang/13.1.6/include/arm_neon.h ./src/
 //
-#include <arm_neon.h>
+#अन्तर्भाव <arm_neon.h>
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+बाह्य "C" {
 #endif
 
-void ggml_print_backtrace(void);
+शून्य ggml_print_backtrace(शून्य);
 
-uint64_t ggml_graph_next_uid(void);
+uint64_t ggml_graph_next_uid(शून्य);
 
 #ifndef MIN
 #    define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -49,71 +49,71 @@ uint64_t ggml_graph_next_uid(void);
 // ref: https://stackoverflow.com/a/53923785/4039976
 #ifndef __cplusplus
     #ifndef static_assert
-        #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
-            #define static_assert(cond, msg) _Static_assert(cond, msg)
-        #else
-            #define static_assert(cond, msg) struct global_scope_noop_trick
+        #यदि defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
+            #define static_assert(cond, संदेश) _Static_assert(cond, संदेश)
+        #अन्यथा
+            #define static_assert(cond, संदेश) संरचना global_scope_noop_trick
         #endif
     #endif
 #endif
 
-static inline int ggml_up32(int n) {
-    return (n + 31) & ~31;
+स्थिर अन्तःस्थ पूर्णाङ्क ggml_up32(पूर्णाङ्क n) {
+    प्रत्यागम (n + 31) & ~31;
 }
 
 //static inline int ggml_up64(int n) {
 //    return (n + 63) & ~63;
 //}
 
-static inline int ggml_up(int n, int m) {
+स्थिर अन्तःस्थ पूर्णाङ्क ggml_up(पूर्णाङ्क n, पूर्णाङ्क m) {
     // assert m is a power of 2
     GGML_ASSERT((m & (m - 1)) == 0);
-    return (n + m - 1) & ~(m - 1);
+    प्रत्यागम (n + m - 1) & ~(m - 1);
 }
 
 // TODO: move to ggml.h? (won't be able to inline)
-static bool ggml_are_same_layout(const struct ggml_tensor * a, const struct ggml_tensor * b) {
-    if (a->type != b->type) {
-        return false;
+स्थिर bool ggml_are_same_layout(ध्रुव संरचना ggml_tensor * a, ध्रुव संरचना ggml_tensor * b) {
+    यदि (a->type != b->type) {
+        प्रत्यागम false;
     }
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (a->ne[i] != b->ne[i]) {
-            return false;
+    प्रति (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+        यदि (a->ne[i] != b->ne[i]) {
+            प्रत्यागम false;
         }
-        if (a->nb[i] != b->nb[i]) {
-            return false;
+        यदि (a->nb[i] != b->nb[i]) {
+            प्रत्यागम false;
         }
     }
-    return true;
+    प्रत्यागम true;
 }
 
-static bool ggml_op_is_empty(enum ggml_op op) {
-    switch (op) {
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-            return true;
-        default:
-            return false;
+स्थिर bool ggml_op_is_empty(गणना ggml_op op) {
+    विकल्प (op) {
+        पक्ष GGML_OP_NONE:
+        पक्ष GGML_OP_RESHAPE:
+        पक्ष GGML_OP_TRANSPOSE:
+        पक्ष GGML_OP_VIEW:
+        पक्ष GGML_OP_PERMUTE:
+            प्रत्यागम true;
+        स्वभाव:
+            प्रत्यागम false;
     }
 }
 
-static inline bool ggml_impl_is_view(const struct ggml_tensor * t) {
-    return t->view_src != NULL;
+स्थिर अन्तःस्थ bool ggml_impl_is_view(ध्रुव संरचना ggml_tensor * t) {
+    प्रत्यागम t->view_src != रिक्त;
 }
 
-static inline float ggml_compute_softplus_f32(float input) {
-    return (input > 20.0f) ? input : logf(1 + expf(input));
+स्थिर अन्तःस्थ भिन्न ggml_compute_softplus_f32(भिन्न निवेश) {
+    प्रत्यागम (निवेश > 20.0f) ? निवेश : logf(1 + expf(निवेश));
 }
 //
 // logging
 //
 
 GGML_ATTRIBUTE_FORMAT(2, 3)
-GGML_API void ggml_log_internal        (enum ggml_log_level level, const char * format, ...);
-GGML_API void ggml_log_callback_default(enum ggml_log_level level, const char * text, void * user_data);
+GGML_API शून्य ggml_log_internal        (गणना ggml_log_level level, ध्रुव वर्ण * format, ...);
+GGML_API शून्य ggml_log_callback_default(गणना ggml_log_level level, ध्रुव वर्ण * text, शून्य * user_data);
 
 #define GGML_LOG(...)       ggml_log_internal(GGML_LOG_LEVEL_NONE , __VA_ARGS__)
 #define GGML_LOG_INFO(...)  ggml_log_internal(GGML_LOG_LEVEL_INFO , __VA_ARGS__)
@@ -124,40 +124,40 @@ GGML_API void ggml_log_callback_default(enum ggml_log_level level, const char * 
 
 #define GGML_DEBUG 0
 
-#if (GGML_DEBUG >= 1)
+#यदि (GGML_DEBUG >= 1)
 #define GGML_PRINT_DEBUG(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#अन्यथा
 #define GGML_PRINT_DEBUG(...)
 #endif
 
-#if (GGML_DEBUG >= 5)
+#यदि (GGML_DEBUG >= 5)
 #define GGML_PRINT_DEBUG_5(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#अन्यथा
 #define GGML_PRINT_DEBUG_5(...)
 #endif
 
-#if (GGML_DEBUG >= 10)
+#यदि (GGML_DEBUG >= 10)
 #define GGML_PRINT_DEBUG_10(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#अन्यथा
 #define GGML_PRINT_DEBUG_10(...)
 #endif
 
 // tensor params
 
-static void ggml_set_op_params(struct ggml_tensor * tensor, const void * params, size_t params_size) {
-    GGML_ASSERT(tensor != NULL); // silence -Warray-bounds warnings
-    assert(params_size <= GGML_MAX_OP_PARAMS);
-    memcpy(tensor->op_params, params, params_size);
+स्थिर शून्य ggml_set_op_params(संरचना ggml_tensor * tensor, ध्रुव शून्य * params, माप_प्रकार params_size) {
+    GGML_ASSERT(tensor != रिक्त); // silence -Warray-bounds warnings
+    प्रतिज्ञा(params_size <= GGML_MAX_OP_PARAMS);
+    स_नकल(tensor->op_params, params, params_size);
 }
 
-static int32_t ggml_get_op_params_i32(const struct ggml_tensor * tensor, uint32_t i) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(int32_t));
-    return ((const int32_t *)(tensor->op_params))[i];
+स्थिर int32_t ggml_get_op_params_i32(ध्रुव संरचना ggml_tensor * tensor, uint32_t i) {
+    प्रतिज्ञा(i < GGML_MAX_OP_PARAMS / परिमाण(int32_t));
+    प्रत्यागम ((ध्रुव int32_t *)(tensor->op_params))[i];
 }
 
-static float ggml_get_op_params_f32(const struct ggml_tensor * tensor, uint32_t i) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(float));
-    return ((const float *)(tensor->op_params))[i];
+स्थिर भिन्न ggml_get_op_params_f32(ध्रुव संरचना ggml_tensor * tensor, uint32_t i) {
+    प्रतिज्ञा(i < GGML_MAX_OP_PARAMS / परिमाण(भिन्न));
+    प्रत्यागम ((ध्रुव भिन्न *)(tensor->op_params))[i];
 }
 
 // [TAG_GGML_PREC]
@@ -172,159 +172,159 @@ static float ggml_get_op_params_f32(const struct ggml_tensor * tensor, uint32_t 
 //   1 - hint
 //   2 - src0 precision
 //   3 - src1 precision
-static void ggml_set_op_params_i32(struct ggml_tensor * tensor, uint32_t i, int32_t value) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(int32_t));
-    ((int32_t *)(tensor->op_params))[i] = value;
+स्थिर शून्य ggml_set_op_params_i32(संरचना ggml_tensor * tensor, uint32_t i, int32_t मूल्य) {
+    प्रतिज्ञा(i < GGML_MAX_OP_PARAMS / परिमाण(int32_t));
+    ((int32_t *)(tensor->op_params))[i] = मूल्य;
 }
 
-static void ggml_set_op_params_f32(struct ggml_tensor * tensor, uint32_t i, float value) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(float));
-    ((float *)(tensor->op_params))[i] = value;
+स्थिर शून्य ggml_set_op_params_f32(संरचना ggml_tensor * tensor, uint32_t i, भिन्न मूल्य) {
+    प्रतिज्ञा(i < GGML_MAX_OP_PARAMS / परिमाण(भिन्न));
+    ((भिन्न *)(tensor->op_params))[i] = मूल्य;
 }
 
-struct ggml_map_custom1_op_params {
+संरचना ggml_map_custom1_op_params {
     ggml_custom1_op_t  fun;
-    int                n_tasks;
-    void             * userdata;
+    पूर्णाङ्क                n_tasks;
+    शून्य             * userdata;
 };
 
-struct ggml_map_custom2_op_params {
+संरचना ggml_map_custom2_op_params {
     ggml_custom2_op_t   fun;
-    int                 n_tasks;
-    void              * userdata;
+    पूर्णाङ्क                 n_tasks;
+    शून्य              * userdata;
 };
 
-struct ggml_map_custom3_op_params {
+संरचना ggml_map_custom3_op_params {
     ggml_custom3_op_t fun;
-    int               n_tasks;
-    void            * userdata;
+    पूर्णाङ्क               n_tasks;
+    शून्य            * userdata;
 };
 
-struct ggml_custom_op_params {
+संरचना ggml_custom_op_params {
     ggml_custom_op_t fun;
-    int              n_tasks;
-    void           * userdata;
+    पूर्णाङ्क              n_tasks;
+    शून्य           * userdata;
 };
 
 // bitset
 
-typedef uint32_t ggml_bitset_t;
+प्रकारनिर्देश uint32_t ggml_bitset_t;
 
-static_assert(sizeof(ggml_bitset_t) == 4, "bitset_t constants must be updated");
+static_assert(परिमाण(ggml_bitset_t) == 4, "bitset_t constants must be updated");
 #define BITSET_SHR 5 // log2(sizeof(ggml_bitset_t)*8)
-#define BITSET_MASK (sizeof(ggml_bitset_t)*8 - 1)
+#define BITSET_MASK (परिमाण(ggml_bitset_t)*8 - 1)
 
-static size_t ggml_bitset_size(size_t n) {
-    return (n + BITSET_MASK) >> BITSET_SHR;
+स्थिर माप_प्रकार ggml_bitset_size(माप_प्रकार n) {
+    प्रत्यागम (n + BITSET_MASK) >> BITSET_SHR;
 }
 
-static inline bool ggml_bitset_get(const ggml_bitset_t * bitset, size_t i) {
-    return !!(bitset[i >> BITSET_SHR] & (1u << (i & BITSET_MASK)));
+स्थिर अन्तःस्थ bool ggml_bitset_get(ध्रुव ggml_bitset_t * bitset, माप_प्रकार i) {
+    प्रत्यागम !!(bitset[i >> BITSET_SHR] & (1u << (i & BITSET_MASK)));
 }
 
-static inline void ggml_bitset_set(ggml_bitset_t * bitset, size_t i) {
+स्थिर अन्तःस्थ शून्य ggml_bitset_set(ggml_bitset_t * bitset, माप_प्रकार i) {
     bitset[i >> BITSET_SHR] |= (1u << (i & BITSET_MASK));
 }
 
-static inline void ggml_bitset_clear(ggml_bitset_t * bitset, size_t i) {
+स्थिर अन्तःस्थ शून्य ggml_bitset_clear(ggml_bitset_t * bitset, माप_प्रकार i) {
     bitset[i >> BITSET_SHR] &= ~(1u << (i & BITSET_MASK));
 }
 
 // hash set
 
-#define GGML_HASHSET_FULL ((size_t)-1)
-#define GGML_HASHSET_ALREADY_EXISTS ((size_t)-2)
+#define GGML_HASHSET_FULL ((माप_प्रकार)-1)
+#define GGML_HASHSET_ALREADY_EXISTS ((माप_प्रकार)-2)
 
-struct ggml_hash_set {
-    size_t size;
+संरचना ggml_hash_set {
+    माप_प्रकार size;
     ggml_bitset_t * used;       // whether or not the keys are in use i.e. set
-    struct ggml_tensor ** keys; // actual tensors in the set, keys[i] is only defined if ggml_bitset_get(used, i)
+    संरचना ggml_tensor ** कुंजियाँ; // actual tensors in the set, keys[i] is only defined if ggml_bitset_get(used, i)
 };
 
-struct ggml_hash_set ggml_hash_set_new(size_t size);
-void                 ggml_hash_set_free(struct ggml_hash_set * hash_set);
+संरचना ggml_hash_set ggml_hash_set_new(माप_प्रकार size);
+शून्य                 ggml_hash_set_free(संरचना ggml_hash_set * hash_set);
 
 // returns the minimum size for a hash set that can hold min_sz elements
-size_t ggml_hash_size(size_t min_sz);
+माप_प्रकार ggml_hash_size(माप_प्रकार min_sz);
 
 // remove all elements from the hash set
-void ggml_hash_set_reset(struct ggml_hash_set * hash_set);
+शून्य ggml_hash_set_reset(संरचना ggml_hash_set * hash_set);
 
 // returns true if key is in the hash set
-static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+स्थिर bool ggml_hash_contains(ध्रुव संरचना ggml_hash_set * hash_set, संरचना ggml_tensor * कुंजी);
 
 // returns GGML_HASHSET_FULL if table is full, otherwise the current index of the key or where it should be inserted
-static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct ggml_tensor * key);
+स्थिर माप_प्रकार ggml_hash_find(ध्रुव संरचना ggml_hash_set * hash_set, ध्रुव संरचना ggml_tensor * कुंजी);
 
 // returns GGML_HASHSET_ALREADY_EXISTS if key already exists, index otherwise, asserts if table is full
-static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+स्थिर माप_प्रकार ggml_hash_जोड़ो(संरचना ggml_hash_set * hash_set, संरचना ggml_tensor * कुंजी);
 
 // return index, asserts if table is full
-static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+स्थिर माप_प्रकार ggml_hash_find_or_जोड़ो(संरचना ggml_hash_set * hash_set, संरचना ggml_tensor * कुंजी);
 
 // hash function for ggml_tensor
-static inline size_t ggml_hash(const struct ggml_tensor * p) {
+स्थिर अन्तःस्थ माप_प्रकार ggml_hash(ध्रुव संरचना ggml_tensor * p) {
     // the last 4 bits are always zero due to alignment
-    return (size_t)(uintptr_t)p >> 4;
+    प्रत्यागम (माप_प्रकार)(uintptr_t)p >> 4;
 }
 
-static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct ggml_tensor * key) {
-    size_t h = ggml_hash(key) % hash_set->size;
+स्थिर माप_प्रकार ggml_hash_find(ध्रुव संरचना ggml_hash_set * hash_set, ध्रुव संरचना ggml_tensor * कुंजी) {
+    माप_प्रकार h = ggml_hash(कुंजी) % hash_set->size;
 
     // linear probing
-    size_t i = h;
-    while (ggml_bitset_get(hash_set->used, i) && hash_set->keys[i] != key) {
+    माप_प्रकार i = h;
+    यावत् (ggml_bitset_get(hash_set->used, i) && hash_set->कुंजियाँ[i] != कुंजी) {
         i = (i + 1) % hash_set->size;
-        if (i == h) {
+        यदि (i == h) {
             // visited all hash table entries -> not found
-            return GGML_HASHSET_FULL;
+            प्रत्यागम GGML_HASHSET_FULL;
         }
     }
-    return i;
+    प्रत्यागम i;
 }
 
-static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
-    size_t i = ggml_hash_find(hash_set, key);
-    return i != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, i);
+स्थिर bool ggml_hash_contains(ध्रुव संरचना ggml_hash_set * hash_set, संरचना ggml_tensor * कुंजी) {
+    माप_प्रकार i = ggml_hash_find(hash_set, कुंजी);
+    प्रत्यागम i != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, i);
 }
 
-static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
-    size_t h = ggml_hash(key) % hash_set->size;
+स्थिर माप_प्रकार ggml_hash_जोड़ो(संरचना ggml_hash_set * hash_set, संरचना ggml_tensor * कुंजी) {
+    माप_प्रकार h = ggml_hash(कुंजी) % hash_set->size;
 
     // linear probing
-    size_t i = h;
-    do {
-        if (!ggml_bitset_get(hash_set->used, i)) {
+    माप_प्रकार i = h;
+    कुरु {
+        यदि (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
-            hash_set->keys[i] = key;
-            return i;
+            hash_set->कुंजियाँ[i] = कुंजी;
+            प्रत्यागम i;
         }
-        if (hash_set->keys[i] == key) {
-            return GGML_HASHSET_ALREADY_EXISTS;
+        यदि (hash_set->कुंजियाँ[i] == कुंजी) {
+            प्रत्यागम GGML_HASHSET_ALREADY_EXISTS;
         }
         i = (i + 1) % hash_set->size;
-    } while (i != h);
+    } यावत् (i != h);
 
     // visited all hash table entries -> not found
     GGML_ABORT("fatal error");
 }
 
-static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
-    size_t h = ggml_hash(key) % hash_set->size;
+स्थिर माप_प्रकार ggml_hash_find_or_जोड़ो(संरचना ggml_hash_set * hash_set, संरचना ggml_tensor * कुंजी) {
+    माप_प्रकार h = ggml_hash(कुंजी) % hash_set->size;
 
     // linear probing
-    size_t i = h;
-    do {
-        if (!ggml_bitset_get(hash_set->used, i)) {
+    माप_प्रकार i = h;
+    कुरु {
+        यदि (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
-            hash_set->keys[i] = key;
-            return i;
+            hash_set->कुंजियाँ[i] = कुंजी;
+            प्रत्यागम i;
         }
-        if (hash_set->keys[i] == key) {
-            return i;
+        यदि (hash_set->कुंजियाँ[i] == कुंजी) {
+            प्रत्यागम i;
         }
         i = (i + 1) % hash_set->size;
-    } while (i != h);
+    } यावत् (i != h);
 
     // visited all hash table entries -> not found
     GGML_ABORT("fatal error");
@@ -332,26 +332,26 @@ static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct g
 
 // computation graph
 
-enum ggml_cgraph_eval_order {
-    GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT = 0,
-    GGML_CGRAPH_EVAL_ORDER_RIGHT_TO_LEFT,
-    GGML_CGRAPH_EVAL_ORDER_COUNT
+गणना ggml_cgraph_eval_order {
+    GGML_CGRAPH_EVAL_ORDER_बायाँ_TO_दायाँ = 0,
+    GGML_CGRAPH_EVAL_ORDER_दायाँ_TO_बायाँ,
+    GGML_CGRAPH_EVAL_ORDER_गिनती
 };
 
-struct ggml_cgraph {
-    int size;    // maximum number of nodes/leafs/grads/grad_accs
-    int n_nodes; // number of nodes currently in use
-    int n_leafs; // number of leafs currently in use
+संरचना ggml_cgraph {
+    पूर्णाङ्क size;    // maximum number of nodes/leafs/grads/grad_accs
+    पूर्णाङ्क n_nodes; // number of nodes currently in use
+    पूर्णाङ्क n_leafs; // number of leafs currently in use
 
-    struct ggml_tensor ** nodes;     // tensors with data that can change if the graph is evaluated
-    struct ggml_tensor ** grads;     // the outputs of these tensors are the gradients of the nodes
-    struct ggml_tensor ** grad_accs; // accumulators for node gradients
-    struct ggml_tensor ** leafs;     // tensors with constant data
+    संरचना ggml_tensor ** nodes;     // tensors with data that can change if the graph is evaluated
+    संरचना ggml_tensor ** grads;     // the outputs of these tensors are the gradients of the nodes
+    संरचना ggml_tensor ** grad_accs; // accumulators for node gradients
+    संरचना ggml_tensor ** leafs;     // tensors with constant data
     int32_t             * use_counts;// number of uses of each tensor, indexed by hash table slot
 
-    struct ggml_hash_set visited_hash_set;
+    संरचना ggml_hash_set visited_hash_set;
 
-    enum ggml_cgraph_eval_order order;
+    गणना ggml_cgraph_eval_order order;
 
     // an optional identifier that can be utilized to recognize same graphs if two non-zero values match
     // a value of 0 means it is not set and should be ignored
@@ -361,85 +361,85 @@ struct ggml_cgraph {
 // returns a slice of cgraph with nodes [i0, i1)
 // the slice does not have leafs or gradients
 // if you need the gradients, get them from the original graph
-struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph, int i0, int i1);
+संरचना ggml_cgraph ggml_graph_view(संरचना ggml_cgraph * cgraph, पूर्णाङ्क i0, पूर्णाङ्क i1);
 
 // ggml-alloc.c: true if the operation can reuse memory from its sources
-GGML_API bool ggml_op_can_inplace(enum ggml_op op);
+GGML_API bool ggml_op_can_inplace(गणना ggml_op op);
 
 
 // Memory allocation
 
-GGML_API void * ggml_aligned_malloc(size_t size);
-GGML_API void ggml_aligned_free(void * ptr, size_t size);
+GGML_API शून्य * ggml_aligned_malloc(माप_प्रकार size);
+GGML_API शून्य ggml_aligned_free(शून्य * ptr, माप_प्रकार size);
 
 // FP16 <-> FP32
 // ref: https://github.com/Maratyszcza/FP16
 
-static inline float fp32_from_bits(uint32_t w) {
-    union {
+स्थिर अन्तःस्थ भिन्न fp32_from_bits(uint32_t w) {
+    सङ्घ {
         uint32_t as_bits;
-        float as_value;
+        भिन्न as_मूल्य;
     } fp32;
     fp32.as_bits = w;
-    return fp32.as_value;
+    प्रत्यागम fp32.as_मूल्य;
 }
 
-static inline uint32_t fp32_to_bits(float f) {
-    union {
-        float as_value;
+स्थिर अन्तःस्थ uint32_t fp32_to_bits(भिन्न f) {
+    सङ्घ {
+        भिन्न as_मूल्य;
         uint32_t as_bits;
     } fp32;
-    fp32.as_value = f;
-    return fp32.as_bits;
+    fp32.as_मूल्य = f;
+    प्रत्यागम fp32.as_bits;
 }
 
-static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
-    const uint32_t w = (uint32_t) h << 16;
-    const uint32_t sign = w & UINT32_C(0x80000000);
-    const uint32_t two_w = w + w;
+स्थिर अन्तःस्थ भिन्न ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
+    ध्रुव uint32_t w = (uint32_t) h << 16;
+    ध्रुव uint32_t sign = w & UINT32_C(0x80000000);
+    ध्रुव uint32_t two_w = w + w;
 
-    const uint32_t exp_offset = UINT32_C(0xE0) << 23;
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
-    const float exp_scale = 0x1.0p-112f;
-#else
-    const float exp_scale = fp32_from_bits(UINT32_C(0x7800000));
+    ध्रुव uint32_t exp_offset = UINT32_C(0xE0) << 23;
+#यदि (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+    ध्रुव भिन्न exp_scale = 0x1.0p-112f;
+#अन्यथा
+    ध्रुव भिन्न exp_scale = fp32_from_bits(UINT32_C(0x7800000));
 #endif
-    const float normalized_value = fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
+    ध्रुव भिन्न normalized_मूल्य = fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
 
-    const uint32_t magic_mask = UINT32_C(126) << 23;
-    const float magic_bias = 0.5f;
-    const float denormalized_value = fp32_from_bits((two_w >> 17) | magic_mask) - magic_bias;
+    ध्रुव uint32_t magic_mask = UINT32_C(126) << 23;
+    ध्रुव भिन्न magic_bias = 0.5f;
+    ध्रुव भिन्न denormalized_मूल्य = fp32_from_bits((two_w >> 17) | magic_mask) - magic_bias;
 
-    const uint32_t denormalized_cutoff = UINT32_C(1) << 27;
-    const uint32_t result = sign |
-        (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_value) : fp32_to_bits(normalized_value));
-    return fp32_from_bits(result);
+    ध्रुव uint32_t denormalized_cutoff = UINT32_C(1) << 27;
+    ध्रुव uint32_t result = sign |
+        (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_मूल्य) : fp32_to_bits(normalized_मूल्य));
+    प्रत्यागम fp32_from_bits(result);
 }
 
-static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
-    const float scale_to_inf = 0x1.0p+112f;
-    const float scale_to_zero = 0x1.0p-110f;
-#else
-    const float scale_to_inf = fp32_from_bits(UINT32_C(0x77800000));
-    const float scale_to_zero = fp32_from_bits(UINT32_C(0x08800000));
+स्थिर अन्तःस्थ ggml_fp16_t ggml_compute_fp32_to_fp16(भिन्न f) {
+#यदि (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+    ध्रुव भिन्न scale_to_inf = 0x1.0p+112f;
+    ध्रुव भिन्न scale_to_zero = 0x1.0p-110f;
+#अन्यथा
+    ध्रुव भिन्न scale_to_inf = fp32_from_bits(UINT32_C(0x77800000));
+    ध्रुव भिन्न scale_to_zero = fp32_from_bits(UINT32_C(0x08800000));
 #endif
-    float base = (fabsf(f) * scale_to_inf) * scale_to_zero;
+    भिन्न base = (fabsf(f) * scale_to_inf) * scale_to_zero;
 
-    const uint32_t w = fp32_to_bits(f);
-    const uint32_t shl1_w = w + w;
-    const uint32_t sign = w & UINT32_C(0x80000000);
+    ध्रुव uint32_t w = fp32_to_bits(f);
+    ध्रुव uint32_t shl1_w = w + w;
+    ध्रुव uint32_t sign = w & UINT32_C(0x80000000);
     uint32_t bias = shl1_w & UINT32_C(0xFF000000);
-    if (bias < UINT32_C(0x71000000)) {
+    यदि (bias < UINT32_C(0x71000000)) {
         bias = UINT32_C(0x71000000);
     }
 
     base = fp32_from_bits((bias >> 1) + UINT32_C(0x07800000)) + base;
-    const uint32_t bits = fp32_to_bits(base);
-    const uint32_t exp_bits = (bits >> 13) & UINT32_C(0x00007C00);
-    const uint32_t mantissa_bits = bits & UINT32_C(0x00000FFF);
-    const uint32_t nonsign = exp_bits + mantissa_bits;
-    return (sign >> 16) | (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign);
+    ध्रुव uint32_t bits = fp32_to_bits(base);
+    ध्रुव uint32_t exp_bits = (bits >> 13) & UINT32_C(0x00007C00);
+    ध्रुव uint32_t mantissa_bits = bits & UINT32_C(0x00000FFF);
+    ध्रुव uint32_t nonsign = exp_bits + mantissa_bits;
+    प्रत्यागम (sign >> 16) | (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign);
 }
 
 #define GGML_COMPUTE_FP16_TO_FP32(x) ggml_compute_fp16_to_fp32(x)
@@ -448,11 +448,11 @@ static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
 #define GGML_FP16_TO_FP32(x) GGML_COMPUTE_FP16_TO_FP32(x)
 #define GGML_FP32_TO_FP16(x) GGML_COMPUTE_FP32_TO_FP16(x)
 
-static inline float ggml_e8m0_to_fp32(uint8_t x) {
+स्थिर अन्तःस्थ भिन्न ggml_e8m0_to_fp32(uint8_t x) {
     uint32_t bits;  // Stores the raw bit representation of the float
 
     // Handle special case for minimum exponent (denormalized float)
-    if (x == 0) {
+    यदि (x == 0) {
         // Bit pattern for 2^(-127):
         // - Sign bit: 0 (positive)
         // - Exponent: 0 (denormalized number)
@@ -470,7 +470,7 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
     //    bits = 0x7FC00000;
     //}
     // Normalized values (most common case)
-    else {
+    अन्यथा {
         // Construct normalized float by shifting exponent into position:
         // - Exponent field: 8 bits (positions 30-23)
         // - Mantissa: 0 (implicit leading 1)
@@ -478,32 +478,32 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
         bits = (uint32_t) x << 23;
     }
 
-    float result;  // Final float value
+    भिन्न result;  // Final float value
                    // Safely reinterpret bit pattern as float without type-punning issues
-    memcpy(&result, &bits, sizeof(float));
-    return result;
+    स_नकल(&result, &bits, परिमाण(भिन्न));
+    प्रत्यागम result;
 }
 
 // Equal to ggml_e8m0_to_fp32/2
 // Useful with MXFP4 quantization since the E0M2 values are doubled
-static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
+स्थिर अन्तःस्थ भिन्न ggml_e8m0_to_fp32_half(uint8_t x) {
     uint32_t bits;
 
     // For x < 2: use precomputed denormal patterns
-    if (x < 2) {
+    यदि (x < 2) {
         // 0x00200000 = 2^(-128), 0x00400000 = 2^(-127)
         bits = 0x00200000 << x;
     }
     // For x >= 2: normalized exponent adjustment
-    else {
+    अन्यथा {
         // 0.5 * 2^(x-127) = 2^(x-128) = normalized with exponent (x-1)
         bits = (uint32_t)(x - 1) << 23;
     }
     // Note: NaNs are not handled here
 
-    float result;
-    memcpy(&result, &bits, sizeof(float));
-    return result;
+    भिन्न result;
+    स_नकल(&result, &bits, परिमाण(भिन्न));
+    प्रत्यागम result;
 }
 
 #define GGML_E8M0_TO_FP32(x) ggml_e8m0_to_fp32(x)
@@ -511,57 +511,57 @@ static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
 
 // UE4M3: unsigned, 4 exp bits (bias=7), 3 mantissa bits
 // Returns value * 0.5 to match kvalues_mxfp4 convention (kvalues = 2 * E2M1_float)
-static inline float ggml_ue4m3_to_fp32(uint8_t x) {
-    if (x == 0 || x == 0x7F) {
-        return 0.0f;
+स्थिर अन्तःस्थ भिन्न ggml_ue4m3_to_fp32(uint8_t x) {
+    यदि (x == 0 || x == 0x7F) {
+        प्रत्यागम 0.0f;
     }
-    int   exp = (x >> 3) & 0xF;
-    int   man = x & 0x7;
-    float raw;
-    if (exp == 0) {
-        raw = ldexpf((float) man, -9);
-    } else {
-        raw = ldexpf(1.0f + (float) man / 8.0f, exp - 7);
+    पूर्णाङ्क   exp = (x >> 3) & 0xF;
+    पूर्णाङ्क   man = x & 0x7;
+    भिन्न raw;
+    यदि (exp == 0) {
+        raw = ldexpf((भिन्न) man, -9);
+    } अन्यथा {
+        raw = ldexpf(1.0f + (भिन्न) man / 8.0f, exp - 7);
     }
-    return raw * 0.5f;
+    प्रत्यागम raw * 0.5f;
 }
 
-static inline uint8_t ggml_fp32_to_ue4m3(float x) {
-    if (!(x > 0.0f)) {
-        return 0;
+स्थिर अन्तःस्थ uint8_t ggml_fp32_to_ue4m3(भिन्न x) {
+    यदि (!(x > 0.0f)) {
+        प्रत्यागम 0;
     }
-    if (x > 448.0f) {
+    यदि (x > 448.0f) {
         x = 448.0f;
     }
     uint32_t bits;
-    memcpy(&bits, &x, 4);
-    int fp32_exp  = ((bits >> 23) & 0xFF) - 127;
-    int fp32_man  = (bits >> 20) & 0x7;
-    int ue4m3_exp = fp32_exp + 7;
-    if (ue4m3_exp <= 0) {
+    स_नकल(&bits, &x, 4);
+    पूर्णाङ्क fp32_exp  = ((bits >> 23) & 0xFF) - 127;
+    पूर्णाङ्क fp32_man  = (bits >> 20) & 0x7;
+    पूर्णाङ्क ue4m3_exp = fp32_exp + 7;
+    यदि (ue4m3_exp <= 0) {
         // subnormal: value = man * 2^-9, man = round(x * 2^9)
-        int man = (int) (x * 512.0f + 0.5f);
-        if (man > 7) {
+        पूर्णाङ्क man = (पूर्णाङ्क) (x * 512.0f + 0.5f);
+        यदि (man > 7) {
             man = 7;
         }
-        if (man < 1) {
-            return 0;
+        यदि (man < 1) {
+            प्रत्यागम 0;
         }
-        return (uint8_t) man;
+        प्रत्यागम (uint8_t) man;
     }
-    if (ue4m3_exp >= 15) {
-        return 0x7E;
+    यदि (ue4m3_exp >= 15) {
+        प्रत्यागम 0x7E;
     }
-    int round_bit = (bits >> 19) & 1;
-    int ue4m3_man = fp32_man + round_bit;
-    if (ue4m3_man > 7) {
+    पूर्णाङ्क round_bit = (bits >> 19) & 1;
+    पूर्णाङ्क ue4m3_man = fp32_man + round_bit;
+    यदि (ue4m3_man > 7) {
         ue4m3_man = 0;
         ue4m3_exp++;
-        if (ue4m3_exp >= 15) {
-            return 0x7E;
+        यदि (ue4m3_exp >= 15) {
+            प्रत्यागम 0x7E;
         }
     }
-    return (uint8_t) ((ue4m3_exp << 3) | ue4m3_man);
+    प्रत्यागम (uint8_t) ((ue4m3_exp << 3) | ue4m3_man);
 }
 
 /**
@@ -603,13 +603,13 @@ static inline uint8_t ggml_fp32_to_ue4m3(float x) {
  *
  * @see IEEE 754-2008
  */
-static inline float ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
-    union {
-        float f;
+स्थिर अन्तःस्थ भिन्न ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
+    सङ्घ {
+        भिन्न f;
         uint32_t i;
     } u;
     u.i = (uint32_t)h.bits << 16;
-    return u.f;
+    प्रत्यागम u.f;
 }
 
 /**
@@ -620,56 +620,56 @@ static inline float ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
  * Subnormals aren't flushed to zero, except perhaps when used.
  * This code should vectorize nicely if using modern compilers.
  */
-static inline ggml_bf16_t ggml_compute_fp32_to_bf16(float s) {
+स्थिर अन्तःस्थ ggml_bf16_t ggml_compute_fp32_to_bf16(भिन्न s) {
     ggml_bf16_t h;
-    union {
-        float f;
+    सङ्घ {
+        भिन्न f;
         uint32_t i;
     } u;
     u.f = s;
-    if ((u.i & 0x7fffffff) > 0x7f800000) { /* nan */
+    यदि ((u.i & 0x7fffffff) > 0x7f800000) { /* nan */
         h.bits = (u.i >> 16) | 64; /* force to quiet */
-        return h;
+        प्रत्यागम h;
     }
     h.bits = (u.i + (0x7fff + ((u.i >> 16) & 1))) >> 16;
-    return h;
+    प्रत्यागम h;
 }
 
 #define GGML_FP32_TO_BF16(x) ggml_compute_fp32_to_bf16(x)
 #define GGML_BF16_TO_FP32(x) ggml_compute_bf16_to_fp32(x)
 
-static inline int32_t ggml_node_get_use_count(const struct ggml_cgraph * cgraph, int node_idx) {
-    const struct ggml_tensor * node = cgraph->nodes[node_idx];
+स्थिर अन्तःस्थ int32_t ggml_गाँठ_get_use_गिनती(ध्रुव संरचना ggml_cgraph * cgraph, पूर्णाङ्क गाँठ_idx) {
+    ध्रुव संरचना ggml_tensor * गाँठ = cgraph->nodes[गाँठ_idx];
 
-    size_t hash_pos = ggml_hash_find(&cgraph->visited_hash_set, node);
-    if (!ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
-        return 0;
+    माप_प्रकार hash_pos = ggml_hash_find(&cgraph->visited_hash_set, गाँठ);
+    यदि (!ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
+        प्रत्यागम 0;
     }
-    return cgraph->use_counts[hash_pos];
+    प्रत्यागम cgraph->use_counts[hash_pos];
 }
 
 // return true if the node's results are only used by N other nodes
 // and can be fused into their calculations.
-static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int node_idx, int32_t n_uses) {
-    const struct ggml_tensor * node = cgraph->nodes[node_idx];
+स्थिर अन्तःस्थ bool ggml_गाँठ_has_n_uses(ध्रुव संरचना ggml_cgraph * cgraph, पूर्णाङ्क गाँठ_idx, int32_t n_uses) {
+    ध्रुव संरचना ggml_tensor * गाँठ = cgraph->nodes[गाँठ_idx];
 
     // check the use count against how many we're replacing
-    if (ggml_node_get_use_count(cgraph, node_idx) != n_uses) {
-        return false;
+    यदि (ggml_गाँठ_get_use_गिनती(cgraph, गाँठ_idx) != n_uses) {
+        प्रत्यागम false;
     }
 
     // if node is a view, some other node might be using the intermediate result
     // via the view source.
-    if (node->view_src) {
-        return false;
+    यदि (गाँठ->view_src) {
+        प्रत्यागम false;
     }
 
     // If the user requested output for the node, can't fuse
-    if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
-        return false;
+    यदि (गाँठ->flags & GGML_TENSOR_FLAG_OUTPUT) {
+        प्रत्यागम false;
     }
 
-    return true;
+    प्रत्यागम true;
 }
 
 // Returns true if nodes with indices { node_idxs } are the sequence of ggml_ops in ops[]
@@ -678,79 +678,79 @@ static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int n
 // - all nodes except the last are a src of the following node.
 // - all nodes are the same shape.
 // TODO: Consider allowing GGML_OP_NONE nodes in between
-static inline bool ggml_can_fuse_ext(const struct ggml_cgraph * cgraph, const int * node_idxs, const enum ggml_op * ops, int num_ops) {
-    for (int i = 0; i < num_ops; ++i) {
-        if (node_idxs[i] >= cgraph->n_nodes) {
-            return false;
+स्थिर अन्तःस्थ bool ggml_can_fuse_ext(ध्रुव संरचना ggml_cgraph * cgraph, ध्रुव पूर्णाङ्क * गाँठ_idxs, ध्रुव गणना ggml_op * ops, पूर्णाङ्क अंक_ops) {
+    प्रति (पूर्णाङ्क i = 0; i < अंक_ops; ++i) {
+        यदि (गाँठ_idxs[i] >= cgraph->n_nodes) {
+            प्रत्यागम false;
         }
 
-        struct ggml_tensor * node = cgraph->nodes[node_idxs[i]];
-        if (node->op != ops[i]) {
-            return false;
+        संरचना ggml_tensor * गाँठ = cgraph->nodes[गाँठ_idxs[i]];
+        यदि (गाँठ->op != ops[i]) {
+            प्रत्यागम false;
         }
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+        यदि ((गाँठ->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            प्रत्यागम false;
         }
-        if (i < num_ops - 1 && !ggml_node_has_n_uses(cgraph, node_idxs[i], 1)) {
-            return false;
+        यदि (i < अंक_ops - 1 && !ggml_गाँठ_has_n_uses(cgraph, गाँठ_idxs[i], 1)) {
+            प्रत्यागम false;
         }
-        if (i > 0) {
-            struct ggml_tensor * prev = cgraph->nodes[node_idxs[i - 1]];
-            if (node->src[0] != prev && node->src[1] != prev) {
-                return false;
+        यदि (i > 0) {
+            संरचना ggml_tensor * prev = cgraph->nodes[गाँठ_idxs[i - 1]];
+            यदि (गाँठ->src[0] != prev && गाँठ->src[1] != prev) {
+                प्रत्यागम false;
             }
-            if (!ggml_are_same_shape(node, prev)) {
-                return false;
+            यदि (!ggml_are_same_shape(गाँठ, prev)) {
+                प्रत्यागम false;
             }
         }
     }
-    return true;
+    प्रत्यागम true;
 }
 
 // same as above, for sequential indices starting at node_idx
-static inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, const enum ggml_op * ops, int num_ops) {
-    assert(num_ops < 32);
+स्थिर अन्तःस्थ bool ggml_can_fuse(ध्रुव संरचना ggml_cgraph * cgraph, पूर्णाङ्क गाँठ_idx, ध्रुव गणना ggml_op * ops, पूर्णाङ्क अंक_ops) {
+    प्रतिज्ञा(अंक_ops < 32);
 
-    if (node_idx + num_ops > cgraph->n_nodes) {
-        return false;
+    यदि (गाँठ_idx + अंक_ops > cgraph->n_nodes) {
+        प्रत्यागम false;
     }
 
-    int idxs[32];
-    for (int i = 0; i < num_ops; ++i) {
-        idxs[i] = node_idx + i;
+    पूर्णाङ्क idxs[32];
+    प्रति (पूर्णाङ्क i = 0; i < अंक_ops; ++i) {
+        idxs[i] = गाँठ_idx + i;
     }
 
-    return ggml_can_fuse_ext(cgraph, idxs, ops, num_ops);
+    प्रत्यागम ggml_can_fuse_ext(cgraph, idxs, ops, अंक_ops);
 }
 
-GGML_API bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
-                                         const int *                node_idxs,
-                                         int                        count,
-                                         const enum ggml_op *       ops,
-                                         const int *                outputs,
-                                         int                        num_outputs);
+GGML_API bool ggml_can_fuse_subgraph_ext(ध्रुव संरचना ggml_cgraph * cgraph,
+                                         ध्रुव पूर्णाङ्क *                गाँठ_idxs,
+                                         पूर्णाङ्क                        गिनती,
+                                         ध्रुव गणना ggml_op *       ops,
+                                         ध्रुव पूर्णाङ्क *                outputs,
+                                         पूर्णाङ्क                        अंक_outputs);
 
 // Returns true if the subgraph formed by {node_idxs} can be fused
 // checks whethers all nodes which are not part of outputs can be elided
 // by checking if their num_uses are confined to the subgraph
-static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
-                                          int                        node_idx,
-                                          int                        count,
-                                          const enum ggml_op *       ops,
-                                          const int *                outputs,
-                                          int                        num_outputs) {
-    GGML_ASSERT(count < 32);
-    if (node_idx + count > cgraph->n_nodes) {
-        return false;
+स्थिर अन्तःस्थ bool ggml_can_fuse_subgraph(ध्रुव संरचना ggml_cgraph * cgraph,
+                                          पूर्णाङ्क                        गाँठ_idx,
+                                          पूर्णाङ्क                        गिनती,
+                                          ध्रुव गणना ggml_op *       ops,
+                                          ध्रुव पूर्णाङ्क *                outputs,
+                                          पूर्णाङ्क                        अंक_outputs) {
+    GGML_ASSERT(गिनती < 32);
+    यदि (गाँठ_idx + गिनती > cgraph->n_nodes) {
+        प्रत्यागम false;
     }
 
-    int idxs[32];
+    पूर्णाङ्क idxs[32];
 
-    for (int i = 0; i < count; ++i) {
-        idxs[i] = node_idx + i;
+    प्रति (पूर्णाङ्क i = 0; i < गिनती; ++i) {
+        idxs[i] = गाँठ_idx + i;
     }
 
-    return ggml_can_fuse_subgraph_ext(cgraph, idxs, count, ops, outputs, num_outputs);
+    प्रत्यागम ggml_can_fuse_subgraph_ext(cgraph, idxs, गिनती, ops, outputs, अंक_outputs);
 }
 
 #ifdef __cplusplus
@@ -758,38 +758,38 @@ static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
 #endif
 
 #ifdef __cplusplus
-#include <array>
-#include <initializer_list>
-#include <vector>
+#अन्तर्भाव <array>
+#अन्तर्भाव <initializer_list>
+#अन्तर्भाव <vector>
 
 // nicer C++ syntax for ggml_can_fuse
-inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
-    return ggml_can_fuse(cgraph, node_idx, ops.begin(), (int)ops.size());
+अन्तःस्थ bool ggml_can_fuse(ध्रुव संरचना ggml_cgraph * cgraph, पूर्णाङ्क गाँठ_idx, std::initializer_list<गणना ggml_op> ops) {
+    प्रत्यागम ggml_can_fuse(cgraph, गाँठ_idx, ops.begin(), (पूर्णाङ्क)ops.size());
 }
 
-inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph *          cgraph,
-                                   int                                 start_idx,
-                                   std::initializer_list<enum ggml_op> ops,
-                                   std::initializer_list<int>          outputs = {}) {
-    return ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());
+अन्तःस्थ bool ggml_can_fuse_subgraph(ध्रुव संरचना ggml_cgraph *          cgraph,
+                                   पूर्णाङ्क                                 start_idx,
+                                   std::initializer_list<गणना ggml_op> ops,
+                                   std::initializer_list<पूर्णाङ्क>          outputs = {}) {
+    प्रत्यागम ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());
 }
 
 // Return true if the edges in the graph match expectations.
-inline bool ggml_check_edges(const struct ggml_cgraph *                cgraph,
-                             int                                       start_idx,
-                             std::initializer_list<std::array<int, 3>> edges) {
-    for (const auto & edge : edges) {
-        int dst_node = edge[0];
-        int src_idx  = edge[1];
-        int src_node = edge[2];
-        if (cgraph->nodes[start_idx + dst_node]->src[src_idx] != cgraph->nodes[start_idx + src_node]) {
-            return false;
+अन्तःस्थ bool ggml_check_edges(ध्रुव संरचना ggml_cgraph *                cgraph,
+                             पूर्णाङ्क                                       start_idx,
+                             std::initializer_list<std::array<पूर्णाङ्क, 3>> edges) {
+    प्रति (ध्रुव स्वतः & edge : edges) {
+        पूर्णाङ्क dst_गाँठ = edge[0];
+        पूर्णाङ्क src_idx  = edge[1];
+        पूर्णाङ्क src_गाँठ = edge[2];
+        यदि (cgraph->nodes[start_idx + dst_गाँठ]->src[src_idx] != cgraph->nodes[start_idx + src_गाँठ]) {
+            प्रत्यागम false;
         }
     }
-    return true;
+    प्रत्यागम true;
 }
 
 // expose GGUF internals for test code
-GGML_API size_t gguf_type_size(enum gguf_type type);
-GGML_API void gguf_write_to_buf(const struct gguf_context * ctx, std::vector<int8_t> & buf, bool only_meta);
+GGML_API माप_प्रकार gguf_type_size(गणना gguf_type type);
+GGML_API शून्य gguf_write_to_buf(ध्रुव संरचना gguf_context * ctx, std::vector<int8_t> & buf, bool only_meta);
 #endif // __cplusplus

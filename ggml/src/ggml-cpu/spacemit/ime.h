@@ -1,20 +1,20 @@
 #pragma once
 
-#include "ggml-alloc.h"
+#अन्तर्भाव "ggml-alloc.h"
 
 #ifdef __cplusplus
-extern "C" {
+बाह्य "C" {
 #endif
 
-ggml_backend_buffer_type_t ggml_backend_cpu_riscv64_spacemit_buffer_type(void);
+ggml_backend_buffer_type_t ggml_backend_cpu_riscv64_spacemit_buffer_type(शून्य);
 
-void ggml_backend_cpu_riscv64_spacemit_set_numa_thread_affinity(int thread_n);
+शून्य ggml_backend_cpu_riscv64_spacemit_set_numa_thread_affinity(पूर्णाङ्क thread_n);
 
-void ggml_backend_cpu_riscv64_spacemit_clear_numa_thread_affinity_threaded(int thread_n);
+शून्य ggml_backend_cpu_riscv64_spacemit_clear_numa_thread_affinity_threaded(पूर्णाङ्क thread_n);
 
-void * ggml_backend_cpu_riscv64_spacemit_alloc_shared(size_t size, size_t alignment);
+शून्य * ggml_backend_cpu_riscv64_spacemit_alloc_shared(माप_प्रकार size, माप_प्रकार alignment);
 
-void ggml_backend_cpu_riscv64_spacemit_free_shared(void * ptr);
+शून्य ggml_backend_cpu_riscv64_spacemit_free_shared(शून्य * ptr);
 
 #ifdef __cplusplus
 }
