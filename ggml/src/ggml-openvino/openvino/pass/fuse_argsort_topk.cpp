@@ -1,64 +1,64 @@
-#include "fuse_argsort_topk.h"
+#अन्तर्भाव "fuse_argsort_topk.h"
 
-#include <openvino/op/constant.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/topk.hpp>
-#include <openvino/pass/pattern/op/wrap_type.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/slice.hpp>
+#अन्तर्भाव <openvino/op/topk.hpp>
+#अन्तर्भाव <openvino/pass/pattern/op/wrap_type.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace pass {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश pass {
 
-FuseArgsortTopK::FuseArgsortTopK() {
+Fuse_Argsort_शीर्ष_K::Fuse_Argsort_शीर्ष_K() {
     // GGML argsort materializes the full ordering before a VIEW keeps the prefix.
     // Let TopK produce only that prefix when all index consumers are such views.
-    auto pattern = ov::pass::pattern::wrap_type<ov::op::v11::TopK>();
+    स्वतः pattern = ov::pass::pattern::wrap_type<ov::op::v11::शीर्ष_K>();
 
-    const auto callback = [](ov::pass::pattern::Matcher & m) {
-        auto topk = ov::as_type_ptr<ov::op::v11::TopK>(m.get_match_root());
-        if (!topk->output(0).get_target_inputs().empty() || topk->output(1).get_target_inputs().empty() ||
-            topk->get_sort_type() != ov::op::v11::TopK::SortType::SORT_VALUES) {
-            return false;
+    अचर स्वतः callback = [](ov::pass::pattern::Matcher & m) {
+        स्वतः topk = ov::as_type_ptr<ov::op::v11::शीर्ष_K>(m.get_match_जरा());
+        यदि (!topk->output(0).get_target_inputs().empty() || topk->output(1).get_target_inputs().empty() ||
+            topk->get_sort_type() != ov::op::v11::शीर्ष_K::SortType::SORT_मानहरू) {
+            फर्काऊ असत्य;
         }
 
-        const auto shape = topk->get_output_partial_shape(1);
-        if (shape.rank().is_dynamic()) {
-            return false;
+        अचर स्वतः shape = topk->get_output_partial_shape(1);
+        यदि (shape.rank().is_dynamic()) {
+            फर्काऊ असत्य;
         }
-        const int64_t rank = shape.rank().get_length();
-        const int64_t axis = topk->get_axis();
-        if (shape[axis].is_dynamic()) {
-            return false;
+        अचर int64_t rank = shape.rank().get_length();
+        अचर int64_t axis = topk->get_axis();
+        यदि (shape[axis].is_dynamic()) {
+            फर्काऊ असत्य;
         }
 
         int64_t prefix = -1;
-        for (const auto & input : topk->output(1).get_target_inputs()) {
-            const auto * slice = ov::as_type<ov::op::v8::Slice>(input.get_node());
-            if (!slice || input.get_index() != 0 || slice->get_input_size() != 5) {
-                return false;
+        लागि (अचर स्वतः & आगत : topk->output(1).get_target_inputs()) {
+            अचर स्वतः * slice = ov::as_type<ov::op::v8::Slice>(आगत.get_गाँठो());
+            यदि (!slice || आगत.get_index() != 0 || slice->get_आगत_size() != 5) {
+                फर्काऊ असत्य;
             }
-            int64_t values[4];
-            for (size_t i = 0; i < 4; ++i) {
-                auto value = ov::as_type_ptr<ov::op::v0::Constant>(slice->get_input_node_shared_ptr(i + 1));
-                if (!value || ov::shape_size(value->get_shape()) != 1) {
-                    return false;
+            int64_t मानहरू[4];
+            लागि (माप_प्रकार i = 0; i < 4; ++i) {
+                स्वतः value = ov::as_type_ptr<ov::op::v0::Constant>(slice->get_आगत_गाँठो_shared_ptr(i + 1));
+                यदि (!value || ov::shape_size(value->get_shape()) != 1) {
+                    फर्काऊ असत्य;
                 }
-                values[i] = value->cast_vector<int64_t>()[0];
+                मानहरू[i] = value->cast_vector<int64_t>()[0];
             }
-            const int64_t slice_axis = values[3] < 0 ? values[3] + rank : values[3];
-            if (values[0] != 0 || values[2] != 1 || slice_axis != axis || values[1] <= 0 ||
-                values[1] >= shape[axis].get_length() || (prefix != -1 && prefix != values[1])) {
-                return false;
+            अचर int64_t slice_axis = मानहरू[3] < 0 ? मानहरू[3] + rank : मानहरू[3];
+            यदि (मानहरू[0] != 0 || मानहरू[2] != 1 || slice_axis != axis || मानहरू[1] <= 0 ||
+                मानहरू[1] >= shape[axis].get_length() || (prefix != -1 && prefix != मानहरू[1])) {
+                फर्काऊ असत्य;
             }
-            prefix = values[1];
+            prefix = मानहरू[1];
         }
 
         // ggml_argsort_top_k sorts the full row, then exposes only its first k indices.
         // Keep other TopK forms unchanged because their ordering can be observable.
         topk->set_argument(1, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{}, {prefix}));
         topk->validate_and_infer_types();
-        return true;
+        फर्काऊ सत्य;
     };
 
     register_matcher(std::make_shared<ov::pass::pattern::Matcher>(pattern, "ov::frontend::ggml::pass::FuseArgsortTopK"), callback);

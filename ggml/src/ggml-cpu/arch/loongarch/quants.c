@@ -1,19 +1,19 @@
 #define GGML_COMMON_IMPL_C
-#include "ggml-common.h"
-#include "ggml-quants.h"
-#include "ggml-impl.h"
-#include "ggml-cpu.h"
-#include "simd-mappings.h"
+#अन्तर्भाव "ggml-common.h"
+#अन्तर्भाव "ggml-quants.h"
+#अन्तर्भाव "ggml-impl.h"
+#अन्तर्भाव "ggml-cpu.h"
+#अन्तर्भाव "simd-mappings.h"
 
-#include "../../quants.h"
-#include "../../ggml-cpu-impl.h"
+#अन्तर्भाव "../../quants.h"
+#अन्तर्भाव "../../ggml-cpu-impl.h"
 
-#include <math.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <stdlib.h> // for qsort
-#include <stdio.h>  // for GGML_ASSERT
+#अन्तर्भाव <math.h>
+#अन्तर्भाव <string.h>
+#अन्तर्भाव <assert.h>
+#अन्तर्भाव <float.h>
+#अन्तर्भाव <stdlib.h> // for qsort
+#अन्तर्भाव <stdio.h>  // for GGML_ASSERT
 
 #define GROUP_MAX_EPS 1e-15f
 #define GROUP_MAX_EPS_IQ3_XXS 1e-8f
@@ -23,116 +23,116 @@
 
 #define UNUSED GGML_UNUSED
 
-#if defined(__loongarch_sx)
+#यदि defined(__loongarch_sx)
 
-static __m128i lsx_packs_w(__m128i a, __m128i b) {
+स्थिर __m128i lsx_packs_w(__m128i a, __m128i b) {
     __m128i tmp, tmp1;
     tmp = __lsx_vsat_w(a, 15);
     tmp1 = __lsx_vsat_w(b, 15);
-    return __lsx_vpickev_h(tmp1, tmp);
+    फर्काऊ __lsx_vpickev_h(tmp1, tmp);
 }
 
-static __m128i lsx_packs_h(__m128i a, __m128i b) {
+स्थिर __m128i lsx_packs_h(__m128i a, __m128i b) {
     __m128i tmp, tmp1;
     tmp = __lsx_vsat_h(a, 7);
     tmp1 = __lsx_vsat_h(b, 7);
-    return __lsx_vpickev_b(tmp1, tmp);
+    फर्काऊ __lsx_vpickev_b(tmp1, tmp);
 }
 
-static __m128i lsx_packus_h(__m128i a, __m128i b) {
+स्थिर __m128i lsx_packus_h(__m128i a, __m128i b) {
     __m128i tmp, tmp1;
     tmp = __lsx_vsat_hu(a, 7);
     tmp1 = __lsx_vsat_hu(b, 7);
-    return __lsx_vpickev_b(tmp1, tmp);
+    फर्काऊ __lsx_vpickev_b(tmp1, tmp);
 }
 
-static __m128i lsx_maddubs_h(__m128i a, __m128i b) {
+स्थिर __m128i lsx_maddubs_h(__m128i a, __m128i b) {
     __m128i tmp1, tmp2;
     tmp1 = __lsx_vmulwev_h_b(a, b);
     tmp2 = __lsx_vmulwod_h_b(a, b);
-    return __lsx_vsadd_h(tmp1, tmp2);
+    फर्काऊ __lsx_vsadd_h(tmp1, tmp2);
 }
 
-static __m128i lsx_madd_h(__m128i a, __m128i b) {
+स्थिर __m128i lsx_madd_h(__m128i a, __m128i b) {
     __m128i tmp1, tmp2;
     tmp1 = __lsx_vmulwev_w_h(a, b);
     tmp2 = __lsx_vmulwod_w_h(a, b);
-    return __lsx_vadd_w(tmp1, tmp2);
+    फर्काऊ __lsx_vadd_w(tmp1, tmp2);
 }
 
-static __m128i lsx_set_w(int32_t a, int32_t b, int32_t c, int32_t d) {
+स्थिर __m128i lsx_set_w(int32_t a, int32_t b, int32_t c, int32_t d) {
     v4i32 __ret = {d, c, b, a};
-    return (__m128i)__ret;
+    फर्काऊ (__m128i)__ret;
 }
 
-static __m128i lsx_shuffle_b(__m128i a, __m128i b) {
+स्थिर __m128i lsx_shuffle_b(__m128i a, __m128i b) {
     __m128i mask_f, zero, tmp0, tmp2, mask;
-    int f = 0x8f;
+    पूर्णाङ्क f = 0x8f;
     mask_f = __lsx_vreplgr2vr_b(f);
     zero = __lsx_vldi(0);
     tmp0 = __lsx_vand_v(b, mask_f); // get mask with low 4 bit and sign bits
     tmp0 = __lsx_vori_b(tmp0, 0x10); // make each mask or  with 0x10 prepare for positive
     mask = __lsx_vsle_b(zero, tmp0); // if mask >= 0, set mask
     tmp2 = __lsx_vand_v(tmp0, mask); // maskout the in2 < ones
-    return __lsx_vshuf_b(a, zero, tmp2);
+    फर्काऊ __lsx_vshuf_b(a, zero, tmp2);
 }
 
-static __m128i lsx_hadd_h(__m128i a, __m128i b) {
+स्थिर __m128i lsx_hadd_h(__m128i a, __m128i b) {
     __m128i tmp1 = __lsx_vpickev_h(b, a);
     __m128i tmp2 = __lsx_vpickod_h(b, a);
-    return __lsx_vadd_h(tmp1, tmp2);
+    फर्काऊ __lsx_vadd_h(tmp1, tmp2);
 }
 
-static __m128i lsx_hadd_w(__m128i a, __m128i b) {
+स्थिर __m128i lsx_hadd_w(__m128i a, __m128i b) {
     __m128i tmp1 = __lsx_vpickev_w(b, a);
     __m128i tmp2 = __lsx_vpickod_w(b, a);
-    return __lsx_vadd_w(tmp1, tmp2);
+    फर्काऊ __lsx_vadd_w(tmp1, tmp2);
 }
 
-static __m128 lsx_hadd_s(__m128 a, __m128 b) {
+स्थिर __m128 lsx_hadd_s(__m128 a, __m128 b) {
     __m128 tmp1 = (__m128)__lsx_vpickev_w((__m128i)b, (__m128i)a);
     __m128 tmp2 = (__m128)__lsx_vpickod_w((__m128i)b, (__m128i)a);
 
-    return __lsx_vfadd_s(tmp1, tmp2);
+    फर्काऊ __lsx_vfadd_s(tmp1, tmp2);
 }
 
-static inline float hsum_float_4x4(const __m128 a, const __m128 b, const __m128 c, const __m128 d) {
+स्थिर अन्तःस्थ भिन्न hsum_float_4x4(अचर __m128 a, अचर __m128 b, अचर __m128 c, अचर __m128 d) {
     __m128 res_0 =lsx_hadd_s(a, b);
     __m128 res_1 =lsx_hadd_s(c, d);
     __m128 res =lsx_hadd_s(res_0, res_1);
     res =lsx_hadd_s(res, res);
     res =lsx_hadd_s(res, res);
 
-    return ((v4f32)res)[0];
+    फर्काऊ ((v4f32)res)[0];
 }
 
 // multiply int8_t, add results pairwise twice
-static inline __m128i mul_sum_i8_pairs(const __m128i x, const __m128i y) {
+स्थिर अन्तःस्थ __m128i mul_sum_i8_pairs(अचर __m128i x, अचर __m128i y) {
     // Get absolute values of x vectors
-    const __m128i ax = __lsx_vsigncov_b(x, x);
+    अचर __m128i ax = __lsx_vsigncov_b(x, x);
     // Sign the values of the y vectors
-    const __m128i sy = __lsx_vsigncov_b(x, y);
+    अचर __m128i sy = __lsx_vsigncov_b(x, y);
     // Perform multiplication and create 16-bit values
-    const __m128i dot = lsx_maddubs_h(ax, sy);
-    const __m128i ones = __lsx_vreplgr2vr_h(1);
-    return lsx_madd_h(ones, dot);
+    अचर __m128i dot = lsx_maddubs_h(ax, sy);
+    अचर __m128i ones = __lsx_vreplgr2vr_h(1);
+    फर्काऊ lsx_madd_h(ones, dot);
 }
 #endif
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
 
 #ifdef __clang__
 #define VREGS_PREFIX "$vr"
 #define XREGS_PREFIX "$xr"
-#else // GCC
+#अन्यथा // GCC
 #define VREGS_PREFIX "$f"
 #define XREGS_PREFIX "$f"
 #endif
 #define __ALL_REGS "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31"
 // Convert __m128i to __m256i
-static inline __m256i ____m256i(__m128i in) {
+स्थिर अन्तःस्थ __m256i ____m256i(__m128i in) {
     __m256i out = __lasx_xvldi(0);
-    __asm__ volatile (
+    __asm__ चञ्चल (
         ".irp i," __ALL_REGS                "\n\t"
         " .ifc %[out], " XREGS_PREFIX"\\i    \n\t"
         "  .irp j," __ALL_REGS              "\n\t"
@@ -144,12 +144,12 @@ static inline __m256i ____m256i(__m128i in) {
         ".endr                               \n\t"
         : [out] "+f" (out) : [in] "f" (in)
     );
-    return out;
+    फर्काऊ out;
 }
 // Convert two __m128i to __m256i
-static inline __m256i lasx_set_q(__m128i inhi, __m128i inlo) {
+स्थिर अन्तःस्थ __m256i lasx_set_q(__m128i inhi, __m128i inlo) {
     __m256i out;
-    __asm__ volatile (
+    __asm__ चञ्चल (
         ".irp i," __ALL_REGS                "\n\t"
         " .ifc %[hi], " VREGS_PREFIX "\\i    \n\t"
         "  .irp j," __ALL_REGS              "\n\t"
@@ -173,12 +173,12 @@ static inline __m256i lasx_set_q(__m128i inhi, __m128i inlo) {
         : [out] "=f" (out), [hi] "+f" (inhi)
         : [lo] "f" (inlo)
     );
-    return out;
+    फर्काऊ out;
 }
 // Convert __m256i low part to __m128i
-static inline __m128i lasx_extracti128_lo(__m256i in) {
+स्थिर अन्तःस्थ __m128i lasx_extracti128_lo(__m256i in) {
     __m128i out;
-    __asm__ volatile (
+    __asm__ चञ्चल (
         ".ifnc %[out], %[in]                 \n\t"
         ".irp i," __ALL_REGS                "\n\t"
         " .ifc %[out], " VREGS_PREFIX "\\i   \n\t"
@@ -192,12 +192,12 @@ static inline __m128i lasx_extracti128_lo(__m256i in) {
         ".endif                              \n\t"
         : [out] "=f" (out) : [in] "f" (in)
     );
-    return out;
+    फर्काऊ out;
 }
 // Convert __m256i high part to __m128i
-static inline __m128i lasx_extracti128_hi(__m256i in) {
+स्थिर अन्तःस्थ __m128i lasx_extracti128_hi(__m256i in) {
     __m128i out;
-    __asm__ volatile (
+    __asm__ चञ्चल (
         ".irp i," __ALL_REGS                "\n\t"
         " .ifc %[out], " VREGS_PREFIX "\\i   \n\t"
         "  .irp j," __ALL_REGS              "\n\t"
@@ -209,143 +209,143 @@ static inline __m128i lasx_extracti128_hi(__m256i in) {
         ".endr                               \n\t"
         : [out] "=f" (out) : [in] "f" (in)
     );
-    return out;
+    फर्काऊ out;
 }
 
-static __m256i lasx_set_w(int e7, int e6, int e5, int e4, int e3, int e2, int e1, int e0) {
+स्थिर __m256i lasx_set_w(पूर्णाङ्क e7, पूर्णाङ्क e6, पूर्णाङ्क e5, पूर्णाङ्क e4, पूर्णाङ्क e3, पूर्णाङ्क e2, पूर्णाङ्क e1, पूर्णाङ्क e0) {
     v8i32 __ret = {e0, e1, e2, e3, e4, e5, e6, e7};
-    return (__m256i)__ret;
+    फर्काऊ (__m256i)__ret;
 }
 
-static __m256i lasx_set_d(int64_t a, int64_t b, int64_t c, int64_t d) {
+स्थिर __m256i lasx_set_d(int64_t a, int64_t b, int64_t c, int64_t d) {
     v4i64 __ret = {d, c, b, a};
-    return (__m256i)__ret;
+    फर्काऊ (__m256i)__ret;
 }
 
-static __m256i lasx_insertf128( __m128i x, __m128i y) {
-    return lasx_set_q(x, y);
+स्थिर __m256i lasx_insertf128( __m128i x, __m128i y) {
+    फर्काऊ lasx_set_q(x, y);
 }
 
-static __m256i lasx_shuffle_b(__m256i a, __m256i b) {
+स्थिर __m256i lasx_shuffle_b(__m256i a, __m256i b) {
     __m256i mask_f, zero, tmp0, tmp2, mask;
-    int f = 0x8f;
+    पूर्णाङ्क f = 0x8f;
     mask_f = __lasx_xvreplgr2vr_b(f);
     zero = __lasx_xvldi(0);
     tmp0 = __lasx_xvand_v(b, mask_f); // get mask with low 4 bit and sign bits
     tmp0 = __lasx_xvori_b(tmp0, 0x10); // make each mask or  with 0x10 prepare for positive
     mask = __lasx_xvsle_b(zero, tmp0); // if mask >= 0, set mask
     tmp2 = __lasx_xvand_v(tmp0, mask); // maskout the in2 < ones
-    return __lasx_xvshuf_b(a, zero, tmp2);
+    फर्काऊ __lasx_xvshuf_b(a, zero, tmp2);
 }
 
-static __m256i lasx_extu8_16(__m128i a) {
-    return __lasx_vext2xv_hu_bu(____m256i(a));
+स्थिर __m256i lasx_extu8_16(__m128i a) {
+    फर्काऊ __lasx_vext2xv_hu_bu(____m256i(a));
 }
 
-static __m256i lasx_ext8_16(__m128i a) {
-    return __lasx_vext2xv_h_b(____m256i(a));
+स्थिर __m256i lasx_ext8_16(__m128i a) {
+    फर्काऊ __lasx_vext2xv_h_b(____m256i(a));
 }
 
-static __m256i lasx_ext16_32(__m128i a) {
-    return __lasx_vext2xv_w_h(____m256i(a));
+स्थिर __m256i lasx_ext16_32(__m128i a) {
+    फर्काऊ __lasx_vext2xv_w_h(____m256i(a));
 }
 
-static __m128i lasx_extracti128( __m256i a, int pos) {
+स्थिर __m128i lasx_extracti128( __m256i a, पूर्णाङ्क pos) {
     __m128i ret;
-    if( pos == 0)
+    यदि( pos == 0)
     {
        ret = lasx_extracti128_lo(a);
-    } else {
+    } अन्यथा {
        ret = lasx_extracti128_hi(a);
     }
-    return ret;
+    फर्काऊ ret;
 }
 
-static __m128 lasx_extractf128( __m256 a, int pos) {
+स्थिर __m128 lasx_extractf128( __m256 a, पूर्णाङ्क pos) {
     __m128 ret;
-    if( pos == 0)
+    यदि( pos == 0)
     {
        ret = (__m128)lasx_extracti128_lo((__m256i)a);
-    } else {
+    } अन्यथा {
        ret = (__m128)lasx_extracti128_hi((__m256i)a);
     }
-    return ret;
+    फर्काऊ ret;
 }
 
-static __m256i lasx_maddubs_h(__m256i a, __m256i b) {
+स्थिर __m256i lasx_maddubs_h(__m256i a, __m256i b) {
     __m256i tmp1, tmp2;
     tmp1 = __lasx_xvmulwev_h_b(a, b);
     tmp2 = __lasx_xvmulwod_h_b(a, b);
-    return __lasx_xvsadd_h(tmp1, tmp2);
+    फर्काऊ __lasx_xvsadd_h(tmp1, tmp2);
 }
 
-static __m256i lasx_madd_h(__m256i a, __m256i b) {
+स्थिर __m256i lasx_madd_h(__m256i a, __m256i b) {
     __m256i tmp1, tmp2;
     tmp1 = __lasx_xvmulwev_w_h(a, b);
     tmp2 = __lasx_xvmulwod_w_h(a, b);
-    return __lasx_xvadd_w(tmp1, tmp2);
+    फर्काऊ __lasx_xvadd_w(tmp1, tmp2);
 }
 
-static __m256i lasx_packs_w(__m256i a, __m256i b) {
+स्थिर __m256i lasx_packs_w(__m256i a, __m256i b) {
     __m256i tmp, tmp1;
     tmp = __lasx_xvsat_w(a, 15);
     tmp1 = __lasx_xvsat_w(b, 15);
-    return __lasx_xvpickev_h(tmp1, tmp);
+    फर्काऊ __lasx_xvpickev_h(tmp1, tmp);
 }
 
-static __m256i lasx_packs_h(__m256i a, __m256i b) {
+स्थिर __m256i lasx_packs_h(__m256i a, __m256i b) {
     __m256i tmp, tmp1;
     tmp = __lasx_xvsat_h(a, 7);
     tmp1 = __lasx_xvsat_h(b, 7);
-    return __lasx_xvpickev_b(tmp1, tmp);
+    फर्काऊ __lasx_xvpickev_b(tmp1, tmp);
 }
 
-static inline __m256i lasx_madd_h_b(__m256i a, __m256i b) {
+स्थिर अन्तःस्थ __m256i lasx_madd_h_b(__m256i a, __m256i b) {
     __m256i tmp1, tmp2;
     tmp1 = __lasx_xvmulwev_h_b(a, b);
     tmp2 = __lasx_xvmulwod_h_b(a, b);
-    return __lasx_xvadd_h(tmp1, tmp2);
+    फर्काऊ __lasx_xvadd_h(tmp1, tmp2);
 }
 
-static inline __m256i lasx_xvrepl128vei_h(__m256i a, const unsigned int b) {
-    switch (b) {
-        case 0: return __lasx_xvrepl128vei_h(a, 0);
-        case 1: return __lasx_xvrepl128vei_h(a, 1);
-        case 2: return __lasx_xvrepl128vei_h(a, 2);
-        case 3: return __lasx_xvrepl128vei_h(a, 3);
-        case 4: return __lasx_xvrepl128vei_h(a, 4);
-        case 5: return __lasx_xvrepl128vei_h(a, 5);
-        case 6: return __lasx_xvrepl128vei_h(a, 6);
-        case 7: return __lasx_xvrepl128vei_h(a, 7);
-        default: __builtin_unreachable();
+स्थिर अन्तःस्थ __m256i lasx_xvrepl128vei_h(__m256i a, अचर अचिन्हित पूर्णाङ्क b) {
+    विकल्प (b) {
+        पक्ष 0: फर्काऊ __lasx_xvrepl128vei_h(a, 0);
+        पक्ष 1: फर्काऊ __lasx_xvrepl128vei_h(a, 1);
+        पक्ष 2: फर्काऊ __lasx_xvrepl128vei_h(a, 2);
+        पक्ष 3: फर्काऊ __lasx_xvrepl128vei_h(a, 3);
+        पक्ष 4: फर्काऊ __lasx_xvrepl128vei_h(a, 4);
+        पक्ष 5: फर्काऊ __lasx_xvrepl128vei_h(a, 5);
+        पक्ष 6: फर्काऊ __lasx_xvrepl128vei_h(a, 6);
+        पक्ष 7: फर्काऊ __lasx_xvrepl128vei_h(a, 7);
+        स्वभाव: __builtin_unreachable();
     }
 }
 
-static inline __m256i lasx_xvandi_b_bit(__m256i a, const unsigned int b) {
-    switch (b) {
-        case 0: return __lasx_xvandi_b(a, 1 << 0);
-        case 1: return __lasx_xvandi_b(a, 1 << 1);
-        case 2: return __lasx_xvandi_b(a, 1 << 2);
-        case 3: return __lasx_xvandi_b(a, 1 << 3);
-        case 4: return __lasx_xvandi_b(a, 1 << 4);
-        case 5: return __lasx_xvandi_b(a, 1 << 5);
-        case 6: return __lasx_xvandi_b(a, 1 << 6);
-        case 7: return __lasx_xvandi_b(a, 1 << 7);
-        default: __builtin_unreachable();
+स्थिर अन्तःस्थ __m256i lasx_xvandi_b_bit(__m256i a, अचर अचिन्हित पूर्णाङ्क b) {
+    विकल्प (b) {
+        पक्ष 0: फर्काऊ __lasx_xvandi_b(a, 1 << 0);
+        पक्ष 1: फर्काऊ __lasx_xvandi_b(a, 1 << 1);
+        पक्ष 2: फर्काऊ __lasx_xvandi_b(a, 1 << 2);
+        पक्ष 3: फर्काऊ __lasx_xvandi_b(a, 1 << 3);
+        पक्ष 4: फर्काऊ __lasx_xvandi_b(a, 1 << 4);
+        पक्ष 5: फर्काऊ __lasx_xvandi_b(a, 1 << 5);
+        पक्ष 6: फर्काऊ __lasx_xvandi_b(a, 1 << 6);
+        पक्ष 7: फर्काऊ __lasx_xvandi_b(a, 1 << 7);
+        स्वभाव: __builtin_unreachable();
     }
 }
 
 // horizontally add 8 floats
-static inline float hsum_float_8(const __m256 x) {
+स्थिर अन्तःस्थ भिन्न hsum_float_8(अचर __m256 x) {
     __m128 res = lasx_extractf128(x, 1);
     res = __lsx_vfadd_s(res, lasx_extractf128(x, 0));
     res = __lsx_vfadd_s(res, (__m128)__lsx_vpickod_d((__m128i)res, (__m128i)res));
     res = __lsx_vfadd_s(res, (__m128)__lsx_vinsgr2vr_w(__lsx_vldi(0), __lsx_vpickve2gr_w(res, 1), 0));
-    return ((v4f32)res)[0];
+    फर्काऊ ((v4f32)res)[0];
 }
 
 // horizontally add 8 int32_t
-static inline int hsum_i32_8(const __m256i a) {
+स्थिर अन्तःस्थ पूर्णाङ्क hsum_i32_8(अचर __m256i a) {
 
     __m256i tmp1 = __lasx_xvpermi_q(a, a, 0x11);
     __m256i tmp2 = __lasx_xvpermi_q(a, a, 0x00);
@@ -359,75 +359,75 @@ static inline int hsum_i32_8(const __m256i a) {
     __m128i od = __lsx_vpickod_w(sum128, sum128);
     __m128i sum64 = __lsx_vadd_w(ev, od);
 
-    int sum64_1, sum64_2;
+    पूर्णाङ्क sum64_1, sum64_2;
     sum64_1 = __lsx_vpickve2gr_w(sum64, 0);
     sum64_2 = __lsx_vpickve2gr_w(sum64, 1);
 
-    return  sum64_1 + sum64_2;
+    फर्काऊ  sum64_1 + sum64_2;
 }
 
 // horizontally add 4 int32_t
-static inline int hsum_i32_4(const __m128i a) {
+स्थिर अन्तःस्थ पूर्णाङ्क hsum_i32_4(अचर __m128i a) {
     __m128i ev = __lsx_vpickev_w(a, a);
     __m128i od = __lsx_vpickod_w(a, a);
     __m128i sum64 = __lsx_vadd_w(ev, od);
 
-    int sum64_1, sum64_2;
+    पूर्णाङ्क sum64_1, sum64_2;
     sum64_1 = __lsx_vpickve2gr_w(sum64, 0);
     sum64_2 = __lsx_vpickve2gr_w(sum64, 1);
 
-    return  sum64_1 + sum64_2;
+    फर्काऊ  sum64_1 + sum64_2;
 }
 
 // spread 32 bits to 32 bytes { 0x00, 0xFF }
-static inline __m256i bytes_from_bits_32(const uint8_t * x) {
+स्थिर अन्तःस्थ __m256i bytes_from_bits_32(अचर uint8_t * x) {
 
     uint32_t x32;
-    memcpy(&x32, x, sizeof(uint32_t));
-    const __m256i shuf_mask = lasx_set_d(
+    स_नकल(&x32, x, परिमाण(uint32_t));
+    अचर __m256i shuf_mask = lasx_set_d(
             0x0303030303030303, 0x0202020202020202,
             0x0101010101010101, 0x0000000000000000);
 
     __m256i bytes = lasx_shuffle_b(__lasx_xvreplgr2vr_w(x32), shuf_mask);
-    const __m256i bit_mask = __lasx_xvreplgr2vr_d(0x7fbfdfeff7fbfdfe);
+    अचर __m256i bit_mask = __lasx_xvreplgr2vr_d(0x7fbfdfeff7fbfdfe);
     bytes = __lasx_xvor_v(bytes, bit_mask);
-    return __lasx_xvseq_b(bytes, __lasx_xvreplgr2vr_d(-1));
+    फर्काऊ __lasx_xvseq_b(bytes, __lasx_xvreplgr2vr_d(-1));
 }
 
 // Unpack 32 4-bit fields into 32 bytes
 // The output vector contains 32 bytes, each one in [ 0 .. 15 ] interval
-static inline __m256i bytes_from_nibbles_32(const uint8_t * rsi) {
-    const __m128i lo = __lsx_vld((const __m128i *)rsi, 0);
+स्थिर अन्तःस्थ __m256i bytes_from_nibbles_32(अचर uint8_t * rsi) {
+    अचर __m128i lo = __lsx_vld((अचर __m128i *)rsi, 0);
     __m128i hi = __lsx_vsrli_h(lo, 4);
-    return __lasx_xvandi_b(lasx_insertf128(hi, lo), 0xf);
+    फर्काऊ __lasx_xvandi_b(lasx_insertf128(hi, lo), 0xf);
 }
 
 // add int16_t pairwise and return as float vector
-static inline __m256 sum_i16_pairs_float(const __m256i x) {
+स्थिर अन्तःस्थ __m256 sum_i16_pairs_float(अचर __m256i x) {
     __m256i v = __lasx_xvpackod_h(x, x);
     __m256i summed_pairs = __lasx_xvaddwev_w_h(x, v);
-    return __lasx_xvffint_s_w(summed_pairs);
+    फर्काऊ __lasx_xvffint_s_w(summed_pairs);
 }
 
-static inline __m256 mul_sum_us8_pairs_float(const __m256i ax, const __m256i sy) {
+स्थिर अन्तःस्थ __m256 mul_sum_us8_pairs_float(अचर __m256i ax, अचर __m256i sy) {
     // Perform multiplication and create 16-bit values
-    const __m256i dot = lasx_maddubs_h(ax, sy);
-    return sum_i16_pairs_float(dot);
+    अचर __m256i dot = lasx_maddubs_h(ax, sy);
+    फर्काऊ sum_i16_pairs_float(dot);
 }
 
 // multiply int8_t, add results pairwise twice and return as float vector
-static inline __m256 mul_sum_i8_pairs_float(const __m256i x, const __m256i y) {
-    const __m256i dot = lasx_madd_h_b(x, y);
-    return sum_i16_pairs_float(dot);
+स्थिर अन्तःस्थ __m256 mul_sum_i8_pairs_float(अचर __m256i x, अचर __m256i y) {
+    अचर __m256i dot = lasx_madd_h_b(x, y);
+    फर्काऊ sum_i16_pairs_float(dot);
 }
 
-static inline __m128i packNibbles( __m256i bytes ) {
+स्थिर अन्तःस्थ __m128i packNibbles( __m256i bytes ) {
     // Move bits within 16-bit lanes from 0000_abcd_0000_efgh into 0000_0000_abcd_efgh
-    const __m256i lowByte = __lasx_xvreplgr2vr_h(0xFF);
-     __m256i high = __lasx_xvandn_v(lowByte, bytes);
-    __m256i low = __lasx_xvand_v(lowByte, bytes);
-    high = __lasx_xvsrli_h(high, 4);
-    bytes = __lasx_xvor_v(low, high);
+    अचर __m256i तल्लो_Byte = __lasx_xvreplgr2vr_h(0xFF);
+     __m256i माथिल्लो = __lasx_xvandn_v(तल्लो_Byte, bytes);
+    __m256i तल्लो = __lasx_xvand_v(तल्लो_Byte, bytes);
+    माथिल्लो = __lasx_xvsrli_h(माथिल्लो, 4);
+    bytes = __lasx_xvor_v(तल्लो, माथिल्लो);
     // Compress uint16_t lanes into bytes
     __m128i *r0 = (__m128i *)&bytes;
     __m256i tmp_h128 = __lasx_xvpermi_q(bytes, bytes, 0x11);
@@ -441,19 +441,19 @@ static inline __m128i packNibbles( __m256i bytes ) {
 
     tmp = __lsx_vmax_h(zero, *r1);
     tmp3 = __lsx_vsat_hu(tmp, 7);
-    return  __lsx_vpickev_b(tmp3, tmp2);
+    फर्काऊ  __lsx_vpickev_b(tmp3, tmp2);
 }
 #endif  //__loongarch_asx
 
-void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(QK8_0 == 32);
-    assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+शून्य quantize_row_q8_0(अचर भिन्न * GGML_RESTRICT x, शून्य * GGML_RESTRICT vy, int64_t k) {
+    प्रतिज्ञा(QK8_0 == 32);
+    प्रतिज्ञा(k % QK8_0 == 0);
+    अचर पूर्णाङ्क nb = k / QK8_0;
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
-    for (int i = 0; i < nb; i++) {
+#यदि defined(__loongarch_asx)
+    लागि (पूर्णाङ्क i = 0; i < nb; i++) {
         __m256 v0 = (__m256)__lasx_xvld( x , 0);
         __m256 v1 = (__m256)__lasx_xvld( x , 32);
         __m256 v2 = (__m256)__lasx_xvld( x , 64);
@@ -461,7 +461,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         x += 32;
 
         // Compute max(abs(e)) for the block
-        const __m256 sign_bit = __lasx_xvreplfr2vr_s( -0.0f );
+        अचर __m256 sign_bit = __lasx_xvreplfr2vr_s( -0.0f );
         __m256 max_abs = (__m256)__lasx_xvandn_v( (__m256i)sign_bit, (__m256i)v0 );
         max_abs = __lasx_xvfmax_s( max_abs, (__m256)__lasx_xvandn_v( (__m256i)sign_bit, (__m256i)v1 ) );
         max_abs = __lasx_xvfmax_s( max_abs, (__m256)__lasx_xvandn_v( (__m256i)sign_bit, (__m256i)v2 ) );
@@ -471,13 +471,13 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         max4 = __lsx_vfmax_s( max4, (__m128)__lsx_vpickod_d((__m128i) max4, (__m128i)max4 ) );
         __m128 tmp = max4;
         max4 = __lsx_vfmax_s( max4, (__m128)__lsx_vinsgr2vr_w(tmp, __lsx_vpickve2gr_w( max4, 1 ), 0 ));
-        const float max_scalar = ((v4f32)max4)[0];
+        अचर भिन्न max_scalar = ((v4f32)max4)[0];
 
         // Quantize these floats
-        const float d = max_scalar / 127.f;
+        अचर भिन्न d = max_scalar / 127.f;
         y[i].d = GGML_CPU_FP32_TO_FP16(d);
-        const float id = ( max_scalar != 0.0f ) ? 127.f / max_scalar : 0.0f;
-        const __m256 mul = (__m256)__lasx_xvreplfr2vr_s( id );
+        अचर भिन्न id = ( max_scalar != 0.0f ) ? 127.f / max_scalar : 0.0f;
+        अचर __m256 mul = (__m256)__lasx_xvreplfr2vr_s( id );
 
         // Apply the multiplier
         v0 = __lasx_xvfmul_s( v0, mul );
@@ -513,21 +513,21 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         __lsx_vst(ni4, (__m128i *)(y[i].qs + 16), 0);
 
     }
-#else
+#अन्यथा
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
 #endif
 }
 
-void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
-    assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+शून्य quantize_row_q8_1(अचर भिन्न * GGML_RESTRICT x, शून्य * GGML_RESTRICT vy, int64_t k) {
+    प्रतिज्ञा(k % QK8_1 == 0);
+    अचर पूर्णाङ्क nb = k / QK8_1;
 
     block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
-    for (int i = 0; i < nb; i++) {
+#यदि defined(__loongarch_asx)
+    लागि (पूर्णाङ्क i = 0; i < nb; i++) {
         __m256 v0 = (__m256)__lasx_xvld( x , 0 );
         __m256 v1 = (__m256)__lasx_xvld( x , 32 );
         __m256 v2 = (__m256)__lasx_xvld( x , 64 );
@@ -535,7 +535,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         x += 32;
 
         // Compute max(abs(e)) for the block
-        const __m256 sign_bit = __lasx_xvreplfr2vr_s( -0.0f );
+        अचर __m256 sign_bit = __lasx_xvreplfr2vr_s( -0.0f );
         __m256 max_abs = (__m256)__lasx_xvandn_v( (__m256i)sign_bit, (__m256i)v0 );
         max_abs = __lasx_xvfmax_s( max_abs, (__m256)__lasx_xvandn_v( (__m256i)sign_bit, (__m256i)v1 ) );
         max_abs = __lasx_xvfmax_s( max_abs, (__m256)__lasx_xvandn_v( (__m256i)sign_bit, (__m256i)v2 ) );
@@ -545,13 +545,13 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         max4 = __lsx_vfmax_s( max4, (__m128)__lsx_vpickod_d((__m128i) max4, (__m128i)max4 ) );
         __m128 tmp = max4;
         max4 = __lsx_vfmax_s( max4, (__m128)__lsx_vextrins_w((__m128i)tmp, (__m128i)max4, 0x1 ));
-        const float max_scalar = ((v4f32)max4)[0];
+        अचर भिन्न max_scalar = ((v4f32)max4)[0];
 
         // Quantize these floats
-        const float d = max_scalar / 127.f;
+        अचर भिन्न d = max_scalar / 127.f;
         y[i].d = GGML_CPU_FP32_TO_FP16(d);
-        const float id = ( max_scalar != 0.0f ) ? 127.f / max_scalar : 0.0f;
-        const __m256 mul = __lasx_xvreplfr2vr_s( id );
+        अचर भिन्न id = ( max_scalar != 0.0f ) ? 127.f / max_scalar : 0.0f;
+        अचर __m256 mul = __lasx_xvreplfr2vr_s( id );
 
         // Apply the multiplier
         v0 = __lasx_xvfmul_s( v0, mul );
@@ -575,8 +575,8 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         __m128i ni7 = lasx_extracti128( i3, 1);
 
         // Compute the sum of the quants and set y[i].s
-        const __m128i s0 = __lsx_vadd_w(__lsx_vadd_w(ni0, ni1), __lsx_vadd_w(ni2, ni3));
-        const __m128i s1 = __lsx_vadd_w(__lsx_vadd_w(ni4, ni5), __lsx_vadd_w(ni6, ni7));
+        अचर __m128i s0 = __lsx_vadd_w(__lsx_vadd_w(ni0, ni1), __lsx_vadd_w(ni2, ni3));
+        अचर __m128i s1 = __lsx_vadd_w(__lsx_vadd_w(ni4, ni5), __lsx_vadd_w(ni6, ni7));
         y[i].s = GGML_CPU_FP32_TO_FP16(d * hsum_i32_4(__lsx_vadd_w(s0, s1)));
 
         // Convert int32 to int16
@@ -591,7 +591,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
         __lsx_vst(ni0, (__m128i *)(y[i].qs +  0), 0);
         __lsx_vst(ni4, (__m128i *)(y[i].qs + 16), 0);
     }
-#else
+#अन्यथा
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
@@ -605,19 +605,19 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 // Helper functions
 //
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
 // shuffles to pick the required scales in dot products
-static inline __m256i get_scale_shuffle_q3k(int i) {
-    static const uint8_t k_shuffle[128] = {
+स्थिर अन्तःस्थ __m256i get_scale_shuffle_q3k(पूर्णाङ्क i) {
+    स्थिर अचर uint8_t k_shuffle[128] = {
          0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,     2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3,
          4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5,     6, 7, 6, 7, 6, 7, 6, 7, 6, 7, 6, 7, 6, 7, 6, 7,
          8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9, 8, 9,    10,11,10,11,10,11,10,11,10,11,10,11,10,11,10,11,
         12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,    14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,
     };
-    return __lasx_xvld((const __m256i*)k_shuffle + i, 0);
+    फर्काऊ __lasx_xvld((अचर __m256i*)k_shuffle + i, 0);
 }
-static inline __m256i get_scale_shuffle_k4(int i) {
-    static const uint8_t k_shuffle[256] = {
+स्थिर अन्तःस्थ __m256i get_scale_shuffle_k4(पूर्णाङ्क i) {
+    स्थिर अचर uint8_t k_shuffle[256] = {
          0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
          2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3,
          4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5, 4, 5,
@@ -627,10 +627,10 @@ static inline __m256i get_scale_shuffle_k4(int i) {
         12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,
         14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15,14,15
     };
-    return __lasx_xvld((const __m256i*)k_shuffle + i, 0);
+    फर्काऊ __lasx_xvld((अचर __m256i*)k_shuffle + i, 0);
 }
-static inline __m128i get_scale_shuffle(int i) {
-    static const uint8_t k_shuffle[128] = {
+स्थिर अन्तःस्थ __m128i get_scale_shuffle(पूर्णाङ्क i) {
+    स्थिर अचर uint8_t k_shuffle[128] = {
          0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
          2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
          4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5,
@@ -640,45 +640,45 @@ static inline __m128i get_scale_shuffle(int i) {
         12,12,12,12,12,12,12,12, 13,13,13,13,13,13,13,13,
         14,14,14,14,14,14,14,14, 15,15,15,15,15,15,15,15
     };
-    return __lsx_vld((const __m128i*)k_shuffle + i, 0);
+    फर्काऊ __lsx_vld((अचर __m128i*)k_shuffle + i, 0);
 }
 #endif
 
-void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+शून्य ggml_vec_dot_q4_0_q8_0(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    अचर पूर्णाङ्क qk = QK8_0;
+    अचर पूर्णाङ्क nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
+    प्रतिज्ञा(n % qk == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q4_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    अचर block_q4_0 * GGML_RESTRICT x = vx;
+    अचर block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0;
+    पूर्णाङ्क ib = 0;
+    भिन्न sumf = 0;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
     // Main loop
-    for (; ib < nb; ++ib) {
+    लागि (; ib < nb; ++ib) {
         /* Compute combined scale for the block */
-        const __m256 d = __lasx_xvreplfr2vr_s( GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d) );
+        अचर __m256 d = __lasx_xvreplfr2vr_s( GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d) );
 
         __m256i qx = bytes_from_nibbles_32(x[ib].qs);
 
         // Now we have a vector with bytes in [ 0 .. 15 ] interval. Offset them into [ -8 .. +7 ] interval.
-        const __m256i off = __lasx_xvreplgr2vr_b( 8 );
+        अचर __m256i off = __lasx_xvreplgr2vr_b( 8 );
         qx = __lasx_xvsub_b( qx, off );
 
-        __m256i qy = __lasx_xvld((const __m256i *)y[ib].qs, 0);
+        __m256i qy = __lasx_xvld((अचर __m256i *)y[ib].qs, 0);
 
-        const __m256 q = mul_sum_i8_pairs_float(qx, qy);
+        अचर __m256 q = mul_sum_i8_pairs_float(qx, qy);
 
         /* Multiply q with scale and accumulate */
         acc = __lasx_xvfmadd_s( d, q, acc );
@@ -686,10 +686,10 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     sumf = hsum_float_8(acc);
 
-#elif defined(__loongarch_sx)
+#अथवायदि defined(__loongarch_sx)
     // set constants
-    const __m128i low_mask = __lsx_vreplgr2vr_b(0xF);
-    const __m128i off = __lsx_vreplgr2vr_b(8);
+    अचर __m128i तल्लो_mask = __lsx_vreplgr2vr_b(0xF);
+    अचर __m128i off = __lsx_vreplgr2vr_b(8);
 
     // Initialize accumulator with zeros
     __m128 acc_0 = (__m128)__lsx_vldi(0);
@@ -697,39 +697,39 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     __m128 acc_2 = (__m128)__lsx_vldi(0);
     __m128 acc_3 = (__m128)__lsx_vldi(0);
 
-    for (; ib + 1 < nb; ib += 2) {
+    लागि (; ib + 1 < nb; ib += 2) {
 
         // Compute combined scale for the block 0 and 1
-        const float ft0 = GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d);
-        const __m128 d_0_1 = (__m128)(v4f32){ft0, ft0, ft0, ft0};
+        अचर भिन्न ft0 = GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d);
+        अचर __m128 d_0_1 = (__m128)(v4f32){ft0, ft0, ft0, ft0};
 
-        const __m128i tmp_0_1 = __lsx_vld((const __m128i *)x[ib].qs, 0);
+        अचर __m128i tmp_0_1 = __lsx_vld((अचर __m128i *)x[ib].qs, 0);
 
-        __m128i bx_0 = __lsx_vand_v(low_mask, tmp_0_1);
-        __m128i by_0 = __lsx_vld((const __m128i *)y[ib].qs, 0);
+        __m128i bx_0 = __lsx_vand_v(तल्लो_mask, tmp_0_1);
+        __m128i by_0 = __lsx_vld((अचर __m128i *)y[ib].qs, 0);
         bx_0 = __lsx_vsub_b(bx_0, off);
-        const __m128i i32_0 = mul_sum_i8_pairs(bx_0, by_0);
+        अचर __m128i i32_0 = mul_sum_i8_pairs(bx_0, by_0);
 
-        __m128i bx_1 = __lsx_vand_v(low_mask, __lsx_vsrli_d(tmp_0_1, 4));
-        __m128i by_1 = __lsx_vld((const __m128i *)(y[ib].qs + 16), 0);
+        __m128i bx_1 = __lsx_vand_v(तल्लो_mask, __lsx_vsrli_d(tmp_0_1, 4));
+        __m128i by_1 = __lsx_vld((अचर __m128i *)(y[ib].qs + 16), 0);
         bx_1 = __lsx_vsub_b(bx_1, off);
-        const __m128i i32_1 = mul_sum_i8_pairs(bx_1, by_1);
+        अचर __m128i i32_1 = mul_sum_i8_pairs(bx_1, by_1);
 
         // Compute combined scale for the block 2 and 3
-        const float ft1 = GGML_CPU_FP16_TO_FP32(x[ib + 1].d) * GGML_CPU_FP16_TO_FP32(y[ib + 1].d);
-        const __m128 d_2_3 = (__m128)(v4f32){ft1, ft1, ft1, ft1};
+        अचर भिन्न ft1 = GGML_CPU_FP16_TO_FP32(x[ib + 1].d) * GGML_CPU_FP16_TO_FP32(y[ib + 1].d);
+        अचर __m128 d_2_3 = (__m128)(v4f32){ft1, ft1, ft1, ft1};
 
-        const __m128i tmp_2_3 = __lsx_vld((const __m128i *)x[ib + 1].qs, 0);
+        अचर __m128i tmp_2_3 = __lsx_vld((अचर __m128i *)x[ib + 1].qs, 0);
 
-        __m128i bx_2 = __lsx_vand_v(low_mask, tmp_2_3);
-        __m128i by_2 = __lsx_vld((const __m128i *)y[ib + 1].qs, 0);
+        __m128i bx_2 = __lsx_vand_v(तल्लो_mask, tmp_2_3);
+        __m128i by_2 = __lsx_vld((अचर __m128i *)y[ib + 1].qs, 0);
         bx_2 = __lsx_vsub_b(bx_2, off);
-        const __m128i i32_2 = mul_sum_i8_pairs(bx_2, by_2);
+        अचर __m128i i32_2 = mul_sum_i8_pairs(bx_2, by_2);
 
-        __m128i bx_3 = __lsx_vand_v(low_mask, __lsx_vsrli_d(tmp_2_3, 4));
-        __m128i by_3 = __lsx_vld((const __m128i *)(y[ib + 1].qs + 16), 0);
+        __m128i bx_3 = __lsx_vand_v(तल्लो_mask, __lsx_vsrli_d(tmp_2_3, 4));
+        __m128i by_3 = __lsx_vld((अचर __m128i *)(y[ib + 1].qs + 16), 0);
         bx_3 = __lsx_vsub_b(bx_3, off);
-        const __m128i i32_3 = mul_sum_i8_pairs(bx_3, by_3);
+        अचर __m128i i32_3 = mul_sum_i8_pairs(bx_3, by_3);
 
         // Convert int32_t to float
         __m128 p0 = __lsx_vffint_s_w(i32_0);
@@ -753,66 +753,66 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_4x4(acc_0, acc_1, acc_2, acc_3);
 
 #endif
-    for (; ib < nb; ++ib) {
-        int sumi0 = 0;
-        int sumi1 = 0;
+    लागि (; ib < nb; ++ib) {
+        पूर्णाङ्क sumi0 = 0;
+        पूर्णाङ्क sumi1 = 0;
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int v0 = (x[ib].qs[j] & 0x0F) - 8;
-            const int v1 = (x[ib].qs[j] >>   4) - 8;
+        लागि (पूर्णाङ्क j = 0; j < qk/2; ++j) {
+            अचर पूर्णाङ्क v0 = (x[ib].qs[j] & 0x0F) - 8;
+            अचर पूर्णाङ्क v1 = (x[ib].qs[j] >>   4) - 8;
 
             sumi0 += (v0 * y[ib].qs[j]);
             sumi1 += (v1 * y[ib].qs[j + qk/2]);
         }
 
-        int sumi = sumi0 + sumi1;
+        पूर्णाङ्क sumi = sumi0 + sumi1;
         sumf += sumi*GGML_CPU_FP16_TO_FP32(x[ib].d)*GGML_CPU_FP16_TO_FP32(y[ib].d);
     }
 
     *s = sumf;
 }
 
-void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+शून्य ggml_vec_dot_q4_1_q8_1(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    अचर पूर्णाङ्क qk = QK8_1;
+    अचर पूर्णाङ्क nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
+    प्रतिज्ञा(n % qk == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q4_1 * GGML_RESTRICT x = vx;
-    const block_q8_1 * GGML_RESTRICT y = vy;
+    अचर block_q4_1 * GGML_RESTRICT x = vx;
+    अचर block_q8_1 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0;
+    पूर्णाङ्क ib = 0;
+    भिन्न sumf = 0;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
-    float summs = 0;
+    भिन्न summs = 0;
 
     // Main loop
-    for (; ib < nb; ++ib) {
-        const float d0 = GGML_CPU_FP16_TO_FP32(x[ib].d);
-        const float d1 = GGML_CPU_FP16_TO_FP32(y[ib].d);
+    लागि (; ib < nb; ++ib) {
+        अचर भिन्न d0 = GGML_CPU_FP16_TO_FP32(x[ib].d);
+        अचर भिन्न d1 = GGML_CPU_FP16_TO_FP32(y[ib].d);
 
         summs += GGML_CPU_FP16_TO_FP32(x[ib].m) * GGML_CPU_FP16_TO_FP32(y[ib].s);
 
-        const __m256 d0v = __lasx_xvreplfr2vr_s( d0 );
-        const __m256 d1v = __lasx_xvreplfr2vr_s( d1 );
+        अचर __m256 d0v = __lasx_xvreplfr2vr_s( d0 );
+        अचर __m256 d1v = __lasx_xvreplfr2vr_s( d1 );
 
         // Compute combined scales
-        const __m256 d0d1 = __lasx_xvfmul_s( d0v, d1v );
+        अचर __m256 d0d1 = __lasx_xvfmul_s( d0v, d1v );
 
         // Load 16 bytes, and unpack 4 bit fields into bytes, making 32 bytes
-        const __m256i qx = bytes_from_nibbles_32(x[ib].qs);
-        const __m256i qy = __lasx_xvld( (const __m256i *)y[ib].qs, 0);
+        अचर __m256i qx = bytes_from_nibbles_32(x[ib].qs);
+        अचर __m256i qy = __lasx_xvld( (अचर __m256i *)y[ib].qs, 0);
 
-        const __m256 xy = mul_sum_us8_pairs_float(qx, qy);
+        अचर __m256 xy = mul_sum_us8_pairs_float(qx, qy);
 
         // Accumulate d0*d1*x*y
         acc = __lasx_xvfmadd_s( d0d1, xy, acc );
@@ -821,7 +821,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc) + summs;
 
     *s = sumf;
-#else
+#अन्यथा
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -831,41 +831,41 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+शून्य ggml_vec_dot_q5_0_q8_0(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    अचर पूर्णाङ्क qk = QK8_0;
+    अचर पूर्णाङ्क nb = n / qk;
 
-    int ib = 0;
-    float sumf = 0;
+    पूर्णाङ्क ib = 0;
+    भिन्न sumf = 0;
 
-    assert(n % qk == 0);
-    assert(qk == QK5_0);
-    assert(nrc == 1);
+    प्रतिज्ञा(n % qk == 0);
+    प्रतिज्ञा(qk == QK5_0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q5_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    अचर block_q5_0 * GGML_RESTRICT x = vx;
+    अचर block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
     // Main loop
-    for (; ib < nb; ++ib) {
+    लागि (; ib < nb; ++ib) {
         /* Compute combined scale for the block */
-        const __m256 d = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d)); //FIXME
+        अचर __m256 d = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d)); //FIXME
 
         __m256i qx = bytes_from_nibbles_32(x[ib].qs);
         __m256i bxhi = bytes_from_bits_32(x[ib].qh);
-        bxhi = __lasx_xvandn_v(bxhi, __lasx_xvreplgr2vr_b((char)0xF0));
+        bxhi = __lasx_xvandn_v(bxhi, __lasx_xvreplgr2vr_b((वर्ण)0xF0));
         qx = __lasx_xvor_v(qx, bxhi);
 
-        __m256i qy = __lasx_xvld((const __m256i *)y[ib].qs, 0);
+        __m256i qy = __lasx_xvld((अचर __m256i *)y[ib].qs, 0);
 
-        const __m256 q = mul_sum_i8_pairs_float(qx, qy);
+        अचर __m256 q = mul_sum_i8_pairs_float(qx, qy);
 
         /* Multiply q with scale and accumulate */
         acc = __lasx_xvfmadd_s(d, q, acc);
@@ -874,7 +874,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc);
 
     *s = sumf;
-#else
+#अन्यथा
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
@@ -884,33 +884,33 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+शून्य ggml_vec_dot_q5_1_q8_1(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    अचर पूर्णाङ्क qk = QK8_1;
+    अचर पूर्णाङ्क nb = n / qk;
 
-    int ib = 0;
-    float sumf = 0;
+    पूर्णाङ्क ib = 0;
+    भिन्न sumf = 0;
 
-    assert(n % qk == 0);
-    assert(qk == QK5_1);
-    assert(nrc == 1);
+    प्रतिज्ञा(n % qk == 0);
+    प्रतिज्ञा(qk == QK5_1);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q5_1 * GGML_RESTRICT x = vx;
-    const block_q8_1 * GGML_RESTRICT y = vy;
+    अचर block_q5_1 * GGML_RESTRICT x = vx;
+    अचर block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
-    float summs = 0.0f;
+    भिन्न summs = 0.0f;
 
     // Main loop
-    for (; ib < nb; ++ib) {
-        const __m256 dx = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(x[ib].d));
+    लागि (; ib < nb; ++ib) {
+        अचर __m256 dx = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(x[ib].d));
 
         summs += GGML_CPU_FP16_TO_FP32(x[ib].m) * GGML_CPU_FP16_TO_FP32(y[ib].s);
 
@@ -919,10 +919,10 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         bxhi = __lasx_xvand_v(bxhi, __lasx_xvreplgr2vr_b(0x10));
         qx = __lasx_xvor_v(qx, bxhi);
 
-        const __m256 dy = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(y[ib].d));
-        const __m256i qy = __lasx_xvld((const __m256i *)y[ib].qs, 0);
+        अचर __m256 dy = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(y[ib].d));
+        अचर __m256i qy = __lasx_xvld((अचर __m256i *)y[ib].qs, 0);
 
-        const __m256 q = mul_sum_us8_pairs_float(qx, qy);
+        अचर __m256 q = mul_sum_us8_pairs_float(qx, qy);
 
         acc = __lasx_xvfmadd_s(q, __lasx_xvfmul_s(dx, dy), acc);
     }
@@ -930,7 +930,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     sumf = hsum_float_8(acc) + summs;
 
     *s = sumf;
-#else
+#अन्यथा
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
@@ -940,35 +940,35 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+शून्य ggml_vec_dot_q8_0_q8_0(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    अचर पूर्णाङ्क qk = QK8_0;
+    अचर पूर्णाङ्क nb = n / qk;
 
-    assert(n % qk == 0);
-    assert(nrc == 1);
+    प्रतिज्ञा(n % qk == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q8_0 * GGML_RESTRICT x = vx;
-    const block_q8_0 * GGML_RESTRICT y = vy;
+    अचर block_q8_0 * GGML_RESTRICT x = vx;
+    अचर block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
-    float sumf = 0;
+    पूर्णाङ्क ib = 0;
+    भिन्न sumf = 0;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
     // Initialize accumulator with zeros
     __m256 acc = (__m256)__lasx_xvldi(0);
 
     // Main loop
-    for (; ib < nb; ++ib) {
+    लागि (; ib < nb; ++ib) {
         // Compute combined scale for the block
-        const __m256 d = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d));
-        __m256i qx = __lasx_xvld((const __m256i *)x[ib].qs, 0);
-        __m256i qy = __lasx_xvld((const __m256i *)y[ib].qs, 0);
+        अचर __m256 d = __lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d));
+        __m256i qx = __lasx_xvld((अचर __m256i *)x[ib].qs, 0);
+        __m256i qy = __lasx_xvld((अचर __m256i *)y[ib].qs, 0);
 
-        const __m256 q = mul_sum_i8_pairs_float(qx, qy);
+        अचर __m256 q = mul_sum_i8_pairs_float(qx, qy);
 
         // Multiply q with scale and accumulate
         acc = __lasx_xvfmadd_s( d, q, acc );
@@ -978,25 +978,25 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#elif defined(__loongarch_sx)
+#अथवायदि defined(__loongarch_sx)
 
     __m128 acc = (__m128)__lsx_vldi(0);
 
-    for (; ib < nb; ++ib) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d);
-        const __m128i qx_0 = __lsx_vld((const __m128i *)x[ib].qs, 0);
-        const __m128i qx_1 = __lsx_vld((const __m128i *)x[ib].qs + 1, 0);
-        const __m128i qy_0 = __lsx_vld((const __m128i *)y[ib].qs, 0);
-        const __m128i qy_1 = __lsx_vld((const __m128i *)y[ib].qs + 1, 0);
+    लागि (; ib < nb; ++ib) {
+        अचर भिन्न d = GGML_CPU_FP16_TO_FP32(x[ib].d) * GGML_CPU_FP16_TO_FP32(y[ib].d);
+        अचर __m128i qx_0 = __lsx_vld((अचर __m128i *)x[ib].qs, 0);
+        अचर __m128i qx_1 = __lsx_vld((अचर __m128i *)x[ib].qs + 1, 0);
+        अचर __m128i qy_0 = __lsx_vld((अचर __m128i *)y[ib].qs, 0);
+        अचर __m128i qy_1 = __lsx_vld((अचर __m128i *)y[ib].qs + 1, 0);
 
-        const __m128i p16_0 = lsx_maddubs_h(qx_0, qy_0);
-        const __m128i p16_1 = lsx_maddubs_h(qx_1, qy_1);
+        अचर __m128i p16_0 = lsx_maddubs_h(qx_0, qy_0);
+        अचर __m128i p16_1 = lsx_maddubs_h(qx_1, qy_1);
 
         // Sum int16 pairs → int32
-        const __m128i s_0 = __lsx_vaddwev_w_h(p16_0, p16_1);
-        const __m128i s_1 = __lsx_vaddwod_w_h(p16_0, p16_1);
+        अचर __m128i s_0 = __lsx_vaddwev_w_h(p16_0, p16_1);
+        अचर __m128i s_1 = __lsx_vaddwod_w_h(p16_0, p16_1);
 
-        const __m128 q = __lsx_vffint_s_w(__lsx_vadd_w(s_0, s_1));
+        अचर __m128 q = __lsx_vffint_s_w(__lsx_vadd_w(s_0, s_1));
         acc = __lsx_vfmadd_s(__lsx_vreplfr2vr_s(d), q, acc);
     }
 
@@ -1006,7 +1006,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#अन्यथा
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
@@ -1016,55 +1016,55 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+शून्य ggml_vec_dot_q2_K_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q2_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    अचर block_q2_K * GGML_RESTRICT x = vx;
+    अचर block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined __loongarch_asx
+#यदि defined __loongarch_asx
 
     __m256 acc = (__m256)__lasx_xvldi(0);
 
-    for (int i = 0; i < nb; ++i) {
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
 
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+        अचर भिन्न d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        अचर भिन्न dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
 
-        const uint8_t * GGML_RESTRICT q2 = x[i].qs;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        अचर uint8_t * GGML_RESTRICT q2 = x[i].qs;
+        अचर int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        const __m128i mins_and_scales128 = __lsx_vld((const __m128i*)x[i].scales, 0);
-        const __m128i scales128 = __lsx_vandi_b(mins_and_scales128, 0xf);
-        const __m256i mins = lasx_ext8_16(__lsx_vsrli_b(mins_and_scales128, 4));
-        const __m256i prod = lasx_madd_h(mins, __lasx_xvld((const __m256i*)y[i].bsums, 0));
+        अचर __m128i mins_and_scales128 = __lsx_vld((अचर __m128i*)x[i].scales, 0);
+        अचर __m128i scales128 = __lsx_vandi_b(mins_and_scales128, 0xf);
+        अचर __m256i mins = lasx_ext8_16(__lsx_vsrli_b(mins_and_scales128, 4));
+        अचर __m256i prod = lasx_madd_h(mins, __lasx_xvld((अचर __m256i*)y[i].bsums, 0));
 
         acc = __lasx_xvfmadd_s(__lasx_xvreplfr2vr_s(dmin), __lasx_xvffint_s_w(prod), acc);
 
-        const v16i8 shuffle_mask = {0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15};
-        const __m256i scales_shuffled = lasx_ext8_16(__lsx_vshuf_b(scales128, scales128, (__m128i)shuffle_mask));
+        अचर v16i8 shuffle_mask = {0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15};
+        अचर __m256i scales_shuffled = lasx_ext8_16(__lsx_vshuf_b(scales128, scales128, (__m128i)shuffle_mask));
 
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        लागि (पूर्णाङ्क j = 0; j < QK_K/128; ++j) {
 
-            const __m256i q2bits = __lasx_xvld((const __m256i*)q2, 0); q2 += 32;
+            अचर __m256i q2bits = __lasx_xvld((अचर __m256i*)q2, 0); q2 += 32;
 
-            const __m256i q8_0 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_1 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_2 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_3 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_0 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_1 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_2 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_3 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
 
-            const __m256i q2_0 = __lasx_xvandi_b(q2bits, 3);
-            const __m256i q2_1 = __lasx_xvandi_b(__lasx_xvsrli_b(q2bits, 2), 3);
-            const __m256i q2_2 = __lasx_xvandi_b(__lasx_xvsrli_b(q2bits, 4), 3);
-            const __m256i q2_3 = __lasx_xvsrli_b(q2bits, 6);
+            अचर __m256i q2_0 = __lasx_xvandi_b(q2bits, 3);
+            अचर __m256i q2_1 = __lasx_xvandi_b(__lasx_xvsrli_b(q2bits, 2), 3);
+            अचर __m256i q2_2 = __lasx_xvandi_b(__lasx_xvsrli_b(q2bits, 4), 3);
+            अचर __m256i q2_3 = __lasx_xvsrli_b(q2bits, 6);
 
             __m256i p0 = lasx_madd_h_b(q2_0, q8_0);
             __m256i p1 = lasx_madd_h_b(q2_1, q8_1);
@@ -1088,7 +1088,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc);
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1096,37 +1096,37 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_q3_K_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const uint32_t kmask1 = 0x03030303;
-    const uint32_t kmask2 = 0x0f0f0f0f;
+    अचर uint32_t kmask1 = 0x03030303;
+    अचर uint32_t kmask2 = 0x0f0f0f0f;
 
-    const block_q3_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    अचर block_q3_K * GGML_RESTRICT x = vx;
+    अचर block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined __loongarch_asx
+#यदि defined __loongarch_asx
 
-    const __m128i m32 = __lsx_vreplgr2vr_b(32);
+    अचर __m128i m32 = __lsx_vreplgr2vr_b(32);
 
     __m256 acc = (__m256)__lasx_xvldi(0);
 
     uint32_t aux[3];
 
-    for (int i = 0; i < nb; ++i) {
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
 
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const uint8_t * GGML_RESTRICT q3 = x[i].qs;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        अचर भिन्न d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        अचर uint8_t * GGML_RESTRICT q3 = x[i].qs;
+        अचर int8_t  * GGML_RESTRICT q8 = y[i].qs;
         // Set up scales
-        memcpy(aux, x[i].scales, 12);
+        स_नकल(aux, x[i].scales, 12);
         __m128i scales128 = lsx_set_w(
                 ((aux[1] >> 4) & kmask2) | (((aux[2] >> 6) & kmask1) << 4),
                 ((aux[0] >> 4) & kmask2) | (((aux[2] >> 4) & kmask1) << 4),
@@ -1134,38 +1134,38 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
                 (aux[0] & kmask2) | (((aux[2] >> 0) & kmask1) << 4));
         scales128 = __lsx_vsub_b(scales128, m32);
 
-        const v16i8 shuffle_mask = {0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15};
-        const __m256i scales_shuffled = lasx_ext8_16(__lsx_vshuf_b(scales128, scales128, (__m128i)shuffle_mask));
+        अचर v16i8 shuffle_mask = {0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15};
+        अचर __m256i scales_shuffled = lasx_ext8_16(__lsx_vshuf_b(scales128, scales128, (__m128i)shuffle_mask));
 
         // high bit
-        const __m256i hbits = __lasx_xvld((const __m256i*)x[i].hmask, 0);
+        अचर __m256i hbits = __lasx_xvld((अचर __m256i*)x[i].hmask, 0);
 
         // integer accumulator
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        लागि (पूर्णाङ्क j = 0; j < QK_K/128; ++j) {
             // load low 2 bits
-            const __m256i q3bits = __lasx_xvld((const __m256i*)q3, 0); q3 += 32;
+            अचर __m256i q3bits = __lasx_xvld((अचर __m256i*)q3, 0); q3 += 32;
 
             // prepare low and high bits
-            const __m256i q3l_0 = __lasx_xvandi_b(q3bits, 3);
-            const __m256i q3l_1 = __lasx_xvandi_b(__lasx_xvsrli_b(q3bits, 2), 3);
-            const __m256i q3l_2 = __lasx_xvandi_b(__lasx_xvsrli_b(q3bits, 4), 3);
-            const __m256i q3l_3 = __lasx_xvsrli_b(q3bits, 6);
-            const __m256i q3h_0 = __lasx_xvslli_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 4 * j + 0), 0), 2);
-            const __m256i q3h_1 = __lasx_xvslli_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 4 * j + 1), 0), 2);
-            const __m256i q3h_2 = __lasx_xvslli_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 4 * j + 2), 0), 2);
-            const __m256i q3h_3 = __lasx_xvslli_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 4 * j + 3), 0), 2);
-            const __m256i q3_0 = __lasx_xvor_v(q3h_0, q3l_0);
-            const __m256i q3_1 = __lasx_xvor_v(q3h_1, q3l_1);
-            const __m256i q3_2 = __lasx_xvor_v(q3h_2, q3l_2);
-            const __m256i q3_3 = __lasx_xvor_v(q3h_3, q3l_3);
+            अचर __m256i q3l_0 = __lasx_xvandi_b(q3bits, 3);
+            अचर __m256i q3l_1 = __lasx_xvandi_b(__lasx_xvsrli_b(q3bits, 2), 3);
+            अचर __m256i q3l_2 = __lasx_xvandi_b(__lasx_xvsrli_b(q3bits, 4), 3);
+            अचर __m256i q3l_3 = __lasx_xvsrli_b(q3bits, 6);
+            अचर __m256i q3h_0 = __lasx_xvslli_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 4 * j + 0), 0), 2);
+            अचर __m256i q3h_1 = __lasx_xvslli_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 4 * j + 1), 0), 2);
+            अचर __m256i q3h_2 = __lasx_xvslli_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 4 * j + 2), 0), 2);
+            अचर __m256i q3h_3 = __lasx_xvslli_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 4 * j + 3), 0), 2);
+            अचर __m256i q3_0 = __lasx_xvor_v(q3h_0, q3l_0);
+            अचर __m256i q3_1 = __lasx_xvor_v(q3h_1, q3l_1);
+            अचर __m256i q3_2 = __lasx_xvor_v(q3h_2, q3l_2);
+            अचर __m256i q3_3 = __lasx_xvor_v(q3h_3, q3l_3);
 
             // load Q8 quants
-            const __m256i q8_0 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_1 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_2 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_3 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_0 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_1 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_2 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_3 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
 
             __m256i p16_0 = lasx_madd_h_b(q8_0, q3_0);
             __m256i p16_1 = lasx_madd_h_b(q8_1, q3_1);
@@ -1189,7 +1189,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc);
 
-#else
+#अन्यथा
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(x);
@@ -1199,75 +1199,75 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_q4_K_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q4_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    अचर block_q4_K * GGML_RESTRICT x = vx;
+    अचर block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+    स्थिर अचर uint32_t kmask1 = 0x3f3f3f3f;
+    स्थिर अचर uint32_t kmask2 = 0x0f0f0f0f;
+    स्थिर अचर uint32_t kmask3 = 0x03030303;
 
     uint32_t utmp[4];
 
-#if defined __loongarch_asx
+#यदि defined __loongarch_asx
 
     __m256 acc = (__m256)__lasx_xvldi(0);
     __m128 acc_m = (__m128)__lsx_vldi(0);
 
-   for (int i = 0; i < nb; ++i) {
+   लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
 
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+        अचर भिन्न d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        अचर भिन्न dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
 
-        memcpy(utmp, x[i].scales, 12);
+        स_नकल(utmp, x[i].scales, 12);
         utmp[3] = ((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4);
-        const uint32_t uaux = utmp[1] & kmask1;
+        अचर uint32_t uaux = utmp[1] & kmask1;
         utmp[1] = (utmp[2] & kmask2) | (((utmp[0] >> 6) & kmask3) << 4);
         utmp[2] = uaux;
         utmp[0] &= kmask1;
 
-        const uint8_t * GGML_RESTRICT q4 = x[i].qs;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        अचर uint8_t * GGML_RESTRICT q4 = x[i].qs;
+        अचर int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        const __m128i mins_and_scales128 = lsx_set_w(utmp[3], utmp[2], utmp[1], utmp[0]);
-        const __m128i mins128 = __lsx_vexth_h_b(mins_and_scales128);
-        const __m128i scales128 = __lsx_vsllwil_h_b(mins_and_scales128, 0);
+        अचर __m128i mins_and_scales128 = lsx_set_w(utmp[3], utmp[2], utmp[1], utmp[0]);
+        अचर __m128i mins128 = __lsx_vexth_h_b(mins_and_scales128);
+        अचर __m128i scales128 = __lsx_vsllwil_h_b(mins_and_scales128, 0);
 
-        const __m256i q8sums = __lasx_xvld((const __m256i*)y[i].bsums, 0);
-        const __m128i q8s = lsx_hadd_h(lasx_extracti128(q8sums, 0), lasx_extracti128(q8sums, 1));
-        const __m128i prod = lsx_madd_h(mins128, q8s);
+        अचर __m256i q8sums = __lasx_xvld((अचर __m256i*)y[i].bsums, 0);
+        अचर __m128i q8s = lsx_hadd_h(lasx_extracti128(q8sums, 0), lasx_extracti128(q8sums, 1));
+        अचर __m128i prod = lsx_madd_h(mins128, q8s);
         acc_m = __lsx_vfmadd_s(__lsx_vreplfr2vr_s(dmin), __lsx_vffint_s_w(prod), acc_m);
 
-        const __m256i scales = lasx_insertf128(scales128, scales128);
+        अचर __m256i scales = lasx_insertf128(scales128, scales128);
 
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        लागि (पूर्णाङ्क j = 0; j < QK_K/64; ++j) {
 
-            const __m256i scale_l = lasx_xvrepl128vei_h(scales, 2 * j + 0);
-            const __m256i scale_h = lasx_xvrepl128vei_h(scales, 2 * j + 1);
+            अचर __m256i scale_l = lasx_xvrepl128vei_h(scales, 2 * j + 0);
+            अचर __m256i scale_h = lasx_xvrepl128vei_h(scales, 2 * j + 1);
 
-            const __m256i q4bits = __lasx_xvld((const __m256i*)q4, 0); q4 += 32;
-            const __m256i q4l = __lasx_xvandi_b(q4bits, 0xf);
-            const __m256i q4h = __lasx_xvsrli_b(q4bits, 4);
+            अचर __m256i q4bits = __lasx_xvld((अचर __m256i*)q4, 0); q4 += 32;
+            अचर __m256i q4l = __lasx_xvandi_b(q4bits, 0xf);
+            अचर __m256i q4h = __lasx_xvsrli_b(q4bits, 4);
 
-            const __m256i q8l = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8l = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
             __m256i p16l = lasx_madd_h_b(q4l, q8l);
             p16l = lasx_madd_h(scale_l, p16l);
 
-            const __m256i q8h = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8h = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
             __m256i p16h = lasx_madd_h_b(q4h, q8h);
             p16h = lasx_madd_h(scale_h, p16h);
-            const __m256i sumj = __lasx_xvadd_w(p16l, p16h);
+            अचर __m256i sumj = __lasx_xvadd_w(p16l, p16h);
 
             sumi = __lasx_xvadd_w(sumi, sumj);
         }
@@ -1284,7 +1284,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc) + ((v4f32)acc_m)[0];
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1296,76 +1296,76 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_q5_K_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy,  माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q5_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    अचर block_q5_K * GGML_RESTRICT x = vx;
+    अचर block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-    static const uint32_t kmask1 = 0x3f3f3f3f;
-    static const uint32_t kmask2 = 0x0f0f0f0f;
-    static const uint32_t kmask3 = 0x03030303;
+    स्थिर अचर uint32_t kmask1 = 0x3f3f3f3f;
+    स्थिर अचर uint32_t kmask2 = 0x0f0f0f0f;
+    स्थिर अचर uint32_t kmask3 = 0x03030303;
 
     uint32_t utmp[4];
 
-#if defined __loongarch_asx
+#यदि defined __loongarch_asx
 
     __m256 acc = (__m256)__lasx_xvldi(0);
     __m128 acc_m = (__m128)__lsx_vldi(0);
 
-    for (int i = 0; i < nb; ++i) {
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
 
-        const uint8_t * GGML_RESTRICT q5 = x[i].qs;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        अचर uint8_t * GGML_RESTRICT q5 = x[i].qs;
+        अचर int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
-        const float dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
+        अचर भिन्न d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        अचर भिन्न dmin = -y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin);
 
-        memcpy(utmp, x[i].scales, 12);
+        स_नकल(utmp, x[i].scales, 12);
         utmp[3] = ((utmp[2] >> 4) & kmask2) | (((utmp[1] >> 6) & kmask3) << 4);
-        const uint32_t uaux = utmp[1] & kmask1;
+        अचर uint32_t uaux = utmp[1] & kmask1;
         utmp[1] = (utmp[2] & kmask2) | (((utmp[0] >> 6) & kmask3) << 4);
         utmp[2] = uaux;
         utmp[0] &= kmask1;
 
-        const __m128i mins_and_scales128 = lsx_set_w(utmp[3], utmp[2], utmp[1], utmp[0]);
-        const __m128i mins128 = __lsx_vexth_h_b(mins_and_scales128);
-        const __m128i scales128 = __lsx_vsllwil_h_b(mins_and_scales128, 0);
+        अचर __m128i mins_and_scales128 = lsx_set_w(utmp[3], utmp[2], utmp[1], utmp[0]);
+        अचर __m128i mins128 = __lsx_vexth_h_b(mins_and_scales128);
+        अचर __m128i scales128 = __lsx_vsllwil_h_b(mins_and_scales128, 0);
 
-        const __m256i q8sums = __lasx_xvld((const __m256i*)y[i].bsums, 0);
-        const __m128i q8s = lsx_hadd_h(lasx_extracti128(q8sums, 0), lasx_extracti128(q8sums, 1));
-        const __m128i prod = lsx_madd_h(mins128, q8s);
+        अचर __m256i q8sums = __lasx_xvld((अचर __m256i*)y[i].bsums, 0);
+        अचर __m128i q8s = lsx_hadd_h(lasx_extracti128(q8sums, 0), lasx_extracti128(q8sums, 1));
+        अचर __m128i prod = lsx_madd_h(mins128, q8s);
         acc_m = __lsx_vfmadd_s(__lsx_vreplfr2vr_s(dmin), __lsx_vffint_s_w(prod), acc_m);
 
-        const __m256i scales = lasx_insertf128(scales128, scales128);
+        अचर __m256i scales = lasx_insertf128(scales128, scales128);
 
-        const __m256i hbits = __lasx_xvld((const __m256i*)x[i].qh, 0);
+        अचर __m256i hbits = __lasx_xvld((अचर __m256i*)x[i].qh, 0);
 
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        लागि (पूर्णाङ्क j = 0; j < QK_K/64; ++j) {
 
-            const __m256i scale_0 = lasx_xvrepl128vei_h(scales, 2 * j + 0);
-            const __m256i scale_1 = lasx_xvrepl128vei_h(scales, 2 * j + 1);
+            अचर __m256i scale_0 = lasx_xvrepl128vei_h(scales, 2 * j + 0);
+            अचर __m256i scale_1 = lasx_xvrepl128vei_h(scales, 2 * j + 1);
 
-            const __m256i q5bits = __lasx_xvld((const __m256i*)q5, 0); q5 += 32;
+            अचर __m256i q5bits = __lasx_xvld((अचर __m256i*)q5, 0); q5 += 32;
 
-            const __m256i q5l_0 = __lasx_xvandi_b(q5bits, 0xf);
-            const __m256i q5l_1 = __lasx_xvsrli_b(q5bits, 4);
-            const __m256i q5h_0 = __lasx_xvnori_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 2 * j + 0), 0), 0xef);
-            const __m256i q5h_1 = __lasx_xvnori_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 2 * j + 1), 0), 0xef);
-            const __m256i q5_0  = __lasx_xvor_v(q5l_0, q5h_0);
-            const __m256i q5_1  = __lasx_xvor_v(q5l_1, q5h_1);
+            अचर __m256i q5l_0 = __lasx_xvandi_b(q5bits, 0xf);
+            अचर __m256i q5l_1 = __lasx_xvsrli_b(q5bits, 4);
+            अचर __m256i q5h_0 = __lasx_xvnori_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 2 * j + 0), 0), 0xef);
+            अचर __m256i q5h_1 = __lasx_xvnori_b(__lasx_xvseqi_b(lasx_xvandi_b_bit(hbits, 2 * j + 1), 0), 0xef);
+            अचर __m256i q5_0  = __lasx_xvor_v(q5l_0, q5h_0);
+            अचर __m256i q5_1  = __lasx_xvor_v(q5l_1, q5h_1);
 
-            const __m256i q8_0 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_1 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_0 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_1 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
 
             __m256i p16_0 = lasx_madd_h_b(q5_0, q8_0);
             __m256i p16_1 = lasx_madd_h_b(q5_1, q8_1);
@@ -1387,7 +1387,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc) + ((v4f32)acc_m)[0];
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1399,59 +1399,59 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_q6_K_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_q6_K * GGML_RESTRICT x = vx;
-    const block_q8_K * GGML_RESTRICT y = vy;
+    अचर block_q6_K * GGML_RESTRICT x = vx;
+    अचर block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined __loongarch_asx
+#यदि defined __loongarch_asx
 
-    const __m256i m32s = __lasx_xvreplgr2vr_b(32);
+    अचर __m256i m32s = __lasx_xvreplgr2vr_b(32);
 
     __m256 acc = (__m256)__lasx_xvldi(0);
 
-    for (int i = 0; i < nb; ++i) {
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
 
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        अचर भिन्न d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
 
-        const uint8_t * GGML_RESTRICT q4 = x[i].ql;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        अचर uint8_t * GGML_RESTRICT q4 = x[i].ql;
+        अचर uint8_t * GGML_RESTRICT qh = x[i].qh;
+        अचर int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        const __m128i scales128 = __lsx_vld((const __m128i*)x[i].scales, 0);
-        const v16i8 shuffle_mask = {0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15};
-        const __m256i scales_shuffled = lasx_ext8_16(__lsx_vshuf_b(scales128, scales128, (__m128i)shuffle_mask));
+        अचर __m128i scales128 = __lsx_vld((अचर __m128i*)x[i].scales, 0);
+        अचर v16i8 shuffle_mask = {0, 2, 4, 6, 8, 10, 12, 14, 1, 3, 5, 7, 9, 11, 13, 15};
+        अचर __m256i scales_shuffled = lasx_ext8_16(__lsx_vshuf_b(scales128, scales128, (__m128i)shuffle_mask));
 
         __m256i sumi = __lasx_xvldi(0);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        लागि (पूर्णाङ्क j = 0; j < QK_K/128; ++j) {
 
-            const __m256i q4bits1 = __lasx_xvld((const __m256i*)q4, 0); q4 += 32;
-            const __m256i q4bits2 = __lasx_xvld((const __m256i*)q4, 0); q4 += 32;
-            const __m256i q4bitsH = __lasx_xvld((const __m256i*)qh, 0); qh += 32;
+            अचर __m256i q4bits1 = __lasx_xvld((अचर __m256i*)q4, 0); q4 += 32;
+            अचर __m256i q4bits2 = __lasx_xvld((अचर __m256i*)q4, 0); q4 += 32;
+            अचर __m256i q4bitsH = __lasx_xvld((अचर __m256i*)qh, 0); qh += 32;
 
-            const __m256i q4h_0 = __lasx_xvslli_b(__lasx_xvandi_b(q4bitsH, 3), 4);
-            const __m256i q4h_1 = __lasx_xvslli_b(__lasx_xvandi_b(q4bitsH, 3 << 2), 2);
-            const __m256i q4h_2 = __lasx_xvandi_b(q4bitsH, 3 << 4);
-            const __m256i q4h_3 = __lasx_xvsrli_b(__lasx_xvandi_b(q4bitsH, 3 << 6), 2);
+            अचर __m256i q4h_0 = __lasx_xvslli_b(__lasx_xvandi_b(q4bitsH, 3), 4);
+            अचर __m256i q4h_1 = __lasx_xvslli_b(__lasx_xvandi_b(q4bitsH, 3 << 2), 2);
+            अचर __m256i q4h_2 = __lasx_xvandi_b(q4bitsH, 3 << 4);
+            अचर __m256i q4h_3 = __lasx_xvsrli_b(__lasx_xvandi_b(q4bitsH, 3 << 6), 2);
 
-            const __m256i q4_0 = __lasx_xvor_v(__lasx_xvandi_b(q4bits1, 0xf), q4h_0);
-            const __m256i q4_1 = __lasx_xvor_v(__lasx_xvandi_b(q4bits2, 0xf), q4h_1);
-            const __m256i q4_2 = __lasx_xvor_v(__lasx_xvsrli_b(q4bits1, 4), q4h_2);
-            const __m256i q4_3 = __lasx_xvor_v(__lasx_xvsrli_b(q4bits2, 4), q4h_3);
+            अचर __m256i q4_0 = __lasx_xvor_v(__lasx_xvandi_b(q4bits1, 0xf), q4h_0);
+            अचर __m256i q4_1 = __lasx_xvor_v(__lasx_xvandi_b(q4bits2, 0xf), q4h_1);
+            अचर __m256i q4_2 = __lasx_xvor_v(__lasx_xvsrli_b(q4bits1, 4), q4h_2);
+            अचर __m256i q4_3 = __lasx_xvor_v(__lasx_xvsrli_b(q4bits2, 4), q4h_3);
 
-            const __m256i q8_0 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_1 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_2 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8_3 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_0 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_1 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_2 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8_3 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
 
             __m256i p16_0 = lasx_madd_h_b(__lasx_xvsub_b(q4_0, m32s), q8_0);
             __m256i p16_1 = lasx_madd_h_b(__lasx_xvsub_b(q4_1, m32s), q8_1);
@@ -1472,64 +1472,64 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_8(acc);
 
-#elif defined(__loongarch_sx)
+#अथवायदि defined(__loongarch_sx)
 
-    const __m128i m32s = __lsx_vreplgr2vr_b(32);
+    अचर __m128i m32s = __lsx_vreplgr2vr_b(32);
 
     __m128 acc_0 = (__m128)__lsx_vldi(0);
     __m128 acc_1 = (__m128)__lsx_vldi(0);
 
-    for (int i = 0; i < nb; ++i) {
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
 
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        अचर भिन्न d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
 
-        const uint8_t * GGML_RESTRICT q4 = x[i].ql;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+        अचर uint8_t * GGML_RESTRICT q4 = x[i].ql;
+        अचर uint8_t * GGML_RESTRICT qh = x[i].qh;
+        अचर int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
-        const __m128i scale_i8 = __lsx_vld(x[i].scales, 0);
-        const __m128i scales_lo = __lsx_vsllwil_h_b(scale_i8, 0);
-        const __m128i scales_hi = __lsx_vsllwil_h_b(__lsx_vbsrl_v(scale_i8, 8), 0);
+        अचर __m128i scale_i8 = __lsx_vld(x[i].scales, 0);
+        अचर __m128i scales_lo = __lsx_vsllwil_h_b(scale_i8, 0);
+        अचर __m128i scales_hi = __lsx_vsllwil_h_b(__lsx_vbsrl_v(scale_i8, 8), 0);
 
         __m128i sumi_0 = __lsx_vldi(0);
         __m128i sumi_1 = __lsx_vldi(0);
 
-        for (int j = 0; j < QK_K/128; ++j) {
+        लागि (पूर्णाङ्क j = 0; j < QK_K/128; ++j) {
 
-            const __m128i q4bitsH_0 = __lsx_vld((const __m128i*)qh, 0); qh += 16;
-            const __m128i q4bitsH_1 = __lsx_vld((const __m128i*)qh, 0); qh += 16;
+            अचर __m128i q4bitsH_0 = __lsx_vld((अचर __m128i*)qh, 0); qh += 16;
+            अचर __m128i q4bitsH_1 = __lsx_vld((अचर __m128i*)qh, 0); qh += 16;
 
-            const __m128i q4h_0 = __lsx_vslli_b(__lsx_vandi_b(q4bitsH_0, 3), 4);
-            const __m128i q4h_1 = __lsx_vslli_b(__lsx_vandi_b(q4bitsH_1, 3), 4);
-            const __m128i q4h_2 = __lsx_vslli_b(__lsx_vandi_b(q4bitsH_0, 3 << 2), 2);
-            const __m128i q4h_3 = __lsx_vslli_b(__lsx_vandi_b(q4bitsH_1, 3 << 2), 2);
-            const __m128i q4h_4 = __lsx_vandi_b(q4bitsH_0, 3 << 4);
-            const __m128i q4h_5 = __lsx_vandi_b(q4bitsH_1, 3 << 4);
-            const __m128i q4h_6 = __lsx_vsrli_b(__lsx_vandi_b(q4bitsH_0, 3 << 6), 2);
-            const __m128i q4h_7 = __lsx_vsrli_b(__lsx_vandi_b(q4bitsH_1, 3 << 6), 2);
+            अचर __m128i q4h_0 = __lsx_vslli_b(__lsx_vandi_b(q4bitsH_0, 3), 4);
+            अचर __m128i q4h_1 = __lsx_vslli_b(__lsx_vandi_b(q4bitsH_1, 3), 4);
+            अचर __m128i q4h_2 = __lsx_vslli_b(__lsx_vandi_b(q4bitsH_0, 3 << 2), 2);
+            अचर __m128i q4h_3 = __lsx_vslli_b(__lsx_vandi_b(q4bitsH_1, 3 << 2), 2);
+            अचर __m128i q4h_4 = __lsx_vandi_b(q4bitsH_0, 3 << 4);
+            अचर __m128i q4h_5 = __lsx_vandi_b(q4bitsH_1, 3 << 4);
+            अचर __m128i q4h_6 = __lsx_vsrli_b(__lsx_vandi_b(q4bitsH_0, 3 << 6), 2);
+            अचर __m128i q4h_7 = __lsx_vsrli_b(__lsx_vandi_b(q4bitsH_1, 3 << 6), 2);
 
-            const __m128i q4bits1_0 = __lsx_vld((const __m128i*)q4, 0); q4 += 16;
-            const __m128i q4bits1_1 = __lsx_vld((const __m128i*)q4, 0); q4 += 16;
-            const __m128i q4bits2_0 = __lsx_vld((const __m128i*)q4, 0); q4 += 16;
-            const __m128i q4bits2_1 = __lsx_vld((const __m128i*)q4, 0); q4 += 16;
+            अचर __m128i q4bits1_0 = __lsx_vld((अचर __m128i*)q4, 0); q4 += 16;
+            अचर __m128i q4bits1_1 = __lsx_vld((अचर __m128i*)q4, 0); q4 += 16;
+            अचर __m128i q4bits2_0 = __lsx_vld((अचर __m128i*)q4, 0); q4 += 16;
+            अचर __m128i q4bits2_1 = __lsx_vld((अचर __m128i*)q4, 0); q4 += 16;
 
-            const __m128i q4_0 = __lsx_vor_v(__lsx_vandi_b(q4bits1_0, 0xf), q4h_0);
-            const __m128i q4_1 = __lsx_vor_v(__lsx_vandi_b(q4bits1_1, 0xf), q4h_1);
-            const __m128i q4_2 = __lsx_vor_v(__lsx_vandi_b(q4bits2_0, 0xf), q4h_2);
-            const __m128i q4_3 = __lsx_vor_v(__lsx_vandi_b(q4bits2_1, 0xf), q4h_3);
-            const __m128i q4_4 = __lsx_vor_v(__lsx_vsrli_b(q4bits1_0, 4), q4h_4);
-            const __m128i q4_5 = __lsx_vor_v(__lsx_vsrli_b(q4bits1_1, 4), q4h_5);
-            const __m128i q4_6 = __lsx_vor_v(__lsx_vsrli_b(q4bits2_0, 4), q4h_6);
-            const __m128i q4_7 = __lsx_vor_v(__lsx_vsrli_b(q4bits2_1, 4), q4h_7);
+            अचर __m128i q4_0 = __lsx_vor_v(__lsx_vandi_b(q4bits1_0, 0xf), q4h_0);
+            अचर __m128i q4_1 = __lsx_vor_v(__lsx_vandi_b(q4bits1_1, 0xf), q4h_1);
+            अचर __m128i q4_2 = __lsx_vor_v(__lsx_vandi_b(q4bits2_0, 0xf), q4h_2);
+            अचर __m128i q4_3 = __lsx_vor_v(__lsx_vandi_b(q4bits2_1, 0xf), q4h_3);
+            अचर __m128i q4_4 = __lsx_vor_v(__lsx_vsrli_b(q4bits1_0, 4), q4h_4);
+            अचर __m128i q4_5 = __lsx_vor_v(__lsx_vsrli_b(q4bits1_1, 4), q4h_5);
+            अचर __m128i q4_6 = __lsx_vor_v(__lsx_vsrli_b(q4bits2_0, 4), q4h_6);
+            अचर __m128i q4_7 = __lsx_vor_v(__lsx_vsrli_b(q4bits2_1, 4), q4h_7);
 
-            const __m128i q8_0 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
-            const __m128i q8_1 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
-            const __m128i q8_2 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
-            const __m128i q8_3 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
-            const __m128i q8_4 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
-            const __m128i q8_5 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
-            const __m128i q8_6 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
-            const __m128i q8_7 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q8_0 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q8_1 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q8_2 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q8_3 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q8_4 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q8_5 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q8_6 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q8_7 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
 
             __m128i p16_0 = lsx_maddubs_h(__lsx_vsub_b(q4_0, m32s), q8_0);
             __m128i p16_1 = lsx_maddubs_h(__lsx_vsub_b(q4_1, m32s), q8_1);
@@ -1540,7 +1540,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
             __m128i p16_6 = lsx_maddubs_h(__lsx_vsub_b(q4_6, m32s), q8_6);
             __m128i p16_7 = lsx_maddubs_h(__lsx_vsub_b(q4_7, m32s), q8_7);
 
-            const __m128i sc_vec = j == 0 ? scales_lo : scales_hi;
+            अचर __m128i sc_vec = j == 0 ? scales_lo : scales_hi;
 
             p16_0 = lsx_madd_h(__lsx_vreplvei_h(sc_vec, 0), p16_0);
             p16_1 = lsx_madd_h(__lsx_vreplvei_h(sc_vec, 1), p16_1);
@@ -1565,7 +1565,7 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = hsum_float_4x4(acc_0, acc_1, (__m128)__lsx_vldi(0), (__m128)__lsx_vldi(0));
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1573,8 +1573,8 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-#if defined(__loongarch_asx)
-static const int8_t keven_signs_q2xs[1024] = {
+#यदि defined(__loongarch_asx)
+स्थिर अचर int8_t keven_signs_q2xs[1024] = {
      1,  1,  1,  1,  1,  1,  1,  1, -1,  1,  1,  1,  1,  1,  1, -1,  1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1,  1,  1,
      1,  1, -1,  1,  1,  1,  1, -1, -1,  1, -1,  1,  1,  1,  1,  1,  1, -1, -1,  1,  1,  1,  1,  1, -1, -1, -1,  1,  1,  1,  1, -1,
      1,  1,  1, -1,  1,  1,  1, -1, -1,  1,  1, -1,  1,  1,  1,  1,  1, -1,  1, -1,  1,  1,  1,  1, -1, -1,  1, -1,  1,  1,  1, -1,
@@ -1610,52 +1610,52 @@ static const int8_t keven_signs_q2xs[1024] = {
 };
 #endif
 
-void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_iq2_xxs_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq2_xxs * GGML_RESTRICT x = vx;
-    const block_q8_K    * GGML_RESTRICT y = vy;
+    अचर block_iq2_xxs * GGML_RESTRICT x = vx;
+    अचर block_q8_K    * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
 
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
+    अचर uint64_t * signs64 = (अचर uint64_t *)keven_signs_q2xs;
 
     uint32_t aux32[4];
-    const uint8_t * aux8 = (const uint8_t *)aux32;
+    अचर uint8_t * aux8 = (अचर uint8_t *)aux32;
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
-        const uint16_t * GGML_RESTRICT q2 = x[i].qs;
-        const int8_t   * GGML_RESTRICT q8 = y[i].qs;
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
+        अचर भिन्न d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        अचर uint16_t * GGML_RESTRICT q2 = x[i].qs;
+        अचर int8_t   * GGML_RESTRICT q8 = y[i].qs;
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
-            const __m256i q8_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q8_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            memcpy(aux32, q2, 4*sizeof(uint32_t)); q2 += 8;
+        लागि (पूर्णाङ्क ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+            अचर __m256i q8_1 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q8_2 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            स_नकल(aux32, q2, 4*परिमाण(uint32_t)); q2 += 8;
 
-            const __m256i q2_1 = lasx_set_d(iq2xxs_grid[aux8[ 3]], iq2xxs_grid[aux8[ 2]], iq2xxs_grid[aux8[1]], iq2xxs_grid[aux8[0]]);
-            const __m256i q2_2 = lasx_set_d(iq2xxs_grid[aux8[11]], iq2xxs_grid[aux8[10]], iq2xxs_grid[aux8[9]], iq2xxs_grid[aux8[8]]);
-            const __m256i s2_1 = lasx_set_d(signs64[(aux32[1] >> 21) & 127], signs64[(aux32[1] >> 14) & 127],
+            अचर __m256i q2_1 = lasx_set_d(iq2xxs_grid[aux8[ 3]], iq2xxs_grid[aux8[ 2]], iq2xxs_grid[aux8[1]], iq2xxs_grid[aux8[0]]);
+            अचर __m256i q2_2 = lasx_set_d(iq2xxs_grid[aux8[11]], iq2xxs_grid[aux8[10]], iq2xxs_grid[aux8[9]], iq2xxs_grid[aux8[8]]);
+            अचर __m256i s2_1 = lasx_set_d(signs64[(aux32[1] >> 21) & 127], signs64[(aux32[1] >> 14) & 127],
                                                    signs64[(aux32[1] >>  7) & 127], signs64[(aux32[1] >>  0) & 127]);
-            const __m256i s2_2 = lasx_set_d(signs64[(aux32[3] >> 21) & 127], signs64[(aux32[3] >> 14) & 127],
+            अचर __m256i s2_2 = lasx_set_d(signs64[(aux32[3] >> 21) & 127], signs64[(aux32[3] >> 14) & 127],
                                                    signs64[(aux32[3] >>  7) & 127], signs64[(aux32[3] >>  0) & 127]);
-            const __m256i q8s_1 = __lasx_xvsigncov_b(s2_1, q8_1);
-            const __m256i q8s_2 = __lasx_xvsigncov_b(s2_2, q8_2);
-            const __m256i dot1  = lasx_maddubs_h(q2_1, q8s_1);
-            const __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2);
-            const uint16_t ls1 = aux32[1] >> 28;
-            const uint16_t ls2 = aux32[3] >> 28;
-            const __m256i p1 = lasx_madd_h(dot1, __lasx_xvreplgr2vr_h(2*ls1+1));
-            const __m256i p2 = lasx_madd_h(dot2, __lasx_xvreplgr2vr_h(2*ls2+1));
+            अचर __m256i q8s_1 = __lasx_xvsigncov_b(s2_1, q8_1);
+            अचर __m256i q8s_2 = __lasx_xvsigncov_b(s2_2, q8_2);
+            अचर __m256i dot1  = lasx_maddubs_h(q2_1, q8s_1);
+            अचर __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2);
+            अचर uint16_t ls1 = aux32[1] >> 28;
+            अचर uint16_t ls2 = aux32[3] >> 28;
+            अचर __m256i p1 = lasx_madd_h(dot1, __lasx_xvreplgr2vr_h(2*ls1+1));
+            अचर __m256i p2 = lasx_madd_h(dot2, __lasx_xvreplgr2vr_h(2*ls2+1));
             sumi1 = __lasx_xvadd_w(sumi1, p1);
             sumi2 = __lasx_xvadd_w(sumi2, p2);
         }
@@ -1665,7 +1665,7 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.125f * hsum_float_8(accumf);
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1673,124 +1673,124 @@ void ggml_vec_dot_iq2_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 #endif
 }
 
-void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_iq2_xs_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq2_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    अचर block_iq2_xs * GGML_RESTRICT x = vx;
+    अचर block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
 
-    const __m256i mone = __lasx_xvreplgr2vr_b(1);
-    static const char block_sign_shuffle_mask_1[32] = {
+    अचर __m256i mone = __lasx_xvreplgr2vr_b(1);
+    स्थिर अचर वर्ण block_sign_shuffle_mask_1[32] = {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
         0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
     };
-    static const char block_sign_shuffle_mask_2[32] = {
+    स्थिर अचर वर्ण block_sign_shuffle_mask_2[32] = {
         0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,
         0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e,
     };
-    static const uint8_t bit_selector_mask_bytes[32] = {
+    स्थिर अचर uint8_t bit_selector_mask_bytes[32] = {
         0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
         0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
     };
 
-    const __m256i bit_selector_mask = __lasx_xvld((const __m256i*)bit_selector_mask_bytes, 0);
-    const __m256i block_sign_shuffle_1 = __lasx_xvld((const __m256i*)block_sign_shuffle_mask_1, 0);
-    const __m256i block_sign_shuffle_2 = __lasx_xvld((const __m256i*)block_sign_shuffle_mask_2, 0);
+    अचर __m256i bit_selector_mask = __lasx_xvld((अचर __m256i*)bit_selector_mask_bytes, 0);
+    अचर __m256i block_sign_shuffle_1 = __lasx_xvld((अचर __m256i*)block_sign_shuffle_mask_1, 0);
+    अचर __m256i block_sign_shuffle_2 = __lasx_xvld((अचर __m256i*)block_sign_shuffle_mask_2, 0);
 
-    static const uint8_t k_bit_helper[32] = {
+    स्थिर अचर uint8_t k_bit_helper[32] = {
         0x00, 0x80, 0x80, 0x00, 0x80, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00, 0x80, 0x00, 0x80, 0x80, 0x00,
         0x00, 0x80, 0x80, 0x00, 0x80, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00, 0x80, 0x00, 0x80, 0x80, 0x00,
     };
-    const __m256i bit_helper = __lasx_xvld((const __m256i*)k_bit_helper, 0);
-    const __m256i m511 = __lasx_xvreplgr2vr_h(511);
-    const __m128i m4 = __lsx_vreplgr2vr_b(0xf);
-    const __m128i m1 = __lsx_vreplgr2vr_b(1);
+    अचर __m256i bit_helper = __lasx_xvld((अचर __m256i*)k_bit_helper, 0);
+    अचर __m256i m511 = __lasx_xvreplgr2vr_h(511);
+    अचर __m128i m4 = __lsx_vreplgr2vr_b(0xf);
+    अचर __m128i m1 = __lsx_vreplgr2vr_b(1);
 
     uint64_t aux64;
 
     // somewhat hacky, but gives a significant boost in performance
     __m256i aux_gindex;
-    const uint16_t * gindex = (const uint16_t *)&aux_gindex;
+    अचर uint16_t * gindex = (अचर uint16_t *)&aux_gindex;
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
-        const uint16_t * GGML_RESTRICT q2 = x[i].qs;
-        const int8_t   * GGML_RESTRICT q8 = y[i].qs;
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
+        अचर भिन्न d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        अचर uint16_t * GGML_RESTRICT q2 = x[i].qs;
+        अचर int8_t   * GGML_RESTRICT q8 = y[i].qs;
 
-        memcpy(&aux64, x[i].scales, 8);
+        स_नकल(&aux64, x[i].scales, 8);
         __m128i stmp = __lsx_vreplgr2vr_d(aux64);
         stmp = __lsx_vilvl_b( __lsx_vand_v(__lsx_vsrli_h(stmp, 4), m4), __lsx_vand_v(stmp, m4));
-        const __m128i scales = __lsx_vadd_b(__lsx_vslli_h(stmp, 1), m1);
+        अचर __m128i scales = __lsx_vadd_b(__lsx_vslli_h(stmp, 1), m1);
 
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 4) {
+        लागि (पूर्णाङ्क ib32 = 0; ib32 < QK_K/32; ib32 += 4) {
 
-            const __m256i q2_data = __lasx_xvld((const __m256i*)q2, 0);  q2 += 16;
+            अचर __m256i q2_data = __lasx_xvld((अचर __m256i*)q2, 0);  q2 += 16;
             aux_gindex = __lasx_xvand_v(q2_data, m511);
 
-            const __m256i partial_sign_bits = __lasx_xvsrli_h(q2_data, 9);
-            const __m256i partial_sign_bits_upper = __lasx_xvsrli_h(q2_data, 13);
-            const __m256i partial_sign_bits_for_counting = __lasx_xvxor_v(partial_sign_bits, partial_sign_bits_upper);
+            अचर __m256i partial_sign_bits = __lasx_xvsrli_h(q2_data, 9);
+            अचर __m256i partial_sign_bits_upper = __lasx_xvsrli_h(q2_data, 13);
+            अचर __m256i partial_sign_bits_for_counting = __lasx_xvxor_v(partial_sign_bits, partial_sign_bits_upper);
 
-            const __m256i odd_bits = lasx_shuffle_b(bit_helper, partial_sign_bits_for_counting);
-            const __m256i full_sign_bits = __lasx_xvor_v(partial_sign_bits, odd_bits);
+            अचर __m256i odd_bits = lasx_shuffle_b(bit_helper, partial_sign_bits_for_counting);
+            अचर __m256i full_sign_bits = __lasx_xvor_v(partial_sign_bits, odd_bits);
 
-            const __m256i q8_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q8_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q8_3 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q8_4 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q8_1 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q8_2 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q8_3 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q8_4 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
 
-            const __m256i q2_1 = lasx_set_d(iq2xs_grid[gindex[ 3]], iq2xs_grid[gindex[ 2]],
+            अचर __m256i q2_1 = lasx_set_d(iq2xs_grid[gindex[ 3]], iq2xs_grid[gindex[ 2]],
                                                    iq2xs_grid[gindex[ 1]], iq2xs_grid[gindex[ 0]]);
-            const __m256i q2_2 = lasx_set_d(iq2xs_grid[gindex[ 7]], iq2xs_grid[gindex[ 6]],
+            अचर __m256i q2_2 = lasx_set_d(iq2xs_grid[gindex[ 7]], iq2xs_grid[gindex[ 6]],
                                                    iq2xs_grid[gindex[ 5]], iq2xs_grid[gindex[ 4]]);
-            const __m256i q2_3 = lasx_set_d(iq2xs_grid[gindex[11]], iq2xs_grid[gindex[10]],
+            अचर __m256i q2_3 = lasx_set_d(iq2xs_grid[gindex[11]], iq2xs_grid[gindex[10]],
                                                    iq2xs_grid[gindex[ 9]], iq2xs_grid[gindex[ 8]]);
-            const __m256i q2_4 = lasx_set_d(iq2xs_grid[gindex[15]], iq2xs_grid[gindex[14]],
+            अचर __m256i q2_4 = lasx_set_d(iq2xs_grid[gindex[15]], iq2xs_grid[gindex[14]],
                                                    iq2xs_grid[gindex[13]], iq2xs_grid[gindex[12]]);
 
-            const __m128i full_signs_l = lasx_extracti128(full_sign_bits, 0);
-            const __m128i full_signs_h = lasx_extracti128(full_sign_bits, 1);
-            const __m256i full_signs_1 = lasx_insertf128(full_signs_l, full_signs_l);
-            const __m256i full_signs_2 = lasx_insertf128(full_signs_h, full_signs_h);
+            अचर __m128i full_signs_l = lasx_extracti128(full_sign_bits, 0);
+            अचर __m128i full_signs_h = lasx_extracti128(full_sign_bits, 1);
+            अचर __m256i full_signs_1 = lasx_insertf128(full_signs_l, full_signs_l);
+            अचर __m256i full_signs_2 = lasx_insertf128(full_signs_h, full_signs_h);
 
             __m256i signs;
             signs = lasx_shuffle_b(full_signs_1, block_sign_shuffle_1);
             signs = __lasx_xvseq_b(__lasx_xvand_v(signs, bit_selector_mask), bit_selector_mask);
-            const __m256i q8s_1 = __lasx_xvsigncov_b(__lasx_xvor_v(signs, mone), q8_1);
+            अचर __m256i q8s_1 = __lasx_xvsigncov_b(__lasx_xvor_v(signs, mone), q8_1);
 
             signs = lasx_shuffle_b(full_signs_1, block_sign_shuffle_2);
             signs = __lasx_xvseq_b(__lasx_xvand_v(signs, bit_selector_mask), bit_selector_mask);
-            const __m256i q8s_2 = __lasx_xvsigncov_b(__lasx_xvor_v(signs, mone), q8_2);
+            अचर __m256i q8s_2 = __lasx_xvsigncov_b(__lasx_xvor_v(signs, mone), q8_2);
 
             signs = lasx_shuffle_b(full_signs_2, block_sign_shuffle_1);
             signs = __lasx_xvseq_b(__lasx_xvand_v(signs, bit_selector_mask), bit_selector_mask);
-            const __m256i q8s_3 = __lasx_xvsigncov_b(__lasx_xvor_v(signs, mone), q8_3);
+            अचर __m256i q8s_3 = __lasx_xvsigncov_b(__lasx_xvor_v(signs, mone), q8_3);
 
             signs = lasx_shuffle_b(full_signs_2, block_sign_shuffle_2);
             signs = __lasx_xvseq_b(__lasx_xvand_v(signs, bit_selector_mask), bit_selector_mask);
-            const __m256i q8s_4 = __lasx_xvsigncov_b(__lasx_xvor_v(signs, mone), q8_4);
+            अचर __m256i q8s_4 = __lasx_xvsigncov_b(__lasx_xvor_v(signs, mone), q8_4);
 
-            const __m256i dot1  = lasx_maddubs_h(q2_1, q8s_1);
-            const __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2);
-            const __m256i dot3  = lasx_maddubs_h(q2_3, q8s_3);
-            const __m256i dot4  = lasx_maddubs_h(q2_4, q8s_4);
+            अचर __m256i dot1  = lasx_maddubs_h(q2_1, q8s_1);
+            अचर __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2);
+            अचर __m256i dot3  = lasx_maddubs_h(q2_3, q8s_3);
+            अचर __m256i dot4  = lasx_maddubs_h(q2_4, q8s_4);
 
-            const __m256i sc1 = lasx_ext8_16(lsx_shuffle_b(scales, get_scale_shuffle(ib32+0)));
-            const __m256i sc2 = lasx_ext8_16(lsx_shuffle_b(scales, get_scale_shuffle(ib32+1)));
-            const __m256i sc3 = lasx_ext8_16(lsx_shuffle_b(scales, get_scale_shuffle(ib32+2)));
-            const __m256i sc4 = lasx_ext8_16(lsx_shuffle_b(scales, get_scale_shuffle(ib32+3)));
+            अचर __m256i sc1 = lasx_ext8_16(lsx_shuffle_b(scales, get_scale_shuffle(ib32+0)));
+            अचर __m256i sc2 = lasx_ext8_16(lsx_shuffle_b(scales, get_scale_shuffle(ib32+1)));
+            अचर __m256i sc3 = lasx_ext8_16(lsx_shuffle_b(scales, get_scale_shuffle(ib32+2)));
+            अचर __m256i sc4 = lasx_ext8_16(lsx_shuffle_b(scales, get_scale_shuffle(ib32+3)));
 
             sumi1 = __lasx_xvadd_w(sumi1, lasx_madd_h(dot1, sc1));
             sumi2 = __lasx_xvadd_w(sumi2, lasx_madd_h(dot2, sc2));
@@ -1804,7 +1804,7 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = 0.125f * hsum_float_8(accumf);
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1812,62 +1812,62 @@ void ggml_vec_dot_iq2_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 #endif
 }
 
-void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_iq2_s_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq2_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    अचर block_iq2_s * GGML_RESTRICT x = vx;
+    अचर block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
 
-   static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+   स्थिर अचर uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                        0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
    };
 
-    static const uint8_t k_mask2[32] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+    स्थिर अचर uint8_t k_mask2[32] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
                                         0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
     };
 
 
-    const __m128i m4 = __lsx_vreplgr2vr_b(0xf);
-    const __m128i m1 = __lsx_vreplgr2vr_b(1);
+    अचर __m128i m4 = __lsx_vreplgr2vr_b(0xf);
+    अचर __m128i m1 = __lsx_vreplgr2vr_b(1);
 
-    const __m256i mask1 = __lasx_xvld((const __m256i*)k_mask1, 0);
-    const __m256i mask2 = __lasx_xvld((const __m256i*)k_mask2, 0);
+    अचर __m256i mask1 = __lasx_xvld((अचर __m256i*)k_mask1, 0);
+    अचर __m256i mask2 = __lasx_xvld((अचर __m256i*)k_mask2, 0);
     uint64_t aux64;
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
-        const uint8_t * GGML_RESTRICT qs = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const uint16_t * GGML_RESTRICT signs = (const uint16_t *)(x[i].qs + QK_K/8);
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
+        अचर भिन्न d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        अचर uint8_t * GGML_RESTRICT qs = x[i].qs;
+        अचर uint8_t * GGML_RESTRICT qh = x[i].qh;
+        अचर uint16_t * GGML_RESTRICT signs = (अचर uint16_t *)(x[i].qs + QK_K/8);
+        अचर int8_t  * GGML_RESTRICT q8 = y[i].qs;
 
         __m128i tmp1;
-        memcpy(&aux64, x[i].scales, 8);
+        स_नकल(&aux64, x[i].scales, 8);
         tmp1 = __lsx_vinsgr2vr_d(tmp1, aux64, 0);
         tmp1 = __lsx_vinsgr2vr_d(tmp1, aux64 >> 4, 1);
-        const __m128i scales8 = __lsx_vadd_b(__lsx_vslli_h(__lsx_vand_v(tmp1, m4), 1), m1);
-        const __m256i scales16 = lasx_ext8_16(scales8); // 0 2 4 6 8 10 12 14 1 3 5 7 9 11 13 15
+        अचर __m128i scales8 = __lsx_vadd_b(__lsx_vslli_h(__lsx_vand_v(tmp1, m4), 1), m1);
+        अचर __m256i scales16 = lasx_ext8_16(scales8); // 0 2 4 6 8 10 12 14 1 3 5 7 9 11 13 15
 
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
-            const __m256i q8_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q8_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q2_1 = lasx_set_d(iq2s_grid[qs[3] | ((qh[ib32+0] << 2) & 0x300)],
+        लागि (पूर्णाङ्क ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+            अचर __m256i q8_1 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q8_2 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q2_1 = lasx_set_d(iq2s_grid[qs[3] | ((qh[ib32+0] << 2) & 0x300)],
                                                    iq2s_grid[qs[2] | ((qh[ib32+0] << 4) & 0x300)],
                                                    iq2s_grid[qs[1] | ((qh[ib32+0] << 6) & 0x300)],
                                                    iq2s_grid[qs[0] | ((qh[ib32+0] << 8) & 0x300)]);
-            const __m256i q2_2 = lasx_set_d(iq2s_grid[qs[7] | ((qh[ib32+1] << 2) & 0x300)],
+            अचर __m256i q2_2 = lasx_set_d(iq2s_grid[qs[7] | ((qh[ib32+1] << 2) & 0x300)],
                                                    iq2s_grid[qs[6] | ((qh[ib32+1] << 4) & 0x300)],
                                                    iq2s_grid[qs[5] | ((qh[ib32+1] << 6) & 0x300)],
                                                    iq2s_grid[qs[4] | ((qh[ib32+1] << 8) & 0x300)]);
@@ -1875,21 +1875,21 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
             __m256i aux256 = __lasx_xvreplgr2vr_w(signs[0] | ((uint32_t) signs[1] << 16));
             aux256 = __lasx_xvand_v(lasx_shuffle_b(aux256,mask1), mask2);
-            const __m256i s2_1 = __lasx_xvseq_b(aux256, mask2);
-            const __m256i q8s_1 = __lasx_xvsub_b(__lasx_xvxor_v(s2_1, q8_1), s2_1);
+            अचर __m256i s2_1 = __lasx_xvseq_b(aux256, mask2);
+            अचर __m256i q8s_1 = __lasx_xvsub_b(__lasx_xvxor_v(s2_1, q8_1), s2_1);
 
             aux256 = __lasx_xvreplgr2vr_w(signs[2] | ((uint32_t) signs[3] << 16));
             aux256 = __lasx_xvand_v(lasx_shuffle_b(aux256,mask1), mask2);
-            const __m256i s2_2 = __lasx_xvseq_b(aux256, mask2);
-            const __m256i q8s_2 = __lasx_xvsub_b(__lasx_xvxor_v(s2_2, q8_2), s2_2);
+            अचर __m256i s2_2 = __lasx_xvseq_b(aux256, mask2);
+            अचर __m256i q8s_2 = __lasx_xvsub_b(__lasx_xvxor_v(s2_2, q8_2), s2_2);
 
             signs += 4;
 
-            const __m256i dot1  = lasx_maddubs_h(q2_1, q8s_1); // blocks 2*ib32+0, 2*ib32+1
-            const __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2); // blocks 2*ib32+2, 2*ib32+3
+            अचर __m256i dot1  = lasx_maddubs_h(q2_1, q8s_1); // blocks 2*ib32+0, 2*ib32+1
+            अचर __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2); // blocks 2*ib32+2, 2*ib32+3
 
-            const __m256i p1 = lasx_madd_h(dot1, lasx_shuffle_b(scales16, get_scale_shuffle_k4(ib32+0)));
-            const __m256i p2 = lasx_madd_h(dot2, lasx_shuffle_b(scales16, get_scale_shuffle_k4(ib32+1)));
+            अचर __m256i p1 = lasx_madd_h(dot1, lasx_shuffle_b(scales16, get_scale_shuffle_k4(ib32+0)));
+            अचर __m256i p2 = lasx_madd_h(dot2, lasx_shuffle_b(scales16, get_scale_shuffle_k4(ib32+1)));
             sumi1 = __lasx_xvadd_w(sumi1, p1);
             sumi2 = __lasx_xvadd_w(sumi2, p2);
         }
@@ -1899,7 +1899,7 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = 0.125f * hsum_float_8(accumf);
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1907,57 +1907,57 @@ void ggml_vec_dot_iq2_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_iq3_xxs_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq3_xxs * GGML_RESTRICT x = vx;
-    const block_q8_K    * GGML_RESTRICT y = vy;
+    अचर block_iq3_xxs * GGML_RESTRICT x = vx;
+    अचर block_q8_K    * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
 
-    const uint64_t * signs64 = (const uint64_t *)keven_signs_q2xs;
+    अचर uint64_t * signs64 = (अचर uint64_t *)keven_signs_q2xs;
 
     uint32_t aux32[2];
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
-        const uint8_t * GGML_RESTRICT q3 = x[i].qs;
-        const uint8_t * GGML_RESTRICT gas = x[i].qs + QK_K/4;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
+        अचर भिन्न d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        अचर uint8_t * GGML_RESTRICT q3 = x[i].qs;
+        अचर uint8_t * GGML_RESTRICT gas = x[i].qs + QK_K/4;
+        अचर int8_t  * GGML_RESTRICT q8 = y[i].qs;
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
-            const __m256i q8_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q8_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q2_1 = lasx_set_w(iq3xxs_grid[q3[7]], iq3xxs_grid[q3[6]], iq3xxs_grid[q3[5]], iq3xxs_grid[q3[4]],
+        लागि (पूर्णाङ्क ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+            अचर __m256i q8_1 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q8_2 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q2_1 = lasx_set_w(iq3xxs_grid[q3[7]], iq3xxs_grid[q3[6]], iq3xxs_grid[q3[5]], iq3xxs_grid[q3[4]],
                                                 iq3xxs_grid[q3[3]], iq3xxs_grid[q3[2]], iq3xxs_grid[q3[1]], iq3xxs_grid[q3[0]]);
             q3 += 8;
-            const __m256i q2_2 = lasx_set_w(iq3xxs_grid[q3[7]], iq3xxs_grid[q3[6]], iq3xxs_grid[q3[5]], iq3xxs_grid[q3[4]],
+            अचर __m256i q2_2 = lasx_set_w(iq3xxs_grid[q3[7]], iq3xxs_grid[q3[6]], iq3xxs_grid[q3[5]], iq3xxs_grid[q3[4]],
                                                 iq3xxs_grid[q3[3]], iq3xxs_grid[q3[2]], iq3xxs_grid[q3[1]], iq3xxs_grid[q3[0]]);
             q3 += 8;
-            memcpy(aux32, gas, 8); gas += 8;
+            स_नकल(aux32, gas, 8); gas += 8;
 
-            const __m256i s2_1 = lasx_set_d(signs64[(aux32[0] >> 21) & 127], signs64[(aux32[0] >> 14) & 127],
+            अचर __m256i s2_1 = lasx_set_d(signs64[(aux32[0] >> 21) & 127], signs64[(aux32[0] >> 14) & 127],
                                                    signs64[(aux32[0] >>  7) & 127], signs64[(aux32[0] >>  0) & 127]);
-            const __m256i s2_2 = lasx_set_d(signs64[(aux32[1] >> 21) & 127], signs64[(aux32[1] >> 14) & 127],
+            अचर __m256i s2_2 = lasx_set_d(signs64[(aux32[1] >> 21) & 127], signs64[(aux32[1] >> 14) & 127],
                                                    signs64[(aux32[1] >>  7) & 127], signs64[(aux32[1] >>  0) & 127]);
-            const __m256i q8s_1 = __lasx_xvsigncov_b(s2_1, q8_1);
-            const __m256i q8s_2 = __lasx_xvsigncov_b(s2_2, q8_2);
-            const __m256i dot1  = lasx_maddubs_h(q2_1, q8s_1);
-            const __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2);
-            const uint16_t ls1 = aux32[0] >> 28;
-            const uint16_t ls2 = aux32[1] >> 28;
+            अचर __m256i q8s_1 = __lasx_xvsigncov_b(s2_1, q8_1);
+            अचर __m256i q8s_2 = __lasx_xvsigncov_b(s2_2, q8_2);
+            अचर __m256i dot1  = lasx_maddubs_h(q2_1, q8s_1);
+            अचर __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2);
+            अचर uint16_t ls1 = aux32[0] >> 28;
+            अचर uint16_t ls2 = aux32[1] >> 28;
 
-            const __m256i p1 = lasx_madd_h(dot1, __lasx_xvreplgr2vr_h(2*ls1+1));
-            const __m256i p2 = lasx_madd_h(dot2, __lasx_xvreplgr2vr_h(2*ls2+1));
+            अचर __m256i p1 = lasx_madd_h(dot1, __lasx_xvreplgr2vr_h(2*ls1+1));
+            अचर __m256i p2 = lasx_madd_h(dot2, __lasx_xvreplgr2vr_h(2*ls2+1));
             sumi1 = __lasx_xvadd_w(sumi1, p1);
             sumi2 = __lasx_xvadd_w(sumi2, p2);
         }
@@ -1967,7 +1967,7 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 
     *s = 0.25f * hsum_float_8(accumf);
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1975,36 +1975,36 @@ void ggml_vec_dot_iq3_xxs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const 
 #endif
 }
 
-void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_iq3_s_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq3_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    अचर block_iq3_s * GGML_RESTRICT x = vx;
+    अचर block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
 
-   static const uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+   स्थिर अचर uint8_t k_mask1[32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                                        0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
    };
 
-    static const uint8_t k_mask2[32] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+    स्थिर अचर uint8_t k_mask2[32] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
                                         0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
     };
 
-    const __m256i mask1 = __lasx_xvld((const __m256i*)k_mask1, 0);
-    const __m256i mask2 = __lasx_xvld((const __m256i*)k_mask2, 0);
+    अचर __m256i mask1 = __lasx_xvld((अचर __m256i*)k_mask1, 0);
+    अचर __m256i mask2 = __lasx_xvld((अचर __m256i*)k_mask2, 0);
 
     __m256i idx_shift = lasx_set_w(1, 2, 3, 4, 5, 6, 7, 8);
-    const __m256i idx_mask  = __lasx_xvreplgr2vr_w(256);
+    अचर __m256i idx_mask  = __lasx_xvreplgr2vr_w(256);
 
-    typedef union {
+    प्रकारनिर्देश सङ्घ {
         __m256i  vec[2];
         uint32_t index[16];
     } index_t;
@@ -2012,18 +2012,18 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
     index_t idx;
 
     __m256 accumf = (__m256)__lasx_xvldi(0);
-    for (int i = 0; i < nb; ++i) {
-        const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
-        const uint8_t * GGML_RESTRICT qs = x[i].qs;
-        const uint8_t * GGML_RESTRICT qh = x[i].qh;
-        const uint16_t * GGML_RESTRICT signs = (const uint16_t *)x[i].signs;
-        const int8_t  * GGML_RESTRICT q8 = y[i].qs;
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
+        अचर भिन्न d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
+        अचर uint8_t * GGML_RESTRICT qs = x[i].qs;
+        अचर uint8_t * GGML_RESTRICT qh = x[i].qh;
+        अचर uint16_t * GGML_RESTRICT signs = (अचर uint16_t *)x[i].signs;
+        अचर int8_t  * GGML_RESTRICT q8 = y[i].qs;
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
-            const __m256i q8_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q8_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i idx_l = lasx_extu8_16(__lsx_vld(qs, 0)); qs += 16;
+        लागि (पूर्णाङ्क ib32 = 0; ib32 < QK_K/32; ib32 += 2) {
+            अचर __m256i q8_1 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q8_2 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i idx_l = lasx_extu8_16(__lsx_vld(qs, 0)); qs += 16;
             idx.vec[0] = __lasx_xvreplgr2vr_w(qh[ib32+0]);
             idx.vec[1] = __lasx_xvreplgr2vr_w(qh[ib32+1]);
             idx.vec[0] = __lasx_xvand_v(__lasx_xvsll_w(idx.vec[0], idx_shift), idx_mask);
@@ -2034,33 +2034,33 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             // At leat on my CPU (Ryzen 7950X), using _mm256_i32gather_epi32 is slower than _mm256_set_epi32. Strange.
             //const __m256i q2_1 = _mm256_i32gather_epi32((const int *)iq3s_grid, idx.vec[0], 4);
             //const __m256i q2_2 = _mm256_i32gather_epi32((const int *)iq3s_grid, idx.vec[1], 4);
-            const __m256i q2_1 = lasx_set_w(
+            अचर __m256i q2_1 = lasx_set_w(
                     iq3s_grid[idx.index[7]], iq3s_grid[idx.index[6]], iq3s_grid[idx.index[5]], iq3s_grid[idx.index[4]],
                     iq3s_grid[idx.index[3]], iq3s_grid[idx.index[2]], iq3s_grid[idx.index[1]], iq3s_grid[idx.index[0]]
             );
-            const __m256i q2_2 = lasx_set_w(
+            अचर __m256i q2_2 = lasx_set_w(
                     iq3s_grid[idx.index[15]], iq3s_grid[idx.index[14]], iq3s_grid[idx.index[13]], iq3s_grid[idx.index[12]],
                     iq3s_grid[idx.index[11]], iq3s_grid[idx.index[10]], iq3s_grid[idx.index[ 9]], iq3s_grid[idx.index[ 8]]
             );
 
             __m256i aux256 = __lasx_xvreplgr2vr_w(signs[0] | (signs[1] << 16));
             aux256 = __lasx_xvand_v(lasx_shuffle_b(aux256,mask1), mask2);
-            const __m256i s2_1 = __lasx_xvseq_b(aux256, mask2);
-            const __m256i q8s_1 = __lasx_xvsub_b(__lasx_xvxor_v(s2_1, q8_1), s2_1);
+            अचर __m256i s2_1 = __lasx_xvseq_b(aux256, mask2);
+            अचर __m256i q8s_1 = __lasx_xvsub_b(__lasx_xvxor_v(s2_1, q8_1), s2_1);
 
             aux256 = __lasx_xvreplgr2vr_w(signs[2] | (signs[3] << 16));
             aux256 = __lasx_xvand_v(lasx_shuffle_b(aux256,mask1), mask2);
-            const __m256i s2_2 = __lasx_xvseq_b(aux256, mask2);
-            const __m256i q8s_2 = __lasx_xvsub_b(__lasx_xvxor_v(s2_2, q8_2), s2_2);
+            अचर __m256i s2_2 = __lasx_xvseq_b(aux256, mask2);
+            अचर __m256i q8s_2 = __lasx_xvsub_b(__lasx_xvxor_v(s2_2, q8_2), s2_2);
 
             signs += 4;
 
-            const __m256i dot1 = lasx_maddubs_h(q2_1, q8s_1);
-            const __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2);
-            const uint16_t ls1 = x[i].scales[ib32/2] & 0xf;
-            const uint16_t ls2 = x[i].scales[ib32/2] >>  4;
-            const __m256i p1 = lasx_madd_h(dot1, __lasx_xvreplgr2vr_h(2*ls1+1));
-            const __m256i p2 = lasx_madd_h(dot2, __lasx_xvreplgr2vr_h(2*ls2+1));
+            अचर __m256i dot1 = lasx_maddubs_h(q2_1, q8s_1);
+            अचर __m256i dot2  = lasx_maddubs_h(q2_2, q8s_2);
+            अचर uint16_t ls1 = x[i].scales[ib32/2] & 0xf;
+            अचर uint16_t ls2 = x[i].scales[ib32/2] >>  4;
+            अचर __m256i p1 = lasx_madd_h(dot1, __lasx_xvreplgr2vr_h(2*ls1+1));
+            अचर __m256i p2 = lasx_madd_h(dot2, __lasx_xvreplgr2vr_h(2*ls2+1));
             sumi1 = __lasx_xvadd_w(sumi1, p1);
             sumi2 = __lasx_xvadd_w(sumi2, p2);
         }
@@ -2070,7 +2070,7 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 
     *s = hsum_float_8(accumf);
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -2078,40 +2078,40 @@ void ggml_vec_dot_iq3_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-#if defined(__loongarch_asx)
-static inline __m256i mul_add_epi8(const __m256i x, const __m256i y) {
-    const __m256i a = __lasx_xvmulwev_h_b(x, y);
-    const __m256i b = __lasx_xvmulwod_h_b(x, y);
-    return __lasx_xvadd_h(a, b);
+#यदि defined(__loongarch_asx)
+स्थिर अन्तःस्थ __m256i mul_add_epi8(अचर __m256i x, अचर __m256i y) {
+    अचर __m256i a = __lasx_xvmulwev_h_b(x, y);
+    अचर __m256i b = __lasx_xvmulwod_h_b(x, y);
+    फर्काऊ __lasx_xvadd_h(a, b);
 }
 #endif
 
-void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(n % QK_K == 0);
-    assert(nrc == 1);
+शून्य ggml_vec_dot_iq1_s_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(n % QK_K == 0);
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
 
-    const block_iq1_s * GGML_RESTRICT x = vx;
-    const block_q8_K  * GGML_RESTRICT y = vy;
+    अचर block_iq1_s * GGML_RESTRICT x = vx;
+    अचर block_q8_K  * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
 
     __m256 accum = (__m256)__lasx_xvldi(0);
-    float accum1 = 0;
-    for (int i = 0; i < nb; ++i) {
+    भिन्न accum1 = 0;
+    लागि (पूर्णाङ्क i = 0; i < nb; ++i) {
 
-        const int8_t   * q8 = y[i].qs;
-        const uint8_t  * qs = x[i].qs;
-        const uint16_t * qh = x[i].qh;
+        अचर int8_t   * q8 = y[i].qs;
+        अचर uint8_t  * qs = x[i].qs;
+        अचर uint16_t * qh = x[i].qh;
 
         __m256i sumi = __lasx_xvldi(0);
-        int sumi1 = 0;
-        for (int ib = 0; ib < QK_K/32; ib += 2) {
+        पूर्णाङ्क sumi1 = 0;
+        लागि (पूर्णाङ्क ib = 0; ib < QK_K/32; ib += 2) {
             __m256i q1b_1 = __lasx_xvinsgr2vr_d(q1b_1, iq1s_grid[qs[0] | ((qh[ib+0] << 8) & 0x700)], 0);
             q1b_1 = __lasx_xvinsgr2vr_d(q1b_1, iq1s_grid[qs[1] | ((qh[ib+0] << 5) & 0x700)], 1);
             q1b_1 = __lasx_xvinsgr2vr_d(q1b_1, iq1s_grid[qs[2] | ((qh[ib+0] << 2) & 0x700)], 2);
@@ -2123,38 +2123,38 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
             q1b_2 = __lasx_xvinsgr2vr_d(q1b_2, iq1s_grid[qs[7] | ((qh[ib+1] >> 1) & 0x700)], 3);
 
             qs += 8;
-            const __m256i q8b_1 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
-            const __m256i q8b_2 = __lasx_xvld((const __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8b_1 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
+            अचर __m256i q8b_2 = __lasx_xvld((अचर __m256i*)q8, 0); q8 += 32;
 
-            const __m256i dot1 = mul_add_epi8(q1b_1, q8b_1);
-            const __m256i dot2 = mul_add_epi8(q1b_2, q8b_2);
-            const int16_t ls1 = 2*((qh[ib+0] >> 12) & 7) + 1;
-            const int16_t ls2 = 2*((qh[ib+1] >> 12) & 7) + 1;
+            अचर __m256i dot1 = mul_add_epi8(q1b_1, q8b_1);
+            अचर __m256i dot2 = mul_add_epi8(q1b_2, q8b_2);
+            अचर int16_t ls1 = 2*((qh[ib+0] >> 12) & 7) + 1;
+            अचर int16_t ls2 = 2*((qh[ib+1] >> 12) & 7) + 1;
 
             __m256i tmp1, tmp5, tmp6;
             tmp1 = __lasx_xvreplgr2vr_h(ls1);
             tmp5 = __lasx_xvmulwev_w_h(dot1, tmp1);
             tmp6 = __lasx_xvmulwod_w_h(dot1, tmp1);
-            const __m256i p1 = __lasx_xvadd_w(tmp5, tmp6);
+            अचर __m256i p1 = __lasx_xvadd_w(tmp5, tmp6);
 
             tmp1 = __lasx_xvreplgr2vr_h(ls2);
             tmp5 = __lasx_xvmulwev_w_h(dot2, tmp1);
             tmp6 = __lasx_xvmulwod_w_h(dot2, tmp1);
-            const __m256i p2 = __lasx_xvadd_w(tmp5, tmp6);
+            अचर __m256i p2 = __lasx_xvadd_w(tmp5, tmp6);
 
             sumi = __lasx_xvadd_w(sumi, __lasx_xvadd_w(p1, p2));
             sumi1 += (y[i].bsums[2*ib+0] + y[i].bsums[2*ib+1]) * (qh[ib+0] & 0x8000 ? -1 : 1) * ls1
                    + (y[i].bsums[2*ib+2] + y[i].bsums[2*ib+3]) * (qh[ib+1] & 0x8000 ? -1 : 1) * ls2;
         }
 
-        const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
+        अचर भिन्न d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
         accum = __lasx_xvfmadd_s(__lasx_xvreplfr2vr_s(d), __lasx_xvffint_s_w(sumi), accum);
         accum1 += d * sumi1;
     }
 
     *s = hsum_float_8(accum) + IQ1S_DELTA * accum1;
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -2162,44 +2162,44 @@ void ggml_vec_dot_iq1_s_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const vo
 #endif
 }
 
-void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+शून्य ggml_vec_dot_iq4_nl_q8_0(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK4_NL == 0);
+    प्रतिज्ञा(n % QK4_NL == 0);
     static_assert(QK4_NL == QK8_0, "QK4_NL and QK8_0 must be the same");
 
-    const block_iq4_nl * GGML_RESTRICT x = vx;
-    const block_q8_0   * GGML_RESTRICT y = vy;
+    अचर block_iq4_nl * GGML_RESTRICT x = vx;
+    अचर block_q8_0   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK4_NL;
+    अचर पूर्णाङ्क nb = n / QK4_NL;
 
-    int ib = 0;
-    float sumf = 0;
+    पूर्णाङ्क ib = 0;
+    भिन्न sumf = 0;
 
-#if defined (__loongarch_asx)
+#यदि defined (__loongarch_asx)
 
-    const __m128i values128 = __lsx_vld((const __m128i*)kvalues_iq4nl, 0);
-    const __m128i m4b  = __lsx_vreplgr2vr_b(0x0f);
-    const __m256i mone = __lasx_xvreplgr2vr_h(1);
+    अचर __m128i values128 = __lsx_vld((अचर __m128i*)kvalues_iq4nl, 0);
+    अचर __m128i m4b  = __lsx_vreplgr2vr_b(0x0f);
+    अचर __m256i mone = __lasx_xvreplgr2vr_h(1);
 
     __m256 accum1 = (__m256)__lasx_xvldi(0);
     __m256 accum2 = (__m256)__lasx_xvldi(0);
-    for (; ib + 1 < nb; ib += 2) {
-        const __m128i q4bits_1 = __lsx_vld((const __m128i*)x[ib + 0].qs, 0);
-        const __m128i q4bits_2 = __lsx_vld((const __m128i*)x[ib + 1].qs, 0);
-        const __m256i q8b_1 = __lasx_xvld((const __m256i *)y[ib + 0].qs, 0);
-        const __m256i q8b_2 = __lasx_xvld((const __m256i *)y[ib + 1].qs, 0);
-        const __m256i q4b_1 = lasx_insertf128(lsx_shuffle_b(values128, __lsx_vand_v(__lsx_vsrli_h(q4bits_1, 4), m4b)),
+    लागि (; ib + 1 < nb; ib += 2) {
+        अचर __m128i q4bits_1 = __lsx_vld((अचर __m128i*)x[ib + 0].qs, 0);
+        अचर __m128i q4bits_2 = __lsx_vld((अचर __m128i*)x[ib + 1].qs, 0);
+        अचर __m256i q8b_1 = __lasx_xvld((अचर __m256i *)y[ib + 0].qs, 0);
+        अचर __m256i q8b_2 = __lasx_xvld((अचर __m256i *)y[ib + 1].qs, 0);
+        अचर __m256i q4b_1 = lasx_insertf128(lsx_shuffle_b(values128, __lsx_vand_v(__lsx_vsrli_h(q4bits_1, 4), m4b)),
                                               lsx_shuffle_b(values128, __lsx_vand_v(q4bits_1, m4b)));
-        const __m256i q4b_2 = lasx_insertf128(lsx_shuffle_b(values128, __lsx_vand_v(__lsx_vsrli_h(q4bits_2, 4), m4b)),
+        अचर __m256i q4b_2 = lasx_insertf128(lsx_shuffle_b(values128, __lsx_vand_v(__lsx_vsrli_h(q4bits_2, 4), m4b)),
                                               lsx_shuffle_b(values128, __lsx_vand_v(q4bits_2, m4b)));
-        const __m256i p16_1 = mul_add_epi8(q4b_1, q8b_1);
-        const __m256i p16_2 = mul_add_epi8(q4b_2, q8b_2);
-        const __m256i p_1 = lasx_madd_h(p16_1, mone);
-        const __m256i p_2 = lasx_madd_h(p16_2, mone);
+        अचर __m256i p16_1 = mul_add_epi8(q4b_1, q8b_1);
+        अचर __m256i p16_2 = mul_add_epi8(q4b_2, q8b_2);
+        अचर __m256i p_1 = lasx_madd_h(p16_1, mone);
+        अचर __m256i p_2 = lasx_madd_h(p16_2, mone);
         accum1 = __lasx_xvfmadd_s(__lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(y[ib + 0].d)*GGML_CPU_FP16_TO_FP32(x[ib + 0].d)),
                 __lasx_xvffint_s_w(p_1), accum1);
         accum2 = __lasx_xvfmadd_s(__lasx_xvreplfr2vr_s(GGML_CPU_FP16_TO_FP32(y[ib + 1].d)*GGML_CPU_FP16_TO_FP32(x[ib + 1].d)),
@@ -2209,10 +2209,10 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     sumf = hsum_float_8(__lasx_xvfadd_s(accum1, accum2));
 
 #endif
-    for (; ib < nb; ++ib) {
-        const float d = GGML_CPU_FP16_TO_FP32(y[ib].d)*GGML_CPU_FP16_TO_FP32(x[ib].d);
-        int sumi1 = 0, sumi2 = 0;
-        for (int j = 0; j < QK4_NL/2; ++j) {
+    लागि (; ib < nb; ++ib) {
+        अचर भिन्न d = GGML_CPU_FP16_TO_FP32(y[ib].d)*GGML_CPU_FP16_TO_FP32(x[ib].d);
+        पूर्णाङ्क sumi1 = 0, sumi2 = 0;
+        लागि (पूर्णाङ्क j = 0; j < QK4_NL/2; ++j) {
             sumi1 += y[ib].qs[j+       0] * kvalues_iq4nl[x[ib].qs[j] & 0xf];
             sumi2 += y[ib].qs[j+QK4_NL/2] * kvalues_iq4nl[x[ib].qs[j] >>  4];
         }
@@ -2221,47 +2221,47 @@ void ggml_vec_dot_iq4_nl_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const v
     *s = sumf;
 }
 
-void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    assert(nrc == 1);
+शून्य ggml_vec_dot_iq4_xs_q8_K(पूर्णाङ्क n, भिन्न * GGML_RESTRICT s, माप_प्रकार bs, अचर शून्य * GGML_RESTRICT vx, माप_प्रकार bx, अचर शून्य * GGML_RESTRICT vy, माप_प्रकार by, पूर्णाङ्क nrc) {
+    प्रतिज्ञा(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
     UNUSED(by);
     UNUSED(bs);
-    assert(n % QK_K == 0);
+    प्रतिज्ञा(n % QK_K == 0);
 
-    const block_iq4_xs * GGML_RESTRICT x = vx;
-    const block_q8_K   * GGML_RESTRICT y = vy;
+    अचर block_iq4_xs * GGML_RESTRICT x = vx;
+    अचर block_q8_K   * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    अचर पूर्णाङ्क nb = n / QK_K;
 
-#if defined(__loongarch_asx)
+#यदि defined(__loongarch_asx)
 
-    const __m128i values128 = __lsx_vld((const __m128i*)kvalues_iq4nl, 0);
+    अचर __m128i values128 = __lsx_vld((अचर __m128i*)kvalues_iq4nl, 0);
 
     __m256 accum = (__m256)__lasx_xvldi(0);
 
-    for (int ibl = 0; ibl < nb; ++ibl) {
-        const uint8_t * qs = x[ibl].qs;
-        const int8_t  * q8 = y[ibl].qs;
+    लागि (पूर्णाङ्क ibl = 0; ibl < nb; ++ibl) {
+        अचर uint8_t * qs = x[ibl].qs;
+        अचर int8_t  * q8 = y[ibl].qs;
         uint16_t sh = x[ibl].scales_h;
         __m256i sumi1 = __lasx_xvldi(0);
         __m256i sumi2 = __lasx_xvldi(0);
-        for (int ib = 0; ib < QK_K/32; ib += 2) {
-            const __m128i q4bits_1 = __lsx_vld((const __m128i*)qs, 0); qs += 16;
-            const __m128i q4bits_2 = __lsx_vld((const __m128i*)qs, 0); qs += 16;
-            const __m256i q8b_1 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q8b_2 = __lasx_xvld((const __m256i *)q8, 0); q8 += 32;
-            const __m256i q4b_1 = lasx_insertf128(__lsx_vshuf_b(values128, values128, __lsx_vsrli_b(q4bits_1, 4)),
+        लागि (पूर्णाङ्क ib = 0; ib < QK_K/32; ib += 2) {
+            अचर __m128i q4bits_1 = __lsx_vld((अचर __m128i*)qs, 0); qs += 16;
+            अचर __m128i q4bits_2 = __lsx_vld((अचर __m128i*)qs, 0); qs += 16;
+            अचर __m256i q8b_1 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q8b_2 = __lasx_xvld((अचर __m256i *)q8, 0); q8 += 32;
+            अचर __m256i q4b_1 = lasx_insertf128(__lsx_vshuf_b(values128, values128, __lsx_vsrli_b(q4bits_1, 4)),
                                                   __lsx_vshuf_b(values128, values128, __lsx_vandi_b(q4bits_1, 0xf)));
-            const __m256i q4b_2 = lasx_insertf128(__lsx_vshuf_b(values128, values128, __lsx_vsrli_b(q4bits_2, 4)),
+            अचर __m256i q4b_2 = lasx_insertf128(__lsx_vshuf_b(values128, values128, __lsx_vsrli_b(q4bits_2, 4)),
                                                   __lsx_vshuf_b(values128, values128, __lsx_vandi_b(q4bits_2, 0xf)));
-            const __m256i p16_1 = mul_add_epi8(q4b_1, q8b_1);
-            const __m256i p16_2 = mul_add_epi8(q4b_2, q8b_2);
-            const int16_t ls1 = ((x[ibl].scales_l[ib/2] & 0xf) | ((sh << 4) & 0x30)) - 32;
-            const int16_t ls2 = ((x[ibl].scales_l[ib/2] >>  4) | ((sh << 2) & 0x30)) - 32;
+            अचर __m256i p16_1 = mul_add_epi8(q4b_1, q8b_1);
+            अचर __m256i p16_2 = mul_add_epi8(q4b_2, q8b_2);
+            अचर int16_t ls1 = ((x[ibl].scales_l[ib/2] & 0xf) | ((sh << 4) & 0x30)) - 32;
+            अचर int16_t ls2 = ((x[ibl].scales_l[ib/2] >>  4) | ((sh << 2) & 0x30)) - 32;
             sh >>= 4;
-            const __m256i p_1 = lasx_madd_h(p16_1, __lasx_xvreplgr2vr_h(ls1));
-            const __m256i p_2 = lasx_madd_h(p16_2, __lasx_xvreplgr2vr_h(ls2));
+            अचर __m256i p_1 = lasx_madd_h(p16_1, __lasx_xvreplgr2vr_h(ls1));
+            अचर __m256i p_2 = lasx_madd_h(p16_2, __lasx_xvreplgr2vr_h(ls2));
             sumi1 = __lasx_xvadd_w(p_1, sumi1);
             sumi2 = __lasx_xvadd_w(p_2, sumi2);
         }
@@ -2271,36 +2271,36 @@ void ggml_vec_dot_iq4_xs_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const v
 
     *s = hsum_float_8(accum);
 
-#elif defined(__loongarch_sx)
+#अथवायदि defined(__loongarch_sx)
 
-    const __m128i values128 = __lsx_vld((const __m128i*)kvalues_iq4nl, 0);
+    अचर __m128i values128 = __lsx_vld((अचर __m128i*)kvalues_iq4nl, 0);
 
     __m128 accum = (__m128)__lsx_vldi(0);
-    for (int ibl = 0; ibl < nb; ++ibl) {
-        const uint8_t * qs = x[ibl].qs;
-        const int8_t  * q8 = y[ibl].qs;
+    लागि (पूर्णाङ्क ibl = 0; ibl < nb; ++ibl) {
+        अचर uint8_t * qs = x[ibl].qs;
+        अचर int8_t  * q8 = y[ibl].qs;
         uint16_t sh = x[ibl].scales_h;
         __m128i sumi = __lsx_vldi(0);
-        for (int ib = 0; ib < QK_K/32; ++ib) {
-            const __m128i q4bits = __lsx_vld((const __m128i*)qs, 0); qs += 16;
-            const __m128i q8b_0 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
-            const __m128i q8b_1 = __lsx_vld((const __m128i*)q8, 0); q8 += 16;
-            const __m128i q4b_0 = __lsx_vshuf_b(values128, values128, __lsx_vandi_b(q4bits, 0xf));
-            const __m128i q4b_1 = __lsx_vshuf_b(values128, values128, __lsx_vsrli_b(q4bits, 4));
-            const __m128i p16_0 = lsx_maddubs_h(q4b_0, q8b_0);
-            const __m128i p16_1 = lsx_maddubs_h(q4b_1, q8b_1);
-            const int16_t ls = (((x[ibl].scales_l[ib/2] >> ((ib & 1) * 4)) & 0xf) | ((sh & 0x3) << 4)) - 32;
+        लागि (पूर्णाङ्क ib = 0; ib < QK_K/32; ++ib) {
+            अचर __m128i q4bits = __lsx_vld((अचर __m128i*)qs, 0); qs += 16;
+            अचर __m128i q8b_0 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q8b_1 = __lsx_vld((अचर __m128i*)q8, 0); q8 += 16;
+            अचर __m128i q4b_0 = __lsx_vshuf_b(values128, values128, __lsx_vandi_b(q4bits, 0xf));
+            अचर __m128i q4b_1 = __lsx_vshuf_b(values128, values128, __lsx_vsrli_b(q4bits, 4));
+            अचर __m128i p16_0 = lsx_maddubs_h(q4b_0, q8b_0);
+            अचर __m128i p16_1 = lsx_maddubs_h(q4b_1, q8b_1);
+            अचर int16_t ls = (((x[ibl].scales_l[ib/2] >> ((ib & 1) * 4)) & 0xf) | ((sh & 0x3) << 4)) - 32;
             sh >>= 2;
             sumi = __lsx_vadd_w(lsx_madd_h(p16_0, __lsx_vreplgr2vr_h(ls)), sumi);
             sumi = __lsx_vadd_w(lsx_madd_h(p16_1, __lsx_vreplgr2vr_h(ls)), sumi);
         }
-        const float ds = GGML_CPU_FP16_TO_FP32(x[ibl].d) * y[ibl].d;
+        अचर भिन्न ds = GGML_CPU_FP16_TO_FP32(x[ibl].d) * y[ibl].d;
         accum = __lsx_vfadd_s(__lsx_vfmul_s(__lsx_vreplfr2vr_s(ds), __lsx_vffint_s_w(sumi)), accum);
     }
 
     *s = ((v4f32)lsx_hadd_s(lsx_hadd_s(accum, accum), lsx_hadd_s(accum, accum)))[0];
 
-#else
+#अन्यथा
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);

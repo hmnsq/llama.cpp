@@ -1,18 +1,18 @@
 #ifndef GGML_WEBGPU_SHADER_LIB_HPP
 #define GGML_WEBGPU_SHADER_LIB_HPP
 
-#include "ggml-impl.h"
-#include "ggml-wgsl-shaders.hpp"
-#include "ggml.h"
-#include "pre_wgsl.hpp"
+#अन्तर्भाव "ggml-impl.h"
+#अन्तर्भाव "ggml-wgsl-shaders.hpp"
+#अन्तर्भाव "ggml.h"
+#अन्तर्भाव "pre_wgsl.hpp"
 
-#include <webgpu/webgpu_cpp.h>
+#अन्तर्भाव <webgpu/webgpu_cpp.h>
 
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
+#अन्तर्भाव <algorithm>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <string>
+#अन्तर्भाव <unordered_map>
+#अन्तर्भाव <vector>
 
 #define GGML_WEBGPU_F16_SIZE_BYTES                   2
 #define GGML_WEBGPU_F32_SIZE_BYTES                   4
@@ -59,21 +59,21 @@
 #define WEBGPU_MUL_MAT_WG_SIZE 256
 
 // Same hash combine function as in boost
-template <typename T> inline void ggml_webgpu_hash_combine(size_t & seed, const T & value) {
+ढाँचा <typename T> अन्तःस्थ शून्य ggml_webgpu_hash_combine(माप_प्रकार & seed, अचर T & value) {
     seed ^= std::hash<T>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 }
 
 // Calculates base address of a tensor ignoring the fake base pointer
-inline uintptr_t ggml_webgpu_tensor_addr(const ggml_tensor * tensor) {
-    const ggml_tensor * base_tensor = tensor->view_src ? tensor->view_src : tensor;
-    return (uintptr_t) base_tensor->data + tensor->view_offs;
+अन्तःस्थ uintptr_t ggml_webgpu_tensor_addr(अचर ggml_tensor * tensor) {
+    अचर ggml_tensor * base_tensor = tensor->view_src ? tensor->view_src : tensor;
+    फर्काऊ (uintptr_t) base_tensor->data + tensor->view_offs;
 }
 
-inline bool ggml_webgpu_tensor_equal(const ggml_tensor * a, const ggml_tensor * b) {
-    return a->buffer == b->buffer && ggml_webgpu_tensor_addr(a) == ggml_webgpu_tensor_addr(b);
+अन्तःस्थ तार्किक ggml_webgpu_tensor_equal(अचर ggml_tensor * a, अचर ggml_tensor * b) {
+    फर्काऊ a->buffer == b->buffer && ggml_webgpu_tensor_addr(a) == ggml_webgpu_tensor_addr(b);
 }
 
-struct ggml_webgpu_shader_lib_context {
+संरचना ggml_webgpu_shader_lib_context {
     ggml_tensor * src0;
     ggml_tensor * src1;
     ggml_tensor * src2;
@@ -84,531 +84,531 @@ struct ggml_webgpu_shader_lib_context {
     ggml_tensor * dst_fuse;
 
     uint32_t    max_wg_size;
-    size_t      wg_mem_limit_bytes       = 0;
-    bool        supports_subgroups       = false;
-    bool        supports_subgroup_matrix = false;
+    माप_प्रकार      wg_mem_limit_bytes       = 0;
+    तार्किक        supports_subgroups       = असत्य;
+    तार्किक        supports_subgroup_matrix = असत्य;
     uint32_t    sg_mat_m                 = 0;
     uint32_t    sg_mat_n                 = 0;
     uint32_t    sg_mat_k                 = 0;
     uint32_t    min_subgroup_size        = 0;
     uint32_t    max_subgroup_size        = 0;
-    bool        supports_dot_product     = false;
+    तार्किक        supports_dot_product     = असत्य;
     std::string vendor;
 };
 
-struct webgpu_pipeline {
+संरचना webgpu_pipeline {
     wgpu::ComputePipeline pipeline;
     std::string           name;
-    std::shared_ptr<void> context = nullptr;
+    std::shared_ptr<शून्य> context = nullptr;
 };
 
-struct ggml_webgpu_generic_shader_decisions {
+संरचना ggml_webgpu_generic_shader_decisions {
     uint32_t wg_size = 0;
-    bool     inplace = false;
+    तार्किक     inplace = असत्य;
 };
 
-struct ggml_webgpu_get_rows_shader_decisions {
+संरचना ggml_webgpu_get_rows_shader_decisions {
     uint32_t wg_size    = 0;
-    bool     vectorized = false;
+    तार्किक     vectorized = असत्य;
 };
 
-struct ggml_webgpu_binary_shader_decisions {
+संरचना ggml_webgpu_द्विआधारी_shader_decisions {
     uint32_t wg_size     = 0;
-    bool     inplace     = false;
-    bool     overlap     = false;
-    bool     src_overlap = false;
+    तार्किक     inplace     = असत्य;
+    तार्किक     overlap     = असत्य;
+    तार्किक     src_overlap = असत्य;
 };
 
-struct ggml_webgpu_glu_shader_decisions {
+संरचना ggml_webgpu_glu_shader_decisions {
     uint32_t wg_size     = 0;
-    bool     src_overlap = false;
+    तार्किक     src_overlap = असत्य;
 };
 
-struct ggml_webgpu_processed_shader {
+संरचना ggml_webgpu_processed_shader {
     std::string           wgsl;
     std::string           variant;
-    std::shared_ptr<void> decisions;
+    std::shared_ptr<शून्य> decisions;
 };
 
-struct ggml_webgpu_ssm_conv_shader_decisions {
+संरचना ggml_webgpu_ssm_conv_shader_decisions {
     uint32_t block_size;
     uint32_t tokens_per_wg;
 };
 
-struct ggml_webgpu_ssm_scan_pipeline_key {
-    int     type;
-    int     d_state;
+संरचना ggml_webgpu_ssm_scan_pipeline_साँचो {
+    पूर्णाङ्क     type;
+    पूर्णाङ्क     d_state;
     uint8_t xbc_overlap;
-    bool    a_overlap;
-    bool    ids_overlap;
+    तार्किक    a_overlap;
+    तार्किक    ids_overlap;
 
-    bool operator==(const ggml_webgpu_ssm_scan_pipeline_key & other) const {
-        return type == other.type && d_state == other.d_state && xbc_overlap == other.xbc_overlap &&
+    तार्किक चालक==(अचर ggml_webgpu_ssm_scan_pipeline_साँचो & other) अचर {
+        फर्काऊ type == other.type && d_state == other.d_state && xbc_overlap == other.xbc_overlap &&
                a_overlap == other.a_overlap && ids_overlap == other.ids_overlap;
     }
 };
 
-struct ggml_webgpu_ssm_scan_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_ssm_scan_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.d_state);
-        ggml_webgpu_hash_combine(seed, key.xbc_overlap);
-        ggml_webgpu_hash_combine(seed, key.a_overlap);
-        ggml_webgpu_hash_combine(seed, key.ids_overlap);
-        return seed;
+संरचना ggml_webgpu_ssm_scan_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_ssm_scan_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.d_state);
+        ggml_webgpu_hash_combine(seed, साँचो.xbc_overlap);
+        ggml_webgpu_hash_combine(seed, साँचो.a_overlap);
+        ggml_webgpu_hash_combine(seed, साँचो.ids_overlap);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_ssm_scan_shader_decisions {
+संरचना ggml_webgpu_ssm_scan_shader_decisions {
     uint32_t wg_size;
     uint32_t tokens_per_tile;
     uint8_t  xbc_overlap = 0;
-    bool     a_overlap   = false;
-    bool     ids_overlap = false;
+    तार्किक     a_overlap   = असत्य;
+    तार्किक     ids_overlap = असत्य;
 };
 
 /** Argsort **/
 
-struct ggml_webgpu_argsort_shader_lib_context {
+संरचना ggml_webgpu_argsort_shader_lib_context {
     uint32_t max_wg_size;
-    size_t   wg_mem_limit_bytes;
+    माप_प्रकार   wg_mem_limit_bytes;
     int32_t  order;
 };
 
 /** Set Rows **/
 
-struct ggml_webgpu_set_rows_pipeline_key {
-    int src0_type;
-    int dst_type;
-    int vec4;
-    int i64_idx;
-    int pair_blocks;
+संरचना ggml_webgpu_set_rows_pipeline_साँचो {
+    पूर्णाङ्क src0_type;
+    पूर्णाङ्क dst_type;
+    पूर्णाङ्क vec4;
+    पूर्णाङ्क i64_idx;
+    पूर्णाङ्क pair_blocks;
 
-    bool operator==(const ggml_webgpu_set_rows_pipeline_key & other) const {
-        return src0_type == other.src0_type && dst_type == other.dst_type && vec4 == other.vec4 &&
+    तार्किक चालक==(अचर ggml_webgpu_set_rows_pipeline_साँचो & other) अचर {
+        फर्काऊ src0_type == other.src0_type && dst_type == other.dst_type && vec4 == other.vec4 &&
                i64_idx == other.i64_idx && pair_blocks == other.pair_blocks;
     }
 };
 
-struct ggml_webgpu_set_rows_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_set_rows_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.src0_type);
-        ggml_webgpu_hash_combine(seed, key.dst_type);
-        ggml_webgpu_hash_combine(seed, key.vec4);
-        ggml_webgpu_hash_combine(seed, key.i64_idx);
-        ggml_webgpu_hash_combine(seed, key.pair_blocks);
-        return seed;
+संरचना ggml_webgpu_set_rows_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_set_rows_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.src0_type);
+        ggml_webgpu_hash_combine(seed, साँचो.dst_type);
+        ggml_webgpu_hash_combine(seed, साँचो.vec4);
+        ggml_webgpu_hash_combine(seed, साँचो.i64_idx);
+        ggml_webgpu_hash_combine(seed, साँचो.pair_blocks);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_set_rows_shader_decisions {
-    bool     vec4;
-    bool     i64_idx;
-    bool     pair_blocks;
+संरचना ggml_webgpu_set_rows_shader_decisions {
+    तार्किक     vec4;
+    तार्किक     i64_idx;
+    तार्किक     pair_blocks;
     uint32_t wg_size;
 };
 
 /** Set **/
 
-struct ggml_webgpu_set_pipeline_key {
+संरचना ggml_webgpu_set_pipeline_साँचो {
     ggml_type type;
-    bool      inplace;
+    तार्किक      inplace;
 
-    bool operator==(const ggml_webgpu_set_pipeline_key & other) const {
-        return type == other.type && inplace == other.inplace;
+    तार्किक चालक==(अचर ggml_webgpu_set_pipeline_साँचो & other) अचर {
+        फर्काऊ type == other.type && inplace == other.inplace;
     }
 };
 
-struct ggml_webgpu_set_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_set_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.inplace);
-        return seed;
+संरचना ggml_webgpu_set_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_set_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.inplace);
+        फर्काऊ seed;
     }
 };
 
 /** Get Rows **/
 
-struct ggml_webgpu_get_rows_pipeline_key {
+संरचना ggml_webgpu_get_rows_pipeline_साँचो {
     ggml_type src_type;
-    int       vectorized;
+    पूर्णाङ्क       vectorized;
 
-    bool operator==(const ggml_webgpu_get_rows_pipeline_key & other) const {
-        return src_type == other.src_type && vectorized == other.vectorized;
+    तार्किक चालक==(अचर ggml_webgpu_get_rows_pipeline_साँचो & other) अचर {
+        फर्काऊ src_type == other.src_type && vectorized == other.vectorized;
     }
 };
 
-struct ggml_webgpu_get_rows_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_get_rows_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.src_type);
-        ggml_webgpu_hash_combine(seed, key.vectorized);
-        return seed;
+संरचना ggml_webgpu_get_rows_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_get_rows_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.src_type);
+        ggml_webgpu_hash_combine(seed, साँचो.vectorized);
+        फर्काऊ seed;
     }
 };
 
 /** Row Norm **/
 
-struct ggml_webgpu_row_norm_pipeline_key {
+संरचना ggml_webgpu_row_norm_pipeline_साँचो {
     ggml_op   op;
     ggml_type src_type;
     ggml_type dst_type;
-    bool      inplace;
+    तार्किक      inplace;
 
-    bool operator==(const ggml_webgpu_row_norm_pipeline_key & other) const {
-        return op == other.op && src_type == other.src_type && dst_type == other.dst_type && inplace == other.inplace;
+    तार्किक चालक==(अचर ggml_webgpu_row_norm_pipeline_साँचो & other) अचर {
+        फर्काऊ op == other.op && src_type == other.src_type && dst_type == other.dst_type && inplace == other.inplace;
     }
 };
 
-struct ggml_webgpu_row_norm_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_row_norm_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.op);
-        ggml_webgpu_hash_combine(seed, key.src_type);
-        ggml_webgpu_hash_combine(seed, key.dst_type);
-        ggml_webgpu_hash_combine(seed, key.inplace);
-        return seed;
+संरचना ggml_webgpu_row_norm_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_row_norm_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.op);
+        ggml_webgpu_hash_combine(seed, साँचो.src_type);
+        ggml_webgpu_hash_combine(seed, साँचो.dst_type);
+        ggml_webgpu_hash_combine(seed, साँचो.inplace);
+        फर्काऊ seed;
     }
 };
 
 /** RMS_NORM + MUL **/
 
-struct ggml_webgpu_rms_norm_mul_pipeline_key {
-    bool inplace;      // rn_src == dst
-    bool overlap;      // mul_src == dst
-    bool src_overlap;  // rn_src binding overlaps mul_src binding
+संरचना ggml_webgpu_rms_norm_mul_pipeline_साँचो {
+    तार्किक inplace;      // rn_src == dst
+    तार्किक overlap;      // mul_src == dst
+    तार्किक src_overlap;  // rn_src binding overlaps mul_src binding
 
-    bool operator==(const ggml_webgpu_rms_norm_mul_pipeline_key & other) const {
-        return inplace == other.inplace && overlap == other.overlap && src_overlap == other.src_overlap;
+    तार्किक चालक==(अचर ggml_webgpu_rms_norm_mul_pipeline_साँचो & other) अचर {
+        फर्काऊ inplace == other.inplace && overlap == other.overlap && src_overlap == other.src_overlap;
     }
 };
 
-struct ggml_webgpu_rms_norm_mul_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_rms_norm_mul_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.inplace);
-        ggml_webgpu_hash_combine(seed, key.overlap);
-        ggml_webgpu_hash_combine(seed, key.src_overlap);
-        return seed;
+संरचना ggml_webgpu_rms_norm_mul_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_rms_norm_mul_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.inplace);
+        ggml_webgpu_hash_combine(seed, साँचो.overlap);
+        ggml_webgpu_hash_combine(seed, साँचो.src_overlap);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_rms_norm_mul_shader_decisions {
+संरचना ggml_webgpu_rms_norm_mul_shader_decisions {
     uint32_t wg_size     = 0;
-    bool     inplace     = false;
-    bool     overlap     = false;
-    bool     src_overlap = false;
+    तार्किक     inplace     = असत्य;
+    तार्किक     overlap     = असत्य;
+    तार्किक     src_overlap = असत्य;
 };
 
 /** Pad **/
-struct ggml_webgpu_pad_pipeline_key {
-    bool circular;
+संरचना ggml_webgpu_pad_pipeline_साँचो {
+    तार्किक circular;
 
-    bool operator==(const ggml_webgpu_pad_pipeline_key & other) const { return circular == other.circular; }
+    तार्किक चालक==(अचर ggml_webgpu_pad_pipeline_साँचो & other) अचर { फर्काऊ circular == other.circular; }
 };
 
-struct ggml_webgpu_pad_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_pad_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.circular);
-        return seed;
+संरचना ggml_webgpu_pad_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_pad_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.circular);
+        फर्काऊ seed;
     }
 };
 
 /** Solve Tri **/
-struct ggml_webgpu_solve_tri_pipeline_key {
-    int type;
-    int n;
-    int k;
+संरचना ggml_webgpu_solve_tri_pipeline_साँचो {
+    पूर्णाङ्क type;
+    पूर्णाङ्क n;
+    पूर्णाङ्क k;
 
-    bool operator==(const ggml_webgpu_solve_tri_pipeline_key & other) const {
-        return type == other.type && n == other.n && k == other.k;
+    तार्किक चालक==(अचर ggml_webgpu_solve_tri_pipeline_साँचो & other) अचर {
+        फर्काऊ type == other.type && n == other.n && k == other.k;
     }
 };
 
-struct ggml_webgpu_solve_tri_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_solve_tri_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.n);
-        ggml_webgpu_hash_combine(seed, key.k);
-        return seed;
+संरचना ggml_webgpu_solve_tri_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_solve_tri_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.n);
+        ggml_webgpu_hash_combine(seed, साँचो.k);
+        फर्काऊ seed;
     }
 };
 
 /** SSM Conv **/
-struct ggml_webgpu_ssm_conv_pipeline_key {
-    int type;
-    int vectorized;
+संरचना ggml_webgpu_ssm_conv_pipeline_साँचो {
+    पूर्णाङ्क type;
+    पूर्णाङ्क vectorized;
 
-    bool operator==(const ggml_webgpu_ssm_conv_pipeline_key & other) const {
-        return type == other.type && vectorized == other.vectorized;
+    तार्किक चालक==(अचर ggml_webgpu_ssm_conv_pipeline_साँचो & other) अचर {
+        फर्काऊ type == other.type && vectorized == other.vectorized;
     }
 };
 
 /** CONV 2D */
-struct ggml_webgpu_conv2d_pipeline_key {
+संरचना ggml_webgpu_conv2d_pipeline_साँचो {
     ggml_type weight_type;
-    ggml_type input_type;
+    ggml_type आगत_type;
     ggml_type output_type;
 
-    bool operator==(const ggml_webgpu_conv2d_pipeline_key & other) const {
-        return weight_type == other.weight_type && input_type == other.input_type && output_type == other.output_type;
+    तार्किक चालक==(अचर ggml_webgpu_conv2d_pipeline_साँचो & other) अचर {
+        फर्काऊ weight_type == other.weight_type && आगत_type == other.आगत_type && output_type == other.output_type;
     }
 };
 
-struct ggml_webgpu_conv2d_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_conv2d_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.weight_type);
-        ggml_webgpu_hash_combine(seed, key.input_type);
-        ggml_webgpu_hash_combine(seed, key.output_type);
-        return seed;
+संरचना ggml_webgpu_conv2d_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_conv2d_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.weight_type);
+        ggml_webgpu_hash_combine(seed, साँचो.आगत_type);
+        ggml_webgpu_hash_combine(seed, साँचो.output_type);
+        फर्काऊ seed;
     }
 };
 
 // Same type fields as conv2d plus the input layout (WHCN vs CWHN).
-struct ggml_webgpu_conv2d_dw_pipeline_key {
+संरचना ggml_webgpu_conv2d_dw_pipeline_साँचो {
     ggml_type weight_type;
-    ggml_type input_type;
+    ggml_type आगत_type;
     ggml_type output_type;
-    bool      whcn;
+    तार्किक      whcn;
 
-    bool operator==(const ggml_webgpu_conv2d_dw_pipeline_key & other) const {
-        return weight_type == other.weight_type && input_type == other.input_type && output_type == other.output_type &&
+    तार्किक चालक==(अचर ggml_webgpu_conv2d_dw_pipeline_साँचो & other) अचर {
+        फर्काऊ weight_type == other.weight_type && आगत_type == other.आगत_type && output_type == other.output_type &&
                whcn == other.whcn;
     }
 };
 
-struct ggml_webgpu_conv2d_dw_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_conv2d_dw_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.weight_type);
-        ggml_webgpu_hash_combine(seed, key.input_type);
-        ggml_webgpu_hash_combine(seed, key.output_type);
-        ggml_webgpu_hash_combine(seed, key.whcn);
-        return seed;
+संरचना ggml_webgpu_conv2d_dw_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_conv2d_dw_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.weight_type);
+        ggml_webgpu_hash_combine(seed, साँचो.आगत_type);
+        ggml_webgpu_hash_combine(seed, साँचो.output_type);
+        ggml_webgpu_hash_combine(seed, साँचो.whcn);
+        फर्काऊ seed;
     }
 };
 
 /** Im2Col **/
-struct ggml_webgpu_im2col_pipeline_key {
-    ggml_type input_type;
+संरचना ggml_webgpu_im2col_pipeline_साँचो {
+    ggml_type आगत_type;
     ggml_type output_type;
 
-    bool operator==(const ggml_webgpu_im2col_pipeline_key & other) const {
-        return input_type == other.input_type && output_type == other.output_type;
+    तार्किक चालक==(अचर ggml_webgpu_im2col_pipeline_साँचो & other) अचर {
+        फर्काऊ आगत_type == other.आगत_type && output_type == other.output_type;
     }
 };
 
-struct ggml_webgpu_im2col_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_im2col_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.input_type);
-        ggml_webgpu_hash_combine(seed, key.output_type);
-        return seed;
+संरचना ggml_webgpu_im2col_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_im2col_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.आगत_type);
+        ggml_webgpu_hash_combine(seed, साँचो.output_type);
+        फर्काऊ seed;
     }
 };
 
 /** Gated Delta Net **/
-struct ggml_webgpu_gated_delta_net_pipeline_key {
-    int  type;
-    int  s_v;
-    int  kda;
-    bool fused_cache;
+संरचना ggml_webgpu_gated_delta_net_pipeline_साँचो {
+    पूर्णाङ्क  type;
+    पूर्णाङ्क  s_v;
+    पूर्णाङ्क  kda;
+    तार्किक fused_cache;
 
-    bool operator==(const ggml_webgpu_gated_delta_net_pipeline_key & other) const {
-        return type == other.type && s_v == other.s_v && kda == other.kda && fused_cache == other.fused_cache;
+    तार्किक चालक==(अचर ggml_webgpu_gated_delta_net_pipeline_साँचो & other) अचर {
+        फर्काऊ type == other.type && s_v == other.s_v && kda == other.kda && fused_cache == other.fused_cache;
     }
 };
 
-struct ggml_webgpu_gated_delta_net_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_gated_delta_net_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.s_v);
-        ggml_webgpu_hash_combine(seed, key.kda);
-        return seed;
+संरचना ggml_webgpu_gated_delta_net_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_gated_delta_net_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.s_v);
+        ggml_webgpu_hash_combine(seed, साँचो.kda);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_ssm_conv_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_ssm_conv_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.vectorized);
-        return seed;
+संरचना ggml_webgpu_ssm_conv_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_ssm_conv_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.vectorized);
+        फर्काऊ seed;
     }
 };
 
 /** Scale **/
 
-struct ggml_webgpu_scale_pipeline_key {
-    int inplace;
+संरचना ggml_webgpu_scale_pipeline_साँचो {
+    पूर्णाङ्क inplace;
 
-    bool operator==(const ggml_webgpu_scale_pipeline_key & other) const { return inplace == other.inplace; }
+    तार्किक चालक==(अचर ggml_webgpu_scale_pipeline_साँचो & other) अचर { फर्काऊ inplace == other.inplace; }
 };
 
-struct ggml_webgpu_scale_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_scale_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.inplace);
-        return seed;
+संरचना ggml_webgpu_scale_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_scale_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.inplace);
+        फर्काऊ seed;
     }
 };
 
 /** Upscale **/
 
-struct ggml_webgpu_upscale_pipeline_key {
-    ggml_type input_type;
+संरचना ggml_webgpu_upscale_pipeline_साँचो {
+    ggml_type आगत_type;
     ggml_type output_type;
     uint32_t  base_mode;
-    bool      antialias;
+    तार्किक      antialias;
 
-    bool operator==(const ggml_webgpu_upscale_pipeline_key & other) const {
-        return input_type == other.input_type && output_type == other.output_type && base_mode == other.base_mode &&
+    तार्किक चालक==(अचर ggml_webgpu_upscale_pipeline_साँचो & other) अचर {
+        फर्काऊ आगत_type == other.आगत_type && output_type == other.output_type && base_mode == other.base_mode &&
                antialias == other.antialias;
     }
 };
 
-struct ggml_webgpu_upscale_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_upscale_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.input_type);
-        ggml_webgpu_hash_combine(seed, key.output_type);
-        ggml_webgpu_hash_combine(seed, key.base_mode);
-        ggml_webgpu_hash_combine(seed, key.antialias);
-        return seed;
+संरचना ggml_webgpu_upscale_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_upscale_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.आगत_type);
+        ggml_webgpu_hash_combine(seed, साँचो.output_type);
+        ggml_webgpu_hash_combine(seed, साँचो.base_mode);
+        ggml_webgpu_hash_combine(seed, साँचो.antialias);
+        फर्काऊ seed;
     }
 };
 
 /** Concat **/
 
-struct ggml_webgpu_concat_pipeline_key {
-    int  type;
-    bool src_overlap;
+संरचना ggml_webgpu_concat_pipeline_साँचो {
+    पूर्णाङ्क  type;
+    तार्किक src_overlap;
 
-    bool operator==(const ggml_webgpu_concat_pipeline_key & other) const {
-        return type == other.type && src_overlap == other.src_overlap;
+    तार्किक चालक==(अचर ggml_webgpu_concat_pipeline_साँचो & other) अचर {
+        फर्काऊ type == other.type && src_overlap == other.src_overlap;
     }
 };
 
-struct ggml_webgpu_concat_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_concat_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.src_overlap);
-        return seed;
+संरचना ggml_webgpu_concat_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_concat_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.src_overlap);
+        फर्काऊ seed;
     }
 };
 
 /** Repeat **/
 
-struct ggml_webgpu_repeat_pipeline_key {
-    int type;
+संरचना ggml_webgpu_repeat_pipeline_साँचो {
+    पूर्णाङ्क type;
 
-    bool operator==(const ggml_webgpu_repeat_pipeline_key & other) const { return type == other.type; }
+    तार्किक चालक==(अचर ggml_webgpu_repeat_pipeline_साँचो & other) अचर { फर्काऊ type == other.type; }
 };
 
-struct ggml_webgpu_repeat_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_repeat_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        return seed;
+संरचना ggml_webgpu_repeat_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_repeat_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        फर्काऊ seed;
     }
 };
 
 /** Binary **/
 
-struct ggml_webgpu_binary_pipeline_key {
-    int  type;
-    int  op;
-    bool inplace;
-    bool overlap;
-    bool src_overlap;
+संरचना ggml_webgpu_द्विआधारी_pipeline_साँचो {
+    पूर्णाङ्क  type;
+    पूर्णाङ्क  op;
+    तार्किक inplace;
+    तार्किक overlap;
+    तार्किक src_overlap;
 
-    bool operator==(const ggml_webgpu_binary_pipeline_key & other) const {
-        return type == other.type && op == other.op && inplace == other.inplace && overlap == other.overlap &&
+    तार्किक चालक==(अचर ggml_webgpu_द्विआधारी_pipeline_साँचो & other) अचर {
+        फर्काऊ type == other.type && op == other.op && inplace == other.inplace && overlap == other.overlap &&
                src_overlap == other.src_overlap;
     }
 };
 
-struct ggml_webgpu_binary_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_binary_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.op);
-        ggml_webgpu_hash_combine(seed, key.inplace);
-        ggml_webgpu_hash_combine(seed, key.overlap);
-        ggml_webgpu_hash_combine(seed, key.src_overlap);
-        return seed;
+संरचना ggml_webgpu_द्विआधारी_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_द्विआधारी_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.op);
+        ggml_webgpu_hash_combine(seed, साँचो.inplace);
+        ggml_webgpu_hash_combine(seed, साँचो.overlap);
+        ggml_webgpu_hash_combine(seed, साँचो.src_overlap);
+        फर्काऊ seed;
     }
 };
 
 /* Add_Id */
 
-struct ggml_webgpu_add_id_pipeline_key {
-    bool inplace;
+संरचना ggml_webgpu_add_id_pipeline_साँचो {
+    तार्किक inplace;
 
-    bool operator==(const ggml_webgpu_add_id_pipeline_key & other) const { return inplace == other.inplace; }
+    तार्किक चालक==(अचर ggml_webgpu_add_id_pipeline_साँचो & other) अचर { फर्काऊ inplace == other.inplace; }
 };
 
-struct ggml_webgpu_add_id_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_add_id_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.inplace);
-        return seed;
+संरचना ggml_webgpu_add_id_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_add_id_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.inplace);
+        फर्काऊ seed;
     }
 };
 
 /** Unary **/
 
-struct ggml_webgpu_unary_pipeline_key {
-    int           type;
-    int           op;
-    bool          is_unary;  // many unary operators fall under the GGML_OP_UNARY umbrella
-    bool          inplace;
+संरचना ggml_webgpu_unary_pipeline_साँचो {
+    पूर्णाङ्क           type;
+    पूर्णाङ्क           op;
+    तार्किक          is_unary;  // many unary operators fall under the GGML_OP_UNARY umbrella
+    तार्किक          inplace;
     ggml_tri_type ttype;     // only used for GGML_OP_TRI
 
-    bool operator==(const ggml_webgpu_unary_pipeline_key & other) const {
-        return type == other.type && op == other.op && is_unary == other.is_unary && inplace == other.inplace &&
+    तार्किक चालक==(अचर ggml_webgpu_unary_pipeline_साँचो & other) अचर {
+        फर्काऊ type == other.type && op == other.op && is_unary == other.is_unary && inplace == other.inplace &&
                ttype == other.ttype;
     }
 };
 
-struct ggml_webgpu_unary_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_unary_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.op);
-        ggml_webgpu_hash_combine(seed, key.is_unary);
-        ggml_webgpu_hash_combine(seed, key.inplace);
-        ggml_webgpu_hash_combine(seed, key.ttype);
-        return seed;
+संरचना ggml_webgpu_unary_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_unary_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.op);
+        ggml_webgpu_hash_combine(seed, साँचो.is_unary);
+        ggml_webgpu_hash_combine(seed, साँचो.inplace);
+        ggml_webgpu_hash_combine(seed, साँचो.ttype);
+        फर्काऊ seed;
     }
 };
 
 /** FlashAttention */
 
-struct ggml_webgpu_flash_attn_common_pipeline_key {
+संरचना ggml_webgpu_flash_attn_common_pipeline_साँचो {
     ggml_type q_type;
     ggml_type k_type;
     ggml_type v_type;
     ggml_type dst_type;
     uint32_t  head_dim_qk;
     uint32_t  head_dim_v;
-    bool      k_direct;
-    bool      v_direct;
-    bool      kv_overlap;
-    bool      has_mask;
-    bool      has_sinks;
-    bool      uses_logit_softcap;
+    तार्किक      k_direct;
+    तार्किक      v_direct;
+    तार्किक      kv_overlap;
+    तार्किक      has_mask;
+    तार्किक      has_sinks;
+    तार्किक      uses_logit_softcap;
 
-    bool operator==(const ggml_webgpu_flash_attn_common_pipeline_key & other) const {
-        return q_type == other.q_type && k_type == other.k_type && v_type == other.v_type &&
+    तार्किक चालक==(अचर ggml_webgpu_flash_attn_common_pipeline_साँचो & other) अचर {
+        फर्काऊ q_type == other.q_type && k_type == other.k_type && v_type == other.v_type &&
                dst_type == other.dst_type && head_dim_qk == other.head_dim_qk && head_dim_v == other.head_dim_v &&
                k_direct == other.k_direct && v_direct == other.v_direct && kv_overlap == other.kv_overlap &&
                has_mask == other.has_mask && has_sinks == other.has_sinks &&
@@ -616,427 +616,427 @@ struct ggml_webgpu_flash_attn_common_pipeline_key {
     }
 };
 
-inline void ggml_webgpu_flash_attn_hash_common_pipeline_key(size_t &                                           seed,
-                                                            const ggml_webgpu_flash_attn_common_pipeline_key & key) {
-    ggml_webgpu_hash_combine(seed, key.q_type);
-    ggml_webgpu_hash_combine(seed, key.k_type);
-    ggml_webgpu_hash_combine(seed, key.v_type);
-    ggml_webgpu_hash_combine(seed, key.dst_type);
-    ggml_webgpu_hash_combine(seed, key.head_dim_qk);
-    ggml_webgpu_hash_combine(seed, key.head_dim_v);
-    ggml_webgpu_hash_combine(seed, key.k_direct);
-    ggml_webgpu_hash_combine(seed, key.v_direct);
-    ggml_webgpu_hash_combine(seed, key.kv_overlap);
-    ggml_webgpu_hash_combine(seed, key.has_mask);
-    ggml_webgpu_hash_combine(seed, key.has_sinks);
-    ggml_webgpu_hash_combine(seed, key.uses_logit_softcap);
+अन्तःस्थ शून्य ggml_webgpu_flash_attn_hash_common_pipeline_साँचो(माप_प्रकार &                                           seed,
+                                                            अचर ggml_webgpu_flash_attn_common_pipeline_साँचो & साँचो) {
+    ggml_webgpu_hash_combine(seed, साँचो.q_type);
+    ggml_webgpu_hash_combine(seed, साँचो.k_type);
+    ggml_webgpu_hash_combine(seed, साँचो.v_type);
+    ggml_webgpu_hash_combine(seed, साँचो.dst_type);
+    ggml_webgpu_hash_combine(seed, साँचो.head_dim_qk);
+    ggml_webgpu_hash_combine(seed, साँचो.head_dim_v);
+    ggml_webgpu_hash_combine(seed, साँचो.k_direct);
+    ggml_webgpu_hash_combine(seed, साँचो.v_direct);
+    ggml_webgpu_hash_combine(seed, साँचो.kv_overlap);
+    ggml_webgpu_hash_combine(seed, साँचो.has_mask);
+    ggml_webgpu_hash_combine(seed, साँचो.has_sinks);
+    ggml_webgpu_hash_combine(seed, साँचो.uses_logit_softcap);
 }
 
-struct ggml_webgpu_flash_attn_vec_pipeline_key {
-    ggml_webgpu_flash_attn_common_pipeline_key common;
+संरचना ggml_webgpu_flash_attn_vec_pipeline_साँचो {
+    ggml_webgpu_flash_attn_common_pipeline_साँचो common;
 
-    bool operator==(const ggml_webgpu_flash_attn_vec_pipeline_key & other) const { return common == other.common; }
+    तार्किक चालक==(अचर ggml_webgpu_flash_attn_vec_pipeline_साँचो & other) अचर { फर्काऊ common == other.common; }
 };
 
-struct ggml_webgpu_flash_attn_vec_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_flash_attn_vec_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_flash_attn_hash_common_pipeline_key(seed, key.common);
-        return seed;
+संरचना ggml_webgpu_flash_attn_vec_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_flash_attn_vec_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_flash_attn_hash_common_pipeline_साँचो(seed, साँचो.common);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_flash_attn_pipeline_key {
-    ggml_webgpu_flash_attn_common_pipeline_key common;
-    bool                                       use_sg_matrix;
+संरचना ggml_webgpu_flash_attn_pipeline_साँचो {
+    ggml_webgpu_flash_attn_common_pipeline_साँचो common;
+    तार्किक                                       use_sg_matrix;
 
-    bool operator==(const ggml_webgpu_flash_attn_pipeline_key & other) const {
-        return common == other.common && use_sg_matrix == other.use_sg_matrix;
+    तार्किक चालक==(अचर ggml_webgpu_flash_attn_pipeline_साँचो & other) अचर {
+        फर्काऊ common == other.common && use_sg_matrix == other.use_sg_matrix;
     }
 };
 
-struct ggml_webgpu_flash_attn_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_flash_attn_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_flash_attn_hash_common_pipeline_key(seed, key.common);
-        ggml_webgpu_hash_combine(seed, key.use_sg_matrix);
-        return seed;
+संरचना ggml_webgpu_flash_attn_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_flash_attn_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_flash_attn_hash_common_pipeline_साँचो(seed, साँचो.common);
+        ggml_webgpu_hash_combine(seed, साँचो.use_sg_matrix);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_flash_attn_vec_decisions {
+संरचना ggml_webgpu_flash_attn_vec_decisions {
     uint32_t kv_tile = 0;
     uint32_t wg_size = 0;
 };
 
-struct ggml_webgpu_flash_attn_decisions {
-    bool     use_sg_matrix = false;
+संरचना ggml_webgpu_flash_attn_decisions {
+    तार्किक     use_sg_matrix = असत्य;
     uint32_t q_tile        = 0;
     uint32_t kv_tile       = 0;
     uint32_t wg_size       = 0;
 };
 
-inline constexpr uint32_t GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH = 4u;
-inline constexpr uint32_t GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE       = 4u;
+अन्तःस्थ constexpr uint32_t GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH = 4u;
+अन्तःस्थ constexpr uint32_t GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE       = 4u;
 
-inline size_t ggml_webgpu_flash_attn_tensor_offset(const ggml_tensor * tensor) {
+अन्तःस्थ माप_प्रकार ggml_webgpu_flash_attn_tensor_offset(अचर ggml_tensor * tensor) {
     constexpr uintptr_t ptr_base_addr = 0x1000u;
-    const ggml_tensor * base          = tensor->view_src != nullptr ? tensor->view_src : tensor;
-    return reinterpret_cast<uintptr_t>(base->data) - ptr_base_addr + tensor->view_offs;
+    अचर ggml_tensor * base          = tensor->view_src != nullptr ? tensor->view_src : tensor;
+    फर्काऊ reinterpret_cast<uintptr_t>(base->data) - ptr_base_addr + tensor->view_offs;
 }
 
-inline bool ggml_webgpu_flash_attn_float_vec4_aligned(const ggml_tensor * K, size_t storage_offset_alignment) {
-    const uint32_t offset_elems =
+अन्तःस्थ तार्किक ggml_webgpu_flash_attn_float_vec4_aligned(अचर ggml_tensor * K, माप_प्रकार storage_offset_alignment) {
+    अचर uint32_t offset_elems =
         (uint32_t) ((ggml_webgpu_flash_attn_tensor_offset(K) & (storage_offset_alignment - 1)) /
                     ggml_type_size(K->type));
-    return offset_elems % GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH == 0u;
+    फर्काऊ offset_elems % GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH == 0u;
 }
 
-inline bool ggml_webgpu_flash_attn_float_vec4_aligned(const ggml_tensor * K,
-                                                      const ggml_tensor * V,
-                                                      size_t              storage_offset_alignment) {
-    return ggml_webgpu_flash_attn_float_vec4_aligned(K, storage_offset_alignment) &&
+अन्तःस्थ तार्किक ggml_webgpu_flash_attn_float_vec4_aligned(अचर ggml_tensor * K,
+                                                      अचर ggml_tensor * V,
+                                                      माप_प्रकार              storage_offset_alignment) {
+    फर्काऊ ggml_webgpu_flash_attn_float_vec4_aligned(K, storage_offset_alignment) &&
            ggml_webgpu_flash_attn_float_vec4_aligned(V, storage_offset_alignment);
 }
 
-inline bool ggml_webgpu_flash_attn_k_direct(const ggml_tensor * Q, const ggml_tensor * K, uint32_t kv_direct_align) {
-    return (K->type == GGML_TYPE_F16 || K->type == GGML_TYPE_Q8_0 || K->type == GGML_TYPE_Q4_0) &&
+अन्तःस्थ तार्किक ggml_webgpu_flash_attn_k_direct(अचर ggml_tensor * Q, अचर ggml_tensor * K, uint32_t kv_direct_align) {
+    फर्काऊ (K->type == GGML_TYPE_F16 || K->type == GGML_TYPE_Q8_0 || K->type == GGML_TYPE_Q4_0) &&
            (Q->ne[0] % kv_direct_align == 0) && (K->ne[1] % GGML_WEBGPU_KV_SEQ_PAD == 0);
 }
 
-inline bool ggml_webgpu_flash_attn_v_direct(const ggml_tensor * Q, const ggml_tensor * V, uint32_t kv_direct_align) {
-    return ggml_webgpu_flash_attn_k_direct(Q, V, kv_direct_align);
+अन्तःस्थ तार्किक ggml_webgpu_flash_attn_v_direct(अचर ggml_tensor * Q, अचर ggml_tensor * V, uint32_t kv_direct_align) {
+    फर्काऊ ggml_webgpu_flash_attn_k_direct(Q, V, kv_direct_align);
 }
 
-inline ggml_webgpu_flash_attn_common_pipeline_key ggml_webgpu_flash_attn_make_common_pipeline_key(
-    const ggml_webgpu_shader_lib_context & context,
+अन्तःस्थ ggml_webgpu_flash_attn_common_pipeline_साँचो ggml_webgpu_flash_attn_make_common_pipeline_साँचो(
+    अचर ggml_webgpu_shader_lib_context & context,
     uint32_t                               kv_direct_align,
-    bool                                   kv_overlap) {
-    ggml_webgpu_flash_attn_common_pipeline_key key = {};
-    key.q_type                                     = context.src0->type;
-    key.k_type                                     = context.src1->type;
-    key.v_type                                     = context.src2->type;
-    key.dst_type                                   = context.dst->type;
-    key.head_dim_qk                                = (uint32_t) context.src0->ne[0];
-    key.head_dim_v                                 = (uint32_t) context.src2->ne[0];
-    key.k_direct           = ggml_webgpu_flash_attn_k_direct(context.src0, context.src1, kv_direct_align);
-    key.v_direct           = ggml_webgpu_flash_attn_v_direct(context.src0, context.src2, kv_direct_align);
-    key.kv_overlap         = kv_overlap;
-    key.has_mask           = context.src3 != nullptr;
-    key.has_sinks          = context.src4 != nullptr;
-    key.uses_logit_softcap = ggml_get_op_params_f32(context.dst, 2) != 0.0f;
-    return key;
+    तार्किक                                   kv_overlap) {
+    ggml_webgpu_flash_attn_common_pipeline_साँचो साँचो = {};
+    साँचो.q_type                                     = context.src0->type;
+    साँचो.k_type                                     = context.src1->type;
+    साँचो.v_type                                     = context.src2->type;
+    साँचो.dst_type                                   = context.dst->type;
+    साँचो.head_dim_qk                                = (uint32_t) context.src0->ne[0];
+    साँचो.head_dim_v                                 = (uint32_t) context.src2->ne[0];
+    साँचो.k_direct           = ggml_webgpu_flash_attn_k_direct(context.src0, context.src1, kv_direct_align);
+    साँचो.v_direct           = ggml_webgpu_flash_attn_v_direct(context.src0, context.src2, kv_direct_align);
+    साँचो.kv_overlap         = kv_overlap;
+    साँचो.has_mask           = context.src3 != nullptr;
+    साँचो.has_sinks          = context.src4 != nullptr;
+    साँचो.uses_logit_softcap = ggml_get_op_params_f32(context.dst, 2) != 0.0f;
+    फर्काऊ साँचो;
 }
 
-inline std::vector<std::string> ggml_webgpu_flash_attn_common_defines(
-    const ggml_webgpu_flash_attn_common_pipeline_key & key,
+अन्तःस्थ std::vector<std::string> ggml_webgpu_flash_attn_common_defines(
+    अचर ggml_webgpu_flash_attn_common_pipeline_साँचो & साँचो,
     std::string &                                      variant,
     uint32_t                                           q_tile,
     uint32_t                                           kv_tile,
     uint32_t                                           wg_size) {
     std::vector<std::string> defines;
 
-    switch (key.k_type) {
-        case GGML_TYPE_F32:
+    विकल्प (साँचो.k_type) {
+        पक्ष GGML_TYPE_F32:
             defines.push_back("K_F32");
-            break;
-        case GGML_TYPE_F16:
+            रोक;
+        पक्ष GGML_TYPE_F16:
             defines.push_back("K_F16");
-            break;
-        case GGML_TYPE_Q4_0:
+            रोक;
+        पक्ष GGML_TYPE_Q4_0:
             defines.push_back("K_Q4_0");
-            break;
-        case GGML_TYPE_Q8_0:
+            रोक;
+        पक्ष GGML_TYPE_Q8_0:
             defines.push_back("K_Q8_0");
-            break;
-        default:
+            रोक;
+        स्वभाव:
             GGML_ABORT("Unsupported K type for flash attention shader");
     }
-    variant += std::string("_k") + ggml_type_name(key.k_type);
+    variant += std::string("_k") + ggml_type_name(साँचो.k_type);
 
-    switch (key.v_type) {
-        case GGML_TYPE_F32:
+    विकल्प (साँचो.v_type) {
+        पक्ष GGML_TYPE_F32:
             defines.push_back("V_F32");
-            break;
-        case GGML_TYPE_F16:
+            रोक;
+        पक्ष GGML_TYPE_F16:
             defines.push_back("V_F16");
-            break;
-        case GGML_TYPE_Q4_0:
+            रोक;
+        पक्ष GGML_TYPE_Q4_0:
             defines.push_back("V_Q4_0");
-            break;
-        case GGML_TYPE_Q8_0:
+            रोक;
+        पक्ष GGML_TYPE_Q8_0:
             defines.push_back("V_Q8_0");
-            break;
-        default:
+            रोक;
+        स्वभाव:
             GGML_ABORT("Unsupported V type for flash attention shader");
     }
-    variant += std::string("_v") + ggml_type_name(key.v_type);
+    variant += std::string("_v") + ggml_type_name(साँचो.v_type);
 
-    switch (key.q_type) {
-        case GGML_TYPE_F32:
+    विकल्प (साँचो.q_type) {
+        पक्ष GGML_TYPE_F32:
             defines.push_back("Q_F32");
-            break;
-        case GGML_TYPE_F16:
+            रोक;
+        पक्ष GGML_TYPE_F16:
             defines.push_back("Q_F16");
-            break;
-        default:
+            रोक;
+        स्वभाव:
             GGML_ABORT("Unsupported Q type for flash attention shader");
     }
-    variant += std::string("_q") + ggml_type_name(key.q_type);
+    variant += std::string("_q") + ggml_type_name(साँचो.q_type);
 
-    switch (key.dst_type) {
-        case GGML_TYPE_F32:
+    विकल्प (साँचो.dst_type) {
+        पक्ष GGML_TYPE_F32:
             defines.push_back("DST_F32");
-            break;
-        case GGML_TYPE_F16:
+            रोक;
+        पक्ष GGML_TYPE_F16:
             defines.push_back("DST_F16");
-            break;
-        default:
+            रोक;
+        स्वभाव:
             GGML_ABORT("Unsupported dst type for flash attention shader");
     }
-    variant += std::string("_dst") + ggml_type_name(key.dst_type);
+    variant += std::string("_dst") + ggml_type_name(साँचो.dst_type);
 
-    if (key.has_mask) {
+    यदि (साँचो.has_mask) {
         defines.push_back("MASK");
         variant += "_mask";
     }
-    if (key.has_sinks) {
+    यदि (साँचो.has_sinks) {
         defines.push_back("SINKS");
         variant += "_sinks";
     }
-    if (key.uses_logit_softcap) {
+    यदि (साँचो.uses_logit_softcap) {
         defines.push_back("LOGIT_SOFTCAP");
         variant += "_lgsc";
     }
-    if (key.k_direct) {
+    यदि (साँचो.k_direct) {
         defines.push_back("K_DIRECT");
         variant += "_k_direct";
     }
-    if (key.v_direct) {
+    यदि (साँचो.v_direct) {
         defines.push_back("V_DIRECT");
         variant += "_v_direct";
     }
-    if (key.kv_overlap) {
+    यदि (साँचो.kv_overlap) {
         defines.push_back("KV_OVERLAP");
         variant += "_kv_overlap";
     }
 
-    defines.push_back(std::string("HEAD_DIM_QK=") + std::to_string(key.head_dim_qk));
-    variant += std::string("_hsqk") + std::to_string(key.head_dim_qk);
+    defines.push_back(std::string("HEAD_DIM_QK=") + std::to_string(साँचो.head_dim_qk));
+    variant += std::string("_hsqk") + std::to_string(साँचो.head_dim_qk);
 
-    defines.push_back(std::string("HEAD_DIM_V=") + std::to_string(key.head_dim_v));
-    variant += std::string("_hsv") + std::to_string(key.head_dim_v);
+    defines.push_back(std::string("HEAD_DIM_V=") + std::to_string(साँचो.head_dim_v));
+    variant += std::string("_hsv") + std::to_string(साँचो.head_dim_v);
 
     defines.push_back(std::string("Q_TILE=") + std::to_string(q_tile));
     defines.push_back(std::string("KV_TILE=") + std::to_string(kv_tile));
     defines.push_back(std::string("WG_SIZE=") + std::to_string(wg_size));
 
-    if (ggml_is_quantized(key.k_type) || ggml_is_quantized(key.v_type)) {
+    यदि (ggml_is_quantized(साँचो.k_type) || ggml_is_quantized(साँचो.v_type)) {
         defines.push_back("U32_DEQUANT_HELPERS");
-        if (ggml_is_quantized(key.k_type)) {
+        यदि (ggml_is_quantized(साँचो.k_type)) {
             defines.push_back("LOADERS_QUANTIZED_K");
         }
-        if (ggml_is_quantized(key.v_type)) {
+        यदि (ggml_is_quantized(साँचो.v_type)) {
             defines.push_back("LOADERS_QUANTIZED_V");
         }
     }
 
-    return defines;
+    फर्काऊ defines;
 }
 
-struct ggml_webgpu_flash_attn_vec_reduce_pipeline_key {
+संरचना ggml_webgpu_flash_attn_vec_reduce_pipeline_साँचो {
     uint32_t  head_dim_v;
     uint32_t  wg_size;
     ggml_type dst_type;
 };
 
-struct ggml_webgpu_flash_attn_vec_reduce_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_flash_attn_vec_reduce_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.head_dim_v);
-        ggml_webgpu_hash_combine(seed, key.wg_size);
-        ggml_webgpu_hash_combine(seed, key.dst_type);
-        return seed;
+संरचना ggml_webgpu_flash_attn_vec_reduce_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_flash_attn_vec_reduce_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.head_dim_v);
+        ggml_webgpu_hash_combine(seed, साँचो.wg_size);
+        ggml_webgpu_hash_combine(seed, साँचो.dst_type);
+        फर्काऊ seed;
     }
 };
 
-inline bool operator==(const ggml_webgpu_flash_attn_vec_reduce_pipeline_key & lhs,
-                       const ggml_webgpu_flash_attn_vec_reduce_pipeline_key & rhs) {
-    return lhs.head_dim_v == rhs.head_dim_v && lhs.wg_size == rhs.wg_size && lhs.dst_type == rhs.dst_type;
+अन्तःस्थ तार्किक चालक==(अचर ggml_webgpu_flash_attn_vec_reduce_pipeline_साँचो & lhs,
+                       अचर ggml_webgpu_flash_attn_vec_reduce_pipeline_साँचो & rhs) {
+    फर्काऊ lhs.head_dim_v == rhs.head_dim_v && lhs.wg_size == rhs.wg_size && lhs.dst_type == rhs.dst_type;
 }
 
-struct ggml_webgpu_flash_attn_blk_pipeline_key {
+संरचना ggml_webgpu_flash_attn_blk_pipeline_साँचो {
     uint32_t kv_tile;
 
-    bool operator==(const ggml_webgpu_flash_attn_blk_pipeline_key & other) const { return kv_tile == other.kv_tile; }
+    तार्किक चालक==(अचर ggml_webgpu_flash_attn_blk_pipeline_साँचो & other) अचर { फर्काऊ kv_tile == other.kv_tile; }
 };
 
-struct ggml_webgpu_flash_attn_blk_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_flash_attn_blk_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.kv_tile);
-        return seed;
+संरचना ggml_webgpu_flash_attn_blk_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_flash_attn_blk_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.kv_tile);
+        फर्काऊ seed;
     }
 };
 
 // Note: this will slightly overestimate memory usage for vec path
 // since row_max and exp_sum shmem are not needed.
-inline size_t ggml_webgpu_flash_attn_wg_mem_bytes(uint32_t q_tile,
+अन्तःस्थ माप_प्रकार ggml_webgpu_flash_attn_wg_mem_bytes(uint32_t q_tile,
                                                   uint32_t kv_tile,
                                                   uint32_t head_dim_qk,
                                                   uint32_t head_dim_v,
-                                                  bool     has_mask,
-                                                  bool     kv_direct) {
-    const uint32_t max_head_dim = std::max(head_dim_qk, head_dim_v);
-    size_t         f16_elems    = 0;
-    size_t         f32_elems    = 0;
+                                                  तार्किक     has_mask,
+                                                  तार्किक     kv_direct) {
+    अचर uint32_t max_head_dim = std::max(head_dim_qk, head_dim_v);
+    माप_प्रकार         f16_elems    = 0;
+    माप_प्रकार         f32_elems    = 0;
 
     f32_elems += q_tile * head_dim_qk;        // q_shmem
-    if (!kv_direct) {
+    यदि (!kv_direct) {
         f32_elems += kv_tile * max_head_dim;  // kv_shmem
     }
     f32_elems += q_tile * head_dim_v;         // o_shmem
-    if (has_mask) {
+    यदि (has_mask) {
         f32_elems += q_tile * kv_tile;        // mask_shmem
     }
     f32_elems += q_tile * kv_tile;            // inter_shmem
     f32_elems += q_tile;                      // row_max_shmem
     f32_elems += q_tile;                      // exp_sum_shmem
-    return f16_elems * GGML_WEBGPU_F16_SIZE_BYTES + f32_elems * GGML_WEBGPU_F32_SIZE_BYTES;
+    फर्काऊ f16_elems * GGML_WEBGPU_F16_SIZE_BYTES + f32_elems * GGML_WEBGPU_F32_SIZE_BYTES;
 }
 
-inline uint32_t ggml_webgpu_flash_attn_max_kv_tile(size_t   limit_bytes,
+अन्तःस्थ uint32_t ggml_webgpu_flash_attn_max_kv_tile(माप_प्रकार   limit_bytes,
                                                    uint32_t q_tile,
                                                    uint32_t kv_granularity,
                                                    uint32_t head_dim_qk,
                                                    uint32_t head_dim_v,
-                                                   bool     has_mask,
-                                                   bool     kv_direct) {
-    const size_t base_q_bytes =
+                                                   तार्किक     has_mask,
+                                                   तार्किक     kv_direct) {
+    अचर माप_प्रकार base_q_bytes =
         ggml_webgpu_flash_attn_wg_mem_bytes(q_tile, 0, head_dim_qk, head_dim_v, has_mask, kv_direct);
-    if (limit_bytes <= base_q_bytes) {
-        return 0;
+    यदि (limit_bytes <= base_q_bytes) {
+        फर्काऊ 0;
     }
-    const size_t one_kv_bytes =
+    अचर माप_प्रकार one_kv_bytes =
         ggml_webgpu_flash_attn_wg_mem_bytes(q_tile, 1, head_dim_qk, head_dim_v, has_mask, kv_direct);
-    const size_t bytes_per_kv = one_kv_bytes - base_q_bytes;
-    if (bytes_per_kv == 0) {
-        return 0;
+    अचर माप_प्रकार bytes_per_kv = one_kv_bytes - base_q_bytes;
+    यदि (bytes_per_kv == 0) {
+        फर्काऊ 0;
     }
-    const size_t max_kv_tile = (limit_bytes - base_q_bytes) / bytes_per_kv;
-    return (uint32_t) ((max_kv_tile / kv_granularity) * kv_granularity);
+    अचर माप_प्रकार max_kv_tile = (limit_bytes - base_q_bytes) / bytes_per_kv;
+    फर्काऊ (uint32_t) ((max_kv_tile / kv_granularity) * kv_granularity);
 }
 
-inline uint32_t ggml_webgpu_flash_attn_get_vec_kv_tile(size_t   wg_mem_limit_bytes,
+अन्तःस्थ uint32_t ggml_webgpu_flash_attn_get_vec_kv_tile(माप_प्रकार   wg_mem_limit_bytes,
                                                        uint32_t head_dim_qk,
                                                        uint32_t head_dim_v,
-                                                       bool     has_mask,
-                                                       bool     kv_direct) {
-    const uint32_t max_kv_tile =
+                                                       तार्किक     has_mask,
+                                                       तार्किक     kv_direct) {
+    अचर uint32_t max_kv_tile =
         ggml_webgpu_flash_attn_max_kv_tile(wg_mem_limit_bytes, 1u, 1u, head_dim_qk, head_dim_v, has_mask, kv_direct);
     GGML_ASSERT(max_kv_tile > 0);
 
     uint32_t kv_tile = std::min(GGML_WEBGPU_FLASH_ATTN_VEC_MAX_KV_TILE, max_kv_tile);
-    if (kv_direct) {
+    यदि (kv_direct) {
         kv_tile = std::min(kv_tile, GGML_WEBGPU_KV_SEQ_PAD);
-        while (GGML_WEBGPU_KV_SEQ_PAD % kv_tile != 0) {
+        जबसम्म (GGML_WEBGPU_KV_SEQ_PAD % kv_tile != 0) {
             kv_tile -= 1u;
         }
     }
 
-    return kv_tile;
+    फर्काऊ kv_tile;
 }
 
-inline bool ggml_webgpu_flash_attn_can_use_subgroup_matrix_path(bool                supports_subgroup_matrix,
+अन्तःस्थ तार्किक ggml_webgpu_flash_attn_can_use_subgroup_matrix_path(तार्किक                supports_subgroup_matrix,
                                                                 uint32_t            sg_mat_k,
                                                                 uint32_t            sg_mat_n,
-                                                                const ggml_tensor * Q,
-                                                                const ggml_tensor * V) {
-    return supports_subgroup_matrix && Q->ne[0] % sg_mat_k == 0 && V->ne[0] % sg_mat_n == 0;
+                                                                अचर ggml_tensor * Q,
+                                                                अचर ggml_tensor * V) {
+    फर्काऊ supports_subgroup_matrix && Q->ne[0] % sg_mat_k == 0 && V->ne[0] % sg_mat_n == 0;
 }
 
 /** Matrix Multiplication **/
 
-struct ggml_webgpu_mul_mat_vec_pipeline_key {
+संरचना ggml_webgpu_mul_mat_vec_pipeline_साँचो {
     ggml_type src0_type;
     ggml_type src1_type;
-    int       vectorized;
-    uint32_t  num_cols;
-    bool      use_mmvq;
-    bool      src_overlap;
+    पूर्णाङ्क       vectorized;
+    uint32_t  अङ्क_cols;
+    तार्किक      use_mmvq;
+    तार्किक      src_overlap;
 
-    bool operator==(const ggml_webgpu_mul_mat_vec_pipeline_key & other) const {
-        return src0_type == other.src0_type && src1_type == other.src1_type && vectorized == other.vectorized &&
-               num_cols == other.num_cols && use_mmvq == other.use_mmvq && src_overlap == other.src_overlap;
+    तार्किक चालक==(अचर ggml_webgpu_mul_mat_vec_pipeline_साँचो & other) अचर {
+        फर्काऊ src0_type == other.src0_type && src1_type == other.src1_type && vectorized == other.vectorized &&
+               अङ्क_cols == other.अङ्क_cols && use_mmvq == other.use_mmvq && src_overlap == other.src_overlap;
     }
 };
 
-struct ggml_webgpu_mul_mat_vec_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_mul_mat_vec_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.src0_type);
-        ggml_webgpu_hash_combine(seed, key.src1_type);
-        ggml_webgpu_hash_combine(seed, key.vectorized);
-        ggml_webgpu_hash_combine(seed, key.num_cols);
-        ggml_webgpu_hash_combine(seed, key.use_mmvq);
-        ggml_webgpu_hash_combine(seed, key.src_overlap);
-        return seed;
+संरचना ggml_webgpu_mul_mat_vec_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_mul_mat_vec_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.src0_type);
+        ggml_webgpu_hash_combine(seed, साँचो.src1_type);
+        ggml_webgpu_hash_combine(seed, साँचो.vectorized);
+        ggml_webgpu_hash_combine(seed, साँचो.अङ्क_cols);
+        ggml_webgpu_hash_combine(seed, साँचो.use_mmvq);
+        ggml_webgpu_hash_combine(seed, साँचो.src_overlap);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_mul_mat_vec_shader_decisions {
+संरचना ggml_webgpu_mul_mat_vec_shader_decisions {
     uint32_t wg_size;
     uint32_t outputs_per_wg;
     uint32_t vec_size;
-    bool     src_overlap = false;
+    तार्किक     src_overlap = असत्य;
 };
 
-struct ggml_webgpu_quantize_q8_pipeline_key {
+संरचना ggml_webgpu_quantize_q8_pipeline_साँचो {
     ggml_type src0_type;
 
-    bool operator==(const ggml_webgpu_quantize_q8_pipeline_key & other) const { return src0_type == other.src0_type; }
+    तार्किक चालक==(अचर ggml_webgpu_quantize_q8_pipeline_साँचो & other) अचर { फर्काऊ src0_type == other.src0_type; }
 };
 
-struct ggml_webgpu_quantize_q8_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_quantize_q8_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.src0_type);
-        return seed;
+संरचना ggml_webgpu_quantize_q8_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_quantize_q8_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.src0_type);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_mul_mat_pipeline_key {
+संरचना ggml_webgpu_mul_mat_pipeline_साँचो {
     ggml_type src0_type;
     ggml_type src1_type;
-    int       vectorized;
-    int       use_subgroup_matrix;
-    bool      src_overlap;
+    पूर्णाङ्क       vectorized;
+    पूर्णाङ्क       use_subgroup_matrix;
+    तार्किक      src_overlap;
 
-    bool operator==(const ggml_webgpu_mul_mat_pipeline_key & other) const {
-        return src0_type == other.src0_type && src1_type == other.src1_type && vectorized == other.vectorized &&
+    तार्किक चालक==(अचर ggml_webgpu_mul_mat_pipeline_साँचो & other) अचर {
+        फर्काऊ src0_type == other.src0_type && src1_type == other.src1_type && vectorized == other.vectorized &&
                use_subgroup_matrix == other.use_subgroup_matrix && src_overlap == other.src_overlap;
     }
 };
 
-struct ggml_webgpu_mul_mat_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_mul_mat_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.src0_type);
-        ggml_webgpu_hash_combine(seed, key.src1_type);
-        ggml_webgpu_hash_combine(seed, key.vectorized);
-        ggml_webgpu_hash_combine(seed, key.use_subgroup_matrix);
-        ggml_webgpu_hash_combine(seed, key.src_overlap);
-        return seed;
+संरचना ggml_webgpu_mul_mat_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_mul_mat_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.src0_type);
+        ggml_webgpu_hash_combine(seed, साँचो.src1_type);
+        ggml_webgpu_hash_combine(seed, साँचो.vectorized);
+        ggml_webgpu_hash_combine(seed, साँचो.use_subgroup_matrix);
+        ggml_webgpu_hash_combine(seed, साँचो.src_overlap);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_mul_mat_shader_decisions {
+संरचना ggml_webgpu_mul_mat_shader_decisions {
     uint32_t tile_k;
     uint32_t wg_size_m;
     uint32_t wg_size_n;
     uint32_t wg_size;
     uint32_t outputs_per_wg;
-    int      use_subgroup_matrix;
+    पूर्णाङ्क      use_subgroup_matrix;
 
     uint32_t tile_m;
     uint32_t tile_n;
@@ -1048,507 +1048,507 @@ struct ggml_webgpu_mul_mat_shader_decisions {
     uint32_t subgroup_matrix_n;
 
     uint32_t mul_mat_wg_size;
-    bool     src_overlap = false;
+    तार्किक     src_overlap = असत्य;
 };
 
 /** MUL_MAT_ID **/
 
-struct ggml_webgpu_mul_mat_id_gather_pipeline_key {
+संरचना ggml_webgpu_mul_mat_id_gather_pipeline_साँचो {
     uint32_t n_experts;
 
-    bool operator==(const ggml_webgpu_mul_mat_id_gather_pipeline_key & other) const {
-        return n_experts == other.n_experts;
+    तार्किक चालक==(अचर ggml_webgpu_mul_mat_id_gather_pipeline_साँचो & other) अचर {
+        फर्काऊ n_experts == other.n_experts;
     }
 };
 
-struct ggml_webgpu_mul_mat_id_gather_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_mul_mat_id_gather_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.n_experts);
-        return seed;
+संरचना ggml_webgpu_mul_mat_id_gather_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_mul_mat_id_gather_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.n_experts);
+        फर्काऊ seed;
     }
 };
 
-struct ggml_webgpu_mul_mat_id_pipeline_key {
+संरचना ggml_webgpu_mul_mat_id_pipeline_साँचो {
     ggml_type src0_type;
     ggml_type src1_type;
     uint32_t  n_experts;
-    uint32_t  num_cols;
-    int       vectorized;
+    uint32_t  अङ्क_cols;
+    पूर्णाङ्क       vectorized;
 
-    bool operator==(const ggml_webgpu_mul_mat_id_pipeline_key & other) const {
-        return src0_type == other.src0_type && src1_type == other.src1_type && n_experts == other.n_experts &&
-               num_cols == other.num_cols && vectorized == other.vectorized;
+    तार्किक चालक==(अचर ggml_webgpu_mul_mat_id_pipeline_साँचो & other) अचर {
+        फर्काऊ src0_type == other.src0_type && src1_type == other.src1_type && n_experts == other.n_experts &&
+               अङ्क_cols == other.अङ्क_cols && vectorized == other.vectorized;
     }
 };
 
-struct ggml_webgpu_mul_mat_id_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_mul_mat_id_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.src0_type);
-        ggml_webgpu_hash_combine(seed, key.src1_type);
-        ggml_webgpu_hash_combine(seed, key.n_experts);
-        ggml_webgpu_hash_combine(seed, key.num_cols);
-        ggml_webgpu_hash_combine(seed, key.vectorized);
-        return seed;
+संरचना ggml_webgpu_mul_mat_id_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_mul_mat_id_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.src0_type);
+        ggml_webgpu_hash_combine(seed, साँचो.src1_type);
+        ggml_webgpu_hash_combine(seed, साँचो.n_experts);
+        ggml_webgpu_hash_combine(seed, साँचो.अङ्क_cols);
+        ggml_webgpu_hash_combine(seed, साँचो.vectorized);
+        फर्काऊ seed;
     }
 };
 
 /** Cpy **/
 
-struct ggml_webgpu_cpy_pipeline_key {
+संरचना ggml_webgpu_cpy_pipeline_साँचो {
     ggml_type src_type;
     ggml_type dst_type;
 
-    bool operator==(const ggml_webgpu_cpy_pipeline_key & other) const {
-        return src_type == other.src_type && dst_type == other.dst_type;
+    तार्किक चालक==(अचर ggml_webgpu_cpy_pipeline_साँचो & other) अचर {
+        फर्काऊ src_type == other.src_type && dst_type == other.dst_type;
     }
 };
 
-struct ggml_webgpu_cpy_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_cpy_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.src_type);
-        ggml_webgpu_hash_combine(seed, key.dst_type);
-        return seed;
+संरचना ggml_webgpu_cpy_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_cpy_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.src_type);
+        ggml_webgpu_hash_combine(seed, साँचो.dst_type);
+        फर्काऊ seed;
     }
 };
 
 /** Glu **/
 
-struct ggml_webgpu_glu_pipeline_key {
+संरचना ggml_webgpu_glu_pipeline_साँचो {
     ggml_glu_op glu_op;
     ggml_type   type;
-    bool        split;
-    bool        src_overlap;
+    तार्किक        split;
+    तार्किक        src_overlap;
 
-    bool operator==(const ggml_webgpu_glu_pipeline_key & other) const {
-        return glu_op == other.glu_op && type == other.type && split == other.split && src_overlap == other.src_overlap;
+    तार्किक चालक==(अचर ggml_webgpu_glu_pipeline_साँचो & other) अचर {
+        फर्काऊ glu_op == other.glu_op && type == other.type && split == other.split && src_overlap == other.src_overlap;
     }
 };
 
-struct ggml_webgpu_glu_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_glu_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.glu_op);
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.split);
-        ggml_webgpu_hash_combine(seed, key.src_overlap);
-        return seed;
+संरचना ggml_webgpu_glu_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_glu_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.glu_op);
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.split);
+        ggml_webgpu_hash_combine(seed, साँचो.src_overlap);
+        फर्काऊ seed;
     }
 };
 
 /** Rope **/
 
-struct ggml_webgpu_rope_pipeline_key {
+संरचना ggml_webgpu_rope_pipeline_साँचो {
     ggml_type type;
-    bool      inplace;
-    bool      has_ff;
+    तार्किक      inplace;
+    तार्किक      has_ff;
 
-    bool operator==(const ggml_webgpu_rope_pipeline_key & other) const {
-        return type == other.type && inplace == other.inplace && has_ff == other.has_ff;
+    तार्किक चालक==(अचर ggml_webgpu_rope_pipeline_साँचो & other) अचर {
+        फर्काऊ type == other.type && inplace == other.inplace && has_ff == other.has_ff;
     }
 };
 
-struct ggml_webgpu_rope_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_rope_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.type);
-        ggml_webgpu_hash_combine(seed, key.inplace);
-        ggml_webgpu_hash_combine(seed, key.has_ff);
-        return seed;
+संरचना ggml_webgpu_rope_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_rope_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.type);
+        ggml_webgpu_hash_combine(seed, साँचो.inplace);
+        ggml_webgpu_hash_combine(seed, साँचो.has_ff);
+        फर्काऊ seed;
     }
 };
 
 /** SoftMax **/
 
-struct ggml_webgpu_soft_max_pipeline_key {
+संरचना ggml_webgpu_soft_max_pipeline_साँचो {
     ggml_type mask_type;
-    bool      has_mask;
-    bool      has_sink;
-    bool      inplace;
+    तार्किक      has_mask;
+    तार्किक      has_sink;
+    तार्किक      inplace;
 
-    bool operator==(const ggml_webgpu_soft_max_pipeline_key & other) const {
-        return mask_type == other.mask_type && has_mask == other.has_mask && has_sink == other.has_sink &&
+    तार्किक चालक==(अचर ggml_webgpu_soft_max_pipeline_साँचो & other) अचर {
+        फर्काऊ mask_type == other.mask_type && has_mask == other.has_mask && has_sink == other.has_sink &&
                inplace == other.inplace;
     }
 };
 
-struct ggml_webgpu_soft_max_pipeline_key_hash {
-    size_t operator()(const ggml_webgpu_soft_max_pipeline_key & key) const {
-        size_t seed = 0;
-        ggml_webgpu_hash_combine(seed, key.mask_type);
-        ggml_webgpu_hash_combine(seed, key.has_mask);
-        ggml_webgpu_hash_combine(seed, key.has_sink);
-        ggml_webgpu_hash_combine(seed, key.inplace);
-        return seed;
+संरचना ggml_webgpu_soft_max_pipeline_साँचो_hash {
+    माप_प्रकार चालक()(अचर ggml_webgpu_soft_max_pipeline_साँचो & साँचो) अचर {
+        माप_प्रकार seed = 0;
+        ggml_webgpu_hash_combine(seed, साँचो.mask_type);
+        ggml_webgpu_hash_combine(seed, साँचो.has_mask);
+        ggml_webgpu_hash_combine(seed, साँचो.has_sink);
+        ggml_webgpu_hash_combine(seed, साँचो.inplace);
+        फर्काऊ seed;
     }
 };
 
 /** MMVQ **/
 
-inline bool ggml_webgpu_can_use_mmvq(const ggml_tensor * src0,
-                                     const ggml_tensor * src1,
-                                     bool                supports_dot_product,
-                                     const std::string & vendor) {
-    if (src1->ne[1] <= 4) {
-        bool supports_dp4a = vendor == "amd" || vendor == "intel" || vendor == "nvidia";
-        if (supports_dp4a && supports_dot_product) {
-            switch (src1->type) {
-                case GGML_TYPE_F32:
-                    switch (src0->type) {
-                        case GGML_TYPE_Q1_0:
-                        case GGML_TYPE_Q4_0:
-                        case GGML_TYPE_Q4_1:
-                        case GGML_TYPE_Q5_0:
-                        case GGML_TYPE_Q5_1:
-                        case GGML_TYPE_Q8_0:
-                        case GGML_TYPE_MXFP4:
-                        case GGML_TYPE_Q2_K:
-                        case GGML_TYPE_Q3_K:
-                        case GGML_TYPE_Q4_K:
-                        case GGML_TYPE_Q5_K:
-                        case GGML_TYPE_Q6_K:
-                            return src0->ne[0] % 4 == 0;
-                        default:
-                            break;
+अन्तःस्थ तार्किक ggml_webgpu_can_use_mmvq(अचर ggml_tensor * src0,
+                                     अचर ggml_tensor * src1,
+                                     तार्किक                supports_dot_product,
+                                     अचर std::string & vendor) {
+    यदि (src1->ne[1] <= 4) {
+        तार्किक supports_dp4a = vendor == "amd" || vendor == "intel" || vendor == "nvidia";
+        यदि (supports_dp4a && supports_dot_product) {
+            विकल्प (src1->type) {
+                पक्ष GGML_TYPE_F32:
+                    विकल्प (src0->type) {
+                        पक्ष GGML_TYPE_Q1_0:
+                        पक्ष GGML_TYPE_Q4_0:
+                        पक्ष GGML_TYPE_Q4_1:
+                        पक्ष GGML_TYPE_Q5_0:
+                        पक्ष GGML_TYPE_Q5_1:
+                        पक्ष GGML_TYPE_Q8_0:
+                        पक्ष GGML_TYPE_MXFP4:
+                        पक्ष GGML_TYPE_Q2_K:
+                        पक्ष GGML_TYPE_Q3_K:
+                        पक्ष GGML_TYPE_Q4_K:
+                        पक्ष GGML_TYPE_Q5_K:
+                        पक्ष GGML_TYPE_Q6_K:
+                            फर्काऊ src0->ne[0] % 4 == 0;
+                        स्वभाव:
+                            रोक;
                     }
-                    break;
-                default:
-                    break;
+                    रोक;
+                स्वभाव:
+                    रोक;
             }
         }
     }
-    return false;
+    फर्काऊ असत्य;
 }
 
-class ggml_webgpu_shader_lib {
+वर्ग ggml_webgpu_shader_lib {
     wgpu::Device           device;
     pre_wgsl::Preprocessor preprocessor;
 
-    std::unordered_map<int, webgpu_pipeline> sum_rows_pipelines;       // key is fixed, no variants yet
-    std::unordered_map<int, webgpu_pipeline> argmax_pipelines;         // key is vec4
-    std::unordered_map<int, webgpu_pipeline> argsort_pipelines;        // key is order
-    std::unordered_map<int, webgpu_pipeline> argsort_merge_pipelines;  // key is order
-    std::unordered_map<int, webgpu_pipeline> cumsum_pipelines;         // key is fixed, no variants yet
-    std::unordered_map<ggml_webgpu_row_norm_pipeline_key, webgpu_pipeline, ggml_webgpu_row_norm_pipeline_key_hash>
+    std::unordered_map<पूर्णाङ्क, webgpu_pipeline> sum_rows_pipelines;       // key is fixed, no variants yet
+    std::unordered_map<पूर्णाङ्क, webgpu_pipeline> argmax_pipelines;         // key is vec4
+    std::unordered_map<पूर्णाङ्क, webgpu_pipeline> argsort_pipelines;        // key is order
+    std::unordered_map<पूर्णाङ्क, webgpu_pipeline> argsort_merge_pipelines;  // key is order
+    std::unordered_map<पूर्णाङ्क, webgpu_pipeline> cumsum_pipelines;         // key is fixed, no variants yet
+    std::unordered_map<ggml_webgpu_row_norm_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_row_norm_pipeline_साँचो_hash>
         row_norm_pipelines;                                            // op/inplace
 
-    std::unordered_map<ggml_webgpu_get_rows_pipeline_key, webgpu_pipeline, ggml_webgpu_get_rows_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_get_rows_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_get_rows_pipeline_साँचो_hash>
         get_rows_pipelines;   // src_type, vectorized
-    std::unordered_map<ggml_webgpu_unary_pipeline_key, webgpu_pipeline, ggml_webgpu_unary_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_unary_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_unary_pipeline_साँचो_hash>
         unary_pipelines;      // type/op/inplace
-    std::unordered_map<ggml_webgpu_scale_pipeline_key, webgpu_pipeline, ggml_webgpu_scale_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_scale_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_scale_pipeline_साँचो_hash>
         scale_pipelines;      // inplace
-    std::unordered_map<ggml_webgpu_solve_tri_pipeline_key, webgpu_pipeline, ggml_webgpu_solve_tri_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_solve_tri_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_solve_tri_pipeline_साँचो_hash>
         solve_tri_pipelines;  // type
-    std::unordered_map<ggml_webgpu_ssm_conv_pipeline_key, webgpu_pipeline, ggml_webgpu_ssm_conv_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_ssm_conv_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_ssm_conv_pipeline_साँचो_hash>
         ssm_conv_pipelines;   // type/vectorized
-    std::unordered_map<ggml_webgpu_ssm_scan_pipeline_key, webgpu_pipeline, ggml_webgpu_ssm_scan_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_ssm_scan_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_ssm_scan_pipeline_साँचो_hash>
         ssm_scan_pipelines;   // type/d_state
-    std::unordered_map<ggml_webgpu_gated_delta_net_pipeline_key,
+    std::unordered_map<ggml_webgpu_gated_delta_net_pipeline_साँचो,
                        webgpu_pipeline,
-                       ggml_webgpu_gated_delta_net_pipeline_key_hash>
+                       ggml_webgpu_gated_delta_net_pipeline_साँचो_hash>
         gated_delta_net_pipelines;  // type/S_v/kda
-    std::unordered_map<ggml_webgpu_pad_pipeline_key, webgpu_pipeline, ggml_webgpu_pad_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_pad_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_pad_pipeline_साँचो_hash>
         pad_pipelines;              // circular/non-circular
-    std::unordered_map<ggml_webgpu_binary_pipeline_key, webgpu_pipeline, ggml_webgpu_binary_pipeline_key_hash>
-        binary_pipelines;           // type/op/inplace/overlap/src_overlap
-    std::unordered_map<ggml_webgpu_add_id_pipeline_key, webgpu_pipeline, ggml_webgpu_add_id_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_द्विआधारी_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_द्विआधारी_pipeline_साँचो_hash>
+        द्विआधारी_pipelines;           // type/op/inplace/overlap/src_overlap
+    std::unordered_map<ggml_webgpu_add_id_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_add_id_pipeline_साँचो_hash>
         add_id_pipelines;           // inplace
-    std::unordered_map<ggml_webgpu_concat_pipeline_key, webgpu_pipeline, ggml_webgpu_concat_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_concat_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_concat_pipeline_साँचो_hash>
         concat_pipelines;           // type
-    std::unordered_map<ggml_webgpu_repeat_pipeline_key, webgpu_pipeline, ggml_webgpu_repeat_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_repeat_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_repeat_pipeline_साँचो_hash>
         repeat_pipelines;           // type
-    std::unordered_map<ggml_webgpu_flash_attn_vec_pipeline_key,
+    std::unordered_map<ggml_webgpu_flash_attn_vec_pipeline_साँचो,
                        webgpu_pipeline,
-                       ggml_webgpu_flash_attn_vec_pipeline_key_hash>
+                       ggml_webgpu_flash_attn_vec_pipeline_साँचो_hash>
         flash_attn_vec_pipelines;
-    std::unordered_map<ggml_webgpu_flash_attn_pipeline_key, webgpu_pipeline, ggml_webgpu_flash_attn_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_flash_attn_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_flash_attn_pipeline_साँचो_hash>
         flash_attn_pipelines;
-    std::unordered_map<ggml_webgpu_flash_attn_vec_reduce_pipeline_key,
+    std::unordered_map<ggml_webgpu_flash_attn_vec_reduce_pipeline_साँचो,
                        webgpu_pipeline,
-                       ggml_webgpu_flash_attn_vec_reduce_pipeline_key_hash>
+                       ggml_webgpu_flash_attn_vec_reduce_pipeline_साँचो_hash>
         flash_attn_vec_reduce_pipelines;
-    std::unordered_map<ggml_webgpu_flash_attn_blk_pipeline_key,
+    std::unordered_map<ggml_webgpu_flash_attn_blk_pipeline_साँचो,
                        webgpu_pipeline,
-                       ggml_webgpu_flash_attn_blk_pipeline_key_hash>
+                       ggml_webgpu_flash_attn_blk_pipeline_साँचो_hash>
         flash_attn_blk_pipelines;
-    std::unordered_map<ggml_webgpu_mul_mat_vec_pipeline_key, webgpu_pipeline, ggml_webgpu_mul_mat_vec_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_mul_mat_vec_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_mul_mat_vec_pipeline_साँचो_hash>
         mul_mat_vec_pipelines;   // fast mat-vec (n==1)
-    std::unordered_map<ggml_webgpu_mul_mat_pipeline_key, webgpu_pipeline, ggml_webgpu_mul_mat_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_mul_mat_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_mul_mat_pipeline_साँचो_hash>
         mul_mat_fast_pipelines;  // fast mat-mat (reg-tile or subgroup)
-    std::unordered_map<ggml_webgpu_quantize_q8_pipeline_key, webgpu_pipeline, ggml_webgpu_quantize_q8_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_quantize_q8_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_quantize_q8_pipeline_साँचो_hash>
         quantize_q8_pipelines;
-    std::unordered_map<ggml_webgpu_mul_mat_id_gather_pipeline_key,
+    std::unordered_map<ggml_webgpu_mul_mat_id_gather_pipeline_साँचो,
                        webgpu_pipeline,
-                       ggml_webgpu_mul_mat_id_gather_pipeline_key_hash>
+                       ggml_webgpu_mul_mat_id_gather_pipeline_साँचो_hash>
         mul_mat_id_gather_pipelines;  // n_experts
-    std::unordered_map<ggml_webgpu_mul_mat_id_pipeline_key, webgpu_pipeline, ggml_webgpu_mul_mat_id_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_mul_mat_id_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_mul_mat_id_pipeline_साँचो_hash>
         mul_mat_id_pipelines;         // src0_type/src1_type
-    std::unordered_map<ggml_webgpu_mul_mat_id_pipeline_key, webgpu_pipeline, ggml_webgpu_mul_mat_id_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_mul_mat_id_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_mul_mat_id_pipeline_साँचो_hash>
         mul_mat_id_vec_pipelines;     // src0_type/src1_type
 
-    std::unordered_map<ggml_webgpu_set_rows_pipeline_key, webgpu_pipeline, ggml_webgpu_set_rows_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_set_rows_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_set_rows_pipeline_साँचो_hash>
         set_rows_pipelines;
-    std::unordered_map<ggml_webgpu_set_pipeline_key, webgpu_pipeline, ggml_webgpu_set_pipeline_key_hash> set_pipelines;
-    std::unordered_map<ggml_webgpu_cpy_pipeline_key, webgpu_pipeline, ggml_webgpu_cpy_pipeline_key_hash> cpy_pipelines;
-    std::unordered_map<ggml_webgpu_glu_pipeline_key, webgpu_pipeline, ggml_webgpu_glu_pipeline_key_hash> glu_pipelines;
-    std::unordered_map<ggml_webgpu_rope_pipeline_key, webgpu_pipeline, ggml_webgpu_rope_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_set_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_set_pipeline_साँचो_hash> set_pipelines;
+    std::unordered_map<ggml_webgpu_cpy_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_cpy_pipeline_साँचो_hash> cpy_pipelines;
+    std::unordered_map<ggml_webgpu_glu_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_glu_pipeline_साँचो_hash> glu_pipelines;
+    std::unordered_map<ggml_webgpu_rope_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_rope_pipeline_साँचो_hash>
         rope_pipelines;
-    std::unordered_map<ggml_webgpu_soft_max_pipeline_key, webgpu_pipeline, ggml_webgpu_soft_max_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_soft_max_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_soft_max_pipeline_साँचो_hash>
         soft_max_pipelines;
-    std::unordered_map<ggml_webgpu_conv2d_pipeline_key, webgpu_pipeline, ggml_webgpu_conv2d_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_conv2d_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_conv2d_pipeline_साँचो_hash>
         conv2d_pipelines;
-    std::unordered_map<ggml_webgpu_conv2d_dw_pipeline_key, webgpu_pipeline, ggml_webgpu_conv2d_dw_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_conv2d_dw_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_conv2d_dw_pipeline_साँचो_hash>
         conv2d_dw_pipelines;
-    std::unordered_map<ggml_webgpu_im2col_pipeline_key, webgpu_pipeline, ggml_webgpu_im2col_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_im2col_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_im2col_pipeline_साँचो_hash>
         im2col_pipelines;
 
-    std::unordered_map<ggml_webgpu_rms_norm_mul_pipeline_key,
+    std::unordered_map<ggml_webgpu_rms_norm_mul_pipeline_साँचो,
                        webgpu_pipeline,
-                       ggml_webgpu_rms_norm_mul_pipeline_key_hash>
+                       ggml_webgpu_rms_norm_mul_pipeline_साँचो_hash>
         rms_norm_mul_pipelines;
-    std::unordered_map<ggml_webgpu_upscale_pipeline_key, webgpu_pipeline, ggml_webgpu_upscale_pipeline_key_hash>
+    std::unordered_map<ggml_webgpu_upscale_pipeline_साँचो, webgpu_pipeline, ggml_webgpu_upscale_pipeline_साँचो_hash>
         upscale_pipelines;
 
-  public:
-    ggml_webgpu_shader_lib(wgpu::Device device) { this->device = device; }
+  सार्वजनिक:
+    ggml_webgpu_shader_lib(wgpu::Device device) { एतत्->device = device; }
 
-    webgpu_pipeline get_sum_rows_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        auto it = sum_rows_pipelines.find(1);
-        if (it != sum_rows_pipelines.end()) {
-            return it->second;
+    webgpu_pipeline get_sum_rows_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        स्वतः it = sum_rows_pipelines.find(1);
+        यदि (it != sum_rows_pipelines.end()) {
+            फर्काऊ it->second;
         }
         std::vector<std::string> defines;
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed        = preprocessor.preprocess(wgsl_sum_rows, defines);
+        स्वतः processed        = preprocessor.preprocess(wgsl_sum_rows, defines);
         sum_rows_pipelines[1] = ggml_webgpu_create_pipeline(device, processed, "sum_rows");
-        return sum_rows_pipelines[1];
+        फर्काऊ sum_rows_pipelines[1];
     }
 
-    webgpu_pipeline get_row_norm_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_row_norm_pipeline_key key = {};
-        key.op                                = context.dst->op;
-        key.src_type                          = context.src0->type;
-        key.dst_type                          = context.dst->type;
-        key.inplace                           = ggml_webgpu_tensor_equal(context.src0, context.dst);
+    webgpu_pipeline get_row_norm_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_row_norm_pipeline_साँचो साँचो = {};
+        साँचो.op                                = context.dst->op;
+        साँचो.src_type                          = context.src0->type;
+        साँचो.dst_type                          = context.dst->type;
+        साँचो.inplace                           = ggml_webgpu_tensor_equal(context.src0, context.dst);
 
-        auto it = row_norm_pipelines.find(key);
-        if (it != row_norm_pipelines.end()) {
-            return it->second;
+        स्वतः it = row_norm_pipelines.find(साँचो);
+        यदि (it != row_norm_pipelines.end()) {
+            फर्काऊ it->second;
         }
         std::vector<std::string> defines;
         std::string              variant;
 
-        switch (key.op) {
-            case GGML_OP_RMS_NORM:
+        विकल्प (साँचो.op) {
+            पक्ष GGML_OP_RMS_NORM:
                 defines.push_back("RMS_NORM");
                 variant = "rms_norm";
-                break;
-            case GGML_OP_NORM:
+                रोक;
+            पक्ष GGML_OP_NORM:
                 defines.push_back("NORM");
                 variant = "norm";
-                break;
-            case GGML_OP_L2_NORM:
+                रोक;
+            पक्ष GGML_OP_L2_NORM:
                 defines.push_back("L2_NORM");
                 variant = "l2_norm";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported op for row_norm shader");
         }
 
-        if (key.inplace) {
+        यदि (साँचो.inplace) {
             defines.push_back("INPLACE");
             variant += "_inplace";
         }
 
-        if (key.src_type == GGML_TYPE_F32) {
+        यदि (साँचो.src_type == GGML_TYPE_F32) {
             defines.push_back("SRC_F32");
             variant += "_src_f32";
-        } else if (key.src_type == GGML_TYPE_F16) {
+        } अन्यथा यदि (साँचो.src_type == GGML_TYPE_F16) {
             defines.push_back("SRC_F16");
             variant += "_src_f16";
         }
 
-        if (key.dst_type == GGML_TYPE_F32) {
+        यदि (साँचो.dst_type == GGML_TYPE_F32) {
             defines.push_back("DST_F32");
             variant += "_dst_f32";
-        } else if (key.dst_type == GGML_TYPE_F16) {
+        } अन्यथा यदि (साँचो.dst_type == GGML_TYPE_F16) {
             defines.push_back("DST_F16");
             variant += "_dst_f16";
         }
 
-        const uint32_t row_norm_wg_size = 128u;
+        अचर uint32_t row_norm_wg_size = 128u;
         uint32_t       wg_size          = std::min(context.max_wg_size, row_norm_wg_size);
         defines.push_back(std::string("WG_SIZE=") + std::to_string(wg_size));
-        auto processed                  = preprocessor.preprocess(wgsl_row_norm, defines);
-        auto decisions                  = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed                  = preprocessor.preprocess(wgsl_row_norm, defines);
+        स्वतः decisions                  = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size              = wg_size;
-        decisions->inplace              = key.inplace;
-        row_norm_pipelines[key]         = ggml_webgpu_create_pipeline(device, processed, variant);
-        row_norm_pipelines[key].context = decisions;
-        return row_norm_pipelines[key];
+        decisions->inplace              = साँचो.inplace;
+        row_norm_pipelines[साँचो]         = ggml_webgpu_create_pipeline(device, processed, variant);
+        row_norm_pipelines[साँचो].context = decisions;
+        फर्काऊ row_norm_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_argmax_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        bool vec4 = context.src0->ne[0] % 4 == 0;
+    webgpu_pipeline get_argmax_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        तार्किक vec4 = context.src0->ne[0] % 4 == 0;
 
-        auto it = argmax_pipelines.find(vec4);
-        if (it != argmax_pipelines.end()) {
-            return it->second;
+        स्वतः it = argmax_pipelines.find(vec4);
+        यदि (it != argmax_pipelines.end()) {
+            फर्काऊ it->second;
         }
         std::string              variant = "argmax";
         std::vector<std::string> defines;
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
-        if (vec4) {
+        यदि (vec4) {
             defines.push_back("VEC4");
             variant += "_vec4";
         }
 
-        auto processed         = preprocessor.preprocess(wgsl_argmax, defines);
+        स्वतः processed         = preprocessor.preprocess(wgsl_argmax, defines);
         argmax_pipelines[vec4] = ggml_webgpu_create_pipeline(device, processed, variant);
-        return argmax_pipelines.at(vec4);
+        फर्काऊ argmax_pipelines.at(vec4);
     }
 
-    webgpu_pipeline get_set_rows_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        const bool                        quantized = ggml_is_quantized(context.dst->type);
-        ggml_webgpu_set_rows_pipeline_key key       = {};
-        key.src0_type                               = context.src0->type;
-        key.dst_type                                = context.dst->type;
-        key.vec4        = (context.dst->type == GGML_TYPE_F32 || context.dst->type == GGML_TYPE_F16) &&
+    webgpu_pipeline get_set_rows_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        अचर तार्किक                        quantized = ggml_is_quantized(context.dst->type);
+        ggml_webgpu_set_rows_pipeline_साँचो साँचो       = {};
+        साँचो.src0_type                               = context.src0->type;
+        साँचो.dst_type                                = context.dst->type;
+        साँचो.vec4        = (context.dst->type == GGML_TYPE_F32 || context.dst->type == GGML_TYPE_F16) &&
                           context.src0->type == GGML_TYPE_F32 && context.src0->ne[0] % 4 == 0;
-        key.i64_idx     = context.src1->type == GGML_TYPE_I64;
-        key.pair_blocks = quantized && ((context.src0->ne[0] / ggml_blck_size(context.dst->type)) % 2 == 0);
+        साँचो.i64_idx     = context.src1->type == GGML_TYPE_I64;
+        साँचो.pair_blocks = quantized && ((context.src0->ne[0] / ggml_blck_size(context.dst->type)) % 2 == 0);
 
-        auto it = set_rows_pipelines.find(key);
-        if (it != set_rows_pipelines.end()) {
-            return it->second;
+        स्वतः it = set_rows_pipelines.find(साँचो);
+        यदि (it != set_rows_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "set_rows";
 
-        switch (context.dst->type) {
-            case GGML_TYPE_F32:
+        विकल्प (context.dst->type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("DST_F32");
                 variant += "_dstf32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("DST_F16");
                 variant += "_dstf16";
-                break;
-            case GGML_TYPE_Q8_0:
+                रोक;
+            पक्ष GGML_TYPE_Q8_0:
                 defines.push_back("DST_Q8_0");
                 variant += "_dstq8_0";
-                break;
-            case GGML_TYPE_Q4_0:
+                रोक;
+            पक्ष GGML_TYPE_Q4_0:
                 defines.push_back("DST_Q4_0");
                 variant += "_dstq4_0";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported dst type for set_rows shader");
         }
 
-        if (context.src0->type == GGML_TYPE_F16) {
+        यदि (context.src0->type == GGML_TYPE_F16) {
             defines.push_back("TYPE_F16");
             variant += "_src0_f16";
         }
 
-        if (key.vec4) {
+        यदि (साँचो.vec4) {
             defines.push_back("VEC4");
             variant += "_vec4";
         }
-        if (key.i64_idx) {
+        यदि (साँचो.i64_idx) {
             defines.push_back("I64_IDX");
             variant += "_i64idx";
         }
-        if (key.pair_blocks) {
+        यदि (साँचो.pair_blocks) {
             defines.push_back("PAIR_BLOCKS");
             variant += "_pair_blocks";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        const auto & shader_source      = quantized ? wgsl_set_rows_quant : wgsl_set_rows;
-        auto         processed          = preprocessor.preprocess(shader_source, defines);
-        auto         decisions          = std::make_shared<ggml_webgpu_set_rows_shader_decisions>();
-        decisions->vec4                 = key.vec4;
-        decisions->i64_idx              = key.i64_idx;
-        decisions->pair_blocks          = key.pair_blocks;
+        अचर स्वतः & shader_source      = quantized ? wgsl_set_rows_quant : wgsl_set_rows;
+        स्वतः         processed          = preprocessor.preprocess(shader_source, defines);
+        स्वतः         decisions          = std::make_shared<ggml_webgpu_set_rows_shader_decisions>();
+        decisions->vec4                 = साँचो.vec4;
+        decisions->i64_idx              = साँचो.i64_idx;
+        decisions->pair_blocks          = साँचो.pair_blocks;
         decisions->wg_size              = context.max_wg_size;
-        set_rows_pipelines[key]         = ggml_webgpu_create_pipeline(device, processed, variant);
-        set_rows_pipelines[key].context = decisions;
-        return set_rows_pipelines[key];
+        set_rows_pipelines[साँचो]         = ggml_webgpu_create_pipeline(device, processed, variant);
+        set_rows_pipelines[साँचो].context = decisions;
+        फर्काऊ set_rows_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_set_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_set_pipeline_key key = {};
-        key.type                         = context.dst->type;
-        key.inplace                      = ggml_webgpu_tensor_equal(context.src0, context.dst);
+    webgpu_pipeline get_set_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_set_pipeline_साँचो साँचो = {};
+        साँचो.type                         = context.dst->type;
+        साँचो.inplace                      = ggml_webgpu_tensor_equal(context.src0, context.dst);
 
-        auto it = set_pipelines.find(key);
-        if (it != set_pipelines.end()) {
-            return it->second;
+        स्वतः it = set_pipelines.find(साँचो);
+        यदि (it != set_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "set";
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_I32:
+                रोक;
+            पक्ष GGML_TYPE_I32:
                 defines.push_back("TYPE_I32");
                 variant += "_i32";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for set shader");
         }
 
-        if (key.inplace) {
+        यदि (साँचो.inplace) {
             defines.push_back("INPLACE");
             variant += "_inplace";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_set, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_set, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
-        decisions->inplace       = key.inplace;
+        decisions->inplace       = साँचो.inplace;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        set_pipelines[key]       = pipeline;
-        return set_pipelines[key];
+        set_pipelines[साँचो]       = pipeline;
+        फर्काऊ set_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_cumsum_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        auto it = cumsum_pipelines.find(1);
-        if (it != cumsum_pipelines.end()) {
-            return it->second;
+    webgpu_pipeline get_cumsum_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        स्वतः it = cumsum_pipelines.find(1);
+        यदि (it != cumsum_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed      = preprocessor.preprocess(wgsl_cumsum, defines);
+        स्वतः processed      = preprocessor.preprocess(wgsl_cumsum, defines);
         cumsum_pipelines[1] = ggml_webgpu_create_pipeline(device, processed, "cumsum");
-        return cumsum_pipelines[1];
+        फर्काऊ cumsum_pipelines[1];
     }
 
-    webgpu_pipeline get_argsort_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        bool          is_top_k = context.dst->op == GGML_OP_TOP_K;
+    webgpu_pipeline get_argsort_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        तार्किक          is_शीर्ष_k = context.dst->op == GGML_OP_शीर्ष_K;
         // ascending order is 0, descending order is 1
-        const int32_t order =
-            is_top_k ? (int32_t) GGML_SORT_ORDER_DESC : (int32_t) ggml_get_op_params_i32(context.dst, 0);
+        अचर int32_t order =
+            is_शीर्ष_k ? (int32_t) GGML_SORT_ORDER_DESC : (int32_t) ggml_get_op_params_i32(context.dst, 0);
 
-        auto it = argsort_pipelines.find(order);
-        if (it != argsort_pipelines.end()) {
-            return it->second;
+        स्वतः it = argsort_pipelines.find(order);
+        यदि (it != argsort_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
@@ -1556,28 +1556,28 @@ class ggml_webgpu_shader_lib {
         defines.push_back(std::string("ORDER=") + std::to_string(order));
         variant += std::string("_order") + std::to_string(order);
         uint32_t wg_size = 1;
-        while (wg_size * 2 <= context.max_wg_size &&
+        जबसम्म (wg_size * 2 <= context.max_wg_size &&
                wg_size * GGML_WEBGPU_I32_SIZE_BYTES <= context.wg_mem_limit_bytes / 2) {
             wg_size *= 2;
         }
         defines.push_back(std::string("WG_SIZE=") + std::to_string(wg_size));
-        auto processed                   = preprocessor.preprocess(wgsl_argsort, defines);
-        auto decisions                   = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed                   = preprocessor.preprocess(wgsl_argsort, defines);
+        स्वतः decisions                   = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size               = wg_size;
         argsort_pipelines[order]         = ggml_webgpu_create_pipeline(device, processed, variant);
         argsort_pipelines[order].context = decisions;
-        return argsort_pipelines[order];
+        फर्काऊ argsort_pipelines[order];
     }
 
-    webgpu_pipeline get_argsort_merge_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        bool          is_top_k = context.dst->op == GGML_OP_TOP_K;
+    webgpu_pipeline get_argsort_merge_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        तार्किक          is_शीर्ष_k = context.dst->op == GGML_OP_शीर्ष_K;
         // ascending order is 0, descending order is 1
-        const int32_t order =
-            is_top_k ? (int32_t) GGML_SORT_ORDER_DESC : (int32_t) ggml_get_op_params_i32(context.dst, 0);
+        अचर int32_t order =
+            is_शीर्ष_k ? (int32_t) GGML_SORT_ORDER_DESC : (int32_t) ggml_get_op_params_i32(context.dst, 0);
 
-        auto it = argsort_merge_pipelines.find(order);
-        if (it != argsort_merge_pipelines.end()) {
-            return it->second;
+        स्वतः it = argsort_merge_pipelines.find(order);
+        यदि (it != argsort_merge_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
@@ -1587,96 +1587,96 @@ class ggml_webgpu_shader_lib {
         uint32_t wg_size = std::min(GGML_WEBGPU_ARGSORT_MERGE_MAX_WG_SIZE, context.max_wg_size);
         defines.push_back(std::string("WG_SIZE=") + std::to_string(wg_size));
 
-        auto processed                 = preprocessor.preprocess(wgsl_argsort_merge, defines);
+        स्वतः processed                 = preprocessor.preprocess(wgsl_argsort_merge, defines);
         argsort_merge_pipelines[order] = ggml_webgpu_create_pipeline(device, processed, variant);
-        return argsort_merge_pipelines[order];
+        फर्काऊ argsort_merge_pipelines[order];
     }
 
-    webgpu_pipeline get_get_rows_pipeline(const ggml_webgpu_shader_lib_context & context, bool vec4_aligned) {
-        const bool vectorized = context.src0->type == GGML_TYPE_F32 && context.dst->ne[0] % 4 == 0 && vec4_aligned;
-        ggml_webgpu_get_rows_pipeline_key key = {};
-        key.src_type                          = context.src0->type;
-        key.vectorized                        = (int) vectorized;
+    webgpu_pipeline get_get_rows_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक vec4_aligned) {
+        अचर तार्किक vectorized = context.src0->type == GGML_TYPE_F32 && context.dst->ne[0] % 4 == 0 && vec4_aligned;
+        ggml_webgpu_get_rows_pipeline_साँचो साँचो = {};
+        साँचो.src_type                          = context.src0->type;
+        साँचो.vectorized                        = (पूर्णाङ्क) vectorized;
 
-        auto it = get_rows_pipelines.find(key);
-        if (it != get_rows_pipelines.end()) {
-            return it->second;
+        स्वतः it = get_rows_pipelines.find(साँचो);
+        यदि (it != get_rows_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "get_rows";
 
-        const struct ggml_type_traits * type_traits = ggml_get_type_traits(key.src_type);
-        const char *                    type_str    = type_traits->type_name;
+        अचर संरचना ggml_type_traits * type_traits = ggml_get_type_traits(साँचो.src_type);
+        अचर वर्ण *                    type_str    = type_traits->type_name;
 
-        switch (key.src_type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.src_type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("FLOAT_PARALLEL");
-                if (key.vectorized) {
+                यदि (साँचो.vectorized) {
                     defines.push_back("F32_VEC");
                     defines.push_back("SRC_TYPE=vec4<f32>");
                     defines.push_back("DST_TYPE=vec4<f32>");
                     defines.push_back("BLOCK_SIZE=4u");
-                } else {
+                } अन्यथा {
                     defines.push_back("F32");
                     defines.push_back("SRC_TYPE=f32");
                     defines.push_back("DST_TYPE=f32");
                     defines.push_back("BLOCK_SIZE=1u");
                 }
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("FLOAT_PARALLEL");
                 defines.push_back("F16");
                 defines.push_back("SRC_TYPE=f16");
                 defines.push_back("DST_TYPE=f32");
                 defines.push_back("BLOCK_SIZE=1u");
                 variant += "_f16";
-                break;
-            case GGML_TYPE_I32:
+                रोक;
+            पक्ष GGML_TYPE_I32:
                 defines.push_back("FLOAT_PARALLEL");
                 defines.push_back("I32");
                 defines.push_back("SRC_TYPE=i32");
                 defines.push_back("DST_TYPE=i32");
                 defines.push_back("BLOCK_SIZE=1u");
                 variant += "_i32";
-                break;
-            case GGML_TYPE_BF16:
+                रोक;
+            पक्ष GGML_TYPE_BF16:
                 defines.push_back("BF16");
                 defines.push_back("SRC_TYPE=u32");
                 defines.push_back("DST_TYPE=f32");
                 defines.push_back("BLOCK_SIZE=1u");
                 variant += "_bf16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 {
                     std::string type_upper = type_str;
-                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::toupper);
+                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::बड़े);
 
-                    switch (key.src_type) {
-                        case GGML_TYPE_Q1_0:
-                        case GGML_TYPE_Q2_0:
-                        case GGML_TYPE_Q4_0:
-                        case GGML_TYPE_Q5_0:
-                        case GGML_TYPE_Q8_0:
-                        case GGML_TYPE_Q3_K:
-                        case GGML_TYPE_Q6_K:
-                        case GGML_TYPE_IQ2_XXS:
-                        case GGML_TYPE_IQ2_XS:
-                        case GGML_TYPE_IQ2_S:
-                        case GGML_TYPE_IQ3_XXS:
-                        case GGML_TYPE_IQ3_S:
-                        case GGML_TYPE_IQ1_S:
-                        case GGML_TYPE_IQ4_NL:
-                        case GGML_TYPE_MXFP4:
-                        case GGML_TYPE_NVFP4:
+                    विकल्प (साँचो.src_type) {
+                        पक्ष GGML_TYPE_Q1_0:
+                        पक्ष GGML_TYPE_Q2_0:
+                        पक्ष GGML_TYPE_Q4_0:
+                        पक्ष GGML_TYPE_Q5_0:
+                        पक्ष GGML_TYPE_Q8_0:
+                        पक्ष GGML_TYPE_Q3_K:
+                        पक्ष GGML_TYPE_Q6_K:
+                        पक्ष GGML_TYPE_IQ2_XXS:
+                        पक्ष GGML_TYPE_IQ2_XS:
+                        पक्ष GGML_TYPE_IQ2_S:
+                        पक्ष GGML_TYPE_IQ3_XXS:
+                        पक्ष GGML_TYPE_IQ3_S:
+                        पक्ष GGML_TYPE_IQ1_S:
+                        पक्ष GGML_TYPE_IQ4_NL:
+                        पक्ष GGML_TYPE_MXFP4:
+                        पक्ष GGML_TYPE_NVFP4:
                             {
                                 // Quantized types using u32 buffers for portability.
                                 defines.push_back("SRC_TYPE=u32");
                                 defines.push_back("U32_DEQUANT_HELPERS");
-                                break;
+                                रोक;
                             }
-                        default:
+                        स्वभाव:
                             {
                                 defines.push_back(std::string("SRC_TYPE=") + type_str);
                             }
@@ -1695,130 +1695,130 @@ class ggml_webgpu_shader_lib {
 
                     defines.push_back("DST_TYPE=f32");
 
-                    if (key.src_type == GGML_TYPE_Q1_0) {
+                    यदि (साँचो.src_type == GGML_TYPE_Q1_0) {
                         defines.push_back("BLOCK_SIZE=128u");
-                    } else if ((key.src_type >= GGML_TYPE_Q4_0 && key.src_type <= GGML_TYPE_Q8_1) ||
-                               key.src_type == GGML_TYPE_IQ4_NL || key.src_type == GGML_TYPE_MXFP4) {
+                    } अन्यथा यदि ((साँचो.src_type >= GGML_TYPE_Q4_0 && साँचो.src_type <= GGML_TYPE_Q8_1) ||
+                               साँचो.src_type == GGML_TYPE_IQ4_NL || साँचो.src_type == GGML_TYPE_MXFP4) {
                         defines.push_back("BLOCK_SIZE=32u");
-                    } else if (key.src_type == GGML_TYPE_Q2_0 || key.src_type == GGML_TYPE_NVFP4) {
+                    } अन्यथा यदि (साँचो.src_type == GGML_TYPE_Q2_0 || साँचो.src_type == GGML_TYPE_NVFP4) {
                         defines.push_back("BLOCK_SIZE=64u");
-                    } else if (key.src_type >= GGML_TYPE_Q2_K) {
+                    } अन्यथा यदि (साँचो.src_type >= GGML_TYPE_Q2_K) {
                         defines.push_back("BLOCK_SIZE=256u");
-                    } else {
+                    } अन्यथा {
                         defines.push_back("BLOCK_SIZE=1u");
                     }
-                    break;
+                    रोक;
                 }
         }
 
-        if (key.vectorized) {
+        यदि (साँचो.vectorized) {
             variant += "_vec";
         }
 
         defines.push_back("WG_SIZE=" + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_get_rows, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_get_rows_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_get_rows, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_get_rows_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
         decisions->vectorized    = vectorized;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        get_rows_pipelines[key]  = pipeline;
-        return get_rows_pipelines[key];
+        get_rows_pipelines[साँचो]  = pipeline;
+        फर्काऊ get_rows_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_scale_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_scale_pipeline_key key = {};
-        key.inplace                        = ggml_webgpu_tensor_equal(context.src0, context.dst);
+    webgpu_pipeline get_scale_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_scale_pipeline_साँचो साँचो = {};
+        साँचो.inplace                        = ggml_webgpu_tensor_equal(context.src0, context.dst);
 
-        auto it = scale_pipelines.find(key);
-        if (it != scale_pipelines.end()) {
-            return it->second;
+        स्वतः it = scale_pipelines.find(साँचो);
+        यदि (it != scale_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "scale";
 
-        if (key.inplace) {
+        यदि (साँचो.inplace) {
             defines.push_back("INPLACE");
             variant += "_inplace";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_scale, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_scale, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
-        decisions->inplace       = key.inplace;
+        decisions->inplace       = साँचो.inplace;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        scale_pipelines[key]     = pipeline;
-        return scale_pipelines[key];
+        scale_pipelines[साँचो]     = pipeline;
+        फर्काऊ scale_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_solve_tri_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_solve_tri_pipeline_key key = {};
-        key.type                               = context.dst->type;
-        key.n                                  = (int) context.src0->ne[0];
-        key.k                                  = (int) context.src1->ne[0];
+    webgpu_pipeline get_solve_tri_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_solve_tri_pipeline_साँचो साँचो = {};
+        साँचो.type                               = context.dst->type;
+        साँचो.n                                  = (पूर्णाङ्क) context.src0->ne[0];
+        साँचो.k                                  = (पूर्णाङ्क) context.src1->ne[0];
 
-        auto it = solve_tri_pipelines.find(key);
-        if (it != solve_tri_pipelines.end()) {
-            return it->second;
+        स्वतः it = solve_tri_pipelines.find(साँचो);
+        यदि (it != solve_tri_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "solve_tri";
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 variant += "_f32";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for solve_tri shader");
         }
 
-        const uint32_t wg_size       = std::min((uint32_t) key.n, context.max_wg_size);
-        const uint32_t k_tile        = wg_size;
-        const uint32_t bytes_per_row = ((uint32_t) key.n + wg_size) * GGML_WEBGPU_F32_SIZE_BYTES;
-        const uint32_t batch_n       = (uint32_t) (context.wg_mem_limit_bytes / bytes_per_row);
+        अचर uint32_t wg_size       = std::min((uint32_t) साँचो.n, context.max_wg_size);
+        अचर uint32_t k_tile        = wg_size;
+        अचर uint32_t bytes_per_row = ((uint32_t) साँचो.n + wg_size) * GGML_WEBGPU_F32_SIZE_BYTES;
+        अचर uint32_t batch_n       = (uint32_t) (context.wg_mem_limit_bytes / bytes_per_row);
 
-        defines.push_back(std::string("N=") + std::to_string(key.n));
+        defines.push_back(std::string("N=") + std::to_string(साँचो.n));
         defines.push_back(std::string("WG_SIZE=") + std::to_string(wg_size));
         defines.push_back(std::string("K_TILE=") + std::to_string(k_tile));
         defines.push_back(std::string("BATCH_N=") + std::to_string(batch_n));
 
-        auto processed           = preprocessor.preprocess(wgsl_solve_tri, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_solve_tri, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = wg_size;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        solve_tri_pipelines[key] = pipeline;
-        return solve_tri_pipelines[key];
+        solve_tri_pipelines[साँचो] = pipeline;
+        फर्काऊ solve_tri_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_ssm_conv_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_ssm_conv_pipeline_key key = {};
-        key.type                              = context.dst->type;
-        key.vectorized                        = context.src1->ne[0] == 4;
+    webgpu_pipeline get_ssm_conv_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_ssm_conv_pipeline_साँचो साँचो = {};
+        साँचो.type                              = context.dst->type;
+        साँचो.vectorized                        = context.src1->ne[0] == 4;
 
-        auto it = ssm_conv_pipelines.find(key);
-        if (it != ssm_conv_pipelines.end()) {
-            return it->second;
+        स्वतः it = ssm_conv_pipelines.find(साँचो);
+        यदि (it != ssm_conv_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "ssm_conv";
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 variant += "_f32";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for ssm_conv shader");
         }
 
-        if (key.vectorized) {
+        यदि (साँचो.vectorized) {
             defines.push_back("VECTORIZED");
             variant += "_vec4";
         }
@@ -1829,155 +1829,155 @@ class ggml_webgpu_shader_lib {
         defines.push_back("BLOCK_SIZE=" + std::to_string(block_size) + "u");
         defines.push_back("TOKENS_PER_WG=" + std::to_string(tokens_per_wg) + "u");
 
-        auto processed           = preprocessor.preprocess(wgsl_ssm_conv, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_ssm_conv_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_ssm_conv, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_ssm_conv_shader_decisions>();
         decisions->block_size    = block_size;
         decisions->tokens_per_wg = tokens_per_wg;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        ssm_conv_pipelines[key]  = pipeline;
-        return ssm_conv_pipelines[key];
+        ssm_conv_pipelines[साँचो]  = pipeline;
+        फर्काऊ ssm_conv_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_ssm_scan_pipeline(const ggml_webgpu_shader_lib_context & context, uint8_t xbc_overlap) {
-        ggml_webgpu_ssm_scan_pipeline_key key = {};
-        key.type                              = context.dst->type;
-        key.d_state                           = (int) context.src0->ne[0];
-        key.xbc_overlap                       = xbc_overlap;
+    webgpu_pipeline get_ssm_scan_pipeline(अचर ggml_webgpu_shader_lib_context & context, uint8_t xbc_overlap) {
+        ggml_webgpu_ssm_scan_pipeline_साँचो साँचो = {};
+        साँचो.type                              = context.dst->type;
+        साँचो.d_state                           = (पूर्णाङ्क) context.src0->ne[0];
+        साँचो.xbc_overlap                       = xbc_overlap;
 
-        auto it = ssm_scan_pipelines.find(key);
-        if (it != ssm_scan_pipelines.end()) {
-            return it->second;
+        स्वतः it = ssm_scan_pipelines.find(साँचो);
+        यदि (it != ssm_scan_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "ssm_scan";
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 variant += "_f32";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for ssm_scan shader");
         }
 
-        const uint32_t wg_size = (uint32_t) key.d_state;
+        अचर uint32_t wg_size = (uint32_t) साँचो.d_state;
 
         constexpr uint32_t tokens_per_tile = 4u;
 
         defines.push_back("WG_SIZE=" + std::to_string(wg_size) + "u");
         defines.push_back("TOKENS_PER_TILE=" + std::to_string(tokens_per_tile) + "u");
 
-        if (context.supports_subgroups) {
+        यदि (context.supports_subgroups) {
             defines.push_back("USE_SUBGROUP_REDUCTION");
             variant += "_sg_reduce";
-        } else {
+        } अन्यथा {
             variant += "_wg_reduce";
         }
 
-        if (key.xbc_overlap == 0b110) {  // x/B
+        यदि (साँचो.xbc_overlap == 0b110) {  // x/B
             defines.push_back("XB_OVERLAP");
             variant += "_xb_overlap";
-        } else if (key.xbc_overlap == 0b011) {  // B/C
+        } अन्यथा यदि (साँचो.xbc_overlap == 0b011) {  // B/C
             defines.push_back("BC_OVERLAP");
             variant += "_bc_overlap";
-        } else if (key.xbc_overlap == 0b111) {  // x/B/C
+        } अन्यथा यदि (साँचो.xbc_overlap == 0b111) {  // x/B/C
             defines.push_back("XBC_OVERLAP");
             variant += "_xbc_overlap";
         }
 
-        variant += "_d" + std::to_string(key.d_state);
+        variant += "_d" + std::to_string(साँचो.d_state);
 
-        auto processed             = preprocessor.preprocess(wgsl_ssm_scan, defines);
-        auto decisions             = std::make_shared<ggml_webgpu_ssm_scan_shader_decisions>();
+        स्वतः processed             = preprocessor.preprocess(wgsl_ssm_scan, defines);
+        स्वतः decisions             = std::make_shared<ggml_webgpu_ssm_scan_shader_decisions>();
         decisions->wg_size         = wg_size;
         decisions->tokens_per_tile = tokens_per_tile;
-        decisions->xbc_overlap     = key.xbc_overlap;
+        decisions->xbc_overlap     = साँचो.xbc_overlap;
         webgpu_pipeline pipeline   = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context           = decisions;
-        ssm_scan_pipelines[key]    = pipeline;
-        return ssm_scan_pipelines[key];
+        ssm_scan_pipelines[साँचो]    = pipeline;
+        फर्काऊ ssm_scan_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_gated_delta_net_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_gated_delta_net_pipeline_key key = {};
-        key.type                                     = context.dst->type;
-        key.s_v                                      = (int) context.src2->ne[0];
-        key.kda                                      = context.src3->ne[0] == context.src2->ne[0];
-        key.fused_cache                              = context.dst_fuse != nullptr;
+    webgpu_pipeline get_gated_delta_net_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_gated_delta_net_pipeline_साँचो साँचो = {};
+        साँचो.type                                     = context.dst->type;
+        साँचो.s_v                                      = (पूर्णाङ्क) context.src2->ne[0];
+        साँचो.kda                                      = context.src3->ne[0] == context.src2->ne[0];
+        साँचो.fused_cache                              = context.dst_fuse != nullptr;
 
-        auto it = gated_delta_net_pipelines.find(key);
-        if (it != gated_delta_net_pipelines.end()) {
-            return it->second;
+        स्वतः it = gated_delta_net_pipelines.find(साँचो);
+        यदि (it != gated_delta_net_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "gated_delta_net";
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 variant += "_f32";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for gated_delta_net shader");
         }
 
-        if (key.kda) {
+        यदि (साँचो.kda) {
             defines.push_back("KDA");
             variant += "_kda";
         }
 
-        if (key.fused_cache) {
+        यदि (साँचो.fused_cache) {
             defines.push_back("FUSED_CACHE");
             variant += "_fused_cache";
         }
 
-        defines.push_back("S_V=" + std::to_string(key.s_v) + "u");
-        defines.push_back("WG_SIZE=" + std::to_string(key.s_v) + "u");
+        defines.push_back("S_V=" + std::to_string(साँचो.s_v) + "u");
+        defines.push_back("WG_SIZE=" + std::to_string(साँचो.s_v) + "u");
 
-        auto            processed      = preprocessor.preprocess(wgsl_gated_delta_net, defines);
+        स्वतः            processed      = preprocessor.preprocess(wgsl_gated_delta_net, defines);
         webgpu_pipeline pipeline       = ggml_webgpu_create_pipeline(device, processed, variant);
-        gated_delta_net_pipelines[key] = pipeline;
-        return gated_delta_net_pipelines[key];
+        gated_delta_net_pipelines[साँचो] = pipeline;
+        फर्काऊ gated_delta_net_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_pad_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_pad_pipeline_key key = {};
-        key.circular                     = ggml_get_op_params_i32(context.dst, 8) != 0;
+    webgpu_pipeline get_pad_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_pad_pipeline_साँचो साँचो = {};
+        साँचो.circular                     = ggml_get_op_params_i32(context.dst, 8) != 0;
 
-        auto it = pad_pipelines.find(key);
-        if (it != pad_pipelines.end()) {
-            return it->second;
+        स्वतः it = pad_pipelines.find(साँचो);
+        यदि (it != pad_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "pad";
 
-        if (key.circular) {
+        यदि (साँचो.circular) {
             defines.push_back("CIRCULAR");
             variant += "_circular";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_pad, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_pad, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        pad_pipelines[key]       = pipeline;
-        return pad_pipelines[key];
+        pad_pipelines[साँचो]       = pipeline;
+        फर्काऊ pad_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_quantize_q8_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_quantize_q8_pipeline_key key = {};
-        key.src0_type                            = context.src0->type;
+    webgpu_pipeline get_quantize_q8_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_quantize_q8_pipeline_साँचो साँचो = {};
+        साँचो.src0_type                            = context.src0->type;
 
-        auto it = quantize_q8_pipelines.find(key);
-        if (it != quantize_q8_pipelines.end()) {
-            return it->second;
+        स्वतः it = quantize_q8_pipelines.find(साँचो);
+        यदि (it != quantize_q8_pipelines.end()) {
+            फर्काऊ it->second;
         }
-        const char *             shader_src = wgsl_quantize_q8;
+        अचर वर्ण *             shader_src = wgsl_quantize_q8;
         std::vector<std::string> defines;
         std::string              variant = "quantize_q8";
 
@@ -1986,11 +1986,11 @@ class ggml_webgpu_shader_lib {
         defines.push_back("SRC1_INNER_TYPE=f32");
         defines.push_back(std::string("WG_SIZE=") + std::to_string(wg_size));
 
-        const struct ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
+        अचर संरचना ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
         std::string                     src0_name   = src0_traits->type_name;
         std::string                     type_upper  = src0_name;
         variant += "_" + src0_name;
-        std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::toupper);
+        std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::बड़े);
 
         defines.push_back("MUL_ACC_" + type_upper);
         defines.push_back("Q8_1_T");
@@ -1998,154 +1998,154 @@ class ggml_webgpu_shader_lib {
         defines.push_back(context.supports_subgroups ? "USE_SUBGROUP_REDUCTION" : "USE_WORKGROUP_REDUCTION");
         variant += context.supports_subgroups ? "_sg_reduce" : "_wg_reduce";
 
-        auto processed             = preprocessor.preprocess(shader_src, defines);
-        auto decisions             = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed             = preprocessor.preprocess(shader_src, defines);
+        स्वतः decisions             = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size         = wg_size;
         webgpu_pipeline pipeline   = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context           = decisions;
-        quantize_q8_pipelines[key] = pipeline;
-        return quantize_q8_pipelines[key];
+        quantize_q8_pipelines[साँचो] = pipeline;
+        फर्काऊ quantize_q8_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_mul_mat_vec_pipeline(const ggml_webgpu_shader_lib_context & context, bool src_overlap) {
-        ggml_webgpu_mul_mat_vec_pipeline_key key = {};
-        key.src0_type                            = context.src0->type;
-        key.src1_type                            = context.src1->type;
-        key.vectorized = (context.src0->ne[0] % 4 == 0 &&
+    webgpu_pipeline get_mul_mat_vec_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक src_overlap) {
+        ggml_webgpu_mul_mat_vec_pipeline_साँचो साँचो = {};
+        साँचो.src0_type                            = context.src0->type;
+        साँचो.src1_type                            = context.src1->type;
+        साँचो.vectorized = (context.src0->ne[0] % 4 == 0 &&
                           (context.src0->type == GGML_TYPE_F32 || context.src0->type == GGML_TYPE_F16)) ?
                              1 :
                              0;
-        key.num_cols   = context.dst->ne[1];
-        key.use_mmvq =
+        साँचो.अङ्क_cols   = context.dst->ne[1];
+        साँचो.use_mmvq =
             ggml_webgpu_can_use_mmvq(context.src0, context.src1, context.supports_dot_product, context.vendor);
-        key.src_overlap = src_overlap;
+        साँचो.src_overlap = src_overlap;
 
-        auto it = mul_mat_vec_pipelines.find(key);
-        if (it != mul_mat_vec_pipelines.end()) {
-            return it->second;
+        स्वतः it = mul_mat_vec_pipelines.find(साँचो);
+        यदि (it != mul_mat_vec_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant    = "mul_mat_vec";
-        const char *             shader_src = wgsl_mul_mat_vec;
+        अचर वर्ण *             shader_src = wgsl_mul_mat_vec;
 
         // src0 type (matrix row)
-        switch (context.src0->type) {
-            case GGML_TYPE_F32:
+        विकल्प (context.src0->type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("SRC0_INNER_TYPE=f32");
                 defines.push_back("MUL_ACC_FLOAT");
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("SRC0_INNER_TYPE=f16");
                 defines.push_back("MUL_ACC_FLOAT");
                 defines.push_back("TYPE_F16");
                 variant += "_f16";
-                break;
-            case GGML_TYPE_BF16:
+                रोक;
+            पक्ष GGML_TYPE_BF16:
                 defines.push_back("SRC0_INNER_TYPE=u32");
                 defines.push_back("MUL_ACC_FLOAT");
                 defines.push_back("TYPE_BF16");
                 variant += "_bf16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 {
                     // Quantized types: use helpers but accumulate in f16
-                    const struct ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
+                    अचर संरचना ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
                     std::string                     src0_name   = src0_traits->type_name;
                     std::string                     type_upper  = src0_name;
                     variant += "_" + src0_name;
-                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::toupper);
+                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::बड़े);
 
                     defines.push_back("BYTE_HELPERS");
                     defines.push_back("MUL_ACC_" + type_upper);
                     defines.push_back("U32_DEQUANT_HELPERS");
                     defines.push_back("SRC0_INNER_TYPE=u32");
-                    switch (context.src0->type) {
-                        case GGML_TYPE_Q4_0:
-                        case GGML_TYPE_Q4_1:
-                        case GGML_TYPE_Q5_0:
-                        case GGML_TYPE_Q5_1:
-                        case GGML_TYPE_Q8_0:
-                            if (key.use_mmvq) {
+                    विकल्प (context.src0->type) {
+                        पक्ष GGML_TYPE_Q4_0:
+                        पक्ष GGML_TYPE_Q4_1:
+                        पक्ष GGML_TYPE_Q5_0:
+                        पक्ष GGML_TYPE_Q5_1:
+                        पक्ष GGML_TYPE_Q8_0:
+                            यदि (साँचो.use_mmvq) {
                                 defines.push_back("LEGACY_QUANTS_HANDLING");
                             }
-                            break;
-                        case GGML_TYPE_Q1_0:
-                        case GGML_TYPE_Q2_K:
-                        case GGML_TYPE_Q3_K:
-                        case GGML_TYPE_Q4_K:
-                        case GGML_TYPE_Q5_K:
-                        case GGML_TYPE_Q6_K:
-                            if (key.use_mmvq) {
+                            रोक;
+                        पक्ष GGML_TYPE_Q1_0:
+                        पक्ष GGML_TYPE_Q2_K:
+                        पक्ष GGML_TYPE_Q3_K:
+                        पक्ष GGML_TYPE_Q4_K:
+                        पक्ष GGML_TYPE_Q5_K:
+                        पक्ष GGML_TYPE_Q6_K:
+                            यदि (साँचो.use_mmvq) {
                                 defines.push_back("K_QUANTS_HANDLING");
                             }
-                            break;
-                        case GGML_TYPE_IQ1_S:
-                        case GGML_TYPE_IQ1_M:
-                        case GGML_TYPE_IQ2_S:
-                        case GGML_TYPE_IQ3_S:
-                        case GGML_TYPE_IQ4_NL:
-                        case GGML_TYPE_IQ4_XS:
+                            रोक;
+                        पक्ष GGML_TYPE_IQ1_S:
+                        पक्ष GGML_TYPE_IQ1_M:
+                        पक्ष GGML_TYPE_IQ2_S:
+                        पक्ष GGML_TYPE_IQ3_S:
+                        पक्ष GGML_TYPE_IQ4_NL:
+                        पक्ष GGML_TYPE_IQ4_XS:
                             defines.push_back(type_upper + "_GRID");
-                            break;
-                        case GGML_TYPE_IQ2_XXS:
-                        case GGML_TYPE_IQ2_XS:
-                        case GGML_TYPE_IQ3_XXS:
+                            रोक;
+                        पक्ष GGML_TYPE_IQ2_XXS:
+                        पक्ष GGML_TYPE_IQ2_XS:
+                        पक्ष GGML_TYPE_IQ3_XXS:
                             defines.push_back(type_upper + "_GRID");
                             defines.push_back(type_upper + "_TABLES");
-                            break;
-                        case GGML_TYPE_MXFP4:
+                            रोक;
+                        पक्ष GGML_TYPE_MXFP4:
                             defines.push_back(type_upper + "_LUT");
-                            if (key.use_mmvq) {
+                            यदि (साँचो.use_mmvq) {
                                 defines.push_back("LEGACY_QUANTS_HANDLING");
                             }
-                            break;
-                        case GGML_TYPE_NVFP4:
+                            रोक;
+                        पक्ष GGML_TYPE_NVFP4:
                             defines.push_back(type_upper + "_LUT");
-                            break;
-                        default:
-                            break;
+                            रोक;
+                        स्वभाव:
+                            रोक;
                     }
-                    break;
+                    रोक;
                 }
         }
 
         // src1 type (vector)
-        switch (context.src1->type) {
-            case GGML_TYPE_F32:
+        विकल्प (context.src1->type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("SRC1_INNER_TYPE=f32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("SRC1_INNER_TYPE=f16");
                 variant += "_f16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported src1 type for mul_mat_vec shader");
         }
 
         // VEC/SCALAR controls
-        defines.push_back(key.vectorized ? "VEC" : "SCALAR");
+        defines.push_back(साँचो.vectorized ? "VEC" : "SCALAR");
 
         uint32_t wg_size        = WEBGPU_MUL_MAT_VEC_WG_SIZE;
         uint32_t outputs_per_wg = WEBGPU_MUL_MAT_VEC_FLOAT_OUTPUTS_PER_WG;
 
-        if (key.src0_type == GGML_TYPE_Q1_0) {
+        यदि (साँचो.src0_type == GGML_TYPE_Q1_0) {
             outputs_per_wg = WEBGPU_MUL_MAT_VEC_LEGACY_Q_OUTPUTS_PER_WG;
-        } else if (key.src0_type >= GGML_TYPE_Q2_K) {
+        } अन्यथा यदि (साँचो.src0_type >= GGML_TYPE_Q2_K) {
             outputs_per_wg = WEBGPU_MUL_MAT_VEC_K_Q_OUTPUTS_PER_WG;
-        } else if (key.src0_type >= GGML_TYPE_Q4_0) {
+        } अन्यथा यदि (साँचो.src0_type >= GGML_TYPE_Q4_0) {
             outputs_per_wg = WEBGPU_MUL_MAT_VEC_LEGACY_Q_OUTPUTS_PER_WG;
         }
 
-        if (key.use_mmvq) {
+        यदि (साँचो.use_mmvq) {
             defines.push_back("MMVQ");
             defines.push_back("Q8_1_T");
         }
 
-        if (key.src_overlap) {
+        यदि (साँचो.src_overlap) {
             defines.push_back("SRC_OVERLAP");
             variant += "_src_overlap";
         }
@@ -2154,88 +2154,88 @@ class ggml_webgpu_shader_lib {
         defines.push_back(std::string("OUTPUTS_PER_WG=") + std::to_string(outputs_per_wg));
         defines.push_back(context.supports_subgroups ? "USE_SUBGROUP_REDUCTION" : "USE_WORKGROUP_REDUCTION");
         variant += context.supports_subgroups ? "_sg_reduce" : "_wg_reduce";
-        if (key.vectorized) {
+        यदि (साँचो.vectorized) {
             variant += "_vectorized";
         }
-        defines.push_back(std::string("NUM_COLS=") + std::to_string(key.num_cols));
+        defines.push_back(std::string("NUM_COLS=") + std::to_string(साँचो.अङ्क_cols));
 
-        auto processed            = preprocessor.preprocess(shader_src, defines);
-        auto decisions            = std::make_shared<ggml_webgpu_mul_mat_vec_shader_decisions>();
+        स्वतः processed            = preprocessor.preprocess(shader_src, defines);
+        स्वतः decisions            = std::make_shared<ggml_webgpu_mul_mat_vec_shader_decisions>();
         decisions->wg_size        = wg_size;
         decisions->outputs_per_wg = outputs_per_wg;
-        decisions->vec_size       = key.vectorized ? 4 : 1;
+        decisions->vec_size       = साँचो.vectorized ? 4 : 1;
 
         webgpu_pipeline pipeline   = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context           = decisions;
-        mul_mat_vec_pipelines[key] = pipeline;
-        return mul_mat_vec_pipelines[key];
+        mul_mat_vec_pipelines[साँचो] = pipeline;
+        फर्काऊ mul_mat_vec_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_mul_mat_fast_pipeline(const ggml_webgpu_shader_lib_context & context, bool src_overlap) {
-        ggml_webgpu_mul_mat_pipeline_key key = {};
-        key.src0_type                        = context.src0->type;
-        key.src1_type                        = context.src1->type;
-        key.vectorized          = (context.src0->ne[0] % 4 == 0 && context.dst->ne[0] % 4 == 0 &&
+    webgpu_pipeline get_mul_mat_fast_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक src_overlap) {
+        ggml_webgpu_mul_mat_pipeline_साँचो साँचो = {};
+        साँचो.src0_type                        = context.src0->type;
+        साँचो.src1_type                        = context.src1->type;
+        साँचो.vectorized          = (context.src0->ne[0] % 4 == 0 && context.dst->ne[0] % 4 == 0 &&
                                    (context.src0->type == GGML_TYPE_F32 || context.src0->type == GGML_TYPE_F16)) ?
                                       1 :
                                       0;
-        key.use_subgroup_matrix = context.supports_subgroup_matrix;
-        key.src_overlap         = src_overlap;
+        साँचो.use_subgroup_matrix = context.supports_subgroup_matrix;
+        साँचो.src_overlap         = src_overlap;
 
-        auto it = mul_mat_fast_pipelines.find(key);
-        if (it != mul_mat_fast_pipelines.end()) {
-            return it->second;
+        स्वतः it = mul_mat_fast_pipelines.find(साँचो);
+        यदि (it != mul_mat_fast_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
-        const char * shader_src = key.use_subgroup_matrix ? wgsl_mul_mat_subgroup_matrix : wgsl_mul_mat_reg_tile;
+        अचर वर्ण * shader_src = साँचो.use_subgroup_matrix ? wgsl_mul_mat_subgroup_matrix : wgsl_mul_mat_reg_tile;
         std::vector<std::string> defines;
-        std::string              variant = key.use_subgroup_matrix ? "mul_mat_subgroup_matrix" : "mul_mat_reg_tile";
+        std::string              variant = साँचो.use_subgroup_matrix ? "mul_mat_subgroup_matrix" : "mul_mat_reg_tile";
 
         // src1 type
-        switch (context.src1->type) {
-            case GGML_TYPE_F32:
+        विकल्प (context.src1->type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("SRC1_INNER_TYPE=f32");
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("SRC1_INNER_TYPE=f16");
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported src1 type for mul_mat fast shader");
         }
 
         // src0 type
-        const struct ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
-        const char *                    src0_name   = src0_traits->type_name;
+        अचर संरचना ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
+        अचर वर्ण *                    src0_name   = src0_traits->type_name;
 
-        switch (context.src0->type) {
-            case GGML_TYPE_F32:
+        विकल्प (context.src0->type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("SRC0_INNER_TYPE=f32");
                 defines.push_back("TYPE_F32");
                 defines.push_back("MUL_ACC_FLOAT");
                 defines.push_back("INIT_SRC0_SHMEM_FLOAT");
                 defines.push_back("INIT_SRC1_SHMEM_FLOAT");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("SRC0_INNER_TYPE=f16");
                 defines.push_back("TYPE_F16");
                 defines.push_back("MUL_ACC_FLOAT");
                 defines.push_back("INIT_SRC0_SHMEM_FLOAT");
                 defines.push_back("INIT_SRC1_SHMEM_FLOAT");
                 variant += "_f16";
-                break;
-            case GGML_TYPE_BF16:
+                रोक;
+            पक्ष GGML_TYPE_BF16:
                 defines.push_back("SRC0_INNER_TYPE=u32");
                 defines.push_back("TYPE_BF16");
                 defines.push_back("MUL_ACC_FLOAT");
                 defines.push_back("INIT_SRC0_SHMEM_FLOAT");
                 defines.push_back("INIT_SRC1_SHMEM_FLOAT");
                 variant += "_bf16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 {
                     std::string type_upper = src0_name;
-                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::toupper);
+                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::बड़े);
 
                     defines.push_back("BYTE_HELPERS");
                     defines.push_back("MUL_ACC_" + type_upper);
@@ -2244,43 +2244,43 @@ class ggml_webgpu_shader_lib {
                     defines.push_back("U32_DEQUANT_HELPERS");
                     defines.push_back("SRC0_INNER_TYPE=u32");
 
-                    switch (context.src0->type) {
-                        case GGML_TYPE_IQ1_S:
-                        case GGML_TYPE_IQ1_M:
-                        case GGML_TYPE_IQ4_NL:
-                        case GGML_TYPE_IQ4_XS:
+                    विकल्प (context.src0->type) {
+                        पक्ष GGML_TYPE_IQ1_S:
+                        पक्ष GGML_TYPE_IQ1_M:
+                        पक्ष GGML_TYPE_IQ4_NL:
+                        पक्ष GGML_TYPE_IQ4_XS:
                             defines.push_back(type_upper + "_GRID");
-                            break;
-                        case GGML_TYPE_IQ2_XXS:
-                        case GGML_TYPE_IQ2_XS:
-                        case GGML_TYPE_IQ2_S:
-                        case GGML_TYPE_IQ3_XXS:
-                        case GGML_TYPE_IQ3_S:
+                            रोक;
+                        पक्ष GGML_TYPE_IQ2_XXS:
+                        पक्ष GGML_TYPE_IQ2_XS:
+                        पक्ष GGML_TYPE_IQ2_S:
+                        पक्ष GGML_TYPE_IQ3_XXS:
+                        पक्ष GGML_TYPE_IQ3_S:
                             defines.push_back(type_upper + "_GRID");
                             defines.push_back(type_upper + "_TABLES");
-                            break;
-                        case GGML_TYPE_MXFP4:
-                        case GGML_TYPE_NVFP4:
+                            रोक;
+                        पक्ष GGML_TYPE_MXFP4:
+                        पक्ष GGML_TYPE_NVFP4:
                             defines.push_back(type_upper + "_LUT");
-                            break;
-                        default:
-                            break;
+                            रोक;
+                        स्वभाव:
+                            रोक;
                     }
 
                     variant += std::string("_") + src0_name;
-                    break;
+                    रोक;
                 }
         }
 
         // VEC/SCALAR controls
-        defines.push_back(key.vectorized ? "VEC" : "SCALAR");
+        defines.push_back(साँचो.vectorized ? "VEC" : "SCALAR");
 
-        const bool is_quant = ggml_is_quantized(context.src0->type);
+        अचर तार्किक is_quant = ggml_is_quantized(context.src0->type);
 
         uint32_t tile_k;
-        if (key.use_subgroup_matrix) {
+        यदि (साँचो.use_subgroup_matrix) {
             tile_k = is_quant ? WEBGPU_MUL_MAT_SUBGROUP_TILE_K_QUANT : WEBGPU_MUL_MAT_SUBGROUP_TILE_K_FLOAT;
-        } else {
+        } अन्यथा {
             tile_k = is_quant ? WEBGPU_MUL_MAT_REG_TILE_K_QUANT : WEBGPU_MUL_MAT_REG_TILE_K_FLOAT;
         }
 
@@ -2289,7 +2289,7 @@ class ggml_webgpu_shader_lib {
         defines.push_back("TILE_N=" + std::to_string(WEBGPU_MUL_MAT_TILE_N) + "u");
 
         // Subgroup matrix specifics
-        if (key.use_subgroup_matrix) {
+        यदि (साँचो.use_subgroup_matrix) {
             defines.push_back("TILE_K=" + std::to_string(tile_k) + "u");
             defines.push_back("MAX_SUBGROUP_SIZE=" + std::to_string(context.max_subgroup_size) + "u");
             defines.push_back("SUBGROUP_M=" + std::to_string(WEBGPU_MUL_MAT_SUBGROUP_M) + "u");
@@ -2303,35 +2303,35 @@ class ggml_webgpu_shader_lib {
 
         // variant suffix for src1 type
         variant += std::string("_") + (context.src1->type == GGML_TYPE_F32 ? "f32" : "f16");
-        if (key.vectorized) {
+        यदि (साँचो.vectorized) {
             variant += "_vectorized";
         }
 
-        if (key.src_overlap) {
+        यदि (साँचो.src_overlap) {
             defines.push_back("SRC_OVERLAP");
             variant += "_src_overlap";
         }
 
-        if (!key.use_subgroup_matrix) {
+        यदि (!साँचो.use_subgroup_matrix) {
             defines.push_back("WORKGROUP_SIZE_M=" + std::to_string(WEBGPU_MUL_MAT_WG_SIZE_M) + "u");
             defines.push_back("WORKGROUP_SIZE_N=" + std::to_string(WEBGPU_MUL_MAT_WG_SIZE_N) + "u");
             defines.push_back("TILE_K=" + std::to_string(tile_k) + "u");
         }
 
-        auto processed = preprocessor.preprocess(shader_src, defines);
+        स्वतः processed = preprocessor.preprocess(shader_src, defines);
 
-        auto decisions                 = std::make_shared<ggml_webgpu_mul_mat_shader_decisions>();
+        स्वतः decisions                 = std::make_shared<ggml_webgpu_mul_mat_shader_decisions>();
         decisions->tile_k              = tile_k;
         decisions->tile_m              = WEBGPU_MUL_MAT_TILE_M;
         decisions->tile_n              = WEBGPU_MUL_MAT_TILE_N;
-        decisions->use_subgroup_matrix = key.use_subgroup_matrix;
-        if (key.use_subgroup_matrix) {
+        decisions->use_subgroup_matrix = साँचो.use_subgroup_matrix;
+        यदि (साँचो.use_subgroup_matrix) {
             decisions->subgroup_m        = WEBGPU_MUL_MAT_SUBGROUP_M;
             decisions->subgroup_n        = WEBGPU_MUL_MAT_SUBGROUP_N;
             decisions->subgroup_matrix_m = WEBGPU_MUL_MAT_SUBGROUP_MATRIX_M;
             decisions->subgroup_matrix_n = WEBGPU_MUL_MAT_SUBGROUP_MATRIX_N;
             decisions->wg_size           = context.max_subgroup_size;
-        } else {
+        } अन्यथा {
             decisions->wg_size_m       = WEBGPU_MUL_MAT_WG_SIZE_M;
             decisions->wg_size_n       = WEBGPU_MUL_MAT_WG_SIZE_N;
             decisions->wg_size         = WEBGPU_MUL_MAT_WG_SIZE_M * WEBGPU_MUL_MAT_WG_SIZE_N;
@@ -2340,47 +2340,47 @@ class ggml_webgpu_shader_lib {
 
         webgpu_pipeline pipeline    = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context            = decisions;
-        mul_mat_fast_pipelines[key] = pipeline;
-        return mul_mat_fast_pipelines[key];
+        mul_mat_fast_pipelines[साँचो] = pipeline;
+        फर्काऊ mul_mat_fast_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_mul_mat_id_gather_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_mul_mat_id_gather_pipeline_key key = {};
-        key.n_experts                                  = (uint32_t) context.src0->ne[2];
+    webgpu_pipeline get_mul_mat_id_gather_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_mul_mat_id_gather_pipeline_साँचो साँचो = {};
+        साँचो.n_experts                                  = (uint32_t) context.src0->ne[2];
 
-        auto it = mul_mat_id_gather_pipelines.find(key);
-        if (it != mul_mat_id_gather_pipelines.end()) {
-            return it->second;
+        स्वतः it = mul_mat_id_gather_pipelines.find(साँचो);
+        यदि (it != mul_mat_id_gather_pipelines.end()) {
+            फर्काऊ it->second;
         }
         std::vector<std::string> defines;
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size) + "u");
-        defines.push_back(std::string("N_EXPERT=") + std::to_string(key.n_experts) + "u");
+        defines.push_back(std::string("N_EXPERT=") + std::to_string(साँचो.n_experts) + "u");
         defines.push_back(std::string("TILE_N_SLOTS=") +
                           std::to_string(WEBGPU_MUL_MAT_TILE_N * WEBGPU_MUL_MAT_WG_SIZE_N) + "u");
 
-        auto processed     = preprocessor.preprocess(wgsl_mul_mat_id_gather, defines);
-        auto decisions     = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed     = preprocessor.preprocess(wgsl_mul_mat_id_gather, defines);
+        स्वतः decisions     = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size = context.max_wg_size;
 
         webgpu_pipeline pipeline         = ggml_webgpu_create_pipeline(device, processed, "mul_mat_id_gather");
         pipeline.context                 = decisions;
-        mul_mat_id_gather_pipelines[key] = pipeline;
-        return pipeline;
+        mul_mat_id_gather_pipelines[साँचो] = pipeline;
+        फर्काऊ pipeline;
     }
 
-    webgpu_pipeline get_mul_mat_id_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_mul_mat_id_pipeline_key key = {};
-        key.src0_type                           = context.src0->type;
-        key.src1_type                           = context.src1->type;
-        key.n_experts                           = context.src0->ne[2];
-        key.vectorized = (context.src0->ne[0] % 4 == 0 && context.src0->ne[1] % 4 == 0 &&
+    webgpu_pipeline get_mul_mat_id_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_mul_mat_id_pipeline_साँचो साँचो = {};
+        साँचो.src0_type                           = context.src0->type;
+        साँचो.src1_type                           = context.src1->type;
+        साँचो.n_experts                           = context.src0->ne[2];
+        साँचो.vectorized = (context.src0->ne[0] % 4 == 0 && context.src0->ne[1] % 4 == 0 &&
                           (context.src0->type == GGML_TYPE_F32 || context.src0->type == GGML_TYPE_F16)) ?
                              1 :
                              0;
 
-        auto it = mul_mat_id_pipelines.find(key);
-        if (it != mul_mat_id_pipelines.end()) {
-            return it->second;
+        स्वतः it = mul_mat_id_pipelines.find(साँचो);
+        यदि (it != mul_mat_id_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
@@ -2388,47 +2388,47 @@ class ggml_webgpu_shader_lib {
         defines.push_back("MUL_MAT_ID");
 
         // src1 type
-        switch (context.src1->type) {
-            case GGML_TYPE_F32:
+        विकल्प (context.src1->type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("SRC1_INNER_TYPE=f32");
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("SRC1_INNER_TYPE=f16");
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported src1 type for mul_mat fast shader");
         }
 
         // src0 type
-        const struct ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
-        const char *                    src0_name   = src0_traits->type_name;
+        अचर संरचना ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
+        अचर वर्ण *                    src0_name   = src0_traits->type_name;
 
-        switch (context.src0->type) {
-            case GGML_TYPE_F32:
+        विकल्प (context.src0->type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("SRC0_INNER_TYPE=f32");
                 defines.push_back("INIT_SRC0_SHMEM_FLOAT");
                 defines.push_back("INIT_SRC1_SHMEM_FLOAT");
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("SRC0_INNER_TYPE=f16");
                 defines.push_back("INIT_SRC0_SHMEM_FLOAT");
                 defines.push_back("INIT_SRC1_SHMEM_FLOAT");
                 defines.push_back("TYPE_F16");
                 variant += "_f16";
-                break;
-            case GGML_TYPE_BF16:
+                रोक;
+            पक्ष GGML_TYPE_BF16:
                 defines.push_back("SRC0_INNER_TYPE=u32");
                 defines.push_back("INIT_SRC0_SHMEM_FLOAT");
                 defines.push_back("INIT_SRC1_SHMEM_FLOAT");
                 defines.push_back("TYPE_BF16");
                 variant += "_bf16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 {
                     std::string type_upper = src0_name;
-                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::toupper);
+                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::बड़े);
 
                     defines.push_back("BYTE_HELPERS");
                     defines.push_back("INIT_SRC0_SHMEM_" + type_upper);
@@ -2436,39 +2436,39 @@ class ggml_webgpu_shader_lib {
                     defines.push_back("U32_DEQUANT_HELPERS");
                     defines.push_back("SRC0_INNER_TYPE=u32");
 
-                    switch (context.src0->type) {
-                        case GGML_TYPE_IQ1_S:
-                        case GGML_TYPE_IQ1_M:
-                        case GGML_TYPE_IQ4_NL:
-                        case GGML_TYPE_IQ4_XS:
+                    विकल्प (context.src0->type) {
+                        पक्ष GGML_TYPE_IQ1_S:
+                        पक्ष GGML_TYPE_IQ1_M:
+                        पक्ष GGML_TYPE_IQ4_NL:
+                        पक्ष GGML_TYPE_IQ4_XS:
                             defines.push_back(type_upper + "_GRID");
-                            break;
-                        case GGML_TYPE_IQ2_XXS:
-                        case GGML_TYPE_IQ2_XS:
-                        case GGML_TYPE_IQ2_S:
-                        case GGML_TYPE_IQ3_XXS:
-                        case GGML_TYPE_IQ3_S:
+                            रोक;
+                        पक्ष GGML_TYPE_IQ2_XXS:
+                        पक्ष GGML_TYPE_IQ2_XS:
+                        पक्ष GGML_TYPE_IQ2_S:
+                        पक्ष GGML_TYPE_IQ3_XXS:
+                        पक्ष GGML_TYPE_IQ3_S:
                             defines.push_back(type_upper + "_GRID");
                             defines.push_back(type_upper + "_TABLES");
-                            break;
-                        case GGML_TYPE_MXFP4:
-                        case GGML_TYPE_NVFP4:
+                            रोक;
+                        पक्ष GGML_TYPE_MXFP4:
+                        पक्ष GGML_TYPE_NVFP4:
                             defines.push_back(type_upper + "_LUT");
-                            break;
-                        default:
-                            break;
+                            रोक;
+                        स्वभाव:
+                            रोक;
                     }
 
                     variant += std::string("_") + src0_name;
-                    break;
+                    रोक;
                 }
         }
 
         // VEC/SCALAR controls
-        defines.push_back(key.vectorized ? "VEC" : "SCALAR");
+        defines.push_back(साँचो.vectorized ? "VEC" : "SCALAR");
 
         // mul_mat_id is register-tile only.
-        const uint32_t tile_k =
+        अचर uint32_t tile_k =
             ggml_is_quantized(context.src0->type) ? WEBGPU_MUL_MAT_REG_TILE_K_QUANT : WEBGPU_MUL_MAT_REG_TILE_K_FLOAT;
 
         // Tiles
@@ -2481,13 +2481,13 @@ class ggml_webgpu_shader_lib {
 
         // variant suffix for src1 type
         variant += std::string("_") + (context.src1->type == GGML_TYPE_F32 ? "f32" : "f16");
-        if (key.vectorized) {
+        यदि (साँचो.vectorized) {
             variant += "_vectorized";
         }
 
-        auto processed = preprocessor.preprocess(wgsl_mul_mat_id, defines);
+        स्वतः processed = preprocessor.preprocess(wgsl_mul_mat_id, defines);
 
-        auto decisions       = std::make_shared<ggml_webgpu_mul_mat_shader_decisions>();
+        स्वतः decisions       = std::make_shared<ggml_webgpu_mul_mat_shader_decisions>();
         decisions->tile_k    = tile_k;
         decisions->tile_m    = WEBGPU_MUL_MAT_TILE_M;
         decisions->tile_n    = WEBGPU_MUL_MAT_TILE_N;
@@ -2497,111 +2497,111 @@ class ggml_webgpu_shader_lib {
 
         webgpu_pipeline pipeline  = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context          = decisions;
-        mul_mat_id_pipelines[key] = pipeline;
-        return mul_mat_id_pipelines[key];
+        mul_mat_id_pipelines[साँचो] = pipeline;
+        फर्काऊ mul_mat_id_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_mul_mat_id_vec_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_mul_mat_id_pipeline_key key = {};
-        key.src0_type                           = context.src0->type;
-        key.src1_type                           = context.src1->type;
-        key.n_experts                           = context.src0->ne[2];
-        key.vectorized = (context.src0->ne[0] % 4 == 0 &&
+    webgpu_pipeline get_mul_mat_id_vec_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_mul_mat_id_pipeline_साँचो साँचो = {};
+        साँचो.src0_type                           = context.src0->type;
+        साँचो.src1_type                           = context.src1->type;
+        साँचो.n_experts                           = context.src0->ne[2];
+        साँचो.vectorized = (context.src0->ne[0] % 4 == 0 &&
                           (context.src0->type == GGML_TYPE_F32 || context.src0->type == GGML_TYPE_F16)) ?
                              1 :
                              0;
 
-        auto it = mul_mat_id_vec_pipelines.find(key);
-        if (it != mul_mat_id_vec_pipelines.end()) {
-            return it->second;
+        स्वतः it = mul_mat_id_vec_pipelines.find(साँचो);
+        यदि (it != mul_mat_id_vec_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant    = "mul_mat_id_vec";
-        const char *             shader_src = wgsl_mul_mat_id_vec;
+        अचर वर्ण *             shader_src = wgsl_mul_mat_id_vec;
 
         // src1 type
-        switch (context.src1->type) {
-            case GGML_TYPE_F32:
+        विकल्प (context.src1->type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("SRC1_INNER_TYPE=f32");
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("SRC1_INNER_TYPE=f16");
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported src1 type for mul_mat fast shader");
         }
 
         // src0 type
-        switch (context.src0->type) {
-            case GGML_TYPE_F32:
+        विकल्प (context.src0->type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("SRC0_INNER_TYPE=f32");
                 defines.push_back("MUL_ACC_FLOAT");
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("SRC0_INNER_TYPE=f16");
                 defines.push_back("MUL_ACC_FLOAT");
                 defines.push_back("TYPE_F16");
                 variant += "_f16";
-                break;
-            case GGML_TYPE_BF16:
+                रोक;
+            पक्ष GGML_TYPE_BF16:
                 defines.push_back("SRC0_INNER_TYPE=u32");
                 defines.push_back("MUL_ACC_FLOAT");
                 defines.push_back("TYPE_BF16");
                 variant += "_bf16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 {
                     // Quantized types: use helpers but accumulate in f16
-                    const struct ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
+                    अचर संरचना ggml_type_traits * src0_traits = ggml_get_type_traits(context.src0->type);
                     std::string                     src0_name   = src0_traits->type_name;
                     std::string                     type_upper  = src0_name;
                     variant += "_" + src0_name;
-                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::toupper);
+                    std::transform(type_upper.begin(), type_upper.end(), type_upper.begin(), ::बड़े);
 
                     defines.push_back("BYTE_HELPERS");
                     defines.push_back("MUL_ACC_" + type_upper);
                     defines.push_back("U32_DEQUANT_HELPERS");
                     defines.push_back("SRC0_INNER_TYPE=u32");
-                    switch (context.src0->type) {
-                        case GGML_TYPE_IQ1_S:
-                        case GGML_TYPE_IQ1_M:
-                        case GGML_TYPE_IQ2_S:
-                        case GGML_TYPE_IQ3_S:
-                        case GGML_TYPE_IQ4_NL:
-                        case GGML_TYPE_IQ4_XS:
+                    विकल्प (context.src0->type) {
+                        पक्ष GGML_TYPE_IQ1_S:
+                        पक्ष GGML_TYPE_IQ1_M:
+                        पक्ष GGML_TYPE_IQ2_S:
+                        पक्ष GGML_TYPE_IQ3_S:
+                        पक्ष GGML_TYPE_IQ4_NL:
+                        पक्ष GGML_TYPE_IQ4_XS:
                             defines.push_back(type_upper + "_GRID");
-                            break;
-                        case GGML_TYPE_IQ2_XXS:
-                        case GGML_TYPE_IQ2_XS:
-                        case GGML_TYPE_IQ3_XXS:
+                            रोक;
+                        पक्ष GGML_TYPE_IQ2_XXS:
+                        पक्ष GGML_TYPE_IQ2_XS:
+                        पक्ष GGML_TYPE_IQ3_XXS:
                             defines.push_back(type_upper + "_GRID");
                             defines.push_back(type_upper + "_TABLES");
-                            break;
-                        case GGML_TYPE_MXFP4:
-                        case GGML_TYPE_NVFP4:
+                            रोक;
+                        पक्ष GGML_TYPE_MXFP4:
+                        पक्ष GGML_TYPE_NVFP4:
                             defines.push_back(type_upper + "_LUT");
-                            break;
-                        default:
-                            break;
+                            रोक;
+                        स्वभाव:
+                            रोक;
                     }
-                    break;
+                    रोक;
                 }
         }
 
         // VEC/SCALAR controls
-        defines.push_back(key.vectorized ? "VEC" : "SCALAR");
+        defines.push_back(साँचो.vectorized ? "VEC" : "SCALAR");
 
         uint32_t wg_size        = WEBGPU_MUL_MAT_VEC_WG_SIZE;
         uint32_t outputs_per_wg = WEBGPU_MUL_MAT_VEC_FLOAT_OUTPUTS_PER_WG;
 
-        if (key.src0_type == GGML_TYPE_Q1_0) {
+        यदि (साँचो.src0_type == GGML_TYPE_Q1_0) {
             outputs_per_wg = WEBGPU_MUL_MAT_VEC_LEGACY_Q_OUTPUTS_PER_WG;
-        } else if (key.src0_type >= GGML_TYPE_Q2_K) {
+        } अन्यथा यदि (साँचो.src0_type >= GGML_TYPE_Q2_K) {
             outputs_per_wg = WEBGPU_MUL_MAT_VEC_K_Q_OUTPUTS_PER_WG;
-        } else if (key.src0_type >= GGML_TYPE_Q4_0) {
+        } अन्यथा यदि (साँचो.src0_type >= GGML_TYPE_Q4_0) {
             outputs_per_wg = WEBGPU_MUL_MAT_VEC_LEGACY_Q_OUTPUTS_PER_WG;
         }
 
@@ -2612,345 +2612,345 @@ class ggml_webgpu_shader_lib {
         defines.push_back(std::string("OUTPUTS_PER_WG=") + std::to_string(outputs_per_wg));
         defines.push_back(context.supports_subgroups ? "USE_SUBGROUP_REDUCTION" : "USE_WORKGROUP_REDUCTION");
         variant += context.supports_subgroups ? "_sg_reduce" : "_wg_reduce";
-        if (key.vectorized) {
+        यदि (साँचो.vectorized) {
             variant += "_vectorized";
         }
         defines.push_back(std::string("NUM_COLS=1"));
 
-        defines.push_back(std::string("N_EXPERTS=") + std::to_string(key.n_experts));
+        defines.push_back(std::string("N_EXPERTS=") + std::to_string(साँचो.n_experts));
 
-        auto processed = preprocessor.preprocess(shader_src, defines);
+        स्वतः processed = preprocessor.preprocess(shader_src, defines);
 
-        auto decisions            = std::make_shared<ggml_webgpu_mul_mat_vec_shader_decisions>();
+        स्वतः decisions            = std::make_shared<ggml_webgpu_mul_mat_vec_shader_decisions>();
         decisions->wg_size        = wg_size;
         decisions->outputs_per_wg = outputs_per_wg;
 
         webgpu_pipeline pipeline      = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context              = decisions;
-        mul_mat_id_vec_pipelines[key] = pipeline;
-        return mul_mat_id_vec_pipelines[key];
+        mul_mat_id_vec_pipelines[साँचो] = pipeline;
+        फर्काऊ mul_mat_id_vec_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_unary_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        const bool                     is_unary = context.dst->op == GGML_OP_UNARY;
-        const int                      op       = is_unary ? (int) ggml_get_unary_op(context.dst) : context.dst->op;
-        ggml_webgpu_unary_pipeline_key key      = {};
-        key.type                                = context.dst->type;
-        key.op                                  = op;
-        key.is_unary                            = is_unary;
-        key.inplace = ggml_webgpu_tensor_equal(context.src0, context.dst) || context.dst->op == GGML_OP_FILL;
-        key.ttype   = (ggml_tri_type) ggml_get_op_params_i32(context.dst, 0);
+    webgpu_pipeline get_unary_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        अचर तार्किक                     is_unary = context.dst->op == GGML_OP_UNARY;
+        अचर पूर्णाङ्क                      op       = is_unary ? (पूर्णाङ्क) ggml_get_unary_op(context.dst) : context.dst->op;
+        ggml_webgpu_unary_pipeline_साँचो साँचो      = {};
+        साँचो.type                                = context.dst->type;
+        साँचो.op                                  = op;
+        साँचो.is_unary                            = is_unary;
+        साँचो.inplace = ggml_webgpu_tensor_equal(context.src0, context.dst) || context.dst->op == GGML_OP_FILL;
+        साँचो.ttype   = (ggml_tri_type) ggml_get_op_params_i32(context.dst, 0);
 
-        auto it = unary_pipelines.find(key);
-        if (it != unary_pipelines.end()) {
-            return it->second;
+        स्वतः it = unary_pipelines.find(साँचो);
+        यदि (it != unary_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant =
-            key.is_unary ? ggml_unary_op_name((ggml_unary_op) key.op) : ggml_op_name((ggml_op) key.op);
+            साँचो.is_unary ? ggml_unary_op_name((ggml_unary_op) साँचो.op) : ggml_op_name((ggml_op) साँचो.op);
         defines.push_back(variant);
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("TYPE_F16");
                 variant += "_f16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for unary shader");
         }
 
-        if (key.inplace) {
+        यदि (साँचो.inplace) {
             defines.push_back("INPLACE");
             variant += "_inplace";
         }
 
-        if (op == GGML_OP_TRI) {
-            switch (key.ttype) {
-                case GGML_TRI_TYPE_LOWER:
+        यदि (op == GGML_OP_TRI) {
+            विकल्प (साँचो.ttype) {
+                पक्ष GGML_TRI_TYPE_LOWER:
                     defines.push_back("TRI_TYPE_LOWER");
                     variant += "_tri_type_lower";
-                    break;
-                case GGML_TRI_TYPE_LOWER_DIAG:
+                    रोक;
+                पक्ष GGML_TRI_TYPE_LOWER_DIAG:
                     defines.push_back("TRI_TYPE_LOWER_DIAG");
                     variant += "_tri_type_lower_diag";
-                    break;
-                case GGML_TRI_TYPE_UPPER:
+                    रोक;
+                पक्ष GGML_TRI_TYPE_UPPER:
                     defines.push_back("TRI_TYPE_UPPER");
                     variant += "_tri_type_upper";
-                    break;
-                case GGML_TRI_TYPE_UPPER_DIAG:
+                    रोक;
+                पक्ष GGML_TRI_TYPE_UPPER_DIAG:
                     defines.push_back("TRI_TYPE_UPPER_DIAG");
                     variant += "_tri_upper_diag";
-                    break;
-                default:
+                    रोक;
+                स्वभाव:
                     GGML_ABORT("Unsupported ggml_tri_type for unary shader");
             }
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_unary, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_unary, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
-        decisions->inplace       = key.inplace;
+        decisions->inplace       = साँचो.inplace;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        unary_pipelines[key]     = pipeline;
-        return unary_pipelines[key];
+        unary_pipelines[साँचो]     = pipeline;
+        फर्काऊ unary_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_rms_norm_mul_pipeline(const ggml_webgpu_shader_lib_context & context, bool src_overlap) {
-        ggml_webgpu_rms_norm_mul_pipeline_key key = {};
-        key.inplace                               = ggml_webgpu_tensor_equal(context.src0, context.dst);
-        key.overlap                               = ggml_webgpu_tensor_equal(context.src1, context.dst);
-        key.src_overlap                           = src_overlap;
+    webgpu_pipeline get_rms_norm_mul_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक src_overlap) {
+        ggml_webgpu_rms_norm_mul_pipeline_साँचो साँचो = {};
+        साँचो.inplace                               = ggml_webgpu_tensor_equal(context.src0, context.dst);
+        साँचो.overlap                               = ggml_webgpu_tensor_equal(context.src1, context.dst);
+        साँचो.src_overlap                           = src_overlap;
 
-        auto it = rms_norm_mul_pipelines.find(key);
-        if (it != rms_norm_mul_pipelines.end()) {
-            return it->second;
+        स्वतः it = rms_norm_mul_pipelines.find(साँचो);
+        यदि (it != rms_norm_mul_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              op_name = "RMS_NORM_MUL";
         std::string              variant = op_name;
 
-        if (key.inplace) {
+        यदि (साँचो.inplace) {
             defines.push_back("INPLACE");
             variant += "_inplace";
-        } else if (key.overlap) {
+        } अन्यथा यदि (साँचो.overlap) {
             defines.push_back("OVERLAP");
             variant += "_overlap";
-        } else if (key.src_overlap) {
+        } अन्यथा यदि (साँचो.src_overlap) {
             defines.push_back("SRC_OVERLAP");
             variant += "_src_overlap";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed                  = preprocessor.preprocess(wgsl_rms_norm_mul, defines);
-        auto pipeline_decisions         = std::make_shared<ggml_webgpu_rms_norm_mul_shader_decisions>();
+        स्वतः processed                  = preprocessor.preprocess(wgsl_rms_norm_mul, defines);
+        स्वतः pipeline_decisions         = std::make_shared<ggml_webgpu_rms_norm_mul_shader_decisions>();
         pipeline_decisions->wg_size     = context.max_wg_size;
-        pipeline_decisions->inplace     = key.inplace;
-        pipeline_decisions->overlap     = key.overlap;
-        pipeline_decisions->src_overlap = key.src_overlap;
+        pipeline_decisions->inplace     = साँचो.inplace;
+        pipeline_decisions->overlap     = साँचो.overlap;
+        pipeline_decisions->src_overlap = साँचो.src_overlap;
         webgpu_pipeline pipeline        = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context                = pipeline_decisions;
-        rms_norm_mul_pipelines[key]     = pipeline;
-        return rms_norm_mul_pipelines[key];
+        rms_norm_mul_pipelines[साँचो]     = pipeline;
+        फर्काऊ rms_norm_mul_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_binary_pipeline(const ggml_webgpu_shader_lib_context & context, bool src_overlap) {
-        ggml_webgpu_binary_pipeline_key key = {};
-        key.type                            = context.dst->type;
-        key.op                              = context.dst->op;
-        key.inplace                         = ggml_webgpu_tensor_equal(context.src0, context.dst);
-        key.overlap                         = ggml_webgpu_tensor_equal(context.src1, context.dst);
-        key.src_overlap                     = src_overlap;
+    webgpu_pipeline get_द्विआधारी_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक src_overlap) {
+        ggml_webgpu_द्विआधारी_pipeline_साँचो साँचो = {};
+        साँचो.type                            = context.dst->type;
+        साँचो.op                              = context.dst->op;
+        साँचो.inplace                         = ggml_webgpu_tensor_equal(context.src0, context.dst);
+        साँचो.overlap                         = ggml_webgpu_tensor_equal(context.src1, context.dst);
+        साँचो.src_overlap                     = src_overlap;
 
-        auto it = binary_pipelines.find(key);
-        if (it != binary_pipelines.end()) {
-            return it->second;
+        स्वतः it = द्विआधारी_pipelines.find(साँचो);
+        यदि (it != द्विआधारी_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
-        std::string              op_name = ggml_op_name((ggml_op) key.op);
+        std::string              op_name = ggml_op_name((ggml_op) साँचो.op);
         std::string              variant = op_name;
 
         defines.push_back(std::string("OP_") + op_name);
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("TYPE_F16");
                 variant += "_f16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for binary shader");
         }
 
-        if (key.inplace) {
+        यदि (साँचो.inplace) {
             defines.push_back("INPLACE");
             variant += "_inplace";
-        } else if (key.overlap) {
+        } अन्यथा यदि (साँचो.overlap) {
             defines.push_back("OVERLAP");
             variant += "_overlap";
-        } else if (key.src_overlap) {
+        } अन्यथा यदि (साँचो.src_overlap) {
             defines.push_back("SRC_OVERLAP");
             variant += "_src_overlap";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed                  = preprocessor.preprocess(wgsl_binary, defines);
-        auto pipeline_decisions         = std::make_shared<ggml_webgpu_binary_shader_decisions>();
+        स्वतः processed                  = preprocessor.preprocess(wgsl_द्विआधारी, defines);
+        स्वतः pipeline_decisions         = std::make_shared<ggml_webgpu_द्विआधारी_shader_decisions>();
         pipeline_decisions->wg_size     = context.max_wg_size;
-        pipeline_decisions->inplace     = key.inplace;
-        pipeline_decisions->overlap     = key.overlap;
-        pipeline_decisions->src_overlap = key.src_overlap;
+        pipeline_decisions->inplace     = साँचो.inplace;
+        pipeline_decisions->overlap     = साँचो.overlap;
+        pipeline_decisions->src_overlap = साँचो.src_overlap;
 
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = pipeline_decisions;
-        binary_pipelines[key]    = pipeline;
-        return binary_pipelines[key];
+        द्विआधारी_pipelines[साँचो]    = pipeline;
+        फर्काऊ द्विआधारी_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_add_id_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_add_id_pipeline_key key = {};
-        key.inplace                         = ggml_webgpu_tensor_equal(context.src0, context.dst);
+    webgpu_pipeline get_add_id_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_add_id_pipeline_साँचो साँचो = {};
+        साँचो.inplace                         = ggml_webgpu_tensor_equal(context.src0, context.dst);
 
-        auto it = add_id_pipelines.find(key);
-        if (it != add_id_pipelines.end()) {
-            return it->second;
+        स्वतः it = add_id_pipelines.find(साँचो);
+        यदि (it != add_id_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant    = "add_id";
-        const char *             shader_src = wgsl_add_id;
+        अचर वर्ण *             shader_src = wgsl_add_id;
 
-        if (key.inplace) {
+        यदि (साँचो.inplace) {
             defines.push_back("INPLACE");
             variant += "_inplace";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed              = preprocessor.preprocess(shader_src, defines);
-        auto pipeline_decisions     = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed              = preprocessor.preprocess(shader_src, defines);
+        स्वतः pipeline_decisions     = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         pipeline_decisions->wg_size = context.max_wg_size;
-        pipeline_decisions->inplace = key.inplace;
+        pipeline_decisions->inplace = साँचो.inplace;
 
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = pipeline_decisions;
-        add_id_pipelines[key]    = pipeline;
-        return pipeline;
+        add_id_pipelines[साँचो]    = pipeline;
+        फर्काऊ pipeline;
     }
 
-    webgpu_pipeline get_concat_pipeline(const ggml_webgpu_shader_lib_context & context, bool src_overlap) {
-        ggml_webgpu_concat_pipeline_key key = {};
-        key.type                            = context.dst->type;
-        key.src_overlap                     = src_overlap;
+    webgpu_pipeline get_concat_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक src_overlap) {
+        ggml_webgpu_concat_pipeline_साँचो साँचो = {};
+        साँचो.type                            = context.dst->type;
+        साँचो.src_overlap                     = src_overlap;
 
-        auto it = concat_pipelines.find(key);
-        if (it != concat_pipelines.end()) {
-            return it->second;
+        स्वतः it = concat_pipelines.find(साँचो);
+        यदि (it != concat_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "concat";
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_I32:
+                रोक;
+            पक्ष GGML_TYPE_I32:
                 defines.push_back("TYPE_I32");
                 variant += "_i32";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for concat shader");
         }
 
-        if (key.src_overlap) {
+        यदि (साँचो.src_overlap) {
             defines.push_back("SRC_OVERLAP");
             variant += "_src_overlap";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_concat, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_binary_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_concat, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_द्विआधारी_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
-        decisions->src_overlap   = key.src_overlap;
+        decisions->src_overlap   = साँचो.src_overlap;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        concat_pipelines[key]    = pipeline;
-        return concat_pipelines[key];
+        concat_pipelines[साँचो]    = pipeline;
+        फर्काऊ concat_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_repeat_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_repeat_pipeline_key key = {};
-        key.type                            = context.dst->type;
+    webgpu_pipeline get_repeat_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_repeat_pipeline_साँचो साँचो = {};
+        साँचो.type                            = context.dst->type;
 
-        auto it = repeat_pipelines.find(key);
-        if (it != repeat_pipelines.end()) {
-            return it->second;
+        स्वतः it = repeat_pipelines.find(साँचो);
+        यदि (it != repeat_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "repeat";
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("TYPE_F16");
                 variant += "_f16";
-                break;
-            case GGML_TYPE_I32:
+                रोक;
+            पक्ष GGML_TYPE_I32:
                 defines.push_back("TYPE_I32");
                 variant += "_i32";
-                break;
-            case GGML_TYPE_I16:
+                रोक;
+            पक्ष GGML_TYPE_I16:
                 defines.push_back("TYPE_I16");
                 variant += "_i16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for repeat shader");
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_repeat, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_repeat, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        repeat_pipelines[key]    = pipeline;
-        return repeat_pipelines[key];
+        repeat_pipelines[साँचो]    = pipeline;
+        फर्काऊ repeat_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_flash_attn_pipeline(const ggml_webgpu_shader_lib_context & context, bool kv_overlap) {
-        const bool can_use_subgroup_matrix = ggml_webgpu_flash_attn_can_use_subgroup_matrix_path(
+    webgpu_pipeline get_flash_attn_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक kv_overlap) {
+        अचर तार्किक can_use_subgroup_matrix = ggml_webgpu_flash_attn_can_use_subgroup_matrix_path(
             context.supports_subgroup_matrix, context.sg_mat_k, context.sg_mat_n, context.src0, context.src2);
         ggml_webgpu_flash_attn_decisions decisions = {};
         decisions.use_sg_matrix                    = can_use_subgroup_matrix;
         decisions.q_tile = decisions.use_sg_matrix ? context.sg_mat_m : GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE;
 
-        ggml_webgpu_flash_attn_pipeline_key key = {};
-        key.common                              = ggml_webgpu_flash_attn_make_common_pipeline_key(
+        ggml_webgpu_flash_attn_pipeline_साँचो साँचो = {};
+        साँचो.common                              = ggml_webgpu_flash_attn_make_common_pipeline_साँचो(
             context, decisions.use_sg_matrix ? context.sg_mat_k : 1u, kv_overlap);
-        key.common.k_direct &= decisions.use_sg_matrix && key.common.k_type == GGML_TYPE_F16;
-        key.common.v_direct &= decisions.use_sg_matrix && key.common.v_type == GGML_TYPE_F16;
-        key.use_sg_matrix = decisions.use_sg_matrix;
+        साँचो.common.k_direct &= decisions.use_sg_matrix && साँचो.common.k_type == GGML_TYPE_F16;
+        साँचो.common.v_direct &= decisions.use_sg_matrix && साँचो.common.v_type == GGML_TYPE_F16;
+        साँचो.use_sg_matrix = decisions.use_sg_matrix;
 
         uint32_t max_kv_tile = ggml_webgpu_flash_attn_max_kv_tile(
             context.wg_mem_limit_bytes, decisions.q_tile, decisions.use_sg_matrix ? context.sg_mat_n : 1u,
-            key.common.head_dim_qk, key.common.head_dim_v, key.common.has_mask,
-            key.common.k_direct || key.common.v_direct);
+            साँचो.common.head_dim_qk, साँचो.common.head_dim_v, साँचो.common.has_mask,
+            साँचो.common.k_direct || साँचो.common.v_direct);
 
         // WorkGroup storage size isn't enough for some params with subgroup matrices path (ref. https://github.com/ggml-org/llama.cpp/pull/26566)
-        if (max_kv_tile == 0) {
+        यदि (max_kv_tile == 0) {
             GGML_ASSERT(decisions.use_sg_matrix);
             // switch to flash_attn_reg_tile path
-            decisions.use_sg_matrix = false;
+            decisions.use_sg_matrix = असत्य;
             decisions.q_tile        = GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE;
-            key.common.k_direct     = false;
-            key.common.v_direct     = false;
-            key.use_sg_matrix       = false;
+            साँचो.common.k_direct     = असत्य;
+            साँचो.common.v_direct     = असत्य;
+            साँचो.use_sg_matrix       = असत्य;
             max_kv_tile             = ggml_webgpu_flash_attn_max_kv_tile(
-                context.wg_mem_limit_bytes, decisions.q_tile, 1u, key.common.head_dim_qk, key.common.head_dim_v,
-                key.common.has_mask, key.common.k_direct || key.common.v_direct);
+                context.wg_mem_limit_bytes, decisions.q_tile, 1u, साँचो.common.head_dim_qk, साँचो.common.head_dim_v,
+                साँचो.common.has_mask, साँचो.common.k_direct || साँचो.common.v_direct);
             GGML_ASSERT(max_kv_tile > 0);
         }
 
@@ -2963,99 +2963,99 @@ class ggml_webgpu_shader_lib {
                 std::min(context.max_wg_size, std::max(GGML_WEBGPU_FLASH_ATTN_PREFERRED_WG_SIZE,
                                                        GGML_WEBGPU_FLASH_ATTN_TILE_Q_TILE * context.max_subgroup_size));
 
-        if (key.common.k_direct || key.common.v_direct) {
+        यदि (साँचो.common.k_direct || साँचो.common.v_direct) {
             decisions.kv_tile = std::min(decisions.kv_tile, GGML_WEBGPU_KV_SEQ_PAD);
-            while (GGML_WEBGPU_KV_SEQ_PAD % decisions.kv_tile != 0) {
+            जबसम्म (GGML_WEBGPU_KV_SEQ_PAD % decisions.kv_tile != 0) {
                 decisions.kv_tile -= decisions.use_sg_matrix ? context.sg_mat_n : context.min_subgroup_size;
             }
         }
 
-        auto it = flash_attn_pipelines.find(key);
-        if (it != flash_attn_pipelines.end()) {
-            return it->second;
+        स्वतः it = flash_attn_pipelines.find(साँचो);
+        यदि (it != flash_attn_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::string              variant = decisions.use_sg_matrix ? "flash_attn" : "flash_attn_tile";
-        std::vector<std::string> defines = ggml_webgpu_flash_attn_common_defines(key.common, variant, decisions.q_tile,
+        std::vector<std::string> defines = ggml_webgpu_flash_attn_common_defines(साँचो.common, variant, decisions.q_tile,
                                                                                  decisions.kv_tile, decisions.wg_size);
-        const char *             shader_src = nullptr;
-        if (!key.use_sg_matrix) {
+        अचर वर्ण *             shader_src = nullptr;
+        यदि (!साँचो.use_sg_matrix) {
             shader_src = wgsl_flash_attn_tile;
             defines.push_back("MIN_SUBGROUP_SIZE=" + std::to_string(context.min_subgroup_size) + "u");
             defines.push_back("MAX_SUBGROUP_SIZE=" + std::to_string(context.max_subgroup_size) + "u");
             variant += "_tile_sg" + std::to_string(context.min_subgroup_size) + "_" +
                        std::to_string(context.max_subgroup_size);
-        } else {
+        } अन्यथा {
             shader_src = wgsl_flash_attn;
             defines.push_back(std::string("SG_MAT_M=") + std::to_string(context.sg_mat_m));
             defines.push_back(std::string("SG_MAT_N=") + std::to_string(context.sg_mat_n));
             defines.push_back(std::string("SG_MAT_K=") + std::to_string(context.sg_mat_k));
         }
-        auto            pipeline_decisions = std::make_shared<ggml_webgpu_flash_attn_decisions>(decisions);
+        स्वतः            pipeline_decisions = std::make_shared<ggml_webgpu_flash_attn_decisions>(decisions);
         webgpu_pipeline pipeline =
             ggml_webgpu_create_pipeline(device, preprocessor.preprocess(shader_src, defines), variant);
         pipeline.context          = pipeline_decisions;
-        flash_attn_pipelines[key] = pipeline;
-        return flash_attn_pipelines[key];
+        flash_attn_pipelines[साँचो] = pipeline;
+        फर्काऊ flash_attn_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_flash_attn_vec_pipeline(const ggml_webgpu_shader_lib_context & context, bool kv_overlap) {
-        ggml_webgpu_flash_attn_vec_pipeline_key key = {};
-        key.common = ggml_webgpu_flash_attn_make_common_pipeline_key(context, GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH,
+    webgpu_pipeline get_flash_attn_vec_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक kv_overlap) {
+        ggml_webgpu_flash_attn_vec_pipeline_साँचो साँचो = {};
+        साँचो.common = ggml_webgpu_flash_attn_make_common_pipeline_साँचो(context, GGML_WEBGPU_FLASH_ATTN_TILE_KV_VEC_WIDTH,
                                                                      kv_overlap);
 
-        auto it = flash_attn_vec_pipelines.find(key);
-        if (it != flash_attn_vec_pipelines.end()) {
-            return it->second;
+        स्वतः it = flash_attn_vec_pipelines.find(साँचो);
+        यदि (it != flash_attn_vec_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         ggml_webgpu_flash_attn_vec_decisions decisions = {};
-        decisions.kv_tile = ggml_webgpu_flash_attn_get_vec_kv_tile(context.wg_mem_limit_bytes, key.common.head_dim_qk,
-                                                                   key.common.head_dim_v, key.common.has_mask,
-                                                                   key.common.k_direct || key.common.v_direct);
+        decisions.kv_tile = ggml_webgpu_flash_attn_get_vec_kv_tile(context.wg_mem_limit_bytes, साँचो.common.head_dim_qk,
+                                                                   साँचो.common.head_dim_v, साँचो.common.has_mask,
+                                                                   साँचो.common.k_direct || साँचो.common.v_direct);
         decisions.wg_size = context.max_subgroup_size;
 
         std::string              variant = "flash_attn_vec";
         std::vector<std::string> defines =
-            ggml_webgpu_flash_attn_common_defines(key.common, variant, 1u, decisions.kv_tile, decisions.wg_size);
-        if (key.common.has_mask) {
+            ggml_webgpu_flash_attn_common_defines(साँचो.common, variant, 1u, decisions.kv_tile, decisions.wg_size);
+        यदि (साँचो.common.has_mask) {
             defines.push_back("BLK");
-            variant.resize(variant.size() - (sizeof("_mask") - 1));
+            variant.resize(variant.size() - (परिमाण("_mask") - 1));
             variant += "_mask_blk";
         }
 
         uint32_t       d_split = context.min_subgroup_size;
-        const uint32_t D       = key.common.head_dim_qk | key.common.head_dim_v;
-        const uint32_t D_lsb   = D & (~(D - 1u));
+        अचर uint32_t D       = साँचो.common.head_dim_qk | साँचो.common.head_dim_v;
+        अचर uint32_t D_lsb   = D & (~(D - 1u));
         d_split                = std::min(std::min(context.min_subgroup_size, 4u), std::max(D_lsb / 4u, 1u));
 
         defines.push_back(std::string("D_SPLIT=") + std::to_string(d_split));
         variant += "_dsplit" + std::to_string(d_split);
 
-        auto            pipeline_decisions = std::make_shared<ggml_webgpu_flash_attn_vec_decisions>(decisions);
+        स्वतः            pipeline_decisions = std::make_shared<ggml_webgpu_flash_attn_vec_decisions>(decisions);
         webgpu_pipeline pipeline =
             ggml_webgpu_create_pipeline(device, preprocessor.preprocess(wgsl_flash_attn_vec_split, defines), variant);
         pipeline.context              = pipeline_decisions;
-        flash_attn_vec_pipelines[key] = pipeline;
-        return flash_attn_vec_pipelines[key];
+        flash_attn_vec_pipelines[साँचो] = pipeline;
+        फर्काऊ flash_attn_vec_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_flash_attn_blk_pipeline(const ggml_webgpu_shader_lib_context & context, uint32_t kv_tile) {
-        ggml_webgpu_flash_attn_blk_pipeline_key key = {};
-        key.kv_tile                                 = kv_tile;
-        auto it                                     = flash_attn_blk_pipelines.find(key);
-        if (it != flash_attn_blk_pipelines.end()) {
-            return it->second;
+    webgpu_pipeline get_flash_attn_blk_pipeline(अचर ggml_webgpu_shader_lib_context & context, uint32_t kv_tile) {
+        ggml_webgpu_flash_attn_blk_pipeline_साँचो साँचो = {};
+        साँचो.kv_tile                                 = kv_tile;
+        स्वतः it                                     = flash_attn_blk_pipelines.find(साँचो);
+        यदि (it != flash_attn_blk_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "flash_attn_vec_blk";
 
-        defines.push_back(std::string("KV_TILE=") + std::to_string(key.kv_tile));
-        variant += std::string("_kvt") + std::to_string(key.kv_tile);
+        defines.push_back(std::string("KV_TILE=") + std::to_string(साँचो.kv_tile));
+        variant += std::string("_kvt") + std::to_string(साँचो.kv_tile);
 
         uint32_t wg_size = 1;
-        while ((wg_size << 1) <= context.max_wg_size) {
+        जबसम्म ((wg_size << 1) <= context.max_wg_size) {
             wg_size <<= 1;
         }
         defines.push_back(std::string("WG_SIZE=") + std::to_string(wg_size));
@@ -3063,479 +3063,479 @@ class ggml_webgpu_shader_lib {
 
         webgpu_pipeline pipeline =
             ggml_webgpu_create_pipeline(device, preprocessor.preprocess(wgsl_flash_attn_vec_blk, defines), variant);
-        flash_attn_blk_pipelines[key] = pipeline;
-        return flash_attn_blk_pipelines[key];
+        flash_attn_blk_pipelines[साँचो] = pipeline;
+        फर्काऊ flash_attn_blk_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_flash_attn_vec_reduce_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_flash_attn_vec_reduce_pipeline_key key = {};
-        key.head_dim_v                                     = (uint32_t) context.src2->ne[0];
-        key.dst_type                                       = context.dst->type;
-        key.wg_size                                        = context.max_wg_size;
-        auto it                                            = flash_attn_vec_reduce_pipelines.find(key);
-        if (it != flash_attn_vec_reduce_pipelines.end()) {
-            return it->second;
+    webgpu_pipeline get_flash_attn_vec_reduce_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_flash_attn_vec_reduce_pipeline_साँचो साँचो = {};
+        साँचो.head_dim_v                                     = (uint32_t) context.src2->ne[0];
+        साँचो.dst_type                                       = context.dst->type;
+        साँचो.wg_size                                        = context.max_wg_size;
+        स्वतः it                                            = flash_attn_vec_reduce_pipelines.find(साँचो);
+        यदि (it != flash_attn_vec_reduce_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "flash_attn_vec_reduce";
 
-        switch (key.dst_type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.dst_type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("DST_F32");
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("DST_F16");
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported dst type for flash attention vec reduce shader");
         }
-        variant += std::string("_dst") + ggml_type_name(key.dst_type);
+        variant += std::string("_dst") + ggml_type_name(साँचो.dst_type);
 
-        defines.push_back(std::string("HEAD_DIM_V=") + std::to_string(key.head_dim_v));
-        variant += std::string("_hsv") + std::to_string(key.head_dim_v);
+        defines.push_back(std::string("HEAD_DIM_V=") + std::to_string(साँचो.head_dim_v));
+        variant += std::string("_hsv") + std::to_string(साँचो.head_dim_v);
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
         variant += std::string("_wg") + std::to_string(context.max_wg_size);
 
         webgpu_pipeline pipeline =
             ggml_webgpu_create_pipeline(device, preprocessor.preprocess(wgsl_flash_attn_vec_reduce, defines), variant);
-        flash_attn_vec_reduce_pipelines[key] = pipeline;
-        return flash_attn_vec_reduce_pipelines[key];
+        flash_attn_vec_reduce_pipelines[साँचो] = pipeline;
+        फर्काऊ flash_attn_vec_reduce_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_cpy_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_cpy_pipeline_key key = {};
-        key.src_type                     = context.src0->type;
-        key.dst_type                     = context.dst->type;
+    webgpu_pipeline get_cpy_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_cpy_pipeline_साँचो साँचो = {};
+        साँचो.src_type                     = context.src0->type;
+        साँचो.dst_type                     = context.dst->type;
 
-        auto it = cpy_pipelines.find(key);
-        if (it != cpy_pipelines.end()) {
-            return it->second;
+        स्वतः it = cpy_pipelines.find(साँचो);
+        यदि (it != cpy_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "cpy";
 
-        switch (key.src_type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.src_type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("SRC_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("SRC_F16");
                 variant += "_f16";
-                break;
-            case GGML_TYPE_I32:
+                रोक;
+            पक्ष GGML_TYPE_I32:
                 defines.push_back("SRC_I32");
                 variant += "_i32";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported src type for cpy shader");
         }
 
-        switch (key.dst_type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.dst_type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("DST_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("DST_F16");
                 variant += "_f16";
-                break;
-            case GGML_TYPE_I32:
+                रोक;
+            पक्ष GGML_TYPE_I32:
                 defines.push_back("DST_I32");
                 variant += "_i32";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported dst type for cpy shader");
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_cpy, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_cpy, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        cpy_pipelines[key]       = pipeline;
-        return cpy_pipelines[key];
+        cpy_pipelines[साँचो]       = pipeline;
+        फर्काऊ cpy_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_glu_pipeline(const ggml_webgpu_shader_lib_context & context, bool src_overlap) {
-        ggml_webgpu_glu_pipeline_key key = {};
-        key.glu_op                       = ggml_get_glu_op(context.dst);
-        key.type                         = context.dst->type;
-        key.split                        = (context.src1 != nullptr);
-        key.src_overlap                  = src_overlap;
+    webgpu_pipeline get_glu_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक src_overlap) {
+        ggml_webgpu_glu_pipeline_साँचो साँचो = {};
+        साँचो.glu_op                       = ggml_get_glu_op(context.dst);
+        साँचो.type                         = context.dst->type;
+        साँचो.split                        = (context.src1 != nullptr);
+        साँचो.src_overlap                  = src_overlap;
 
-        auto it = glu_pipelines.find(key);
-        if (it != glu_pipelines.end()) {
-            return it->second;
+        स्वतः it = glu_pipelines.find(साँचो);
+        यदि (it != glu_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "glu";
 
-        switch (key.glu_op) {
-            case GGML_GLU_OP_REGLU:
+        विकल्प (साँचो.glu_op) {
+            पक्ष GGML_GLU_OP_REGLU:
                 defines.push_back("OP_REGLU");
                 variant += "_reglu";
-                break;
-            case GGML_GLU_OP_GEGLU:
+                रोक;
+            पक्ष GGML_GLU_OP_GEGLU:
                 defines.push_back("OP_GEGLU");
                 variant += "_geglu";
-                break;
-            case GGML_GLU_OP_SWIGLU:
+                रोक;
+            पक्ष GGML_GLU_OP_SWIGLU:
                 defines.push_back("OP_SWIGLU");
                 variant += "_swiglu";
-                break;
-            case GGML_GLU_OP_SWIGLU_OAI:
+                रोक;
+            पक्ष GGML_GLU_OP_SWIGLU_OAI:
                 defines.push_back("OP_SWIGLU_OAI");
                 variant += "_swiglu_oai";
-                break;
-            case GGML_GLU_OP_GEGLU_ERF:
+                रोक;
+            पक्ष GGML_GLU_OP_GEGLU_ERF:
                 defines.push_back("OP_GEGLU_ERF");
                 variant += "_geglu_erf";
-                break;
-            case GGML_GLU_OP_GEGLU_QUICK:
+                रोक;
+            पक्ष GGML_GLU_OP_GEGLU_QUICK:
                 defines.push_back("OP_GEGLU_QUICK");
                 variant += "_geglu_quick";
-                break;
-            case GGML_GLU_OP_SWIGLU_CLAMP:
+                रोक;
+            पक्ष GGML_GLU_OP_SWIGLU_CLAMP:
                 defines.push_back("OP_SWIGLU_CLAMP");
                 variant += "_swiglu_clamp";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported GLU op");
         }
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("TYPE_F16");
                 variant += "_f16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for GLU shader");
         }
 
-        if (key.src_overlap) {
+        यदि (साँचो.src_overlap) {
             defines.push_back("SRC_OVERLAP");
             variant += "_src_overlap";
-        } else if (key.split) {
+        } अन्यथा यदि (साँचो.split) {
             variant += "_split";
-        } else {
+        } अन्यथा {
             defines.push_back("NO_SPLIT");
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_glu, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_glu_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_glu, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_glu_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
-        decisions->src_overlap   = key.src_overlap;
+        decisions->src_overlap   = साँचो.src_overlap;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        glu_pipelines[key]       = pipeline;
-        return glu_pipelines[key];
+        glu_pipelines[साँचो]       = pipeline;
+        फर्काऊ glu_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_rope_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_rope_pipeline_key key = {};
-        key.type                          = context.dst->type;
-        key.inplace                       = ggml_webgpu_tensor_equal(context.src0, context.dst);
-        key.has_ff                        = (context.src2 != nullptr);
+    webgpu_pipeline get_rope_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_rope_pipeline_साँचो साँचो = {};
+        साँचो.type                          = context.dst->type;
+        साँचो.inplace                       = ggml_webgpu_tensor_equal(context.src0, context.dst);
+        साँचो.has_ff                        = (context.src2 != nullptr);
 
-        auto it = rope_pipelines.find(key);
-        if (it != rope_pipelines.end()) {
-            return it->second;
+        स्वतः it = rope_pipelines.find(साँचो);
+        यदि (it != rope_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "rope";
 
-        switch (key.type) {
-            case GGML_TYPE_F32:
+        विकल्प (साँचो.type) {
+            पक्ष GGML_TYPE_F32:
                 defines.push_back("TYPE_F32");
                 variant += "_f32";
-                break;
-            case GGML_TYPE_F16:
+                रोक;
+            पक्ष GGML_TYPE_F16:
                 defines.push_back("TYPE_F16");
                 variant += "_f16";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported type for ROPE shader");
         }
 
-        if (key.inplace) {
+        यदि (साँचो.inplace) {
             defines.push_back("INPLACE");
             variant += "_inplace";
         }
 
-        if (key.has_ff) {
+        यदि (साँचो.has_ff) {
             defines.push_back("FF_FUNC");
             variant += "_ff";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_rope, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_rope, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
-        decisions->inplace       = key.inplace;
+        decisions->inplace       = साँचो.inplace;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        rope_pipelines[key]      = pipeline;
-        return rope_pipelines[key];
+        rope_pipelines[साँचो]      = pipeline;
+        फर्काऊ rope_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_soft_max_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_soft_max_pipeline_key key = {};
-        key.mask_type                         = context.src1 ? context.src1->type : GGML_TYPE_F32;
-        key.has_mask                          = (context.src1 != nullptr);
-        key.has_sink                          = (context.src2 != nullptr);
-        key.inplace                           = ggml_webgpu_tensor_equal(context.src0, context.dst);
+    webgpu_pipeline get_soft_max_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_soft_max_pipeline_साँचो साँचो = {};
+        साँचो.mask_type                         = context.src1 ? context.src1->type : GGML_TYPE_F32;
+        साँचो.has_mask                          = (context.src1 != nullptr);
+        साँचो.has_sink                          = (context.src2 != nullptr);
+        साँचो.inplace                           = ggml_webgpu_tensor_equal(context.src0, context.dst);
 
-        auto it = soft_max_pipelines.find(key);
-        if (it != soft_max_pipelines.end()) {
-            return it->second;
+        स्वतः it = soft_max_pipelines.find(साँचो);
+        यदि (it != soft_max_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "soft_max";
 
-        if (key.has_mask) {
+        यदि (साँचो.has_mask) {
             defines.push_back("HAS_MASK");
-            switch (key.mask_type) {
-                case GGML_TYPE_F32:
+            विकल्प (साँचो.mask_type) {
+                पक्ष GGML_TYPE_F32:
                     defines.push_back("MASK_F32");
                     variant += "_mask_f32";
-                    break;
-                case GGML_TYPE_F16:
+                    रोक;
+                पक्ष GGML_TYPE_F16:
                     defines.push_back("MASK_F16");
                     variant += "_mask_f16";
-                    break;
-                default:
+                    रोक;
+                स्वभाव:
                     GGML_ABORT("Unsupported type for SOFT_MAX shader");
             }
         }
 
-        if (key.has_sink) {
+        यदि (साँचो.has_sink) {
             defines.push_back("HAS_SINK");
             variant += "_sink";
         }
 
-        if (key.inplace) {
+        यदि (साँचो.inplace) {
             defines.push_back("INPLACE");
             variant += "_inplace";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_soft_max, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_soft_max, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
-        decisions->inplace       = key.inplace;
+        decisions->inplace       = साँचो.inplace;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        soft_max_pipelines[key]  = pipeline;
-        return soft_max_pipelines[key];
+        soft_max_pipelines[साँचो]  = pipeline;
+        फर्काऊ soft_max_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_conv2d_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_conv2d_pipeline_key key = {};
-        key.weight_type                     = context.src0->type;
-        key.input_type                      = context.src1->type;
-        key.output_type                     = context.dst->type;
+    webgpu_pipeline get_conv2d_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_conv2d_pipeline_साँचो साँचो = {};
+        साँचो.weight_type                     = context.src0->type;
+        साँचो.आगत_type                      = context.src1->type;
+        साँचो.output_type                     = context.dst->type;
 
-        auto it = conv2d_pipelines.find(key);
-        if (it != conv2d_pipelines.end()) {
-            return it->second;
+        स्वतः it = conv2d_pipelines.find(साँचो);
+        यदि (it != conv2d_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "conv_2d";
 
-        auto push_type_defines = [&](const char * prefix, ggml_type type) {
+        स्वतः थप_type_defines = [&](अचर वर्ण * prefix, ggml_type type) {
             std::string s_prefix = prefix;
-            if (type == GGML_TYPE_F32) {
+            यदि (type == GGML_TYPE_F32) {
                 defines.push_back(s_prefix + "=f32");
-            } else if (type == GGML_TYPE_F16) {
+            } अन्यथा यदि (type == GGML_TYPE_F16) {
                 defines.push_back(s_prefix + "=f16");
-            } else {
+            } अन्यथा {
                 GGML_ABORT("Unsupported type for CONV_2D shader");
             }
         };
 
-        push_type_defines("WEIGHT_TYPE", key.weight_type);
-        push_type_defines("INPUT_TYPE", key.input_type);
-        push_type_defines("OUTPUT_TYPE", key.output_type);
+        थप_type_defines("WEIGHT_TYPE", साँचो.weight_type);
+        थप_type_defines("INPUT_TYPE", साँचो.आगत_type);
+        थप_type_defines("OUTPUT_TYPE", साँचो.output_type);
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_conv2d, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_conv2d, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        conv2d_pipelines[key]    = pipeline;
-        return conv2d_pipelines[key];
+        conv2d_pipelines[साँचो]    = pipeline;
+        फर्काऊ conv2d_pipelines[साँचो];
     }
 
     // whcn selects the input layout: contiguous WHCN vs contiguous-channels CWHN
-    webgpu_pipeline get_conv2d_dw_pipeline(const ggml_webgpu_shader_lib_context & context, bool whcn) {
-        ggml_webgpu_conv2d_dw_pipeline_key key = {};
-        key.weight_type                        = context.src0->type;
-        key.input_type                         = context.src1->type;
-        key.output_type                        = context.dst->type;
-        key.whcn                               = whcn;
+    webgpu_pipeline get_conv2d_dw_pipeline(अचर ggml_webgpu_shader_lib_context & context, तार्किक whcn) {
+        ggml_webgpu_conv2d_dw_pipeline_साँचो साँचो = {};
+        साँचो.weight_type                        = context.src0->type;
+        साँचो.आगत_type                         = context.src1->type;
+        साँचो.output_type                        = context.dst->type;
+        साँचो.whcn                               = whcn;
 
-        auto it = conv2d_dw_pipelines.find(key);
-        if (it != conv2d_dw_pipelines.end()) {
-            return it->second;
+        स्वतः it = conv2d_dw_pipelines.find(साँचो);
+        यदि (it != conv2d_dw_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = whcn ? "conv_2d_dw_whcn" : "conv_2d_dw_cwhn";
 
-        auto push_type_defines = [&](const char * prefix, ggml_type type) {
+        स्वतः थप_type_defines = [&](अचर वर्ण * prefix, ggml_type type) {
             std::string s_prefix = prefix;
-            if (type == GGML_TYPE_F32) {
+            यदि (type == GGML_TYPE_F32) {
                 defines.push_back(s_prefix + "=f32");
-            } else if (type == GGML_TYPE_F16) {
+            } अन्यथा यदि (type == GGML_TYPE_F16) {
                 defines.push_back(s_prefix + "=f16");
-            } else {
+            } अन्यथा {
                 GGML_ABORT("Unsupported type for CONV_2D shader");
             }
         };
 
-        push_type_defines("WEIGHT_TYPE", key.weight_type);
-        push_type_defines("INPUT_TYPE", key.input_type);
-        push_type_defines("OUTPUT_TYPE", key.output_type);
+        थप_type_defines("WEIGHT_TYPE", साँचो.weight_type);
+        थप_type_defines("INPUT_TYPE", साँचो.आगत_type);
+        थप_type_defines("OUTPUT_TYPE", साँचो.output_type);
 
-        if (whcn) {
+        यदि (whcn) {
             defines.push_back("WHCN");
         }
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_conv2d_dw, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_conv2d_dw, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        conv2d_dw_pipelines[key] = pipeline;
-        return conv2d_dw_pipelines[key];
+        conv2d_dw_pipelines[साँचो] = pipeline;
+        फर्काऊ conv2d_dw_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_im2col_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        ggml_webgpu_im2col_pipeline_key key = {};
-        key.input_type                      = context.src1->type;
-        key.output_type                     = context.dst->type;
+    webgpu_pipeline get_im2col_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        ggml_webgpu_im2col_pipeline_साँचो साँचो = {};
+        साँचो.आगत_type                      = context.src1->type;
+        साँचो.output_type                     = context.dst->type;
 
-        auto it = im2col_pipelines.find(key);
-        if (it != im2col_pipelines.end()) {
-            return it->second;
+        स्वतः it = im2col_pipelines.find(साँचो);
+        यदि (it != im2col_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "im2col";
 
-        auto push_type_defines = [&](const char * prefix, ggml_type type) {
+        स्वतः थप_type_defines = [&](अचर वर्ण * prefix, ggml_type type) {
             std::string s_prefix = prefix;
-            if (type == GGML_TYPE_F32) {
+            यदि (type == GGML_TYPE_F32) {
                 defines.push_back(s_prefix + "=f32");
-            } else if (type == GGML_TYPE_F16) {
+            } अन्यथा यदि (type == GGML_TYPE_F16) {
                 defines.push_back(s_prefix + "=f16");
-            } else {
+            } अन्यथा {
                 GGML_ABORT("Unsupported type for IM2COL shader");
             }
         };
 
-        push_type_defines("INPUT_TYPE", key.input_type);
-        push_type_defines("OUTPUT_TYPE", key.output_type);
+        थप_type_defines("INPUT_TYPE", साँचो.आगत_type);
+        थप_type_defines("OUTPUT_TYPE", साँचो.output_type);
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_im2col, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_im2col, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        im2col_pipelines[key]    = pipeline;
-        return im2col_pipelines[key];
+        im2col_pipelines[साँचो]    = pipeline;
+        फर्काऊ im2col_pipelines[साँचो];
     }
 
-    webgpu_pipeline get_upscale_pipeline(const ggml_webgpu_shader_lib_context & context) {
-        const uint32_t mode_flags = (uint32_t) ggml_get_op_params_i32(context.dst, 0);
-        const uint32_t base_mode  = mode_flags & 0xFFu;
-        const bool     antialias  = (mode_flags & GGML_SCALE_FLAG_ANTIALIAS) != 0u;
+    webgpu_pipeline get_upscale_pipeline(अचर ggml_webgpu_shader_lib_context & context) {
+        अचर uint32_t mode_flags = (uint32_t) ggml_get_op_params_i32(context.dst, 0);
+        अचर uint32_t base_mode  = mode_flags & 0xFFu;
+        अचर तार्किक     antialias  = (mode_flags & GGML_SCALE_FLAG_ANTIALIAS) != 0u;
 
-        ggml_webgpu_upscale_pipeline_key key = {};
-        key.input_type                       = context.src0->type;
-        key.output_type                      = context.dst->type;
-        key.base_mode                        = base_mode;
-        key.antialias                        = antialias;
+        ggml_webgpu_upscale_pipeline_साँचो साँचो = {};
+        साँचो.आगत_type                       = context.src0->type;
+        साँचो.output_type                      = context.dst->type;
+        साँचो.base_mode                        = base_mode;
+        साँचो.antialias                        = antialias;
 
-        auto it = upscale_pipelines.find(key);
-        if (it != upscale_pipelines.end()) {
-            return it->second;
+        स्वतः it = upscale_pipelines.find(साँचो);
+        यदि (it != upscale_pipelines.end()) {
+            फर्काऊ it->second;
         }
 
         std::vector<std::string> defines;
         std::string              variant = "upscale";
 
-        if (key.input_type == GGML_TYPE_F16) {
+        यदि (साँचो.आगत_type == GGML_TYPE_F16) {
             defines.push_back("SRC_F16");
             variant += "_src_f16";
-        } else {
+        } अन्यथा {
             variant += "_src_f32";
         }
 
-        if (key.output_type == GGML_TYPE_F16) {
+        यदि (साँचो.output_type == GGML_TYPE_F16) {
             defines.push_back("DST_F16");
             variant += "_dst_f16";
-        } else {
+        } अन्यथा {
             variant += "_dst_f32";
         }
 
-        switch (base_mode) {
-            case GGML_SCALE_MODE_NEAREST:
+        विकल्प (base_mode) {
+            पक्ष GGML_SCALE_MODE_NEAREST:
                 defines.push_back("NEAREST");
                 variant += "_nearest";
-                break;
-            case GGML_SCALE_MODE_BILINEAR:
+                रोक;
+            पक्ष GGML_SCALE_MODE_BILINEAR:
                 defines.push_back("BILINEAR");
                 variant += "_bilinear";
-                break;
-            case GGML_SCALE_MODE_BICUBIC:
+                रोक;
+            पक्ष GGML_SCALE_MODE_BICUBIC:
                 defines.push_back("BICUBIC");
                 variant += "_bicubic";
-                break;
-            default:
+                रोक;
+            स्वभाव:
                 GGML_ABORT("Unsupported upscale mode");
         }
 
-        if (antialias) {
+        यदि (antialias) {
             defines.push_back("ANTIALIAS");
             variant += "_aa";
         }
 
         defines.push_back(std::string("WG_SIZE=") + std::to_string(context.max_wg_size));
 
-        auto processed           = preprocessor.preprocess(wgsl_upscale, defines);
-        auto decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
+        स्वतः processed           = preprocessor.preprocess(wgsl_upscale, defines);
+        स्वतः decisions           = std::make_shared<ggml_webgpu_generic_shader_decisions>();
         decisions->wg_size       = context.max_wg_size;
         webgpu_pipeline pipeline = ggml_webgpu_create_pipeline(device, processed, variant);
         pipeline.context         = decisions;
-        upscale_pipelines[key]   = pipeline;
-        return upscale_pipelines[key];
+        upscale_pipelines[साँचो]   = pipeline;
+        फर्काऊ upscale_pipelines[साँचो];
     }
 
-  private:
-    static webgpu_pipeline ggml_webgpu_create_pipeline(wgpu::Device & device,
+  गुप्त:
+    स्थिर webgpu_pipeline ggml_webgpu_create_pipeline(wgpu::Device & device,
                                                        std::string    shader_code,
                                                        std::string    label) {
         wgpu::ShaderSourceWGSL shader_source;
@@ -3551,7 +3551,7 @@ class ggml_webgpu_shader_lib {
         pipeline_desc.compute.module     = shader_module;
         pipeline_desc.compute.entryPoint = "main";   // Entry point in the WGSL code
         pipeline_desc.layout             = nullptr;  // nullptr means auto layout
-        return { device.CreateComputePipeline(&pipeline_desc), label };
+        फर्काऊ { device.CreateComputePipeline(&pipeline_desc), label };
     }
 };
 

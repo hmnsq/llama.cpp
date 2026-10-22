@@ -1,61 +1,61 @@
 #ifndef GGML_ZDNN_SCRATCH_HPP
 #define GGML_ZDNN_SCRATCH_HPP
 
-#include "ggml.h"
+#अन्तर्भाव "ggml.h"
 
-#include <cstddef>
-#include <vector>
+#अन्तर्भाव <cstddef>
+#अन्तर्भाव <vector>
 
 // 4K aligned host buffers that are cached for reuse, see ggml_cuda_pool_leg
-struct ggml_zdnn_pool {
-    struct buffer {
-        void * ptr  = nullptr;
-        size_t size = 0;
+संरचना ggml_zdnn_pool {
+    संरचना buffer {
+        शून्य * ptr  = nullptr;
+        माप_प्रकार size = 0;
     };
 
     std::vector<buffer> cached;
 
     ~ggml_zdnn_pool();
 
-    void * alloc(size_t size, size_t * actual_size);
-    void   free(void * ptr, size_t size);
+    शून्य * alloc(माप_प्रकार size, माप_प्रकार * actual_size);
+    शून्य   मुक्त(शून्य * ptr, माप_प्रकार size);
 };
 
 // a buffer of the pool that goes back to it at the end of its scope, see ggml_cuda_pool_alloc
-template <typename T>
-struct ggml_zdnn_pool_alloc {
+ढाँचा <typename T>
+संरचना ggml_zdnn_pool_alloc {
     ggml_zdnn_pool * pool = nullptr;
     T * ptr = nullptr;
-    size_t actual_size = 0;
+    माप_प्रकार actual_size = 0;
 
-    ggml_zdnn_pool_alloc() = default;
+    ggml_zdnn_pool_alloc() = स्वभाव;
 
-    ggml_zdnn_pool_alloc(ggml_zdnn_pool & pool, size_t size) {
+    ggml_zdnn_pool_alloc(ggml_zdnn_pool & pool, माप_प्रकार size) {
         alloc(pool, size);
     }
 
     ~ggml_zdnn_pool_alloc() {
-        if (ptr != nullptr) {
-            pool->free(ptr, actual_size);
+        यदि (ptr != nullptr) {
+            pool->मुक्त(ptr, actual_size);
         }
     }
 
     // size is in number of elements
-    T * alloc(ggml_zdnn_pool & pool, size_t size) {
+    T * alloc(ggml_zdnn_pool & pool, माप_प्रकार size) {
         GGML_ASSERT(ptr == nullptr);
-        this->pool = &pool;
-        ptr = (T *) pool.alloc(size * sizeof(T), &actual_size);
-        return ptr;
+        एतत्->pool = &pool;
+        ptr = (T *) pool.alloc(size * परिमाण(T), &actual_size);
+        फर्काऊ ptr;
     }
 
     T * get() {
-        return ptr;
+        फर्काऊ ptr;
     }
 
-    ggml_zdnn_pool_alloc(const ggml_zdnn_pool_alloc &) = delete;
+    ggml_zdnn_pool_alloc(अचर ggml_zdnn_pool_alloc &) = delete;
     ggml_zdnn_pool_alloc(ggml_zdnn_pool_alloc &&) = delete;
-    ggml_zdnn_pool_alloc & operator=(const ggml_zdnn_pool_alloc &) = delete;
-    ggml_zdnn_pool_alloc & operator=(ggml_zdnn_pool_alloc &&) = delete;
+    ggml_zdnn_pool_alloc & चालक=(अचर ggml_zdnn_pool_alloc &) = delete;
+    ggml_zdnn_pool_alloc & चालक=(ggml_zdnn_pool_alloc &&) = delete;
 };
 
 #endif  // GGML_ZDNN_SCRATCH_HPP

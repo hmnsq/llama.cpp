@@ -1,53 +1,53 @@
 #pragma clang diagnostic ignored "-Wunused-but-set-variable"
 
-#include <HAP_farf.h>
-#include <HAP_perf.h>
+#अन्तर्भाव <HAP_farf.h>
+#अन्तर्भाव <HAP_perf.h>
 
 #define GGML_COMMON_DECL_C
-#include "ggml-common.h"
-#include "hex-common.h"
-#include "hex-profile.h"
-#include "htp-ctx.h"
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hvx-types.h"
-#include "hex-utils.h"
-#include "hvx-copy.h"
-#include "dma-queue.h"
+#अन्तर्भाव "ggml-common.h"
+#अन्तर्भाव "hex-common.h"
+#अन्तर्भाव "hex-profile.h"
+#अन्तर्भाव "htp-ctx.h"
+#अन्तर्भाव "htp-ops.h"
+#अन्तर्भाव "htp-tensor.h"
+#अन्तर्भाव "hvx-types.h"
+#अन्तर्भाव "hex-utils.h"
+#अन्तर्भाव "hvx-copy.h"
+#अन्तर्भाव "dma-queue.h"
 
 #define htp_diag_tensors_preamble                           \
-    const struct htp_tensor * restrict src0 = octx->src[0]; \
-    const struct htp_tensor * restrict dst  = octx->dst;    \
+    अचर संरचना htp_tensor * restrict src0 = octx->src[0]; \
+    अचर संरचना htp_tensor * restrict dst  = octx->dst;    \
                                                             \
-    const uint32_t ne02 = src0->ne[2];                      \
+    अचर uint32_t ne02 = src0->ne[2];                      \
                                                             \
-    const uint32_t ne0 = dst->ne[0];                        \
-    const uint32_t ne1 = dst->ne[1];                        \
+    अचर uint32_t ne0 = dst->ne[0];                        \
+    अचर uint32_t ne1 = dst->ne[1];                        \
                                                             \
-    const uint32_t nb02 = src0->nb[2];                      \
-    const uint32_t nb03 = src0->nb[3];                      \
+    अचर uint32_t nb02 = src0->nb[2];                      \
+    अचर uint32_t nb03 = src0->nb[3];                      \
                                                             \
-    const uint32_t nb1 = dst->nb[1];                        \
-    const uint32_t nb2 = dst->nb[2];                        \
-    const uint32_t nb3 = dst->nb[3];
+    अचर uint32_t nb1 = dst->nb[1];                        \
+    अचर uint32_t nb2 = dst->nb[2];                        \
+    अचर uint32_t nb3 = dst->nb[3];
 
-struct htp_diag_context {
-    struct htp_ops_context * octx;
-    size_t          src_batch_size;
-    size_t          dst_row_size;
-    size_t          src_batch_size_aligned;
-    size_t          dst_row_size_aligned;
+संरचना htp_diag_context {
+    संरचना htp_ops_context * octx;
+    माप_प्रकार          src_batch_size;
+    माप_प्रकार          dst_row_size;
+    माप_प्रकार          src_batch_size_aligned;
+    माप_प्रकार          dst_row_size_aligned;
     uint32_t        batches_per_thread;
     uint32_t        total_batches;
     uint32_t        batch_start;
 };
 
 #define htp_diag_preamble                                              \
-    struct htp_diag_context * dctx = (struct htp_diag_context *) data; \
-    struct htp_ops_context *  octx = dctx->octx;                       \
+    संरचना htp_diag_context * dctx = (संरचना htp_diag_context *) data; \
+    संरचना htp_ops_context *  octx = dctx->octx;                       \
     htp_diag_tensors_preamble;
 
-static inline void hvx_diag_row_f32(const float * restrict src, float * restrict dst,
+स्थिर अन्तःस्थ शून्य hvx_diag_row_f32(अचर भिन्न * restrict src, भिन्न * restrict dst,
                                     uint32_t row_idx, uint32_t n) {
     hvx_splat_f32_a((uint8_t *) dst, 0.0f, n);
     dst[row_idx] = src[row_idx];
@@ -57,62 +57,62 @@ static inline void hvx_diag_row_f32(const float * restrict src, float * restrict
 // Per thread worker: DMA src fetch, compute in VTCM, DMA dst writeback
 // ---------------------------------------------------------------------------
 
-static void diag_thread_f32_dma(unsigned int nth, unsigned int ith, void * data) {
+स्थिर शून्य diag_thread_f32_dma(अचिन्हित पूर्णाङ्क nth, अचिन्हित पूर्णाङ्क ith, शून्य * data) {
     htp_diag_preamble;
     dma_queue * dma_q = octx->ctx->dma[ith];
 
-    const uint32_t ib0 = dctx->batch_start + dctx->batches_per_thread * ith;
-    const uint32_t ib1 = MIN(ib0 + dctx->batches_per_thread, dctx->batch_start + dctx->total_batches);
+    अचर uint32_t ib0 = dctx->batch_start + dctx->batches_per_thread * ith;
+    अचर uint32_t ib1 = MIN(ib0 + dctx->batches_per_thread, dctx->batch_start + dctx->total_batches);
 
-    if (ib0 >= ib1) {
-        return;
+    यदि (ib0 >= ib1) {
+        फर्काऊ;
     }
 
-    const size_t src_batch_size         = dctx->src_batch_size;
-    const size_t dst_row_size           = dctx->dst_row_size;
-    const size_t src_batch_size_aligned = dctx->src_batch_size_aligned;
-    const size_t dst_row_size_aligned   = dctx->dst_row_size_aligned;
+    अचर माप_प्रकार src_batch_size         = dctx->src_batch_size;
+    अचर माप_प्रकार dst_row_size           = dctx->dst_row_size;
+    अचर माप_प्रकार src_batch_size_aligned = dctx->src_batch_size_aligned;
+    अचर माप_प्रकार dst_row_size_aligned   = dctx->dst_row_size_aligned;
 
-    const dma_addr_t src_data = src0->data;
-    const dma_addr_t dst_data = dst->data;
+    अचर dma_addr_t src_data = src0->data;
+    अचर dma_addr_t dst_data = dst->data;
 
     // 1 src buffer + 1 dst row buffer per thread in VTCM
     uint8_t * src_spad = octx->src0_spad.data + (ith * src_batch_size_aligned);
     uint8_t * dst_spad = octx->dst_spad.data  + (ith * dst_row_size_aligned);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
 
-    for (uint32_t ib = ib0; ib < ib1; ib++) {
-        const uint32_t i3 = ib / ne02;
-        const uint32_t i2 = ib % ne02;
+    लागि (uint32_t ib = ib0; ib < ib1; ib++) {
+        अचर uint32_t i3 = ib / ne02;
+        अचर uint32_t i2 = ib % ne02;
 
-        const dma_addr_t src_batch = src_data + i3 * nb03 + i2 * nb02;
+        अचर dma_addr_t src_batch = src_data + i3 * nb03 + i2 * nb02;
 
         // Fetch source vector into VTCM
-        dma_queue_push(dma_q,
+        dma_queue_थप(dma_q,
                        dma_make_data(src_spad, src_batch),
                        src_batch_size_aligned, src_batch_size, src_batch_size, 1);
         dma_queue_flush(dma_q);
 
-        const float * src_spad_f32 = (const float *) src_spad;
-        float       * dst_spad_f32 = (float *) dst_spad;
+        अचर भिन्न * src_spad_f32 = (अचर भिन्न *) src_spad;
+        भिन्न       * dst_spad_f32 = (भिन्न *) dst_spad;
 
-        for (uint32_t i1 = 0; i1 < ne1; i1++) {
+        लागि (uint32_t i1 = 0; i1 < ne1; i1++) {
             // Compute row in VTCM
             htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) (ib * ne1 + i1));
             hvx_diag_row_f32(src_spad_f32, dst_spad_f32, i1, ne0);
             htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) (ib * ne1 + i1));
 
             // Write completed row back to DDR
-            const dma_addr_t dst_row = dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1;
-            dma_queue_push(dma_q,
+            अचर dma_addr_t dst_row = dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1;
+            dma_queue_थप(dma_q,
                            dma_make_data(dst_row, dst_spad),
                            dst_row_size, dst_row_size_aligned, dst_row_size, 1);
             dma_queue_flush(dma_q);
         }
     }
 
-    FARF(HIGH, "diag-f32-dma %d/%d: %ux%ux%ux%u (%u:%u) -> %ux%ux%ux%u\n",
+    FARF(माथिल्लो_2, "diag-f32-dma %d/%d: %ux%ux%ux%u (%u:%u) -> %ux%ux%ux%u\n",
          ith, nth, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], ib0, ib1,
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
 }
@@ -121,80 +121,80 @@ static void diag_thread_f32_dma(unsigned int nth, unsigned int ith, void * data)
 // Per thread worker: Direct HVX (no DMA)
 // ---------------------------------------------------------------------------
 
-static void diag_thread_f32(unsigned int nth, unsigned int ith, void * data) {
+स्थिर शून्य diag_thread_f32(अचिन्हित पूर्णाङ्क nth, अचिन्हित पूर्णाङ्क ith, शून्य * data) {
     htp_diag_preamble;
 
-    const uint8_t * src_data = (const uint8_t *) src0->data;
+    अचर uint8_t * src_data = (अचर uint8_t *) src0->data;
     uint8_t *       dst_data = (uint8_t *) dst->data;
 
-    const uint32_t ib0 = dctx->batch_start + dctx->batches_per_thread * ith;
-    const uint32_t ib1 = MIN(ib0 + dctx->batches_per_thread, dctx->batch_start + dctx->total_batches);
+    अचर uint32_t ib0 = dctx->batch_start + dctx->batches_per_thread * ith;
+    अचर uint32_t ib1 = MIN(ib0 + dctx->batches_per_thread, dctx->batch_start + dctx->total_batches);
 
-    struct htp_thread_trace * tr = &octx->ctx->trace[ith];
+    संरचना htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ib0);
 
-    for (uint32_t ib = ib0; ib < ib1; ib++) {
-        const uint32_t i3 = ib / ne02;
-        const uint32_t i2 = ib % ne02;
+    लागि (uint32_t ib = ib0; ib < ib1; ib++) {
+        अचर uint32_t i3 = ib / ne02;
+        अचर uint32_t i2 = ib % ne02;
 
-        const float * restrict src_batch = (const float *)(src_data + i3 * nb03 + i2 * nb02);
+        अचर भिन्न * restrict src_batch = (अचर भिन्न *)(src_data + i3 * nb03 + i2 * nb02);
 
-        for (uint32_t i1 = 0; i1 < ne1; i1++) {
-            float * restrict dst_row = (float *)(dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
+        लागि (uint32_t i1 = 0; i1 < ne1; i1++) {
+            भिन्न * restrict dst_row = (भिन्न *)(dst_data + i3 * nb3 + i2 * nb2 + i1 * nb1);
             hvx_diag_row_f32(src_batch, dst_row, i1, ne0);
         }
     }
 
     htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ib0);
 
-    FARF(HIGH, "diag-f32 %d/%d: %ux%ux%ux%u (%u:%u) -> %ux%ux%ux%u\n",
+    FARF(माथिल्लो_2, "diag-f32 %d/%d: %ux%ux%ux%u (%u:%u) -> %ux%ux%ux%u\n",
          ith, nth, src0->ne[0], src0->ne[1], src0->ne[2], src0->ne[3], ib0, ib1,
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3]);
 }
 
-int op_diag_f32(struct htp_ops_context * octx) {
-    const struct htp_tensor * src0 = octx->src[0];
-    const struct htp_tensor * dst  = octx->dst;
+पूर्णाङ्क op_diag_f32(संरचना htp_ops_context * octx) {
+    अचर संरचना htp_tensor * src0 = octx->src[0];
+    अचर संरचना htp_tensor * dst  = octx->dst;
 
-    const uint32_t total_batches = src0->ne[2] * src0->ne[3];
-    const size_t dst_batch_size  = dst->ne[1] * dst->nb[1];
+    अचर uint32_t total_batches = src0->ne[2] * src0->ne[3];
+    अचर माप_प्रकार dst_batch_size  = dst->ne[1] * dst->nb[1];
 
     uint32_t batch_start = 0;
     uint32_t nbatches    = total_batches;
 
-    if (octx->ctx->mdev.count > 1) {
-        bool can_split = htp_tensor_mdev_data_aligned(dst) && (dst->ne[0] == 1 || dst->nb[0] == sizeof(float)) && !htp_tensor_is_permuted(dst);
+    यदि (octx->ctx->mdev.गन्ती > 1) {
+        bool can_split = htp_tensor_mdev_data_aligned(dst) && (dst->ne[0] == 1 || dst->nb[0] == परिमाण(भिन्न)) && !htp_tensor_is_permuted(dst);
         uint32_t batches_per_chunk = 1;
-        if (can_split) {
-            if (dst->ne[2] > 1 && (dst->nb[2] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0 &&
-                (dst->ne[3] <= 1 || (dst->nb[3] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0)) {
+        यदि (can_split) {
+            यदि (dst->ne[2] > 1 && (dst->nb[2] & (HTP_TENSOR_MDEV_पङ्क्ति_SIZE - 1)) == 0 &&
+                (dst->ne[3] <= 1 || (dst->nb[3] & (HTP_TENSOR_MDEV_पङ्क्ति_SIZE - 1)) == 0)) {
                 batches_per_chunk = 1;
-            } else if (dst->nb[2] == dst_batch_size &&
+            } अन्यथा यदि (dst->nb[2] == dst_batch_size &&
                        (dst->ne[3] <= 1 || dst->nb[3] == dst->nb[2] * dst->ne[2])) {
-                batches_per_chunk = (dst_batch_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(dst_batch_size, HEX_L2_LINE_SIZE)) : 1;
-            } else {
+                batches_per_chunk = (dst_batch_size > 0) ? (HEX_L2_पङ्क्ति_SIZE / hex_gcd_u32(dst_batch_size, HEX_L2_पङ्क्ति_SIZE)) : 1;
+            } अन्यथा {
                 can_split = false;
             }
         }
 
-        const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, can_split ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
+        अचर संरचना htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, can_split ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.गन्ती, &octx->ctx->mdev.गन्ती_div);
         batch_start = range.start;
-        nbatches    = range.count;
+        nbatches    = range.गन्ती;
     }
 
-    if (nbatches == 0) {
-        return HTP_STATUS_OK;
+    यदि (nbatches == 0) {
+        फर्काऊ HTP_STATUS_OK;
     }
 
-    const uint32_t n_threads     = octx->n_threads;
+    अचर uint32_t n_threads     = octx->n_threads;
 
-    const size_t src_batch_size         = src0->ne[0] * sizeof(float);
-    const size_t dst_row_size           = dst->ne[0] * sizeof(float);
-    const size_t src_batch_size_aligned = hex_round_up(src_batch_size, VLEN);
-    const size_t dst_row_size_aligned   = hex_round_up(dst_row_size, VLEN);
+    अचर माप_प्रकार src_batch_size         = src0->ne[0] * परिमाण(भिन्न);
+    अचर माप_प्रकार dst_row_size           = dst->ne[0] * परिमाण(भिन्न);
+    अचर माप_प्रकार src_batch_size_aligned = hex_round_up(src_batch_size, VLEN);
+    अचर माप_प्रकार dst_row_size_aligned   = hex_round_up(dst_row_size, VLEN);
 
     // 1 src buffer + 1 dst row buffer per thread
-    const size_t spad_per_thread = src_batch_size_aligned + dst_row_size_aligned;
+    अचर माप_प्रकार spad_per_thread = src_batch_size_aligned + dst_row_size_aligned;
 
     octx->src0_spad.size_per_thread = src_batch_size_aligned;
     octx->dst_spad.size_per_thread  = dst_row_size_aligned;
@@ -202,10 +202,10 @@ int op_diag_f32(struct htp_ops_context * octx) {
     octx->src0_spad.size = n_threads * octx->src0_spad.size_per_thread;
     octx->dst_spad.size  = n_threads * octx->dst_spad.size_per_thread;
 
-    octx->src0_spad.data = octx->ctx->vtcm_base;                        octx->src0_spad.src = NULL;
-    octx->dst_spad.data  = octx->src0_spad.data + octx->src0_spad.size; octx->dst_spad.src  = NULL;
+    octx->src0_spad.data = octx->ctx->vtcm_base;                        octx->src0_spad.src = रिक्त;
+    octx->dst_spad.data  = octx->src0_spad.data + octx->src0_spad.size; octx->dst_spad.src  = रिक्त;
 
-    struct htp_diag_context dctx = {
+    संरचना htp_diag_context dctx = {
         .octx                   = octx,
         .src_batch_size         = src_batch_size,
         .dst_row_size           = dst_row_size,
@@ -216,31 +216,31 @@ int op_diag_f32(struct htp_ops_context * octx) {
         .batch_start            = batch_start,
     };
 
-    if (octx->ctx->vtcm_size < spad_per_thread * n_threads) {
-        if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
-            return HTP_STATUS_NO_SUPPORT;
+    यदि (octx->ctx->vtcm_size < spad_per_thread * n_threads) {
+        यदि (htp_tensor_is_extended(src0) || htp_tensor_is_extended(dst)) {
+            फर्काऊ HTP_STATUS_NO_SUPPORT;
         }
         work_queue_run(octx->ctx->work_queue, diag_thread_f32, &dctx, n_threads);
-    } else {
+    } अन्यथा {
         work_queue_run(octx->ctx->work_queue, diag_thread_f32_dma, &dctx, n_threads);
     }
 
-    return HTP_STATUS_OK;
+    फर्काऊ HTP_STATUS_OK;
 }
 
-int op_diag(struct htp_ops_context * octx) {
-    const struct htp_tensor * dst = octx->dst;
+पूर्णाङ्क op_diag(संरचना htp_ops_context * octx) {
+    अचर संरचना htp_tensor * dst = octx->dst;
 
-    int err = HTP_STATUS_OK;
+    पूर्णाङ्क err = HTP_STATUS_OK;
 
-    switch (dst->type) {
-        case HTP_TYPE_F32:
+    विकल्प (dst->type) {
+        पक्ष HTP_TYPE_F32:
             err = op_diag_f32(octx);
-            break;
-        default:
+            रोक;
+        स्वभाव:
             err = HTP_STATUS_NO_SUPPORT;
-            break;
+            रोक;
     }
 
-    return err;
+    फर्काऊ err;
 }

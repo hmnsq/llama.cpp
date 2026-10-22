@@ -1,83 +1,83 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#अन्तर्भाव "../node_context.h"
+#अन्तर्भाव "../op_table.h"
+#अन्तर्भाव "../utils.h"
 
-#include <cstdint>
-#include <memory>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/frontend/exception.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/reshape.hpp>
-#include <vector>
+#अन्तर्भाव <cstdint>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/core/node.hpp>
+#अन्तर्भाव <openvino/core/node_output.hpp>
+#अन्तर्भाव <openvino/frontend/exception.hpp>
+#अन्तर्भाव <openvino/op/concat.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/reshape.hpp>
+#अन्तर्भाव <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश op {
 
-OutputVector translate_reshape(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
-    if (context.get_input(0).get_partial_shape().is_static() &&
-        context.get_input_shape(0) == context.get_output_shape()) {
-        return {context.get_input(0)};
+OutputVector translate_reshape(अचर गाँठो_Context & context) {
+    अङ्क_inputs_check(context, 1, 1);
+    यदि (context.get_आगत(0).get_partial_shape().is_static() &&
+        context.get_आगत_shape(0) == context.get_output_shape()) {
+        फर्काऊ {context.get_आगत(0)};
     }
 
-    const int op_case = context.get_op_case();
-    const auto output_shape = context.get_output_shape().to_shape();
+    अचर पूर्णाङ्क op_case = context.get_op_case();
+    अचर स्वतः output_shape = context.get_output_shape().to_shape();
     std::vector<int64_t> shape(output_shape.begin(), output_shape.end());
-    std::shared_ptr<ov::Node> new_shape_node;
-    switch (op_case) {
-    case 0:
-        break;
-    case 1:
-    case 9:
+    std::shared_ptr<ov::Node> new_shape_गाँठो;
+    विकल्प (op_case) {
+    पक्ष 0:
+        रोक;
+    पक्ष 1:
+    पक्ष 9:
         shape[1] = -1;
-        if (context.is_stateful() && op_case == 1) {
+        यदि (context.is_stateful() && op_case == 1) {
             shape.erase(shape.begin());
         }
-        break;
-    case 2:
-    case 3:
+        रोक;
+    पक्ष 2:
+    पक्ष 3:
         shape[2] = -1;
-        if (op_case == 3) {
+        यदि (op_case == 3) {
             shape[3] = 1;
         }
-        break;
-    case 4:
-        return {context.get_input(0).get_node_shared_ptr()->input_value(0)};
-    case 5:
-    case 7:
+        रोक;
+    पक्ष 4:
+        फर्काऊ {context.get_आगत(0).get_गाँठो_shared_ptr()->आगत_मान(0)};
+    पक्ष 5:
+    पक्ष 7:
         shape = {1, 1, -1, shape[3]};
-        if (context.is_stateful() && op_case == 5) {
+        यदि (context.is_stateful() && op_case == 5) {
             shape.erase(shape.begin());
         }
-        break;
-    case 6:
+        रोक;
+    पक्ष 6:
         // Recurrent inputs keep the active sequence count separate from the token count.
-        if (context.has_input("s_copy_active_slot_len")) {
-            auto n_slot_active_len = context.get_input("s_copy_active_slot_len");
-            auto emb_size = ov::op::v0::Constant::create(ov::element::i64, {1}, {shape[3]});
-            auto one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
-            auto neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
-            new_shape_node =
+        यदि (context.has_आगत("s_copy_active_slot_len")) {
+            स्वतः n_slot_active_len = context.get_आगत("s_copy_active_slot_len");
+            स्वतः emb_size = ov::op::v0::Constant::create(ov::element::i64, {1}, {shape[3]});
+            स्वतः one = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
+            स्वतः neg_one = ov::op::v0::Constant::create(ov::element::i64, {1}, {-1});
+            new_shape_गाँठो =
                 std::make_shared<ov::op::v0::Concat>(ov::OutputVector{one, n_slot_active_len, neg_one, emb_size}, 0);
-        } else {
+        } अन्यथा {
             shape = {1, 1, -1, shape[3]};
         }
-        break;
-    case 8:
+        रोक;
+    पक्ष 8:
         shape[0] = -1;
-        break;
-    default:
-        FRONT_END_OP_CONVERSION_CHECK(false, "Unsupported RESHAPE case: ", op_case);
+        रोक;
+    स्वभाव:
+        FRONT_END_OP_CONVERSION_CHECK(असत्य, "Unsupported RESHAPE case: ", op_case);
     }
-    if (!new_shape_node) {
-        new_shape_node = ov::op::v0::Constant::create(ov::element::i64, {shape.size()}, shape);
+    यदि (!new_shape_गाँठो) {
+        new_shape_गाँठो = ov::op::v0::Constant::create(ov::element::i64, {shape.size()}, shape);
     }
-    auto res = std::make_shared<ov::op::v1::Reshape>(context.get_input(0), new_shape_node, false);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    स्वतः res = std::make_shared<ov::op::v1::Reshape>(context.get_आगत(0), new_shape_गाँठो, असत्य);
+    फर्काऊ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

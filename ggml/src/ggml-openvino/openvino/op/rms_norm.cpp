@@ -1,86 +1,86 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#अन्तर्भाव "../node_context.h"
+#अन्तर्भाव "../op_table.h"
+#अन्तर्भाव "../utils.h"
 
-#include <memory>
-#include <openvino/op/add.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/negative.hpp>
-#include <openvino/op/power.hpp>
-#include <openvino/op/reduce_mean.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/sqrt.hpp>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <openvino/op/add.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/divide.hpp>
+#अन्तर्भाव <openvino/op/multiply.hpp>
+#अन्तर्भाव <openvino/op/negative.hpp>
+#अन्तर्भाव <openvino/op/power.hpp>
+#अन्तर्भाव <openvino/op/reduce_mean.hpp>
+#अन्तर्भाव <openvino/op/reshape.hpp>
+#अन्तर्भाव <openvino/op/slice.hpp>
+#अन्तर्भाव <openvino/op/sqrt.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश op {
 
-OutputVector translate_rms_norm(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_rms_norm(अचर गाँठो_Context & context) {
+    अङ्क_inputs_check(context, 1, 1);
 
-    auto op_case = context.get_op_case();
+    स्वतः op_case = context.get_op_case();
 
-    ov::Output<ov::Node> input_node;
-    if (op_case == 3) {
+    ov::Output<ov::Node> आगत_गाँठो;
+    यदि (op_case == 3) {
         // Flatten sequence and token dimensions to match the gate layout.
-        auto input_shape = context.get_input_shape(0).to_shape();
-        input_node = std::make_shared<ov::op::v1::Reshape>(
-            context.get_input(0),
+        स्वतः आगत_shape = context.get_आगत_shape(0).to_shape();
+        आगत_गाँठो = std::make_shared<ov::op::v1::Reshape>(
+            context.get_आगत(0),
             ov::op::v0::Constant::create(
-                ov::element::i64, {4}, std::vector<int64_t>{1, -1, (int64_t) input_shape[2], (int64_t) input_shape[3]}),
-            false);
-    } else if (op_case == 1) {
-        input_node = process_view_input_new(context, 0);
-    } else if (op_case == 2) {
-        auto ssm_state_size = context.get_ssm_state_size();
+                ov::element::i64, {4}, std::vector<int64_t>{1, -1, (int64_t) आगत_shape[2], (int64_t) आगत_shape[3]}),
+            असत्य);
+    } अन्यथा यदि (op_case == 1) {
+        आगत_गाँठो = process_view_आगत_new(context, 0);
+    } अन्यथा यदि (op_case == 2) {
+        स्वतः ssm_state_size = context.get_ssm_state_size();
         // The GDN op packs [attn | new_state] along the row axis; the state occupies the last
         // ssm_state_size * n_seqs rows. Slice it off (scaling by the active sequence count) to keep
         // just the attention output.
         ov::Output<ov::Node> state_end;
-        if (context.has_input("s_copy_active_slot_len")) {
-            auto len = context.get_input("s_copy_active_slot_len");
-            auto state_rows = std::make_shared<ov::op::v1::Multiply>(
+        यदि (context.has_आगत("s_copy_active_slot_len")) {
+            स्वतः len = context.get_आगत("s_copy_active_slot_len");
+            स्वतः state_rows = std::make_shared<ov::op::v1::Multiply>(
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {ssm_state_size}), len);
             state_end = std::make_shared<ov::op::v0::Negative>(state_rows);
-        } else {
+        } अन्यथा {
             state_end = ov::op::v0::Constant::create(ov::element::i64, {1}, {-ssm_state_size});
         }
-        auto gdn_attn_output = std::make_shared<ov::op::v8::Slice>(
-            context.get_input(0), ov::op::v0::Constant::create(ov::element::i64, {1}, {0}), state_end,
+        स्वतः gdn_attn_output = std::make_shared<ov::op::v8::Slice>(
+            context.get_आगत(0), ov::op::v0::Constant::create(ov::element::i64, {1}, {0}), state_end,
             ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
             ov::op::v0::Constant::create(ov::element::i64, {1}, {2}));
 
-        auto input_shape = context.get_input_shape(0).to_shape();
-        input_node = std::make_shared<ov::op::v1::Reshape>(
+        स्वतः आगत_shape = context.get_आगत_shape(0).to_shape();
+        आगत_गाँठो = std::make_shared<ov::op::v1::Reshape>(
             gdn_attn_output,
             ov::op::v0::Constant::create(
-                ov::element::i64, {4}, std::vector<int64_t>{1, -1, (int64_t) input_shape[2], (int64_t) input_shape[3]}),
-            false);
+                ov::element::i64, {4}, std::vector<int64_t>{1, -1, (int64_t) आगत_shape[2], (int64_t) आगत_shape[3]}),
+            असत्य);
 
-    } else {
-        input_node = process_view_input_new(context, 0);
+    } अन्यथा {
+        आगत_गाँठो = process_view_आगत_new(context, 0);
     }
-    auto square = std::make_shared<ov::op::v1::Multiply>(input_node, input_node);
+    स्वतः square = std::make_shared<ov::op::v1::Multiply>(आगत_गाँठो, आगत_गाँठो);
 
-    auto mean = std::make_shared<ov::op::v1::ReduceMean>(
-        square, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1}), true);
+    स्वतः mean = std::make_shared<ov::op::v1::ReduceMean>(
+        square, ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1}), सत्य);
 
-    float eps;
-    memcpy(&eps, context.get_output_op_params(), sizeof(float));
+    भिन्न eps;
+    स_नकल(&eps, context.get_output_op_params(), परिमाण(भिन्न));
 
-    auto rms = std::make_shared<ov::op::v0::Sqrt>(
+    स्वतः rms = std::make_shared<ov::op::v0::Sqrt>(
         std::make_shared<ov::op::v1::Add>(mean, ov::op::v0::Constant::create(ov::element::f32, ov::Shape{1}, {eps})));
 
-    auto reciprocal =
+    स्वतः reciprocal =
         std::make_shared<ov::op::v1::Divide>(ov::op::v0::Constant::create(ov::element::f32, ov::Shape{1}, {1.0f}), rms);
 
-    auto res = std::make_shared<ov::op::v1::Multiply>(input_node, reciprocal);
+    स्वतः res = std::make_shared<ov::op::v1::Multiply>(आगत_गाँठो, reciprocal);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    फर्काऊ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

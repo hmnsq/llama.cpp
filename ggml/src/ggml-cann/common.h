@@ -23,26 +23,26 @@
 #ifndef CANN_COMMON_H
 #define CANN_COMMON_H
 
-#include "../ggml-impl.h"
-#include "../include/ggml-cann.h"
-#include "../include/ggml.h"
+#अन्तर्भाव "../ggml-impl.h"
+#अन्तर्भाव "../include/ggml-cann.h"
+#अन्तर्भाव "../include/ggml.h"
 
-#include <acl/acl.h>
-#include <unistd.h>
+#अन्तर्भाव <acl/acl.h>
+#अन्तर्भाव <unistd.h>
 
-#include <atomic>
-#include <condition_variable>
-#include <cstdio>
-#include <functional>
-#include <iostream>
-#include <list>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <string>
-#include <thread>
-#include <vector>
+#अन्तर्भाव <atomic>
+#अन्तर्भाव <condition_variable>
+#अन्तर्भाव <cstdio>
+#अन्तर्भाव <functional>
+#अन्तर्भाव <iostream>
+#अन्तर्भाव <list>
+#अन्तर्भाव <map>
+#अन्तर्भाव <memory>
+#अन्तर्भाव <mutex>
+#अन्तर्भाव <optional>
+#अन्तर्भाव <string>
+#अन्तर्भाव <thread>
+#अन्तर्भाव <vector>
 
 #define MATRIX_ROW_PADDING    512
 #define GGML_CANN_MAX_STREAMS 8
@@ -56,7 +56,7 @@
  * @param line The line number at which the error occurred.
  * @param msg The error message.
  */
-[[noreturn]] void ggml_cann_error(const char * stmt, const char * func, const char * file, int line, const char * msg);
+[[noreturn]] शून्य ggml_cann_error(अचर वर्ण * stmt, अचर वर्ण * func, अचर वर्ण * file, पूर्णाङ्क पङ्क्ति, अचर वर्ण * सन्देश);
 
 /**
  * @brief Checks the result of a CANN function call and invokes the error
@@ -66,54 +66,54 @@
  * @param error_fn The function to call to retrieve the error message.
  */
 #define ACL_CHECK_GEN(stmt, success, error_fn)                                \
-    do {                                                                      \
-        int err_code = (stmt);                                                \
-        if (err_code != (success)) {                                          \
+    गर {                                                                      \
+        पूर्णाङ्क err_code = (stmt);                                                \
+        यदि (err_code != (success)) {                                          \
             ggml_cann_error(#stmt, __func__, __FILE__, __LINE__, error_fn()); \
         }                                                                     \
-    } while (0);
+    } जबसम्म (0);
 
-#define ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, aclGetRecentErrMsg)
+#define ACL_CHECK(stmt) ACL_CHECK_GEN(stmt, 0, acl_Get_Recent_Err_सन्देश)
 
 /**
  * @brief Contains information about CANN devices.
  */
-struct ggml_cann_device_info {
+संरचना ggml_cann_device_info {
     /**
      * @brief Number of CANN devices available.
      */
-    int32_t device_count;
+    int32_t device_गन्ती;
 
     /**
      * @brief Information about a single CANN device.
      */
-    struct cann_device_info {
-        int    cc;              /**< Compute capability.                   */
-        size_t smpb;            /**< Maximum shared memory per block.      */
+    संरचना cann_device_info {
+        पूर्णाङ्क    cc;              /**< Compute capability.                   */
+        माप_प्रकार smpb;            /**< Maximum shared memory per block.      */
         bool   vmm;             /**< Virtual memory support.               */
-        size_t vmm_granularity; /**< Granularity of virtual memory.        */
-        size_t total_vram;      /**< Total video RAM available on the device. */
+        माप_प्रकार vmm_granularity; /**< Granularity of virtual memory.        */
+        माप_प्रकार total_vram;      /**< Total video RAM available on the device. */
     };
 
     cann_device_info devices[GGML_CANN_MAX_DEVICES] = {}; /**< Array of CANN device information. */
 };
 
-const ggml_cann_device_info & ggml_cann_info();
+अचर ggml_cann_device_info & ggml_cann_info();
 
-void    ggml_cann_set_device(int32_t device);
+शून्य    ggml_cann_set_device(int32_t device);
 
-std::optional<std::string> get_env_as_lowercase(const std::string & name);
-bool                       parse_bool(const std::string & value);
-int                        parse_integer(const std::string & value);
+std::optional<std::string> get_env_as_lowercase(अचर std::string & name);
+bool                       parse_bool(अचर std::string & मान);
+पूर्णाङ्क                        parse_integer(अचर std::string & मान);
 
 /**
  * @brief Abstract base class for memory pools used by CANN.
  */
-struct ggml_cann_pool {
+संरचना ggml_cann_pool {
     /**
      * @brief Virtual destructor for the memory pool.
      */
-    virtual ~ggml_cann_pool() = default;
+    आभास ~ggml_cann_pool() = स्वभाव;
 
     /**
      * @brief Allocates memory from the pool.
@@ -123,7 +123,7 @@ struct ggml_cann_pool {
      *                     will be stored.
      * @return             Pointer to the allocated memory block.
      */
-    virtual void * alloc(size_t size, size_t * actual_size) = 0;
+    आभास शून्य * alloc(माप_प्रकार size, माप_प्रकार * actual_size) = 0;
 
     /**
      * @brief Frees a previously allocated memory block.
@@ -133,21 +133,21 @@ struct ggml_cann_pool {
      * @note Note that all CANN opertors are running async. Make sure memory is
      *       still avaiable before this operator finished.
      */
-    virtual void free(void * ptr, size_t size) = 0;
+    आभास शून्य मुक्त(शून्य * ptr, माप_प्रकार size) = 0;
 };
 
 /**
  * @brief RAII wrapper for managing memory allocations from a CANN memory pool.
  */
-struct ggml_cann_pool_alloc {
+संरचना ggml_cann_pool_alloc {
     ggml_cann_pool * pool        = nullptr; /**< Pointer to the memory pool. */
-    void *           ptr         = nullptr; /**< Pointer to the allocated memory block. */
-    size_t           actual_size = 0;       /**< Actual size of the allocated memory block. */
+    शून्य *           ptr         = nullptr; /**< Pointer to the allocated memory block. */
+    माप_प्रकार           actual_size = 0;       /**< Actual size of the allocated memory block. */
 
     /**
      * @brief Default constructor.
      */
-    ggml_cann_pool_alloc() = default;
+    ggml_cann_pool_alloc() = स्वभाव;
 
     /**
      * @brief Constructor that initializes the memory pool.
@@ -160,14 +160,14 @@ struct ggml_cann_pool_alloc {
      * @param pool Reference to the memory pool.
      * @param size Size of the memory block to allocate.
      */
-    ggml_cann_pool_alloc(ggml_cann_pool & pool, size_t size) : pool(&pool) { alloc(size); }
+    ggml_cann_pool_alloc(ggml_cann_pool & pool, माप_प्रकार size) : pool(&pool) { alloc(size); }
 
     /**
      * @brief Destructor that frees the allocated memory block.
      */
     ~ggml_cann_pool_alloc() {
-        if (ptr != nullptr) {
-            pool->free(ptr, actual_size);
+        यदि (ptr != nullptr) {
+            pool->मुक्त(ptr, actual_size);
         }
     }
 
@@ -176,11 +176,11 @@ struct ggml_cann_pool_alloc {
      * @param size Size of the memory block to allocate.
      * @return Pointer to the allocated memory block.
      */
-    void * alloc(size_t size) {
+    शून्य * alloc(माप_प्रकार size) {
         GGML_ASSERT(pool != nullptr);
         GGML_ASSERT(ptr == nullptr);
         ptr = pool->alloc(size, &this->actual_size);
-        return ptr;
+        फर्काऊ ptr;
     }
 
     /**
@@ -189,47 +189,47 @@ struct ggml_cann_pool_alloc {
      * @param size Size of the memory block to allocate.
      * @return Pointer to the allocated memory block.
      */
-    void * alloc(ggml_cann_pool & pool, size_t size) {
+    शून्य * alloc(ggml_cann_pool & pool, माप_प्रकार size) {
         this->pool = &pool;
-        return alloc(size);
+        फर्काऊ alloc(size);
     }
 
     /**
      * @brief Gets the pointer to the allocated memory block.
      * @return Pointer to the allocated memory block.
      */
-    void * get() { return ptr; }
+    शून्य * get() { फर्काऊ ptr; }
 
     // Deleted copy constructor
-    ggml_cann_pool_alloc(const ggml_cann_pool_alloc &) = delete;
+    ggml_cann_pool_alloc(अचर ggml_cann_pool_alloc &) = delete;
 
     // Deleted move constructor
     ggml_cann_pool_alloc(ggml_cann_pool_alloc &&) = delete;
 
     // Deleted copy assignment operator
-    ggml_cann_pool_alloc & operator=(const ggml_cann_pool_alloc &) = delete;
+    ggml_cann_pool_alloc & चालक=(अचर ggml_cann_pool_alloc &) = delete;
 
     // Deleted move assignment operator
-    ggml_cann_pool_alloc & operator=(ggml_cann_pool_alloc &&) = delete;
+    ggml_cann_pool_alloc & चालक=(ggml_cann_pool_alloc &&) = delete;
 };
 
 #ifdef USE_ACL_GRAPH
-struct ggml_graph_node_properties {
+संरचना ggml_graph_गाँठो_properties {
     // dst tensor
-    void *    node_address;
-    ggml_type node_type;
+    शून्य *    गाँठो_address;
+    ggml_type गाँठो_type;
     int64_t   ne[GGML_MAX_DIMS];
-    size_t    nb[GGML_MAX_DIMS];
+    माप_प्रकार    nb[GGML_MAX_DIMS];
 
     // src tensor
-    void *    src_address[GGML_MAX_SRC];
+    शून्य *    src_address[GGML_MAX_SRC];
     ggml_type src_type[GGML_MAX_SRC];
     int64_t   src_ne[GGML_MAX_SRC][GGML_MAX_DIMS];
-    size_t    src_nb[GGML_MAX_SRC][GGML_MAX_DIMS];
+    माप_प्रकार    src_nb[GGML_MAX_SRC][GGML_MAX_DIMS];
 
     // op
-    ggml_op node_op;
-    int32_t op_params[GGML_MAX_OP_PARAMS / sizeof(int32_t)];
+    ggml_op गाँठो_op;
+    int32_t op_params[GGML_MAX_OP_PARAMS / परिमाण(int32_t)];
 
     /**
      * @brief Check if a ggml tensor node matches this property set.
@@ -240,67 +240,67 @@ struct ggml_graph_node_properties {
      * @param node The current ggml tensor node.
      * @return true if all fields match (excluding GGML_OP_VIEW); false otherwise.
      */
-    bool has_matching_properties(ggml_tensor * node) {
-        if (node->data != this->node_address && node->op != GGML_OP_VIEW) {
-            return false;
+    bool has_matching_properties(ggml_tensor * गाँठो) {
+        यदि (गाँठो->data != this->गाँठो_address && गाँठो->op != GGML_OP_VIEW) {
+            फर्काऊ false;
         }
 
-        if (node->op != this->node_op) {
-            return false;
+        यदि (गाँठो->op != this->गाँठो_op) {
+            फर्काऊ false;
         }
 
-        if (node->type != this->node_type) {
-            return false;
+        यदि (गाँठो->type != this->गाँठो_type) {
+            फर्काऊ false;
         }
 
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
-            if (node->ne[i] != this->ne[i]) {
-                return false;
+        लागि (पूर्णाङ्क i = 0; i < GGML_MAX_DIMS; i++) {
+            यदि (गाँठो->ne[i] != this->ne[i]) {
+                फर्काऊ false;
             }
-            if (node->nb[i] != this->nb[i]) {
-                return false;
+            यदि (गाँठो->nb[i] != this->nb[i]) {
+                फर्काऊ false;
             }
         }
 
-        for (int i = 0; i < GGML_MAX_SRC; i++) {
-            if (node->src[i]) {
-                if (node->src[i]->data != this->src_address[i] && node->op != GGML_OP_VIEW) {
-                    return false;
+        लागि (पूर्णाङ्क i = 0; i < GGML_MAX_SRC; i++) {
+            यदि (गाँठो->src[i]) {
+                यदि (गाँठो->src[i]->data != this->src_address[i] && गाँठो->op != GGML_OP_VIEW) {
+                    फर्काऊ false;
                 }
 
-                if (node->src[i]->type != this->src_type[i]) {
-                    return false;
+                यदि (गाँठो->src[i]->type != this->src_type[i]) {
+                    फर्काऊ false;
                 }
 
-                for (int d = 0; d < GGML_MAX_DIMS; d++) {
-                    if (node->src[i]->ne[d] != this->src_ne[i][d]) {
-                        return false;
+                लागि (पूर्णाङ्क d = 0; d < GGML_MAX_DIMS; d++) {
+                    यदि (गाँठो->src[i]->ne[d] != this->src_ne[i][d]) {
+                        फर्काऊ false;
                     }
-                    if (node->src[i]->nb[d] != this->src_nb[i][d]) {
-                        return false;
+                    यदि (गाँठो->src[i]->nb[d] != this->src_nb[i][d]) {
+                        फर्काऊ false;
                     }
                 }
-            } else {
-                if (this->src_address[i] != nullptr) {
-                    return false;
+            } अन्यथा {
+                यदि (this->src_address[i] != nullptr) {
+                    फर्काऊ false;
                 }
             }
         }
 
-        return memcmp(this->op_params, node->op_params, GGML_MAX_OP_PARAMS) == 0;
+        फर्काऊ स_भेद(this->op_params, गाँठो->op_params, GGML_MAX_OP_PARAMS) == 0;
     }
 };
 
-struct ggml_cann_graph {
+संरचना ggml_cann_graph {
     ~ggml_cann_graph() {
-        if (graph != nullptr) {
+        यदि (graph != nullptr) {
             ACL_CHECK(aclmdlRIDestroy(graph));
         }
     }
 
     aclmdlRI graph = nullptr;
 
-    std::vector<ggml_graph_node_properties> ggml_graph_properties;
+    std::vector<ggml_graph_गाँठो_properties> ggml_graph_properties;
 
     /**
      * @brief Create a new CANN graph from a ggml computation graph.
@@ -319,39 +319,39 @@ struct ggml_cann_graph {
      * @param cgraph The current ggml computation graph.
      * @return Pointer to the newly created ggml_cann_graph object.
      */
-    static ggml_cann_graph * create_from_cgraph(ggml_cgraph * cgraph) {
+    स्थिर ggml_cann_graph * create_from_cgraph(ggml_cgraph * cgraph) {
         ggml_cann_graph * new_graph = new ggml_cann_graph();
         new_graph->ggml_graph_properties.resize(cgraph->n_nodes);
 
-        for (int node_idx = 0; node_idx < cgraph->n_nodes; ++node_idx) {
-            ggml_tensor * node = cgraph->nodes[node_idx];
-            auto &        prop = new_graph->ggml_graph_properties[node_idx];
+        लागि (पूर्णाङ्क गाँठो_idx = 0; गाँठो_idx < cgraph->n_nodes; ++गाँठो_idx) {
+            ggml_tensor * गाँठो = cgraph->nodes[गाँठो_idx];
+            स्वतः &        prop = new_graph->ggml_graph_properties[गाँठो_idx];
 
-            prop.node_address = node->data;
-            prop.node_op      = node->op;
-            prop.node_type    = node->type;
+            prop.गाँठो_address = गाँठो->data;
+            prop.गाँठो_op      = गाँठो->op;
+            prop.गाँठो_type    = गाँठो->type;
 
-            std::copy_n(node->ne, GGML_MAX_DIMS, prop.ne);
-            std::copy_n(node->nb, GGML_MAX_DIMS, prop.nb);
+            std::copy_n(गाँठो->ne, GGML_MAX_DIMS, prop.ne);
+            std::copy_n(गाँठो->nb, GGML_MAX_DIMS, prop.nb);
 
-            for (int src = 0; src < GGML_MAX_SRC; ++src) {
-                if (node->src[src]) {
-                    prop.src_address[src] = node->src[src]->data;
-                    prop.src_type[src]    = node->src[src]->type;
-                    std::copy_n(node->src[src]->ne, GGML_MAX_DIMS, prop.src_ne[src]);
-                    std::copy_n(node->src[src]->nb, GGML_MAX_DIMS, prop.src_nb[src]);
-                } else {
+            लागि (पूर्णाङ्क src = 0; src < GGML_MAX_SRC; ++src) {
+                यदि (गाँठो->src[src]) {
+                    prop.src_address[src] = गाँठो->src[src]->data;
+                    prop.src_type[src]    = गाँठो->src[src]->type;
+                    std::copy_n(गाँठो->src[src]->ne, GGML_MAX_DIMS, prop.src_ne[src]);
+                    std::copy_n(गाँठो->src[src]->nb, GGML_MAX_DIMS, prop.src_nb[src]);
+                } अन्यथा {
                     prop.src_address[src] = nullptr;
-                    prop.src_type[src]    = GGML_TYPE_COUNT;
+                    prop.src_type[src]    = GGML_TYPE_गन्ती;
                     std::fill_n(prop.src_ne[src], GGML_MAX_DIMS, 0);
                     std::fill_n(prop.src_nb[src], GGML_MAX_DIMS, 0);
                 }
             }
 
-            memcpy(prop.op_params, node->op_params, GGML_MAX_OP_PARAMS);
+            स_नकल(prop.op_params, गाँठो->op_params, GGML_MAX_OP_PARAMS);
         }
 
-        return new_graph;
+        फर्काऊ new_graph;
     }
 
     /**
@@ -365,17 +365,17 @@ struct ggml_cann_graph {
      * @return true if this CANN graph matches the ggml graph; false otherwise.
      */
     bool matches_cgraph(ggml_cgraph * cgraph) {
-        if (this->ggml_graph_properties.size() != static_cast<size_t>(cgraph->n_nodes)) {
-            return false;
+        यदि (this->ggml_graph_properties.size() != static_cast<माप_प्रकार>(cgraph->n_nodes)) {
+            फर्काऊ false;
         }
 
-        for (int i = 0; i < cgraph->n_nodes; ++i) {
-            if (!this->ggml_graph_properties[i].has_matching_properties(cgraph->nodes[i])) {
-                return false;
+        लागि (पूर्णाङ्क i = 0; i < cgraph->n_nodes; ++i) {
+            यदि (!this->ggml_graph_properties[i].has_matching_properties(cgraph->nodes[i])) {
+                फर्काऊ false;
             }
         }
 
-        return true;
+        फर्काऊ true;
     }
 };
 
@@ -386,12 +386,12 @@ struct ggml_cann_graph {
  * and enforces a maximum capacity. It provides methods to push new graphs,
  * move existing graphs to the front (most recently used), and clear the cache.
  */
-struct ggml_cann_graph_lru_cache {
-    size_t capacity;                         /**< Maximum number of graphs in the cache. */
+संरचना ggml_cann_graph_lru_cache {
+    माप_प्रकार capacity;                         /**< Maximum number of graphs in the cache. */
 
     std::list<ggml_cann_graph *> cache_list; /**< List storing cached graphs as raw pointers. */
 
-    ggml_cann_graph_lru_cache() { capacity = parse_integer(get_env_as_lowercase("GGML_CANN_GRAPH_CACHE_CAPACITY").value_or("12")); }
+    ggml_cann_graph_lru_cache() { capacity = parse_integer(get_env_as_lowercase("GGML_CANN_GRAPH_CACHE_CAPACITY").मान_or("12")); }
 
     /**
      * @brief Push a new graph to the front of the cache.
@@ -399,20 +399,20 @@ struct ggml_cann_graph_lru_cache {
      * @param new_node Pointer to the new ggml_cann_graph to cache.
      *        Ownership is transferred to the cache (cache will delete it).
      */
-    void push(ggml_cann_graph * new_node) {
-        if (cache_list.size() >= capacity) {
+    शून्य थप(ggml_cann_graph * new_गाँठो) {
+        यदि (cache_list.size() >= capacity) {
             ggml_cann_graph * old = cache_list.back();
-            cache_list.pop_back();
+            cache_list.झिक_back();
             delete old;  // free the old graph
         }
-        cache_list.push_front(new_node);
+        cache_list.थप_front(new_गाँठो);
     }
 
     /**
      * @brief Clear all graphs from the cache (also frees memory).
      */
-    void clear() {
-        for (auto ptr : cache_list) {
+    शून्य clear() {
+        लागि (स्वतः ptr : cache_list) {
             delete ptr;
         }
         cache_list.clear();
@@ -435,72 +435,72 @@ struct ggml_cann_graph_lru_cache {
      * @return true if found; false otherwise.
      */
     bool find_and_move_to_front(ggml_cgraph * cgraph) {
-        for (auto & graph_ptr : this->cache_list) {
-            if (graph_ptr->matches_cgraph(cgraph)) {
-                cache_list.remove(graph_ptr);
-                cache_list.push_front(graph_ptr);
-                return true;
+        लागि (स्वतः & graph_ptr : this->cache_list) {
+            यदि (graph_ptr->matches_cgraph(cgraph)) {
+                cache_list.हटाओ(graph_ptr);
+                cache_list.थप_front(graph_ptr);
+                फर्काऊ true;
             }
         }
-        return false;
+        फर्काऊ false;
     }
 };
 #endif  // USE_ACL_GRAPH
 
-struct ggml_cann_rope_cache {
+संरचना ggml_cann_rope_cache {
     ~ggml_cann_rope_cache() {
-        if (theta_scale_cache) {
+        यदि (theta_scale_cache) {
             ACL_CHECK(aclrtFree(theta_scale_cache));
         }
-        if (sin_cache) {
+        यदि (sin_cache) {
             ACL_CHECK(aclrtFree(sin_cache));
         }
-        if (cos_cache) {
+        यदि (cos_cache) {
             ACL_CHECK(aclrtFree(cos_cache));
         }
-        if (position_select_index) {
+        यदि (position_select_index) {
             ACL_CHECK(aclrtFree(position_select_index));
         }
-        if (theta_scale_exp_host) {
-            free(theta_scale_exp_host);
+        यदि (theta_scale_exp_host) {
+            मुक्त(theta_scale_exp_host);
         }
-        if (position_select_index_host) {
-            free(position_select_index_host);
+        यदि (position_select_index_host) {
+            मुक्त(position_select_index_host);
         }
-        if (yarn_ramp_cache) {
+        यदि (yarn_ramp_cache) {
             ACL_CHECK(aclrtFree(yarn_ramp_cache));
         }
     }
 
     bool equal(int64_t theta_scale_length,
                int64_t position_length,
-               float   ext_factor,
-               float   theta_scale,
-               float   freq_scale,
-               float   attn_factor,
+               भिन्न   ext_factor,
+               भिन्न   theta_scale,
+               भिन्न   freq_scale,
+               भिन्न   attn_factor,
                bool    is_neox,
                bool    indep_sects,
                bool    mrope_used,
                bool    is_imrope,
-               int     sections[4]) {
-        return this->theta_scale_length == theta_scale_length && this->position_length == position_length &&
+               पूर्णाङ्क     sections[4]) {
+        फर्काऊ this->theta_scale_length == theta_scale_length && this->position_length == position_length &&
                this->ext_factor == ext_factor && this->theta_scale == theta_scale && this->freq_scale == freq_scale &&
                this->attn_factor == attn_factor && this->is_neox == is_neox && this->indep_sects == indep_sects &&
                this->mrope_used == mrope_used && this->is_imrope == is_imrope && this->sections[0] == sections[0] &&
                this->sections[1] == sections[1] && this->sections[2] == sections[2] && this->sections[3] == sections[3];
     }
 
-    void set(int64_t theta_scale_length,
+    शून्य set(int64_t theta_scale_length,
              int64_t position_length,
-             float   ext_factor,
-             float   theta_scale,
-             float   freq_scale,
-             float   attn_factor,
+             भिन्न   ext_factor,
+             भिन्न   theta_scale,
+             भिन्न   freq_scale,
+             भिन्न   attn_factor,
              bool    is_neox,
              bool    indep_sects,
              bool    mrope_used,
              bool    is_imrope,
-             int     sections[4]) {
+             पूर्णाङ्क     sections[4]) {
         this->theta_scale_length = theta_scale_length;
         this->position_length    = position_length;
         this->ext_factor         = ext_factor;
@@ -518,44 +518,44 @@ struct ggml_cann_rope_cache {
     }
 
     // memory cache, prepare before inferencing.
-    void *  theta_scale_cache          = nullptr;
-    float * theta_scale_exp_host       = nullptr;
-    int *   position_select_index_host = nullptr;
-    void *  position_select_index      = nullptr;
-    void *  yarn_ramp_cache            = nullptr;
+    शून्य *  theta_scale_cache          = nullptr;
+    भिन्न * theta_scale_exp_host       = nullptr;
+    पूर्णाङ्क *   position_select_index_host = nullptr;
+    शून्य *  position_select_index      = nullptr;
+    शून्य *  yarn_ramp_cache            = nullptr;
     // sin/cos cache, used only to accelerate first layer on each device
-    void *  sin_cache                  = nullptr;
-    void *  cos_cache                  = nullptr;
+    शून्य *  sin_cache                  = nullptr;
+    शून्य *  cos_cache                  = nullptr;
     // Properties to check before reusing the sincos cache
     int64_t theta_scale_length         = 0;
     int64_t position_length            = 0;
     bool    cached                     = false;
-    float   ext_factor                 = 0.0f;
-    float   theta_scale                = 0.0f;
-    float   freq_scale                 = 0.0f;
-    float   attn_factor                = 0.0f;
+    भिन्न   ext_factor                 = 0.0f;
+    भिन्न   theta_scale                = 0.0f;
+    भिन्न   freq_scale                 = 0.0f;
+    भिन्न   attn_factor                = 0.0f;
     bool    is_neox                    = false;
     bool    indep_sects                = false;
     bool    mrope_used                 = false;
-    int     sections[4]                = { 0, 0, 0, 0 };
+    पूर्णाङ्क     sections[4]                = { 0, 0, 0, 0 };
     bool    is_imrope                  = false;
 };
 
-struct ggml_cann_tensor_cache {
+संरचना ggml_cann_tensor_cache {
     ~ggml_cann_tensor_cache() {
-        if (cache != nullptr) {
+        यदि (cache != nullptr) {
             ACL_CHECK(aclrtFree(cache));
         }
     }
 
-    void *  cache = nullptr;
+    शून्य *  cache = nullptr;
     int64_t size  = 0;
 };
 
 /**
  * @brief Context for managing CANN backend operations.
  */
-struct ggml_backend_cann_context {
+संरचना ggml_backend_cann_context {
     int32_t     device;               /**< Device ID. */
     std::string name;                 /**< Name of the device. */
     std::string description;          /**< Description of the device. */
@@ -578,12 +578,12 @@ struct ggml_backend_cann_context {
      * @brief Constructor for initializing the context with a given device.
      * @param device Device ID.
      */
-    explicit ggml_backend_cann_context(int device) : device(device), name("CANN" + std::to_string(device)) {
+    explicit ggml_backend_cann_context(पूर्णाङ्क device) : device(device), name("CANN" + std::to_string(device)) {
         ggml_cann_set_device(device);
         description = aclrtGetSocName();
 
 #ifdef USE_ACL_GRAPH
-        acl_graph_mode = parse_bool(get_env_as_lowercase("GGML_CANN_ACL_GRAPH").value_or("on"));
+        acl_graph_mode = parse_bool(get_env_as_lowercase("GGML_CANN_ACL_GRAPH").मान_or("on"));
         GGML_LOG_INFO("%s: device %d execution mode is %s (%s)\n", __func__, device, acl_graph_mode ? "GRAPH" : "EAGER",
                       acl_graph_mode ? "acl graph enabled" : "acl graph disabled");
 #endif
@@ -594,11 +594,11 @@ struct ggml_backend_cann_context {
      */
     ~ggml_backend_cann_context() {
         ggml_cann_set_device(device);
-        if (copy_event != nullptr) {
+        यदि (copy_event != nullptr) {
             ACL_CHECK(aclrtDestroyEvent(copy_event));
         }
-        for (int i = 0; i < GGML_CANN_MAX_STREAMS; ++i) {
-            if (streams[i] != nullptr) {
+        लागि (पूर्णाङ्क i = 0; i < GGML_CANN_MAX_STREAMS; ++i) {
+            यदि (streams[i] != nullptr) {
                 ACL_CHECK(aclrtDestroyStream(streams[i]));
             }
         }
@@ -609,22 +609,22 @@ struct ggml_backend_cann_context {
      * @param stream Index of the stream.
      * @return The stream corresponding to the given index.
      */
-    aclrtStream stream(int stream) {
-        if (streams[stream] == nullptr) {
+    aclrtStream stream(पूर्णाङ्क stream) {
+        यदि (streams[stream] == nullptr) {
             // If the device is not set here, destroying the stream later may cause a mismatch
             // between the thread contexts where the stream was created and destroyed.
             // However, I printed the device_id, thread_id, and stream, and they are all consistent.
             ACL_CHECK(aclrtSetDevice(device));
             ACL_CHECK(aclrtCreateStream(&streams[stream]));
         }
-        return streams[stream];
+        फर्काऊ streams[stream];
     }
 
     /**
      * @brief Get or create the default stream (index 0).
      * @return The default stream.
      */
-    aclrtStream stream() { return stream(0); }
+    aclrtStream stream() { फर्काऊ stream(0); }
 
     // TODO: each stream should have a memory pool.
     std::unique_ptr<ggml_cann_pool> mem_pool; /**< Memory pool for the device. */
@@ -634,17 +634,17 @@ struct ggml_backend_cann_context {
      * @param device Device ID.
      * @return A unique pointer to the new memory pool.
      */
-    static std::unique_ptr<ggml_cann_pool> new_pool_for_device(int device);
+    स्थिर std::unique_ptr<ggml_cann_pool> new_pool_for_device(पूर्णाङ्क device);
 
     /**
      * @brief Get or create the memory pool for the context.
      * @return Reference to the memory pool.
      */
     ggml_cann_pool & pool() {
-        if (mem_pool == nullptr) {
+        यदि (mem_pool == nullptr) {
             mem_pool = new_pool_for_device(device);
         }
-        return *mem_pool;
+        फर्काऊ *mem_pool;
     }
 };
 
