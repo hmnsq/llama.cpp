@@ -18,17 +18,17 @@
 
 #include "repack.h"
 
-#if defined(__GNUC__)
+#ако defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #endif
 
 #define UNUSED GGML_UNUSED
 
-static inline int nearest_int(float fval) {
+static inline цяло nearest_int(float fval) {
     assert(fabsf(fval) <= 4194303.f);
     float val = fval + 12582912.f;
-    int i; memcpy(&i, &val, sizeof(int));
-    return (i & 0x007fffff) - 0x00400000;
+    цяло i; memcpy(&i, &val, sizeof(цяло));
+    върни (i & 0x007fffff) - 0x00400000;
 }
 
 // Functions to create the interleaved data layout formats
@@ -48,24 +48,24 @@ static inline int nearest_int(float fval) {
 
 extern "C" {
 
-#if defined __riscv_zvfh
+#ако defined __riscv_zvfh
 void ggml_quantize_mat_q8_0_4x1_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+    const цяло nb = k / QK8_0;
 
     block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 1;
+    const цяло blck_size_interleave = 1;
     float srcv[4][QK8_0];
     float id[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
+    за (цяло i = 0; i < nb; i++) {
+        за (цяло row_iter = 0; row_iter < 4; row_iter++) {
             float amax = 0.0f; // absolute max
 
-            for (int j = 0; j < QK8_0; j++) {
+            за (цяло j = 0; j < QK8_0; j++) {
                 srcv[row_iter][j] = x[row_iter * k + i * QK8_0 + j];
                 amax = MAX(amax, fabsf(srcv[row_iter][j]));
             }
@@ -76,9 +76,9 @@ void ggml_quantize_mat_q8_0_4x1_generic(const float * GGML_RESTRICT x, void * GG
             y[i].d[row_iter] = GGML_CPU_FP32_TO_FP16(d);
         }
 
-        for (int j = 0; j < QK8_0 * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id = (j % (4 * blck_size_interleave)) / blck_size_interleave;
+        за (цяло j = 0; j < QK8_0 * 4; j++) {
+            цяло src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
+            цяло src_id = (j % (4 * blck_size_interleave)) / blck_size_interleave;
             src_offset += (j % blck_size_interleave);
 
             float x0 = srcv[src_id][src_offset] * id[src_id];
@@ -90,23 +90,23 @@ void ggml_quantize_mat_q8_0_4x1_generic(const float * GGML_RESTRICT x, void * GG
 void ggml_quantize_mat_q8_K_4x1_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK_K == 256);
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const цяло nb = k / QK_K;
 
     block_q8_Kx4 * GGML_RESTRICT y = (block_q8_Kx4 *) vy;
 
-    const int blck_size_interleave = 1;
+    const цяло blck_size_interleave = 1;
     float srcv[4][QK_K];
     float iscale[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
+    за (цяло i = 0; i < nb; i++) {
+        за (цяло row_iter = 0; row_iter < 4; row_iter++) {
             float amax = 0.0f; // absolute max
             float max = 0;
 
-            for (int j = 0; j < QK_K; j++) {
+            за (цяло j = 0; j < QK_K; j++) {
                 srcv[row_iter][j] = x[row_iter * k + i * QK_K + j];
                 // Update the maximum value of the corresponding super block
-                if(amax < fabsf(srcv[row_iter][j])) {
+                ако(amax < fabsf(srcv[row_iter][j])) {
                     amax = fabsf(srcv[row_iter][j]);
                     max = srcv[row_iter][j];
                 }
@@ -116,13 +116,13 @@ void ggml_quantize_mat_q8_K_4x1_generic(const float * GGML_RESTRICT x, void * GG
             y[i].d[row_iter] = amax ? 1/iscale[row_iter] : 0;
         }
 
-        for (int j = 0; j < QK_K / 4; j++) {
+        за (цяло j = 0; j < QK_K / 4; j++) {
             y[i].bsums[j] = 0;
         }
-        for (int j = 0; j < QK_K * 4; j++) {
-            int src_id = j % 4;
-            int src_offset = j / 4;
-            int index = ((j >> 6) << 2) + (j & 3);
+        за (цяло j = 0; j < QK_K * 4; j++) {
+            цяло src_id = j % 4;
+            цяло src_offset = j / 4;
+            цяло index = ((j >> 6) << 2) + (j & 3);
 
             float x0 = srcv[src_id][src_offset] * iscale[src_id];
             y[i].qs[j] = nearest_int(x0);
@@ -135,20 +135,20 @@ void ggml_quantize_mat_q8_K_4x1_generic(const float * GGML_RESTRICT x, void * GG
 void ggml_quantize_mat_q8_0_4x4_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+    const цяло nb = k / QK8_0;
 
     block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 4;
+    const цяло blck_size_interleave = 4;
     float srcv[4][QK8_0];
     float id[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
+    за (цяло i = 0; i < nb; i++) {
+        за (цяло row_iter = 0; row_iter < 4; row_iter++) {
             float amax = 0.0f; // absolute max
 
-            for (int j = 0; j < QK8_0; j++) {
+            за (цяло j = 0; j < QK8_0; j++) {
                 srcv[row_iter][j] = x[row_iter * k + i * QK8_0 + j];
                 amax = MAX(amax, fabsf(srcv[row_iter][j]));
             }
@@ -159,9 +159,9 @@ void ggml_quantize_mat_q8_0_4x4_generic(const float * GGML_RESTRICT x, void * GG
             y[i].d[row_iter] = GGML_CPU_FP32_TO_FP16(d);
         }
 
-        for (int j = 0; j < QK8_0 * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id = (j % (4 * blck_size_interleave)) / blck_size_interleave;
+        за (цяло j = 0; j < QK8_0 * 4; j++) {
+            цяло src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
+            цяло src_id = (j % (4 * blck_size_interleave)) / blck_size_interleave;
             src_offset += (j % blck_size_interleave);
 
             float x0 = srcv[src_id][src_offset] * id[src_id];
@@ -173,20 +173,20 @@ void ggml_quantize_mat_q8_0_4x4_generic(const float * GGML_RESTRICT x, void * GG
 void ggml_quantize_mat_q8_0_4x8_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+    const цяло nb = k / QK8_0;
 
     block_q8_0x4 * GGML_RESTRICT y = (block_q8_0x4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 8;
+    const цяло blck_size_interleave = 8;
     float srcv[4][QK8_0];
     float id[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
+    за (цяло i = 0; i < nb; i++) {
+        за (цяло row_iter = 0; row_iter < 4; row_iter++) {
             float amax = 0.0f; // absolute max
 
-            for (int j = 0; j < QK8_0; j++) {
+            за (цяло j = 0; j < QK8_0; j++) {
                 srcv[row_iter][j] = x[row_iter * k + i * QK8_0 + j];
                 amax = MAX(amax, fabsf(srcv[row_iter][j]));
             }
@@ -197,9 +197,9 @@ void ggml_quantize_mat_q8_0_4x8_generic(const float * GGML_RESTRICT x, void * GG
             y[i].d[row_iter] = GGML_CPU_FP32_TO_FP16(d);
         }
 
-        for (int j = 0; j < QK8_0 * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id = (j % (4 * blck_size_interleave)) / blck_size_interleave;
+        за (цяло j = 0; j < QK8_0 * 4; j++) {
+            цяло src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
+            цяло src_id = (j % (4 * blck_size_interleave)) / blck_size_interleave;
             src_offset += (j % blck_size_interleave);
 
             float x0 = srcv[src_id][src_offset] * id[src_id];
@@ -211,24 +211,24 @@ void ggml_quantize_mat_q8_0_4x8_generic(const float * GGML_RESTRICT x, void * GG
 void ggml_quantize_mat_q8_K_4x4_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK_K == 256);
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const цяло nb = k / QK_K;
 
     block_q8_Kx4 * GGML_RESTRICT y = (block_q8_Kx4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 4;
+    const цяло blck_size_interleave = 4;
     float srcv[4][QK_K];
     float iscale[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
+    за (цяло i = 0; i < nb; i++) {
+        за (цяло row_iter = 0; row_iter < 4; row_iter++) {
             float amax = 0.0f; // absolute max
             float max = 0;
 
-            for (int j = 0; j < QK_K; j++) {
+            за (цяло j = 0; j < QK_K; j++) {
                 srcv[row_iter][j] = x[row_iter * k + i * QK_K + j];
                 // Update the maximum value of the corresponding super block
-                if(amax < fabsf(srcv[row_iter][j])) {
+                ако(amax < fabsf(srcv[row_iter][j])) {
                     amax = fabsf(srcv[row_iter][j]);
                     max = srcv[row_iter][j];
                 }
@@ -239,18 +239,18 @@ void ggml_quantize_mat_q8_K_4x4_generic(const float * GGML_RESTRICT x, void * GG
             y[i].d[row_iter] = amax ? 1/iscale[row_iter] : 0;
         }
 
-        for (int j = 0; j < QK_K / 4; j++) {
+        за (цяло j = 0; j < QK_K / 4; j++) {
             y[i].bsums[j] = 0;
         }
 
         // Quants values are interleaved in sequence of four bytes from corresponding super blocks
         // Bsums values are interleaved in sequence of four bsums from each super block taken for interleaving
         // i.e first four bsums from the first super block, followed by first four bsums from second super block and so on
-        for (int j = 0; j < QK_K * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id     = (j % (4 * blck_size_interleave)) / blck_size_interleave;
+        за (цяло j = 0; j < QK_K * 4; j++) {
+            цяло src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
+            цяло src_id     = (j % (4 * blck_size_interleave)) / blck_size_interleave;
             src_offset += (j % blck_size_interleave);
-            int index = (((j & 15) >> 2) << 2) + ((j >> 8) << 4) + ((j >> 6) & 3);
+            цяло index = (((j & 15) >> 2) << 2) + ((j >> 8) << 4) + ((j >> 6) & 3);
 
             float x0 = srcv[src_id][src_offset] * iscale[src_id];
             y[i].qs[j] = nearest_int(x0);
@@ -262,24 +262,24 @@ void ggml_quantize_mat_q8_K_4x4_generic(const float * GGML_RESTRICT x, void * GG
 void ggml_quantize_mat_q8_K_4x8_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK_K == 256);
     assert(k % QK_K == 0);
-    const int nb = k / QK_K;
+    const цяло nb = k / QK_K;
 
     block_q8_Kx4 * GGML_RESTRICT y = (block_q8_Kx4 *) vy;
 
     // scalar
-    const int blck_size_interleave = 8;
+    const цяло blck_size_interleave = 8;
     float srcv[4][QK_K];
     float iscale[4];
 
-    for (int i = 0; i < nb; i++) {
-        for (int row_iter = 0; row_iter < 4; row_iter++) {
+    за (цяло i = 0; i < nb; i++) {
+        за (цяло row_iter = 0; row_iter < 4; row_iter++) {
             float amax = 0.0f; // absolute max
             float max = 0;
 
-            for (int j = 0; j < QK_K; j++) {
+            за (цяло j = 0; j < QK_K; j++) {
                 srcv[row_iter][j] = x[row_iter * k + i * QK_K + j];
                 // Update the maximum value of the corresponding super block
-                if(amax < fabsf(srcv[row_iter][j])) {
+                ако(amax < fabsf(srcv[row_iter][j])) {
                     amax = fabsf(srcv[row_iter][j]);
                     max = srcv[row_iter][j];
                 }
@@ -290,18 +290,18 @@ void ggml_quantize_mat_q8_K_4x8_generic(const float * GGML_RESTRICT x, void * GG
             y[i].d[row_iter] = amax ? 1/iscale[row_iter] : 0;
         }
 
-        for (int j = 0; j < QK_K / 4; j++) {
+        за (цяло j = 0; j < QK_K / 4; j++) {
             y[i].bsums[j] = 0;
         }
 
         // Quants values are interleaved in sequence of eight bytes from corresponding super blocks
         // Bsums values are interleaved in sequence of four bsums from each super block taken for interleaving
         // i.e first four bsums from the first super block, followed by first four bsums from second super block and so on
-        for (int j = 0; j < QK_K * 4; j++) {
-            int src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
-            int src_id     = (j % (4 * blck_size_interleave)) / blck_size_interleave;
+        за (цяло j = 0; j < QK_K * 4; j++) {
+            цяло src_offset = (j / (4 * blck_size_interleave)) * blck_size_interleave;
+            цяло src_id     = (j % (4 * blck_size_interleave)) / blck_size_interleave;
             src_offset += (j % blck_size_interleave);
-            int index = (((j & 31) >> 3) << 2) + ((j >> 8) << 4) + ((j >> 6) & 3);
+            цяло index = (((j & 31) >> 3) << 2) + ((j >> 8) << 4) + ((j >> 6) & 3);
 
             float x0 = srcv[src_id][src_offset] * iscale[src_id];
             y[i].qs[j] = nearest_int(x0);
@@ -339,7 +339,7 @@ template <> void ggml_quantize_mat_t<8, GGML_TYPE_Q8_K>(const float * GGML_RESTR
     ggml_quantize_mat_q8_K_4x8(x, vy, n_per_row);
 }
 
-#if defined __riscv_zvfh
+#ако defined __riscv_zvfh
 template <> void ggml_quantize_mat_t<1, GGML_TYPE_Q8_0>(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t nrow, int64_t n_per_row) {
     assert(nrow == 4);
     UNUSED(nrow);
@@ -353,19 +353,19 @@ template <> void ggml_quantize_mat_t<1, GGML_TYPE_Q8_K>(const float * GGML_RESTR
 }
 #endif
 
-template <int M, int N>
-static void ggml_gemv_q6_K_NxM_q8_K_generic_impl(int                        n,
+template <цяло M, цяло N>
+static void ggml_gemv_q6_K_NxM_q8_K_generic_impl(цяло                        n,
                                                  float * GGML_RESTRICT      s,
                                                  size_t                     bs,
                                                  const void * GGML_RESTRICT vx,
                                                  const void * GGML_RESTRICT vy,
-                                                 int                        nr,
-                                                 int                        nc) {
-    constexpr int blocklen          = M;
-    constexpr int ncols_interleaved = N;
-    const int     qk                = QK_K;
-    const int     nb                = n / qk;
-    const int     blocks_per_half   = 64 / blocklen;
+                                                 цяло                        nr,
+                                                 цяло                        nc) {
+    constexpr цяло blocklen          = M;
+    constexpr цяло ncols_interleaved = N;
+    const цяло     qk                = QK_K;
+    const цяло     nb                = n / qk;
+    const цяло     blocks_per_half   = 64 / blocklen;
 
     assert(n % qk == 0);
     assert(nc % ncols_interleaved == 0);
@@ -376,53 +376,53 @@ static void ggml_gemv_q6_K_NxM_q8_K_generic_impl(int                        n,
     float sumf[8];
 
     const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q6_Kx8 * b_ptr = (const block_q6_Kx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0f;
         }
 
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                const int base_l = (k / blocks_per_half) * 128 + (k % blocks_per_half) * blocklen;
-                const int base_h = base_l + 64;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                const цяло base_l = (k / blocks_per_half) * 128 + (k % blocks_per_half) * blocklen;
+                const цяло base_h = base_l + 64;
 
-                const int scale_idx_l = base_l / 16;
-                const int scale_idx_h = base_h / 16;
+                const цяло scale_idx_l = base_l / 16;
+                const цяло scale_idx_h = base_h / 16;
 
-                const int qh_shift_l = ((base_l % 128) / 32) * 2;
-                const int qh_shift_h = ((base_h % 128) / 32) * 2;
+                const цяло qh_shift_l = ((base_l % 128) / 32) * 2;
+                const цяло qh_shift_h = ((base_h % 128) / 32) * 2;
 
-                const int qh_half_l = (base_l / 128) * 32;
-                const int qh_half_h = (base_h / 128) * 32;
+                const цяло qh_half_l = (base_l / 128) * 32;
+                const цяло qh_half_h = (base_h / 128) * 32;
 
-                for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     const int8_t scale_l = b_ptr[l].scales[scale_idx_l * ncols_interleaved + j];
                     const int8_t scale_h = b_ptr[l].scales[scale_idx_h * ncols_interleaved + j];
 
-                    int sumi_l = 0;
-                    int sumi_h = 0;
+                    цяло sumi_l = 0;
+                    цяло sumi_h = 0;
 
-                    for (int i = 0; i < blocklen; i++) {
-                        const int ql_pos = k * ncols_interleaved * blocklen + j * blocklen + i;
-                        const int l_4    = b_ptr[l].ql[ql_pos] & 0xF;
-                        const int hi_4   = (b_ptr[l].ql[ql_pos] >> 4) & 0xF;
+                    за (цяло i = 0; i < blocklen; i++) {
+                        const цяло ql_pos = k * ncols_interleaved * blocklen + j * blocklen + i;
+                        const цяло l_4    = b_ptr[l].ql[ql_pos] & 0xF;
+                        const цяло hi_4   = (b_ptr[l].ql[ql_pos] >> 4) & 0xF;
 
-                        const int qh_idx_l    = qh_half_l + ((base_l + i) % 32);
-                        const int qh_chunk_l  = qh_idx_l / blocklen;
-                        const int qh_pos_l    = qh_idx_l % blocklen;
-                        const int qh_offset_l = qh_chunk_l * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_l;
-                        const int hi_2_l      = (b_ptr[l].qh[qh_offset_l] >> qh_shift_l) & 0x3;
+                        const цяло qh_idx_l    = qh_half_l + ((base_l + i) % 32);
+                        const цяло qh_chunk_l  = qh_idx_l / blocklen;
+                        const цяло qh_pos_l    = qh_idx_l % blocklen;
+                        const цяло qh_offset_l = qh_chunk_l * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_l;
+                        const цяло hi_2_l      = (b_ptr[l].qh[qh_offset_l] >> qh_shift_l) & 0x3;
 
-                        const int qh_idx_h    = qh_half_h + ((base_h + i) % 32);
-                        const int qh_chunk_h  = qh_idx_h / blocklen;
-                        const int qh_pos_h    = qh_idx_h % blocklen;
-                        const int qh_offset_h = qh_chunk_h * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_h;
-                        const int hi_2_h      = (b_ptr[l].qh[qh_offset_h] >> qh_shift_h) & 0x3;
+                        const цяло qh_idx_h    = qh_half_h + ((base_h + i) % 32);
+                        const цяло qh_chunk_h  = qh_idx_h / blocklen;
+                        const цяло qh_pos_h    = qh_idx_h % blocklen;
+                        const цяло qh_offset_h = qh_chunk_h * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_h;
+                        const цяло hi_2_h      = (b_ptr[l].qh[qh_offset_h] >> qh_shift_h) & 0x3;
 
-                        const int q_l = ((hi_2_l << 4) | l_4) - 32;
-                        const int q_h = ((hi_2_h << 4) | hi_4) - 32;
+                        const цяло q_l = ((hi_2_l << 4) | l_4) - 32;
+                        const цяло q_h = ((hi_2_h << 4) | hi_4) - 32;
 
                         const int8_t a_l = a_ptr[l].qs[base_l + i];
                         const int8_t a_h = a_ptr[l].qs[base_h + i];
@@ -437,27 +437,27 @@ static void ggml_gemv_q6_K_NxM_q8_K_generic_impl(int                        n,
             }
         }
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-template <int M, int N>
-static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
+template <цяло M, цяло N>
+static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(цяло                        n,
                                                  float * GGML_RESTRICT      s,
                                                  size_t                     bs,
                                                  const void * GGML_RESTRICT vx,
                                                  const void * GGML_RESTRICT vy,
-                                                 int                        nr,
-                                                 int                        nc) {
-    constexpr int blocklen          = M;
-    constexpr int ncols_interleaved = N;
-    const int     qk                = QK_K;
-    const int     nb                = n / qk;
-    const int     blocks_per_half   = 64 / blocklen;
-    const int     q8_half_stride    = 512;
-    const int     q8_low_high_step  = 256;
+                                                 цяло                        nr,
+                                                 цяло                        nc) {
+    constexpr цяло blocklen          = M;
+    constexpr цяло ncols_interleaved = N;
+    const цяло     qk                = QK_K;
+    const цяло     nb                = n / qk;
+    const цяло     blocks_per_half   = 64 / blocklen;
+    const цяло     q8_half_stride    = 512;
+    const цяло     q8_low_high_step  = 256;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
@@ -467,62 +467,62 @@ static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
 
     float sumf[4][8];
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q6_Kx8 * b_ptr = (const block_q6_Kx8 *) vx + (x * nb);
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0f;
                 }
             }
 
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    const int base_l = (k / blocks_per_half) * 128 + (k % blocks_per_half) * blocklen;
-                    const int base_h = base_l + 64;
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                    const цяло base_l = (k / blocks_per_half) * 128 + (k % blocks_per_half) * blocklen;
+                    const цяло base_h = base_l + 64;
 
-                    const int scale_idx_l = base_l / 16;
-                    const int scale_idx_h = base_h / 16;
+                    const цяло scale_idx_l = base_l / 16;
+                    const цяло scale_idx_h = base_h / 16;
 
-                    const int qh_shift_l = ((base_l % 128) / 32) * 2;
-                    const int qh_shift_h = ((base_h % 128) / 32) * 2;
+                    const цяло qh_shift_l = ((base_l % 128) / 32) * 2;
+                    const цяло qh_shift_h = ((base_h % 128) / 32) * 2;
 
-                    const int qh_half_l = (base_l / 128) * 32;
-                    const int qh_half_h = (base_h / 128) * 32;
+                    const цяло qh_half_l = (base_l / 128) * 32;
+                    const цяло qh_half_h = (base_h / 128) * 32;
 
-                    const int q8_base = (k / blocks_per_half) * q8_half_stride + (k % blocks_per_half) * (blocklen * 4);
+                    const цяло q8_base = (k / blocks_per_half) * q8_half_stride + (k % blocks_per_half) * (blocklen * 4);
 
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             const int8_t scale_l = b_ptr[l].scales[scale_idx_l * ncols_interleaved + j];
                             const int8_t scale_h = b_ptr[l].scales[scale_idx_h * ncols_interleaved + j];
 
-                            int sumi_l = 0;
-                            int sumi_h = 0;
+                            цяло sumi_l = 0;
+                            цяло sumi_h = 0;
 
-                            for (int i = 0; i < blocklen; i++) {
-                                const int ql_pos = k * ncols_interleaved * blocklen + j * blocklen + i;
-                                const int l_4    = b_ptr[l].ql[ql_pos] & 0xF;
-                                const int hi_4   = (b_ptr[l].ql[ql_pos] >> 4) & 0xF;
+                            за (цяло i = 0; i < blocklen; i++) {
+                                const цяло ql_pos = k * ncols_interleaved * blocklen + j * blocklen + i;
+                                const цяло l_4    = b_ptr[l].ql[ql_pos] & 0xF;
+                                const цяло hi_4   = (b_ptr[l].ql[ql_pos] >> 4) & 0xF;
 
-                                const int qh_idx_l   = qh_half_l + ((base_l + i) % 32);
-                                const int qh_chunk_l = qh_idx_l / blocklen;
-                                const int qh_pos_l   = qh_idx_l % blocklen;
-                                const int qh_offset_l =
+                                const цяло qh_idx_l   = qh_half_l + ((base_l + i) % 32);
+                                const цяло qh_chunk_l = qh_idx_l / blocklen;
+                                const цяло qh_pos_l   = qh_idx_l % blocklen;
+                                const цяло qh_offset_l =
                                     qh_chunk_l * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_l;
-                                const int hi_2_l = (b_ptr[l].qh[qh_offset_l] >> qh_shift_l) & 0x3;
+                                const цяло hi_2_l = (b_ptr[l].qh[qh_offset_l] >> qh_shift_l) & 0x3;
 
-                                const int qh_idx_h   = qh_half_h + ((base_h + i) % 32);
-                                const int qh_chunk_h = qh_idx_h / blocklen;
-                                const int qh_pos_h   = qh_idx_h % blocklen;
-                                const int qh_offset_h =
+                                const цяло qh_idx_h   = qh_half_h + ((base_h + i) % 32);
+                                const цяло qh_chunk_h = qh_idx_h / blocklen;
+                                const цяло qh_pos_h   = qh_idx_h % blocklen;
+                                const цяло qh_offset_h =
                                     qh_chunk_h * (blocklen * ncols_interleaved) + j * blocklen + qh_pos_h;
-                                const int hi_2_h = (b_ptr[l].qh[qh_offset_h] >> qh_shift_h) & 0x3;
+                                const цяло hi_2_h = (b_ptr[l].qh[qh_offset_h] >> qh_shift_h) & 0x3;
 
-                                const int q_l = ((hi_2_l << 4) | l_4) - 32;
-                                const int q_h = ((hi_2_h << 4) | hi_4) - 32;
+                                const цяло q_l = ((hi_2_l << 4) | l_4) - 32;
+                                const цяло q_h = ((hi_2_h << 4) | hi_4) - 32;
 
                                 const int8_t q8_l = a_ptr[l].qs[q8_base + m * blocklen + i];
                                 const int8_t q8_h = a_ptr[l].qs[q8_base + m * blocklen + i + q8_low_high_step];
@@ -538,8 +538,8 @@ static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
                 }
             }
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -547,18 +547,18 @@ static void ggml_gemm_q6_K_NxM_q8_K_generic_impl(int                        n,
     }
 }
 
-template <int M, int N>
-static void ggml_gemv_q5_K_NxM_q8_K_generic_impl(int                        n,
+template <цяло M, цяло N>
+static void ggml_gemv_q5_K_NxM_q8_K_generic_impl(цяло                        n,
                                                  float * GGML_RESTRICT      s,
                                                  size_t                     bs,
                                                  const void * GGML_RESTRICT vx,
                                                  const void * GGML_RESTRICT vy,
-                                                 int                        nr,
-                                                 int                        nc) {
-    constexpr int         blocklen          = M;
-    constexpr int         ncols_interleaved = N;
-    const int             qk                = QK_K;
-    const int             nb                = n / qk;
+                                                 цяло                        nr,
+                                                 цяло                        nc) {
+    constexpr цяло         blocklen          = M;
+    constexpr цяло         ncols_interleaved = N;
+    const цяло             qk                = QK_K;
+    const цяло             nb                = n / qk;
     static const uint32_t kmask1            = 0x3f3f3f3f;
     static const uint32_t kmask2            = 0x0f0f0f0f;
     static const uint32_t kmask3            = 0x03030303;
@@ -572,20 +572,20 @@ static void ggml_gemv_q5_K_NxM_q8_K_generic_impl(int                        n,
     float    sumf[ncols_interleaved];
     float    sum_minf[ncols_interleaved];
     uint32_t utmp[32];
-    int      sumi1;
-    int      sumi2;
-    int      sumi;
+    цяло      sumi1;
+    цяло      sumi2;
+    цяло      sumi;
 
     const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q5_Kx8 * b_ptr = (const block_q5_Kx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j]     = 0.0;
             sum_minf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int sb = 0; sb < 8; sb++) {
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло sb = 0; sb < 8; sb++) {
                 memcpy(utmp + sb * 4, b_ptr[l].scales + sb * K_SCALE_SIZE, K_SCALE_SIZE);
                 utmp[sb * 4 + 3]      = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
                 const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
@@ -593,32 +593,32 @@ static void ggml_gemv_q5_K_NxM_q8_K_generic_impl(int                        n,
                 utmp[sb * 4 + 2]      = uaux_0;
                 utmp[sb * 4 + 0] &= kmask1;
             }
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                constexpr int scale_stride = 32;
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                constexpr цяло scale_stride = 32;
                 uint8_t *     scales_0     = (uint8_t *) utmp + (k / (32 / blocklen)) * scale_stride;
                 uint8_t *     scales_1     = (uint8_t *) utmp + (k / (32 / blocklen)) * scale_stride + 16;
 
-                const int qh_shift = (k / (32 / blocklen)) * 2;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                const цяло qh_shift = (k / (32 / blocklen)) * 2;
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi1 = 0;
                     sumi2 = 0;
                     sumi  = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int b_qs_offset = k * ncols_interleaved * blocklen + j * blocklen + i;
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло b_qs_offset = k * ncols_interleaved * blocklen + j * blocklen + i;
 
-                        const int qh_idx      = (k * blocklen + i) % 32;
-                        const int qh_chunk    = qh_idx / blocklen;
-                        const int qh_pos      = qh_idx % blocklen;
-                        const int b_qh_offset = qh_chunk * (blocklen * ncols_interleaved) + j * blocklen + qh_pos;
+                        const цяло qh_idx      = (k * blocklen + i) % 32;
+                        const цяло qh_chunk    = qh_idx / blocklen;
+                        const цяло qh_pos      = qh_idx % blocklen;
+                        const цяло b_qh_offset = qh_chunk * (blocklen * ncols_interleaved) + j * blocklen + qh_pos;
 
                         const uint8_t qh_val = b_ptr[l].qh[b_qh_offset];
                         const uint8_t h0     = (qh_val >> qh_shift) & 1;
                         const uint8_t h1     = (qh_val >> (qh_shift + 1)) & 1;
 
-                        const int v0 = (int8_t) ((b_ptr[l].qs[b_qs_offset] & 0xF) | (h0 << 4));
-                        const int v1 = (int8_t) ((b_ptr[l].qs[b_qs_offset] >> 4) | (h1 << 4));
+                        const цяло v0 = (int8_t) ((b_ptr[l].qs[b_qs_offset] & 0xF) | (h0 << 4));
+                        const цяло v1 = (int8_t) ((b_ptr[l].qs[b_qs_offset] >> 4) | (h1 << 4));
 
-                        const int q8_offset = (k / (32 / blocklen)) * 64 + (k % (32 / blocklen)) * blocklen + i;
+                        const цяло q8_offset = (k / (32 / blocklen)) * 64 + (k % (32 / blocklen)) * blocklen + i;
 
                         sumi1 = (v0 * a_ptr[l].qs[q8_offset]);
                         sumi2 = (v1 * a_ptr[l].qs[q8_offset + 32]);
@@ -629,32 +629,32 @@ static void ggml_gemv_q5_K_NxM_q8_K_generic_impl(int                        n,
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                 }
             }
-            for (int sb = 0; sb < 8; sb++) {
+            за (цяло sb = 0; sb < 8; sb++) {
                 uint8_t * mins = (uint8_t *) utmp + 8 + sb * 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sum_minf[j] += mins[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) *
                                    GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
         }
     }
 }
 
-template <int M, int N>
-static void ggml_gemm_q5_K_NxM_q8_K_generic_impl(int                        n,
+template <цяло M, цяло N>
+static void ggml_gemm_q5_K_NxM_q8_K_generic_impl(цяло                        n,
                                                  float * GGML_RESTRICT      s,
                                                  size_t                     bs,
                                                  const void * GGML_RESTRICT vx,
                                                  const void * GGML_RESTRICT vy,
-                                                 int                        nr,
-                                                 int                        nc) {
-    constexpr int         blocklen          = M;
-    constexpr int         ncols_interleaved = N;
-    const int             qk                = QK_K;
-    const int             nb                = n / qk;
+                                                 цяло                        nr,
+                                                 цяло                        nc) {
+    constexpr цяло         blocklen          = M;
+    constexpr цяло         ncols_interleaved = N;
+    const цяло             qk                = QK_K;
+    const цяло             nb                = n / qk;
     static const uint32_t kmask1            = 0x3f3f3f3f;
     static const uint32_t kmask2            = 0x0f0f0f0f;
     static const uint32_t kmask3            = 0x03030303;
@@ -666,22 +666,22 @@ static void ggml_gemm_q5_K_NxM_q8_K_generic_impl(int                        n,
     float    sumf[4][ncols_interleaved];
     float    sum_minf[4][ncols_interleaved];
     uint32_t utmp[32];
-    int      sumi1;
-    int      sumi2;
-    int      sumi;
+    цяло      sumi1;
+    цяло      sumi2;
+    цяло      sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q5_Kx8 * b_ptr = (const block_q5_Kx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j]     = 0.0;
                     sum_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int sb = 0; sb < 8; sb++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло sb = 0; sb < 8; sb++) {
                     memcpy(utmp + sb * 4, b_ptr[l].scales + sb * K_SCALE_SIZE, K_SCALE_SIZE);
                     utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
                     const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
@@ -689,34 +689,34 @@ static void ggml_gemm_q5_K_NxM_q8_K_generic_impl(int                        n,
                     utmp[sb * 4 + 2]      = uaux_0;
                     utmp[sb * 4 + 0] &= kmask1;
                 }
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    constexpr int scale_stride = 32;
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                    constexpr цяло scale_stride = 32;
                     uint8_t *     scales_0     = (uint8_t *) utmp + (k / (32 / blocklen)) * scale_stride;
                     uint8_t *     scales_1     = (uint8_t *) utmp + (k / (32 / blocklen)) * scale_stride + 16;
 
-                    const int qh_shift = (k / (32 / blocklen)) * 2;
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                    const цяло qh_shift = (k / (32 / blocklen)) * 2;
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi1 = 0;
                             sumi2 = 0;
                             sumi  = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int b_qs_offset = k * ncols_interleaved * blocklen + j * blocklen + i;
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло b_qs_offset = k * ncols_interleaved * blocklen + j * blocklen + i;
 
-                                const int qh_idx   = (k * blocklen + i) % 32;
-                                const int qh_chunk = qh_idx / blocklen;
-                                const int qh_pos   = qh_idx % blocklen;
-                                const int b_qh_offset =
+                                const цяло qh_idx   = (k * blocklen + i) % 32;
+                                const цяло qh_chunk = qh_idx / blocklen;
+                                const цяло qh_pos   = qh_idx % blocklen;
+                                const цяло b_qh_offset =
                                     qh_chunk * (blocklen * ncols_interleaved) + j * blocklen + qh_pos;
 
                                 const uint8_t qh_val = b_ptr[l].qh[b_qh_offset];
                                 const uint8_t h0     = (qh_val >> qh_shift) & 1;
                                 const uint8_t h1     = (qh_val >> (qh_shift + 1)) & 1;
 
-                                const int v0 = (int8_t) ((b_ptr[l].qs[b_qs_offset] & 0xF) | (h0 << 4));
-                                const int v1 = (int8_t) ((b_ptr[l].qs[b_qs_offset] >> 4) | (h1 << 4));
+                                const цяло v0 = (int8_t) ((b_ptr[l].qs[b_qs_offset] & 0xF) | (h0 << 4));
+                                const цяло v1 = (int8_t) ((b_ptr[l].qs[b_qs_offset] >> 4) | (h1 << 4));
 
-                                const int q8_offset = (k / (32 / blocklen)) * 256 +
+                                const цяло q8_offset = (k / (32 / blocklen)) * 256 +
                                                       (k % (32 / blocklen)) * 4 * blocklen + m * blocklen + i;
 
                                 sumi1 = (v0 * a_ptr[l].qs[q8_offset]);
@@ -729,19 +729,19 @@ static void ggml_gemm_q5_K_NxM_q8_K_generic_impl(int                        n,
                         }
                     }
                 }
-                for (int sb = 0; sb < 8; sb++) {
+                за (цяло sb = 0; sb < 8; sb++) {
                     uint8_t * mins = (uint8_t *) utmp + 8 + sb * 16;
-                    for (int m = 0; m < 4; m++) {
+                    за (цяло m = 0; m < 4; m++) {
                         const int16_t * bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) * 6);
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sum_minf[m][j] += mins[j] * (bsums[0] + bsums[1]) *
                                               GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
                 }
             }
@@ -751,11 +751,11 @@ static void ggml_gemm_q5_K_NxM_q8_K_generic_impl(int                        n,
 
 extern "C" {
 
-void ggml_gemv_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+void ggml_gemv_q4_0_4x4_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen = 4;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -772,35 +772,35 @@ void ggml_gemv_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     UNUSED(blocklen);
 
     float sumf[4];
-    int sumi;
+    цяло sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                        const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2])) >> 4;
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        за (цяло j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q4_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 8;
+void ggml_gemv_q4_0_4x8_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen = 8;
 
     assert (n % qk == 0);
     assert (nc % ncols_interleaved == 0);
@@ -816,35 +816,35 @@ void ggml_gemv_q4_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     UNUSED(blocklen);
 
     float sumf[4];
-    int sumi;
+    цяло sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                        const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2])) >> 4;
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        за (цяло j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q4_0_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemv_q4_0_8x8_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
 
     assert (n % qk == 0);
     assert (nc % ncols_interleaved == 0);
@@ -860,35 +860,35 @@ void ggml_gemv_q4_0_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     UNUSED(blocklen);
 
     float sumf[8];
-    int sumi;
+    цяло sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q4_0x8 * b_ptr = (const block_q4_0x8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                        const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2])) >> 4;
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        за (цяло j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 4;
+void ggml_gemv_q4_K_8x4_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK_K;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 4;
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
     static const uint32_t kmask3 = 0x03030303;
@@ -902,20 +902,20 @@ void ggml_gemv_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     float sumf[8];
     float sum_minf[8];
     uint32_t utmp[32];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    цяло sumi1;
+    цяло sumi2;
+    цяло sumi;
 
     const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q4_Kx8 * b_ptr = (const block_q4_Kx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
             sum_minf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int sb = 0; sb < 8; sb++) {
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло sb = 0; sb < 8; sb++) {
                 memcpy(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
                 utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
                 const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
@@ -923,16 +923,16 @@ void ggml_gemv_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                 utmp[sb * 4 + 2] = uaux_0;
                 utmp[sb * 4 + 0] &= kmask1;
             }
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
                 uint8_t * scales_0 = (uint8_t *) utmp + (k / 8) * 32;
                 uint8_t * scales_1 = (uint8_t *) utmp + (k / 8) * 32 + 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi1 = 0;
                     sumi2 = 0;
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
+                        const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
                         sumi1 = (v0 * a_ptr[l].qs[(k / 8) * 64 + (k % 8) * blocklen + i]);
                         sumi2 = (v1 * a_ptr[l].qs[(k / 8) * 64 + (k % 8) * blocklen + i + 32]);
                         sumi1 = sumi1 * scales_0[j];
@@ -942,24 +942,24 @@ void ggml_gemv_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                 }
             }
-            for (int sb = 0; sb < 8; sb++) {
+            за (цяло sb = 0; sb < 8; sb++) {
                 uint8_t * mins = (uint8_t *) utmp + 8 + sb * 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sum_minf[j] += mins[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
         }
     }
 }
 
-void ggml_gemv_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemv_q4_K_8x8_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK_K;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
     static const uint32_t kmask3 = 0x03030303;
@@ -973,20 +973,20 @@ void ggml_gemv_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     float sumf[8];
     float sum_minf[8];
     uint32_t utmp[32];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    цяло sumi1;
+    цяло sumi2;
+    цяло sumi;
 
     const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q4_Kx8 * b_ptr = (const block_q4_Kx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
             sum_minf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int sb = 0; sb < 8; sb++) {
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло sb = 0; sb < 8; sb++) {
                 memcpy(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
                 utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
                 const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
@@ -994,16 +994,16 @@ void ggml_gemv_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                 utmp[sb * 4 + 2] = uaux_0;
                 utmp[sb * 4 + 0] &= kmask1;
             }
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
                 uint8_t *scales_0 = (uint8_t*) utmp + (k / 4) * 32;
                 uint8_t *scales_1 = (uint8_t*) utmp + (k / 4) * 32 + 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi1 = 0;
                     sumi2 = 0;
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
+                        const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
                         sumi1 = (v0 * a_ptr[l].qs[(k >> 2) * 64 + (k % 4) * blocklen + i]);
                         sumi2 = (v1 * a_ptr[l].qs[(k >> 2) * 64 + (k % 4) * blocklen + i + 32]);
                         sumi1 = sumi1 * scales_0[j];
@@ -1013,24 +1013,24 @@ void ggml_gemv_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                 }
             }
-            for (int sb = 0; sb < 8; sb++) {
+            за (цяло sb = 0; sb < 8; sb++) {
                 uint8_t *mins = (uint8_t*) utmp + 8 + sb * 16;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sum_minf[j] += mins[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
         }
     }
 }
 
-void ggml_gemv_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemv_q2_K_8x8_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK_K;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
 
     assert (n % qk == 0);
     assert (nc % ncols_interleaved == 0);
@@ -1047,34 +1047,34 @@ void ggml_gemv_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
 
     float sumf[8];
     float sum_minf[8];
-    int sumi1,sumi2,sumi3,sumi4;
-    int sumi;
+    цяло sumi1,sumi2,sumi3,sumi4;
+    цяло sumi;
 
     const block_q8_K * a_ptr = (const block_q8_K *)vy;
-    for(int x = 0; x < nc / ncols_interleaved; x++) {
+    за(цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q2_Kx8 * b_ptr = (const block_q2_Kx8 *) vx + (x * nb);
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
             sum_minf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (4 * blocklen)); k++) {
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (4 * blocklen)); k++) {
                 const uint8_t *scales_0 = b_ptr[l].scales + (k / 4) * 64 ;
                 const uint8_t *scales_1 = b_ptr[l].scales + (k / 4) * 64 + 16;
                 const uint8_t *scales_2 = b_ptr[l].scales + (k / 4) * 64 + 32;
                 const uint8_t *scales_3 = b_ptr[l].scales + (k / 4) * 64 + 48;
-                for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi1 = 0;
                     sumi2 = 0;
                     sumi3 = 0;
                     sumi4 = 0;
                     sumi = 0;
-                    int offset = ((k / 2) % 2) + j * 2;
-                    for (int i = 0; i < blocklen; ++i){
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 3);
-                        const int v1 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 2 ) & 3);
-                        const int v2 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4 ) & 3);
-                        const int v3 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 6 ) & 3);
+                    цяло offset = ((k / 2) % 2) + j * 2;
+                    за (цяло i = 0; i < blocklen; ++i){
+                        const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 3);
+                        const цяло v1 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 2 ) & 3);
+                        const цяло v2 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4 ) & 3);
+                        const цяло v3 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 6 ) & 3);
                         sumi1 = (v0 * a_ptr[l].qs[(k >> 2) * 128 + (k % 4) * blocklen + i]);
                         sumi2 = (v1 * a_ptr[l].qs[(k >> 2) * 128 + (k % 4) * blocklen + i + 32]);
                         sumi3 = (v2 * a_ptr[l].qs[(k >> 2) * 128 + (k % 4) * blocklen + i + 64]);
@@ -1089,41 +1089,41 @@ void ggml_gemv_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                     sumf[j] += sumi * GGML_FP16_TO_FP32(b_ptr[l].d[j]) * a_ptr[l].d;
                 }
             }
-            for(int sb = 0; sb < 8; sb++) {
+            за(цяло sb = 0; sb < 8; sb++) {
                 const uint8_t *mins = b_ptr[l].scales + sb * 16;
-                for(int j = 0; j < ncols_interleaved; j++){
+                за(цяло j = 0; j < ncols_interleaved; j++){
                     sum_minf[j] += ((mins[j * 2] >> 4) * a_ptr[l].bsums[sb * 2] + (mins[(j * 2)+ 1] >> 4) * a_ptr[l].bsums[sb * 2 + 1]) * GGML_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
         }
     }
 }
 
-void ggml_gemv_q5_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemv_q5_K_8x4_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
     ggml_gemv_q5_K_NxM_q8_K_generic_impl<4, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q5_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemv_q5_K_8x8_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
     ggml_gemv_q5_K_NxM_q8_K_generic_impl<8, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
 
-void ggml_gemv_q6_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemv_q6_K_8x4_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
     ggml_gemv_q6_K_NxM_q8_K_generic_impl<4, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_q6_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemv_q6_K_8x8_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
     ggml_gemv_q6_K_NxM_q8_K_generic_impl<8, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemv_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+void ggml_gemv_iq4_nl_4x4_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen = 4;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1133,35 +1133,35 @@ void ggml_gemv_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs
     UNUSED(nr);
 
     float sumf[4];
-    int sumi;
+    цяло sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_iq4_nlx4 * b_ptr = (const block_iq4_nlx4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        const цяло v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        за (цяло j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_iq4_nl_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemv_iq4_nl_8x8_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1171,35 +1171,35 @@ void ggml_gemv_iq4_nl_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs
     UNUSED(nr);
 
     float sumf[8];
-    int sumi;
+    цяло sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_iq4_nlx8 * b_ptr = (const block_iq4_nlx8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        const цяло v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        за (цяло j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_mxfp4_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+void ggml_gemv_mxfp4_4x4_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen = 4;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1209,35 +1209,35 @@ void ggml_gemv_mxfp4_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
     UNUSED(nr);
 
     float sumf[4];
-    int sumi;
+    цяло sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_mxfp4x4 * b_ptr = (const block_mxfp4x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        const цяло v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
                     sumf[j] += sumi * GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        за (цяло j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_mxfp4_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemv_mxfp4_8x8_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1247,41 +1247,41 @@ void ggml_gemv_mxfp4_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
     UNUSED(nr);
 
     float sumf[8];
-    int sumi;
+    цяло sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_mxfp4x8 * b_ptr = (const block_mxfp4x8 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        const цяло v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
                     sumf[j] += sumi * GGML_CPU_E8M0_TO_FP32_HALF(b_ptr[l].e[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        за (цяло j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q8_0_4x4_q8_0_generic(int                        n,
+void ggml_gemv_q8_0_4x4_q8_0_generic(цяло                        n,
                                      float * GGML_RESTRICT      s,
                                      size_t                     bs,
                                      const void * GGML_RESTRICT vx,
                                      const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 4;
+                                     цяло                        nr,
+                                     цяло                        nc) {
+    const цяло qk                = QK8_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen          = 4;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1291,44 +1291,44 @@ void ggml_gemv_q8_0_4x4_q8_0_generic(int                        n,
     UNUSED(nr);
 
     float sumf[4];
-    int   sumi;
+    цяло   sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / blocklen); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / blocklen); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                         sumi += v0 * a_ptr[l].qs[k * blocklen + i];
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-void ggml_gemv_q8_0_4x8_q8_0_generic(int                        n,
+void ggml_gemv_q8_0_4x8_q8_0_generic(цяло                        n,
                                      float * GGML_RESTRICT      s,
                                      size_t                     bs,
                                      const void * GGML_RESTRICT vx,
                                      const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                                     цяло                        nr,
+                                     цяло                        nc) {
+    const цяло qk                = QK8_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen          = 8;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1338,43 +1338,43 @@ void ggml_gemv_q8_0_4x8_q8_0_generic(int                        n,
     UNUSED(nr);
 
     float sumf[4];
-    int   sumi;
+    цяло   sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / blocklen); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / blocklen); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                         sumi += v0 * a_ptr[l].qs[k * blocklen + i];
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-void ggml_gemv_q1_0_4x4_q8_0_generic(int                        n,
+void ggml_gemv_q1_0_4x4_q8_0_generic(цяло                        n,
                                      float * GGML_RESTRICT      s,
                                      size_t                     bs,
                                      const void * GGML_RESTRICT vx,
                                      const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
+                                     цяло                        nr,
+                                     цяло                        nc) {
+    const цяло qk                = QK1_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 4;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1386,14 +1386,14 @@ void ggml_gemv_q1_0_4x4_q8_0_generic(int                        n,
     float sumf[4];
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
         }
 
-        for (int l = 0; l < nb; l++) {
+        за (цяло l = 0; l < nb; l++) {
             const float d0[4] = {
                 GGML_CPU_FP16_TO_FP32(b_ptr[l].d[0]),
                 GGML_CPU_FP16_TO_FP32(b_ptr[l].d[1]),
@@ -1401,16 +1401,16 @@ void ggml_gemv_q1_0_4x4_q8_0_generic(int                        n,
                 GGML_CPU_FP16_TO_FP32(b_ptr[l].d[3]),
             };
 
-            for (int k = 0; k < QK1_0 / QK8_0; ++k) {
+            за (цяло k = 0; k < QK1_0 / QK8_0; ++k) {
                 const block_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * (QK1_0 / QK8_0) + k;
                 const float d1 = GGML_CPU_FP16_TO_FP32(a_blk->d);
                 const float scale[4] = { d0[0] * d1, d0[1] * d1, d0[2] * d1, d0[3] * d1 };
 
-                for (int tile = 0; tile < QK8_0 / 4; ++tile) {
+                за (цяло tile = 0; tile < QK8_0 / 4; ++tile) {
                     const uint8_t bits_lo = b_ptr[l].qs[k * 16 + 2 * tile + 0];
                     const uint8_t bits_hi = b_ptr[l].qs[k * 16 + 2 * tile + 1];
 
-                    for (int p = 0; p < 4; ++p) {
+                    за (цяло p = 0; p < 4; ++p) {
                         const float q = (float) a_blk->qs[tile * 4 + p];
 
                         sumf[0] += ((bits_lo & (1u << p))       ? scale[0] : -scale[0]) * q;
@@ -1422,23 +1422,23 @@ void ggml_gemv_q1_0_4x4_q8_0_generic(int                        n,
             }
         }
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-void ggml_gemv_q1_0_4x8_q8_0_generic(int                        n,
+void ggml_gemv_q1_0_4x8_q8_0_generic(цяло                        n,
                                      float * GGML_RESTRICT      s,
                                      size_t                     bs,
                                      const void * GGML_RESTRICT vx,
                                      const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                                     цяло                        nr,
+                                     цяло                        nc) {
+    const цяло qk                = QK1_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen          = 8;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1450,14 +1450,14 @@ void ggml_gemv_q1_0_4x8_q8_0_generic(int                        n,
     float sumf[4];
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0f;
         }
 
-        for (int l = 0; l < nb; l++) {
+        за (цяло l = 0; l < nb; l++) {
             const float d0[4] = {
                 GGML_CPU_FP16_TO_FP32(b_ptr[l].d[0]),
                 GGML_CPU_FP16_TO_FP32(b_ptr[l].d[1]),
@@ -1465,7 +1465,7 @@ void ggml_gemv_q1_0_4x8_q8_0_generic(int                        n,
                 GGML_CPU_FP16_TO_FP32(b_ptr[l].d[3]),
             };
 
-            for (int k = 0; k < qk / blocklen; ++k) {
+            за (цяло k = 0; k < qk / blocklen; ++k) {
                 const block_q8_0 * GGML_RESTRICT a_blk = a_ptr + l * (qk / QK8_0) + k / (QK8_0 / blocklen);
                 const float d1 = GGML_CPU_FP16_TO_FP32(a_blk->d);
                 const float scale[4] = { d0[0] * d1, d0[1] * d1, d0[2] * d1, d0[3] * d1 };
@@ -1473,9 +1473,9 @@ void ggml_gemv_q1_0_4x8_q8_0_generic(int                        n,
                 const uint8_t bits1 = b_ptr[l].qs[k * ncols_interleaved + 1];
                 const uint8_t bits2 = b_ptr[l].qs[k * ncols_interleaved + 2];
                 const uint8_t bits3 = b_ptr[l].qs[k * ncols_interleaved + 3];
-                const int q_offset = (k % (QK8_0 / blocklen)) * blocklen;
+                const цяло q_offset = (k % (QK8_0 / blocklen)) * blocklen;
 
-                for (int p = 0; p < blocklen; ++p) {
+                за (цяло p = 0; p < blocklen; ++p) {
                     const float q = (float) a_blk->qs[q_offset + p];
 
                     sumf[0] += ((bits0 & (1u << p)) ? scale[0] : -scale[0]) * q;
@@ -1486,19 +1486,19 @@ void ggml_gemv_q1_0_4x8_q8_0_generic(int                        n,
             }
         }
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
 // Only enable these for RISC-V.
-#if defined __riscv_zvfh
-void ggml_gemv_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+#ако defined __riscv_zvfh
+void ggml_gemv_q4_0_16x1_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 16;
+    const цяло blocklen = 1;
 
     assert (n % qk == 0);
     assert (nc % ncols_interleaved == 0);
@@ -1514,35 +1514,35 @@ void ggml_gemv_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
     UNUSED(blocklen);
 
     float sumf[16];
-    int sumi;
+    цяло sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q4_0x16 * b_ptr = (const block_q4_0x16 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                        const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                        const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2])) >> 4;
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        за (цяло j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+void ggml_gemv_q4_K_16x1_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK_K;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 16;
+    const цяло blocklen = 1;
     assert (n % qk == 0);
     assert (nc % ncols_interleaved == 0);
     UNUSED(s);
@@ -1558,43 +1558,43 @@ void ggml_gemv_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
     float sum_minf[16];
     uint8_t scales[128];
     uint8_t mins[128];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    цяло sumi1;
+    цяло sumi2;
+    цяло sumi;
     const block_q8_K * a_ptr = (const block_q8_K *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q4_Kx16 * b_ptr = (const block_q4_Kx16 *) vx + (x * nb);
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0f;
             sum_minf[j] = 0.0f;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int i = 0; i < 128; i++) {
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло i = 0; i < 128; i++) {
                 scales[i] = b_ptr[l].scales[i] & 0x0F;
                 mins[i] = b_ptr[l].scales[i] >> 4;
             }
-            for (int i = 0; i < 64; i++) {
+            за (цяло i = 0; i < 64; i++) {
                 scales[i] |= (b_ptr[l].scales[128 + i] & 0x03) << 4;
                 mins[i] |= (b_ptr[l].scales[128 + i] & 0x0C) << 2;
                 scales[i + 64] |= (b_ptr[l].scales[128 + i] & 0x30);
                 mins[i + 64] |= (b_ptr[l].scales[128 + i] & 0xC0) >> 2;
             }
-            for (int sb = 0; sb < 8; sb++) {
+            за (цяло sb = 0; sb < 8; sb++) {
                 uint8_t *min = &mins[sb * 16];
-                for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sum_minf[j] += min[j] * (a_ptr[l].bsums[sb * 2] + a_ptr[l].bsums[sb * 2 + 1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d;
                 }
             }
-            for (int sb = 0; sb < 8; sb += 2) {
+            за (цяло sb = 0; sb < 8; sb += 2) {
                 uint8_t *scales_0 = &scales[sb * 16];
                 uint8_t *scales_1 = &scales[(sb + 1) * 16];
-                for (int i = 0; i < QK4_0; i++) {
-                    for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло i = 0; i < QK4_0; i++) {
+                    за (цяло j = 0; j < ncols_interleaved; j++) {
                         sumi1 = 0;
                         sumi2 = 0;
                         sumi = 0;
-                        const int v0 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] & 0xF);
-                        const int v1 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] >> 4);
+                        const цяло v0 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] & 0xF);
+                        const цяло v1 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] >> 4);
                         sumi1 = (v0 * a_ptr[l].qs[sb * 32 + i]);
                         sumi2 = (v1 * a_ptr[l].qs[sb * 32 + 32 + i]);
                         sumi1 = sumi1 * scales_0[j];
@@ -1605,17 +1605,17 @@ void ggml_gemv_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j] - sum_minf[j];
         }
     }
 }
 
-void ggml_gemv_iq4_nl_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+void ggml_gemv_iq4_nl_16x1_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 16;
+    const цяло blocklen = 1;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1625,35 +1625,35 @@ void ggml_gemv_iq4_nl_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t b
     UNUSED(nr);
 
     float sumf[16];
-    int sumi;
+    цяло sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_iq4_nlx16 * b_ptr = (const block_iq4_nlx16 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) sumf[j] = 0.0;
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                        const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                        const цяло v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                         sumi += ((v0 * a_ptr[l].qs[k * blocklen + i]) + (v1 * a_ptr[l].qs[k * blocklen + i + qk / 2]));
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
+        за (цяло j = 0; j < ncols_interleaved; j++) s[x * ncols_interleaved + j] = sumf[j];
     }
 }
 
-void ggml_gemv_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen          = 1;
+void ggml_gemv_q8_0_16x1_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk                = QK8_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 16;
+    const цяло blocklen          = 1;
 
     assert(nr == 1);
     assert(n % qk == 0);
@@ -1663,34 +1663,34 @@ void ggml_gemv_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
     UNUSED(nr);
 
     float sumf[16];
-    int   sumi;
+    цяло   sumi;
 
     const block_q8_0 * a_ptr = (const block_q8_0 *) vy;
-    for (int x = 0; x < nc / ncols_interleaved; x++) {
+    за (цяло x = 0; x < nc / ncols_interleaved; x++) {
         const block_q8_0x16 * b_ptr = (const block_q8_0x16 *) vx + (x * nb);
 
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             sumf[j] = 0.0;
         }
-        for (int l = 0; l < nb; l++) {
-            for (int k = 0; k < (qk / blocklen); k++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло l = 0; l < nb; l++) {
+            за (цяло k = 0; k < (qk / blocklen); k++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumi = 0;
-                    for (int i = 0; i < blocklen; ++i) {
-                        const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                    за (цяло i = 0; i < blocklen; ++i) {
+                        const цяло v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                         sumi += v0 * a_ptr[l].qs[k * blocklen + i];
                     }
                     sumf[j] += sumi * GGML_CPU_FP16_TO_FP32(b_ptr[l].d[j]) * GGML_CPU_FP16_TO_FP32(a_ptr[l].d);
                 }
             }
         }
-        for (int j = 0; j < ncols_interleaved; j++) {
+        за (цяло j = 0; j < ncols_interleaved; j++) {
             s[x * ncols_interleaved + j] = sumf[j];
         }
     }
 }
 
-void ggml_gemv_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemv_q2_K_16x1_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
     assert(n % QK_K == 0);
     assert(nr == 1);
     assert(nc % 16 == 0);
@@ -1698,24 +1698,24 @@ void ggml_gemv_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
     UNUSED(bs);
     UNUSED(nr);
 
-    const int nb = n / QK_K;
+    const цяло nb = n / QK_K;
     const block_q2_Kx16 * x = (const block_q2_Kx16 *)vx;
     const block_q8_K    * y = (const block_q8_K *)vy;
 
     // Layout: Even-Low(0,2,4,6), Odd-Low(1,3,5,7), Even-High(8...), Odd-High(9...)
-    const int sb_perm[16] = {
+    const цяло sb_perm[16] = {
         0, 4, 1, 5, 2, 6, 3, 7,  // 0-7
         8, 12, 9, 13, 10, 14, 11, 15 // 8-15
     };
 
-    for (int col_tile = 0; col_tile < nc; col_tile += 16) {
+    за (цяло col_tile = 0; col_tile < nc; col_tile += 16) {
         const block_q2_Kx16 * x_ptr = x + (col_tile / 16) * nb;
         const block_q8_K    * y_ptr = y;
 
         float sumf[16] = {0};
 
         // Loop over K-blocks
-        for (int k_block = 0; k_block < nb; ++k_block) {
+        за (цяло k_block = 0; k_block < nb; ++k_block) {
             int32_t isum[16]  = {0};
             int32_t summs[16] = {0};
 
@@ -1725,36 +1725,36 @@ void ggml_gemv_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
             const int16_t * bs_lhs = y_ptr[k_block].bsums;
 
             // Iterate over sub-blocks 0..15
-            for (int sb = 0; sb < 16; ++sb) {
+            за (цяло sb = 0; sb < 16; ++sb) {
                 // Correction Term
                 int16_t bsum = bs_lhs[sb];
-                int scale_offset = sb_perm[sb] * 16;
+                цяло scale_offset = sb_perm[sb] * 16;
 
-                for (int col = 0; col < 16; ++col) {
+                за (цяло col = 0; col < 16; ++col) {
                     uint8_t sc_val = sc_rhs[scale_offset + col];
                     summs[col] += bsum * (sc_val >> 4); // Min is high 4 bits
                 }
 
                 // Main Dot Product
                 // Calculate base offsets for Q2 unpacking based on SB
-                int byte_base;
-                if (sb < 8) byte_base = (sb % 2 == 0) ? 0 : 16;
-                else        byte_base = (sb % 2 == 0) ? 32 : 48;
+                цяло byte_base;
+                ако (sb < 8) byte_base = (sb % 2 == 0) ? 0 : 16;
+                иначе        byte_base = (sb % 2 == 0) ? 32 : 48;
 
-                int shift = ((sb / 2) % 4) * 2;
+                цяло shift = ((sb / 2) % 4) * 2;
 
-                for (int col = 0; col < 16; ++col) {
+                за (цяло col = 0; col < 16; ++col) {
                     uint8_t sc_val = sc_rhs[scale_offset + col];
                     int32_t d_sb = sc_val & 0xF; // Scale is low 4 bits
 
                     // Process 16 elements (l=0..15)
-                    for (int l = 0; l < 16; ++l) {
+                    за (цяло l = 0; l < 16; ++l) {
                         // Q2: Interleaved by column. Byte `l` contains 4 k-values.
-                        int qs_idx = (byte_base + l) * 16 + col;
+                        цяло qs_idx = (byte_base + l) * 16 + col;
                         uint8_t q2_val = (qs_rhs[qs_idx] >> shift) & 3;
 
                         // Q8: Linear access
-                        int k = sb * 16 + l;
+                        цяло k = sb * 16 + l;
                         int8_t q8_val = qs_lhs[k];
 
                         isum[col] += q8_val * q2_val * d_sb;
@@ -1763,7 +1763,7 @@ void ggml_gemv_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
             }
 
             // Finalize K-Block
-            for (int col = 0; col < 16; ++col) {
+            за (цяло col = 0; col < 16; ++col) {
                 float d_lhs = y_ptr[k_block].d;
                 float d_rhs = GGML_FP16_TO_FP32(x_ptr[k_block].d[col]);
                 float dm_rhs = GGML_FP16_TO_FP32(x_ptr[k_block].dmin[col]);
@@ -1775,18 +1775,18 @@ void ggml_gemv_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
             }
         }
 
-        for (int col = 0; col < 16; ++col) {
+        за (цяло col = 0; col < 16; ++col) {
             s[col_tile + col] = sumf[col];
         }
     }
 }
 #endif
 
-void ggml_gemm_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+void ggml_gemm_q4_0_4x4_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen = 4;
 
     assert (n % qk == 0);
     assert (nr % 4 == 0);
@@ -1804,23 +1804,23 @@ void ggml_gemm_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
 
     {
         float sumf[4][4];
-        int sumi;
+        цяло sumi;
 
-        for (int y = 0; y < nr / 4; y++) {
+        за (цяло y = 0; y < nr / 4; y++) {
             const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-            for (int x = 0; x < nc / ncols_interleaved; x++) {
+            за (цяло x = 0; x < nc / ncols_interleaved; x++) {
                 const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx + (x * nb);
-                for (int m = 0; m < 4; m++) {
-                    for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+                за (цяло m = 0; m < 4; m++) {
+                    за (цяло j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
                 }
-                for (int l = 0; l < nb; l++) {
-                    for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                        for (int m = 0; m < 4; m++) {
-                            for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло l = 0; l < nb; l++) {
+                    за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                        за (цяло m = 0; m < 4; m++) {
+                            за (цяло j = 0; j < ncols_interleaved; j++) {
                                 sumi = 0;
-                                for (int i = 0; i < blocklen; ++i) {
-                                    const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                                    const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                                за (цяло i = 0; i < blocklen; ++i) {
+                                    const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                                    const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                                     sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                             (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4])) >> 4;
                                 }
@@ -1829,8 +1829,8 @@ void ggml_gemm_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                         }
                     }
                 }
-                for (int m = 0; m < 4; m++) {
-                    for (int j = 0; j < ncols_interleaved; j++)
+                за (цяло m = 0; m < 4; m++) {
+                    за (цяло j = 0; j < ncols_interleaved; j++)
                         s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -1838,11 +1838,11 @@ void ggml_gemm_q4_0_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     }
 }
 
-void ggml_gemm_q4_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 8;
+void ggml_gemm_q4_0_4x8_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen = 8;
 
     assert (n % qk == 0);
     assert (nr % 4 == 0);
@@ -1859,23 +1859,23 @@ void ggml_gemm_q4_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     UNUSED(blocklen);
 
     float sumf[4][4];
-    int sumi;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q4_0x4 * b_ptr = (const block_q4_0x4 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                                const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                         (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4])) >> 4;
                             }
@@ -1884,19 +1884,19 @@ void ggml_gemm_q4_0_4x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q4_0_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemm_q4_0_8x8_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
 
     assert (n % qk == 0);
     assert (nr % 4 == 0);
@@ -1913,23 +1913,23 @@ void ggml_gemm_q4_0_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     UNUSED(blocklen);
 
     float sumf[4][8];
-    int sumi;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q4_0x8 * b_ptr = (const block_q4_0x8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                                const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4])) >> 4;
                             }
@@ -1938,19 +1938,19 @@ void ggml_gemm_q4_0_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 4;
+void ggml_gemm_q4_K_8x4_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK_K;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 4;
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
     static const uint32_t kmask3 = 0x03030303;
@@ -1966,22 +1966,22 @@ void ggml_gemm_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     float sumf[4][8];
     float sum_minf[4][8];
     uint32_t utmp[32];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    цяло sumi1;
+    цяло sumi2;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q4_Kx8 * b_ptr = (const block_q4_Kx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                     sum_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int sb = 0; sb < 8; sb++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло sb = 0; sb < 8; sb++) {
                     memcpy(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
                     utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
                     const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
@@ -1989,17 +1989,17 @@ void ggml_gemm_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                     utmp[sb * 4 + 2] = uaux_0;
                     utmp[sb * 4 + 0] &= kmask1;
                 }
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
                     uint8_t * scales_0 = (uint8_t *) utmp + (k / 8) * 32;
                     uint8_t * scales_1 = (uint8_t *) utmp + (k / 8) * 32 + 16;
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi1 = 0;
                             sumi2 = 0;
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
+                                const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
                                 sumi1 = (v0 * a_ptr[l].qs[(k / 8) * 256 + (k % 8) * 4 * blocklen + m * blocklen + i]);
                                 sumi2 = (v1 * a_ptr[l].qs[(k / 8) * 256 + (k % 8) * 4 * blocklen + m * blocklen + i + 128]);
                                 sumi1 = sumi1 * scales_0[j];
@@ -2010,18 +2010,18 @@ void ggml_gemm_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                         }
                     }
                 }
-                for (int sb = 0; sb < 8; sb++) {
+                за (цяло sb = 0; sb < 8; sb++) {
                     uint8_t * mins = (uint8_t *) utmp + 8 + sb * 16;
-                    for(int m = 0; m < 4; m++) {
+                    за(цяло m = 0; m < 4; m++) {
                         const int16_t * bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) * 6);
-                        for(int j = 0; j < ncols_interleaved; j++) {
+                        за(цяло j = 0; j < ncols_interleaved; j++) {
                             sum_minf[m][j] += mins[j] * (bsums[0] + bsums[1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
                 }
             }
@@ -2029,11 +2029,11 @@ void ggml_gemm_q4_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     }
 }
 
-void ggml_gemm_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemm_q4_K_8x8_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK_K;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
     static const uint32_t kmask3 = 0x03030303;
@@ -2047,22 +2047,22 @@ void ggml_gemm_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     float sumf[4][8];
     float sum_minf[4][8];
     uint32_t utmp[32];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    цяло sumi1;
+    цяло sumi2;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q4_Kx8 * b_ptr = (const block_q4_Kx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                     sum_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int sb = 0; sb < 8; sb++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло sb = 0; sb < 8; sb++) {
                     memcpy(utmp + sb * 4, b_ptr[l].scales + sb * 12, 12);
                     utmp[sb * 4 + 3] = ((utmp[sb * 4 + 2] >> 4) & kmask2) | (((utmp[sb * 4 + 1] >> 6) & kmask3) << 4);
                     const uint32_t uaux_0 = utmp[sb * 4 + 1] & kmask1;
@@ -2070,17 +2070,17 @@ void ggml_gemm_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                     utmp[sb * 4 + 2] = uaux_0;
                     utmp[sb * 4 + 0] &= kmask1;
                 }
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
                     uint8_t *scales_0 = (uint8_t*) utmp + (k / 4) * 32;
                     uint8_t *scales_1 = (uint8_t*) utmp + (k / 4) * 32 + 16;
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi1 = 0;
                             sumi2 = 0;
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF);
+                                const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4);
                                 sumi1 = (v0 * a_ptr[l].qs[(k >> 2) * 256 + (k % 4) * 4 * blocklen + m * blocklen + i]);
                                 sumi2 = (v1 * a_ptr[l].qs[(k >> 2) * 256 + (k % 4) * 4 * blocklen + m * blocklen + i + 128]);
                                 sumi1 = sumi1 * scales_0[j];
@@ -2091,18 +2091,18 @@ void ggml_gemm_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                         }
                     }
                 }
-                for (int sb = 0; sb < 8; sb++) {
+                за (цяло sb = 0; sb < 8; sb++) {
                     uint8_t *mins = (uint8_t*) utmp + 8 + sb * 16;
-                    for(int m = 0; m < 4; m++) {
+                    за(цяло m = 0; m < 4; m++) {
                         const int16_t *bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) * 6);
-                        for(int j = 0; j < ncols_interleaved; j++) {
+                        за(цяло j = 0; j < ncols_interleaved; j++) {
                             sum_minf[m][j] += mins[j] * (bsums[0] + bsums[1]) * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
                 }
             }
@@ -2110,11 +2110,11 @@ void ggml_gemm_q4_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     }
 }
 
-void ggml_gemm_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemm_q2_K_8x8_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK_K;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
 
     assert (n % qk == 0);
     assert (nr % 4 == 0);
@@ -2132,39 +2132,39 @@ void ggml_gemm_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
 
     float sumf[4][8];
     float sum_minf[4][8];
-    int sumi1, sumi2, sumi3, sumi4;
-    int sumi;
+    цяло sumi1, sumi2, sumi3, sumi4;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q2_Kx8 * b_ptr = (const block_q2_Kx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                     sum_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (4 * blocklen)); k++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / (4 * blocklen)); k++) {
 
                     const uint8_t *scales_0 = b_ptr[l].scales + (k / 4) * 64 ;
                     const uint8_t *scales_1 = b_ptr[l].scales + (k / 4) * 64 + 16;
                     const uint8_t *scales_2 = b_ptr[l].scales + (k / 4) * 64 + 32;
                     const uint8_t *scales_3 = b_ptr[l].scales + (k / 4) * 64 + 48;
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi1 = 0;
                             sumi2 = 0;
                             sumi3 = 0;
                             sumi4 = 0;
                             sumi = 0;
-                            int offset = ((k / 2) % 2) + j * 2;
-                            for (int i = 0; i < blocklen; ++i){
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 3);
-                                const int v1 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 2 ) & 3);
-                                const int v2 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4 ) & 3);
-                                const int v3 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 6 ) & 3);
+                            цяло offset = ((k / 2) % 2) + j * 2;
+                            за (цяло i = 0; i < blocklen; ++i){
+                                const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 3);
+                                const цяло v1 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 2 ) & 3);
+                                const цяло v2 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4 ) & 3);
+                                const цяло v3 = (int8_t) ((b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 6 ) & 3);
                                 sumi1 = (v0 * a_ptr[l].qs[(k >> 2) * 512 + (k % 4) * 4 * blocklen + m * blocklen + i]);
                                 sumi2 = (v1 * a_ptr[l].qs[(k >> 2) * 512  + (k % 4) * 4 * blocklen + m * blocklen + i + 128]);
                                 sumi3 = (v2 * a_ptr[l].qs[(k >> 2) * 512  + (k % 4) * 4 * blocklen + m * blocklen + i + 256]);
@@ -2179,20 +2179,20 @@ void ggml_gemm_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
                         }
                     }
                 }
-                for(int sb = 0; sb < 8; sb++) {
+                за(цяло sb = 0; sb < 8; sb++) {
                     const uint8_t *mins = b_ptr[l].scales + sb * 16;
-                    for(int m = 0; m < 4; m++) {
+                    за(цяло m = 0; m < 4; m++) {
                         const int16_t *bsums = a_ptr[l].bsums + (sb * 8) + (m * 4) - ((sb % 2) *  6);
-                        for(int j = 0; j < ncols_interleaved; j++) {
-                            int mins_prod = ((mins[j * 2] >> 4) * bsums[0] + (mins[(j * 2)+ 1] >> 4) * bsums[1]);
+                        за(цяло j = 0; j < ncols_interleaved; j++) {
+                            цяло mins_prod = ((mins[j * 2] >> 4) * bsums[0] + (mins[(j * 2)+ 1] >> 4) * bsums[1]);
                             sum_minf[m][j] += (mins_prod) * GGML_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
             }
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
                 }
             }
@@ -2200,27 +2200,27 @@ void ggml_gemm_q2_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, 
     }
 }
 
-void ggml_gemm_q5_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemm_q5_K_8x4_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
     ggml_gemm_q5_K_NxM_q8_K_generic_impl<4, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q5_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemm_q5_K_8x8_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
     ggml_gemm_q5_K_NxM_q8_K_generic_impl<8, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q6_K_8x4_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemm_q6_K_8x4_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
     ggml_gemm_q6_K_NxM_q8_K_generic_impl<4, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_q6_K_8x8_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemm_q6_K_8x8_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
    ggml_gemm_q6_K_NxM_q8_K_generic_impl<8, 8>(n, s, bs, vx, vy, nr, nc);
 }
 
-void ggml_gemm_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+void ggml_gemm_iq4_nl_4x4_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen = 4;
 
     assert (n % qk == 0);
     assert (nr % 4 == 0);
@@ -2238,23 +2238,23 @@ void ggml_gemm_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs
 
     {
         float sumf[4][4];
-        int sumi;
+        цяло sumi;
 
-        for (int y = 0; y < nr / 4; y++) {
+        за (цяло y = 0; y < nr / 4; y++) {
             const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-            for (int x = 0; x < nc / ncols_interleaved; x++) {
+            за (цяло x = 0; x < nc / ncols_interleaved; x++) {
                 const block_iq4_nlx4 * b_ptr = (const block_iq4_nlx4 *) vx + (x * nb);
-                for (int m = 0; m < 4; m++) {
-                    for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+                за (цяло m = 0; m < 4; m++) {
+                    за (цяло j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
                 }
-                for (int l = 0; l < nb; l++) {
-                    for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                        for (int m = 0; m < 4; m++) {
-                            for (int j = 0; j < ncols_interleaved; j++) {
+                за (цяло l = 0; l < nb; l++) {
+                    за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                        за (цяло m = 0; m < 4; m++) {
+                            за (цяло j = 0; j < ncols_interleaved; j++) {
                                 sumi = 0;
-                                for (int i = 0; i < blocklen; ++i) {
-                                    const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                    const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                                за (цяло i = 0; i < blocklen; ++i) {
+                                    const цяло v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                    const цяло v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                     sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                             (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4]));
                                 }
@@ -2263,8 +2263,8 @@ void ggml_gemm_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs
                         }
                     }
                 }
-                for (int m = 0; m < 4; m++) {
-                    for (int j = 0; j < ncols_interleaved; j++)
+                за (цяло m = 0; m < 4; m++) {
+                    за (цяло j = 0; j < ncols_interleaved; j++)
                         s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2272,34 +2272,34 @@ void ggml_gemm_iq4_nl_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs
     }
 }
 
-void ggml_gemm_iq4_nl_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemm_iq4_nl_8x8_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
     assert(nc % ncols_interleaved == 0);
 
     float sumf[4][8];
-    int sumi;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_iq4_nlx8 * b_ptr = (const block_iq4_nlx8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                const цяло v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4]));
                             }
@@ -2308,42 +2308,42 @@ void ggml_gemm_iq4_nl_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_mxfp4_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen = 4;
+void ggml_gemm_mxfp4_4x4_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen = 4;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
     assert(nc % ncols_interleaved == 0);
 
     float sumf[4][4];
-    int sumi;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_mxfp4x4 * b_ptr = (const block_mxfp4x4 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                const int v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                const цяло v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4]));
                             }
@@ -2352,42 +2352,42 @@ void ggml_gemm_mxfp4_4x4_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_mxfp4_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 8;
-    const int blocklen = 8;
+void ggml_gemm_mxfp4_8x8_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 8;
+    const цяло blocklen = 8;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
     assert(nc % ncols_interleaved == 0);
 
     float sumf[4][8];
-    int sumi;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_mxfp4x8 * b_ptr = (const block_mxfp4x8 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                const int v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                const цяло v1 = kvalues_mxfp4[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4]));
                             }
@@ -2396,49 +2396,49 @@ void ggml_gemm_mxfp4_8x8_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q8_0_4x4_q8_0_generic(int                        n,
+void ggml_gemm_q8_0_4x4_q8_0_generic(цяло                        n,
                                      float * GGML_RESTRICT      s,
                                      size_t                     bs,
                                      const void * GGML_RESTRICT vx,
                                      const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 4;
+                                     цяло                        nr,
+                                     цяло                        nc) {
+    const цяло qk                = QK8_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen          = 4;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
     assert(nc % ncols_interleaved == 0);
 
     float sumf[4][4];
-    int   sumi;
+    цяло   sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / blocklen); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / blocklen); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                                 sumi += v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i];
                             }
                             sumf[m][j] +=
@@ -2447,8 +2447,8 @@ void ggml_gemm_q8_0_4x4_q8_0_generic(int                        n,
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2458,41 +2458,41 @@ void ggml_gemm_q8_0_4x4_q8_0_generic(int                        n,
 
 
 
-void ggml_gemm_q8_0_4x8_q8_0_generic(int                        n,
+void ggml_gemm_q8_0_4x8_q8_0_generic(цяло                        n,
                                      float * GGML_RESTRICT      s,
                                      size_t                     bs,
                                      const void * GGML_RESTRICT vx,
                                      const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                                     цяло                        nr,
+                                     цяло                        nc) {
+    const цяло qk                = QK8_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen          = 8;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
     assert(nc % ncols_interleaved == 0);
 
     float sumf[4][4];
-    int   sumi;
+    цяло   sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q8_0x4 * b_ptr = (const block_q8_0x4 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / blocklen); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / blocklen); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                                 sumi += v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i];
                             }
                             sumf[m][j] +=
@@ -2501,8 +2501,8 @@ void ggml_gemm_q8_0_4x8_q8_0_generic(int                        n,
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2510,16 +2510,16 @@ void ggml_gemm_q8_0_4x8_q8_0_generic(int                        n,
     }
 }
 
-void ggml_gemm_q1_0_4x4_q8_0_generic(int                        n,
+void ggml_gemm_q1_0_4x4_q8_0_generic(цяло                        n,
                                      float * GGML_RESTRICT      s,
                                      size_t                     bs,
                                      const void * GGML_RESTRICT vx,
                                      const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
+                                     цяло                        nr,
+                                     цяло                        nc) {
+    const цяло qk                = QK1_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 4;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
@@ -2527,18 +2527,18 @@ void ggml_gemm_q1_0_4x4_q8_0_generic(int                        n,
 
     float sumf[4][4];
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (4 * y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                 }
             }
 
-            for (int l = 0; l < nb; l++) {
+            за (цяло l = 0; l < nb; l++) {
                 const float d0[4] = {
                     GGML_CPU_FP16_TO_FP32(b_ptr[l].d[0]),
                     GGML_CPU_FP16_TO_FP32(b_ptr[l].d[1]),
@@ -2546,7 +2546,7 @@ void ggml_gemm_q1_0_4x4_q8_0_generic(int                        n,
                     GGML_CPU_FP16_TO_FP32(b_ptr[l].d[3]),
                 };
 
-                for (int k = 0; k < QK1_0 / QK8_0; ++k) {
+                за (цяло k = 0; k < QK1_0 / QK8_0; ++k) {
                     const block_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k;
                     const float a_d[4] = {
                         GGML_CPU_FP16_TO_FP32(a_blk->d[0]),
@@ -2555,26 +2555,26 @@ void ggml_gemm_q1_0_4x4_q8_0_generic(int                        n,
                         GGML_CPU_FP16_TO_FP32(a_blk->d[3]),
                     };
 
-                    for (int tile = 0; tile < QK8_0 / 4; ++tile) {
+                    за (цяло tile = 0; tile < QK8_0 / 4; ++tile) {
                         const uint8_t bits_lo = b_ptr[l].qs[k * 16 + 2 * tile + 0];
                         const uint8_t bits_hi = b_ptr[l].qs[k * 16 + 2 * tile + 1];
-                        const int tile_offset = tile * 16;
+                        const цяло tile_offset = tile * 16;
 
-                        for (int p = 0; p < 4; ++p) {
+                        за (цяло p = 0; p < 4; ++p) {
                             const int8_t q_row[4] = {
                                 a_blk->qs[tile_offset + 0 * 4 + p],
                                 a_blk->qs[tile_offset + 1 * 4 + p],
                                 a_blk->qs[tile_offset + 2 * 4 + p],
                                 a_blk->qs[tile_offset + 3 * 4 + p],
                             };
-                            const int sign[4] = {
+                            const цяло sign[4] = {
                                 (bits_lo & (1u << p))       ? 1 : -1,
                                 (bits_lo & (1u << (4 + p))) ? 1 : -1,
                                 (bits_hi & (1u << p))       ? 1 : -1,
                                 (bits_hi & (1u << (4 + p))) ? 1 : -1,
                             };
 
-                            for (int m = 0; m < 4; ++m) {
+                            за (цяло m = 0; m < 4; ++m) {
                                 const float row_scale = a_d[m];
                                 sumf[m][0] += sign[0] * q_row[m] * d0[0] * row_scale;
                                 sumf[m][1] += sign[1] * q_row[m] * d0[1] * row_scale;
@@ -2586,8 +2586,8 @@ void ggml_gemm_q1_0_4x4_q8_0_generic(int                        n,
                 }
             }
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2595,17 +2595,17 @@ void ggml_gemm_q1_0_4x4_q8_0_generic(int                        n,
     }
 }
 
-void ggml_gemm_q1_0_4x8_q8_0_generic(int                        n,
+void ggml_gemm_q1_0_4x8_q8_0_generic(цяло                        n,
                                      float * GGML_RESTRICT      s,
                                      size_t                     bs,
                                      const void * GGML_RESTRICT vx,
                                      const void * GGML_RESTRICT vy,
-                                     int                        nr,
-                                     int                        nc) {
-    const int qk                = QK1_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 4;
-    const int blocklen          = 8;
+                                     цяло                        nr,
+                                     цяло                        nc) {
+    const цяло qk                = QK1_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 4;
+    const цяло blocklen          = 8;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
@@ -2613,18 +2613,18 @@ void ggml_gemm_q1_0_4x8_q8_0_generic(int                        n,
 
     float sumf[4][4];
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (4 * y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q1_0x4 * b_ptr = (const block_q1_0x4 *) vx + (x * nb);
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0f;
                 }
             }
 
-            for (int l = 0; l < nb; l++) {
+            за (цяло l = 0; l < nb; l++) {
                 const float d0[4] = {
                     GGML_CPU_FP16_TO_FP32(b_ptr[l].d[0]),
                     GGML_CPU_FP16_TO_FP32(b_ptr[l].d[1]),
@@ -2632,7 +2632,7 @@ void ggml_gemm_q1_0_4x8_q8_0_generic(int                        n,
                     GGML_CPU_FP16_TO_FP32(b_ptr[l].d[3]),
                 };
 
-                for (int k = 0; k < qk / blocklen; ++k) {
+                за (цяло k = 0; k < qk / blocklen; ++k) {
                     const block_q8_0x4 * GGML_RESTRICT a_blk = a_ptr + 4 * l + k / (QK8_0 / blocklen);
                     const float a_d[4] = {
                         GGML_CPU_FP16_TO_FP32(a_blk->d[0]),
@@ -2644,23 +2644,23 @@ void ggml_gemm_q1_0_4x8_q8_0_generic(int                        n,
                     const uint8_t bits1 = b_ptr[l].qs[k * ncols_interleaved + 1];
                     const uint8_t bits2 = b_ptr[l].qs[k * ncols_interleaved + 2];
                     const uint8_t bits3 = b_ptr[l].qs[k * ncols_interleaved + 3];
-                    const int q_offset = (k % (QK8_0 / blocklen)) * 4 * blocklen;
+                    const цяло q_offset = (k % (QK8_0 / blocklen)) * 4 * blocklen;
 
-                    for (int p = 0; p < blocklen; ++p) {
+                    за (цяло p = 0; p < blocklen; ++p) {
                         const int8_t q_row[4] = {
                             a_blk->qs[q_offset + 0 * blocklen + p],
                             a_blk->qs[q_offset + 1 * blocklen + p],
                             a_blk->qs[q_offset + 2 * blocklen + p],
                             a_blk->qs[q_offset + 3 * blocklen + p],
                         };
-                        const int sign[4] = {
+                        const цяло sign[4] = {
                             (bits0 & (1u << p)) ? 1 : -1,
                             (bits1 & (1u << p)) ? 1 : -1,
                             (bits2 & (1u << p)) ? 1 : -1,
                             (bits3 & (1u << p)) ? 1 : -1,
                         };
 
-                        for (int m = 0; m < 4; ++m) {
+                        за (цяло m = 0; m < 4; ++m) {
                             const float row_scale = a_d[m];
                             sumf[m][0] += sign[0] * q_row[m] * d0[0] * row_scale;
                             sumf[m][1] += sign[1] * q_row[m] * d0[1] * row_scale;
@@ -2671,8 +2671,8 @@ void ggml_gemm_q1_0_4x8_q8_0_generic(int                        n,
                 }
             }
 
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2681,12 +2681,12 @@ void ggml_gemm_q1_0_4x8_q8_0_generic(int                        n,
 }
 
 // Only enable these for RISC-V.
-#if defined __riscv_zvfh
-void ggml_gemm_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+#ако defined __riscv_zvfh
+void ggml_gemm_q4_0_16x1_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 16;
+    const цяло blocklen = 1;
 
     assert (n % qk == 0);
     assert (nr % 4 == 0);
@@ -2703,23 +2703,23 @@ void ggml_gemm_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
     UNUSED(blocklen);
 
     float sumf[4][16];
-    int sumi;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q4_0x16 * b_ptr = (const block_q4_0x16 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
-                                const int v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] << 4);
+                                const цяло v1 = (int8_t) (b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0xF0);
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + qk / 2 * 4])) >> 4;
                             }
@@ -2728,19 +2728,19 @@ void ggml_gemm_q4_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK_K;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+void ggml_gemm_q4_K_16x1_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK_K;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 16;
+    const цяло blocklen = 1;
 
     assert (n % qk == 0);
     assert (nr % 4 == 0);
@@ -2760,55 +2760,55 @@ void ggml_gemm_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
     float sum_minf[4][16];
     uint8_t scales[128];
     uint8_t mins[128];
-    int sumi1;
-    int sumi2;
-    int sumi;
+    цяло sumi1;
+    цяло sumi2;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_Kx4 * a_ptr = (const block_q8_Kx4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q4_Kx16 * b_ptr = (const block_q4_Kx16 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                     sum_minf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int i = 0; i < 128; i++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло i = 0; i < 128; i++) {
                     scales[i] = b_ptr[l].scales[i] & 0x0F;
                     mins[i] = b_ptr[l].scales[i] >> 4;
                 }
-                for (int i = 0; i < 64; i++) {
+                за (цяло i = 0; i < 64; i++) {
                     scales[i] |= (b_ptr[l].scales[128 + i] & 0x03) << 4;
                     mins[i] |= (b_ptr[l].scales[128 + i] & 0x0C) << 2;
                     scales[i + 64] |= (b_ptr[l].scales[128 + i] & 0x30);
                     mins[i + 64] |= (b_ptr[l].scales[128 + i] & 0xC0) >> 2;
                 }
 
-                for (int sb = 0; sb < 8; sb++) {
+                за (цяло sb = 0; sb < 8; sb++) {
                     uint8_t *min = &mins[sb * 16];
-                    for(int m = 0; m < 4; m++) {
+                    за(цяло m = 0; m < 4; m++) {
                         const int16_t bsums = a_ptr[l].bsums[sb * 8 + m] + a_ptr[l].bsums[sb * 8 + m + 4];
-                        for(int j = 0; j < ncols_interleaved; j++) {
+                        за(цяло j = 0; j < ncols_interleaved; j++) {
                             sum_minf[m][j] += min[j] * bsums * GGML_CPU_FP16_TO_FP32(b_ptr[l].dmin[j]) * a_ptr[l].d[m];
                         }
                     }
                 }
 
-                for (int sb = 0; sb < 8; sb += 2) {
+                за (цяло sb = 0; sb < 8; sb += 2) {
                     uint8_t *scales_0 = &scales[sb * 16];
                     uint8_t *scales_1 = &scales[(sb + 1) * 16];
 
-                    for (int i = 0; i < QK4_0; i++) {
-                        for (int m = 0; m < 4; m++) {
-                            for (int j = 0; j < ncols_interleaved; j++) {
+                    за (цяло i = 0; i < QK4_0; i++) {
+                        за (цяло m = 0; m < 4; m++) {
+                            за (цяло j = 0; j < ncols_interleaved; j++) {
                                 sumi1 = 0;
                                 sumi2 = 0;
                                 sumi = 0;
 
-                                const int v0 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] & 0xF);
-                                const int v1 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] >> 4);
+                                const цяло v0 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] & 0xF);
+                                const цяло v1 = (int8_t) (b_ptr[l].qs[sb * 256 + i * 16 + j] >> 4);
                                 sumi1 = (v0 * a_ptr[l].qs[sb * 4 * 32 + i * 4 + m]);
                                 sumi2 = (v1 * a_ptr[l].qs[sb * 4 * 32 + 32 * 4 + i * 4 + m]);
                                 sumi1 = sumi1 * scales_0[j];
@@ -2821,8 +2821,8 @@ void ggml_gemm_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j] - sum_minf[m][j];
                 }
             }
@@ -2830,34 +2830,34 @@ void ggml_gemm_q4_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
     }
 }
 
-void ggml_gemm_iq4_nl_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen = 1;
+void ggml_gemm_iq4_nl_16x1_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk = QK8_0;
+    const цяло nb = n / qk;
+    const цяло ncols_interleaved = 16;
+    const цяло blocklen = 1;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
     assert(nc % ncols_interleaved == 0);
 
     float sumf[4][16];
-    int sumi;
+    цяло sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_iq4_nlx16 * b_ptr = (const block_iq4_nlx16 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) sumf[m][j] = 0.0;
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / (2 * blocklen)); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / (2 * blocklen)); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
-                                const int v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] & 0x0F];
+                                const цяло v1 = kvalues_iq4nl[b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i] >> 4];
                                 sumi += ((v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i]) +
                                          (v1 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i + (qk / 2) * 4]));
                             }
@@ -2866,43 +2866,43 @@ void ggml_gemm_iq4_nl_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t b
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++)
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++)
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
             }
         }
     }
 }
 
-void ggml_gemm_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
-    const int qk                = QK8_0;
-    const int nb                = n / qk;
-    const int ncols_interleaved = 16;
-    const int blocklen          = 1;
+void ggml_gemm_q8_0_16x1_q8_0_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
+    const цяло qk                = QK8_0;
+    const цяло nb                = n / qk;
+    const цяло ncols_interleaved = 16;
+    const цяло blocklen          = 1;
 
     assert(n % qk == 0);
     assert(nr % 4 == 0);
     assert(nc % ncols_interleaved == 0);
 
     float sumf[4][16];
-    int   sumi;
+    цяло   sumi;
 
-    for (int y = 0; y < nr / 4; y++) {
+    за (цяло y = 0; y < nr / 4; y++) {
         const block_q8_0x4 * a_ptr = (const block_q8_0x4 *) vy + (y * nb);
-        for (int x = 0; x < nc / ncols_interleaved; x++) {
+        за (цяло x = 0; x < nc / ncols_interleaved; x++) {
             const block_q8_0x16 * b_ptr = (const block_q8_0x16 *) vx + (x * nb);
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     sumf[m][j] = 0.0;
                 }
             }
-            for (int l = 0; l < nb; l++) {
-                for (int k = 0; k < (qk / blocklen); k++) {
-                    for (int m = 0; m < 4; m++) {
-                        for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло l = 0; l < nb; l++) {
+                за (цяло k = 0; k < (qk / blocklen); k++) {
+                    за (цяло m = 0; m < 4; m++) {
+                        за (цяло j = 0; j < ncols_interleaved; j++) {
                             sumi = 0;
-                            for (int i = 0; i < blocklen; ++i) {
-                                const int v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
+                            за (цяло i = 0; i < blocklen; ++i) {
+                                const цяло v0 = b_ptr[l].qs[k * ncols_interleaved * blocklen + j * blocklen + i];
                                 sumi += v0 * a_ptr[l].qs[k * 4 * blocklen + m * blocklen + i];
                             }
                             sumf[m][j] +=
@@ -2911,8 +2911,8 @@ void ggml_gemm_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
                     }
                 }
             }
-            for (int m = 0; m < 4; m++) {
-                for (int j = 0; j < ncols_interleaved; j++) {
+            за (цяло m = 0; m < 4; m++) {
+                за (цяло j = 0; j < ncols_interleaved; j++) {
                     s[(y * 4 + m) * bs + x * ncols_interleaved + j] = sumf[m][j];
                 }
             }
@@ -2921,23 +2921,23 @@ void ggml_gemm_q8_0_16x1_q8_0_generic(int n, float * GGML_RESTRICT s, size_t bs,
 }
 
 
-void ggml_gemm_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, int nr, int nc) {
+void ggml_gemm_q2_K_16x1_q8_K_generic(цяло n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, const void * GGML_RESTRICT vy, цяло nr, цяло nc) {
     assert(n % QK_K == 0);
     assert(nr % 4 == 0);
     assert(nc % 16 == 0);
-    const int nb = n / QK_K;
+    const цяло nb = n / QK_K;
     const block_q2_Kx16 * x = (const block_q2_Kx16 *)vx;
     const block_q8_Kx4  * y = (const block_q8_Kx4 *)vy;
 
-    const int sb_perm[16] = {
+    const цяло sb_perm[16] = {
         0, 4, 1, 5, 2, 6, 3, 7,
         8, 12, 9, 13, 10, 14, 11, 15
     };
 
     // Iterate Rows in tiles of 4
-    for (int row_tile = 0; row_tile < nr; row_tile += 4) {
+    за (цяло row_tile = 0; row_tile < nr; row_tile += 4) {
         // Iterate Columns in tiles of 16
-        for (int col_tile = 0; col_tile < nc; col_tile += 16) {
+        за (цяло col_tile = 0; col_tile < nc; col_tile += 16) {
 
             const block_q2_Kx16 * x_ptr = x + (col_tile / 16) * nb;
             const block_q8_Kx4  * y_ptr = y + (row_tile / 4) * nb;
@@ -2945,7 +2945,7 @@ void ggml_gemm_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
             float sumf[4][16];
             memset(sumf, 0, sizeof(sumf));
 
-            for (int k_block = 0; k_block < nb; ++k_block) {
+            за (цяло k_block = 0; k_block < nb; ++k_block) {
                 int32_t isum[4][16];
                 int32_t summs[4][16];
                 memset(isum, 0, sizeof(isum));
@@ -2956,35 +2956,35 @@ void ggml_gemm_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
                 const int8_t  * qs_lhs = y_ptr[k_block].qs;
                 const int16_t * bs_lhs = y_ptr[k_block].bsums;
 
-                for (int sb = 0; sb < 16; ++sb) {
-                    int scale_offset = sb_perm[sb] * 16;
+                за (цяло sb = 0; sb < 16; ++sb) {
+                    цяло scale_offset = sb_perm[sb] * 16;
 
-                    int byte_base;
-                    if (sb < 8) byte_base = (sb % 2 == 0) ? 0 : 16;
-                    else        byte_base = (sb % 2 == 0) ? 32 : 48;
-                    int shift = ((sb / 2) % 4) * 2;
+                    цяло byte_base;
+                    ако (sb < 8) byte_base = (sb % 2 == 0) ? 0 : 16;
+                    иначе        byte_base = (sb % 2 == 0) ? 32 : 48;
+                    цяло shift = ((sb / 2) % 4) * 2;
 
-                    for (int col = 0; col < 16; ++col) {
+                    за (цяло col = 0; col < 16; ++col) {
                         uint8_t sc_val = sc_rhs[scale_offset + col];
                         int32_t d_sb = sc_val & 0xF;
                         int32_t m_sb = sc_val >> 4;
 
                         // Correction Term
-                        for (int r = 0; r < 4; ++r) {
-                            int bsum_idx = (sb / 4) * 16 + r * 4 + (sb % 4);
+                        за (цяло r = 0; r < 4; ++r) {
+                            цяло bsum_idx = (sb / 4) * 16 + r * 4 + (sb % 4);
                             summs[r][col] += bs_lhs[bsum_idx] * m_sb;
                         }
 
                         // Main Dot Product
-                        for (int l = 0; l < 16; ++l) {
-                            int qs_idx = (byte_base + l) * 16 + col;
+                        за (цяло l = 0; l < 16; ++l) {
+                            цяло qs_idx = (byte_base + l) * 16 + col;
                             uint8_t q2_val = (qs_rhs[qs_idx] >> shift) & 3;
 
                             // Calculate Q8 index for this specific k and row
-                            int k = sb * 16 + l;
-                            int q8_idx = (k / 4) * 16 + (k % 4);
+                            цяло k = sb * 16 + l;
+                            цяло q8_idx = (k / 4) * 16 + (k % 4);
 
-                            for (int r = 0; r < 4; ++r) {
+                            за (цяло r = 0; r < 4; ++r) {
                                 // Add r*4 to jump to the correct row within the 4x4 chunk
                                 int8_t q8_val = qs_lhs[q8_idx + r * 4];
                                 isum[r][col] += q8_val * q2_val * d_sb;
@@ -2994,11 +2994,11 @@ void ggml_gemm_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
                 }
 
                 // Finalize K-Block
-                for (int col = 0; col < 16; ++col) {
+                за (цяло col = 0; col < 16; ++col) {
                     float d_rhs = GGML_FP16_TO_FP32(x_ptr[k_block].d[col]);
                     float dm_rhs = GGML_FP16_TO_FP32(x_ptr[k_block].dmin[col]);
 
-                    for (int r = 0; r < 4; ++r) {
+                    за (цяло r = 0; r < 4; ++r) {
                         float d_lhs = y_ptr[k_block].d[r];
                         float d_all = d_lhs * d_rhs;
                         float d_min = d_lhs * dm_rhs;
@@ -3007,8 +3007,8 @@ void ggml_gemm_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
                 }
             }
 
-            for (int r = 0; r < 4; ++r) {
-                for (int col = 0; col < 16; ++col) {
+            за (цяло r = 0; r < 4; ++r) {
+                за (цяло col = 0; col < 16; ++col) {
                     s[(row_tile + r) * bs + (col_tile + col)] = sumf[r][col];
                 }
             }
@@ -3019,43 +3019,43 @@ void ggml_gemm_q2_K_16x1_q8_K_generic(int n, float * GGML_RESTRICT s, size_t bs,
 
 } // extern "C"
 
-static block_q8_0x4 make_block_q8_0x4(block_q8_0 * in, unsigned int blck_size_interleave) {
+static block_q8_0x4 make_block_q8_0x4(block_q8_0 * in, unsigned цяло blck_size_interleave) {
     block_q8_0x4 out;
 
-    for (int i = 0; i < 4; i++) {
+    за (цяло i = 0; i < 4; i++) {
         out.d[i] = in[i].d;
     }
 
-    const int end = QK8_0 * 4 / blck_size_interleave;
-    for (int i = 0; i < end; ++i) {
-        int src_id     = i % 4;
-        int src_offset = (i / 4) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    const цяло end = QK8_0 * 4 / blck_size_interleave;
+    за (цяло i = 0; i < end; ++i) {
+        цяло src_id     = i % 4;
+        цяло src_offset = (i / 4) * blck_size_interleave;
+        цяло dst_offset = i * blck_size_interleave;
         memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], blck_size_interleave);
     }
-    return out;
+    върни out;
 }
 
-static block_q1_0x4 make_block_q1_0x4(block_q1_0 * in, unsigned int blck_size_interleave) {
+static block_q1_0x4 make_block_q1_0x4(block_q1_0 * in, unsigned цяло blck_size_interleave) {
     block_q1_0x4 out;
 
-    for (int i = 0; i < 4; i++) {
+    за (цяло i = 0; i < 4; i++) {
         out.d[i] = in[i].d;
     }
 
     GGML_ASSERT(blck_size_interleave == 4 || blck_size_interleave == 8);
 
-    if (blck_size_interleave == 4) {
-        for (int k = 0; k < QK1_0 / QK8_0; ++k) {
-            for (int tile = 0; tile < QK8_0 / 4; ++tile) {
+    ако (blck_size_interleave == 4) {
+        за (цяло k = 0; k < QK1_0 / QK8_0; ++k) {
+            за (цяло tile = 0; tile < QK8_0 / 4; ++tile) {
                 uint8_t packed_lo = 0;
                 uint8_t packed_hi = 0;
 
-                const int weight_base = k * QK8_0 + tile * 4;
-                for (int pos = 0; pos < 4; ++pos) {
-                    const int weight_idx = weight_base + pos;
-                    const int byte_idx   = weight_idx / 8;
-                    const int bit_idx    = weight_idx % 8;
+                const цяло weight_base = k * QK8_0 + tile * 4;
+                за (цяло pos = 0; pos < 4; ++pos) {
+                    const цяло weight_idx = weight_base + pos;
+                    const цяло byte_idx   = weight_idx / 8;
+                    const цяло bit_idx    = weight_idx % 8;
 
                     packed_lo |= ((in[0].qs[byte_idx] >> bit_idx) & 1u) << pos;
                     packed_lo |= ((in[1].qs[byte_idx] >> bit_idx) & 1u) << (4 + pos);
@@ -3067,34 +3067,34 @@ static block_q1_0x4 make_block_q1_0x4(block_q1_0 * in, unsigned int blck_size_in
                 out.qs[k * 16 + 2 * tile + 1] = packed_hi;
             }
         }
-        return out;
+        върни out;
     }
 
-    for (int byte_idx = 0; byte_idx < QK1_0 / 8; ++byte_idx) {
+    за (цяло byte_idx = 0; byte_idx < QK1_0 / 8; ++byte_idx) {
         out.qs[byte_idx * 4 + 0] = in[0].qs[byte_idx];
         out.qs[byte_idx * 4 + 1] = in[1].qs[byte_idx];
         out.qs[byte_idx * 4 + 2] = in[2].qs[byte_idx];
         out.qs[byte_idx * 4 + 3] = in[3].qs[byte_idx];
     }
 
-    return out;
+    върни out;
 }
 
-static block_q4_0x4 make_block_q4_0x4(block_q4_0 * in, int blck_size_interleave) {
+static block_q4_0x4 make_block_q4_0x4(block_q4_0 * in, цяло blck_size_interleave) {
     block_q4_0x4 out;
 
-    for (int i = 0; i < 4; i++) {
+    за (цяло i = 0; i < 4; i++) {
         out.d[i] = in[i].d;
     }
 
-    const int end = QK4_0 * 2 / blck_size_interleave;
+    const цяло end = QK4_0 * 2 / blck_size_interleave;
 
-    if (blck_size_interleave == 8) {
+    ако (blck_size_interleave == 8) {
         const uint64_t xor_mask = 0x8888888888888888ULL;
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 4;
-            int src_offset = (i / 4) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id = i % 4;
+            цяло src_offset = (i / 4) * blck_size_interleave;
+            цяло dst_offset = i * blck_size_interleave;
 
             uint64_t elems;
             // Using memcpy to avoid unaligned memory accesses
@@ -3102,43 +3102,43 @@ static block_q4_0x4 make_block_q4_0x4(block_q4_0 * in, int blck_size_interleave)
             elems ^= xor_mask;
             memcpy(&out.qs[dst_offset], &elems, sizeof(uint64_t));
         }
-    } else if (blck_size_interleave == 4) {
+    } иначе ако (blck_size_interleave == 4) {
         const uint32_t xor_mask = 0x88888888;
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 4;
-            int src_offset = (i / 4) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id = i % 4;
+            цяло src_offset = (i / 4) * blck_size_interleave;
+            цяло dst_offset = i * blck_size_interleave;
 
             uint32_t elems;
             memcpy(&elems, &in[src_id].qs[src_offset], sizeof(uint32_t));
             elems ^= xor_mask;
             memcpy(&out.qs[dst_offset], &elems, sizeof(uint32_t));
         }
-    } else {
+    } иначе {
         GGML_ASSERT(false);
     }
 
-    return out;
+    върни out;
 }
 
 // interleave 8 block_q4_0s in blocks of blck_size_interleave
 // returns an interleaved block_q4_0x8
 // in the interleaved block_q4_0x8, place deltas for 8 block_q4_0 blocks
 // first, then interleave quants from 8 block_q4_0s in blocks of blck_size_interleave
-static block_q4_0x8 make_block_q4_0x8(block_q4_0 * in, unsigned int blck_size_interleave) {
+static block_q4_0x8 make_block_q4_0x8(block_q4_0 * in, unsigned цяло blck_size_interleave) {
     block_q4_0x8 out;
 
-    for (int i = 0; i < 8; i++) {
+    за (цяло i = 0; i < 8; i++) {
         out.d[i] = in[i].d;
     }
 
-    const int end = QK4_0 * 4 / blck_size_interleave;
+    const цяло end = QK4_0 * 4 / blck_size_interleave;
     const uint64_t xor_mask = 0x8888888888888888ULL;
 
-    for (int i = 0; i < end; ++i) {
-        int src_id = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    за (цяло i = 0; i < end; ++i) {
+        цяло src_id = i % 8;
+        цяло src_offset = (i / 8) * blck_size_interleave;
+        цяло dst_offset = i * blck_size_interleave;
 
         uint64_t elems;
         memcpy(&elems, &in[src_id].qs[src_offset], sizeof(uint64_t));
@@ -3146,52 +3146,52 @@ static block_q4_0x8 make_block_q4_0x8(block_q4_0 * in, unsigned int blck_size_in
         memcpy(&out.qs[dst_offset], &elems, sizeof(uint64_t));
     }
 
-    return out;
+    върни out;
 }
 
-static block_q4_0x16 make_block_q4_0x16(block_q4_0 * in, unsigned int blck_size_interleave) {
+static block_q4_0x16 make_block_q4_0x16(block_q4_0 * in, unsigned цяло blck_size_interleave) {
     block_q4_0x16 out;
 
-    for (int i = 0; i < 16; i++) {
+    за (цяло i = 0; i < 16; i++) {
         out.d[i] = in[i].d;
     }
 
-    const int end = QK4_0 * 8 / blck_size_interleave;
+    const цяло end = QK4_0 * 8 / blck_size_interleave;
 
-    if (blck_size_interleave == 1) {
+    ако (blck_size_interleave == 1) {
         const uint8_t xor_mask = 0x88;
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 16;
-            int src_offset = i / 16;
-            int dst_offset = i;
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id = i % 16;
+            цяло src_offset = i / 16;
+            цяло dst_offset = i;
 
             out.qs[dst_offset] = in[src_id].qs[src_offset] ^ xor_mask;
         }
-    } else {
+    } иначе {
         GGML_ASSERT(false);
     }
 
-    return out;
+    върни out;
 }
 
-static block_q4_Kx8 make_block_q4_Kx8(block_q4_K * in, unsigned int blck_size_interleave) {
+static block_q4_Kx8 make_block_q4_Kx8(block_q4_K * in, unsigned цяло blck_size_interleave) {
     block_q4_Kx8 out;
     //Delta(scale) and dmin values of the eight Q4_K structures are copied onto the output interleaved structure
-    for (int i = 0; i < 8; i++) {
+    за (цяло i = 0; i < 8; i++) {
         out.d[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
     }
 
-    for (int i = 0; i < 8; i++) {
+    за (цяло i = 0; i < 8; i++) {
         out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
-    const int end = QK_K * 4 / blck_size_interleave;
+    const цяло end = QK_K * 4 / blck_size_interleave;
 
     // Interleave Q4_K quants by taking 8 bytes at a time
-    for (int i = 0; i < end; ++i) {
-        int src_id = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    за (цяло i = 0; i < end; ++i) {
+        цяло src_id = i % 8;
+        цяло src_offset = (i / 8) * blck_size_interleave;
+        цяло dst_offset = i * blck_size_interleave;
 
         // buffer large enough for the max interleave block size (8 bytes)
         uint64_t elems;
@@ -3206,8 +3206,8 @@ static block_q4_Kx8 make_block_q4_Kx8(block_q4_K * in, unsigned int blck_size_in
     // For eg - First 12 bytes contains 8 scales and 8 mins - each of first sub block from different Q4_K structures
     uint8_t s[8], m[8];
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 8; j++) {
+    за (цяло i = 0; i < 4; i++) {
+        за (цяло j = 0; j < 8; j++) {
             s[j] = in[j].scales[i] & 63;
             m[j] = in[j].scales[i + 4] & 63;
         }
@@ -3227,8 +3227,8 @@ static block_q4_Kx8 make_block_q4_Kx8(block_q4_K * in, unsigned int blck_size_in
 
     }
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 8; j++) {
+    за (цяло i = 0; i < 4; i++) {
+        за (цяло j = 0; j < 8; j++) {
             s[j] = ((in[j].scales[i] & 192) >> 2) | (in[j].scales[i+8] & 15);
             m[j] = ((in[j].scales[i + 4] & 192) >> 2) | ((in[j].scales[i+8] & 240) >> 4);
         }
@@ -3248,27 +3248,27 @@ static block_q4_Kx8 make_block_q4_Kx8(block_q4_K * in, unsigned int blck_size_in
 
     }
 
-    return out;
+    върни out;
 }
 
-static block_q4_Kx16 make_block_q4_Kx16(block_q4_K * in, unsigned int blck_size_interleave) {
+static block_q4_Kx16 make_block_q4_Kx16(block_q4_K * in, unsigned цяло blck_size_interleave) {
     block_q4_Kx16 out;
     //Delta(scale) and dmin values of the 16 Q4_K structures are copied onto the output interleaved structure
-    for (int i = 0; i < 16; i++) {
+    за (цяло i = 0; i < 16; i++) {
         out.d[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
     }
 
-    for (int i = 0; i < 16; i++) {
+    за (цяло i = 0; i < 16; i++) {
         out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
-    const int end = QK_K * 8 / blck_size_interleave;
+    const цяло end = QK_K * 8 / blck_size_interleave;
 
-    if (blck_size_interleave == 1) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 16;
-            int src_offset = i / 16;
-            int dst_offset = i;
+    ако (blck_size_interleave == 1) {
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id = i % 16;
+            цяло src_offset = i / 16;
+            цяло dst_offset = i;
 
             out.qs[dst_offset] = in[src_id].qs[src_offset];
         }
@@ -3277,51 +3277,51 @@ static block_q4_Kx16 make_block_q4_Kx16(block_q4_K * in, unsigned int blck_size_
         //
         // Extract sums and mins for all 8 sub-blocks for each block of Q4_K.
         uint8_t s[128], m[128];
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 16; j++) {
+        за (цяло i = 0; i < 4; i++) {
+            за (цяло j = 0; j < 16; j++) {
                 s[i * 16 + j] = in[j].scales[i] & 63;
                 m[i * 16 + j] = in[j].scales[i + 4] & 63;
             }
         }
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 16; j++) {
+        за (цяло i = 0; i < 4; i++) {
+            за (цяло j = 0; j < 16; j++) {
                 s[64 + i * 16 + j] = ((in[j].scales[i] & 192) >> 2) | (in[j].scales[i+8] & 15);
                 m[64 + i * 16 + j] = ((in[j].scales[i + 4] & 192) >> 2) | ((in[j].scales[i+8] & 240) >> 4);
             }
         }
 
-        for (int i = 0; i < 128; i++) {
+        за (цяло i = 0; i < 128; i++) {
             out.scales[i] = (s[i] & 15) | ((m[i] & 15) << 4);
         }
-        for (int i = 0; i < 64; i++) {
+        за (цяло i = 0; i < 64; i++) {
             out.scales[128 + i] = ((s[i] & 48) >> 4) | ((m[i] & 48) >> 2) | (s[64 + i] & 48) | ((m[64 + i] & 48) << 2);
         }
-    } else {
+    } иначе {
         GGML_ASSERT(false);
     }
 
-    return out;
+    върни out;
 }
 
-static block_q2_Kx8 make_block_q2_Kx8(block_q2_K * in, unsigned int blck_size_interleave) {
+static block_q2_Kx8 make_block_q2_Kx8(block_q2_K * in, unsigned цяло blck_size_interleave) {
     block_q2_Kx8 out;
 
     // Delta(scale) and dmin values of the eight Q2_K structures are copied onto the output interleaved structure
-    for (int i = 0; i < 8; i++) {
+    за (цяло i = 0; i < 8; i++) {
         out.d[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
     }
 
-    for (int i = 0; i < 8; i++) {
+    за (цяло i = 0; i < 8; i++) {
         out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
-    const int end = QK_K * 2 / blck_size_interleave;
+    const цяло end = QK_K * 2 / blck_size_interleave;
 
     // Interleave Q2_K quants by taking 8 bytes at a time
-    for (int i = 0; i < end; ++i) {
-        int src_id = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    за (цяло i = 0; i < end; ++i) {
+        цяло src_id = i % 8;
+        цяло src_offset = (i / 8) * blck_size_interleave;
+        цяло dst_offset = i * blck_size_interleave;
 
         uint64_t elems;
         memcpy(&elems, &in[src_id].qs[src_offset], sizeof(uint64_t));
@@ -3334,35 +3334,35 @@ static block_q2_Kx8 make_block_q2_Kx8(block_q2_K * in, unsigned int blck_size_in
     // Every 16 byte is packed such that it contains scales and mins for corresponding sub blocks from Q2_K structure
     // For eg - First 16 bytes contains 16 scales and 16 mins - each of first and second sub blocks from different Q2_K structures
 
-    for (int i = 0; i < 128; i++) {
+    за (цяло i = 0; i < 128; i++) {
         // Index for selecting which q2k super block
-        int src1 = (i % 16) / 2;
+        цяло src1 = (i % 16) / 2;
         // Index for selecting scale
-        int src2 = ((i / 16) * 2) + (i % 2);
+        цяло src2 = ((i / 16) * 2) + (i % 2);
 
         out.scales[i] = in[src1].scales[src2];
     }
-    return out;
+    върни out;
 }
 
-static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned int blck_size_interleave) {
+static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned цяло blck_size_interleave) {
     block_q5_Kx8 out;
     //Delta(scale) and dmin values of the eight Q5_K structures are copied onto the output interleaved structure
-    for (int i = 0; i < 8; i++) {
+    за (цяло i = 0; i < 8; i++) {
         out.d[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
     }
 
-    for (int i = 0; i < 8; i++) {
+    за (цяло i = 0; i < 8; i++) {
         out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
-    const int end = QK_K * 4 / blck_size_interleave;
+    const цяло end = QK_K * 4 / blck_size_interleave;
 
     // Interleave Q5_K quants by taking blck_size_interleave bytes at a time
-    for (int i = 0; i < end; ++i) {
-        int src_id     = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    за (цяло i = 0; i < end; ++i) {
+        цяло src_id     = i % 8;
+        цяло src_offset = (i / 8) * blck_size_interleave;
+        цяло dst_offset = i * blck_size_interleave;
 
         memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], blck_size_interleave);
     }
@@ -3371,10 +3371,10 @@ static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned int blck_size_in
     // the high bits are interleaved in Q5_K and the index is
     // qh_idx = (qs_idx % 32);
     // qh_val = qh[qh_idx] >> (qs_idx / 32);
-    for (int i = 0; i < end / 4; ++i) {
-        int src_id     = i % 8;
-        int src_offset = (i / 8) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    за (цяло i = 0; i < end / 4; ++i) {
+        цяло src_id     = i % 8;
+        цяло src_offset = (i / 8) * blck_size_interleave;
+        цяло dst_offset = i * blck_size_interleave;
 
         memcpy(&out.qh[dst_offset], &in[src_id].qh[src_offset], blck_size_interleave);
     }
@@ -3387,8 +3387,8 @@ static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned int blck_size_in
     // For eg - First 12 bytes contains 8 scales and 8 mins - each of first sub block from different Q5_K structures
     uint8_t s[8], m[8];
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 8; j++) {
+    за (цяло i = 0; i < 4; i++) {
+        за (цяло j = 0; j < 8; j++) {
             s[j] = in[j].scales[i] & 63;
             m[j] = in[j].scales[i + 4] & 63;
         }
@@ -3407,8 +3407,8 @@ static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned int blck_size_in
         out.scales[i * 12 + 11] = (s[7] & 15) + ((m[7] & 15) << 4);
     }
 
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 8; j++) {
+    за (цяло i = 0; i < 4; i++) {
+        за (цяло j = 0; j < 8; j++) {
             s[j] = ((in[j].scales[i] & 192) >> 2) | (in[j].scales[i + 8] & 15);
             m[j] = ((in[j].scales[i + 4] & 192) >> 2) | ((in[j].scales[i + 8] & 240) >> 4);
         }
@@ -3427,22 +3427,22 @@ static block_q5_Kx8 make_block_q5_Kx8(block_q5_K * in, unsigned int blck_size_in
         out.scales[i * 12 + 59] = (s[7] & 15) + ((m[7] & 15) << 4);
     }
 
-    return out;
+    върни out;
 }
 
-static block_q6_Kx8 make_block_q6_Kx8(block_q6_K * in, unsigned int blck_size_interleave) {
+static block_q6_Kx8 make_block_q6_Kx8(block_q6_K * in, unsigned цяло blck_size_interleave) {
     block_q6_Kx8  out;
-    constexpr int n_blocks = 8;  // Kx8
-    for (int i = 0; i < n_blocks; i++) {
+    constexpr цяло n_blocks = 8;  // Kx8
+    за (цяло i = 0; i < n_blocks; i++) {
         out.d[i] = in[i].d;
     }
 
-    const int end_ls = QK_K * 4 / blck_size_interleave;
+    const цяло end_ls = QK_K * 4 / blck_size_interleave;
     // Interleave Q6_K quants by taking blck_size_interleave bytes at a time
-    for (int i = 0; i < end_ls; ++i) {
-        int src_id     = i % n_blocks;
-        int src_offset = (i / n_blocks) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    за (цяло i = 0; i < end_ls; ++i) {
+        цяло src_id     = i % n_blocks;
+        цяло src_offset = (i / n_blocks) * blck_size_interleave;
+        цяло dst_offset = i * blck_size_interleave;
 
         uint64_t elem_ls;
         memcpy(&elem_ls, &in[src_id].ql[src_offset], blck_size_interleave);
@@ -3450,11 +3450,11 @@ static block_q6_Kx8 make_block_q6_Kx8(block_q6_K * in, unsigned int blck_size_in
     }
 
     // Interleave high bits using same chunk size as low bits
-    const int end_hs = end_ls / 2;
-    for (int i = 0; i < end_hs; ++i) {
-        int src_id     = i % n_blocks;
-        int src_offset = (i / n_blocks) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    const цяло end_hs = end_ls / 2;
+    за (цяло i = 0; i < end_hs; ++i) {
+        цяло src_id     = i % n_blocks;
+        цяло src_offset = (i / n_blocks) * blck_size_interleave;
+        цяло dst_offset = i * blck_size_interleave;
 
         uint64_t elem_hs;
         memcpy(&elem_hs, &in[src_id].qh[src_offset], blck_size_interleave);
@@ -3465,225 +3465,225 @@ static block_q6_Kx8 make_block_q6_Kx8(block_q6_K * in, unsigned int blck_size_in
     // The output Q6_Kx8 structure interleaves the 8 bit scales in the same fashion as the quants
     // Q6_K structure has an 8-bit scale per 16 elements -> 16 scales
     // scales: [0 bl0 0 bl1 ... 0 bl7][1 bl0 ... 1 bl7] ... [15 bl0 ... 15 bl7]  (bl = block)
-    constexpr int n_scales = QK_K / 16;
+    constexpr цяло n_scales = QK_K / 16;
 
-    for (int i = 0; i < n_blocks; i++) {
-        for (int j = 0; j < n_scales; j++) {
+    за (цяло i = 0; i < n_blocks; i++) {
+        за (цяло j = 0; j < n_scales; j++) {
             out.scales[j * n_blocks + i] = in[i].scales[j];
         }
     }
 
-    return out;
+    върни out;
 }
 
-static block_q2_Kx16 make_block_q2_Kx16(const block_q2_K * in, unsigned int blck_size_interleave) {
+static block_q2_Kx16 make_block_q2_Kx16(const block_q2_K * in, unsigned цяло blck_size_interleave) {
     block_q2_Kx16 out;
-    constexpr int N_COLS = 16;
+    constexpr цяло N_COLS = 16;
 
     // 1. Copy Super-Scales (d) and Super-Mins (dmin)
-    for (int i = 0; i < N_COLS; i++) {
+    за (цяло i = 0; i < N_COLS; i++) {
         out.d[i]    = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.d;
         out.dmin[i] = in[i].GGML_COMMON_AGGR_U.GGML_COMMON_AGGR_S.dmin;
     }
 
     // 2. Interleave Q2_K Data
-    const int bytes_per_col = 64;
-    const int total_bytes = N_COLS * bytes_per_col;
-    const int end = total_bytes / blck_size_interleave;
+    const цяло bytes_per_col = 64;
+    const цяло total_bytes = N_COLS * bytes_per_col;
+    const цяло end = total_bytes / blck_size_interleave;
 
-    for (int i = 0; i < end; ++i) {
-        int src_col_id = i % N_COLS;
-        int src_offset = (i / N_COLS) * blck_size_interleave;
-        int dst_offset = i * blck_size_interleave;
+    за (цяло i = 0; i < end; ++i) {
+        цяло src_col_id = i % N_COLS;
+        цяло src_offset = (i / N_COLS) * blck_size_interleave;
+        цяло dst_offset = i * blck_size_interleave;
         memcpy(&out.qs[dst_offset], &in[src_col_id].qs[src_offset], blck_size_interleave);
     }
 
     // 3. Repack Scales into the Optimized "Sequential-Parallel" Layout
-    int out_idx = 0;
+    цяло out_idx = 0;
 
     // Arrays define the sub-block order for each group
-    const int even_low_sbs[]  = {0, 2, 4, 6};
-    const int odd_low_sbs[]   = {1, 3, 5, 7};
-    const int even_high_sbs[] = {8, 10, 12, 14};
-    const int odd_high_sbs[]  = {9, 11, 13, 15};
+    const цяло even_low_sbs[]  = {0, 2, 4, 6};
+    const цяло odd_low_sbs[]   = {1, 3, 5, 7};
+    const цяло even_high_sbs[] = {8, 10, 12, 14};
+    const цяло odd_high_sbs[]  = {9, 11, 13, 15};
 
     // Pack Group 1: Even-Low
-    for (int sb : even_low_sbs) {
-        for (int col = 0; col < N_COLS; col++) {
+    за (цяло sb : even_low_sbs) {
+        за (цяло col = 0; col < N_COLS; col++) {
             out.scales[out_idx++] = in[col].scales[sb];
         }
     }
 
     // Pack Group 2: Odd-Low
-    for (int sb : odd_low_sbs) {
-        for (int col = 0; col < N_COLS; col++) {
+    за (цяло sb : odd_low_sbs) {
+        за (цяло col = 0; col < N_COLS; col++) {
             out.scales[out_idx++] = in[col].scales[sb];
         }
     }
 
     // Pack Group 3: Even-High
-    for (int sb : even_high_sbs) {
-        for (int col = 0; col < N_COLS; col++) {
+    за (цяло sb : even_high_sbs) {
+        за (цяло col = 0; col < N_COLS; col++) {
             out.scales[out_idx++] = in[col].scales[sb];
         }
     }
 
     // Pack Group 4: Odd-High
-    for (int sb : odd_high_sbs) {
-        for (int col = 0; col < N_COLS; col++) {
+    за (цяло sb : odd_high_sbs) {
+        за (цяло col = 0; col < N_COLS; col++) {
             out.scales[out_idx++] = in[col].scales[sb];
         }
     }
 
-    return out;
+    върни out;
 }
 
-static int repack_q4_0_to_q4_0_4_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_q4_0_to_q4_0_4_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_0);
     GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 4;
+    constexpr цяло nrows_interleaved = 4;
 
     block_q4_0x4 * dst = (block_q4_0x4 *)t->data;
     const block_q4_0 * src = (const block_q4_0 *)data;
     block_q4_0 dst_tmp[4];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK4_0;
+    цяло nrow = ggml_nrows(t);
+    цяло nblocks = t->ne[0] / QK4_0;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q4_0x4(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static int repack_q4_K_to_q4_K_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_q4_K_to_q4_K_8_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_K);
     GGML_ASSERT(interleave_block == 8 || interleave_block == 4);
-    constexpr int nrows_interleaved = 8;
+    constexpr цяло nrows_interleaved = 8;
 
     block_q4_Kx8 * dst = (block_q4_Kx8*)t->data;
     const block_q4_K * src = (const block_q4_K*) data;
     block_q4_K dst_tmp[8];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    цяло nrow = ggml_nrows(t);
+    цяло nblocks = t->ne[0] / QK_K;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q4_Kx8(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static int repack_q4_K_to_q4_K_16_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_q4_K_to_q4_K_16_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_K);
-    constexpr int nrows_interleaved = 16;
+    constexpr цяло nrows_interleaved = 16;
 
     block_q4_Kx16 * dst = (block_q4_Kx16*)t->data;
     const block_q4_K * src = (const block_q4_K*) data;
     block_q4_K dst_tmp[16];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    цяло nrow = ggml_nrows(t);
+    цяло nblocks = t->ne[0] / QK_K;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q4_Kx16(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static int repack_q2_K_to_q2_K_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_q2_K_to_q2_K_8_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q2_K);
     GGML_ASSERT(interleave_block == 8);
-    constexpr int nrows_interleaved = 8;
+    constexpr цяло nrows_interleaved = 8;
 
     block_q2_Kx8 * dst = (block_q2_Kx8*)t->data;
     const block_q2_K * src = (const block_q2_K*) data;
     block_q2_K dst_tmp[8];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    цяло nrow = ggml_nrows(t);
+    цяло nblocks = t->ne[0] / QK_K;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q2_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q2_Kx8(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static int repack_q2_K_to_q2_K_16_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_q2_K_to_q2_K_16_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q2_K);
-    constexpr int nrows_interleaved = 16;
+    constexpr цяло nrows_interleaved = 16;
 
     block_q2_Kx16 * dst = (block_q2_Kx16*)t->data;
     const block_q2_K * src = (const block_q2_K*) data;
 
     block_q2_K dst_tmp[nrows_interleaved];
 
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    цяло nrow = ggml_nrows(t);
+    цяло nblocks = t->ne[0] / QK_K;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q2_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
             // This loop gathers 16 separate blocks (one from each column)
             // that correspond to the same K-dimension chunk.
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+            за (цяло i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
 
@@ -3691,259 +3691,259 @@ static int repack_q2_K_to_q2_K_16_bl(struct ggml_tensor * t, int interleave_bloc
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static int repack_q4_0_to_q4_0_16_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_q4_0_to_q4_0_16_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_0);
-    constexpr int nrows_interleaved = 16;
+    constexpr цяло nrows_interleaved = 16;
 
     block_q4_0x16 * dst = (block_q4_0x16*)t->data;
     const block_q4_0 * src = (const block_q4_0*) data;
     block_q4_0 dst_tmp[16];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK4_0;
+    цяло nrow = ggml_nrows(t);
+    цяло nblocks = t->ne[0] / QK4_0;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q4_0x16(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static int repack_q5_K_to_q5_K_8_bl(struct ggml_tensor *       t,
-                                    int                        interleave_block,
+static цяло repack_q5_K_to_q5_K_8_bl(struct ggml_tensor *       t,
+                                    цяло                        interleave_block,
                                     const void * GGML_RESTRICT data,
                                     size_t                     data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q5_K);
     GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 8;
+    constexpr цяло nrows_interleaved = 8;
 
     block_q5_Kx8 *     dst = (block_q5_Kx8 *) t->data;
     const block_q5_K * src = (const block_q5_K *) data;
     block_q5_K         dst_tmp[8];
-    int                nrow    = ggml_nrows(t);
-    int                nblocks = t->ne[0] / QK_K;
+    цяло                nrow    = ggml_nrows(t);
+    цяло                nblocks = t->ne[0] / QK_K;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q5_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q5_Kx8(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 }
 
-static int repack_q6_K_to_q6_K_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_q6_K_to_q6_K_8_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q6_K);
     GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 8;
+    constexpr цяло nrows_interleaved = 8;
 
     block_q6_Kx8 * dst = (block_q6_Kx8 *)t->data;
     const block_q6_K * src = (const block_q6_K *) data;
     block_q6_K dst_tmp[8];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK_K;
+    цяло nrow = ggml_nrows(t);
+    цяло nblocks = t->ne[0] / QK_K;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q6_K));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q6_Kx8(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 }
 
-static int repack_q4_0_to_q4_0_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_q4_0_to_q4_0_8_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q4_0);
     GGML_ASSERT(interleave_block == 8);
-    constexpr int nrows_interleaved = 8;
+    constexpr цяло nrows_interleaved = 8;
 
     block_q4_0x8 * dst = (block_q4_0x8*)t->data;
     const block_q4_0 * src = (const block_q4_0*) data;
     block_q4_0 dst_tmp[8];
-    int nrow = ggml_nrows(t);
-    int nblocks = t->ne[0] / QK4_0;
+    цяло nrow = ggml_nrows(t);
+    цяло nblocks = t->ne[0] / QK4_0;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q4_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i  = 0; i < nrows_interleaved; i++ ) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i  = 0; i < nrows_interleaved; i++ ) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q4_0x8(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static int repack_q8_0_to_q8_0_4_bl(struct ggml_tensor *       t,
-                                    int                        interleave_block,
+static цяло repack_q8_0_to_q8_0_4_bl(struct ggml_tensor *       t,
+                                    цяло                        interleave_block,
                                     const void * GGML_RESTRICT data,
                                     size_t                     data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q8_0);
     GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 4;
+    constexpr цяло nrows_interleaved = 4;
 
     block_q8_0x4 *     dst = (block_q8_0x4 *) t->data;
     const block_q8_0 * src = (const block_q8_0 *) data;
     block_q8_0         dst_tmp[4];
-    int                nrow    = ggml_nrows(t);
-    int                nblocks = t->ne[0] / QK8_0;
+    цяло                nrow    = ggml_nrows(t);
+    цяло                nblocks = t->ne[0] / QK8_0;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q8_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q8_0x4(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 }
 
-static int repack_q1_0_to_q1_0_4_bl(struct ggml_tensor *       t,
-                                    int                        interleave_block,
+static цяло repack_q1_0_to_q1_0_4_bl(struct ggml_tensor *       t,
+                                    цяло                        interleave_block,
                                     const void * GGML_RESTRICT data,
                                     size_t                     data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q1_0);
     GGML_ASSERT(interleave_block == 4 || interleave_block == 8);
-    constexpr int nrows_interleaved = 4;
+    constexpr цяло nrows_interleaved = 4;
 
     block_q1_0x4 *     dst = (block_q1_0x4 *) t->data;
     const block_q1_0 * src = (const block_q1_0 *) data;
     block_q1_0         dst_tmp[4];
-    int                nrow    = ggml_nrows(t);
-    int                nblocks = t->ne[0] / QK1_0;
+    цяло                nrow    = ggml_nrows(t);
+    цяло                nblocks = t->ne[0] / QK1_0;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q1_0));
 
-    if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q1_0x4(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 }
 
-static block_q8_0x16 make_block_q8_0x16(block_q8_0 * in, unsigned int blck_size_interleave) {
+static block_q8_0x16 make_block_q8_0x16(block_q8_0 * in, unsigned цяло blck_size_interleave) {
     block_q8_0x16 out;
 
-    for (int i = 0; i < 16; i++) {
+    за (цяло i = 0; i < 16; i++) {
         out.d[i] = in[i].d;
     }
 
-    const int end = QK8_0 * 16 / blck_size_interleave;
+    const цяло end = QK8_0 * 16 / blck_size_interleave;
 
-    if (blck_size_interleave == 1) {
-        for (int i = 0; i < end; ++i) {
-            int src_id     = i % 16;
-            int src_offset = i / 16;
-            int dst_offset = i;
+    ако (blck_size_interleave == 1) {
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id     = i % 16;
+            цяло src_offset = i / 16;
+            цяло dst_offset = i;
             out.qs[dst_offset] = in[src_id].qs[src_offset];
         }
-    } else {
+    } иначе {
         GGML_ASSERT(false);
     }
 
-    return out;
+    върни out;
 }
 
-static int repack_q8_0_to_q8_0_16_bl(struct ggml_tensor *       t,
-                                    int                        interleave_block,
+static цяло repack_q8_0_to_q8_0_16_bl(struct ggml_tensor *       t,
+                                    цяло                        interleave_block,
                                     const void * GGML_RESTRICT data,
                                     size_t                     data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_Q8_0);
-    constexpr int nrows_interleaved = 16;
+    constexpr цяло nrows_interleaved = 16;
 
     block_q8_0x16 *     dst = (block_q8_0x16 *) t->data;
     const block_q8_0 * src = (const block_q8_0 *) data;
     block_q8_0         dst_tmp[16];
-    int                nrow    = ggml_nrows(t);
-    int                nblocks = t->ne[0] / QK8_0;
+    цяло                nrow    = ggml_nrows(t);
+    цяло                nblocks = t->ne[0] / QK8_0;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_q8_0));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_q8_0x16(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 }
 
-static block_iq4_nlx4 make_block_iq4_nlx4(block_iq4_nl * in, unsigned int blck_size_interleave) {
+static block_iq4_nlx4 make_block_iq4_nlx4(block_iq4_nl * in, unsigned цяло blck_size_interleave) {
     block_iq4_nlx4 out;
 
-    for (int i = 0; i < 4; i++) {
+    за (цяло i = 0; i < 4; i++) {
         out.d[i] = in[i].d;
     }
 
-    const int end = QK4_NL * 2 / blck_size_interleave;
+    const цяло end = QK4_NL * 2 / blck_size_interleave;
 
     // TODO: this branch seems wrong
     //if (blck_size_interleave == 8) {
@@ -3956,22 +3956,22 @@ static block_iq4_nlx4 make_block_iq4_nlx4(block_iq4_nl * in, unsigned int blck_s
     //        memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint64_t));
     //    }
     //} else
-    if (blck_size_interleave == 4) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 4;
-            int src_offset = (i / 4) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    ако (blck_size_interleave == 4) {
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id = i % 4;
+            цяло src_offset = (i / 4) * blck_size_interleave;
+            цяло dst_offset = i * blck_size_interleave;
 
             memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint32_t));
         }
-    } else {
+    } иначе {
         GGML_ASSERT(false);
     }
 
-    return out;
+    върни out;
 }
 
-static int repack_iq4_nl_to_iq4_nl_4_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_iq4_nl_to_iq4_nl_4_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_IQ4_NL);
     GGML_ASSERT(interleave_block == 4);
 
@@ -3980,55 +3980,55 @@ static int repack_iq4_nl_to_iq4_nl_4_bl(struct ggml_tensor * t, int interleave_b
 
     block_iq4_nl dst_tmp[4];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 4;
-    int nblocks = t->ne[0] / QK4_NL;
+    цяло nrow = ggml_nrows(t);
+    цяло nrows_interleaved = 4;
+    цяло nblocks = t->ne[0] / QK4_NL;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_iq4_nl));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_iq4_nlx4(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static block_iq4_nlx8 make_block_iq4_nlx8(block_iq4_nl * in, unsigned int blck_size_interleave) {
+static block_iq4_nlx8 make_block_iq4_nlx8(block_iq4_nl * in, unsigned цяло blck_size_interleave) {
     block_iq4_nlx8 out;
 
-    for (int i = 0; i < 8; i++) {
+    за (цяло i = 0; i < 8; i++) {
         out.d[i] = in[i].d;
     }
 
-    const int end = QK4_NL * 4 / blck_size_interleave;
+    const цяло end = QK4_NL * 4 / blck_size_interleave;
 
-    if (blck_size_interleave == 8) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 8;
-            int src_offset = (i / 8) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    ако (blck_size_interleave == 8) {
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id = i % 8;
+            цяло src_offset = (i / 8) * blck_size_interleave;
+            цяло dst_offset = i * blck_size_interleave;
 
             memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint64_t));
         }
-    } else {
+    } иначе {
         GGML_ASSERT(false);
     }
 
-    return out;
+    върни out;
 }
 
-static int repack_iq4_nl_to_iq4_nl_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_iq4_nl_to_iq4_nl_8_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_IQ4_NL);
     GGML_ASSERT(interleave_block == 8);
 
@@ -4037,55 +4037,55 @@ static int repack_iq4_nl_to_iq4_nl_8_bl(struct ggml_tensor * t, int interleave_b
 
     block_iq4_nl dst_tmp[8];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 8;
-    int nblocks = t->ne[0] / QK4_NL;
+    цяло nrow = ggml_nrows(t);
+    цяло nrows_interleaved = 8;
+    цяло nblocks = t->ne[0] / QK4_NL;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_iq4_nl));
 
-    if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_iq4_nlx8(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static block_iq4_nlx16 make_block_iq4_nlx16(block_iq4_nl * in, unsigned int blck_size_interleave) {
+static block_iq4_nlx16 make_block_iq4_nlx16(block_iq4_nl * in, unsigned цяло blck_size_interleave) {
     block_iq4_nlx16 out;
 
-    for (int i = 0; i < 16; i++) {
+    за (цяло i = 0; i < 16; i++) {
         out.d[i] = in[i].d;
     }
 
-    const int end = QK4_NL * 8 / blck_size_interleave;
+    const цяло end = QK4_NL * 8 / blck_size_interleave;
 
-    if (blck_size_interleave == 1) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 16;
-            int src_offset = i / 16;
-            int dst_offset = i;
+    ако (blck_size_interleave == 1) {
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id = i % 16;
+            цяло src_offset = i / 16;
+            цяло dst_offset = i;
 
             out.qs[dst_offset] = in[src_id].qs[src_offset];
         }
-    } else {
+    } иначе {
         GGML_ASSERT(false);
     }
 
-    return out;
+    върни out;
 }
 
-static int repack_iq4_nl_to_iq4_nl_16_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_iq4_nl_to_iq4_nl_16_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_IQ4_NL);
     GGML_ASSERT(interleave_block == 1);
 
@@ -4094,55 +4094,55 @@ static int repack_iq4_nl_to_iq4_nl_16_bl(struct ggml_tensor * t, int interleave_
 
     block_iq4_nl dst_tmp[16];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 16;
-    int nblocks = t->ne[0] / QK4_NL;
+    цяло nrow = ggml_nrows(t);
+    цяло nrows_interleaved = 16;
+    цяло nblocks = t->ne[0] / QK4_NL;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_iq4_nl));
 
-    if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_iq4_nlx16(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static block_mxfp4x4 make_block_mxfp4x4(block_mxfp4 * in, unsigned int blck_size_interleave) {
+static block_mxfp4x4 make_block_mxfp4x4(block_mxfp4 * in, unsigned цяло blck_size_interleave) {
     block_mxfp4x4 out;
 
-    for (int i = 0; i < 4; i++) {
+    за (цяло i = 0; i < 4; i++) {
         out.e[i] = in[i].e;
     }
 
-    const int end = QK_MXFP4 * 2 / blck_size_interleave;
+    const цяло end = QK_MXFP4 * 2 / blck_size_interleave;
 
-    if (blck_size_interleave == 4) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 4;
-            int src_offset = (i / 4) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    ако (blck_size_interleave == 4) {
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id = i % 4;
+            цяло src_offset = (i / 4) * blck_size_interleave;
+            цяло dst_offset = i * blck_size_interleave;
 
             memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint32_t));
         }
-    } else {
+    } иначе {
         GGML_ASSERT(false);
     }
 
-    return out;
+    върни out;
 }
 
-static int repack_mxfp4_to_mxfp4_4_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_mxfp4_to_mxfp4_4_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_MXFP4);
     GGML_ASSERT(interleave_block == 4);
 
@@ -4151,55 +4151,55 @@ static int repack_mxfp4_to_mxfp4_4_bl(struct ggml_tensor * t, int interleave_blo
 
     block_mxfp4 dst_tmp[4];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 4;
-    int nblocks = t->ne[0] / QK_MXFP4;
+    цяло nrow = ggml_nrows(t);
+    цяло nrows_interleaved = 4;
+    цяло nblocks = t->ne[0] / QK_MXFP4;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_mxfp4));
 
-    if (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0 || t->ne[0] % 8 != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_mxfp4x4(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
 
-static block_mxfp4x8 make_block_mxfp4x8(block_mxfp4 * in, unsigned int blck_size_interleave) {
+static block_mxfp4x8 make_block_mxfp4x8(block_mxfp4 * in, unsigned цяло blck_size_interleave) {
     block_mxfp4x8 out;
 
-    for (int i = 0; i < 8; i++) {
+    за (цяло i = 0; i < 8; i++) {
         out.e[i] = in[i].e;
     }
 
-    const int end = QK_MXFP4 * 4 / blck_size_interleave;
+    const цяло end = QK_MXFP4 * 4 / blck_size_interleave;
 
-    if (blck_size_interleave == 8) {
-        for (int i = 0; i < end; ++i) {
-            int src_id = i % 8;
-            int src_offset = (i / 8) * blck_size_interleave;
-            int dst_offset = i * blck_size_interleave;
+    ако (blck_size_interleave == 8) {
+        за (цяло i = 0; i < end; ++i) {
+            цяло src_id = i % 8;
+            цяло src_offset = (i / 8) * blck_size_interleave;
+            цяло dst_offset = i * blck_size_interleave;
 
             memcpy(&out.qs[dst_offset], &in[src_id].qs[src_offset], sizeof(uint64_t));
         }
-    } else {
+    } иначе {
         GGML_ASSERT(false);
     }
 
-    return out;
+    върни out;
 }
 
-static int repack_mxfp4_to_mxfp4_8_bl(struct ggml_tensor * t, int interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
+static цяло repack_mxfp4_to_mxfp4_8_bl(struct ggml_tensor * t, цяло interleave_block, const void * GGML_RESTRICT data, size_t data_size) {
     GGML_ASSERT(t->type == GGML_TYPE_MXFP4);
     GGML_ASSERT(interleave_block == 8);
 
@@ -4208,26 +4208,26 @@ static int repack_mxfp4_to_mxfp4_8_bl(struct ggml_tensor * t, int interleave_blo
 
     block_mxfp4 dst_tmp[8];
 
-    int nrow = ggml_nrows(t);
-    int nrows_interleaved = 8;
-    int nblocks = t->ne[0] / QK_MXFP4;
+    цяло nrow = ggml_nrows(t);
+    цяло nrows_interleaved = 8;
+    цяло nblocks = t->ne[0] / QK_MXFP4;
 
     GGML_ASSERT(data_size == nrow * nblocks * sizeof(block_mxfp4));
 
-    if (t->ne[1] % nrows_interleaved != 0) {
-        return -1;
+    ако (t->ne[1] % nrows_interleaved != 0) {
+        върни -1;
     }
 
-    for (int b = 0; b < nrow; b += nrows_interleaved) {
-        for (int64_t x = 0; x < nblocks; x++) {
-            for (int i = 0; i < nrows_interleaved; i++) {
+    за (цяло b = 0; b < nrow; b += nrows_interleaved) {
+        за (int64_t x = 0; x < nblocks; x++) {
+            за (цяло i = 0; i < nrows_interleaved; i++) {
                 dst_tmp[i] = src[x + i * nblocks];
             }
             *dst++ = make_block_mxfp4x8(dst_tmp, interleave_block);
         }
         src += nrows_interleaved * nblocks;
     }
-    return 0;
+    върни 0;
 
     GGML_UNUSED(data_size);
 }
@@ -4235,59 +4235,59 @@ static int repack_mxfp4_to_mxfp4_8_bl(struct ggml_tensor * t, int interleave_blo
 namespace ggml::cpu::repack {
 // repack
 template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS>
-int repack(struct ggml_tensor *, const void *, size_t);
+цяло repack(struct ggml_tensor *, const void *, size_t);
 
 // TODO: generalise.
-template <> int repack<block_q1_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q1_0_to_q1_0_4_bl(t, 4, data, data_size);
+template <> цяло repack<block_q1_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q1_0_to_q1_0_4_bl(t, 4, data, data_size);
 }
 
-template <> int repack<block_q1_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q1_0_to_q1_0_4_bl(t, 8, data, data_size);
+template <> цяло repack<block_q1_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q1_0_to_q1_0_4_bl(t, 8, data, data_size);
 }
 
-template <> int repack<block_q4_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_4_bl(t, 4, data, data_size);
+template <> цяло repack<block_q4_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q4_0_to_q4_0_4_bl(t, 4, data, data_size);
 }
 
-template <> int repack<block_q4_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_4_bl(t, 8, data, data_size);
+template <> цяло repack<block_q4_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q4_0_to_q4_0_4_bl(t, 8, data, data_size);
 }
 
-template <> int repack<block_q4_0, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_8_bl(t, 8, data, data_size);
+template <> цяло repack<block_q4_0, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q4_0_to_q4_0_8_bl(t, 8, data, data_size);
 }
 
-template <> int repack<block_q4_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_K_to_q4_K_8_bl(t, 8, data, data_size);
+template <> цяло repack<block_q4_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q4_K_to_q4_K_8_bl(t, 8, data, data_size);
 }
 
-template <> int repack<block_q4_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_K_to_q4_K_8_bl(t, 4, data, data_size);
+template <> цяло repack<block_q4_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q4_K_to_q4_K_8_bl(t, 4, data, data_size);
 }
 
-template <> int repack<block_q2_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q2_K_to_q2_K_8_bl(t, 8, data, data_size);
+template <> цяло repack<block_q2_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q2_K_to_q2_K_8_bl(t, 8, data, data_size);
 }
 
-template <> int repack<block_q5_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q5_K_to_q5_K_8_bl(t, 4, data, data_size);
+template <> цяло repack<block_q5_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q5_K_to_q5_K_8_bl(t, 4, data, data_size);
 }
 
-template <> int repack<block_q5_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q5_K_to_q5_K_8_bl(t, 8, data, data_size);
+template <> цяло repack<block_q5_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q5_K_to_q5_K_8_bl(t, 8, data, data_size);
 }
 
-template <> int repack<block_q6_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q6_K_to_q6_K_8_bl(t, 4, data, data_size);
+template <> цяло repack<block_q6_K, 4, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q6_K_to_q6_K_8_bl(t, 4, data, data_size);
 }
 
-template <> int repack<block_q6_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q6_K_to_q6_K_8_bl(t, 8, data, data_size);
+template <> цяло repack<block_q6_K, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q6_K_to_q6_K_8_bl(t, 8, data, data_size);
 }
 
-template <> int repack<block_iq4_nl, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_iq4_nl_to_iq4_nl_4_bl(t, 4, data, data_size);
+template <> цяло repack<block_iq4_nl, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_iq4_nl_to_iq4_nl_4_bl(t, 4, data, data_size);
 }
 
 // TODO: needs to be revisited
@@ -4295,272 +4295,272 @@ template <> int repack<block_iq4_nl, 4, 4>(struct ggml_tensor * t, const void * 
 //    return repack_iq4_nl_to_iq4_nl_4_bl(t, 8, data, data_size);
 //}
 
-template <> int repack<block_iq4_nl, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_iq4_nl_to_iq4_nl_8_bl(t, 8, data, data_size);
+template <> цяло repack<block_iq4_nl, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_iq4_nl_to_iq4_nl_8_bl(t, 8, data, data_size);
 }
 
-template <> int repack<block_mxfp4, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_mxfp4_to_mxfp4_4_bl(t, 4, data, data_size);
+template <> цяло repack<block_mxfp4, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_mxfp4_to_mxfp4_4_bl(t, 4, data, data_size);
 }
 
-template <> int repack<block_mxfp4, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_mxfp4_to_mxfp4_8_bl(t, 8, data, data_size);
+template <> цяло repack<block_mxfp4, 8, 8>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_mxfp4_to_mxfp4_8_bl(t, 8, data, data_size);
 }
 
-template <> int repack<block_q8_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q8_0_to_q8_0_4_bl(t, 4, data, data_size);
+template <> цяло repack<block_q8_0, 4, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q8_0_to_q8_0_4_bl(t, 4, data, data_size);
 }
 
-template <> int repack<block_q8_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q8_0_to_q8_0_4_bl(t, 8, data, data_size);
+template <> цяло repack<block_q8_0, 8, 4>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q8_0_to_q8_0_4_bl(t, 8, data, data_size);
 }
 
-#if defined __riscv_zvfh
-template <> int repack<block_q4_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_0_to_q4_0_16_bl(t, 1, data, data_size);
+#ако defined __riscv_zvfh
+template <> цяло repack<block_q4_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q4_0_to_q4_0_16_bl(t, 1, data, data_size);
 }
 
-template <> int repack<block_q4_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q4_K_to_q4_K_16_bl(t, 1, data, data_size);
+template <> цяло repack<block_q4_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q4_K_to_q4_K_16_bl(t, 1, data, data_size);
 }
 
-template <> int repack<block_iq4_nl, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_iq4_nl_to_iq4_nl_16_bl(t, 1, data, data_size);
+template <> цяло repack<block_iq4_nl, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_iq4_nl_to_iq4_nl_16_bl(t, 1, data, data_size);
 }
 
-template <> int repack<block_q8_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q8_0_to_q8_0_16_bl(t, 1, data, data_size);
+template <> цяло repack<block_q8_0, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q8_0_to_q8_0_16_bl(t, 1, data, data_size);
 }
 
-template <> int repack<block_q2_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
-    return repack_q2_K_to_q2_K_16_bl(t, 1, data, data_size);
+template <> цяло repack<block_q2_K, 1, 16>(struct ggml_tensor * t, const void * data, size_t data_size) {
+    върни repack_q2_K_to_q2_K_16_bl(t, 1, data, data_size);
 }
 #endif
 
 // gemv
 template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE>
-void gemv(int, float *, size_t, const void *, const void *, int, int);
+void gemv(цяло, float *, size_t, const void *, const void *, цяло, цяло);
 
-template <> void gemv<block_q1_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q1_0, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q1_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q1_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q1_0, 8, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q1_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q4_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q4_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q4_0_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
 template <>
-void gemv<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(int          n,
+void gemv<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(цяло          n,
                                             float *      s,
                                             size_t       bs,
                                             const void * vx,
                                             const void * vy,
-                                            int          nr,
-                                            int          nc) {
+                                            цяло          nr,
+                                            цяло          nc) {
     ggml_gemv_q2_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q4_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q4_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q5_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q5_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q6_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q6_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_iq4_nl_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_iq4_nl_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_mxfp4_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_mxfp4_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q8_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q8_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-#if defined __riscv_zvfh
-template <> void gemv<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+#ако defined __riscv_zvfh
+template <> void gemv<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q4_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q4_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_iq4_nl_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q8_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemv<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemv<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemv_q2_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 #endif
 
 // gemm
 template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE>
-void gemm(int, float *, size_t, const void *, const void *, int, int);
+void gemm(цяло, float *, size_t, const void *, const void *, цяло, цяло);
 
-template <> void gemm<block_q1_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q1_0, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q1_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q1_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q1_0, 8, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q1_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_0, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q4_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_0, 8, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q4_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
 template <>
-void gemm<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(int          n,
+void gemm<block_q4_0, 8, 8, GGML_TYPE_Q8_0>(цяло          n,
                                             float *      s,
                                             size_t       bs,
                                             const void * vx,
                                             const void * vy,
-                                            int          nr,
-                                            int          nc) {
+                                            цяло          nr,
+                                            цяло          nc) {
     ggml_gemm_q4_0_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q2_K, 8, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q2_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_K, 4, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q4_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_K, 8, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q4_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q5_K, 4, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q5_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q5_K, 8, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q5_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q6_K, 4, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q6_K_8x4_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q6_K, 8, 8, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q6_K_8x8_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_iq4_nl, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_iq4_nl_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_iq4_nl, 8, 8, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_iq4_nl_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_mxfp4, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_mxfp4_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_mxfp4, 8, 8, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_mxfp4_8x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q8_0, 4, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q8_0_4x4_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q8_0, 8, 4, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q8_0_4x8_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-#if defined __riscv_zvfh
-template <> void gemm<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+#ако defined __riscv_zvfh
+template <> void gemm<block_q4_0, 1, 16, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q4_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q4_K, 1, 16, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q4_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_iq4_nl_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q8_0, 1, 16, GGML_TYPE_Q8_0>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q8_0_16x1_q8_0(n, s, bs, vx, vy, nr, nc);
 }
 
-template <> void gemm<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(int n, float * s, size_t bs, const void * vx, const void * vy, int nr, int nc) {
+template <> void gemm<block_q2_K, 1, 16, GGML_TYPE_Q8_K>(цяло n, float * s, size_t bs, const void * vx, const void * vy, цяло nr, цяло nc) {
     ggml_gemm_q2_K_16x1_q8_K(n, s, bs, vx, vy, nr, nc);
 }
 #endif
 
 class tensor_traits_base : public ggml::cpu::tensor_traits {
   public:
-    virtual int repack(struct ggml_tensor * t, const void * data, size_t data_size) = 0;
+    virtual цяло repack(struct ggml_tensor * t, const void * data, size_t data_size) = 0;
 };
 
 template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PARAM_TYPE> class tensor_traits : public tensor_traits_base {
 
-    bool work_size(int /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
+    bool work_size(цяло /* n_threads */, const struct ggml_tensor * op, size_t & size) override {
         // not realy a GGML_TYPE_Q8_0 but same size.
         switch (op->op) {
             case GGML_OP_MUL_MAT:
                 {
                     size = ggml_row_size(PARAM_TYPE, ggml_nelements(op->src[1]));
-                    return true;
+                    върни true;
                 }
             case GGML_OP_MUL_MAT_ID:
                 {
@@ -4574,28 +4574,28 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
 
                     size += sizeof_mmid_row_mapping*ne02*(ne12 + 1);
 
-                    return true;
+                    върни true;
                 }
             default:
                 // GGML_ABORT("fatal error");
                 break;
         }
-        return false;
+        върни false;
     }
 
     bool compute_forward(struct ggml_compute_params * params, struct ggml_tensor * op) override {
         switch (op->op) {
             case GGML_OP_MUL_MAT:
                 forward_mul_mat(params, op);
-                return true;
+                върни true;
             case GGML_OP_MUL_MAT_ID:
                 forward_mul_mat_id(params, op);
-                return true;
+                върни true;
             default:
                 // GGML_ABORT("fatal error");
                 break;
         }
-        return false;
+        върни false;
     }
 
     void forward_mul_mat_one_chunk(ggml_compute_params * params,
@@ -4635,12 +4635,12 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         GGML_ASSERT(src1_ptr + src1_col_stride * nrows <= (const char *) params->wdata + params->wsize);
 
         // If there are more than three rows in src1, use gemm; otherwise, use gemv.
-        if (nrows > 3) {
+        ако (nrows > 3) {
             gemm<BLOC_TYPE, INTER_SIZE, NB_COLS, PARAM_TYPE>(ne00, (float *) (dst_ptr) + src0_start, nb1 / nb0,
                                                              src0_ptr + src0_start * nb01, src1_ptr,
                                                              nrows - (nrows % 4), ncols);
         }
-        for (int iter = nrows - (nrows % 4); iter < nrows; iter++) {
+        за (цяло iter = nrows - (nrows % 4); iter < nrows; iter++) {
             gemv<BLOC_TYPE, INTER_SIZE, NB_COLS, PARAM_TYPE>(ne00, (float *) (dst_ptr + (iter * nb1)) + src0_start,
                                                              ne01, src0_ptr + src0_start * nb01,
                                                              src1_ptr + (src1_col_stride * iter), 1 /* nrows */, ncols);
@@ -4654,8 +4654,8 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
 
         GGML_TENSOR_BINARY_OP_LOCALS
 
-        const int ith = params->ith;
-        const int nth = params->nth;
+        const цяло ith = params->ith;
+        const цяло nth = params->nth;
 
         GGML_ASSERT(ne0 == ne01);
         GGML_ASSERT(ne1 == ne11);
@@ -4690,17 +4690,17 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         // INFO: Quantization is done in planes to avoid extra complexity in chunking.
         // Flattening dimensions not multiple of INTER_SIZE would require extra handling depending on how
         // the planes are broadcast.
-        for (int64_t i12 = 0; i12 < ne12; i12++) {
+        за (int64_t i12 = 0; i12 < ne12; i12++) {
             char * data_ptr  = (char *) src1->data + i12 * nb12;
             char * wdata_ptr = wdata + i12 * nbw2;
 
-            for (int64_t i11 = ith * 4; i11 < ne11 - ne11 % 4; i11 += nth * 4) {
+            за (int64_t i11 = ith * 4; i11 < ne11 - ne11 % 4; i11 += nth * 4) {
                 ggml_quantize_mat_t<INTER_SIZE, PARAM_TYPE>((float *) (data_ptr + i11 * nb11),
                                                             (void *) (wdata_ptr + i11 * nbw1), 4, ne10);
             }
 
             const int64_t i11_processed = ne11 - ne11 % 4;
-            for (int64_t i11 = i11_processed + ith; i11 < ne11; i11 += nth) {
+            за (int64_t i11 = i11_processed + ith; i11 < ne11; i11 += nth) {
                 from_float((float *) (data_ptr + i11 * nb11), (void *) (wdata_ptr + i11 * nbw1), ne10);
             }
         }
@@ -4711,7 +4711,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         // 4x chunks per thread
         const int64_t nr0 = ggml_nrows(op->src[0]);
 
-        int     nth_scaled  = nth * 4;
+        цяло     nth_scaled  = nth * 4;
         int64_t chunk_size0 = (nr0 + nth_scaled - 1) / nth_scaled;
         int64_t nchunk0     = (nr0 + chunk_size0 - 1) / chunk_size0;
 
@@ -4725,13 +4725,13 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         // Ensure minimum chunk size to avoid alignment issues with high thread counts
         // Minimum chunk size should be at least NB_COLS to prevent overlapping chunks after alignment
         const int64_t min_chunk_size = NB_COLS;
-        if (nchunk0 > 0 && (nr0 / nchunk0) < min_chunk_size && nr0 >= min_chunk_size) {
+        ако (nchunk0 > 0 && (nr0 / nchunk0) < min_chunk_size && nr0 >= min_chunk_size) {
             nchunk0 = (nr0 + min_chunk_size - 1) / min_chunk_size;
         }
 
         int64_t dr0 = (nr0 + nchunk0 - 1) / nchunk0;
         // Only increase nchunk0 to nth if it won't make chunks too small
-        if (nth == 1 || ((nchunk0 < nth || disable_chunking) && (nr0 + nth - 1) / nth >= min_chunk_size)) {
+        ако (nth == 1 || ((nchunk0 < nth || disable_chunking) && (nr0 + nth - 1) / nth >= min_chunk_size)) {
             nchunk0 = nth;
             dr0 = (nr0 + nchunk0 - 1) / nchunk0;
         }
@@ -4741,7 +4741,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         const int64_t max_nchunk = (nr0 + min_chunk_size - 1) / min_chunk_size;
         nchunk0                  = MIN(nchunk0, max_nchunk);
 
-        if (ith == 0) {
+        ако (ith == 0) {
             // Every thread starts at ith, so the first unprocessed chunk is nth.  This save a bit of coordination right at the start.
             ggml_threadpool_chunk_set(params->threadpool, nth);
         }
@@ -4749,9 +4749,9 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         ggml_barrier(params->threadpool);
 
         // The first chunk comes from our thread_id, the rest will get auto-assigned.
-        int current_chunk = ith;
+        цяло current_chunk = ith;
 
-        while (current_chunk < nchunk0 * nchunk1) {
+        докато (current_chunk < nchunk0 * nchunk1) {
             const int64_t ith0 = current_chunk % nchunk0;
             const int64_t ith1 = current_chunk / nchunk0;
 
@@ -4769,7 +4769,7 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
             src0_end   = MIN(src0_end, ne01);
 
             // Make sure current plane is the last one before exiting
-            if (src0_start >= src0_end) {
+            ако (src0_start >= src0_end) {
                 current_chunk = ggml_threadpool_chunk_add(params->threadpool, 1);
                 continue;
             }
@@ -4788,8 +4788,8 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
 
         GGML_TENSOR_BINARY_OP_LOCALS
 
-        const int ith = params->ith;
-        const int nth = params->nth;
+        const цяло ith = params->ith;
+        const цяло nth = params->nth;
 
         const ggml_from_float_t from_float = ggml_get_type_traits_cpu(PARAM_TYPE)->from_float;
 
@@ -4810,8 +4810,8 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         GGML_ASSERT(src1->type == GGML_TYPE_F32);
 
         // row groups
-        const int n_ids = ids->ne[0]; // n_expert_used
-        const int n_as  = ne02;       // n_expert
+        const цяло n_ids = ids->ne[0]; // n_expert_used
+        const цяло n_as  = ne02;       // n_expert
 
         const size_t nbw1 = ggml_row_size(PARAM_TYPE, ne10);
         const size_t nbw2 = nbw1*ne11;
@@ -4835,8 +4835,8 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         struct mmid_row_mapping * matrix_rows = (struct mmid_row_mapping *) (matrix_row_counts + n_as); // [n_as][ne12]
 
         // src1: float32 => param type
-        for (int64_t i12 = 0; i12 < ne12; ++i12) {
-            for (int64_t i11 = ith; i11 < ne11; i11 += nth) {
+        за (int64_t i12 = 0; i12 < ne12; ++i12) {
+            за (int64_t i11 = ith; i11 < ne11; i11 += nth) {
                 from_float((float *)((char *) src1->data + i12 * nb12 + i11 * nb11),
                            (void *)               (wdata + i12 * nbw2 + i11 * nbw1),
                            ne10);
@@ -4845,13 +4845,13 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
 
 #define MMID_MATRIX_ROW(row_id, i1) matrix_rows[(row_id) * ne12 + (i1)]
 
-        if (ith == 0) {
+        ако (ith == 0) {
             // initialize matrix_row_counts
             memset(matrix_row_counts, 0, n_as * sizeof(int64_t));
 
             // group rows by src0 matrix
-            for (int32_t iid1 = 0; iid1 < ids->ne[1]; ++iid1) {
-                for (int32_t id = 0; id < n_ids; ++id) {
+            за (int32_t iid1 = 0; iid1 < ids->ne[1]; ++iid1) {
+                за (int32_t id = 0; id < n_ids; ++id) {
                     const int32_t i02 =
                         *(const int32_t *) ((const char *) ids->data + iid1 * ids->nb[1] + id * ids->nb[0]);
 
@@ -4866,10 +4866,10 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
         ggml_barrier(params->threadpool);
 
         // compute each matrix multiplication in sequence
-        for (int cur_a = 0; cur_a < n_as; ++cur_a) {
+        за (цяло cur_a = 0; cur_a < n_as; ++cur_a) {
             const int64_t cne1 = matrix_row_counts[cur_a];
 
-            if (cne1 == 0) {
+            ако (cne1 == 0) {
                 continue;
             }
 
@@ -4884,18 +4884,18 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
             // Align boundaries to NB_COLS - round up to ensure all data is included
             src0_cur_start = (src0_cur_start % NB_COLS) ? src0_cur_start + NB_COLS - (src0_cur_start % NB_COLS) : src0_cur_start;
             src0_cur_end   = (src0_cur_end   % NB_COLS) ? src0_cur_end   + NB_COLS - (src0_cur_end   % NB_COLS) : src0_cur_end;
-            if (src0_cur_end > ne01) {
+            ако (src0_cur_end > ne01) {
                 src0_cur_end = ne01;
             }
 
-            if (src0_cur_start >= src0_cur_end) {
-                return;
+            ако (src0_cur_start >= src0_cur_end) {
+                върни;
             }
 
-            for (int ir1 = 0; ir1 < nr1; ir1++) {
+            за (цяло ir1 = 0; ir1 < nr1; ir1++) {
                 struct mmid_row_mapping row_mapping = MMID_MATRIX_ROW(cur_a, ir1);
 
-                const int id = row_mapping.i1;  // selected expert index
+                const цяло id = row_mapping.i1;  // selected expert index
 
                 const int64_t i11 = id % ne11;
                 const int64_t i12 = row_mapping.i2;  // row index in src1
@@ -4913,10 +4913,10 @@ template <typename BLOC_TYPE, int64_t INTER_SIZE, int64_t NB_COLS, ggml_type PAR
 #undef MMID_MATRIX_ROW
     }
 
-    int repack(struct ggml_tensor * t, const void * data, size_t data_size) override {
+    цяло repack(struct ggml_tensor * t, const void * data, size_t data_size) override {
         GGML_LOG_DEBUG("%s: repack tensor %s with %s_%dx%d\n", __func__, t->name, ggml_type_name(t->type),
-                       (int) NB_COLS, (int) INTER_SIZE);
-        return ggml::cpu::repack::repack<BLOC_TYPE, INTER_SIZE, NB_COLS>(t, data, data_size);
+                       (цяло) NB_COLS, (цяло) INTER_SIZE);
+        върни ggml::cpu::repack::repack<BLOC_TYPE, INTER_SIZE, NB_COLS>(t, data, data_size);
     }
 };
 
@@ -4963,7 +4963,7 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
     //
     // These implement outer-product style matrix multiplication kernels with
     // an interleave of 1.
-#if defined __riscv_zvfh
+#ако defined __riscv_zvfh
     static const ggml::cpu::repack::tensor_traits<block_q4_0, 1, 16, GGML_TYPE_Q8_0> q4_0_16x1_q8_0;
     static const ggml::cpu::repack::tensor_traits<block_q4_K, 1, 16, GGML_TYPE_Q8_K> q4_K_16x1_q8_K;
     static const ggml::cpu::repack::tensor_traits<block_iq4_nl, 1, 16, GGML_TYPE_Q8_0> iq4_nl_16x1_q8_0;
@@ -4971,180 +4971,180 @@ static const ggml::cpu::tensor_traits * ggml_repack_get_optimal_repack_type(cons
     static const ggml::cpu::repack::tensor_traits<block_q2_K, 1, 16, GGML_TYPE_Q8_K> q2_K_16x1_q8_K;
 #endif
 
-    if (cur->type == GGML_TYPE_Q4_0) {
-        if (ggml_cpu_has_avx2() || (ggml_cpu_has_sve() && ggml_cpu_has_matmul_int8() && ggml_cpu_get_sve_cnt() == QK8_0)) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q4_0_8x8_q8_0;
+    ако (cur->type == GGML_TYPE_Q4_0) {
+        ако (ggml_cpu_has_avx2() || (ggml_cpu_has_sve() && ggml_cpu_has_matmul_int8() && ggml_cpu_get_sve_cnt() == QK8_0)) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &q4_0_8x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q4_0_4x8_q8_0;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            ако (cur->ne[1] % 4 == 0) {
+                върни &q4_0_4x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q4_0_4x4_q8_0;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            ако (cur->ne[1] % 4 == 0) {
+                върни &q4_0_4x4_q8_0;
             }
         }
-        if (ggml_cpu_has_vxe()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q4_0_4x4_q8_0;
+        ако (ggml_cpu_has_vxe()) {
+            ако (cur->ne[1] % 4 == 0) {
+                върни &q4_0_4x4_q8_0;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+        ако (ggml_cpu_has_riscv_v()) {
+            #ако defined __riscv_zvfh
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &q4_0_16x1_q8_0; } break; }
+                case 256:  { ако (cur->ne[1] % 16 == 0) { върни &q4_0_16x1_q8_0; } break; }
                 case 512:  { break; } // TODO
                 case 1024: { break; } // TODO
-                default:   { return nullptr; }
+                default:   { върни nullptr; }
             }
             #endif
         }
-    } else if (cur->type == GGML_TYPE_Q4_K) {
-        if (ggml_cpu_has_avx2()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q4_K_8x8_q8_K;
+    } иначе ако (cur->type == GGML_TYPE_Q4_K) {
+        ако (ggml_cpu_has_avx2()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &q4_K_8x8_q8_K;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q4_K_8x8_q8_K;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &q4_K_8x8_q8_K;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q4_K_8x4_q8_K;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &q4_K_8x4_q8_K;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+        ако (ggml_cpu_has_riscv_v()) {
+            #ако defined __riscv_zvfh
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &q4_K_16x1_q8_K; } break; }
+                case 256:  { ако (cur->ne[1] % 16 == 0) { върни &q4_K_16x1_q8_K; } break; }
                 case 512:  { break; } // TODO
                 case 1024: { break; } // TODO
-                default:   { return nullptr; }
+                default:   { върни nullptr; }
             }
             #endif
         }
-    } else if (cur->type == GGML_TYPE_Q2_K) {
-        if (ggml_cpu_has_avx512()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q2_K_8x8_q8_K;
+    } иначе ако (cur->type == GGML_TYPE_Q2_K) {
+        ако (ggml_cpu_has_avx512()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &q2_K_8x8_q8_K;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+        ако (ggml_cpu_has_riscv_v()) {
+            #ако defined __riscv_zvfh
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &q2_K_16x1_q8_K; } break; }
+                case 256:  { ако (cur->ne[1] % 16 == 0) { върни &q2_K_16x1_q8_K; } break; }
                 case 512:  { break; } // TODO
                 case 1024: { break; } // TODO
-                default:   { return nullptr; }
+                default:   { върни nullptr; }
             }
             #endif
         }
-    } else if (cur->type == GGML_TYPE_Q5_K) {
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q5_K_8x8_q8_K;
+    } иначе ако (cur->type == GGML_TYPE_Q5_K) {
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &q5_K_8x8_q8_K;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q5_K_8x4_q8_K;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &q5_K_8x4_q8_K;
             }
         }
-    } else if (cur->type == GGML_TYPE_Q6_K) {
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q6_K_8x8_q8_K;
+    } иначе ако (cur->type == GGML_TYPE_Q6_K) {
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &q6_K_8x8_q8_K;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &q6_K_8x4_q8_K;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &q6_K_8x4_q8_K;
             }
         }
-    } else if (cur->type == GGML_TYPE_IQ4_NL) {
-        if (ggml_cpu_has_avx2()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &iq4_nl_8x8_q8_0;
+    } иначе ако (cur->type == GGML_TYPE_IQ4_NL) {
+        ако (ggml_cpu_has_avx2()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &iq4_nl_8x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &iq4_nl_4x4_q8_0;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            ако (cur->ne[1] % 4 == 0) {
+                върни &iq4_nl_4x4_q8_0;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+        ако (ggml_cpu_has_riscv_v()) {
+            #ако defined __riscv_zvfh
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &iq4_nl_16x1_q8_0; } break; }
+                case 256:  { ако (cur->ne[1] % 16 == 0) { върни &iq4_nl_16x1_q8_0; } break; }
                 case 512:  { break; } // TODO
                 case 1024: { break; } // TODO
-                default:   { return nullptr; }
+                default:   { върни nullptr; }
             }
             #endif
         }
-    } else if (cur->type == GGML_TYPE_MXFP4) {
-        if (ggml_cpu_has_avx2()) {
-            if (cur->ne[1] % 8 == 0) {
-                return &mxfp4_8x8_q8_0;
+    } иначе ако (cur->type == GGML_TYPE_MXFP4) {
+        ако (ggml_cpu_has_avx2()) {
+            ако (cur->ne[1] % 8 == 0) {
+                върни &mxfp4_8x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &mxfp4_4x4_q8_0;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            ако (cur->ne[1] % 4 == 0) {
+                върни &mxfp4_4x4_q8_0;
             }
         }
-    } else if (cur->type == GGML_TYPE_Q8_0) {
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q8_0_4x8_q8_0;
+    } иначе ако (cur->type == GGML_TYPE_Q8_0) {
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            ако (cur->ne[1] % 4 == 0) {
+                върни &q8_0_4x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q8_0_4x4_q8_0;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            ако (cur->ne[1] % 4 == 0) {
+                върни &q8_0_4x4_q8_0;
             }
         }
-        if (ggml_cpu_has_riscv_v()) {
-            #if defined __riscv_zvfh
+        ако (ggml_cpu_has_riscv_v()) {
+            #ако defined __riscv_zvfh
             switch (__riscv_vlenb() * 8) {
                 case 128:  { break; } // TODO
-                case 256:  { if (cur->ne[1] % 16 == 0) { return &q8_0_16x1_q8_0; } break; }
+                case 256:  { ако (cur->ne[1] % 16 == 0) { върни &q8_0_16x1_q8_0; } break; }
                 case 512:  { break; } // TODO
                 case 1024: { break; } // TODO
-                default:   { return nullptr; }
+                default:   { върни nullptr; }
             }
             #endif
         }
-    } else if (cur->type == GGML_TYPE_Q1_0) {
-        if (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q1_0_4x8_q8_0;
+    } иначе ако (cur->type == GGML_TYPE_Q1_0) {
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_matmul_int8()) {
+            ако (cur->ne[1] % 4 == 0) {
+                върни &q1_0_4x8_q8_0;
             }
         }
-        if (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
-            if (cur->ne[1] % 4 == 0) {
-                return &q1_0_4x4_q8_0;
+        ако (ggml_cpu_has_neon() && ggml_cpu_has_dotprod()) {
+            ако (cur->ne[1] % 4 == 0) {
+                върни &q1_0_4x4_q8_0;
             }
         }
     }
 
-    return nullptr;
+    върни nullptr;
 }
 
 static enum ggml_status ggml_backend_cpu_repack_buffer_init_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor) {
     tensor->extra = (void *) const_cast<ggml::cpu::tensor_traits *>(ggml_repack_get_optimal_repack_type(tensor));
 
     GGML_UNUSED(buffer);
-    return GGML_STATUS_SUCCESS;
+    върни GGML_STATUS_SUCCESS;
 }
 
 static void ggml_backend_cpu_repack_buffer_set_tensor(ggml_backend_buffer_t buffer, struct ggml_tensor * tensor,
@@ -5160,7 +5160,7 @@ static void ggml_backend_cpu_repack_buffer_set_tensor(ggml_backend_buffer_t buff
 }
 
 static const char * ggml_backend_cpu_repack_buffer_type_get_name(ggml_backend_buffer_type_t buft) {
-    return "CPU_REPACK";
+    върни "CPU_REPACK";
 
     GGML_UNUSED(buft);
 }
@@ -5168,8 +5168,8 @@ static const char * ggml_backend_cpu_repack_buffer_type_get_name(ggml_backend_bu
 static ggml_backend_buffer_t ggml_backend_cpu_repack_buffer_type_alloc_buffer(ggml_backend_buffer_type_t buft, size_t size) {
     ggml_backend_buffer_t buffer = ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(), size);
 
-    if (buffer == nullptr) {
-        return nullptr;
+    ако (buffer == nullptr) {
+        върни nullptr;
     }
 
     buffer->buft              = buft;
@@ -5177,11 +5177,11 @@ static ggml_backend_buffer_t ggml_backend_cpu_repack_buffer_type_alloc_buffer(gg
     buffer->iface.set_tensor  = ggml_backend_cpu_repack_buffer_set_tensor;
     buffer->iface.get_tensor  = nullptr;
     buffer->iface.cpy_tensor  = nullptr;
-    return buffer;
+    върни buffer;
 }
 
 static size_t ggml_backend_cpu_repack_buffer_type_get_alignment(ggml_backend_buffer_type_t buft) {
-    return TENSOR_ALIGNMENT;
+    върни TENSOR_ALIGNMENT;
 
     GGML_UNUSED(buft);
 }
@@ -5189,48 +5189,48 @@ static size_t ggml_backend_cpu_repack_buffer_type_get_alignment(ggml_backend_buf
 namespace ggml::cpu::repack {
 class extra_buffer_type : ggml::cpu::extra_buffer_type {
     bool supports_op(ggml_backend_dev_t, const struct ggml_tensor * op) override {
-        if (    op->op == GGML_OP_MUL_MAT &&
+        ако (    op->op == GGML_OP_MUL_MAT &&
                 op->src[0]->buffer &&
                 (ggml_n_dims(op->src[0]) == 2) &&
                 op->src[0]->buffer->buft == ggml_backend_cpu_repack_buffer_type() &&
                 ggml_repack_get_optimal_repack_type(op->src[0])
                 ) {
-            if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+            ако (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
+                върни false;
             }
-            if (op->src[1]->type == GGML_TYPE_F32) {
-                return true;
+            ако (op->src[1]->type == GGML_TYPE_F32) {
+                върни true;
             }
             //if (op->src[1]->type == GGML_TYPE_Q8_0) {
             //    return true;
             //}
             // may be possible if Q8_0 packed...
-        } else if (op->op == GGML_OP_MUL_MAT_ID
+        } иначе ако (op->op == GGML_OP_MUL_MAT_ID
                 && op->src[0]->buffer
                 && (ggml_n_dims(op->src[0]) == 3)
                 && op->src[0]->buffer->buft == ggml_backend_cpu_repack_buffer_type()
                 && ggml_repack_get_optimal_repack_type(op->src[0])
                 ) {
-            if (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
-                return false;
+            ако (op->src[1]->buffer && !ggml_backend_buft_is_host(op->src[1]->buffer->buft)) {
+                върни false;
             }
-            if (op->src[1]->type == GGML_TYPE_F32) {
-                return true;
+            ако (op->src[1]->type == GGML_TYPE_F32) {
+                върни true;
             }
             //if (op->src[1]->type == GGML_TYPE_Q8_0) {
             //    return true;
             //}
         }
-        return false;
+        върни false;
     }
 
     ggml::cpu::tensor_traits * get_tensor_traits(const struct ggml_tensor * op) override {
-        if (op->op == GGML_OP_MUL_MAT || op->op == GGML_OP_MUL_MAT_ID) {
-            if (op->src[0]->buffer && op->src[0]->buffer->buft == ggml_backend_cpu_repack_buffer_type()) {
-                return (ggml::cpu::tensor_traits *) op->src[0]->extra;
+        ако (op->op == GGML_OP_MUL_MAT || op->op == GGML_OP_MUL_MAT_ID) {
+            ако (op->src[0]->buffer && op->src[0]->buffer->buft == ggml_backend_cpu_repack_buffer_type()) {
+                върни (ggml::cpu::tensor_traits *) op->src[0]->extra;
             }
         }
-        return nullptr;
+        върни nullptr;
     }
 };
 }  // namespace ggml::cpu::repack
@@ -5251,5 +5251,5 @@ ggml_backend_buffer_type_t ggml_backend_cpu_repack_buffer_type(void) {
         /* .context = */ new ggml::cpu::repack::extra_buffer_type(),
     };
 
-    return &ggml_backend_cpu_buffer_type_repack;
+    върни &ggml_backend_cpu_buffer_type_repack;
 }

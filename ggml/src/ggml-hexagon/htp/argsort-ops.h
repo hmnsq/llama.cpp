@@ -52,12 +52,12 @@ static inline bool htp_sort_solve_layout(
 
     memset(layout, 0, sizeof(*layout));
 
-    if (total_rows > 1) {
+    ако (total_rows > 1) {
         uint32_t n_threads = total_rows < n_threads_max ? total_rows : n_threads_max;
 
         uint32_t n_vec = (ne00 + 31) / 32;
         uint32_t n_vec_pow2 = 1;
-        while (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
+        докато (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
         uint32_t ne00_padded = n_vec_pow2 * 32;
 
         size_t values_size  = ((ne00_padded * sizeof(float)) + 127) & ~127;
@@ -65,19 +65,19 @@ static inline bool htp_sort_solve_layout(
         size_t spad_per_slot = ((values_size + indices_size) + 255) & ~255;
 
         uint32_t n_slots = 2;
-        if (spad_per_slot * 2 > vtcm_budget) {
+        ако (spad_per_slot * 2 > vtcm_budget) {
             n_slots = 1;
         }
 
         size_t spad_per_thread = spad_per_slot * n_slots;
 
-        while (n_threads > 1 && (spad_per_thread * n_threads) > vtcm_budget) {
+        докато (n_threads > 1 && (spad_per_thread * n_threads) > vtcm_budget) {
             n_threads--;
         }
 
         size_t total_bytes = spad_per_thread * n_threads;
-        if (total_bytes > vtcm_budget) {
-            return false;
+        ако (total_bytes > vtcm_budget) {
+            върни false;
         }
 
         layout->total_bytes      = total_bytes;
@@ -86,16 +86,16 @@ static inline bool htp_sort_solve_layout(
         layout->n_chunks         = 1;
         layout->n_threads        = n_threads;
         layout->n_slots          = n_slots;
-        return true;
+        върни true;
     }
 
     uint32_t n_vec = (ne00 + 31) / 32;
     uint32_t n_vec_pow2 = 1;
-    while (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
+    докато (n_vec_pow2 < n_vec) n_vec_pow2 <<= 1;
 
     uint32_t n_chunks = 1;
-    if (ne00 > 1024) {
-        while (n_chunks * 2 <= n_threads_max && n_chunks * 2 <= n_vec_pow2) {
+    ако (ne00 > 1024) {
+        докато (n_chunks * 2 <= n_threads_max && n_chunks * 2 <= n_vec_pow2) {
             n_chunks *= 2;
         }
     }
@@ -114,15 +114,15 @@ static inline bool htp_sort_solve_layout(
     size_t merge_indices_off  = 0;
     uint32_t merge_elems      = 0;
 
-    if (n_chunks > 1) {
-        if (is_top_k) {
+    ако (n_chunks > 1) {
+        ако (is_top_k) {
             uint32_t local_k = k < chunk_elems ? k : chunk_elems;
             uint32_t total_candidates = n_chunks * local_k;
             uint32_t merge_n_vec = (total_candidates + 31) / 32;
             uint32_t merge_n_vec_pow2 = 1;
-            while (merge_n_vec_pow2 < merge_n_vec) merge_n_vec_pow2 <<= 1;
+            докато (merge_n_vec_pow2 < merge_n_vec) merge_n_vec_pow2 <<= 1;
             merge_elems = merge_n_vec_pow2 * 32;
-        } else {
+        } иначе {
             merge_elems = n_vec_pow2 * 32;
         }
         merge_values_size  = ((merge_elems * sizeof(float)) + 127) & ~127;
@@ -132,7 +132,7 @@ static inline bool htp_sort_solve_layout(
 
     size_t total_bytes = phase1_total_size + merge_values_size + merge_indices_size;
 
-    if (total_bytes > vtcm_budget && n_chunks > 1) {
+    ако (total_bytes > vtcm_budget && n_chunks > 1) {
         n_chunks = 1;
         chunk_elems = n_vec_pow2 * 32;
         phase1_values_size  = ((chunk_elems * sizeof(float)) + 127) & ~127;
@@ -147,12 +147,12 @@ static inline bool htp_sort_solve_layout(
         total_bytes         = phase1_total_size;
     }
 
-    if (total_bytes > vtcm_budget) {
-        return false;
+    ако (total_bytes > vtcm_budget) {
+        върни false;
     }
 
     uint32_t n_slots = 1;
-    if (n_chunks == 1 && phase1_slot_size * 2 <= vtcm_budget) {
+    ако (n_chunks == 1 && phase1_slot_size * 2 <= vtcm_budget) {
         n_slots = 2;
         total_bytes = phase1_slot_size * 2;
     }
@@ -166,12 +166,12 @@ static inline bool htp_sort_solve_layout(
     layout->merge_elems       = merge_elems;
     layout->n_threads         = n_chunks;
     layout->n_slots           = n_slots;
-    return true;
+    върни true;
 }
 
-#if defined(__cplusplus)
+#ако defined(__cplusplus)
 static_assert(sizeof(struct htp_sort_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
-#else
+#иначе
 _Static_assert(sizeof(struct htp_sort_kernel_params) <= 128, "htp_sort_kernel_params is too large for kernel_params blob");
 #endif
 

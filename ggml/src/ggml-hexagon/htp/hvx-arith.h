@@ -28,22 +28,22 @@
         uint32_t i = 0;                                                                   \
                                                                                           \
         _Pragma("unroll(4)")                                                              \
-        for (; i < nvec; i++) {                                                           \
+        за (; i < nvec; i++) {                                                           \
             vdst[i] = vec_op(vsrc0[i], vsrc1[i]);                                         \
         }                                                                                 \
-        if (nloe) {                                                                       \
+        ако (nloe) {                                                                       \
             HVX_Vector v = vec_op(vsrc0[i], vsrc1[i]);                                    \
             vec_store((void *) &vdst[i], nloe * (elem_size), v);                          \
         }                                                                                 \
-    } while(0)
+    } докато(0)
 
-#if __HVX_ARCH__ < 79
+#ако __HVX_ARCH__ < 79
 
 #define HVX_OP_ADD_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vadd_VsfVsf(a, b))
 #define HVX_OP_SUB_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vsub_VsfVsf(a, b))
 #define HVX_OP_MUL_F32(a, b) Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(a, b))
 
-#else
+#иначе
 
 #define HVX_OP_ADD_F32(a, b) Q6_Vsf_vadd_VsfVsf(a, b)
 #define HVX_OP_SUB_F32(a, b) Q6_Vsf_vsub_VsfVsf(a, b)
@@ -105,21 +105,21 @@ DEFINE_HVX_BINARY_OP_VARIANTS(hvx_mul_f16, HVX_OP_MUL_F16, _Float16)
 // Dispatcher logic
 #define HVX_BINARY_DISPATCHER(OP_NAME)                                                                                                       \
 static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src0, const uint8_t * restrict src1, const uint32_t num_elems) { \
-    if (hex_is_aligned((void *) dst, 128)) {                                                                                                 \
-        if (hex_is_aligned((void *) src0, 128)) {                                                                                            \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aaa(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_aau(dst, src0, src1, num_elems);                                               \
-        } else {                                                                                                                             \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_aua(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_auu(dst, src0, src1, num_elems);                                               \
+    ако (hex_is_aligned((void *) dst, 128)) {                                                                                                 \
+        ако (hex_is_aligned((void *) src0, 128)) {                                                                                            \
+            ако (hex_is_aligned((void *) src1, 128)) OP_NAME##_aaa(dst, src0, src1, num_elems);                                               \
+            иначе                                    OP_NAME##_aau(dst, src0, src1, num_elems);                                               \
+        } иначе {                                                                                                                             \
+            ако (hex_is_aligned((void *) src1, 128)) OP_NAME##_aua(dst, src0, src1, num_elems);                                               \
+            иначе                                    OP_NAME##_auu(dst, src0, src1, num_elems);                                               \
         }                                                                                                                                    \
-    } else {                                                                                                                                 \
-        if (hex_is_aligned((void *) src0, 128)) {                                                                                            \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uaa(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_uau(dst, src0, src1, num_elems);                                               \
-        } else {                                                                                                                             \
-            if (hex_is_aligned((void *) src1, 128)) OP_NAME##_uua(dst, src0, src1, num_elems);                                               \
-            else                                    OP_NAME##_uuu(dst, src0, src1, num_elems);                                               \
+    } иначе {                                                                                                                                 \
+        ако (hex_is_aligned((void *) src0, 128)) {                                                                                            \
+            ако (hex_is_aligned((void *) src1, 128)) OP_NAME##_uaa(dst, src0, src1, num_elems);                                               \
+            иначе                                    OP_NAME##_uau(dst, src0, src1, num_elems);                                               \
+        } иначе {                                                                                                                             \
+            ако (hex_is_aligned((void *) src1, 128)) OP_NAME##_uua(dst, src0, src1, num_elems);                                               \
+            иначе                                    OP_NAME##_uuu(dst, src0, src1, num_elems);                                               \
         }                                                                                                                                    \
     }                                                                                                                                        \
 }
@@ -152,12 +152,12 @@ static inline void hvx_mul_mul_f32_aa(uint8_t * restrict dst, const uint8_t * re
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    за (; i < nvec; i++) {
         HVX_Vector v1 = HVX_OP_MUL_F32(vsrc0[i], vsrc1[i]);
         vdst[i] = HVX_OP_MUL(v1, vsrc2[i]);
     }
 
-    if (nloe) {
+    ако (nloe) {
         HVX_Vector v1 = HVX_OP_MUL_F32(vsrc0[i], vsrc1[i]);
         HVX_Vector v2 = HVX_OP_MUL_F32(v1, vsrc2[i]);
         hvx_vec_store_a((void *) &vdst[i], nloe * elem_size, v2);
@@ -183,12 +183,12 @@ static inline void hvx_mul_mul_f16_aa(uint8_t * restrict dst, const uint8_t * re
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    за (; i < nvec; i++) {
         HVX_Vector v1 = HVX_OP_MUL_F16(vsrc0[i], vsrc1[i]);
         vdst[i] = HVX_OP_MUL_F16(v1, vsrc2[i]);
     }
 
-    if (nloe) {
+    ако (nloe) {
         HVX_Vector v1 = HVX_OP_MUL_F16(vsrc0[i], vsrc1[i]);
         HVX_Vector v2 = HVX_OP_MUL_F16(v1, vsrc2[i]);
         hvx_vec_store_a((void *) &vdst[i], nloe * elem_size, v2);
@@ -209,16 +209,16 @@ static inline void hvx_mul_mul_f16_aa(uint8_t * restrict dst, const uint8_t * re
         uint32_t i = 0;                                                                 \
                                                                                         \
         _Pragma("unroll(4)")                                                            \
-        for (; i < nvec; i++) {                                                         \
+        за (; i < nvec; i++) {                                                         \
             HVX_Vector v = vsrc[i];                                                     \
             vdst[i] = scalar_op_macro(v);                                               \
         }                                                                               \
-        if (nloe) {                                                                     \
+        ако (nloe) {                                                                     \
             HVX_Vector v = vsrc[i];                                                     \
             v = scalar_op_macro(v);                                                     \
             vec_store((void *) &vdst[i], nloe * (elem_size), v);                        \
         }                                                                               \
-    } while(0)
+    } докато(0)
 
 #define HVX_OP_ADD_SCALAR_F32(v)                                   \
     ({                                                             \
@@ -280,13 +280,13 @@ DEFINE_HVX_BINARY_SCALAR_OP_VARIANTS(hvx_mul_scalar_f16, HVX_OP_MUL_SCALAR_F16, 
 // Dispatcher logic
 #define HVX_BINARY_SCALAR_DISPATCHER(OP_NAME, ELEM_TYPE)                                                                          \
 static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src, const ELEM_TYPE val, const uint32_t num_elems) { \
-    if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {                                                 \
+    ако (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {                                                 \
         OP_NAME##_aa(dst, src, val, num_elems);                                                                                   \
-    } else if (hex_is_aligned((void *) dst, 128)) {                                                                               \
+    } иначе ако (hex_is_aligned((void *) dst, 128)) {                                                                               \
         OP_NAME##_au(dst, src, val, num_elems);                                                                                   \
-    } else if (hex_is_aligned((void *) src, 128)) {                                                                               \
+    } иначе ако (hex_is_aligned((void *) src, 128)) {                                                                               \
         OP_NAME##_ua(dst, src, val, num_elems);                                                                                   \
-    } else {                                                                                                                      \
+    } иначе {                                                                                                                      \
         OP_NAME##_uu(dst, src, val, num_elems);                                                                                   \
     }                                                                                                                             \
 }
@@ -327,14 +327,14 @@ static inline void hvx_min_scalar_f32_uu(uint8_t * restrict dst, const uint8_t *
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(float), hvx_vec_store_u, HVX_OP_MIN_SCALAR);
 }
 
-static inline void hvx_min_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const int num_elems) {
-    if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
+static inline void hvx_min_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const цяло num_elems) {
+    ако (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
         hvx_min_scalar_f32_aa(dst, src, val, num_elems);
-    } else if (hex_is_aligned((void *) dst, 128)) {
+    } иначе ако (hex_is_aligned((void *) dst, 128)) {
         hvx_min_scalar_f32_au(dst, src, val, num_elems);
-    } else if (hex_is_aligned((void *) src, 128)) {
+    } иначе ако (hex_is_aligned((void *) src, 128)) {
         hvx_min_scalar_f32_ua(dst, src, val, num_elems);
-    } else {
+    } иначе {
         hvx_min_scalar_f32_uu(dst, src, val, num_elems);
     }
 }
@@ -367,14 +367,14 @@ static inline void hvx_max_scalar_f32_uu(uint8_t * restrict dst, const uint8_t *
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(float), hvx_vec_store_u, HVX_OP_MAX_SCALAR);
 }
 
-static inline void hvx_max_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const int num_elems) {
-    if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
+static inline void hvx_max_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float val, const цяло num_elems) {
+    ако (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
         hvx_max_scalar_f32_aa(dst, src, val, num_elems);
-    } else if (hex_is_aligned((void *) dst, 128)) {
+    } иначе ако (hex_is_aligned((void *) dst, 128)) {
         hvx_max_scalar_f32_au(dst, src, val, num_elems);
-    } else if (hex_is_aligned((void *) src, 128)) {
+    } иначе ако (hex_is_aligned((void *) src, 128)) {
         hvx_max_scalar_f32_ua(dst, src, val, num_elems);
-    } else {
+    } иначе {
         hvx_max_scalar_f32_uu(dst, src, val, num_elems);
     }
 }
@@ -405,14 +405,14 @@ static inline void hvx_min_scalar_f16_uu(uint8_t * restrict dst, const uint8_t *
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(_Float16), hvx_vec_store_u, HVX_OP_MIN_SCALAR_F16);
 }
 
-static inline void hvx_min_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 val, const int num_elems) {
-    if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
+static inline void hvx_min_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 val, const цяло num_elems) {
+    ако (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
         hvx_min_scalar_f16_aa(dst, src, val, num_elems);
-    } else if (hex_is_aligned((void *) dst, 128)) {
+    } иначе ако (hex_is_aligned((void *) dst, 128)) {
         hvx_min_scalar_f16_au(dst, src, val, num_elems);
-    } else if (hex_is_aligned((void *) src, 128)) {
+    } иначе ако (hex_is_aligned((void *) src, 128)) {
         hvx_min_scalar_f16_ua(dst, src, val, num_elems);
-    } else {
+    } иначе {
         hvx_min_scalar_f16_uu(dst, src, val, num_elems);
     }
 }
@@ -455,14 +455,14 @@ static inline void hvx_clamp_scalar_f32_uu(uint8_t * restrict dst, const uint8_t
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(float), hvx_vec_store_u, HVX_OP_CLAMP_SCALAR);
 }
 
-static inline void hvx_clamp_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float min, const float max, const int num_elems) {
-    if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
+static inline void hvx_clamp_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float min, const float max, const цяло num_elems) {
+    ако (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
         hvx_clamp_scalar_f32_aa(dst, src, min, max, num_elems);
-    } else if (hex_is_aligned((void *) dst, 128)) {
+    } иначе ако (hex_is_aligned((void *) dst, 128)) {
         hvx_clamp_scalar_f32_au(dst, src, min, max, num_elems);
-    } else if (hex_is_aligned((void *) src, 128)) {
+    } иначе ако (hex_is_aligned((void *) src, 128)) {
         hvx_clamp_scalar_f32_ua(dst, src, min, max, num_elems);
-    } else {
+    } иначе {
         hvx_clamp_scalar_f32_uu(dst, src, min, max, num_elems);
     }
 }
@@ -503,14 +503,14 @@ static inline void hvx_clamp_scalar_f16_uu(uint8_t * restrict dst, const uint8_t
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(_Float16), hvx_vec_store_u, HVX_OP_CLAMP_SCALAR_F16);
 }
 
-static inline void hvx_clamp_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 min, const _Float16 max, const int num_elems) {
-    if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
+static inline void hvx_clamp_scalar_f16(uint8_t * restrict dst, const uint8_t * restrict src, const _Float16 min, const _Float16 max, const цяло num_elems) {
+    ако (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
         hvx_clamp_scalar_f16_aa(dst, src, min, max, num_elems);
-    } else if (hex_is_aligned((void *) dst, 128)) {
+    } иначе ако (hex_is_aligned((void *) dst, 128)) {
         hvx_clamp_scalar_f16_au(dst, src, min, max, num_elems);
-    } else if (hex_is_aligned((void *) src, 128)) {
+    } иначе ако (hex_is_aligned((void *) src, 128)) {
         hvx_clamp_scalar_f16_ua(dst, src, min, max, num_elems);
-    } else {
+    } иначе {
         hvx_clamp_scalar_f16_uu(dst, src, min, max, num_elems);
     }
 }
@@ -550,14 +550,14 @@ static inline void hvx_leaky_relu_scalar_f32_uu(uint8_t * restrict dst, const ui
     hvx_scalar_loop_body(HVX_UVector, HVX_UVector, sizeof(float), hvx_vec_store_u, HVX_OP_LEAKY_RELU_SCALAR);
 }
 
-static inline void hvx_leaky_relu_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float ns, const int num_elems) {
-    if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
+static inline void hvx_leaky_relu_scalar_f32(uint8_t * restrict dst, const uint8_t * restrict src, const float ns, const цяло num_elems) {
+    ако (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {
         hvx_leaky_relu_scalar_f32_aa(dst, src, ns, num_elems);
-    } else if (hex_is_aligned((void *) dst, 128)) {
+    } иначе ако (hex_is_aligned((void *) dst, 128)) {
         hvx_leaky_relu_scalar_f32_au(dst, src, ns, num_elems);
-    } else if (hex_is_aligned((void *) src, 128)) {
+    } иначе ако (hex_is_aligned((void *) src, 128)) {
         hvx_leaky_relu_scalar_f32_ua(dst, src, ns, num_elems);
-    } else {
+    } иначе {
         hvx_leaky_relu_scalar_f32_uu(dst, src, ns, num_elems);
     }
 }
@@ -581,10 +581,10 @@ static inline void hvx_abs_f32_aa(uint8_t * restrict dst, const uint8_t * restri
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    за (; i < nvec; i++) {
         vdst[i] = hvx_vec_abs_f32(vsrc[i]);
     }
-    if (nloe) {
+    ако (nloe) {
         HVX_Vector v = hvx_vec_abs_f32(vsrc[i]);
         hvx_vec_store_a((void *) &vdst[i], nloe * elem_size, v);
     }
@@ -603,14 +603,14 @@ static inline void hvx_abs_f32_aa(uint8_t * restrict dst, const uint8_t * restri
         uint32_t i = 0;                                                    \
                                                                            \
         _Pragma("unroll(4)")                                               \
-        for (; i < nvec; i++) {                                            \
+        за (; i < nvec; i++) {                                            \
             vdst[i] = hvx_vec_abs_f16(vsrc[i]);                            \
         }                                                                  \
-        if (nloe) {                                                        \
+        ако (nloe) {                                                        \
             HVX_Vector v = hvx_vec_abs_f16(vsrc[i]);                       \
             vec_store((void *) &vdst[i], nloe * elem_size, v);             \
         }                                                                  \
-    } while(0)
+    } докато(0)
 
 static inline void hvx_abs_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
@@ -633,16 +633,16 @@ static inline void hvx_abs_f16_uu(uint8_t * restrict dst, const uint8_t * restri
 }
 
 static inline void hvx_abs_f16(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t num_elems) {
-    if (hex_is_aligned((void *) dst, 128)) {
-        if (hex_is_aligned((void *) src, 128)) {
+    ако (hex_is_aligned((void *) dst, 128)) {
+        ако (hex_is_aligned((void *) src, 128)) {
             hvx_abs_f16_aa(dst, src, num_elems);
-        } else {
+        } иначе {
             hvx_abs_f16_au(dst, src, num_elems);
         }
-    } else {
-        if (hex_is_aligned((void *) src, 128)) {
+    } иначе {
+        ако (hex_is_aligned((void *) src, 128)) {
             hvx_abs_f16_ua(dst, src, num_elems);
-        } else {
+        } иначе {
             hvx_abs_f16_uu(dst, src, num_elems);
         }
     }
@@ -667,10 +667,10 @@ static inline void hvx_step_f32_aa(uint8_t * restrict dst, const uint8_t * restr
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    за (; i < nvec; i++) {
         vdst[i] = hvx_vec_step_f32(vsrc[i]);
     }
-    if (nloe) {
+    ако (nloe) {
         HVX_Vector v = hvx_vec_step_f32(vsrc[i]);
         hvx_vec_store_a((void *) &vdst[i], nloe * elem_size, v);
     }
@@ -691,10 +691,10 @@ static inline void hvx_step_f16_aa(uint8_t * restrict dst, const uint8_t * restr
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    за (; i < nvec; i++) {
         vdst[i] = hvx_vec_step_f16(vsrc[i]);
     }
-    if (nloe) {
+    ако (nloe) {
         HVX_Vector v = hvx_vec_step_f16(vsrc[i]);
         hvx_vec_store_a((void *) &vdst[i], nloe * elem_size, v);
     }
@@ -717,14 +717,14 @@ static inline void hvx_step_f16_aa(uint8_t * restrict dst, const uint8_t * restr
         uint32_t i = 0;                                                    \
                                                                            \
         _Pragma("unroll(4)")                                               \
-        for (; i < nvec; i++) {                                            \
+        за (; i < nvec; i++) {                                            \
             vdst[i] = HVX_OP_MUL_F32(vsrc[i], vsrc[i]);                    \
         }                                                                  \
-        if (nloe) {                                                        \
+        ако (nloe) {                                                        \
             HVX_Vector v = HVX_OP_MUL_F32(vsrc[i], vsrc[i]);               \
             vec_store((void *) &vdst[i], nloe * elem_size, v);             \
         }                                                                  \
-    } while(0)
+    } докато(0)
 
 static inline void hvx_sqr_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
@@ -747,16 +747,16 @@ static inline void hvx_sqr_f32_uu(uint8_t * restrict dst, const uint8_t * restri
 }
 
 static inline void hvx_sqr_f32(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t num_elems) {
-    if (hex_is_aligned((void *) dst, 128)) {
-        if (hex_is_aligned((void *) src, 128)) {
+    ако (hex_is_aligned((void *) dst, 128)) {
+        ако (hex_is_aligned((void *) src, 128)) {
             hvx_sqr_f32_aa(dst, src, num_elems);
-        } else {
+        } иначе {
             hvx_sqr_f32_au(dst, src, num_elems);
         }
-    } else {
-        if (hex_is_aligned((void *) src, 128)) {
+    } иначе {
+        ако (hex_is_aligned((void *) src, 128)) {
             hvx_sqr_f32_ua(dst, src, num_elems);
-        } else {
+        } иначе {
             hvx_sqr_f32_uu(dst, src, num_elems);
         }
     }
@@ -775,14 +775,14 @@ static inline void hvx_sqr_f32(uint8_t * restrict dst, const uint8_t * restrict 
         uint32_t i = 0;                                                    \
                                                                            \
         _Pragma("unroll(4)")                                               \
-        for (; i < nvec; i++) {                                            \
+        за (; i < nvec; i++) {                                            \
             vdst[i] = HVX_OP_MUL_F16(vsrc[i], vsrc[i]);                    \
         }                                                                  \
-        if (nloe) {                                                        \
+        ако (nloe) {                                                        \
             HVX_Vector v = HVX_OP_MUL_F16(vsrc[i], vsrc[i]);               \
             vec_store((void *) &vdst[i], nloe * elem_size, v);             \
         }                                                                  \
-    } while(0)
+    } докато(0)
 
 static inline void hvx_sqr_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
@@ -805,16 +805,16 @@ static inline void hvx_sqr_f16_uu(uint8_t * restrict dst, const uint8_t * restri
 }
 
 static inline void hvx_sqr_f16(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t num_elems) {
-    if (hex_is_aligned((void *) dst, 128)) {
-        if (hex_is_aligned((void *) src, 128)) {
+    ако (hex_is_aligned((void *) dst, 128)) {
+        ако (hex_is_aligned((void *) src, 128)) {
             hvx_sqr_f16_aa(dst, src, num_elems);
-        } else {
+        } иначе {
             hvx_sqr_f16_au(dst, src, num_elems);
         }
-    } else {
-        if (hex_is_aligned((void *) src, 128)) {
+    } иначе {
+        ако (hex_is_aligned((void *) src, 128)) {
             hvx_sqr_f16_ua(dst, src, num_elems);
-        } else {
+        } иначе {
             hvx_sqr_f16_uu(dst, src, num_elems);
         }
     }

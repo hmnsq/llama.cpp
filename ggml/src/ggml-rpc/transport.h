@@ -26,8 +26,8 @@ struct socket_t {
     void update_caps(const uint8_t * remote_caps);
     const char * transport_name() const;
 
-    static socket_ptr create_server(const char * host, int port);
-    static socket_ptr connect(const char * host, int port);
+    static socket_ptr create_server(const char * host, цяло port);
+    static socket_ptr connect(const char * host, цяло port);
 
 private:
     struct impl;

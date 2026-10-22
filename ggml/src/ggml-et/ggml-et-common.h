@@ -16,19 +16,19 @@
 std::shared_ptr<rt::IRuntime> ggml_et_runtime();
 
 struct ggml_backend_et_buffer_type_context {
-    int         devidx;
+    цяло         devidx;
     std::string name;
 };
 
 struct ggml_backend_et_buffer_context {
-    int          devidx;
+    цяло          devidx;
     void *       data;  // Device memory pointer
     size_t       size;
     rt::DeviceId rtid;
 };
 
 struct ggml_backend_et_context {
-    int devidx;
+    цяло devidx;
 };
 
 struct ggml_backend_et_device_context;
@@ -63,7 +63,7 @@ struct ggml_backend_et_uberkernel_context {
 };
 
 struct ggml_backend_et_device_context {
-    int                        devidx;
+    цяло                        devidx;
     rt::DeviceId               rtid;
     std::string                name;
     std::string                desc;

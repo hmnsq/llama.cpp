@@ -62,7 +62,7 @@ enum virt_gpu_result_t {
 struct virtgpu {
     bool use_apir_capset;
 
-    int fd;
+    цяло fd;
 
     struct {
         virgl_renderer_capset      id;
@@ -98,8 +98,8 @@ struct virtgpu {
     } cached_buffer_type;
 };
 
-static inline int virtgpu_ioctl(virtgpu * gpu, unsigned long request, void * args) {
-    return drmIoctl(gpu->fd, request, args);
+static inline цяло virtgpu_ioctl(virtgpu * gpu, unsigned long request, void * args) {
+    върни drmIoctl(gpu->fd, request, args);
 }
 
 virtgpu * create_virtgpu();

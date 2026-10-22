@@ -29,7 +29,7 @@ struct ggml_et_unary_params {
 // NEG: dst = -x  (zero - x)
 static inline void vec_neg(float * dst, const float * src, int32_t n) {
     float zero = 0.0f;
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "fbc.ps  f10, %[z]\n"
             "flw.ps  f11, %[x]\n"
@@ -45,7 +45,7 @@ static inline void vec_neg(float * dst, const float * src, int32_t n) {
 // Uses: negate then fmax.ps
 static inline void vec_abs(float * dst, const float * src, int32_t n) {
     float zero = 0.0f;
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "fbc.ps  f10, %[z]\n"
             "flw.ps  f11, %[x]\n"
@@ -61,7 +61,7 @@ static inline void vec_abs(float * dst, const float * src, int32_t n) {
 // RELU: dst = max(0, x)
 static inline void vec_relu(float * dst, const float * src, int32_t n) {
     float zero = 0.0f;
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "fbc.ps  f10, %[z]\n"
             "flw.ps  f11, %[x]\n"
@@ -77,14 +77,14 @@ static inline void vec_relu(float * dst, const float * src, int32_t n) {
 // Trick: relu(x) then frcp gives inf for 0 and finite for >0, but simpler:
 // step(x) = min(1, relu(x) * huge) ... too fragile.  Scalar is fine for step/sgn.
 static inline void vec_step(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+    за (int32_t i = 0; i < n; i++) {
         dst[i] = (src[i] > 0.0f) ? 1.0f : 0.0f;
     }
 }
 
 // SGN: dst = sign(x) = x>0 ? 1 : (x<0 ? -1 : 0)
 static inline void vec_sgn(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+    за (int32_t i = 0; i < n; i++) {
         dst[i] = (src[i] > 0.0f) ? 1.0f : ((src[i] < 0.0f) ? -1.0f : 0.0f);
     }
 }
@@ -93,7 +93,7 @@ static inline void vec_sgn(float * dst, const float * src, int32_t n) {
 // fexp.ps computes 2^x, so feed x * log2(e)
 static inline void vec_exp(float * dst, const float * src, int32_t n) {
     float log2e = 1.4426950408889634f;
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f11, %[l2e]\n"
@@ -110,7 +110,7 @@ static inline void vec_exp(float * dst, const float * src, int32_t n) {
 static inline void vec_expm1(float * dst, const float * src, int32_t n) {
     float log2e = 1.4426950408889634f;
     float one   = 1.0f;
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f11, %[l2e]\n"
@@ -131,7 +131,7 @@ static inline void vec_sigmoid(float * dst, const float * src, int32_t n) {
     float zero  = 0.0f;
     float one   = 1.0f;
     float log2e = 1.4426950408889634f;
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[z]\n"
@@ -156,7 +156,7 @@ static inline void vec_tanh(float * dst, const float * src, int32_t n) {
     float one       = 1.0f;
     float two       = 2.0f;
     float two_log2e = 2.8853900817779268f;  // 2 * log2(e)
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[one]\n"
@@ -182,7 +182,7 @@ static inline void vec_silu(float * dst, const float * src, int32_t n) {
     float zero  = 0.0f;
     float one   = 1.0f;
     float log2e = 1.4426950408889634f;
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[z]\n"
@@ -212,7 +212,7 @@ static inline void vec_elu(float * dst, const float * src, int32_t n) {
     float log2e = 1.4426950408889634f;
     float one   = 1.0f;
     // Compute exp(x)-1 vectorized, then fixup positive elements
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f11, %[l2e]\n"
@@ -225,8 +225,8 @@ static inline void vec_elu(float * dst, const float * src, int32_t n) {
             : [x] "m"(*(const float (*)[8]) & src[i]), [l2e] "m"(log2e), [one] "m"(one)
             : "f10", "f11", "f12", "f13", "f14");
         // Fixup: for x > 0, dst = x
-        for (int32_t j = 0; j < 8 && (i + j) < n; j++) {
-            if (src[i + j] > 0.0f) {
+        за (int32_t j = 0; j < 8 && (i + j) < n; j++) {
+            ако (src[i + j] > 0.0f) {
                 dst[i + j] = src[i + j];
             }
         }
@@ -242,7 +242,7 @@ static inline void vec_gelu(float * dst, const float * src, int32_t n) {
     float coef_a    = 0.044715f;
     float sqrt2pi   = 0.79788456080286535587989211986876f;
     float two_log2e = 2.8853900817779268f;  // 2 * log2(e)
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[one]\n"
@@ -283,7 +283,7 @@ static inline void vec_gelu_quick(float * dst, const float * src, int32_t n) {
     float one            = 1.0f;
     // -1.702 * log2(e) precomputed
     float neg_coef_log2e = -1.702f * 1.4426950408889634f;  // ~ -2.4542
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[one]\n"
@@ -306,7 +306,7 @@ static inline void vec_gelu_quick(float * dst, const float * src, int32_t n) {
 // but use et_expf for the exp(-z^2) part
 static inline void vec_gelu_erf(float * dst, const float * src, int32_t n) {
     const float SQRT_2_INV = 0.70710678118654752440084436210484f;
-    for (int32_t i = 0; i < n; i++) {
+    за (int32_t i = 0; i < n; i++) {
         float x  = src[i];
         float z  = x * SQRT_2_INV;
         float az = z < 0.0f ? -z : z;
@@ -332,7 +332,7 @@ static inline void vec_hardsigmoid(float * dst, const float * src, int32_t n) {
     float one   = 1.0f;
     float three = 3.0f;
     float inv6  = 0.16666666666666666f;  // 1/6
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[z]\n"
@@ -356,7 +356,7 @@ static inline void vec_hardswish(float * dst, const float * src, int32_t n) {
     float one   = 1.0f;
     float three = 3.0f;
     float inv6  = 0.16666666666666666f;
-    for (int32_t i = 0; i < n; i += 8) {
+    за (int32_t i = 0; i < n; i += 8) {
         __asm__ volatile(
             "flw.ps  f10, %[x]\n"
             "fbc.ps  f20, %[z]\n"
@@ -377,7 +377,7 @@ static inline void vec_hardswish(float * dst, const float * src, int32_t n) {
 
 // FLOOR: largest integer <= x
 static inline void vec_floor(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+    за (int32_t i = 0; i < n; i++) {
         float x = src[i];
         float t = (float) (int32_t) x;
         dst[i]  = (t > x) ? t - 1.0f : t;
@@ -386,7 +386,7 @@ static inline void vec_floor(float * dst, const float * src, int32_t n) {
 
 // CEIL: smallest integer >= x
 static inline void vec_ceil(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+    за (int32_t i = 0; i < n; i++) {
         float x = src[i];
         float t = (float) (int32_t) x;
         dst[i]  = (t < x) ? t + 1.0f : t;
@@ -395,20 +395,20 @@ static inline void vec_ceil(float * dst, const float * src, int32_t n) {
 
 // TRUNC: round towards zero
 static inline void vec_trunc(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+    за (int32_t i = 0; i < n; i++) {
         dst[i] = (float) (int32_t) src[i];
     }
 }
 
 // ROUND: round to nearest, ties to even (banker's rounding)
 static inline void vec_round(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+    за (int32_t i = 0; i < n; i++) {
         float x    = src[i];
         float t    = (float) (int32_t) x;
         float diff = x - t;
-        if (diff > 0.5f || (diff == 0.5f && ((int32_t) t & 1))) {
+        ако (diff > 0.5f || (diff == 0.5f && ((int32_t) t & 1))) {
             t += 1.0f;
-        } else if (diff < -0.5f || (diff == -0.5f && ((int32_t) t & 1))) {
+        } иначе ако (diff < -0.5f || (diff == -0.5f && ((int32_t) t & 1))) {
             t -= 1.0f;
         }
         dst[i] = t;
@@ -419,36 +419,36 @@ static inline void vec_round(float * dst, const float * src, int32_t n) {
 // For large x (>20), softplus(x) ~ x.  For moderate x, use fexp + flog.
 // Scalar fallback since flog.ps computes log2, need conversion, and overflow guard
 static inline void vec_softplus(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+    за (int32_t i = 0; i < n; i++) {
         float x = src[i];
         dst[i]  = (x > 20.0f) ? x : et_logf(1.0f + et_expf(x));
     }
 }
 
 static inline size_t tensor_bytes(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+    върни (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
 //******************************************************************************
 // Main entry point
 //******************************************************************************
 
-int entry_point(struct ggml_et_unary_params * params, void * env) {
+цяло entry_point(struct ggml_et_unary_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ако (!kernel_env) {
+        върни -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    цяло thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    цяло num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ако (thread_id < 0) {
+        върни 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ако (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        върни -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;
@@ -460,15 +460,15 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
 
     int32_t unary_op = params->unary_op;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    ако (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        върни -1;
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    ако (!src0_data || !dst_data) {
+        върни -1;
     }
 
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
@@ -502,17 +502,17 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
     const int64_t cl_per_thread = (total_cachelines + num_threads - 1) / num_threads;
     const int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cachelines) {
+    ако (cl_end > total_cachelines) {
         cl_end = total_cachelines;
     }
 
-    if (cl_start >= total_cachelines) {
-        return 0;
+    ако (cl_start >= total_cachelines) {
+        върни 0;
     }
 
     const int64_t elem_start = cl_start * elements_per_cacheline;
     int64_t       elem_end   = cl_end * elements_per_cacheline;
-    if (elem_end > total_elements) {
+    ако (elem_end > total_elements) {
         elem_end = total_elements;
     }
 
@@ -525,10 +525,10 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
     // WAIT_CACHEOPS;
     // et_barrier(ET_BARRIER_GLOBAL);
 
-    const int is_flat = s_nb1 == row_bytes && s_nb2 == s_nb1 * (size_t) ne1 && s_nb3 == s_nb2 * (size_t) ne2 &&
+    const цяло is_flat = s_nb1 == row_bytes && s_nb2 == s_nb1 * (size_t) ne1 && s_nb3 == s_nb2 * (size_t) ne2 &&
                         d_nb1 == row_bytes && d_nb2 == d_nb1 * (size_t) ne1 && d_nb3 == d_nb2 * (size_t) ne2;
 
-    if (is_flat) {
+    ако (is_flat) {
         float *       src_ptr = src0_data + elem_start;
         // evict_region_past_l2(src_ptr, 1024);
         float *       dst_ptr = dst_data + elem_start;
@@ -598,9 +598,9 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
                 vec_trunc(dst_ptr, src_ptr, count);
                 break;
             default:
-                return -1;
+                върни -1;
         }
-        return 0;
+        върни 0;
     }
 
     // Slow path: arbitrary 4D-strided view. Walk the assigned element range
@@ -608,11 +608,11 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
     // nb[1]. For each row index r, decompose into (i1,i2,i3) and add the
     // corresponding nb[*] byte offsets to the base pointers.
     int64_t e = elem_start;
-    while (e < elem_end) {
+    докато (e < elem_end) {
         int64_t row  = e / nc;
         int64_t col  = e % nc;
         int64_t take = nc - col;
-        if (take > elem_end - e) {
+        ако (take > elem_end - e) {
             take = elem_end - e;
         }
 
@@ -695,11 +695,11 @@ int entry_point(struct ggml_et_unary_params * params, void * env) {
                 vec_trunc(dst_ptr, src_ptr, count);
                 break;
             default:
-                return -1;
+                върни -1;
         }
 
         e += take;
     }
 
-    return 0;
+    върни 0;
 }

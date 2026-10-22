@@ -30,15 +30,15 @@ struct ggml_et_mul_mat_id_params {
 };
 
 // ne[i] == 1 axes are skipped: their stride is unobservable.
-static inline int ggml_tensor_is_contiguous(const struct ggml_tensor * t, int type_size) {
+static inline цяло ggml_tensor_is_contiguous(const struct ggml_tensor * t, цяло type_size) {
     int64_t expected = type_size;
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (t->ne[i] > 1 && (int64_t) t->nb[i] != expected) {
-            return 0;
+    за (цяло i = 0; i < GGML_MAX_DIMS; i++) {
+        ако (t->ne[i] > 1 && (int64_t) t->nb[i] != expected) {
+            върни 0;
         }
         expected *= t->ne[i];
     }
-    return 1;
+    върни 1;
 }
 
 #endif  // GGML_TENSOR_H

@@ -31,7 +31,7 @@ uint64_t ggml_openvino_model_fingerprint(const ggml_cgraph * cgraph,
                                          const std::string & device,
                                          bool fa,
                                          const int32_t * rope_params,
-                                         int rope_len,
+                                         цяло rope_len,
                                          uint64_t extra_cfg,
                                          const std::string & graph_signature);
 

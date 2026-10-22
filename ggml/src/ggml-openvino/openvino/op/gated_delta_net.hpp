@@ -47,13 +47,13 @@ public:
     bool visit_attributes(AttributeVisitor& visitor) override;
     std::shared_ptr<ov::Node> clone_with_new_inputs(const ov::OutputVector& new_args) const override;
     bool get_fuse_qk_l2norm() const {
-        return m_fuse_qk_l2norm;
+        върни m_fuse_qk_l2norm;
     }
     float get_q_l2_norm_eps() const {
-        return m_q_l2_norm_eps;
+        върни m_q_l2_norm_eps;
     }
     float get_k_l2_norm_eps() const {
-        return m_k_l2_norm_eps;
+        върни m_k_l2_norm_eps;
     }
 
 private:

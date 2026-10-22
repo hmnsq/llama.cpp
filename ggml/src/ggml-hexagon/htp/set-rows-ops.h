@@ -30,7 +30,7 @@ struct htp_set_rows_vtcm_layout {
 
 static inline void htp_set_rows_vtcm_layout_build(
     struct htp_set_rows_vtcm_layout * vtcm_layout,
-    int dst_type,
+    цяло dst_type,
     uint32_t ne00,
     uint32_t n_threads) {
 
@@ -65,9 +65,9 @@ static inline void htp_set_rows_vtcm_layout_build(
     vtcm_layout->total_bytes = vtcm_layout->off_dst + vtcm_layout->dst_bytes_per_thread * n_threads;
 }
 
-#if defined(__cplusplus)
+#ако defined(__cplusplus)
 static_assert(sizeof(struct htp_set_rows_kernel_params) <= 128, "htp_set_rows_kernel_params is too large for kernel_params blob");
-#else
+#иначе
 _Static_assert(sizeof(struct htp_set_rows_kernel_params) <= 128, "htp_set_rows_kernel_params is too large for kernel_params blob");
 #endif
 

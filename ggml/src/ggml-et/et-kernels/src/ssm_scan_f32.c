@@ -17,25 +17,25 @@ struct ggml_et_ssm_scan_params {
 };
 
 static inline float softplus_f32(float x) {
-    return x <= 20.0f ? et_logf(1.0f + et_expf(x)) : x;
+    върни x <= 20.0f ? et_logf(1.0f + et_expf(x)) : x;
 }
 
-int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
+цяло entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    ако (!kernel_env) {
+        върни -1;
     }
 
-    const int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    const int num_threads = get_num_threads(kernel_env->shire_mask);
+    const цяло thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    const цяло num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    ако (thread_id < 0) {
+        върни 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    ако (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        върни -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;
@@ -47,10 +47,10 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
     struct ggml_tensor * src6 = &params->src6;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_F32 ||
+    ако (src0->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_F32 || src2->type != GGML_TYPE_F32 ||
         src3->type != GGML_TYPE_F32 || src4->type != GGML_TYPE_F32 || src5->type != GGML_TYPE_F32 ||
         src6->type != GGML_TYPE_I32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+        върни -1;
     }
 
     const float *   s_data   = (const float *) src0->data;
@@ -62,8 +62,8 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
     const int32_t * ids      = (const int32_t *) src6->data;
     float *         dst_data = (float *) dst->data;
 
-    if (!s_data || !x_data || !dt_data || !A_data || !B_data || !C_data || !ids || !dst_data) {
-        return -1;
+    ако (!s_data || !x_data || !dt_data || !A_data || !B_data || !C_data || !ids || !dst_data) {
+        върни -1;
     }
 
     const int64_t d_state      = src0->ne[0];
@@ -75,14 +75,14 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
     const int64_t y_elems      = src1->ne[0] * src1->ne[1] * src1->ne[2] * src1->ne[3];
     const int64_t K            = params->K;
 
-    if (src0->nb[0] != sizeof(float) || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(float) ||
+    ако (src0->nb[0] != sizeof(float) || src1->nb[0] != sizeof(float) || src2->nb[0] != sizeof(float) ||
         src3->nb[0] != sizeof(float) || src4->nb[0] != sizeof(float) || src5->nb[0] != sizeof(float) ||
         src6->nb[0] != sizeof(int32_t) || dst->nb[0] != sizeof(float)) {
-        return -1;
+        върни -1;
     }
 
-    if (K < 1 || n_group <= 0 || n_head % n_group != 0) {
-        return -1;
+    ако (K < 1 || n_group <= 0 || n_head % n_group != 0) {
+        върни -1;
     }
 
     // Cache-line bundling on the dst output (1 dst float per (head, dim, token)).
@@ -105,19 +105,19 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
     const int64_t unit_begin       = (int64_t) thread_id * units_per_thread;
     int64_t       unit_end         = unit_begin + units_per_thread;
 
-    if (unit_begin >= total_units) {
-        return 0;
+    ако (unit_begin >= total_units) {
+        върни 0;
     }
 
-    if (unit_end > total_units) {
+    ако (unit_end > total_units) {
         unit_end = total_units;
     }
 
-    const int     A_broadcast = (src3->ne[0] == 1);
+    const цяло     A_broadcast = (src3->ne[0] == 1);
     const int64_t d_state_vec = (d_state / 8) * 8;  // largest multiple of 8 <= d_state
     const float   log2e_const = 1.4426950408889634f;
 
-    for (int64_t unit = unit_begin; unit < unit_end; ++unit) {
+    за (int64_t unit = unit_begin; unit < unit_end; ++unit) {
         const int64_t seq_idx       = unit / units_per_seq;
         const int64_t unit_in_seq   = unit % units_per_seq;
         const int64_t block_in_seq  = unit_in_seq / dim_chunks_per_head;
@@ -125,25 +125,25 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
         const int64_t head_begin    = block_in_seq * heads_per_block;
         int64_t       head_end      = head_begin + heads_per_block;
 
-        if (head_end > n_head) {
+        ако (head_end > n_head) {
             head_end = n_head;
         }
 
         const int64_t dim_begin = dim_chunk_idx * dim_chunk_lanes;
         int64_t       dim_end   = dim_begin + dim_chunk_lanes;
-        if (dim_end > head_dim) {
+        ако (dim_end > head_dim) {
             dim_end = head_dim;
         }
 
         const int32_t state_seq = ids[seq_idx];
 
-        for (int64_t head_idx = head_begin; head_idx < head_end; ++head_idx) {
+        за (int64_t head_idx = head_begin; head_idx < head_end; ++head_idx) {
             const int64_t group_idx = head_idx / (n_head / n_group);
 
             // A pointer for this head: contiguous over state_idx when not broadcast
             const float * A_row = (const float *) ((const char *) A_data + (size_t) head_idx * src3->nb[1]);
 
-            for (int64_t dim_idx = dim_begin; dim_idx < dim_end; ++dim_idx) {
+            за (int64_t dim_idx = dim_begin; dim_idx < dim_end; ++dim_idx) {
                 const float * state_src =
                     (const float *) ((const char *) s_data + (size_t) dim_idx * src0->nb[1] +
                                      (size_t) head_idx * src0->nb[2] + (size_t) state_seq * src0->nb[3]);
@@ -152,7 +152,7 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
                     (float *) ((char *) dst_data + (size_t) y_elems * sizeof(float) + (size_t) dim_idx * src0->nb[1] +
                                (size_t) head_idx * src0->nb[2] + (size_t) seq_idx * src0->nb[3]);
 
-                for (int64_t token_idx = 0; token_idx < n_seq_tokens; ++token_idx) {
+                за (int64_t token_idx = 0; token_idx < n_seq_tokens; ++token_idx) {
                     const float * x_ptr =
                         (const float *) ((const char *) x_data + (size_t) dim_idx * src1->nb[0] +
                                          (size_t) head_idx * src1->nb[1] + (size_t) token_idx * src1->nb[2] +
@@ -181,7 +181,7 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
                     float   sumf      = 0.0f;
                     int64_t state_idx = 0;
 
-                    if (d_state_vec > 0) {
+                    ако (d_state_vec > 0) {
                         // Save mask, enable all 8 vector lanes for the state loop.
                         unsigned long saved_mask;
                         __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
@@ -200,14 +200,14 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
                             : [xdt] "m"(x_dt), [dtl] "m"(dt_log2e)
                             : "f20", "f21", "f23");
 
-                        if (A_broadcast) {
+                        ако (A_broadcast) {
                             // dA is a per-head scalar — compute once and splat.
                             const float dA_scalar = et_expf(dt_softplus * (*A_row));
                             __asm__ volatile("fbc.ps f22, %[da]\n\t" : : [da] "m"(dA_scalar) : "f22");
                         }
 
-                        for (; state_idx < d_state_vec; state_idx += 8) {
-                            if (!A_broadcast) {
+                        за (; state_idx < d_state_vec; state_idx += 8) {
+                            ако (!A_broadcast) {
                                 // f22 = exp(dt_softplus * A[state..state+7])
                                 //     = 2^((dt_softplus * A) * log2e) via fexp.ps
                                 __asm__ volatile(
@@ -253,7 +253,7 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
                     }
 
                     // Scalar tail (d_state not a multiple of 8).
-                    for (; state_idx < d_state; ++state_idx) {
+                    за (; state_idx < d_state; ++state_idx) {
                         const float prev_state = prev_row[state_idx];
                         const float A_val      = A_broadcast ? *A_row : A_row[state_idx];
                         const float dA         = et_expf(dt_softplus * A_val);
@@ -263,10 +263,10 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
                     }
 
                     const int64_t slot = n_seq_tokens - 1 - token_idx;
-                    if (slot > 0 && slot < K) {
+                    ако (slot > 0 && slot < K) {
                         float * state_snapshot =
                             (float *) ((char *) state_dst + (size_t) slot * n_seqs * src0->nb[3]);
-                        for (int64_t i = 0; i < d_state; ++i) {
+                        за (int64_t i = 0; i < d_state; ++i) {
                             state_snapshot[i] = state_dst[i];
                         }
                     }
@@ -278,5 +278,5 @@ int entry_point(struct ggml_et_ssm_scan_params * params, void * env) {
         }
     }
 
-    return 0;
+    върни 0;
 }

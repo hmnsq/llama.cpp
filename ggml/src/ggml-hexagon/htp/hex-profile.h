@@ -16,7 +16,7 @@
 #endif
 
 static inline void hex_get_pmu(uint32_t counters[]) {
-#if __HVX_ARCH__ >= 79
+#ако __HVX_ARCH__ >= 79
     asm volatile("%0 = upmucnt0" : "=r"(counters[0]));
     asm volatile("%0 = upmucnt1" : "=r"(counters[1]));
     asm volatile("%0 = upmucnt2" : "=r"(counters[2]));
@@ -25,7 +25,7 @@ static inline void hex_get_pmu(uint32_t counters[]) {
     asm volatile("%0 = upmucnt5" : "=r"(counters[5]));
     asm volatile("%0 = upmucnt6" : "=r"(counters[6]));
     asm volatile("%0 = upmucnt7" : "=r"(counters[7]));
-#else
+#иначе
     counters[0] = qurt_pmu_get(QURT_PMUCNT0);
     counters[1] = qurt_pmu_get(QURT_PMUCNT1);
     counters[2] = qurt_pmu_get(QURT_PMUCNT2);
@@ -44,7 +44,7 @@ struct htp_thread_trace {
 };
 
 static inline void htp_trace_event(struct htp_thread_trace * tr, uint16_t id, uint16_t info, uint32_t type) {
-    if (tr->count < tr->max_events) {
+    ако (tr->count < tr->max_events) {
         uint32_t i = tr->count;
         tr->events[i].id     = id;
         tr->events[i].info   = info | (type == HTP_TRACE_EVT_STOP ? 0x8000 : 0);

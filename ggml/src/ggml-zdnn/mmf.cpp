@@ -67,10 +67,10 @@ void ggml_zdnn_mul_mat_f(
     GGML_ASSERT(inputs_extra->pre_tfm_desc.dim2  == inputs->ne[1]  && "inputs_extra->pre_tfm_desc.dim2 must match inputs->ne[1]");
 
     // compute tensors are transformed on first use
-    if (!weights_extra->ztensor.is_transformed) {
+    ако (!weights_extra->ztensor.is_transformed) {
         ggml_zdnn_load_tensor(weights_extra->ztensor, weights->data);
     }
-    if (!inputs_extra->ztensor.is_transformed) {
+    ако (!inputs_extra->ztensor.is_transformed) {
         ggml_zdnn_load_tensor(inputs_extra->ztensor, inputs->data);
     }
 

@@ -41,13 +41,13 @@ struct ggml_et_get_rows_params {
 // Copy a row of F32 data from source to destination
 static void copy_f32_row(float * dst, const float * src, int64_t num_elements) {
     // Simple memcpy for F32 data - no conversion needed
-    for (int64_t i = 0; i < num_elements; i++) {
+    за (int64_t i = 0; i < num_elements; i++) {
         dst[i] = src[i];
     }
 }
 
 static void copy_f16_row(float * dst, const uint16_t * src, int64_t num_elements) {
-    for (int64_t i = 0; i < num_elements; i++) {
+    за (int64_t i = 0; i < num_elements; i++) {
         dst[i] = fp16_to_fp32(src[i]);
     }
 }
@@ -56,7 +56,7 @@ static void copy_f16_row(float * dst, const uint16_t * src, int64_t num_elements
 // using FP32 load/store instructions. They don't perform data conversion so is fine.
 // Requirement: n_bytes is a multiple of CACHE_LINE_SIZE (64 bytes)
 static void copy_row_cache_align(float * dst, const float * src, int64_t n_bytes) {
-    int num_f32_elem = n_bytes / sizeof(float);
+    цяло num_f32_elem = n_bytes / sizeof(float);
 
     // Unrolled to do an entire cache line at a time
     __asm__ volatile(
@@ -89,13 +89,13 @@ static void copy_row_cache_align(float * dst, const float * src, int64_t n_bytes
 static void copy_q4_0_row(float * dst, const block_q4_0 * src_blocks, int64_t num_elements) {
     const int64_t num_blocks = (num_elements + QK4_0 - 1) / QK4_0;
 
-    for (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
+    за (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
         const int64_t elements_in_block = (block_idx == num_blocks - 1) ? (num_elements - block_idx * QK4_0) : QK4_0;
 
         float temp_buffer[QK4_0];
         dequantize_q4_0_block(&src_blocks[block_idx], temp_buffer);
 
-        for (int64_t i = 0; i < elements_in_block; i++) {
+        за (int64_t i = 0; i < elements_in_block; i++) {
             dst[block_idx * QK4_0 + i] = temp_buffer[i];
         }
     }
@@ -106,7 +106,7 @@ static void copy_q8_0_row(float * dst, const block_q8_0 * src_blocks, int64_t nu
     // Number of Q8_0 blocks needed for this row
     const int64_t num_blocks = (num_elements + QK8_0 - 1) / QK8_0;  // Round up to handle partial blocks
 
-    for (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
+    за (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
         const int64_t elements_in_block =
             (block_idx == num_blocks - 1) ? (num_elements - block_idx * QK8_0) : QK8_0;  // Handle last partial block
 
@@ -115,7 +115,7 @@ static void copy_q8_0_row(float * dst, const block_q8_0 * src_blocks, int64_t nu
         dequantize_q8_0_block(&src_blocks[block_idx], temp_buffer);
 
         // Copy dequantized values to destination
-        for (int64_t i = 0; i < elements_in_block; i++) {
+        за (int64_t i = 0; i < elements_in_block; i++) {
             dst[block_idx * QK8_0 + i] = temp_buffer[i];
         }
     }
@@ -125,13 +125,13 @@ static void copy_q8_0_row(float * dst, const block_q8_0 * src_blocks, int64_t nu
 static void copy_q4_K_row(float * dst, const block_q4_K * src_blocks, int64_t num_elements) {
     const int64_t num_blocks = (num_elements + QK_K - 1) / QK_K;
 
-    for (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
+    за (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
         const int64_t elements_in_block = (block_idx == num_blocks - 1) ? (num_elements - block_idx * QK_K) : QK_K;
 
         float temp_buffer[QK_K];
         dequantize_q4_K_block(&src_blocks[block_idx], temp_buffer);
 
-        for (int64_t i = 0; i < elements_in_block; i++) {
+        за (int64_t i = 0; i < elements_in_block; i++) {
             dst[block_idx * QK_K + i] = temp_buffer[i];
         }
     }
@@ -153,7 +153,7 @@ static void dequantize_q8_0_block_cache_aligned(const block_q8_0 * block, float 
         "r"(vec_indices)
         : "f0", "f1");
 
-    for (int i = 0; i < 4; i++) {
+    за (цяло i = 0; i < 4; i++) {
         __asm__ volatile(
             "fgb.ps      f2, f1(%0)   \n\t"  // Loads 8 bytes from (qs_ptr + indices) and sign-extends to 32-bit int.
             "fcvt.ps.pw  f2, f2, rne  \n\t"  // Convert Int32 to Float32
@@ -197,7 +197,7 @@ static void copy_q4_0_row_cache_aligned(float * dst, const block_q4_0 * src_bloc
         "r"(gather_indices)
         : "f1", "f4");
 
-    for (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
+    за (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
         const block_q4_0 * block     = &src_blocks[block_idx];
         const uint8_t *    qs        = block->qs;
         float *            block_dst = dst + block_idx * QK4_0;
@@ -214,7 +214,7 @@ static void copy_q4_0_row_cache_aligned(float * dst, const block_q4_0 * src_bloc
             : "f0", "f3");
 
         // 4 iterations x 4 packed bytes = 16 bytes = full block -> 32 floats
-        for (int i = 0; i < 4; i++) {
+        за (цяло i = 0; i < 4; i++) {
             __asm__ volatile(
                 "fgb.ps      f2, f1(%0)    \n\t"  // Gather: [b0,b0,b1,b1,b2,b2,b3,b3]
                 "mov.m.x     m0, x0, 0xAA  \n\t"  // Odd lanes only (fills gather latency)
@@ -244,7 +244,7 @@ static void copy_q8_0_row_cache_aligned(float * dst, const block_q8_0 * src_bloc
     // Number of Q8_0 blocks needed for this row
     const int64_t num_blocks = (num_elements + QK8_0 - 1) / QK8_0;  // Round up to handle partial blocks
 
-    for (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
+    за (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
         const int64_t elements_in_block =
             (block_idx == num_blocks - 1) ? (num_elements - block_idx * QK8_0) : QK8_0;  // Handle last partial block
 
@@ -253,7 +253,7 @@ static void copy_q8_0_row_cache_aligned(float * dst, const block_q8_0 * src_bloc
         dequantize_q8_0_block_cache_aligned(&src_blocks[block_idx], temp_buffer);
 
         // Copy dequantized values to destination
-        for (int64_t i = 0; i < elements_in_block; i++) {
+        за (int64_t i = 0; i < elements_in_block; i++) {
             dst[block_idx * QK8_0 + i] = temp_buffer[i];
         }
     }
@@ -277,7 +277,7 @@ static void copy_q4_K_row_cache_aligned(float * dst, const block_q4_K * src_bloc
                      ::"r"(gather_indices)
                      : "f1");
 
-    for (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
+    за (int64_t block_idx = 0; block_idx < num_blocks; block_idx++) {
         const block_q4_K * block     = &src_blocks[block_idx];
         const uint8_t *    qs        = block->qs;
         float *            block_dst = dst + block_idx * QK_K;
@@ -285,8 +285,8 @@ static void copy_q4_K_row_cache_aligned(float * dst, const block_q4_K * src_bloc
         const float d   = fp16_to_fp32(block->d);
         const float min = fp16_to_fp32(block->dmin);
 
-        int is = 0;
-        for (int j = 0; j < QK_K; j += 64) {
+        цяло is = 0;
+        за (цяло j = 0; j < QK_K; j += 64) {
             // Extract per-group scales and mins (scalar — only 8 pairs per super-block)
             uint8_t sc, m;
             get_scale_min_k4(is + 0, block->scales, &sc, &m);
@@ -306,7 +306,7 @@ static void copy_q4_K_row_cache_aligned(float * dst, const block_q4_K * src_bloc
 
             const uint8_t * qs_lo  = qs;
             float *         dst_lo = block_dst + j;
-            for (int k = 0; k < 4; k++) {
+            за (цяло k = 0; k < 4; k++) {
                 __asm__ volatile(
                     "fgb.ps      f2, f1(%0)   \n\t"   // Gather 8 bytes, sign-extend to int32
                     "fandi.pi    f2, f2, 0xF   \n\t"  // Mask low nibble (imm10=15)
@@ -330,7 +330,7 @@ static void copy_q4_K_row_cache_aligned(float * dst, const block_q4_K * src_bloc
 
             const uint8_t * qs_hi  = qs;
             float *         dst_hi = block_dst + j + 32;
-            for (int k = 0; k < 4; k++) {
+            за (цяло k = 0; k < 4; k++) {
                 __asm__ volatile(
                     "fgb.ps      f2, f1(%0)   \n\t"   // Gather 8 bytes, sign-extend to int32
                     "fsrli.pi    f2, f2, 4     \n\t"  // Shift right 4: high nibble
@@ -356,24 +356,24 @@ static void copy_q4_K_row_cache_aligned(float * dst, const block_q4_K * src_bloc
 // Determine the number of F32 elements per work unit for a given source type.
 // For F32: 1 cacheline (16 elements)
 // For quantized types: 1 quant block
-static int64_t get_elements_per_work_unit(int type) {
+static int64_t get_elements_per_work_unit(цяло type) {
     const int64_t elements_per_cacheline = CACHE_LINE_SIZE_BYTES / sizeof(float);  // 16
     switch (type) {
         case GGML_TYPE_Q8_0:
-            return QK8_0;                   // 32 elements = 2 cachelines
+            върни QK8_0;                   // 32 elements = 2 cachelines
         case GGML_TYPE_Q4_0:
-            return QK4_0;                   // 32 elements = 2 cachelines
+            върни QK4_0;                   // 32 elements = 2 cachelines
         case GGML_TYPE_Q4_K:
-            return QK_K;                    // 256 elements = 16 cachelines
+            върни QK_K;                    // 256 elements = 16 cachelines
         default:
-            return elements_per_cacheline;  // 16 elements = 1 cacheline
+            върни elements_per_cacheline;  // 16 elements = 1 cacheline
     }
 }
 
-static int get_row_f32_mc_cacheline_aligned(struct ggml_et_get_rows_params * params, void * env) {
+static цяло get_row_f32_mc_cacheline_aligned(struct ggml_et_get_rows_params * params, void * env) {
     kernel_environment_t * kernel_env  = (kernel_environment_t *) env;
-    int                    thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int                    num_threads = get_num_threads(kernel_env->shire_mask);
+    цяло                    thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    цяло                    num_threads = get_num_threads(kernel_env->shire_mask);
 
     struct ggml_tensor * src0 = &params->src0;  // Data tensor
     struct ggml_tensor * src1 = &params->src1;  // Row indices tensor (I32)
@@ -400,7 +400,7 @@ static int get_row_f32_mc_cacheline_aligned(struct ggml_et_get_rows_params * par
     const int64_t wus_per_thread = (total_wus + num_threads - 1) / num_threads;
     const int64_t wu_start       = thread_id * wus_per_thread;
     int64_t       wu_end         = wu_start + wus_per_thread;
-    if (wu_end > total_wus) {
+    ако (wu_end > total_wus) {
         wu_end = total_wus;
     }
 
@@ -409,7 +409,7 @@ static int get_row_f32_mc_cacheline_aligned(struct ggml_et_get_rows_params * par
     float *   dst_data  = (float *) dst->data;
 
     int64_t wu = wu_start;
-    while (wu < wu_end) {
+    докато (wu < wu_end) {
         // Determine which row this work unit belongs to and offset within row
         const int64_t row_idx   = wu / wus_per_row;
         const int64_t wu_in_row = wu % wus_per_row;
@@ -417,7 +417,7 @@ static int get_row_f32_mc_cacheline_aligned(struct ggml_et_get_rows_params * par
         // How many work units to process in this row (batch contiguous WUs in same row)
         int64_t wus_remaining_in_row = wus_per_row - wu_in_row;
         int64_t wus_to_process       = wu_end - wu;
-        if (wus_remaining_in_row < wus_to_process) {
+        ако (wus_remaining_in_row < wus_to_process) {
             wus_to_process = wus_remaining_in_row;
         }
 
@@ -432,8 +432,8 @@ static int get_row_f32_mc_cacheline_aligned(struct ggml_et_get_rows_params * par
         const int64_t index_offset = i13_idx * ne12 * ne11 * ne10 + i12_idx * ne11 * ne10 + i11_idx * ne10 + i10_idx;
         const int32_t row_index    = src1_data[index_offset];
 
-        if (row_index < 0 || row_index >= ne01) {
-            return -1;  // Index out of bounds
+        ако (row_index < 0 || row_index >= ne01) {
+            върни -1;  // Index out of bounds
         }
 
         const int64_t batch_offset =
@@ -444,30 +444,30 @@ static int get_row_f32_mc_cacheline_aligned(struct ggml_et_get_rows_params * par
 
         float * dst_row = dst_data + row_idx * ne00 + elem_offset_in_row;
 
-        if (src0->type == GGML_TYPE_F32) {
+        ако (src0->type == GGML_TYPE_F32) {
             // F32 source: direct copy of cacheline-aligned chunk
             const float * src_row = (const float *) src0_data + row_index * ne00 + batch_offset + elem_offset_in_row;
             copy_row_cache_align(dst_row, src_row, num_elements * sizeof(float));
-        } else if (src0->type == GGML_TYPE_F16) {
+        } иначе ако (src0->type == GGML_TYPE_F16) {
             // F16 source: scalar conversion over a destination-aligned write chunk.
             const uint16_t * src_row =
                 (const uint16_t *) src0_data + row_index * ne00 + batch_offset + elem_offset_in_row;
             copy_f16_row(dst_row, src_row, num_elements);
-        } else if (src0->type == GGML_TYPE_Q8_0) {
+        } иначе ако (src0->type == GGML_TYPE_Q8_0) {
             // Q8_0 source: dequantize work-unit-aligned blocks
             const int64_t      blocks_per_row   = (ne00 + QK8_0 - 1) / QK8_0;
             const int64_t      src_block_offset = (row_index * blocks_per_row) + (batch_offset / ne00) * blocks_per_row;
             const int64_t      block_start      = elem_offset_in_row / QK8_0;
             const block_q8_0 * src_blocks       = (const block_q8_0 *) src0_data + src_block_offset + block_start;
             copy_q8_0_row_cache_aligned(dst_row, src_blocks, num_elements);
-        } else if (src0->type == GGML_TYPE_Q4_0) {
+        } иначе ако (src0->type == GGML_TYPE_Q4_0) {
             // Q4_0 source: dequantize work-unit-aligned blocks
             const int64_t      blocks_per_row   = (ne00 + QK4_0 - 1) / QK4_0;
             const int64_t      src_block_offset = (row_index * blocks_per_row) + (batch_offset / ne00) * blocks_per_row;
             const int64_t      block_start      = elem_offset_in_row / QK4_0;
             const block_q4_0 * src_blocks       = (const block_q4_0 *) src0_data + src_block_offset + block_start;
             copy_q4_0_row_cache_aligned(dst_row, src_blocks, num_elements);
-        } else if (src0->type == GGML_TYPE_Q4_K) {
+        } иначе ако (src0->type == GGML_TYPE_Q4_K) {
             // Q4_K source: dequantize work-unit-aligned blocks
             const int64_t      blocks_per_row   = (ne00 + QK_K - 1) / QK_K;
             const int64_t      src_block_offset = (row_index * blocks_per_row) + (batch_offset / ne00) * blocks_per_row;
@@ -479,17 +479,17 @@ static int get_row_f32_mc_cacheline_aligned(struct ggml_et_get_rows_params * par
         wu += wus_to_process;
     }
 
-    return 0;
+    върни 0;
 }
 
 static inline size_t tensor_bytes(const struct ggml_tensor * t) {
-    return (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
+    върни (size_t) t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 }
 
-int entry_point(struct ggml_et_get_rows_params * params, void * env) {
+цяло entry_point(struct ggml_et_get_rows_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
-    if (!kernel_env) {
-        return -1;
+    ако (!kernel_env) {
+        върни -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;  // Data tensor (F32, Q4_0, Q8_0, or Q4_K)
@@ -497,32 +497,32 @@ int entry_point(struct ggml_et_get_rows_params * params, void * env) {
     struct ggml_tensor * dst  = &params->dst;   // Output tensor (F32)
 
     // Fast path - we know how to deal with them multi-core
-    if ((src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16 || src0->type == GGML_TYPE_Q8_0 ||
+    ако ((src0->type == GGML_TYPE_F32 || src0->type == GGML_TYPE_F16 || src0->type == GGML_TYPE_Q8_0 ||
          src0->type == GGML_TYPE_Q4_0 || src0->type == GGML_TYPE_Q4_K) &&
         src1->type == GGML_TYPE_I32 && dst->type == GGML_TYPE_F32 && dst->ne[0] % CACHE_ELEMENTS(sizeof(float)) == 0) {
-        return get_row_f32_mc_cacheline_aligned(params, env);
+        върни get_row_f32_mc_cacheline_aligned(params, env);
     }
 
-    int thread_id = get_relative_thread_id(kernel_env->shire_mask);
-    if (thread_id < 0) {
-        return 0;
+    цяло thread_id = get_relative_thread_id(kernel_env->shire_mask);
+    ако (thread_id < 0) {
+        върни 0;
     }
 
-    if (thread_id != 0) {
-        return 0;
+    ако (thread_id != 0) {
+        върни 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;  // Invalid pointer
+    ако (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        върни -1;  // Invalid pointer
     }
 
-    if (dst->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I32) {
-        return -1;  // Invalid output or index type
+    ако (dst->type != GGML_TYPE_F32 || src1->type != GGML_TYPE_I32) {
+        върни -1;  // Invalid output or index type
     }
 
-    if (src0->type != GGML_TYPE_F32 && src0->type != GGML_TYPE_F16 && src0->type != GGML_TYPE_Q8_0 &&
+    ако (src0->type != GGML_TYPE_F32 && src0->type != GGML_TYPE_F16 && src0->type != GGML_TYPE_Q8_0 &&
         src0->type != GGML_TYPE_Q4_0 && src0->type != GGML_TYPE_Q4_K) {
-        return -1;  // Unsupported input type
+        върни -1;  // Unsupported input type
     }
 
     void *    src0_data = src0->data;
@@ -534,8 +534,8 @@ int entry_point(struct ggml_et_get_rows_params * params, void * env) {
     evict_region_past_l2(dst_data, tensor_bytes(dst));
 #endif
 
-    if (!src0_data || !src1_data || !dst_data) {
-        return -1;  // Null data pointer
+    ако (!src0_data || !src1_data || !dst_data) {
+        върни -1;  // Null data pointer
     }
 
     const int64_t ne00 = src0->ne[0];  // Source columns (row width)
@@ -554,7 +554,7 @@ int entry_point(struct ggml_et_get_rows_params * params, void * env) {
 #endif
     // Naive single-threaded implementation - process all rows sequentially
     // XXX: Do we really need a single-threaded implementation?
-    for (int64_t i = 0; i < total_rows_to_extract; i++) {
+    за (int64_t i = 0; i < total_rows_to_extract; i++) {
         // Calculate multi-dimensional index for the current output position
         const int64_t i13_idx = i / (ne12 * ne11 * ne10);
         const int64_t i12_idx = (i - i13_idx * ne12 * ne11 * ne10) / (ne11 * ne10);
@@ -565,8 +565,8 @@ int entry_point(struct ggml_et_get_rows_params * params, void * env) {
         const int64_t index_offset = i13_idx * ne12 * ne11 * ne10 + i12_idx * ne11 * ne10 + i11_idx * ne10 + i10_idx;
         const int32_t row_index    = src1_data[index_offset];
 
-        if (row_index < 0 || row_index >= ne01) {
-            return -1;  // Index out of bounds
+        ако (row_index < 0 || row_index >= ne01) {
+            върни -1;  // Index out of bounds
         }
 
         const int64_t batch_offset =
@@ -574,31 +574,31 @@ int entry_point(struct ggml_et_get_rows_params * params, void * env) {
 
         const int64_t dst_offset = i;
 
-        if (src0->type == GGML_TYPE_F32) {
+        ако (src0->type == GGML_TYPE_F32) {
             // F32 source: direct copy
             const float * src_row = (const float *) src0_data + row_index * ne00 + batch_offset;
             float *       dst_row = dst_data + dst_offset * ne00;
             copy_f32_row(dst_row, src_row, ne00);
-        } else if (src0->type == GGML_TYPE_F16) {
+        } иначе ако (src0->type == GGML_TYPE_F16) {
             // F16 source: scalar conversion
             const uint16_t * src_row = (const uint16_t *) src0_data + row_index * ne00 + batch_offset;
             float *          dst_row = dst_data + dst_offset * ne00;
             copy_f16_row(dst_row, src_row, ne00);
-        } else if (src0->type == GGML_TYPE_Q8_0) {
+        } иначе ако (src0->type == GGML_TYPE_Q8_0) {
             // Q8_0 source: dequantize while copying
             const int64_t      blocks_per_row   = (ne00 + QK8_0 - 1) / QK8_0;
             const int64_t      src_block_offset = (row_index * blocks_per_row) + (batch_offset / ne00) * blocks_per_row;
             const block_q8_0 * src_blocks       = (const block_q8_0 *) src0_data + src_block_offset;
             float *            dst_row          = dst_data + dst_offset * ne00;
             copy_q8_0_row(dst_row, src_blocks, ne00);
-        } else if (src0->type == GGML_TYPE_Q4_0) {
+        } иначе ако (src0->type == GGML_TYPE_Q4_0) {
             // Q4_0 source: dequantize while copying
             const int64_t      blocks_per_row   = (ne00 + QK4_0 - 1) / QK4_0;
             const int64_t      src_block_offset = (row_index * blocks_per_row) + (batch_offset / ne00) * blocks_per_row;
             const block_q4_0 * src_blocks       = (const block_q4_0 *) src0_data + src_block_offset;
             float *            dst_row          = dst_data + dst_offset * ne00;
             copy_q4_0_row(dst_row, src_blocks, ne00);
-        } else if (src0->type == GGML_TYPE_Q4_K) {
+        } иначе ако (src0->type == GGML_TYPE_Q4_K) {
             // Q4_K source: dequantize while copying
             const int64_t      blocks_per_row   = (ne00 + QK_K - 1) / QK_K;
             const int64_t      src_block_offset = (row_index * blocks_per_row) + (batch_offset / ne00) * blocks_per_row;
@@ -608,5 +608,5 @@ int entry_point(struct ggml_et_get_rows_params * params, void * env) {
         }
     }
 
-    return 0;
+    върни 0;
 }

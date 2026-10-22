@@ -7,11 +7,11 @@
 static inline uint8_t *vtcm_seq_alloc(uint8_t **vtcm_ptr, size_t size) {
     uint8_t *p = *vtcm_ptr;
     *vtcm_ptr += size;
-    return p;
+    върни p;
 }
 
-#define VTCM_LAYOUT_ALLOC(off, field, sz) do { (L)->field = (off); (off) += (sz); } while (0)
-#define VTCM_LAYOUT_ALLOC_OPTIONAL(off, field, sz, cond) do { if (cond) { VTCM_LAYOUT_ALLOC(off, field, sz); } else { (L)->field = 0; } } while (0)
+#define VTCM_LAYOUT_ALLOC(off, field, sz) do { (L)->field = (off); (off) += (sz); } докато (0)
+#define VTCM_LAYOUT_ALLOC_OPTIONAL(off, field, sz, cond) do { ако (cond) { VTCM_LAYOUT_ALLOC(off, field, sz); } иначе { (L)->field = 0; } } докато (0)
 
 #define VTCM_LAYOUT_PTR(type, base, offset) ((type *)((uint8_t *)(base) + (offset)))
 #define VTCM_LAYOUT_PTR_OPTIONAL(type, base, offset, cond) ((cond) ? VTCM_LAYOUT_PTR(type, base, offset) : NULL)

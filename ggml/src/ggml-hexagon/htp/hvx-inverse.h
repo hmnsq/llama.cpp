@@ -28,7 +28,7 @@ static inline HVX_Vector hvx_vec_recip_xp1_O3_unsigned(HVX_Vector vx) {
     p = Q6_Vh_vmpa_VhVhVuhPuh_sat(p, vx, 0x2E49406159097A14ull);
     p = Q6_Vh_vmps_VhVhVuhPuh_sat(p, vx, 0x5DF66B7177AB7FC2ull);
     p = Q6_Vh_vmpa_VhVhVuhPuh_sat(p, vx, 0x79E57D427F4E8001ull);
-    return p;  // signed result, 14 fractional bits
+    върни p;  // signed result, 14 fractional bits
 }
 
 // Find reciprocal of fp16.
@@ -83,7 +83,7 @@ static inline HVX_Vector hvx_vec_inverse_f16(HVX_Vector vals) {
     recip            = Q6_V_vmux_QVV(is_small, Q6_Vh_vsplat_R(0x7bff), recip);
     // add sign back
     recip            = Q6_V_vandor_VQR(recip, is_neg, 0x80008000);
-    return recip;
+    върни recip;
 }
 
 static inline HVX_Vector hvx_vec_inverse_f32(HVX_Vector v_sf) {
@@ -103,7 +103,7 @@ static inline HVX_Vector hvx_vec_inverse_f32(HVX_Vector v_sf) {
     r_qf = Q6_Vqf32_vmpy_Vqf32Vqf32(
         r_qf, Q6_Vqf32_vsub_VsfVsf(two_sf, Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(Q6_Vsf_equals_Vqf32(r_qf), v_sf))));
 
-    return Q6_Vsf_equals_Vqf32(r_qf);
+    върни Q6_Vsf_equals_Vqf32(r_qf);
 }
 
 static inline HVX_Vector hvx_vec_inverse_f32_guard(HVX_Vector v_sf, HVX_Vector nan_inf_mask) {
@@ -112,7 +112,7 @@ static inline HVX_Vector hvx_vec_inverse_f32_guard(HVX_Vector v_sf, HVX_Vector n
     HVX_Vector     masked_out = Q6_V_vand_VV(out, nan_inf_mask);
     const HVX_VectorPred pred = Q6_Q_vcmp_eq_VwVw(nan_inf_mask, masked_out);
 
-    return Q6_V_vmux_QVV(pred, Q6_V_vzero(), out);
+    върни Q6_V_vmux_QVV(pred, Q6_V_vzero(), out);
 }
 
 #define hvx_inverse_f32_loop_body(dst_type, src_type, vec_store)             \
@@ -128,14 +128,14 @@ static inline HVX_Vector hvx_vec_inverse_f32_guard(HVX_Vector v_sf, HVX_Vector n
         uint32_t i = 0;                                                      \
                                                                              \
         _Pragma("unroll(4)")                                                 \
-        for (; i < nvec; i++) {                                              \
+        за (; i < nvec; i++) {                                              \
              vdst[i] = hvx_vec_inverse_f32_guard(vsrc[i], nan_inf_mask);     \
         }                                                                    \
-        if (nloe) {                                                          \
+        ако (nloe) {                                                          \
             HVX_Vector v = hvx_vec_inverse_f32_guard(vsrc[i], nan_inf_mask); \
             vec_store((void *) &vdst[i], nloe * SIZEOF_FP32, v);             \
         }                                                                    \
-    } while(0)
+    } докато(0)
 
 static inline HVX_Vector hvx_vec_inverse_f16_guard(HVX_Vector v_sf, HVX_Vector nan_inf_mask) {
     HVX_Vector out = hvx_vec_inverse_f16(v_sf);
@@ -143,7 +143,7 @@ static inline HVX_Vector hvx_vec_inverse_f16_guard(HVX_Vector v_sf, HVX_Vector n
     HVX_Vector     masked_out = Q6_V_vand_VV(out, nan_inf_mask);
     const HVX_VectorPred pred = Q6_Q_vcmp_eq_VhVh(nan_inf_mask, masked_out);
 
-    return Q6_V_vmux_QVV(pred, Q6_V_vzero(), out);
+    върни Q6_V_vmux_QVV(pred, Q6_V_vzero(), out);
 }
 
 #define hvx_inverse_f16_loop_body(dst_type, src_type, vec_store)             \
@@ -159,14 +159,14 @@ static inline HVX_Vector hvx_vec_inverse_f16_guard(HVX_Vector v_sf, HVX_Vector n
         uint32_t i = 0;                                                      \
                                                                              \
         _Pragma("unroll(4)")                                                 \
-        for (; i < nvec; i++) {                                              \
+        за (; i < nvec; i++) {                                              \
              vdst[i] = hvx_vec_inverse_f16_guard(vsrc[i], nan_inf_mask);     \
         }                                                                    \
-        if (nloe) {                                                          \
+        ако (nloe) {                                                          \
             HVX_Vector v = hvx_vec_inverse_f16_guard(vsrc[i], nan_inf_mask); \
             vec_store((void *) &vdst[i], nloe * SIZEOF_FP16, v);             \
         }                                                                    \
-    } while(0)
+    } докато(0)
 
 // Generic macro to define alignment permutations for an op
 #define DEFINE_HVX_INV_OP_VARIANTS(OP_NAME, OP_LOOP_BODY)                                           \
@@ -190,13 +190,13 @@ static inline void OP_NAME##_uu(uint8_t * restrict dst, const uint8_t * restrict
 // Dispatcher logic
 #define HVX_INV_DISPATCHER(OP_NAME)                                                                          \
 static inline void OP_NAME(uint8_t * restrict dst, const uint8_t * restrict src, const uint32_t num_elems) { \
-    if (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {                            \
+    ако (hex_is_aligned((void *) dst, 128) && hex_is_aligned((void *) src, 128)) {                            \
         OP_NAME##_aa(dst, src, num_elems);                                                                   \
-    } else if (hex_is_aligned((void *) dst, 128)) {                                                          \
+    } иначе ако (hex_is_aligned((void *) dst, 128)) {                                                          \
         OP_NAME##_au(dst, src, num_elems);                                                                   \
-    } else if (hex_is_aligned((void *) src, 128)) {                                                          \
+    } иначе ако (hex_is_aligned((void *) src, 128)) {                                                          \
         OP_NAME##_ua(dst, src, num_elems);                                                                   \
-    } else {                                                                                                 \
+    } иначе {                                                                                                 \
         OP_NAME##_uu(dst, src, num_elems);                                                                   \
     }                                                                                                        \
 }

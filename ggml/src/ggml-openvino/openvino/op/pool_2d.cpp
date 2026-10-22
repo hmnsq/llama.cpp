@@ -15,14 +15,14 @@ OutputVector translate_pool_2d(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
     const int32_t * params = context.get_output_op_params();
 
-    const int k0 = params[1];
-    const int k1 = params[2];
-    const int s0 = params[3];
-    const int s1 = params[4];
-    const int p0 = params[5];
-    const int p1 = params[6];
+    const цяло k0 = params[1];
+    const цяло k1 = params[2];
+    const цяло s0 = params[3];
+    const цяло s1 = params[4];
+    const цяло p0 = params[5];
+    const цяло p1 = params[6];
 
-    const int op_case = context.get_op_case();
+    const цяло op_case = context.get_op_case();
     ov::Output<Node> input = context.get_input(0);
     ov::Strides strides{static_cast<size_t>(s1), static_cast<size_t>(s0)};
     ov::Shape pads_begin{static_cast<size_t>(p1), static_cast<size_t>(p0)};
@@ -44,7 +44,7 @@ OutputVector translate_pool_2d(const NodeContext & context) {
     default:
         break;
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    върни rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

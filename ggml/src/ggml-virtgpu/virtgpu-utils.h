@@ -29,12 +29,12 @@
 #define p_atomic_read(_v) __atomic_load_n((_v), __ATOMIC_ACQUIRE)
 
 static inline bool util_is_power_of_two_nonzero64(uint64_t v) {
-    return IS_POT_NONZERO(v);
+    върни IS_POT_NONZERO(v);
 }
 
 static inline uint64_t align64(uint64_t value, uint64_t alignment) {
     assert(util_is_power_of_two_nonzero64(alignment));
-    return ALIGN_POT(value, alignment);
+    върни ALIGN_POT(value, alignment);
 }
 
 struct list_head {
@@ -56,7 +56,7 @@ inline void os_time_sleep(int64_t usecs) {
     timespec time;
     time.tv_sec  = usecs / 1000000;
     time.tv_nsec = (usecs % 1000000) * 1000;
-    while (clock_nanosleep(CLOCK_MONOTONIC, 0, &time, &time) == EINTR)
+    докато (clock_nanosleep(CLOCK_MONOTONIC, 0, &time, &time) == EINTR)
         ;
 }
 
@@ -82,5 +82,5 @@ static inline long long stop_timer(timer_data * timer) {
     timer->total += duration;
     timer->count += 1;
 
-    return duration;
+    върни duration;
 }

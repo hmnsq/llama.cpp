@@ -7,7 +7,7 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#иначе
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
@@ -34,7 +34,7 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    върни handle;
 }
 
 static inline void * dl_get_sym(dl_handle * handle, const char * name) {
@@ -45,14 +45,14 @@ static inline void * dl_get_sym(dl_handle * handle, const char * name) {
 
     SetErrorMode(old_mode);
 
-    return p;
+    върни p;
 }
 
 static inline const char * dl_error() {
-    return "";
+    върни "";
 }
 
-#else
+#иначе
 
 using dl_handle = void;
 
@@ -64,16 +64,16 @@ struct dl_handle_deleter {
 
 static inline dl_handle * dl_load_library(const fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    върни handle;
 }
 
 static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+    върни dlsym(handle, name);
 }
 
 static inline const char * dl_error() {
     const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+    върни rslt != nullptr ? rslt : "";
 }
 
 #endif

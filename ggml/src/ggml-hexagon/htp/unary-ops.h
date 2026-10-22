@@ -33,9 +33,9 @@ struct htp_unary_kernel_params {
     struct fastdiv_values div_tpr;
 };
 
-#if defined(__cplusplus)
+#ако defined(__cplusplus)
 static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
-#else
+#иначе
 _Static_assert(sizeof(struct htp_unary_kernel_params) <= 128, "htp_unary_kernel_params is too large for kernel_params blob");
 #endif
 
@@ -65,9 +65,9 @@ static inline bool htp_op_is_unary(uint32_t opcode) {
         case HTP_OP_L2_NORM:
         case HTP_OP_TRI:
         case HTP_OP_HADAMARD:
-            return true;
+            върни true;
         default:
-            return false;
+            върни false;
     }
 }
 
@@ -103,7 +103,7 @@ static inline void htp_unary_vtcm_layout_build(
     const size_t dst_row_size_aligned  = hex_round_up(dst_data_row_size,  128);
 
     size_t src1_row_size_aligned = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
+    ако (op == HTP_OP_RMS_NORM_MUL) {
         // RMS_NORM_MUL fusion is F32-only; its weight tensor is always F32.
         const size_t src1_data_row_size = ne11 * sizeof(float);
         src1_row_size_aligned = hex_round_up(src1_data_row_size, 128);
@@ -112,22 +112,22 @@ static inline void htp_unary_vtcm_layout_build(
     size_t vtcm_size_per_row = 0;
     size_t vtcm_row_per_thread = 0;
 
-    if (op == HTP_OP_RMS_NORM_MUL) {
-        if (broadcast_weight) {
+    ако (op == HTP_OP_RMS_NORM_MUL) {
+        ако (broadcast_weight) {
             size_t available_vtcm = vtcm_size;
             size_t src1_vtcm_total = n_threads * src1_row_size_aligned;
-            if (available_vtcm > src1_vtcm_total) {
+            ако (available_vtcm > src1_vtcm_total) {
                 available_vtcm -= src1_vtcm_total;
-            } else {
+            } иначе {
                 available_vtcm = 0;
             }
             vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned);
             vtcm_row_per_thread = available_vtcm / (n_threads * vtcm_size_per_row);
-        } else {
+        } иначе {
             vtcm_size_per_row = 2 * (src0_row_size_aligned + dst_row_size_aligned + src1_row_size_aligned);
             vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
         }
-    } else {
+    } иначе {
         vtcm_size_per_row   = 2 * (src0_row_size_aligned + dst_row_size_aligned);
         vtcm_row_per_thread = vtcm_size / (n_threads * vtcm_size_per_row);
     }
@@ -144,7 +144,7 @@ static inline void htp_unary_vtcm_layout_build(
     const bool is_f16 = (elem_size == sizeof(_Float16));
     uint32_t col_tile = 0;
 
-    if (vtcm_row_per_thread == 0 && !is_reduction && !is_f16) {
+    ако (vtcm_row_per_thread == 0 && !is_reduction && !is_f16) {
         const size_t per_thread_budget = vtcm_size / n_threads;
         const size_t col_tile_bytes = hex_align_down(per_thread_budget / 4, 128);
         col_tile = (uint32_t) (col_tile_bytes / elem_size);
@@ -152,25 +152,25 @@ static inline void htp_unary_vtcm_layout_build(
         L->src0_bytes = col_tile_bytes * 2;
         L->dst_bytes  = col_tile_bytes * 2;
         L->src1_bytes = 0;
-    } else {
+    } иначе {
         L->src0_bytes = src0_row_size_aligned * vtcm_row_per_thread * 2;
         L->dst_bytes  = dst_row_size_aligned * vtcm_row_per_thread * 2;
-        if (op == HTP_OP_RMS_NORM_MUL) {
-            if (broadcast_weight) {
+        ако (op == HTP_OP_RMS_NORM_MUL) {
+            ако (broadcast_weight) {
                 L->src1_bytes = src1_row_size_aligned;
-            } else {
+            } иначе {
                 L->src1_bytes = src1_row_size_aligned * vtcm_row_per_thread * 2;
             }
-        } else {
+        } иначе {
             L->src1_bytes = 0;
         }
     }
 
     L->off_src0 = 0;
-    if (op == HTP_OP_RMS_NORM_MUL) {
+    ако (op == HTP_OP_RMS_NORM_MUL) {
         L->off_src1 = L->off_src0 + L->src0_bytes * n_threads;
         L->off_dst  = L->off_src1 + L->src1_bytes * n_threads;
-    } else {
+    } иначе {
         L->off_src1 = 0;
         L->off_dst  = L->off_src0 + L->src0_bytes * n_threads;
     }
