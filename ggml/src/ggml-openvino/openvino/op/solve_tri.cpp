@@ -1,21 +1,21 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#अन्तर्भाव "../node_context.h"
+#अन्तर्भाव "../op_table.h"
+#अन्तर्भाव "../utils.h"
 
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/loop.hpp>
-#include <openvino/op/matmul.hpp>
-#include <openvino/op/scatter_update.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/subtract.hpp>
+#अन्तर्भाव <openvino/op/broadcast.hpp>
+#अन्तर्भाव <openvino/op/constant.hpp>
+#अन्तर्भाव <openvino/op/divide.hpp>
+#अन्तर्भाव <openvino/op/gather.hpp>
+#अन्तर्भाव <openvino/op/loop.hpp>
+#अन्तर्भाव <openvino/op/matmul.hpp>
+#अन्तर्भाव <openvino/op/scatter_update.hpp>
+#अन्तर्भाव <openvino/op/shape_of.hpp>
+#अन्तर्भाव <openvino/op/subtract.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+नामाकाश ov {
+नामाकाश frontend {
+नामाकाश ggml {
+नामाकाश op {
 
 // GGML SOLVE_TRI: solve Ax = B for lower-triangular A via forward substitution.
 // Currently only lower, right, non-unitriangular variant is implemented.
@@ -30,19 +30,19 @@ namespace op {
 // Key insight: A is lower-triangular and X starts as zeros, so the full matmul
 //   A_row_i @ X_partial = sum_{t<i} A[i,t]*x[t] exactly (upper triangle of A
 //   is zero; unfilled rows of X are zero).
-OutputVector translate_solve_tri(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_solve_tri(ध्रुव गाँठ_Context & context) {
+    अंक_inputs_check(context, 2, 2);
 
-    auto A = context.get_input(0);  // [B2, B1, n, n]
-    auto B = context.get_input(1);  // [B2, B1, n, k]
+    auto A = context.get_निवेश(0);  // [B2, B1, n, n]
+    auto B = context.get_निवेश(1);  // [B2, B1, n, k]
 
-    auto A_shape = context.get_input_shape(0).to_shape();
+    auto A_shape = context.get_निवेश_shape(0).to_shape();
     int64_t n = static_cast<int64_t>(A_shape[2]);
 
     // Initial X: zeros with shape of B
-    auto B_shape_node = std::make_shared<ov::op::v3::ShapeOf>(B, ov::element::i64);
+    auto B_shape_गाँठ = std::make_shared<ov::op::v3::ShapeOf>(B, ov::element::i64);
     auto zero_f32  = ov::op::v0::Constant::create(ov::element::f32, {}, {0.0f});
-    auto X_init    = std::make_shared<ov::op::v3::Broadcast>(zero_f32, B_shape_node);
+    auto X_init    = std::make_shared<ov::op::v3::Broadcast>(zero_f32, B_shape_गाँठ);
 
     // --- Loop body parameters ---
     // body_iter: iteration counter injected by the Loop op (i64, shape {1})
@@ -63,7 +63,7 @@ OutputVector translate_solve_tri(const NodeContext & context) {
 
     // sum_i    = A_row_i @ X       [B2, B1, 1, k]
     // (lower-tri zeros + unfilled-X zeros make this equal to the partial sum)
-    auto sum_i = std::make_shared<ov::op::v0::MatMul>(A_row_i, body_X, false, false);
+    auto sum_i = std::make_shared<ov::op::v0::MatMul>(A_row_i, body_X, असत्य, असत्य);
 
     // diag_i   = A[..., i, i]      [B2, B1, 1, 1]
     auto diag_i = std::make_shared<ov::op::v8::Gather>(A_row_i, body_iter, c_axis3);
@@ -75,31 +75,31 @@ OutputVector translate_solve_tri(const NodeContext & context) {
     // X_updated: scatter x_i into body_X at row i along axis 2
     auto X_updated = std::make_shared<ov::op::v3::ScatterUpdate>(body_X, body_iter, x_i, c_axis2_scalar);
 
-    auto body_cond = ov::op::v0::Constant::create(ov::element::boolean, ov::Shape{1}, {true});
+    auto body_cond = ov::op::v0::Constant::create(ov::element::boolean, ov::Shape{1}, {सत्य});
 
     auto body = std::make_shared<ov::Model>(
         ov::OutputVector{body_cond, X_updated},
         ov::ParameterVector{body_iter, body_X, body_A, body_B_p});
 
     // --- Assemble Loop ---
-    auto trip_count = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, std::vector<int64_t>{n});
-    auto exec_cond  = ov::op::v0::Constant::create(ov::element::boolean, ov::Shape{1}, {true});
+    auto trip_गिनती = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, std::vector<int64_t>{n});
+    auto exec_cond  = ov::op::v0::Constant::create(ov::element::boolean, ov::Shape{1}, {सत्य});
 
-    auto loop = std::make_shared<ov::op::v5::Loop>(trip_count, exec_cond);
+    auto loop = std::make_shared<ov::op::v5::Loop>(trip_गिनती, exec_cond);
     loop->set_function(body);
     // iter_counter_body_param_idx=0 (body_iter), exec_condition_body_result_idx=0 (body_cond)
     loop->set_special_body_ports(ov::op::v5::Loop::SpecialBodyPorts{0, 0});
 
     // Carried state: X feeds back from X_updated each iteration
-    loop->set_merged_input(body_X, X_init, X_updated);
+    loop->set_merged_निवेश(body_X, X_init, X_updated);
     // Invariant inputs passed through unchanged
-    loop->set_invariant_input(body_A,   A);
-    loop->set_invariant_input(body_B_p, B);
+    loop->set_invariant_निवेश(body_A,   A);
+    loop->set_invariant_निवेश(body_B_p, B);
 
     // Final output: value of X_updated after the last iteration
-    auto X_final = loop->get_iter_value(X_updated, -1);
+    auto X_final = loop->get_iter_मूल्य(X_updated, -1);
 
-    return rename_outputs_with_suffix({X_final}, context.get_name());
+    प्रत्यागम rename_outputs_with_suffix({X_final}, context.get_name());
 }
 
 }  // namespace op
