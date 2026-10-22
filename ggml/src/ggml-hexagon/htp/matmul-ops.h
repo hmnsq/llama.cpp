@@ -1,22 +1,22 @@
 #ifndef HTP_MATMUL_OPS_H
 #define HTP_MATMUL_OPS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include "htp-ops.h"
-#include "htp-tensor.h"
-#include "hex-fastdiv.h"
-#include "hex-common.h"
-#include "htp-vtcm.h"
+#ضمن <stdint.h>
+#ضمن <stddef.h>
+#ضمن "htp-ops.h"
+#ضمن "htp-tensor.h"
+#ضمن "hex-fastdiv.h"
+#ضمن "hex-common.h"
+#ضمن "htp-vtcm.h"
 
 #ifdef __cplusplus
-extern "C" {
+خارجي "C" {
 #endif
 
 // --- HMX Tile Constraints ---
 #define HTP_MM_HMX_TILE_N_COLS 32
 #define HTP_MM_HMX_TILE_N_ROWS 32
-#define HTP_MM_HMX_TILE_SIZE   (32 * 32 * sizeof(__fp16)) // 2048 bytes
+#define HTP_MM_HMX_TILE_SIZE   (32 * 32 * حجم(__fp16)) // 2048 bytes
 #define HTP_MM_HMX_TILE_N_ELMS 1024
 #define HTP_MM_HMX_MIN_NROWS   4
 
@@ -39,7 +39,7 @@ extern "C" {
 #define HTP_MM_DMA_ACT_ROWS_PER_STEP 2
 #define HTP_MM_DMA_ACT_MULTIPLIER    (2 * HTP_MM_DMA_ACT_ROWS_PER_STEP)
 
-enum htp_mm_kernel_type {
+تعداد htp_mm_kernel_type {
     HTP_MM_KERNEL_UNSUPPORTED = 0,
 
     // HMX paths
@@ -57,7 +57,7 @@ enum htp_mm_kernel_type {
 };
 
 // Op-specific struct for precomputed matmul params
-struct htp_mm_kernel_params {
+بنية htp_mm_kernel_params {
     uint8_t  kernel_type;        // enum htp_mm_kernel_type
     uint8_t  pipeline;           // 1 = pipelined execution, 0 = standard
     uint8_t  collapse;           // 1 = collapse outer dims into 2D, 0 = standard
@@ -80,28 +80,28 @@ struct htp_mm_kernel_params {
     int32_t  vtcm_dst_size;      // dst scratchpad size in VTCM
 
     // Precomputed division values
-    struct fastdiv_values div_ne12_ne1;
-    struct fastdiv_values div_ne1;
-    struct fastdiv_values div_r2;
-    struct fastdiv_values div_r3;
-    struct fastdiv_values div_ne12;
-    struct fastdiv_values div_n_act_threads;
-    struct fastdiv_values div_ne00_padded;
+    بنية fastdiv_قيم div_ne12_ne1;
+    بنية fastdiv_قيم div_ne1;
+    بنية fastdiv_قيم div_r2;
+    بنية fastdiv_قيم div_r3;
+    بنية fastdiv_قيم div_ne12;
+    بنية fastdiv_قيم div_n_act_threads;
+    بنية fastdiv_قيم div_ne00_padded;
 };
 
-#if defined(__cplusplus)
-static_assert(sizeof(struct htp_mm_kernel_params) <= 128, "htp_matmul_kernel_params is too large for kernel_params blob");
-#else
-_Static_assert(sizeof(struct htp_mm_kernel_params) <= 128, "htp_matmul_kernel_params is too large for kernel_params blob");
+#إذا defined(__cplusplus)
+static_assert(حجم(بنية htp_mm_kernel_params) <= 128, "htp_matmul_kernel_params is too large for kernel_params blob");
+#وإلا
+_Static_assert(حجم(بنية htp_mm_kernel_params) <= 128, "htp_matmul_kernel_params is too large for kernel_params blob");
 #endif
 
-struct mmid_row_mapping {
+بنية mmid_row_mapping {
     uint32_t i1;
     uint32_t i2;
 };
 
 // Search for optimal (mc, nc) chunk sizes within VTCM budget.
-static inline int htp_mm_hmx_compute_chunks(size_t   vtcm_total,
+ساكن مضمن صحيح htp_mm_hmx_compute_chunks(size_t   vtcm_total,
                               size_t   overhead,
                               size_t   per_n_cost,
                               size_t   per_m_cost,
@@ -113,26 +113,26 @@ static inline int htp_mm_hmx_compute_chunks(size_t   vtcm_total,
                               size_t * m_chunk_out,
                               size_t * n_chunk_out,
                               size_t * total_out) {
-    if (m == 0 || n == 0) return -1;
-    if (vtcm_total <= overhead) return -1;
-    if (per_n_cost == 0 || per_m_cost == 0 || per_mn_cost == 0) return -1;
+    إذا (m == 0 || n == 0) أرجع -1;
+    إذا (vtcm_total <= overhead) أرجع -1;
+    إذا (per_n_cost == 0 || per_m_cost == 0 || per_mn_cost == 0) أرجع -1;
 
-    const size_t usable = vtcm_total - overhead;
+    ثابت size_t usable = vtcm_total - overhead;
 
     size_t best_cost = SIZE_MAX;
     size_t best_tail_waste = SIZE_MAX;
     size_t best_mn   = 0;
     size_t best_m = 0, best_n = 0;
 
-    const size_t max_nc_budget = (usable / per_n_cost);
-    const size_t n_max = hex_align_down(hex_smin((size_t)n, max_nc_budget), HTP_MM_HMX_TILE_N_COLS);
-    for (size_t nc = n_max; nc >= HTP_MM_HMX_TILE_N_COLS; nc -= HTP_MM_HMX_TILE_N_COLS) {
+    ثابت size_t max_nc_budget = (usable / per_n_cost);
+    ثابت size_t n_max = hex_align_down(hex_smin((size_t)n, max_nc_budget), HTP_MM_HMX_TILE_N_COLS);
+    لكل (size_t nc = n_max; nc >= HTP_MM_HMX_TILE_N_COLS; nc -= HTP_MM_HMX_TILE_N_COLS) {
         size_t n_fixed = 0, ncmn = 0, mc_denom = 0;
-        if (hex_mul_overflow(nc, per_n_cost, &n_fixed)) continue;
-        if (n_fixed >= usable) goto next_nc;
+        إذا (hex_mul_overflow(nc, per_n_cost, &n_fixed)) استمر;
+        إذا (n_fixed >= usable) اذهب next_nc;
 
-        if (hex_mul_overflow(nc, per_mn_cost, &ncmn)) goto next_nc;
-        if (hex_add_overflow(per_m_cost, ncmn, &mc_denom) || mc_denom == 0) goto next_nc;
+        إذا (hex_mul_overflow(nc, per_mn_cost, &ncmn)) اذهب next_nc;
+        إذا (hex_add_overflow(per_m_cost, ncmn, &mc_denom) || mc_denom == 0) اذهب next_nc;
 
         {
             size_t remain = usable - n_fixed;
@@ -140,8 +140,8 @@ static inline int htp_mm_hmx_compute_chunks(size_t   vtcm_total,
             mc = hex_align_down(mc, HTP_MM_HMX_TILE_N_ROWS);
             mc = hex_smin(mc, m);
 
-            if (mc == 0) {
-                goto next_nc;
+            إذا (mc == 0) {
+                اذهب next_nc;
             }
 
             size_t mblocks = ((size_t) m + mc - 1) / mc;
@@ -150,7 +150,7 @@ static inline int htp_mm_hmx_compute_chunks(size_t   vtcm_total,
             size_t rem     = n % nc;
             size_t tail_waste = (rem == 0) ? 0 : (nc - rem);
             size_t mn      = mc * nc;
-            if (cost < best_cost ||
+            إذا (cost < best_cost ||
                 (cost == best_cost && tail_waste < best_tail_waste) ||
                 (cost == best_cost && tail_waste == best_tail_waste && mn > best_mn)) {
                 best_cost       = cost;
@@ -162,104 +162,104 @@ static inline int htp_mm_hmx_compute_chunks(size_t   vtcm_total,
         }
 
 next_nc:
-        if (nc == HTP_MM_HMX_TILE_N_COLS) break;  // avoid size_t underflow
+        إذا (nc == HTP_MM_HMX_TILE_N_COLS) اكسر;  // avoid size_t underflow
     }
 
-    if (best_m == 0 || best_n == 0) return -1;
+    إذا (best_m == 0 || best_n == 0) أرجع -1;
 
     // Compute exact total (with overflow checks)
     size_t t0 = 0, t1 = 0, t2 = 0, mn = 0, total = 0;
-    if (hex_mul_overflow(best_n, per_n_cost, &t0)) return -1;
-    if (hex_mul_overflow(best_m, per_m_cost, &t1)) return -1;
-    if (hex_mul_overflow(best_m, best_n, &mn))     return -1;
-    if (hex_mul_overflow(mn, per_mn_cost, &t2))    return -1;
-    if (hex_add_overflow(t0, t1, &total))          return -1;
-    if (hex_add_overflow(total, t2, &total))       return -1;
-    if (hex_add_overflow(total, overhead, &total)) return -1;
+    إذا (hex_mul_overflow(best_n, per_n_cost, &t0)) أرجع -1;
+    إذا (hex_mul_overflow(best_m, per_m_cost, &t1)) أرجع -1;
+    إذا (hex_mul_overflow(best_m, best_n, &mn))     أرجع -1;
+    إذا (hex_mul_overflow(mn, per_mn_cost, &t2))    أرجع -1;
+    إذا (hex_add_overflow(t0, t1, &total))          أرجع -1;
+    إذا (hex_add_overflow(total, t2, &total))       أرجع -1;
+    إذا (hex_add_overflow(total, overhead, &total)) أرجع -1;
 
     *m_chunk_out = best_m;
     *n_chunk_out = best_n;
     *total_out   = total;
-    return 0;
+    أرجع 0;
 }
 
 // weight types whose tiles carry a per-block offset (x = d * q + m): the activations need block sums (q8_1)
 // (Q2_K: per-16 k sums, q8_1_s16)
-static inline bool htp_mm_weight_has_offset(int weight_type) {
-    return weight_type == HTP_TYPE_Q4_1 || weight_type == HTP_TYPE_Q4_K || weight_type == HTP_TYPE_Q5_K ||
+ساكن مضمن bool htp_mm_weight_has_offset(صحيح weight_type) {
+    أرجع weight_type == HTP_TYPE_Q4_1 || weight_type == HTP_TYPE_Q4_K || weight_type == HTP_TYPE_Q5_K ||
            weight_type == HTP_TYPE_Q2_K || weight_type == HTP_TYPE_Q2_0;
 }
 
 // --- Activation/Row Size Helpers ---
-static inline size_t htp_mm_q8_0_tiled_row_size(uint32_t ne) {
-    const uint32_t ne_padded = ((ne + 127) / 128) * 128;
-    const uint32_t nb_32 = ne_padded / 32;
-    return nb_32 * HTP_MM_ACT_TILE_SIZE_Q8_0;
+ساكن مضمن size_t htp_mm_q8_0_tiled_row_size(uint32_t ne) {
+    ثابت uint32_t ne_padded = ((ne + 127) / 128) * 128;
+    ثابت uint32_t nb_32 = ne_padded / 32;
+    أرجع nb_32 * HTP_MM_ACT_TILE_SIZE_Q8_0;
 }
 
-static inline size_t htp_mm_q8_1_tiled_row_size(uint32_t ne) {
-    const uint32_t ne_padded = ((ne + 127) / 128) * 128;
-    const uint32_t nb_32 = ne_padded / 32;
-    return nb_32 * HTP_MM_ACT_TILE_SIZE_Q8_1;
+ساكن مضمن size_t htp_mm_q8_1_tiled_row_size(uint32_t ne) {
+    ثابت uint32_t ne_padded = ((ne + 127) / 128) * 128;
+    ثابت uint32_t nb_32 = ne_padded / 32;
+    أرجع nb_32 * HTP_MM_ACT_TILE_SIZE_Q8_1;
 }
 
-static inline size_t htp_mm_f16_tiled_row_size(uint32_t ne) {
-    const uint32_t ne_padded = ((ne + 127) / 128) * 128;
-    const uint32_t nb_32 = ne_padded / 32;
-    return nb_32 * HTP_MM_ACT_TILE_SIZE_F16;
+ساكن مضمن size_t htp_mm_f16_tiled_row_size(uint32_t ne) {
+    ثابت uint32_t ne_padded = ((ne + 127) / 128) * 128;
+    ثابت uint32_t nb_32 = ne_padded / 32;
+    أرجع nb_32 * HTP_MM_ACT_TILE_SIZE_F16;
 }
 
-static inline size_t htp_mm_tiled_act_row_size(int weight_type, uint32_t ne) {
-    if (weight_type == HTP_TYPE_F16) {
-        return htp_mm_f16_tiled_row_size(ne);
+ساكن مضمن size_t htp_mm_tiled_act_row_size(صحيح weight_type, uint32_t ne) {
+    إذا (weight_type == HTP_TYPE_F16) {
+        أرجع htp_mm_f16_tiled_row_size(ne);
     }
-    return htp_mm_weight_has_offset(weight_type) ? htp_mm_q8_1_tiled_row_size(ne) : htp_mm_q8_0_tiled_row_size(ne);
+    أرجع htp_mm_weight_has_offset(weight_type) ? htp_mm_q8_1_tiled_row_size(ne) : htp_mm_q8_0_tiled_row_size(ne);
 }
 
-static inline size_t htp_mm_round_up(size_t n, size_t m) {
-    return ((n + m - 1) / m) * m;
+ساكن مضمن size_t htp_mm_round_up(size_t n, size_t m) {
+    أرجع ((n + m - 1) / m) * m;
 }
 
-static inline bool htp_mm_hmx_pipeline(uint32_t m) {
-    return m > 32;
+ساكن مضمن bool htp_mm_hmx_pipeline(uint32_t m) {
+    أرجع m > 32;
 }
 
-static inline void htp_mm_hmx_get_2d_chunk_costs(
-    int wtype, uint32_t k, bool pipeline, uint32_t aligned_tile_size,
+ساكن مضمن فراغ htp_mm_hmx_get_2d_chunk_costs(
+    صحيح wtype, uint32_t k, bool pipeline, uint32_t aligned_tile_size,
     size_t * size_per_n_out, size_t * size_per_m_out, size_t * size_per_mn_out
 ) {
-    const bool is_quant = (wtype != HTP_TYPE_F16 && wtype != HTP_TYPE_F32 && wtype != HTP_TYPE_BF16);
-    const size_t row_stride = htp_tensor_get_row_size(wtype, k);
-    const size_t vec_dot_size = k * sizeof(uint16_t);
-    const uint32_t n_weight_tiles = k / htp_tensor_get_tile_k(wtype);
-    const size_t qweight_row_stride = is_quant ? (size_t)(n_weight_tiles * aligned_tile_size) / 32 : 0;
+    ثابت bool is_quant = (wtype != HTP_TYPE_F16 && wtype != HTP_TYPE_F32 && wtype != HTP_TYPE_BF16);
+    ثابت size_t row_stride = htp_tensor_get_row_size(wtype, k);
+    ثابت size_t vec_dot_size = k * حجم(uint16_t);
+    ثابت uint32_t n_weight_tiles = k / htp_tensor_get_tile_k(wtype);
+    ثابت size_t qweight_row_stride = is_quant ? (size_t)(n_weight_tiles * aligned_tile_size) / 32 : 0;
 
     *size_per_n_out = (pipeline ? 2 : 1) * (is_quant ? qweight_row_stride : row_stride) +
                       (pipeline ? 2 * vec_dot_size : vec_dot_size);
     *size_per_m_out = vec_dot_size;
-    *size_per_mn_out = (pipeline ? 2 : 1) * sizeof(uint16_t);
+    *size_per_mn_out = (pipeline ? 2 : 1) * حجم(uint16_t);
 }
 
-static inline void htp_mm_hmx_get_batched_chunk_costs(
+ساكن مضمن فراغ htp_mm_hmx_get_batched_chunk_costs(
     uint32_t k, uint32_t group_size,
     size_t * size_per_n_out, size_t * size_per_m_out, size_t * size_per_mn_out
 ) {
-    const size_t vec_dot_size = k * sizeof(uint16_t);
+    ثابت size_t vec_dot_size = k * حجم(uint16_t);
     *size_per_n_out = 3 * vec_dot_size;
     *size_per_m_out = group_size * vec_dot_size;
-    *size_per_mn_out = sizeof(uint16_t);
+    *size_per_mn_out = حجم(uint16_t);
 }
 
-static inline size_t htp_mm_hmx_get_2d_overhead(bool pipeline, bool is_matmul_id) {
-    size_t num_regions = pipeline ? 7 : (is_matmul_id ? 4 : 5);
-    return num_regions * HTP_MM_HMX_TILE_SIZE + 256;
+ساكن مضمن size_t htp_mm_hmx_get_2d_overhead(bool pipeline, bool is_matmul_id) {
+    size_t رقم_regions = pipeline ? 7 : (is_matmul_id ? 4 : 5);
+    أرجع رقم_regions * HTP_MM_HMX_TILE_SIZE + 256;
 }
 
-static inline size_t htp_mm_hmx_get_batched_overhead(void) {
-    return 5 * HTP_MM_HMX_TILE_SIZE + 256;
+ساكن مضمن size_t htp_mm_hmx_get_batched_overhead(فراغ) {
+    أرجع 5 * HTP_MM_HMX_TILE_SIZE + 256;
 }
 
-struct htp_mm_hmx_vtcm_layout {
+بنية htp_mm_hmx_vtcm_layout {
     // Byte offsets from vtcm_base for each region
     size_t off_weight[2];     // [1] is only used when pipelined
     size_t off_act;
@@ -281,7 +281,7 @@ struct htp_mm_hmx_vtcm_layout {
     size_t total_bytes;
 };
 
-struct htp_mm_hvx_vtcm_layout {
+بنية htp_mm_hvx_vtcm_layout {
     // Byte offsets from vtcm_base for each region
     size_t off_act;           // vtcm_act (activation)
     size_t off_src0;          // vtcm_src0 (weight/Wk)
@@ -299,10 +299,10 @@ struct htp_mm_hvx_vtcm_layout {
     size_t total_bytes;
 };
 
-static inline void htp_mm_hmx_vtcm_layout_build(
-    struct htp_mm_hmx_vtcm_layout * L,
-    int kernel_type,
-    int wtype,
+ساكن مضمن فراغ htp_mm_hmx_vtcm_layout_build(
+    بنية htp_mm_hmx_vtcm_layout * L,
+    صحيح kernel_type,
+    صحيح wtype,
     uint32_t k,
     size_t mc,
     size_t nc,
@@ -314,14 +314,14 @@ static inline void htp_mm_hmx_vtcm_layout_build(
 ) {
     size_t off = 0;
 
-    if (kernel_type == HTP_MM_KERNEL_HMX_BATCHED) {
-        const size_t vec_dot_size     = k * sizeof(uint16_t);
-        const size_t act_head_stride   = mc * k;
-        const size_t weight_area_size  = hex_align_up(nc * vec_dot_size, HTP_MM_HMX_TILE_SIZE);
-        const size_t activation_area_size = hex_align_up(group_size * act_head_stride * sizeof(uint16_t), HTP_MM_HMX_TILE_SIZE);
-        const size_t output_area_size  = hex_align_up(group_size * mc * nc * sizeof(uint16_t), HTP_MM_HMX_TILE_SIZE);
-        const size_t scratch_area_size = hex_align_up(nc * vec_dot_size, HTP_MM_HMX_TILE_SIZE);
-        const size_t min_f32_size = hex_align_up(act_threads * HTP_MM_DMA_ACT_MULTIPLIER * k * sizeof(float), 128);
+    إذا (kernel_type == HTP_MM_KERNEL_HMX_BATCHED) {
+        ثابت size_t vec_dot_size     = k * حجم(uint16_t);
+        ثابت size_t act_head_stride   = mc * k;
+        ثابت size_t weight_area_size  = hex_align_up(nc * vec_dot_size, HTP_MM_HMX_TILE_SIZE);
+        ثابت size_t activation_area_size = hex_align_up(group_size * act_head_stride * حجم(uint16_t), HTP_MM_HMX_TILE_SIZE);
+        ثابت size_t output_area_size  = hex_align_up(group_size * mc * nc * حجم(uint16_t), HTP_MM_HMX_TILE_SIZE);
+        ثابت size_t scratch_area_size = hex_align_up(nc * vec_dot_size, HTP_MM_HMX_TILE_SIZE);
+        ثابت size_t min_f32_size = hex_align_up(act_threads * HTP_MM_DMA_ACT_MULTIPLIER * k * حجم(عائم), 128);
 
         // Group A: Permanent activation tiles and scales
         size_t off_group_a = 0;
@@ -338,15 +338,15 @@ static inline void htp_mm_hmx_vtcm_layout_build(
         VTCM_LAYOUT_ALLOC(off_group_b, off_scratch[0], scratch_area_size);
         VTCM_LAYOUT_ALLOC(off_group_b, off_scratch[1], scratch_area_size);
 
-        const size_t group_b_size = off_group_b - off_group_a;
+        ثابت size_t group_b_size = off_group_b - off_group_a;
 
         // Group C: Activation prep temporary buffer (overlaps Group B, starting at off_group_a)
-        const size_t max_f32_size = act_threads * 64 * k * sizeof(float);
-        const size_t act_f32_size = hex_align_up(hex_smin(max_f32_size, hex_smax(min_f32_size, group_b_size)), 128);
+        ثابت size_t max_f32_size = act_threads * 64 * k * حجم(عائم);
+        ثابت size_t act_f32_size = hex_align_up(hex_smin(max_f32_size, hex_smax(min_f32_size, group_b_size)), 128);
         size_t off_group_c = off_group_a;
         VTCM_LAYOUT_ALLOC(off_group_c, off_act_f32, act_f32_size);
 
-        const size_t group_c_size = off_group_c - off_group_a;
+        ثابت size_t group_c_size = off_group_c - off_group_a;
 
         L->weight_area_bytes = weight_area_size;
         L->act_area_bytes    = activation_area_size;
@@ -358,22 +358,22 @@ static inline void htp_mm_hmx_vtcm_layout_build(
         L->bias_bytes        = bias_size;
 
         off = off_group_a + hex_smax(group_b_size, group_c_size);
-    } else {
+    } وإلا {
         // HTP_MM_KERNEL_HMX_2D
-        const bool is_quant = (wtype != HTP_TYPE_F16 && wtype != HTP_TYPE_F32 && wtype != HTP_TYPE_BF16);
-        const size_t row_stride = htp_tensor_get_row_size(wtype, k);
-        const size_t vec_dot_size = k * sizeof(uint16_t);
-        const uint32_t n_weight_tiles = k / htp_tensor_get_tile_k(wtype);
+        ثابت bool is_quant = (wtype != HTP_TYPE_F16 && wtype != HTP_TYPE_F32 && wtype != HTP_TYPE_BF16);
+        ثابت size_t row_stride = htp_tensor_get_row_size(wtype, k);
+        ثابت size_t vec_dot_size = k * حجم(uint16_t);
+        ثابت uint32_t n_weight_tiles = k / htp_tensor_get_tile_k(wtype);
 
-        const size_t min_f32_size = hex_align_up(act_threads * HTP_MM_DMA_ACT_MULTIPLIER * k * sizeof(float), 128);
-        const size_t weight_area_size = is_quant
+        ثابت size_t min_f32_size = hex_align_up(act_threads * HTP_MM_DMA_ACT_MULTIPLIER * k * حجم(عائم), 128);
+        ثابت size_t weight_area_size = is_quant
             ? hex_align_up((nc / 32) * n_weight_tiles * aligned_tile_size, HTP_MM_HMX_TILE_SIZE)
             : hex_align_up(nc * row_stride, HTP_MM_HMX_TILE_SIZE);
-        const size_t act_area_size    = hex_align_up(mc * vec_dot_size, HTP_MM_HMX_TILE_SIZE);
-        const size_t output_area_size = hex_align_up(mc * nc * sizeof(__fp16), HTP_MM_HMX_TILE_SIZE);
+        ثابت size_t act_area_size    = hex_align_up(mc * vec_dot_size, HTP_MM_HMX_TILE_SIZE);
+        ثابت size_t output_area_size = hex_align_up(mc * nc * حجم(__fp16), HTP_MM_HMX_TILE_SIZE);
 
-        const size_t scratch0_size = hex_align_up(nc * vec_dot_size, HTP_MM_HMX_TILE_SIZE);
-        const size_t scratch1_size = pipeline ? scratch0_size : 0;
+        ثابت size_t scratch0_size = hex_align_up(nc * vec_dot_size, HTP_MM_HMX_TILE_SIZE);
+        ثابت size_t scratch1_size = pipeline ? scratch0_size : 0;
 
         // Group A:  Scales and activation tiles (must not overlap with Group B or C)
         size_t off_group_a = 0;
@@ -390,15 +390,15 @@ static inline void htp_mm_hmx_vtcm_layout_build(
         VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_scratch[1], scratch0_size, pipeline);
         VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_dst[1], output_area_size, pipeline);
 
-        const size_t group_b_size = off_group_b - off_group_a;
+        ثابت size_t group_b_size = off_group_b - off_group_a;
 
         // Group C: Activation prep temporary buffer (overlaps Group B, starting at off_group_a)
-        const size_t max_f32_size = act_threads * 64 * k * sizeof(float);
-        const size_t act_f32_size = hex_align_up(hex_smin(max_f32_size, hex_smax(min_f32_size, group_b_size)), 128);
+        ثابت size_t max_f32_size = act_threads * 64 * k * حجم(عائم);
+        ثابت size_t act_f32_size = hex_align_up(hex_smin(max_f32_size, hex_smax(min_f32_size, group_b_size)), 128);
         size_t off_group_c = off_group_a;
         VTCM_LAYOUT_ALLOC(off_group_c, off_act_f32, act_f32_size);
 
-        const size_t group_c_size = off_group_c - off_group_a;
+        ثابت size_t group_c_size = off_group_c - off_group_a;
 
         L->weight_area_bytes = weight_area_size;
         L->act_area_bytes    = act_area_size;
@@ -415,10 +415,10 @@ static inline void htp_mm_hmx_vtcm_layout_build(
     L->total_bytes = off;
 }
 
-static inline void htp_mm_hvx_vtcm_layout_build(
-    struct htp_mm_hvx_vtcm_layout * L,
-    int kernel_type,
-    int wtype,
+ساكن مضمن فراغ htp_mm_hvx_vtcm_layout_build(
+    بنية htp_mm_hvx_vtcm_layout * L,
+    صحيح kernel_type,
+    صحيح wtype,
     uint32_t ne10,       // k
     uint32_t act_nrows,  // m_total
     uint32_t n_threads,
@@ -430,14 +430,14 @@ static inline void htp_mm_hvx_vtcm_layout_build(
     bool is_matmul_id,
     bool is_fused_nx
 ) {
-    (void)act_row_size;
+    (فراغ)act_row_size;
     size_t src0_sz    = 0;
     size_t act_sz     = 0;
     size_t bias_sz    = bias_row_size > 0 ? htp_mm_round_up(bias_row_size, 128) : 0;
     size_t dst_sz     = 0;
     size_t act_raw_sz = 0;
 
-    if (is_fused_nx) {
+    إذا (is_fused_nx) {
         uint32_t aligned_tile_size = htp_tensor_get_tile_padded_size(wtype);
         uint32_t n_k_tiles = (ne10 + htp_tensor_get_tile_k(wtype) - 1) / htp_tensor_get_tile_k(wtype);
         uint32_t tile_row_size = n_k_tiles * aligned_tile_size;
@@ -445,52 +445,52 @@ static inline void htp_mm_hvx_vtcm_layout_build(
 
         size_t tiled_act_row_size = htp_mm_tiled_act_row_size(wtype, ne10);
         size_t q_act_sz = hex_round_up(tiled_act_row_size * act_nrows, 128);
-        size_t raw_row_size = hex_round_up(ne10 * sizeof(float), QK_Q8_0_TILED * sizeof(float));
+        size_t raw_row_size = hex_round_up(ne10 * حجم(عائم), QK_Q8_0_TILED * حجم(عائم));
 
         src0_sz    = weight_sz_per_thread * n_threads; // shared single-weight prefetch buffer
         act_sz     = q_act_sz;                         // quantized activation buffer
         bias_sz    = 0;
         dst_sz     = 0;
         act_raw_sz = hex_round_up(raw_row_size * act_nrows, 128);
-    } else if (is_matmul_id) {
-        const size_t act_row_size_tiled = htp_mm_tiled_act_row_size(wtype, ne10);
-        const uint32_t aligned_tile_size = htp_tensor_get_tile_padded_size(wtype);
-        const uint32_t n_k_tiles         = (ne10 + htp_tensor_get_tile_k(wtype) - 1) / htp_tensor_get_tile_k(wtype);
-        const uint32_t tile_row_size     = n_k_tiles * aligned_tile_size;
+    } وإلا إذا (is_matmul_id) {
+        ثابت size_t act_row_size_tiled = htp_mm_tiled_act_row_size(wtype, ne10);
+        ثابت uint32_t aligned_tile_size = htp_tensor_get_tile_padded_size(wtype);
+        ثابت uint32_t n_k_tiles         = (ne10 + htp_tensor_get_tile_k(wtype) - 1) / htp_tensor_get_tile_k(wtype);
+        ثابت uint32_t tile_row_size     = n_k_tiles * aligned_tile_size;
         size_t src0_sz_per_thread        = htp_mm_round_up(n_prefetch * tile_row_size, 256);
 
         act_sz = htp_mm_round_up(act_row_size_tiled * act_nrows, 256);
 
-        size_t raw_row_size = hex_round_up(ne10 * sizeof(float), QK_Q8_0_TILED * sizeof(float));
+        size_t raw_row_size = hex_round_up(ne10 * حجم(عائم), QK_Q8_0_TILED * حجم(عائم));
 
         src0_sz    = src0_sz_per_thread * n_threads;
         dst_sz     = 0;
         bias_sz    = 0;
         act_raw_sz = hex_round_up(raw_row_size * act_nrows, 128);
-    } else {
-        const size_t src0_row_size_padded = htp_mm_round_up(src0_row_size, 128);
-        const size_t dst_nrows = (act_nrows > 1) ? 0 : 1;
+    } وإلا {
+        ثابت size_t src0_row_size_padded = htp_mm_round_up(src0_row_size, 128);
+        ثابت size_t dst_nrows = (act_nrows > 1) ? 0 : 1;
 
-        switch (kernel_type) {
-            case HTP_MM_KERNEL_HVX_F16_F16_VTCM: {
+        بدل (kernel_type) {
+            حالة HTP_MM_KERNEL_HVX_F16_F16_VTCM: {
                 size_t f16_act_row_size = htp_mm_round_up(ne10 * 2, 128);
                 act_sz     = htp_mm_round_up(f16_act_row_size * act_nrows, 256);
                 src0_sz    = htp_mm_round_up(n_prefetch * src0_row_size_padded, 256) * n_threads;
                 dst_sz     = dst_nrows > 0 ? htp_mm_round_up(dst_row_size, 128) * n_threads : 0;
-                act_raw_sz = hex_round_up(hex_round_up(ne10 * sizeof(float), 128) * act_nrows, 128);
-                break;
+                act_raw_sz = hex_round_up(hex_round_up(ne10 * حجم(عائم), 128) * act_nrows, 128);
+                اكسر;
             }
-            case HTP_MM_KERNEL_HVX_F32_F32_VTCM:
-            case HTP_MM_KERNEL_HVX_BF16_F32_VTCM: {
+            حالة HTP_MM_KERNEL_HVX_F32_F32_VTCM:
+            حالة HTP_MM_KERNEL_HVX_BF16_F32_VTCM: {
                 size_t f32_act_row_size = htp_mm_round_up(ne10 * 4, 128);
                 act_sz     = htp_mm_round_up(f32_act_row_size * act_nrows, 256);
                 src0_sz    = htp_mm_round_up(n_prefetch * src0_row_size_padded, 256) * n_threads;
                 dst_sz     = dst_nrows > 0 ? htp_mm_round_up(dst_row_size, 128) * n_threads : 0;
                 act_raw_sz = 0;
-                break;
+                اكسر;
             }
-            case HTP_MM_KERNEL_HVX_QUANT_BLOCK:
-            case HTP_MM_KERNEL_HVX_QUANT_ROW: {
+            حالة HTP_MM_KERNEL_HVX_QUANT_BLOCK:
+            حالة HTP_MM_KERNEL_HVX_QUANT_ROW: {
                 size_t q_act_row_size = htp_mm_tiled_act_row_size(wtype, ne10);
                 uint32_t aligned_tile_size = htp_tensor_get_tile_padded_size(wtype);
                 uint32_t n_weight_tiles = (ne10 + htp_tensor_get_tile_k(wtype) - 1) / htp_tensor_get_tile_k(wtype);
@@ -502,12 +502,12 @@ static inline void htp_mm_hvx_vtcm_layout_build(
 
                 size_t dst_slice_per_thread = (dst_nrows > 0 && act_nrows == 1) ? htp_mm_round_up((dst_row_size + n_threads - 1) / n_threads, 128) : 0;
                 dst_sz = dst_slice_per_thread * n_threads;
-                size_t raw_row_size = hex_round_up(ne10 * sizeof(float), QK_Q8_0_TILED * sizeof(float));
+                size_t raw_row_size = hex_round_up(ne10 * حجم(عائم), QK_Q8_0_TILED * حجم(عائم));
                 act_raw_sz = hex_round_up(raw_row_size * act_nrows, 128);
-                break;
+                اكسر;
             }
-            default:
-                break;
+            افتراضي:
+                اكسر;
         }
     }
 
@@ -520,12 +520,12 @@ static inline void htp_mm_hvx_vtcm_layout_build(
     size_t off_group_b = off_group_a;
     VTCM_LAYOUT_ALLOC(off_group_b, off_src0, src0_sz);
     VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_b, off_dst, dst_sz, dst_sz > 0);
-    const size_t group_b_size = off_group_b - off_group_a;
+    ثابت size_t group_b_size = off_group_b - off_group_a;
 
     // Group C: Raw activation staging buffer (overlaps Group B, starts at off_group_a)
     size_t off_group_c = off_group_a;
     VTCM_LAYOUT_ALLOC_OPTIONAL(off_group_c, off_act_raw, act_raw_sz, act_raw_sz > 0);
-    const size_t group_c_size = off_group_c - off_group_a;
+    ثابت size_t group_c_size = off_group_c - off_group_a;
 
     L->src0_bytes    = src0_sz;
     L->act_bytes     = act_sz;
@@ -535,9 +535,9 @@ static inline void htp_mm_hvx_vtcm_layout_build(
     L->total_bytes   = off_group_a + hex_smax(group_b_size, group_c_size);
 }
 
-static inline bool htp_mm_hvx_solve_vtcm_params(
-    int kernel_type,
-    int wtype,
+ساكن مضمن bool htp_mm_hvx_solve_vtcm_params(
+    صحيح kernel_type,
+    صحيح wtype,
     uint32_t ne10,
     uint32_t act_nrows,
     uint32_t n_threads,
@@ -547,53 +547,53 @@ static inline bool htp_mm_hvx_solve_vtcm_params(
     size_t bias_row_size,
     uint32_t n_prefetch,
     size_t vtcm_budget,
-    struct htp_mm_hvx_vtcm_layout * L_out,
+    بنية htp_mm_hvx_vtcm_layout * L_out,
     uint32_t * m_chunk_out
 ) {
-    struct htp_mm_hvx_vtcm_layout L;
+    بنية htp_mm_hvx_vtcm_layout L;
     htp_mm_hvx_vtcm_layout_build(
         &L, kernel_type, wtype, ne10, act_nrows, n_threads,
         dst_row_size, src0_row_size, act_row_size, bias_row_size, n_prefetch, false, false
     );
 
-    if (L.total_bytes <= vtcm_budget) {
+    إذا (L.total_bytes <= vtcm_budget) {
         *L_out = L;
         *m_chunk_out = act_nrows;
-        return true;
+        أرجع true;
     }
 
-    const size_t fixed_bytes = L.src0_bytes + L.bias_bytes + L.dst_bytes;
-    if (vtcm_budget <= fixed_bytes) {
-        return false;
+    ثابت size_t fixed_bytes = L.src0_bytes + L.bias_bytes + L.dst_bytes;
+    إذا (vtcm_budget <= fixed_bytes) {
+        أرجع false;
     }
 
-    const size_t avail_act = vtcm_budget - fixed_bytes;
+    ثابت size_t avail_act = vtcm_budget - fixed_bytes;
     size_t row_size = 0;
-    if (kernel_type == HTP_MM_KERNEL_HVX_QUANT_ROW || kernel_type == HTP_MM_KERNEL_HVX_QUANT_BLOCK) {
+    إذا (kernel_type == HTP_MM_KERNEL_HVX_QUANT_ROW || kernel_type == HTP_MM_KERNEL_HVX_QUANT_BLOCK) {
         row_size = htp_mm_tiled_act_row_size(wtype, ne10);
-    } else if (kernel_type == HTP_MM_KERNEL_HVX_F16_F16_VTCM) {
+    } وإلا إذا (kernel_type == HTP_MM_KERNEL_HVX_F16_F16_VTCM) {
         row_size = hex_round_up(ne10 * 2, 128);
-    } else {
+    } وإلا {
         row_size = hex_round_up(ne10 * 4, 128);
     }
-    if (row_size == 0) {
-        return false;
+    إذا (row_size == 0) {
+        أرجع false;
     }
 
     size_t eff_row_size = row_size;
-    if (kernel_type == HTP_MM_KERNEL_HVX_QUANT_ROW || kernel_type == HTP_MM_KERNEL_HVX_QUANT_BLOCK) {
-        eff_row_size += hex_round_up(ne10 * sizeof(float), QK_Q8_0_TILED * sizeof(float));
+    إذا (kernel_type == HTP_MM_KERNEL_HVX_QUANT_ROW || kernel_type == HTP_MM_KERNEL_HVX_QUANT_BLOCK) {
+        eff_row_size += hex_round_up(ne10 * حجم(عائم), QK_Q8_0_TILED * حجم(عائم));
     }
 
     uint32_t m_chunk = (uint32_t) (avail_act / eff_row_size);
-    if (m_chunk > 1) {
+    إذا (m_chunk > 1) {
         m_chunk &= ~1U;
     }
-    if (m_chunk > act_nrows) {
+    إذا (m_chunk > act_nrows) {
         m_chunk = act_nrows;
     }
-    if (m_chunk < 1) {
-        return false;
+    إذا (m_chunk < 1) {
+        أرجع false;
     }
 
     htp_mm_hvx_vtcm_layout_build(
@@ -601,7 +601,7 @@ static inline bool htp_mm_hvx_solve_vtcm_params(
         dst_row_size, src0_row_size, act_row_size, bias_row_size, n_prefetch, false, false
     );
 
-    while (m_chunk > 2 && L.total_bytes > vtcm_budget) {
+    طالما (m_chunk > 2 && L.total_bytes > vtcm_budget) {
         m_chunk -= 2;
         htp_mm_hvx_vtcm_layout_build(
             &L, kernel_type, wtype, ne10, m_chunk, n_threads,
@@ -609,54 +609,54 @@ static inline bool htp_mm_hvx_solve_vtcm_params(
         );
     }
 
-    if (L.total_bytes <= vtcm_budget) {
+    إذا (L.total_bytes <= vtcm_budget) {
         *L_out = L;
         *m_chunk_out = m_chunk;
-        return true;
+        أرجع true;
     }
 
-    return false;
+    أرجع false;
 }
 
-static inline size_t htp_mm_hmx_get_2d_vtcm_size(
-    int wtype, uint32_t k, size_t mc, size_t nc, bool pipeline, uint32_t act_threads, uint32_t aligned_tile_size, size_t bias_size
+ساكن مضمن size_t htp_mm_hmx_get_2d_vtcm_size(
+    صحيح wtype, uint32_t k, size_t mc, size_t nc, bool pipeline, uint32_t act_threads, uint32_t aligned_tile_size, size_t bias_size
 ) {
-    struct htp_mm_hmx_vtcm_layout L;
+    بنية htp_mm_hmx_vtcm_layout L;
     htp_mm_hmx_vtcm_layout_build(&L, HTP_MM_KERNEL_HMX_2D, wtype, k, mc, nc, 1, pipeline, act_threads, aligned_tile_size, bias_size);
-    return L.total_bytes;
+    أرجع L.total_bytes;
 }
 
-static inline size_t htp_mm_hmx_get_batched_vtcm_size(
-    int wtype, uint32_t k, size_t mc, size_t nc, uint32_t group_size, bool pipeline, uint32_t act_threads, size_t bias_size) {
-    (void)pipeline;
-    struct htp_mm_hmx_vtcm_layout L;
+ساكن مضمن size_t htp_mm_hmx_get_batched_vtcm_size(
+    صحيح wtype, uint32_t k, size_t mc, size_t nc, uint32_t group_size, bool pipeline, uint32_t act_threads, size_t bias_size) {
+    (فراغ)pipeline;
+    بنية htp_mm_hmx_vtcm_layout L;
     htp_mm_hmx_vtcm_layout_build(&L, HTP_MM_KERNEL_HMX_BATCHED, wtype, k, mc, nc, group_size, false, act_threads, 0, bias_size);
-    return L.total_bytes;
+    أرجع L.total_bytes;
 }
 
-static inline bool htp_mm_hmx_solve_batched_params(
-    int wtype,
+ساكن مضمن bool htp_mm_hmx_solve_batched_params(
+    صحيح wtype,
     uint32_t k,
     uint32_t ne01_padded,
     uint32_t ne11,
     uint32_t group_size,
-    int n_threads,
+    صحيح n_threads,
     bool pipeline,
     size_t bias_size,
     size_t vtcm_budget,
     size_t * m_chunk_out,
     size_t * n_chunk_out,
-    int * act_threads_out,
+    صحيح * act_threads_out,
     size_t * vtcm_size_out
 ) {
     size_t best_mblocks = SIZE_MAX;
-    int best_act_threads = 0;
+    صحيح best_act_threads = 0;
     size_t best_m_chunk = 0;
     size_t best_n_chunk = 0;
     size_t best_vtcm_size = 0;
 
-    int act_threads = n_threads;
-    while (act_threads >= 1) {
+    صحيح act_threads = n_threads;
+    طالما (act_threads >= 1) {
         size_t group_overhead = htp_mm_hmx_get_batched_overhead() + (bias_size > 0 ? hex_align_up(bias_size, HTP_MM_HMX_TILE_SIZE) : 0);
         size_t group_size_per_n, group_size_per_m, group_size_per_mn;
         htp_mm_hmx_get_batched_chunk_costs(k, group_size, &group_size_per_n, &group_size_per_m, &group_size_per_mn);
@@ -665,13 +665,13 @@ static inline bool htp_mm_hmx_solve_batched_params(
         size_t n_chunk_candidate = 0;
         size_t vtcm_size_candidate = 0;
 
-        if (htp_mm_hmx_compute_chunks(vtcm_budget, group_overhead, group_size_per_n, group_size_per_m, group_size_per_mn, hex_align_up(ne11, 32), ne01_padded,
+        إذا (htp_mm_hmx_compute_chunks(vtcm_budget, group_overhead, group_size_per_n, group_size_per_m, group_size_per_mn, hex_align_up(ne11, 32), ne01_padded,
                                (size_t) ne01_padded * HTP_MM_HMX_COST_W_DEQUANT, (size_t) ne11 * HTP_MM_HMX_COST_A_CONVERT,
                                 &m_chunk_candidate, &n_chunk_candidate, &vtcm_size_candidate) == 0) {
             size_t exact_size = htp_mm_hmx_get_batched_vtcm_size(wtype, k, m_chunk_candidate, n_chunk_candidate, group_size, pipeline, act_threads, bias_size);
-            if (exact_size <= vtcm_budget) {
+            إذا (exact_size <= vtcm_budget) {
                 size_t mblocks = ((size_t) ne11 + m_chunk_candidate - 1) / m_chunk_candidate;
-                if (mblocks < best_mblocks || (mblocks == best_mblocks && act_threads > best_act_threads)) {
+                إذا (mblocks < best_mblocks || (mblocks == best_mblocks && act_threads > best_act_threads)) {
                     best_mblocks = mblocks;
                     best_act_threads = act_threads;
                     best_m_chunk = m_chunk_candidate;
@@ -680,31 +680,31 @@ static inline bool htp_mm_hmx_solve_batched_params(
                 }
             }
         }
-        if (act_threads == 1) {
+        إذا (act_threads == 1) {
             act_threads = 0;
-        } else {
+        } وإلا {
             act_threads /= 2;
         }
     }
 
-    if (best_act_threads > 0) {
+    إذا (best_act_threads > 0) {
         *m_chunk_out = best_m_chunk;
         *n_chunk_out = best_n_chunk;
         *vtcm_size_out = best_vtcm_size;
         *act_threads_out = best_act_threads;
-        return true;
+        أرجع true;
     }
-    return false;
+    أرجع false;
 }
 
-static inline bool htp_mm_hmx_solve_2d_params(
-    int wtype,
+ساكن مضمن bool htp_mm_hmx_solve_2d_params(
+    صحيح wtype,
     uint32_t k,
     uint32_t m_id_rows,
     uint32_t ne01_padded,
     uint32_t ne11_padded,
     uint32_t m_for_cost,
-    int n_threads,
+    صحيح n_threads,
     bool pipeline,
     bool is_matmul_id,
     uint32_t aligned_tile_size,
@@ -712,19 +712,19 @@ static inline bool htp_mm_hmx_solve_2d_params(
     size_t vtcm_budget,
     size_t * m_chunk_out,
     size_t * n_chunk_out,
-    int * act_threads_out,
+    صحيح * act_threads_out,
     size_t * vtcm_size_out
 ) {
     size_t best_mblocks = SIZE_MAX;
-    int best_act_threads = 0;
+    صحيح best_act_threads = 0;
     size_t best_m_chunk = 0;
     size_t best_n_chunk = 0;
     size_t best_vtcm_size = 0;
 
-    const int m_for_chunks = is_matmul_id ? hex_align_up(m_id_rows, 32) : ne11_padded;
+    ثابت صحيح m_for_chunks = is_matmul_id ? hex_align_up(m_id_rows, 32) : ne11_padded;
 
-    int act_threads = n_threads;
-    while (act_threads >= 1) {
+    صحيح act_threads = n_threads;
+    طالما (act_threads >= 1) {
         size_t simple_2d_overhead = htp_mm_hmx_get_2d_overhead(pipeline, is_matmul_id) + (bias_size > 0 ? hex_align_up(bias_size, HTP_MM_HMX_TILE_SIZE) : 0);
         size_t simple_2d_size_per_n, simple_2d_size_per_m, simple_2d_size_per_mn;
         htp_mm_hmx_get_2d_chunk_costs(wtype, k, pipeline, aligned_tile_size, &simple_2d_size_per_n, &simple_2d_size_per_m, &simple_2d_size_per_mn);
@@ -733,13 +733,13 @@ static inline bool htp_mm_hmx_solve_2d_params(
         size_t n_chunk_candidate = 0;
         size_t vtcm_size_candidate = 0;
 
-        if (htp_mm_hmx_compute_chunks(vtcm_budget, simple_2d_overhead, simple_2d_size_per_n, simple_2d_size_per_m, simple_2d_size_per_mn, m_for_chunks, ne01_padded,
+        إذا (htp_mm_hmx_compute_chunks(vtcm_budget, simple_2d_overhead, simple_2d_size_per_n, simple_2d_size_per_m, simple_2d_size_per_mn, m_for_chunks, ne01_padded,
                                (size_t) ne01_padded * HTP_MM_HMX_COST_W_DEQUANT, (size_t) m_for_cost * HTP_MM_HMX_COST_A_CONVERT,
                                &m_chunk_candidate, &n_chunk_candidate, &vtcm_size_candidate) == 0) {
             size_t exact_size = htp_mm_hmx_get_2d_vtcm_size(wtype, k, m_chunk_candidate, n_chunk_candidate, pipeline, is_matmul_id ? 0 : act_threads, aligned_tile_size, bias_size);
-            if (exact_size <= vtcm_budget) {
+            إذا (exact_size <= vtcm_budget) {
                 size_t mblocks = ((size_t) m_for_cost + m_chunk_candidate - 1) / m_chunk_candidate;
-                if (mblocks < best_mblocks || (mblocks == best_mblocks && act_threads > best_act_threads)) {
+                إذا (mblocks < best_mblocks || (mblocks == best_mblocks && act_threads > best_act_threads)) {
                     best_mblocks = mblocks;
                     best_act_threads = act_threads;
                     best_m_chunk = m_chunk_candidate;
@@ -748,21 +748,21 @@ static inline bool htp_mm_hmx_solve_2d_params(
                 }
             }
         }
-        if (act_threads == 1) {
+        إذا (act_threads == 1) {
             act_threads = 0;
-        } else {
+        } وإلا {
             act_threads /= 2;
         }
     }
 
-    if (best_act_threads > 0) {
+    إذا (best_act_threads > 0) {
         *m_chunk_out = best_m_chunk;
         *n_chunk_out = best_n_chunk;
         *vtcm_size_out = best_vtcm_size;
         *act_threads_out = best_act_threads;
-        return true;
+        أرجع true;
     }
-    return false;
+    أرجع false;
 }
 
 #ifdef __cplusplus

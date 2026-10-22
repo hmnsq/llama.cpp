@@ -1,24 +1,24 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../node_context.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/reduce_mean.hpp>
+#ضمن <memory>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/reduce_mean.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-OutputVector translate_mean(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_mean(ثابت عقدة_Context & context) {
+    رقم_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
+    auto مدخل = process_view_مدخل_new(context, 0);
     auto axis = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
-    auto res = std::make_shared<ov::op::v1::ReduceMean>(input, axis, true);
+    auto res = std::make_shared<ov::op::v1::ReduceMean>(مدخل, axis, true);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    أرجع rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

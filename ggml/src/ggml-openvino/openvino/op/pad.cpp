@@ -1,47 +1,47 @@
-#include "../op_table.h"
-#include "../utils.h"
+#ضمن "../op_table.h"
+#ضمن "../utils.h"
 
-#include <array>
-#include <cstdint>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/pad.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <utility>
-#include <vector>
+#ضمن <array>
+#ضمن <cstdint>
+#ضمن <openvino/op/constant.hpp>
+#ضمن <openvino/op/gather.hpp>
+#ضمن <openvino/op/pad.hpp>
+#ضمن <openvino/op/reshape.hpp>
+#ضمن <openvino/op/shape_of.hpp>
+#ضمن <utility>
+#ضمن <vector>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+نطاق ov {
+نطاق frontend {
+نطاق ggml {
+نطاق op {
 
-namespace {
+نطاق {
 
-ov::Output<ov::Node> translate_circular_pad(ov::Output<ov::Node> input,
-                                            const std::array<int32_t, 8> & pads,
-                                            const ov::Shape & input_shape) {
-    ov::Output<ov::Node> result = std::move(input);
+ov::Output<ov::Node> translate_circular_pad(ov::Output<ov::Node> مدخل,
+                                            ثابت std::array<int32_t, 8> & pads,
+                                            ثابت ov::Shape & مدخل_shape) {
+    ov::Output<ov::Node> result = std::move(مدخل);
 
-    const std::array<int32_t, 4> pads_begin = {pads[6], pads[4], pads[2], pads[0]};
-    const std::array<int32_t, 4> pads_end = {pads[7], pads[5], pads[3], pads[1]};
+    ثابت std::array<int32_t, 4> pads_begin = {pads[6], pads[4], pads[2], pads[0]};
+    ثابت std::array<int32_t, 4> pads_end = {pads[7], pads[5], pads[3], pads[1]};
 
-    for (size_t axis = 0; axis < input_shape.size(); ++axis) {
-        const int64_t input_dim = static_cast<int64_t>(input_shape[axis]);
-        const int64_t pad_begin = pads_begin[axis];
-        const int64_t pad_end = pads_end[axis];
+    لكل (size_t axis = 0; axis < مدخل_shape.size(); ++axis) {
+        ثابت int64_t مدخل_dim = static_cast<int64_t>(مدخل_shape[axis]);
+        ثابت int64_t pad_begin = pads_begin[axis];
+        ثابت int64_t pad_end = pads_end[axis];
 
-        if (pad_begin == 0 && pad_end == 0) {
-            continue;
+        إذا (pad_begin == 0 && pad_end == 0) {
+            استمر;
         }
 
-        FRONT_END_CHECK_IMPLEMENTED(input_dim > 0, "Circular PAD requires static non-zero input dimensions");
+        FRONT_END_CHECK_IMPLEMENTED(مدخل_dim > 0, "Circular PAD requires static non-zero input dimensions");
 
-        std::vector<int64_t> indices(static_cast<size_t>(input_dim + pad_begin + pad_end));
-        for (int64_t index = 0; index < static_cast<int64_t>(indices.size()); ++index) {
-            int64_t wrapped = (index - pad_begin) % input_dim;
-            if (wrapped < 0) {
-                wrapped += input_dim;
+        std::vector<int64_t> indices(static_cast<size_t>(مدخل_dim + pad_begin + pad_end));
+        لكل (int64_t index = 0; index < static_cast<int64_t>(indices.size()); ++index) {
+            int64_t wrapped = (index - pad_begin) % مدخل_dim;
+            إذا (wrapped < 0) {
+                wrapped += مدخل_dim;
             }
             indices[static_cast<size_t>(index)] = wrapped;
         }
@@ -51,41 +51,41 @@ ov::Output<ov::Node> translate_circular_pad(ov::Output<ov::Node> input,
         result = std::make_shared<ov::op::v8::Gather>(result, gather_indices, gather_axis);
     }
 
-    return result;
+    أرجع result;
 }
 
 }  // namespace
 
-OutputVector translate_pad(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_pad(ثابت عقدة_Context & context) {
+    رقم_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
-    if (context.get_input_shape(0) == context.get_output_shape()) {
-        return rename_outputs_with_suffix({input}, context.get_name());
+    auto مدخل = process_view_مدخل_new(context, 0);
+    إذا (context.get_مدخل_shape(0) == context.get_output_shape()) {
+        أرجع rename_outputs_with_suffix({مدخل}, context.get_name());
     }
 
-    const int32_t * op_params = context.get_output_op_params();
+    ثابت int32_t * op_params = context.get_output_op_params();
     FRONT_END_CHECK_IMPLEMENTED(op_params != nullptr, "PAD requires output op params");
 
-    const std::array<int32_t, 8> pads = {op_params[0], op_params[1], op_params[2], op_params[3],
+    ثابت std::array<int32_t, 8> pads = {op_params[0], op_params[1], op_params[2], op_params[3],
                                          op_params[4], op_params[5], op_params[6], op_params[7]};
-    const bool circular = op_params[8] != 0;
+    ثابت منطقي circular = op_params[8] != 0;
 
-    if (circular) {
-        auto res = translate_circular_pad(input, pads, context.get_input_shape(0).to_shape());
-        return rename_outputs_with_suffix({res}, context.get_name());
+    إذا (circular) {
+        auto res = translate_circular_pad(مدخل, pads, context.get_مدخل_shape(0).to_shape());
+        أرجع rename_outputs_with_suffix({res}, context.get_name());
     }
 
-    const std::vector<int64_t> pads_begin = {pads[6], pads[4], pads[2], pads[0]};
-    const std::vector<int64_t> pads_end = {pads[7], pads[5], pads[3], pads[1]};
+    ثابت std::vector<int64_t> pads_begin = {pads[6], pads[4], pads[2], pads[0]};
+    ثابت std::vector<int64_t> pads_end = {pads[7], pads[5], pads[3], pads[1]};
 
-    auto pads_begin_node = ov::op::v0::Constant::create(ov::element::i64, {pads_begin.size()}, pads_begin);
-    auto pads_end_node = ov::op::v0::Constant::create(ov::element::i64, {pads_end.size()}, pads_end);
-    auto pad_value = ov::op::v0::Constant::create(context.get_input_type(0), ov::Shape{}, {0});
+    auto pads_begin_عقدة = ov::op::v0::Constant::create(ov::element::i64, {pads_begin.size()}, pads_begin);
+    auto pads_end_عقدة = ov::op::v0::Constant::create(ov::element::i64, {pads_end.size()}, pads_end);
+    auto pad_قيمة = ov::op::v0::Constant::create(context.get_مدخل_type(0), ov::Shape{}, {0});
     auto res =
-        std::make_shared<ov::op::v1::Pad>(input, pads_begin_node, pads_end_node, pad_value, ov::op::PadMode::CONSTANT);
+        std::make_shared<ov::op::v1::Pad>(مدخل, pads_begin_عقدة, pads_end_عقدة, pad_قيمة, ov::op::PadMode::CONSTANT);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    أرجع rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

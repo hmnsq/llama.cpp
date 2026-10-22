@@ -8,7 +8,7 @@ _start:
 .option pop
     # Firmware sets stack pointer before launch
     # bss not allowed, no init
-    call  entry_point
+    نادي  entry_point
     li    a2, 0  /* KERNEL_RETURN_SUCCESS (0) */
     mv    a1, a0
     li    a0, 8  /* SYSCALL_RETURN_FROM_KERNEL (8) */
