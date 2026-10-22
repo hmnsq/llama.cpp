@@ -7,11 +7,11 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#இல்லையெனில்
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
-#include <filesystem>
+#அந்தர்பாவ <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -19,18 +19,18 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+கட்டமைப்பு dl_handle_deleter {
+    வெறுமை operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-#else
+#இல்லையெனில்
 
-using dl_handle = void;
+using dl_handle = வெறுமை;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+கட்டமைப்பு dl_handle_deleter {
+    வெறுமை operator()(வெறுமை * handle) {
         dlclose(handle);
     }
 };
@@ -39,7 +39,7 @@ struct dl_handle_deleter {
 
 using dl_handle_ptr = std::unique_ptr<dl_handle, dl_handle_deleter>;
 
-dl_handle * dl_load_library(const fs::path & path);
-void * dl_get_sym(dl_handle * handle, const char * name);
-const char * dl_error();
+dl_handle * dl_load_library(மாறிலி fs::path & path);
+வெறுமை * dl_get_sym(dl_handle * handle, மாறிலி எழுத்து * name);
+மாறிலி எழுத்து * dl_error();
 

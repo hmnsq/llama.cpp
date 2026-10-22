@@ -39,8 +39,8 @@
 
 #pragma once
 
-#include <CL/cl.h>
-#include <string>
+#அந்தர்பாவ <CL/cl.h>
+#அந்தர்பாவ <string>
 
 // Bumped manually if host-side OpenCL API usage changes in a way that
 // affects compile semantics but does not show up in source_bytes /
@@ -50,26 +50,26 @@
 // require bumping this; the source bytes already capture those.
 #define CL_PROGRAM_CACHE_FORMAT_VERSION 1u
 
-struct cl_program_cache_state {
+கட்டமைப்பு cl_program_cache_state {
     // Empty string means cache is disabled.
     std::string dir;
     // Concatenated device/driver/platform identity + cache format version,
     // computed once at init and folded into every key.
-    std::string key_suffix;
+    std::string சாவி_suffix;
 };
 
 cl_program_cache_state cl_program_cache_init(cl_device_id device);
 
 cl_program cl_program_cache_try_load(
-    const cl_program_cache_state & state,
+    மாறிலி cl_program_cache_state & state,
     cl_context                     context,
     cl_device_id                   device,
-    const char *                   source,
-    const std::string &            compile_opts);
+    மாறிலி எழுத்து *                   source,
+    மாறிலி std::string &            compile_opts);
 
-void cl_program_cache_try_save(
-    const cl_program_cache_state & state,
+வெறுமை cl_program_cache_try_save(
+    மாறிலி cl_program_cache_state & state,
     cl_program                     program,
     cl_device_id                   device,
-    const char *                   source,
-    const std::string &            compile_opts);
+    மாறிலி எழுத்து *                   source,
+    மாறிலி std::string &            compile_opts);

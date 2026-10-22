@@ -2,35 +2,35 @@
 
 // GGML internal header
 
-#include "ggml.h"
-#include "gguf.h"
+#அந்தர்பாவ "ggml.h"
+#அந்தர்பாவ "gguf.h"
 
-#include <assert.h>
-#include <math.h>
-#include <stdlib.h> // load `stdlib.h` before other headers to work around MinGW bug: https://sourceforge.net/p/mingw-w64/bugs/192/
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
+#அந்தர்பாவ <assert.h>
+#அந்தர்பாவ <math.h>
+#அந்தர்பாவ <stdlib.h> // load `stdlib.h` before other headers to work around MinGW bug: https://sourceforge.net/p/mingw-w64/bugs/192/
+#அந்தர்பாவ <stdbool.h>
+#அந்தர்பாவ <stdint.h>
+#அந்தர்பாவ <string.h>
 
 #ifdef __ARM_FEATURE_SVE
-#include <arm_sve.h>
+#அந்தர்பாவ <arm_sve.h>
 #endif // __ARM_FEATURE_SVE
 
-#if defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
+#எனில் defined(__ARM_NEON) && !defined(__CUDACC__) && !defined(__MUSACC__)
 // if YCM cannot find <arm_neon.h>, make a symbolic link to it, for example:
 //
 //   $ ln -sfn /Library/Developer/CommandLineTools/usr/lib/clang/13.1.6/include/arm_neon.h ./src/
 //
-#include <arm_neon.h>
+#அந்தர்பாவ <arm_neon.h>
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+வெளி "C" {
 #endif
 
-void ggml_print_backtrace(void);
+வெறுமை ggml_print_backtrace(வெறுமை);
 
-uint64_t ggml_graph_next_uid(void);
+uint64_t ggml_graph_next_uid(வெறுமை);
 
 #ifndef MIN
 #    define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -49,71 +49,71 @@ uint64_t ggml_graph_next_uid(void);
 // ref: https://stackoverflow.com/a/53923785/4039976
 #ifndef __cplusplus
     #ifndef static_assert
-        #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
-            #define static_assert(cond, msg) _Static_assert(cond, msg)
-        #else
-            #define static_assert(cond, msg) struct global_scope_noop_trick
+        #எனில் defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201100L)
+            #define static_assert(cond, செய்தி) _Static_assert(cond, செய்தி)
+        #இல்லையெனில்
+            #define static_assert(cond, செய்தி) கட்டமைப்பு global_scope_noop_trick
         #endif
     #endif
 #endif
 
-static inline int ggml_up32(int n) {
-    return (n + 31) & ~31;
+நிலையான உள்வரி முழு ggml_up32(முழு n) {
+    திரும்பு (n + 31) & ~31;
 }
 
 //static inline int ggml_up64(int n) {
 //    return (n + 63) & ~63;
 //}
 
-static inline int ggml_up(int n, int m) {
+நிலையான உள்வரி முழு ggml_up(முழு n, முழு m) {
     // assert m is a power of 2
     GGML_ASSERT((m & (m - 1)) == 0);
-    return (n + m - 1) & ~(m - 1);
+    திரும்பு (n + m - 1) & ~(m - 1);
 }
 
 // TODO: move to ggml.h? (won't be able to inline)
-static bool ggml_are_same_layout(const struct ggml_tensor * a, const struct ggml_tensor * b) {
-    if (a->type != b->type) {
-        return false;
+நிலையான bool ggml_are_same_layout(மாறிலி கட்டமைப்பு ggml_tensor * a, மாறிலி கட்டமைப்பு ggml_tensor * b) {
+    எனில் (a->type != b->type) {
+        திரும்பு false;
     }
-    for (int i = 0; i < GGML_MAX_DIMS; i++) {
-        if (a->ne[i] != b->ne[i]) {
-            return false;
+    க்கு (முழு i = 0; i < GGML_MAX_DIMS; i++) {
+        எனில் (a->ne[i] != b->ne[i]) {
+            திரும்பு false;
         }
-        if (a->nb[i] != b->nb[i]) {
-            return false;
+        எனில் (a->nb[i] != b->nb[i]) {
+            திரும்பு false;
         }
     }
-    return true;
+    திரும்பு true;
 }
 
-static bool ggml_op_is_empty(enum ggml_op op) {
-    switch (op) {
-        case GGML_OP_NONE:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-            return true;
-        default:
-            return false;
+நிலையான bool ggml_op_is_empty(எண்ணிக்கை ggml_op op) {
+    தேர்வு (op) {
+        நிலை GGML_OP_NONE:
+        நிலை GGML_OP_RESHAPE:
+        நிலை GGML_OP_TRANSPOSE:
+        நிலை GGML_OP_VIEW:
+        நிலை GGML_OP_PERMUTE:
+            திரும்பு true;
+        இயல்பு:
+            திரும்பு false;
     }
 }
 
-static inline bool ggml_impl_is_view(const struct ggml_tensor * t) {
-    return t->view_src != NULL;
+நிலையான உள்வரி bool ggml_impl_is_view(மாறிலி கட்டமைப்பு ggml_tensor * t) {
+    திரும்பு t->view_src != வெற்று;
 }
 
-static inline float ggml_compute_softplus_f32(float input) {
-    return (input > 20.0f) ? input : logf(1 + expf(input));
+நிலையான உள்வரி தசம ggml_compute_softplus_f32(தசம உள்ளீடு) {
+    திரும்பு (உள்ளீடு > 20.0f) ? உள்ளீடு : logf(1 + expf(உள்ளீடு));
 }
 //
 // logging
 //
 
 GGML_ATTRIBUTE_FORMAT(2, 3)
-GGML_API void ggml_log_internal        (enum ggml_log_level level, const char * format, ...);
-GGML_API void ggml_log_callback_default(enum ggml_log_level level, const char * text, void * user_data);
+GGML_API வெறுமை ggml_log_internal        (எண்ணிக்கை ggml_log_level level, மாறிலி எழுத்து * format, ...);
+GGML_API வெறுமை ggml_log_callback_default(எண்ணிக்கை ggml_log_level level, மாறிலி எழுத்து * text, வெறுமை * user_data);
 
 #define GGML_LOG(...)       ggml_log_internal(GGML_LOG_LEVEL_NONE , __VA_ARGS__)
 #define GGML_LOG_INFO(...)  ggml_log_internal(GGML_LOG_LEVEL_INFO , __VA_ARGS__)
@@ -124,40 +124,40 @@ GGML_API void ggml_log_callback_default(enum ggml_log_level level, const char * 
 
 #define GGML_DEBUG 0
 
-#if (GGML_DEBUG >= 1)
+#எனில் (GGML_DEBUG >= 1)
 #define GGML_PRINT_DEBUG(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#இல்லையெனில்
 #define GGML_PRINT_DEBUG(...)
 #endif
 
-#if (GGML_DEBUG >= 5)
+#எனில் (GGML_DEBUG >= 5)
 #define GGML_PRINT_DEBUG_5(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#இல்லையெனில்
 #define GGML_PRINT_DEBUG_5(...)
 #endif
 
-#if (GGML_DEBUG >= 10)
+#எனில் (GGML_DEBUG >= 10)
 #define GGML_PRINT_DEBUG_10(...) GGML_LOG_DEBUG(__VA_ARGS__)
-#else
+#இல்லையெனில்
 #define GGML_PRINT_DEBUG_10(...)
 #endif
 
 // tensor params
 
-static void ggml_set_op_params(struct ggml_tensor * tensor, const void * params, size_t params_size) {
-    GGML_ASSERT(tensor != NULL); // silence -Warray-bounds warnings
-    assert(params_size <= GGML_MAX_OP_PARAMS);
+நிலையான வெறுமை ggml_set_op_params(கட்டமைப்பு ggml_tensor * tensor, மாறிலி வெறுமை * params, size_t params_size) {
+    GGML_ASSERT(tensor != வெற்று); // silence -Warray-bounds warnings
+    ப்ரதிஜ்ஞா(params_size <= GGML_MAX_OP_PARAMS);
     memcpy(tensor->op_params, params, params_size);
 }
 
-static int32_t ggml_get_op_params_i32(const struct ggml_tensor * tensor, uint32_t i) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(int32_t));
-    return ((const int32_t *)(tensor->op_params))[i];
+நிலையான int32_t ggml_get_op_params_i32(மாறிலி கட்டமைப்பு ggml_tensor * tensor, uint32_t i) {
+    ப்ரதிஜ்ஞா(i < GGML_MAX_OP_PARAMS / அளவு(int32_t));
+    திரும்பு ((மாறிலி int32_t *)(tensor->op_params))[i];
 }
 
-static float ggml_get_op_params_f32(const struct ggml_tensor * tensor, uint32_t i) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(float));
-    return ((const float *)(tensor->op_params))[i];
+நிலையான தசம ggml_get_op_params_f32(மாறிலி கட்டமைப்பு ggml_tensor * tensor, uint32_t i) {
+    ப்ரதிஜ்ஞா(i < GGML_MAX_OP_PARAMS / அளவு(தசம));
+    திரும்பு ((மாறிலி தசம *)(tensor->op_params))[i];
 }
 
 // [TAG_GGML_PREC]
@@ -172,61 +172,61 @@ static float ggml_get_op_params_f32(const struct ggml_tensor * tensor, uint32_t 
 //   1 - hint
 //   2 - src0 precision
 //   3 - src1 precision
-static void ggml_set_op_params_i32(struct ggml_tensor * tensor, uint32_t i, int32_t value) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(int32_t));
-    ((int32_t *)(tensor->op_params))[i] = value;
+நிலையான வெறுமை ggml_set_op_params_i32(கட்டமைப்பு ggml_tensor * tensor, uint32_t i, int32_t மதிப்பு) {
+    ப்ரதிஜ்ஞா(i < GGML_MAX_OP_PARAMS / அளவு(int32_t));
+    ((int32_t *)(tensor->op_params))[i] = மதிப்பு;
 }
 
-static void ggml_set_op_params_f32(struct ggml_tensor * tensor, uint32_t i, float value) {
-    assert(i < GGML_MAX_OP_PARAMS / sizeof(float));
-    ((float *)(tensor->op_params))[i] = value;
+நிலையான வெறுமை ggml_set_op_params_f32(கட்டமைப்பு ggml_tensor * tensor, uint32_t i, தசம மதிப்பு) {
+    ப்ரதிஜ்ஞா(i < GGML_MAX_OP_PARAMS / அளவு(தசம));
+    ((தசம *)(tensor->op_params))[i] = மதிப்பு;
 }
 
-struct ggml_map_custom1_op_params {
+கட்டமைப்பு ggml_map_custom1_op_params {
     ggml_custom1_op_t  fun;
-    int                n_tasks;
-    void             * userdata;
+    முழு                n_tasks;
+    வெறுமை             * userdata;
 };
 
-struct ggml_map_custom2_op_params {
+கட்டமைப்பு ggml_map_custom2_op_params {
     ggml_custom2_op_t   fun;
-    int                 n_tasks;
-    void              * userdata;
+    முழு                 n_tasks;
+    வெறுமை              * userdata;
 };
 
-struct ggml_map_custom3_op_params {
+கட்டமைப்பு ggml_map_custom3_op_params {
     ggml_custom3_op_t fun;
-    int               n_tasks;
-    void            * userdata;
+    முழு               n_tasks;
+    வெறுமை            * userdata;
 };
 
-struct ggml_custom_op_params {
+கட்டமைப்பு ggml_custom_op_params {
     ggml_custom_op_t fun;
-    int              n_tasks;
-    void           * userdata;
+    முழு              n_tasks;
+    வெறுமை           * userdata;
 };
 
 // bitset
 
-typedef uint32_t ggml_bitset_t;
+வகைவரை uint32_t ggml_bitset_t;
 
-static_assert(sizeof(ggml_bitset_t) == 4, "bitset_t constants must be updated");
+static_assert(அளவு(ggml_bitset_t) == 4, "bitset_t constants must be updated");
 #define BITSET_SHR 5 // log2(sizeof(ggml_bitset_t)*8)
-#define BITSET_MASK (sizeof(ggml_bitset_t)*8 - 1)
+#define BITSET_MASK (அளவு(ggml_bitset_t)*8 - 1)
 
-static size_t ggml_bitset_size(size_t n) {
-    return (n + BITSET_MASK) >> BITSET_SHR;
+நிலையான size_t ggml_bitset_size(size_t n) {
+    திரும்பு (n + BITSET_MASK) >> BITSET_SHR;
 }
 
-static inline bool ggml_bitset_get(const ggml_bitset_t * bitset, size_t i) {
-    return !!(bitset[i >> BITSET_SHR] & (1u << (i & BITSET_MASK)));
+நிலையான உள்வரி bool ggml_bitset_get(மாறிலி ggml_bitset_t * bitset, size_t i) {
+    திரும்பு !!(bitset[i >> BITSET_SHR] & (1u << (i & BITSET_MASK)));
 }
 
-static inline void ggml_bitset_set(ggml_bitset_t * bitset, size_t i) {
+நிலையான உள்வரி வெறுமை ggml_bitset_set(ggml_bitset_t * bitset, size_t i) {
     bitset[i >> BITSET_SHR] |= (1u << (i & BITSET_MASK));
 }
 
-static inline void ggml_bitset_clear(ggml_bitset_t * bitset, size_t i) {
+நிலையான உள்வரி வெறுமை ggml_bitset_clear(ggml_bitset_t * bitset, size_t i) {
     bitset[i >> BITSET_SHR] &= ~(1u << (i & BITSET_MASK));
 }
 
@@ -235,96 +235,96 @@ static inline void ggml_bitset_clear(ggml_bitset_t * bitset, size_t i) {
 #define GGML_HASHSET_FULL ((size_t)-1)
 #define GGML_HASHSET_ALREADY_EXISTS ((size_t)-2)
 
-struct ggml_hash_set {
+கட்டமைப்பு ggml_hash_set {
     size_t size;
     ggml_bitset_t * used;       // whether or not the keys are in use i.e. set
-    struct ggml_tensor ** keys; // actual tensors in the set, keys[i] is only defined if ggml_bitset_get(used, i)
+    கட்டமைப்பு ggml_tensor ** சாவிகள்; // actual tensors in the set, keys[i] is only defined if ggml_bitset_get(used, i)
 };
 
-struct ggml_hash_set ggml_hash_set_new(size_t size);
-void                 ggml_hash_set_free(struct ggml_hash_set * hash_set);
+கட்டமைப்பு ggml_hash_set ggml_hash_set_new(size_t size);
+வெறுமை                 ggml_hash_set_free(கட்டமைப்பு ggml_hash_set * hash_set);
 
 // returns the minimum size for a hash set that can hold min_sz elements
 size_t ggml_hash_size(size_t min_sz);
 
 // remove all elements from the hash set
-void ggml_hash_set_reset(struct ggml_hash_set * hash_set);
+வெறுமை ggml_hash_set_reset(கட்டமைப்பு ggml_hash_set * hash_set);
 
 // returns true if key is in the hash set
-static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+நிலையான bool ggml_hash_contains(மாறிலி கட்டமைப்பு ggml_hash_set * hash_set, கட்டமைப்பு ggml_tensor * சாவி);
 
 // returns GGML_HASHSET_FULL if table is full, otherwise the current index of the key or where it should be inserted
-static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct ggml_tensor * key);
+நிலையான size_t ggml_hash_find(மாறிலி கட்டமைப்பு ggml_hash_set * hash_set, மாறிலி கட்டமைப்பு ggml_tensor * சாவி);
 
 // returns GGML_HASHSET_ALREADY_EXISTS if key already exists, index otherwise, asserts if table is full
-static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+நிலையான size_t ggml_hash_செருகு(கட்டமைப்பு ggml_hash_set * hash_set, கட்டமைப்பு ggml_tensor * சாவி);
 
 // return index, asserts if table is full
-static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key);
+நிலையான size_t ggml_hash_find_or_செருகு(கட்டமைப்பு ggml_hash_set * hash_set, கட்டமைப்பு ggml_tensor * சாவி);
 
 // hash function for ggml_tensor
-static inline size_t ggml_hash(const struct ggml_tensor * p) {
+நிலையான உள்வரி size_t ggml_hash(மாறிலி கட்டமைப்பு ggml_tensor * p) {
     // the last 4 bits are always zero due to alignment
-    return (size_t)(uintptr_t)p >> 4;
+    திரும்பு (size_t)(uintptr_t)p >> 4;
 }
 
-static size_t ggml_hash_find(const struct ggml_hash_set * hash_set, const struct ggml_tensor * key) {
-    size_t h = ggml_hash(key) % hash_set->size;
+நிலையான size_t ggml_hash_find(மாறிலி கட்டமைப்பு ggml_hash_set * hash_set, மாறிலி கட்டமைப்பு ggml_tensor * சாவி) {
+    size_t h = ggml_hash(சாவி) % hash_set->size;
 
     // linear probing
     size_t i = h;
-    while (ggml_bitset_get(hash_set->used, i) && hash_set->keys[i] != key) {
+    போது (ggml_bitset_get(hash_set->used, i) && hash_set->சாவிகள்[i] != சாவி) {
         i = (i + 1) % hash_set->size;
-        if (i == h) {
+        எனில் (i == h) {
             // visited all hash table entries -> not found
-            return GGML_HASHSET_FULL;
+            திரும்பு GGML_HASHSET_FULL;
         }
     }
-    return i;
+    திரும்பு i;
 }
 
-static bool ggml_hash_contains(const struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
-    size_t i = ggml_hash_find(hash_set, key);
-    return i != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, i);
+நிலையான bool ggml_hash_contains(மாறிலி கட்டமைப்பு ggml_hash_set * hash_set, கட்டமைப்பு ggml_tensor * சாவி) {
+    size_t i = ggml_hash_find(hash_set, சாவி);
+    திரும்பு i != GGML_HASHSET_FULL && ggml_bitset_get(hash_set->used, i);
 }
 
-static size_t ggml_hash_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
-    size_t h = ggml_hash(key) % hash_set->size;
+நிலையான size_t ggml_hash_செருகு(கட்டமைப்பு ggml_hash_set * hash_set, கட்டமைப்பு ggml_tensor * சாவி) {
+    size_t h = ggml_hash(சாவி) % hash_set->size;
 
     // linear probing
     size_t i = h;
-    do {
-        if (!ggml_bitset_get(hash_set->used, i)) {
+    செய் {
+        எனில் (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
-            hash_set->keys[i] = key;
-            return i;
+            hash_set->சாவிகள்[i] = சாவி;
+            திரும்பு i;
         }
-        if (hash_set->keys[i] == key) {
-            return GGML_HASHSET_ALREADY_EXISTS;
+        எனில் (hash_set->சாவிகள்[i] == சாவி) {
+            திரும்பு GGML_HASHSET_ALREADY_EXISTS;
         }
         i = (i + 1) % hash_set->size;
-    } while (i != h);
+    } போது (i != h);
 
     // visited all hash table entries -> not found
     GGML_ABORT("fatal error");
 }
 
-static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct ggml_tensor * key) {
-    size_t h = ggml_hash(key) % hash_set->size;
+நிலையான size_t ggml_hash_find_or_செருகு(கட்டமைப்பு ggml_hash_set * hash_set, கட்டமைப்பு ggml_tensor * சாவி) {
+    size_t h = ggml_hash(சாவி) % hash_set->size;
 
     // linear probing
     size_t i = h;
-    do {
-        if (!ggml_bitset_get(hash_set->used, i)) {
+    செய் {
+        எனில் (!ggml_bitset_get(hash_set->used, i)) {
             ggml_bitset_set(hash_set->used, i);
-            hash_set->keys[i] = key;
-            return i;
+            hash_set->சாவிகள்[i] = சாவி;
+            திரும்பு i;
         }
-        if (hash_set->keys[i] == key) {
-            return i;
+        எனில் (hash_set->சாவிகள்[i] == சாவி) {
+            திரும்பு i;
         }
         i = (i + 1) % hash_set->size;
-    } while (i != h);
+    } போது (i != h);
 
     // visited all hash table entries -> not found
     GGML_ABORT("fatal error");
@@ -332,26 +332,26 @@ static size_t ggml_hash_find_or_insert(struct ggml_hash_set * hash_set, struct g
 
 // computation graph
 
-enum ggml_cgraph_eval_order {
-    GGML_CGRAPH_EVAL_ORDER_LEFT_TO_RIGHT = 0,
-    GGML_CGRAPH_EVAL_ORDER_RIGHT_TO_LEFT,
-    GGML_CGRAPH_EVAL_ORDER_COUNT
+எண்ணிக்கை ggml_cgraph_eval_order {
+    GGML_CGRAPH_EVAL_ORDER_இடது_TO_வலது = 0,
+    GGML_CGRAPH_EVAL_ORDER_வலது_TO_இடது,
+    GGML_CGRAPH_EVAL_ORDER_மொத்தம்
 };
 
-struct ggml_cgraph {
-    int size;    // maximum number of nodes/leafs/grads/grad_accs
-    int n_nodes; // number of nodes currently in use
-    int n_leafs; // number of leafs currently in use
+கட்டமைப்பு ggml_cgraph {
+    முழு size;    // maximum number of nodes/leafs/grads/grad_accs
+    முழு n_nodes; // number of nodes currently in use
+    முழு n_leafs; // number of leafs currently in use
 
-    struct ggml_tensor ** nodes;     // tensors with data that can change if the graph is evaluated
-    struct ggml_tensor ** grads;     // the outputs of these tensors are the gradients of the nodes
-    struct ggml_tensor ** grad_accs; // accumulators for node gradients
-    struct ggml_tensor ** leafs;     // tensors with constant data
+    கட்டமைப்பு ggml_tensor ** nodes;     // tensors with data that can change if the graph is evaluated
+    கட்டமைப்பு ggml_tensor ** grads;     // the outputs of these tensors are the gradients of the nodes
+    கட்டமைப்பு ggml_tensor ** grad_accs; // accumulators for node gradients
+    கட்டமைப்பு ggml_tensor ** leafs;     // tensors with constant data
     int32_t             * use_counts;// number of uses of each tensor, indexed by hash table slot
 
-    struct ggml_hash_set visited_hash_set;
+    கட்டமைப்பு ggml_hash_set visited_hash_set;
 
-    enum ggml_cgraph_eval_order order;
+    எண்ணிக்கை ggml_cgraph_eval_order order;
 
     // an optional identifier that can be utilized to recognize same graphs if two non-zero values match
     // a value of 0 means it is not set and should be ignored
@@ -361,85 +361,85 @@ struct ggml_cgraph {
 // returns a slice of cgraph with nodes [i0, i1)
 // the slice does not have leafs or gradients
 // if you need the gradients, get them from the original graph
-struct ggml_cgraph ggml_graph_view(struct ggml_cgraph * cgraph, int i0, int i1);
+கட்டமைப்பு ggml_cgraph ggml_graph_view(கட்டமைப்பு ggml_cgraph * cgraph, முழு i0, முழு i1);
 
 // ggml-alloc.c: true if the operation can reuse memory from its sources
-GGML_API bool ggml_op_can_inplace(enum ggml_op op);
+GGML_API bool ggml_op_can_inplace(எண்ணிக்கை ggml_op op);
 
 
 // Memory allocation
 
-GGML_API void * ggml_aligned_malloc(size_t size);
-GGML_API void ggml_aligned_free(void * ptr, size_t size);
+GGML_API வெறுமை * ggml_aligned_malloc(size_t size);
+GGML_API வெறுமை ggml_aligned_free(வெறுமை * ptr, size_t size);
 
 // FP16 <-> FP32
 // ref: https://github.com/Maratyszcza/FP16
 
-static inline float fp32_from_bits(uint32_t w) {
-    union {
+நிலையான உள்வரி தசம fp32_from_bits(uint32_t w) {
+    ஒன்றிப்பு {
         uint32_t as_bits;
-        float as_value;
+        தசம as_மதிப்பு;
     } fp32;
     fp32.as_bits = w;
-    return fp32.as_value;
+    திரும்பு fp32.as_மதிப்பு;
 }
 
-static inline uint32_t fp32_to_bits(float f) {
-    union {
-        float as_value;
+நிலையான உள்வரி uint32_t fp32_to_bits(தசம f) {
+    ஒன்றிப்பு {
+        தசம as_மதிப்பு;
         uint32_t as_bits;
     } fp32;
-    fp32.as_value = f;
-    return fp32.as_bits;
+    fp32.as_மதிப்பு = f;
+    திரும்பு fp32.as_bits;
 }
 
-static inline float ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
-    const uint32_t w = (uint32_t) h << 16;
-    const uint32_t sign = w & UINT32_C(0x80000000);
-    const uint32_t two_w = w + w;
+நிலையான உள்வரி தசம ggml_compute_fp16_to_fp32(ggml_fp16_t h) {
+    மாறிலி uint32_t w = (uint32_t) h << 16;
+    மாறிலி uint32_t sign = w & UINT32_C(0x80000000);
+    மாறிலி uint32_t two_w = w + w;
 
-    const uint32_t exp_offset = UINT32_C(0xE0) << 23;
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
-    const float exp_scale = 0x1.0p-112f;
-#else
-    const float exp_scale = fp32_from_bits(UINT32_C(0x7800000));
+    மாறிலி uint32_t exp_offset = UINT32_C(0xE0) << 23;
+#எனில் (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+    மாறிலி தசம exp_scale = 0x1.0p-112f;
+#இல்லையெனில்
+    மாறிலி தசம exp_scale = fp32_from_bits(UINT32_C(0x7800000));
 #endif
-    const float normalized_value = fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
+    மாறிலி தசம normalized_மதிப்பு = fp32_from_bits((two_w >> 4) + exp_offset) * exp_scale;
 
-    const uint32_t magic_mask = UINT32_C(126) << 23;
-    const float magic_bias = 0.5f;
-    const float denormalized_value = fp32_from_bits((two_w >> 17) | magic_mask) - magic_bias;
+    மாறிலி uint32_t magic_mask = UINT32_C(126) << 23;
+    மாறிலி தசம magic_bias = 0.5f;
+    மாறிலி தசம denormalized_மதிப்பு = fp32_from_bits((two_w >> 17) | magic_mask) - magic_bias;
 
-    const uint32_t denormalized_cutoff = UINT32_C(1) << 27;
-    const uint32_t result = sign |
-        (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_value) : fp32_to_bits(normalized_value));
-    return fp32_from_bits(result);
+    மாறிலி uint32_t denormalized_cutoff = UINT32_C(1) << 27;
+    மாறிலி uint32_t result = sign |
+        (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_மதிப்பு) : fp32_to_bits(normalized_மதிப்பு));
+    திரும்பு fp32_from_bits(result);
 }
 
-static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
-#if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
-    const float scale_to_inf = 0x1.0p+112f;
-    const float scale_to_zero = 0x1.0p-110f;
-#else
-    const float scale_to_inf = fp32_from_bits(UINT32_C(0x77800000));
-    const float scale_to_zero = fp32_from_bits(UINT32_C(0x08800000));
+நிலையான உள்வரி ggml_fp16_t ggml_compute_fp32_to_fp16(தசம f) {
+#எனில் (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) || defined(__GNUC__) && !defined(__STRICT_ANSI__)) && (!defined(__cplusplus) || __cplusplus >= 201703L)
+    மாறிலி தசம scale_to_inf = 0x1.0p+112f;
+    மாறிலி தசம scale_to_zero = 0x1.0p-110f;
+#இல்லையெனில்
+    மாறிலி தசம scale_to_inf = fp32_from_bits(UINT32_C(0x77800000));
+    மாறிலி தசம scale_to_zero = fp32_from_bits(UINT32_C(0x08800000));
 #endif
-    float base = (fabsf(f) * scale_to_inf) * scale_to_zero;
+    தசம base = (fabsf(f) * scale_to_inf) * scale_to_zero;
 
-    const uint32_t w = fp32_to_bits(f);
-    const uint32_t shl1_w = w + w;
-    const uint32_t sign = w & UINT32_C(0x80000000);
+    மாறிலி uint32_t w = fp32_to_bits(f);
+    மாறிலி uint32_t shl1_w = w + w;
+    மாறிலி uint32_t sign = w & UINT32_C(0x80000000);
     uint32_t bias = shl1_w & UINT32_C(0xFF000000);
-    if (bias < UINT32_C(0x71000000)) {
+    எனில் (bias < UINT32_C(0x71000000)) {
         bias = UINT32_C(0x71000000);
     }
 
     base = fp32_from_bits((bias >> 1) + UINT32_C(0x07800000)) + base;
-    const uint32_t bits = fp32_to_bits(base);
-    const uint32_t exp_bits = (bits >> 13) & UINT32_C(0x00007C00);
-    const uint32_t mantissa_bits = bits & UINT32_C(0x00000FFF);
-    const uint32_t nonsign = exp_bits + mantissa_bits;
-    return (sign >> 16) | (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign);
+    மாறிலி uint32_t bits = fp32_to_bits(base);
+    மாறிலி uint32_t exp_bits = (bits >> 13) & UINT32_C(0x00007C00);
+    மாறிலி uint32_t mantissa_bits = bits & UINT32_C(0x00000FFF);
+    மாறிலி uint32_t nonsign = exp_bits + mantissa_bits;
+    திரும்பு (sign >> 16) | (shl1_w > UINT32_C(0xFF000000) ? UINT16_C(0x7E00) : nonsign);
 }
 
 #define GGML_COMPUTE_FP16_TO_FP32(x) ggml_compute_fp16_to_fp32(x)
@@ -448,11 +448,11 @@ static inline ggml_fp16_t ggml_compute_fp32_to_fp16(float f) {
 #define GGML_FP16_TO_FP32(x) GGML_COMPUTE_FP16_TO_FP32(x)
 #define GGML_FP32_TO_FP16(x) GGML_COMPUTE_FP32_TO_FP16(x)
 
-static inline float ggml_e8m0_to_fp32(uint8_t x) {
+நிலையான உள்வரி தசம ggml_e8m0_to_fp32(uint8_t x) {
     uint32_t bits;  // Stores the raw bit representation of the float
 
     // Handle special case for minimum exponent (denormalized float)
-    if (x == 0) {
+    எனில் (x == 0) {
         // Bit pattern for 2^(-127):
         // - Sign bit: 0 (positive)
         // - Exponent: 0 (denormalized number)
@@ -470,7 +470,7 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
     //    bits = 0x7FC00000;
     //}
     // Normalized values (most common case)
-    else {
+    இல்லையெனில் {
         // Construct normalized float by shifting exponent into position:
         // - Exponent field: 8 bits (positions 30-23)
         // - Mantissa: 0 (implicit leading 1)
@@ -478,32 +478,32 @@ static inline float ggml_e8m0_to_fp32(uint8_t x) {
         bits = (uint32_t) x << 23;
     }
 
-    float result;  // Final float value
+    தசம result;  // Final float value
                    // Safely reinterpret bit pattern as float without type-punning issues
-    memcpy(&result, &bits, sizeof(float));
-    return result;
+    memcpy(&result, &bits, அளவு(தசம));
+    திரும்பு result;
 }
 
 // Equal to ggml_e8m0_to_fp32/2
 // Useful with MXFP4 quantization since the E0M2 values are doubled
-static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
+நிலையான உள்வரி தசம ggml_e8m0_to_fp32_half(uint8_t x) {
     uint32_t bits;
 
     // For x < 2: use precomputed denormal patterns
-    if (x < 2) {
+    எனில் (x < 2) {
         // 0x00200000 = 2^(-128), 0x00400000 = 2^(-127)
         bits = 0x00200000 << x;
     }
     // For x >= 2: normalized exponent adjustment
-    else {
+    இல்லையெனில் {
         // 0.5 * 2^(x-127) = 2^(x-128) = normalized with exponent (x-1)
         bits = (uint32_t)(x - 1) << 23;
     }
     // Note: NaNs are not handled here
 
-    float result;
-    memcpy(&result, &bits, sizeof(float));
-    return result;
+    தசம result;
+    memcpy(&result, &bits, அளவு(தசம));
+    திரும்பு result;
 }
 
 #define GGML_E8M0_TO_FP32(x) ggml_e8m0_to_fp32(x)
@@ -511,57 +511,57 @@ static inline float ggml_e8m0_to_fp32_half(uint8_t x) {
 
 // UE4M3: unsigned, 4 exp bits (bias=7), 3 mantissa bits
 // Returns value * 0.5 to match kvalues_mxfp4 convention (kvalues = 2 * E2M1_float)
-static inline float ggml_ue4m3_to_fp32(uint8_t x) {
-    if (x == 0 || x == 0x7F) {
-        return 0.0f;
+நிலையான உள்வரி தசம ggml_ue4m3_to_fp32(uint8_t x) {
+    எனில் (x == 0 || x == 0x7F) {
+        திரும்பு 0.0f;
     }
-    int   exp = (x >> 3) & 0xF;
-    int   man = x & 0x7;
-    float raw;
-    if (exp == 0) {
-        raw = ldexpf((float) man, -9);
-    } else {
-        raw = ldexpf(1.0f + (float) man / 8.0f, exp - 7);
+    முழு   exp = (x >> 3) & 0xF;
+    முழு   man = x & 0x7;
+    தசம raw;
+    எனில் (exp == 0) {
+        raw = ldexpf((தசம) man, -9);
+    } இல்லையெனில் {
+        raw = ldexpf(1.0f + (தசம) man / 8.0f, exp - 7);
     }
-    return raw * 0.5f;
+    திரும்பு raw * 0.5f;
 }
 
-static inline uint8_t ggml_fp32_to_ue4m3(float x) {
-    if (!(x > 0.0f)) {
-        return 0;
+நிலையான உள்வரி uint8_t ggml_fp32_to_ue4m3(தசம x) {
+    எனில் (!(x > 0.0f)) {
+        திரும்பு 0;
     }
-    if (x > 448.0f) {
+    எனில் (x > 448.0f) {
         x = 448.0f;
     }
     uint32_t bits;
     memcpy(&bits, &x, 4);
-    int fp32_exp  = ((bits >> 23) & 0xFF) - 127;
-    int fp32_man  = (bits >> 20) & 0x7;
-    int ue4m3_exp = fp32_exp + 7;
-    if (ue4m3_exp <= 0) {
+    முழு fp32_exp  = ((bits >> 23) & 0xFF) - 127;
+    முழு fp32_man  = (bits >> 20) & 0x7;
+    முழு ue4m3_exp = fp32_exp + 7;
+    எனில் (ue4m3_exp <= 0) {
         // subnormal: value = man * 2^-9, man = round(x * 2^9)
-        int man = (int) (x * 512.0f + 0.5f);
-        if (man > 7) {
+        முழு man = (முழு) (x * 512.0f + 0.5f);
+        எனில் (man > 7) {
             man = 7;
         }
-        if (man < 1) {
-            return 0;
+        எனில் (man < 1) {
+            திரும்பு 0;
         }
-        return (uint8_t) man;
+        திரும்பு (uint8_t) man;
     }
-    if (ue4m3_exp >= 15) {
-        return 0x7E;
+    எனில் (ue4m3_exp >= 15) {
+        திரும்பு 0x7E;
     }
-    int round_bit = (bits >> 19) & 1;
-    int ue4m3_man = fp32_man + round_bit;
-    if (ue4m3_man > 7) {
+    முழு round_bit = (bits >> 19) & 1;
+    முழு ue4m3_man = fp32_man + round_bit;
+    எனில் (ue4m3_man > 7) {
         ue4m3_man = 0;
         ue4m3_exp++;
-        if (ue4m3_exp >= 15) {
-            return 0x7E;
+        எனில் (ue4m3_exp >= 15) {
+            திரும்பு 0x7E;
         }
     }
-    return (uint8_t) ((ue4m3_exp << 3) | ue4m3_man);
+    திரும்பு (uint8_t) ((ue4m3_exp << 3) | ue4m3_man);
 }
 
 /**
@@ -603,13 +603,13 @@ static inline uint8_t ggml_fp32_to_ue4m3(float x) {
  *
  * @see IEEE 754-2008
  */
-static inline float ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
-    union {
-        float f;
+நிலையான உள்வரி தசம ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
+    ஒன்றிப்பு {
+        தசம f;
         uint32_t i;
     } u;
     u.i = (uint32_t)h.bits << 16;
-    return u.f;
+    திரும்பு u.f;
 }
 
 /**
@@ -620,56 +620,56 @@ static inline float ggml_compute_bf16_to_fp32(ggml_bf16_t h) {
  * Subnormals aren't flushed to zero, except perhaps when used.
  * This code should vectorize nicely if using modern compilers.
  */
-static inline ggml_bf16_t ggml_compute_fp32_to_bf16(float s) {
+நிலையான உள்வரி ggml_bf16_t ggml_compute_fp32_to_bf16(தசம s) {
     ggml_bf16_t h;
-    union {
-        float f;
+    ஒன்றிப்பு {
+        தசம f;
         uint32_t i;
     } u;
     u.f = s;
-    if ((u.i & 0x7fffffff) > 0x7f800000) { /* nan */
+    எனில் ((u.i & 0x7fffffff) > 0x7f800000) { /* nan */
         h.bits = (u.i >> 16) | 64; /* force to quiet */
-        return h;
+        திரும்பு h;
     }
     h.bits = (u.i + (0x7fff + ((u.i >> 16) & 1))) >> 16;
-    return h;
+    திரும்பு h;
 }
 
 #define GGML_FP32_TO_BF16(x) ggml_compute_fp32_to_bf16(x)
 #define GGML_BF16_TO_FP32(x) ggml_compute_bf16_to_fp32(x)
 
-static inline int32_t ggml_node_get_use_count(const struct ggml_cgraph * cgraph, int node_idx) {
-    const struct ggml_tensor * node = cgraph->nodes[node_idx];
+நிலையான உள்வரி int32_t ggml_முனை_get_use_மொத்தம்(மாறிலி கட்டமைப்பு ggml_cgraph * cgraph, முழு முனை_idx) {
+    மாறிலி கட்டமைப்பு ggml_tensor * முனை = cgraph->nodes[முனை_idx];
 
-    size_t hash_pos = ggml_hash_find(&cgraph->visited_hash_set, node);
-    if (!ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
-        return 0;
+    size_t hash_pos = ggml_hash_find(&cgraph->visited_hash_set, முனை);
+    எனில் (!ggml_bitset_get(cgraph->visited_hash_set.used, hash_pos)) {
+        திரும்பு 0;
     }
-    return cgraph->use_counts[hash_pos];
+    திரும்பு cgraph->use_counts[hash_pos];
 }
 
 // return true if the node's results are only used by N other nodes
 // and can be fused into their calculations.
-static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int node_idx, int32_t n_uses) {
-    const struct ggml_tensor * node = cgraph->nodes[node_idx];
+நிலையான உள்வரி bool ggml_முனை_has_n_uses(மாறிலி கட்டமைப்பு ggml_cgraph * cgraph, முழு முனை_idx, int32_t n_uses) {
+    மாறிலி கட்டமைப்பு ggml_tensor * முனை = cgraph->nodes[முனை_idx];
 
     // check the use count against how many we're replacing
-    if (ggml_node_get_use_count(cgraph, node_idx) != n_uses) {
-        return false;
+    எனில் (ggml_முனை_get_use_மொத்தம்(cgraph, முனை_idx) != n_uses) {
+        திரும்பு false;
     }
 
     // if node is a view, some other node might be using the intermediate result
     // via the view source.
-    if (node->view_src) {
-        return false;
+    எனில் (முனை->view_src) {
+        திரும்பு false;
     }
 
     // If the user requested output for the node, can't fuse
-    if (node->flags & GGML_TENSOR_FLAG_OUTPUT) {
-        return false;
+    எனில் (முனை->flags & GGML_TENSOR_FLAG_OUTPUT) {
+        திரும்பு false;
     }
 
-    return true;
+    திரும்பு true;
 }
 
 // Returns true if nodes with indices { node_idxs } are the sequence of ggml_ops in ops[]
@@ -678,79 +678,79 @@ static inline bool ggml_node_has_n_uses(const struct ggml_cgraph * cgraph, int n
 // - all nodes except the last are a src of the following node.
 // - all nodes are the same shape.
 // TODO: Consider allowing GGML_OP_NONE nodes in between
-static inline bool ggml_can_fuse_ext(const struct ggml_cgraph * cgraph, const int * node_idxs, const enum ggml_op * ops, int num_ops) {
-    for (int i = 0; i < num_ops; ++i) {
-        if (node_idxs[i] >= cgraph->n_nodes) {
-            return false;
+நிலையான உள்வரி bool ggml_can_fuse_ext(மாறிலி கட்டமைப்பு ggml_cgraph * cgraph, மாறிலி முழு * முனை_idxs, மாறிலி எண்ணிக்கை ggml_op * ops, முழு இலக்கம்_ops) {
+    க்கு (முழு i = 0; i < இலக்கம்_ops; ++i) {
+        எனில் (முனை_idxs[i] >= cgraph->n_nodes) {
+            திரும்பு false;
         }
 
-        struct ggml_tensor * node = cgraph->nodes[node_idxs[i]];
-        if (node->op != ops[i]) {
-            return false;
+        கட்டமைப்பு ggml_tensor * முனை = cgraph->nodes[முனை_idxs[i]];
+        எனில் (முனை->op != ops[i]) {
+            திரும்பு false;
         }
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
-            return false;
+        எனில் ((முனை->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+            திரும்பு false;
         }
-        if (i < num_ops - 1 && !ggml_node_has_n_uses(cgraph, node_idxs[i], 1)) {
-            return false;
+        எனில் (i < இலக்கம்_ops - 1 && !ggml_முனை_has_n_uses(cgraph, முனை_idxs[i], 1)) {
+            திரும்பு false;
         }
-        if (i > 0) {
-            struct ggml_tensor * prev = cgraph->nodes[node_idxs[i - 1]];
-            if (node->src[0] != prev && node->src[1] != prev) {
-                return false;
+        எனில் (i > 0) {
+            கட்டமைப்பு ggml_tensor * prev = cgraph->nodes[முனை_idxs[i - 1]];
+            எனில் (முனை->src[0] != prev && முனை->src[1] != prev) {
+                திரும்பு false;
             }
-            if (!ggml_are_same_shape(node, prev)) {
-                return false;
+            எனில் (!ggml_are_same_shape(முனை, prev)) {
+                திரும்பு false;
             }
         }
     }
-    return true;
+    திரும்பு true;
 }
 
 // same as above, for sequential indices starting at node_idx
-static inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, const enum ggml_op * ops, int num_ops) {
-    assert(num_ops < 32);
+நிலையான உள்வரி bool ggml_can_fuse(மாறிலி கட்டமைப்பு ggml_cgraph * cgraph, முழு முனை_idx, மாறிலி எண்ணிக்கை ggml_op * ops, முழு இலக்கம்_ops) {
+    ப்ரதிஜ்ஞா(இலக்கம்_ops < 32);
 
-    if (node_idx + num_ops > cgraph->n_nodes) {
-        return false;
+    எனில் (முனை_idx + இலக்கம்_ops > cgraph->n_nodes) {
+        திரும்பு false;
     }
 
-    int idxs[32];
-    for (int i = 0; i < num_ops; ++i) {
-        idxs[i] = node_idx + i;
+    முழு idxs[32];
+    க்கு (முழு i = 0; i < இலக்கம்_ops; ++i) {
+        idxs[i] = முனை_idx + i;
     }
 
-    return ggml_can_fuse_ext(cgraph, idxs, ops, num_ops);
+    திரும்பு ggml_can_fuse_ext(cgraph, idxs, ops, இலக்கம்_ops);
 }
 
-GGML_API bool ggml_can_fuse_subgraph_ext(const struct ggml_cgraph * cgraph,
-                                         const int *                node_idxs,
-                                         int                        count,
-                                         const enum ggml_op *       ops,
-                                         const int *                outputs,
-                                         int                        num_outputs);
+GGML_API bool ggml_can_fuse_subgraph_ext(மாறிலி கட்டமைப்பு ggml_cgraph * cgraph,
+                                         மாறிலி முழு *                முனை_idxs,
+                                         முழு                        மொத்தம்,
+                                         மாறிலி எண்ணிக்கை ggml_op *       ops,
+                                         மாறிலி முழு *                outputs,
+                                         முழு                        இலக்கம்_outputs);
 
 // Returns true if the subgraph formed by {node_idxs} can be fused
 // checks whethers all nodes which are not part of outputs can be elided
 // by checking if their num_uses are confined to the subgraph
-static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
-                                          int                        node_idx,
-                                          int                        count,
-                                          const enum ggml_op *       ops,
-                                          const int *                outputs,
-                                          int                        num_outputs) {
-    GGML_ASSERT(count < 32);
-    if (node_idx + count > cgraph->n_nodes) {
-        return false;
+நிலையான உள்வரி bool ggml_can_fuse_subgraph(மாறிலி கட்டமைப்பு ggml_cgraph * cgraph,
+                                          முழு                        முனை_idx,
+                                          முழு                        மொத்தம்,
+                                          மாறிலி எண்ணிக்கை ggml_op *       ops,
+                                          மாறிலி முழு *                outputs,
+                                          முழு                        இலக்கம்_outputs) {
+    GGML_ASSERT(மொத்தம் < 32);
+    எனில் (முனை_idx + மொத்தம் > cgraph->n_nodes) {
+        திரும்பு false;
     }
 
-    int idxs[32];
+    முழு idxs[32];
 
-    for (int i = 0; i < count; ++i) {
-        idxs[i] = node_idx + i;
+    க்கு (முழு i = 0; i < மொத்தம்; ++i) {
+        idxs[i] = முனை_idx + i;
     }
 
-    return ggml_can_fuse_subgraph_ext(cgraph, idxs, count, ops, outputs, num_outputs);
+    திரும்பு ggml_can_fuse_subgraph_ext(cgraph, idxs, மொத்தம், ops, outputs, இலக்கம்_outputs);
 }
 
 #ifdef __cplusplus
@@ -758,38 +758,38 @@ static inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph * cgraph,
 #endif
 
 #ifdef __cplusplus
-#include <array>
-#include <initializer_list>
-#include <vector>
+#அந்தர்பாவ <array>
+#அந்தர்பாவ <initializer_list>
+#அந்தர்பாவ <vector>
 
 // nicer C++ syntax for ggml_can_fuse
-inline bool ggml_can_fuse(const struct ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops) {
-    return ggml_can_fuse(cgraph, node_idx, ops.begin(), (int)ops.size());
+உள்வரி bool ggml_can_fuse(மாறிலி கட்டமைப்பு ggml_cgraph * cgraph, முழு முனை_idx, std::initializer_list<எண்ணிக்கை ggml_op> ops) {
+    திரும்பு ggml_can_fuse(cgraph, முனை_idx, ops.begin(), (முழு)ops.size());
 }
 
-inline bool ggml_can_fuse_subgraph(const struct ggml_cgraph *          cgraph,
-                                   int                                 start_idx,
-                                   std::initializer_list<enum ggml_op> ops,
-                                   std::initializer_list<int>          outputs = {}) {
-    return ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());
+உள்வரி bool ggml_can_fuse_subgraph(மாறிலி கட்டமைப்பு ggml_cgraph *          cgraph,
+                                   முழு                                 start_idx,
+                                   std::initializer_list<எண்ணிக்கை ggml_op> ops,
+                                   std::initializer_list<முழு>          outputs = {}) {
+    திரும்பு ggml_can_fuse_subgraph(cgraph, start_idx, ops.size(), ops.begin(), outputs.begin(), outputs.size());
 }
 
 // Return true if the edges in the graph match expectations.
-inline bool ggml_check_edges(const struct ggml_cgraph *                cgraph,
-                             int                                       start_idx,
-                             std::initializer_list<std::array<int, 3>> edges) {
-    for (const auto & edge : edges) {
-        int dst_node = edge[0];
-        int src_idx  = edge[1];
-        int src_node = edge[2];
-        if (cgraph->nodes[start_idx + dst_node]->src[src_idx] != cgraph->nodes[start_idx + src_node]) {
-            return false;
+உள்வரி bool ggml_check_edges(மாறிலி கட்டமைப்பு ggml_cgraph *                cgraph,
+                             முழு                                       start_idx,
+                             std::initializer_list<std::array<முழு, 3>> edges) {
+    க்கு (மாறிலி auto & edge : edges) {
+        முழு dst_முனை = edge[0];
+        முழு src_idx  = edge[1];
+        முழு src_முனை = edge[2];
+        எனில் (cgraph->nodes[start_idx + dst_முனை]->src[src_idx] != cgraph->nodes[start_idx + src_முனை]) {
+            திரும்பு false;
         }
     }
-    return true;
+    திரும்பு true;
 }
 
 // expose GGUF internals for test code
-GGML_API size_t gguf_type_size(enum gguf_type type);
-GGML_API void gguf_write_to_buf(const struct gguf_context * ctx, std::vector<int8_t> & buf, bool only_meta);
+GGML_API size_t gguf_type_size(எண்ணிக்கை gguf_type type);
+GGML_API வெறுமை gguf_write_to_buf(மாறிலி கட்டமைப்பு gguf_context * ctx, std::vector<int8_t> & buf, bool only_meta);
 #endif // __cplusplus

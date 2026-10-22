@@ -14,30 +14,30 @@
  * - High stability and backward compatibility required.
  */
 
-#include <cstdio>
+#அந்தர்பாவ <cstdio>
 
-extern int g_ggml_sycl_debug;
-extern int g_ggml_sycl_dev_debug;
+வெளி முழு g_ggml_sycl_debug;
+வெளி முழு g_ggml_sycl_dev_debug;
 
-#if defined(__clang__) && __has_builtin(__builtin_expect)
+#எனில் defined(__clang__) && __has_builtin(__builtin_expect)
 // Hint the optimizer to pipeline the more likely following instruction in branches
-#    define LIKELY(expr)   __builtin_expect(expr, true)
-#    define UNLIKELY(expr) __builtin_expect(expr, false)
-#else
-#    define LIKELY(expr)   (expr)
-#    define UNLIKELY(expr) (expr)
+#    define LIKELY(கோவை)   __builtin_expect(கோவை, உண்மை)
+#    define UNLIKELY(கோவை) __builtin_expect(கோவை, பொய்)
+#இல்லையெனில்
+#    define LIKELY(கோவை)   (கோவை)
+#    define UNLIKELY(கோவை) (கோவை)
 #endif
 
 #define GGML_SYCL_DEBUG(...)              \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_debug))  \
+    செய் {                                  \
+        எனில் (UNLIKELY(g_ggml_sycl_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } போது (0)
 
 #define GGML_SYCL_DEV_DEBUG(...)          \
-    do {                                  \
-        if (UNLIKELY(g_ggml_sycl_dev_debug))  \
+    செய் {                                  \
+        எனில் (UNLIKELY(g_ggml_sycl_dev_debug))  \
             fprintf(stderr, __VA_ARGS__); \
-    } while (0)
+    } போது (0)
 
 #endif  // GGML_SYCL_BASE_HPP

@@ -1,100 +1,100 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#அந்தர்பாவ "../node_context.h"
+#அந்தர்பாவ "../op_table.h"
+#அந்தர்பாவ "../utils.h"
 
-#include <climits>
-#include <openvino/core/node.hpp>
-#include <openvino/core/node_output.hpp>
-#include <openvino/op/add.hpp>
-#include <openvino/op/broadcast.hpp>
-#include <openvino/op/concat.hpp>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/unsqueeze.hpp>
+#அந்தர்பாவ <climits>
+#அந்தர்பாவ <openvino/core/node.hpp>
+#அந்தர்பாவ <openvino/core/node_output.hpp>
+#அந்தர்பாவ <openvino/op/add.hpp>
+#அந்தர்பாவ <openvino/op/broadcast.hpp>
+#அந்தர்பாவ <openvino/op/concat.hpp>
+#அந்தர்பாவ <openvino/op/constant.hpp>
+#அந்தர்பாவ <openvino/op/convert.hpp>
+#அந்தர்பாவ <openvino/op/gather.hpp>
+#அந்தர்பாவ <openvino/op/shape_of.hpp>
+#அந்தர்பாவ <openvino/op/slice.hpp>
+#அந்தர்பாவ <openvino/op/squeeze.hpp>
+#அந்தர்பாவ <openvino/op/unsqueeze.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+நாமாகாஶ ov {
+நாமாகாஶ frontend {
+நாமாகாஶ ggml {
+நாமாகாஶ op {
 
-OutputVector translate_get_rows(const NodeContext & context) {
-    num_inputs_check(context, 2, 2);
+OutputVector translate_get_rows(மாறிலி முனை_Context & context) {
+    இலக்கம்_inputs_check(context, 2, 2);
 
     Output<Node> res;
     Output<Node> data;
     int64_t row_offset = 0;
-    if (context.get_view_input_size(0) > 0 && context.get_input(0).get_partial_shape().rank() == 2) {
+    எனில் (context.get_view_உள்ளீடு_size(0) > 0 && context.get_உள்ளீடு(0).get_partial_shape().rank() == 2) {
         // A row range view over a 2D weight Constant folds into the gather indices,
         // which keeps the dequantization subgraph intact for the plugins.
-        const auto view_shape = context.get_view_input_ggml_shape(0, 0);
-        const auto view_stride = context.get_view_input_stride(0, 0);
-        const size_t view_offset = context.get_view_input_offset(0, 0);
-        const size_t row_bytes = view_stride[2];
-        data = context.get_input(0);
+        மாறிலி auto view_shape = context.get_view_உள்ளீடு_ggml_shape(0, 0);
+        மாறிலி auto view_stride = context.get_view_உள்ளீடு_stride(0, 0);
+        மாறிலி size_t view_offset = context.get_view_உள்ளீடு_offset(0, 0);
+        மாறிலி size_t row_bytes = view_stride[2];
+        data = context.get_உள்ளீடு(0);
         FRONT_END_OP_CONVERSION_CHECK(row_bytes > 0 && view_offset % row_bytes == 0 &&
                                           data.get_partial_shape()[1].compatible(view_shape[3]),
                                       "GET_ROWS: view over a weight must be a row range");
         row_offset = static_cast<int64_t>(view_offset / row_bytes);
-    } else {
-        data = process_view_input_new(context, 0);
+    } இல்லையெனில் {
+        data = process_view_உள்ளீடு_new(context, 0);
     }
 
     auto op_case = context.get_op_case();
-    if (op_case == 3 || op_case == 4) {
-        return {data};
+    எனில் (op_case == 3 || op_case == 4) {
+        திரும்பு {data};
     }
 
     ov::Output<ov::Node> indices;
-    if ((op_case == 1 || op_case == 2) && context.has_input("s_copy_active_slot_len")) {
+    எனில் ((op_case == 1 || op_case == 2) && context.has_உள்ளீடு("s_copy_active_slot_len")) {
         // Recurrent state reorder (inp->s_copy): slice the active (op_case 1) or extra (op_case 2)
         // segment from the s_copy index list at runtime, instead of baking the static view offset,
         // so the cached IR works for any number of active sequences.
-        auto s_copy = context.get_input(1);
-        auto len = context.get_input("s_copy_active_slot_len");
+        auto s_copy = context.get_உள்ளீடு(1);
+        auto len = context.get_உள்ளீடு("s_copy_active_slot_len");
         auto step = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
         auto axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-        if (op_case == 1) {
+        எனில் (op_case == 1) {
             auto begin = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
             indices = std::make_shared<ov::op::v8::Slice>(s_copy, begin, len, step, axis);
-        } else {
+        } இல்லையெனில் {
             auto end = ov::op::v0::Constant::create(ov::element::i64, {1}, {INT_MAX});
             indices = std::make_shared<ov::op::v8::Slice>(s_copy, len, end, step, axis);
         }
-    } else {
-        indices = process_view_input_new(context, 1);
+    } இல்லையெனில் {
+        indices = process_view_உள்ளீடு_new(context, 1);
     }
 
     // data[1,b,x,y] ind[1,1,b,x'] test-backend-ops case
     // data[x,y] ind[1,1,1,x'] normal case
     // Squeeze the leading dims down to [b,x']. Stateful models drop one rank, so a hardcoded
     // {0,1} would also strip the batch dim whenever b == 1 (every decode step).
-    const auto indices_rank = indices.get_partial_shape().rank();
+    மாறிலி auto indices_rank = indices.get_partial_shape().rank();
     FRONT_END_OP_CONVERSION_CHECK(indices_rank.is_static(), "Expected static rank for GET_ROWS indices");
     std::vector<int64_t> indices_squeeze_axes;
-    for (int64_t i = 0; i + 2 < indices_rank.get_length(); ++i) {
+    க்கு (int64_t i = 0; i + 2 < indices_rank.get_length(); ++i) {
         indices_squeeze_axes.push_back(i);
     }
-    if (!indices_squeeze_axes.empty()) {
+    எனில் (!indices_squeeze_axes.empty()) {
         indices = std::make_shared<ov::op::v0::Squeeze>(
             indices, ov::op::v0::Constant::create(ov::element::i64, {indices_squeeze_axes.size()},
                                                   indices_squeeze_axes));
     }
-    if (row_offset != 0) {
+    எனில் (row_offset != 0) {
         indices = std::make_shared<ov::op::v1::Add>(
             indices, ov::op::v0::Constant::create(indices.get_element_type(), {}, {row_offset}));
     }
-    if (data.get_partial_shape().rank() == 4) {
-        if (!(data.get_partial_shape()[1].is_dynamic()) && data.get_partial_shape()[1].get_length() == 1) {
+    எனில் (data.get_partial_shape().rank() == 4) {
+        எனில் (!(data.get_partial_shape()[1].is_dynamic()) && data.get_partial_shape()[1].get_length() == 1) {
             // Work-around for a bug in ov cpu plugin for test-backend-ops
             data = std::make_shared<ov::op::v0::Squeeze>(data,
                                                          ov::op::v0::Constant::create(ov::element::i64, {2}, {0, 1}));
             auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
             res = std::make_shared<ov::op::v8::Gather>(data, indices, axis);
-        } else {
+        } இல்லையெனில் {
             auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {1});
             data =
                 std::make_shared<ov::op::v0::Squeeze>(data, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
@@ -104,12 +104,12 @@ OutputVector translate_get_rows(const NodeContext & context) {
             // reshapes, so the GPU plugin's gather shape inference cannot prove
             // data.shape[0] == indices.shape[0] and rejects the node. We must tie both
             // batch dims to the SAME value, and crucially that value must stay DYNAMIC.
-            const auto data_ps = data.get_partial_shape();
-            const auto idx_ps = indices.get_partial_shape();
-            const bool data_batch_static = data_ps.rank().is_static() && data_ps[0].is_static();
-            const bool idx_batch_dynamic = idx_ps.rank().is_dynamic() || idx_ps[0].is_dynamic();
+            மாறிலி auto data_ps = data.get_partial_shape();
+            மாறிலி auto idx_ps = indices.get_partial_shape();
+            மாறிலி தருக்க data_batch_static = data_ps.rank().is_static() && data_ps[0].is_static();
+            மாறிலி தருக்க idx_batch_dynamic = idx_ps.rank().is_dynamic() || idx_ps[0].is_dynamic();
 
-            if (data_batch_static && idx_batch_dynamic) {
+            எனில் (data_batch_static && idx_batch_dynamic) {
                 // MoE per-expert-scale path: `data` is a statically-tiled REPEAT
                 // (ggml_repeat_4d(scale, 1, n_expert, n_tokens, 1)) whose batch dim is a
                 // compile-time-constant n_tokens, and every batch slice is IDENTICAL (it was
@@ -131,9 +131,9 @@ OutputVector translate_get_rows(const NodeContext & context) {
                 auto idx_shape = std::make_shared<ov::op::v3::ShapeOf>(indices, ov::element::i64);
                 auto idx_batch = get_dimensions(idx_shape, {0});  // [batch] (dynamic)
                 auto data_b1_shape = std::make_shared<ov::op::v3::ShapeOf>(data_b1, ov::element::i64);
-                const auto rank = data_ps.rank().get_length();
-                std::vector<int> rest_axes;
-                for (int a = 1; a < rank; ++a) {
+                மாறிலி auto rank = data_ps.rank().get_length();
+                std::vector<முழு> rest_axes;
+                க்கு (முழு a = 1; a < rank; ++a) {
                     rest_axes.push_back(a);
                 }
                 auto data_rest = get_dimensions(data_b1_shape, rest_axes);  // [rows, ...]
@@ -141,7 +141,7 @@ OutputVector translate_get_rows(const NodeContext & context) {
                 data =
                     std::make_shared<ov::op::v3::Broadcast>(data_b1, data_target, ov::op::BroadcastType::BIDIRECTIONAL);
                 res = std::make_shared<ov::op::v8::Gather>(data, indices, axis, 1);
-            } else {
+            } இல்லையெனில் {
                 // General case: tie the indices batch to the data batch (the data batch is
                 // already dynamic, e.g. the routing-weights gather whose data comes from the
                 // activations). Broadcast indices to [data_batch, indices_n].
@@ -155,21 +155,21 @@ OutputVector translate_get_rows(const NodeContext & context) {
                 res = std::make_shared<ov::op::v8::Gather>(data, indices, axis, 1);
             }
         }
-    } else if (context.is_stateful() && data.get_partial_shape().rank() == 3) {
+    } இல்லையெனில் எனில் (context.is_stateful() && data.get_partial_shape().rank() == 3) {
         auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {1});
         res = std::make_shared<ov::op::v8::Gather>(data, indices, axis, 1);
-    } else {
+    } இல்லையெனில் {
         auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
         res = std::make_shared<ov::op::v8::Gather>(data, indices, axis);
     }
 
-    if (res.get_element_type() != context.get_output_type()) {
+    எனில் (res.get_element_type() != context.get_output_type()) {
         res = std::make_shared<ov::op::v0::Convert>(res, context.get_output_type());
     }
-    if (!(context.is_stateful())) {
+    எனில் (!(context.is_stateful())) {
         res = std::make_shared<ov::op::v0::Unsqueeze>(res, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    திரும்பு rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

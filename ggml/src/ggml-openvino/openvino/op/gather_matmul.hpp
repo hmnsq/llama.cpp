@@ -13,31 +13,31 @@
 
 #pragma once
 
-#include "openvino/op/op.hpp"
+#அந்தர்பாவ "openvino/op/op.hpp"
 
-namespace ov::op::internal {
+நாமாகாஶ ov::op::internal {
 
-class OPENVINO_API GatherMatmul : public ov::op::Op {
-public:
+வகுப்பு OPENVINO_API GatherMatmul : பொது ov::op::Op {
+பொது:
     OPENVINO_OP("GatherMatmul")
 
-    GatherMatmul() = default;
+    GatherMatmul() = இயல்பு;
 
-    GatherMatmul(const ov::Output<Node>& A,
-                 const ov::Output<Node>& B,
-                 const ov::Output<Node>& indices,
-                 const ov::Output<Node>& bias);
+    GatherMatmul(மாறிலி ov::Output<Node>& A,
+                 மாறிலி ov::Output<Node>& B,
+                 மாறிலி ov::Output<Node>& indices,
+                 மாறிலி ov::Output<Node>& bias);
 
-    GatherMatmul(const ov::Output<Node>& A, const ov::Output<Node>& B, const ov::Output<Node>& indices);
+    GatherMatmul(மாறிலி ov::Output<Node>& A, மாறிலி ov::Output<Node>& B, மாறிலி ov::Output<Node>& indices);
 
-    std::shared_ptr<Node> clone_with_new_inputs(const ov::OutputVector& new_args) const override;
+    std::shared_ptr<Node> clone_with_new_inputs(மாறிலி ov::OutputVector& new_args) மாறிலி override;
 
-    void validate_and_infer_types() override;
+    வெறுமை validate_and_infer_types() override;
 
-private:
+தனிப்பட்ட:
     // the weights matrix B is expected to have the transposed form [group, N, K]
-    static constexpr bool transp_a = false;
-    static constexpr bool transp_b = true;
+    நிலையான constexpr தருக்க transp_a = பொய்;
+    நிலையான constexpr தருக்க transp_b = உண்மை;
 };
 
 }  // namespace ov::op::internal

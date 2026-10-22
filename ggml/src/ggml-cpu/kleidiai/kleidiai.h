@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "ggml-alloc.h"
+#அந்தர்பாவ "ggml-alloc.h"
 
 #ifdef  __cplusplus
-extern "C" {
+வெளி "C" {
 #endif
 
-ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(void);
+ggml_backend_buffer_type_t ggml_backend_cpu_kleidiai_buffer_type(வெறுமை);
 
 #ifdef  __cplusplus
 }

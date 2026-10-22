@@ -1,19 +1,19 @@
 #ifndef HTP_CTX_H
 #define HTP_CTX_H
 
-#include "dma-queue.h"
-#include "hmx-queue.h"
-#include "htp-dcache.h"
-#include "htp-ops.h"
-#include "hex-profile.h"
-#include "work-queue.h"
-#include "hex-fastdiv.h"
+#அந்தர்பாவ "dma-queue.h"
+#அந்தர்பாவ "hmx-queue.h"
+#அந்தர்பாவ "htp-dcache.h"
+#அந்தர்பாவ "htp-ops.h"
+#அந்தர்பாவ "hex-profile.h"
+#அந்தர்பாவ "work-queue.h"
+#அந்தர்பாவ "hex-fastdiv.h"
 
-#include <assert.h>
-#include <dspqueue.h>
-#include <stdatomic.h>
-#include <stdint.h>
-#include <stdbool.h>
+#அந்தர்பாவ <assert.h>
+#அந்தர்பாவ <dspqueue.h>
+#அந்தர்பாவ <stdatomic.h>
+#அந்தர்பாவ <stdint.h>
+#அந்தர்பாவ <stdbool.h>
 
 #ifndef HTP_MAX_NTHREADS
 #define HTP_MAX_NTHREADS 10
@@ -22,7 +22,7 @@
 #define HTP_MAX_MMAPS 64
 
 // Memory mapping
-struct htp_mmap {
+கட்டமைப்பு htp_mmap {
     uint64_t size;
     uint64_t base;
     uint32_t fd;
@@ -30,67 +30,67 @@ struct htp_mmap {
 };
 
 // Scratchpad state
-struct htp_spad {
-    const struct htp_tensor * src;             // original src of the data (for reuse)
+கட்டமைப்பு htp_spad {
+    மாறிலி கட்டமைப்பு htp_tensor * src;             // original src of the data (for reuse)
     uint8_t *                 data;            // pointer to an area in vtcm
     uint32_t                  stride;          // stride used inside this spad
     uint32_t                  size;            // total size
     uint32_t                  size_per_thread; // size per thread
 };
 
-struct htp_mdev_group {
+கட்டமைப்பு htp_mdev_group {
     uint16_t              idx;
-    uint16_t              count;
-    struct fastdiv_values count_div;
+    uint16_t              மொத்தம்;
+    கட்டமைப்பு fastdiv_மதிப்புகள் மொத்தம்_div;
     uint8_t *             fence_base;
     uint32_t              fence_seq;
 };
 
-struct htp_context;
+கட்டமைப்பு htp_context;
 
 // Context while processing an Op
 // TODO: fold this into the main context
-struct htp_ops_context {
-    struct htp_context * ctx;
+கட்டமைப்பு htp_ops_context {
+    கட்டமைப்பு htp_context * ctx;
 
-    enum htp_op_code    op; // FIXME: rename to opcode
+    எண்ணிக்கை htp_op_code    op; // FIXME: rename to opcode
     int32_t             op_params[HTP_OP_MAX_PARAMS];
     int32_t             kernel_params[HTP_OP_MAX_KERN_PARAMS];
 
-    const struct htp_tensor * src[HTP_OP_MAX_INPUTS];
-    union {
-        const struct htp_tensor * dst;
-        const struct htp_tensor * dsts[HTP_OP_MAX_OUTPUTS];
+    மாறிலி கட்டமைப்பு htp_tensor * src[HTP_OP_MAX_INPUTS];
+    ஒன்றிப்பு {
+        மாறிலி கட்டமைப்பு htp_tensor * dst;
+        மாறிலி கட்டமைப்பு htp_tensor * dsts[HTP_OP_MAX_OUTPUTS];
     };
 
     // TODO convert these to an array
-    struct htp_spad src0_spad;
-    struct htp_spad src1_spad;
-    struct htp_spad src2_spad;
-    struct htp_spad src3_spad;
-    struct htp_spad dst_spad;
+    கட்டமைப்பு htp_spad src0_spad;
+    கட்டமைப்பு htp_spad src1_spad;
+    கட்டமைப்பு htp_spad src2_spad;
+    கட்டமைப்பு htp_spad src3_spad;
+    கட்டமைப்பு htp_spad dst_spad;
 
     uint32_t              flags;
     uint32_t              n_threads;
-    struct fastdiv_values n_threads_div;
-    int                   status;
+    கட்டமைப்பு fastdiv_மதிப்புகள் n_threads_div;
+    முழு                   status;
 };
 
 // Main context for htp DSP backend
-struct htp_context {
+கட்டமைப்பு htp_context {
     dspqueue_t             dsp_queue;
 
-    struct htp_mmap        mmap[HTP_MAX_MMAPS];
+    கட்டமைப்பு htp_mmap        mmap[HTP_MAX_MMAPS];
     dma_queue_t            dma[HTP_MAX_NTHREADS];
-    struct htp_thread_trace trace[HTP_MAX_NTHREADS + 1];
+    கட்டமைப்பு htp_thread_trace trace[HTP_MAX_NTHREADS + 1];
     work_queue_t           work_queue;
     hmx_queue_t            hmx_queue;
 
     uint32_t               n_threads;
-    struct fastdiv_values  n_threads_div;
+    கட்டமைப்பு fastdiv_மதிப்புகள்  n_threads_div;
 
-    int                    thread_id;
-    int                    thread_prio;
+    முழு                    thread_id;
+    முழு                    thread_prio;
 
     bool                   hmx_enabled;
     bool                   etm;
@@ -103,75 +103,75 @@ struct htp_context {
     atomic_bool            vtcm_needs_release;
 
     uint64_t               max_vmem;
-    struct htp_dirty_range dirty_ranges[HTP_MAX_DIRTY_RANGES];
+    கட்டமைப்பு htp_dirty_range dirty_ranges[HTP_MAX_DIRTY_RANGES];
 
     // Persistent DDR scratchpad for MUL_MAT_ID mappings
-    void *                 ddr_spad_base;
+    வெறுமை *                 ddr_spad_base;
     size_t                 ddr_spad_size;
 
-    struct htp_mdev_group  mdev;
-    struct htp_ops_context octx;
+    கட்டமைப்பு htp_mdev_group  mdev;
+    கட்டமைப்பு htp_ops_context octx;
 
     qurt_thread_t          main_thread;
-    void *                 main_stack;
+    வெறுமை *                 main_அடுக்கு;
     atomic_bool            killed;
     size_t                 footprint;
 };
 
-static inline bool htp_ops_context_set_n_threads(struct htp_ops_context * octx, uint32_t n_threads) {
-    if (n_threads == 0 || n_threads > octx->ctx->n_threads) {
-        return false;
+நிலையான உள்வரி bool htp_ops_context_set_n_threads(கட்டமைப்பு htp_ops_context * octx, uint32_t n_threads) {
+    எனில் (n_threads == 0 || n_threads > octx->ctx->n_threads) {
+        திரும்பு false;
     }
 
-    if (n_threads != octx->n_threads) {
+    எனில் (n_threads != octx->n_threads) {
         octx->n_threads = n_threads;
         octx->n_threads_div = n_threads == octx->ctx->n_threads
             ? octx->ctx->n_threads_div
-            : init_fastdiv_values(n_threads);
+            : init_fastdiv_மதிப்புகள்(n_threads);
     }
 
-    return true;
+    திரும்பு true;
 }
 
-static inline void htp_ops_context_set_status(struct htp_ops_context * octx, int status) {
-    if (status > HTP_STATUS_OK && octx->status == HTP_STATUS_OK) {
+நிலையான உள்வரி வெறுமை htp_ops_context_set_status(கட்டமைப்பு htp_ops_context * octx, முழு status) {
+    எனில் (status > HTP_STATUS_OK && octx->status == HTP_STATUS_OK) {
         octx->status = status;
     }
 }
 
-int op_matmul(struct htp_ops_context * octx);
-int op_matmul_id(struct htp_ops_context * octx);
-int op_matmul_nx(struct htp_ops_context * octx);
-int op_matmul_id_nx(struct htp_ops_context * octx);
-int op_binary(struct htp_ops_context * octx);
-int op_unary(struct htp_ops_context * octx);
-int op_sum(struct htp_ops_context * octx);
-int op_sum_rows(struct htp_ops_context * octx);
-int op_argmax(struct htp_ops_context * octx);
-int op_activations(struct htp_ops_context * octx);
-int op_softmax(struct htp_ops_context * octx);
-int op_add_id(struct htp_ops_context * octx);
-int op_rope(struct htp_ops_context * octx);
-int op_flash_attn_ext(struct htp_ops_context * octx);
-int op_set_rows(struct htp_ops_context * octx);
-int op_get_rows(struct htp_ops_context * octx);
-int op_cpy(struct htp_ops_context * octx);
-int op_repeat(struct htp_ops_context * octx);
-int op_argsort(struct htp_ops_context * octx);
-int op_top_k(struct htp_ops_context * octx);
-int op_ssm_conv(struct htp_ops_context * octx);
-int op_cumsum(struct htp_ops_context * octx);
-int op_fill(struct htp_ops_context * octx);
-int op_concat(struct htp_ops_context * octx);
-int op_diag(struct htp_ops_context * octx);
-int op_solve_tri(struct htp_ops_context * octx);
-int op_gated_delta_net(struct htp_ops_context * octx);
-int op_pad(struct htp_ops_context * octx);
-int op_im2col(struct htp_ops_context * octx);
-int op_im2col_3d(struct htp_ops_context * octx);
-int op_pool_2d(struct htp_ops_context * octx);
-int op_pool_1d(struct htp_ops_context * octx);
-int op_allreduce(struct htp_ops_context * octx);
-int op_roll(struct htp_ops_context * octx);
+முழு op_matmul(கட்டமைப்பு htp_ops_context * octx);
+முழு op_matmul_id(கட்டமைப்பு htp_ops_context * octx);
+முழு op_matmul_nx(கட்டமைப்பு htp_ops_context * octx);
+முழு op_matmul_id_nx(கட்டமைப்பு htp_ops_context * octx);
+முழு op_இருமம்(கட்டமைப்பு htp_ops_context * octx);
+முழு op_unary(கட்டமைப்பு htp_ops_context * octx);
+முழு op_sum(கட்டமைப்பு htp_ops_context * octx);
+முழு op_sum_rows(கட்டமைப்பு htp_ops_context * octx);
+முழு op_argmax(கட்டமைப்பு htp_ops_context * octx);
+முழு op_activations(கட்டமைப்பு htp_ops_context * octx);
+முழு op_softmax(கட்டமைப்பு htp_ops_context * octx);
+முழு op_add_id(கட்டமைப்பு htp_ops_context * octx);
+முழு op_rope(கட்டமைப்பு htp_ops_context * octx);
+முழு op_flash_attn_ext(கட்டமைப்பு htp_ops_context * octx);
+முழு op_set_rows(கட்டமைப்பு htp_ops_context * octx);
+முழு op_get_rows(கட்டமைப்பு htp_ops_context * octx);
+முழு op_cpy(கட்டமைப்பு htp_ops_context * octx);
+முழு op_repeat(கட்டமைப்பு htp_ops_context * octx);
+முழு op_argsort(கட்டமைப்பு htp_ops_context * octx);
+முழு op_உச்சி_k(கட்டமைப்பு htp_ops_context * octx);
+முழு op_ssm_conv(கட்டமைப்பு htp_ops_context * octx);
+முழு op_cumsum(கட்டமைப்பு htp_ops_context * octx);
+முழு op_fill(கட்டமைப்பு htp_ops_context * octx);
+முழு op_concat(கட்டமைப்பு htp_ops_context * octx);
+முழு op_diag(கட்டமைப்பு htp_ops_context * octx);
+முழு op_solve_tri(கட்டமைப்பு htp_ops_context * octx);
+முழு op_gated_delta_net(கட்டமைப்பு htp_ops_context * octx);
+முழு op_pad(கட்டமைப்பு htp_ops_context * octx);
+முழு op_im2col(கட்டமைப்பு htp_ops_context * octx);
+முழு op_im2col_3d(கட்டமைப்பு htp_ops_context * octx);
+முழு op_pool_2d(கட்டமைப்பு htp_ops_context * octx);
+முழு op_pool_1d(கட்டமைப்பு htp_ops_context * octx);
+முழு op_allreduce(கட்டமைப்பு htp_ops_context * octx);
+முழு op_roll(கட்டமைப்பு htp_ops_context * octx);
 
 #endif /* HTP_CTX_H */

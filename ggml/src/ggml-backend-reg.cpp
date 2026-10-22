@@ -1,15 +1,15 @@
-#include "ggml-backend-impl.h"
-#include "ggml-backend.h"
-#include "ggml-backend-dl.h"
-#include "ggml-impl.h"
-#include <algorithm>
-#include <cstring>
-#include <filesystem>
-#include <memory>
-#include <string>
-#include <type_traits>
-#include <vector>
-#include <cctype>
+#அந்தர்பாவ "ggml-backend-impl.h"
+#அந்தர்பாவ "ggml-backend.h"
+#அந்தர்பாவ "ggml-backend-dl.h"
+#அந்தர்பாவ "ggml-impl.h"
+#அந்தர்பாவ <algorithm>
+#அந்தர்பாவ <cstring>
+#அந்தர்பாவ <filesystem>
+#அந்தர்பாவ <memory>
+#அந்தர்பாவ <string>
+#அந்தர்பாவ <type_traits>
+#அந்தர்பாவ <vector>
+#அந்தர்பாவ <cctype>
 
 #ifdef _WIN32
 #    define WIN32_LEAN_AND_MEAN
@@ -17,102 +17,102 @@
 #        define NOMINMAX
 #    endif
 #    include <windows.h>
-#elif defined(__APPLE__)
+#அல்லதெனில் defined(__APPLE__)
 #    include <mach-o/dyld.h>
 #    include <dlfcn.h>
-#else
+#இல்லையெனில்
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
 
 // Backend registry
 #ifdef GGML_USE_CPU
-#include "ggml-cpu.h"
+#அந்தர்பாவ "ggml-cpu.h"
 #endif
 
 #ifdef GGML_USE_CUDA
-#include "ggml-cuda.h"
+#அந்தர்பாவ "ggml-cuda.h"
 #endif
 
 #ifdef GGML_USE_METAL
-#include "ggml-metal.h"
+#அந்தர்பாவ "ggml-metal.h"
 #endif
 
 #ifdef GGML_USE_SYCL
-#include "ggml-sycl.h"
+#அந்தர்பாவ "ggml-sycl.h"
 #endif
 
 #ifdef GGML_USE_VULKAN
-#include "ggml-vulkan.h"
+#அந்தர்பாவ "ggml-vulkan.h"
 #endif
 
 #ifdef GGML_USE_WEBGPU
-#include "ggml-webgpu.h"
+#அந்தர்பாவ "ggml-webgpu.h"
 #endif
 
 #ifdef GGML_USE_ZDNN
-#include "ggml-zdnn.h"
+#அந்தர்பாவ "ggml-zdnn.h"
 #endif
 
 #ifdef GGML_USE_OPENCL
-#include "ggml-opencl.h"
+#அந்தர்பாவ "ggml-opencl.h"
 #endif
 
 #ifdef GGML_USE_HEXAGON
-#include "ggml-hexagon.h"
+#அந்தர்பாவ "ggml-hexagon.h"
 #endif
 
 #ifdef GGML_USE_BLAS
-#include "ggml-blas.h"
+#அந்தர்பாவ "ggml-blas.h"
 #endif
 
 #ifdef GGML_USE_RPC
-#include "ggml-rpc.h"
+#அந்தர்பாவ "ggml-rpc.h"
 #endif
 
 #ifdef GGML_USE_VIRTGPU_FRONTEND
-#include "ggml-virtgpu.h"
+#அந்தர்பாவ "ggml-virtgpu.h"
 #endif
 
 #ifdef GGML_USE_CANN
-#include "ggml-cann.h"
+#அந்தர்பாவ "ggml-cann.h"
 #endif
 
 #ifdef GGML_USE_ZENDNN
-#include "ggml-zendnn.h"
+#அந்தர்பாவ "ggml-zendnn.h"
 #endif
 
 #ifdef GGML_USE_OPENVINO
-#include "ggml-openvino.h"
+#அந்தர்பாவ "ggml-openvino.h"
 #endif
 
 #ifdef GGML_USE_ET
-#include "ggml-et.h"
+#அந்தர்பாவ "ggml-et.h"
 #endif
 
-namespace fs = std::filesystem;
+நாமாகாஶ fs = std::filesystem;
 
-static std::string path_str(const fs::path & path) {
-    try {
-#if defined(__cpp_lib_char8_t)
+நிலையான std::string path_str(மாறிலி fs::path & path) {
+    முயல் {
+#எனில் defined(__cpp_lib_char8_t)
         // C++20 and later: u8string() returns std::u8string
-        const std::u8string u8str = path.u8string();
-        return std::string(reinterpret_cast<const char *>(u8str.data()), u8str.size());
-#else
+        மாறிலி std::u8string u8str = path.u8string();
+        திரும்பு std::string(reinterpret_cast<மாறிலி எழுத்து *>(u8str.data()), u8str.size());
+#இல்லையெனில்
         // C++17: u8string() returns std::string
-        return path.u8string();
+        திரும்பு path.u8string();
 #endif
-    } catch (...) {
-        return std::string();
+    } பிடி (...) {
+        திரும்பு std::string();
     }
 }
 
-struct ggml_backend_reg_entry {
+கட்டமைப்பு ggml_backend_reg_entry {
     ggml_backend_reg_t reg;
     dl_handle_ptr handle;
 };
 
-struct ggml_backend_registry {
+கட்டமைப்பு ggml_backend_registry {
     std::vector<ggml_backend_reg_entry> backends;
     std::vector<ggml_backend_dev_t> devices;
 
@@ -128,9 +128,9 @@ struct ggml_backend_registry {
 #endif
 #ifdef GGML_USE_VULKAN
     // Add runtime disable check
-    if (getenv("GGML_DISABLE_VULKAN") == nullptr) {
+    எனில் (getenv("GGML_DISABLE_VULKAN") == nullptr) {
         register_backend(ggml_backend_vk_reg());
-    } else {
+    } இல்லையெனில் {
         GGML_LOG_DEBUG("Vulkan backend disabled by GGML_DISABLE_VULKAN environment variable\n");
     }
 #endif
@@ -176,38 +176,38 @@ struct ggml_backend_registry {
     ~ggml_backend_registry() {
         // FIXME: backends cannot be safely unloaded without a function to destroy all the backend resources,
         // since backend threads may still be running and accessing resources from the dynamic library
-        for (auto & entry : backends) {
-            if (entry.handle) {
+        க்கு (auto & entry : backends) {
+            எனில் (entry.handle) {
                 entry.handle.release(); // NOLINT
             }
         }
     }
 
-    void register_backend(ggml_backend_reg_t reg, dl_handle_ptr handle = nullptr) {
-        if (!reg) {
-            return;
+    வெறுமை register_backend(ggml_backend_reg_t reg, dl_handle_ptr handle = nullptr) {
+        எனில் (!reg) {
+            திரும்பு;
         }
 
-        for (auto & entry : backends) {
-            if (entry.reg == reg) {
-                return;
+        க்கு (auto & entry : backends) {
+            எனில் (entry.reg == reg) {
+                திரும்பு;
             }
         }
 
 #ifndef NDEBUG
         GGML_LOG_DEBUG("%s: registered backend %s (%zu devices)\n",
-            __func__, ggml_backend_reg_name(reg), ggml_backend_reg_dev_count(reg));
+            __func__, ggml_backend_reg_name(reg), ggml_backend_reg_dev_மொத்தம்(reg));
 #endif
         backends.push_back({ reg, std::move(handle) });
-        for (size_t i = 0; i < ggml_backend_reg_dev_count(reg); i++) {
+        க்கு (size_t i = 0; i < ggml_backend_reg_dev_மொத்தம்(reg); i++) {
             register_device(ggml_backend_reg_dev_get(reg, i));
         }
     }
 
-    void register_device(ggml_backend_dev_t device) {
-        for (auto & dev : devices) {
-            if (dev == device) {
-                return;
+    வெறுமை register_device(ggml_backend_dev_t device) {
+        க்கு (auto & dev : devices) {
+            எனில் (dev == device) {
+                திரும்பு;
             }
         }
 
@@ -217,71 +217,71 @@ struct ggml_backend_registry {
         devices.push_back(device);
     }
 
-    ggml_backend_reg_t load_backend(const fs::path & path, bool silent) {
+    ggml_backend_reg_t load_backend(மாறிலி fs::path & path, தருக்க silent) {
         dl_handle_ptr handle { dl_load_library(path) };
-        if (!handle) {
-            if (!silent) {
+        எனில் (!handle) {
+            எனில் (!silent) {
                 GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, path_str(path).c_str(), dl_error());
             }
-            return nullptr;
+            திரும்பு nullptr;
         }
 
         auto score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
-        if (score_fn && score_fn() == 0) {
-            if (!silent) {
+        எனில் (score_fn && score_fn() == 0) {
+            எனில் (!silent) {
                 GGML_LOG_INFO("%s: backend %s is not supported on this system\n", __func__, path_str(path).c_str());
             }
-            return nullptr;
+            திரும்பு nullptr;
         }
 
         auto backend_init_fn = (ggml_backend_init_t) dl_get_sym(handle.get(), "ggml_backend_init");
-        if (!backend_init_fn) {
-            if (!silent) {
+        எனில் (!backend_init_fn) {
+            எனில் (!silent) {
                 GGML_LOG_ERROR("%s: failed to find ggml_backend_init in %s\n", __func__, path_str(path).c_str());
             }
-            return nullptr;
+            திரும்பு nullptr;
         }
 
         ggml_backend_reg_t reg = backend_init_fn();
-        if (!reg || reg->api_version != GGML_BACKEND_API_VERSION) {
-            if (!silent) {
-                if (!reg) {
+        எனில் (!reg || reg->api_version != GGML_BACKEND_API_VERSION) {
+            எனில் (!silent) {
+                எனில் (!reg) {
                     GGML_LOG_ERROR("%s: failed to initialize backend from %s: ggml_backend_init returned NULL\n",
                         __func__, path_str(path).c_str());
-                } else {
+                } இல்லையெனில் {
                     GGML_LOG_ERROR("%s: failed to initialize backend from %s: incompatible API version (backend: %d, current: %d)\n",
                         __func__, path_str(path).c_str(), reg->api_version, GGML_BACKEND_API_VERSION);
                 }
             }
-            return nullptr;
+            திரும்பு nullptr;
         }
 
         GGML_LOG_INFO("%s: loaded %s backend from %s\n", __func__, ggml_backend_reg_name(reg), path_str(path).c_str());
 
         register_backend(reg, std::move(handle));
 
-        return reg;
+        திரும்பு reg;
     }
 
-    void unload_backend(ggml_backend_reg_t reg, bool silent) {
+    வெறுமை unload_backend(ggml_backend_reg_t reg, தருக்க silent) {
         auto it = std::find_if(backends.begin(), backends.end(),
-                               [reg](const ggml_backend_reg_entry & entry) { return entry.reg == reg; });
+                               [reg](மாறிலி ggml_backend_reg_entry & entry) { திரும்பு entry.reg == reg; });
 
-        if (it == backends.end()) {
-            if (!silent) {
+        எனில் (it == backends.end()) {
+            எனில் (!silent) {
                 GGML_LOG_ERROR("%s: backend not found\n", __func__);
             }
-            return;
+            திரும்பு;
         }
 
-        if (!silent) {
+        எனில் (!silent) {
             GGML_LOG_DEBUG("%s: unloading %s backend\n", __func__, ggml_backend_reg_name(reg));
         }
 
         // remove devices
         devices.erase(
             std::remove_if(devices.begin(), devices.end(),
-                            [reg](ggml_backend_dev_t dev) { return ggml_backend_dev_backend_reg(dev) == reg; }),
+                            [reg](ggml_backend_dev_t dev) { திரும்பு ggml_backend_dev_backend_reg(dev) == reg; }),
             devices.end());
 
         // remove backend
@@ -289,249 +289,249 @@ struct ggml_backend_registry {
     }
 };
 
-static ggml_backend_registry & get_reg() {
-    static ggml_backend_registry reg;
-    return reg;
+நிலையான ggml_backend_registry & get_reg() {
+    நிலையான ggml_backend_registry reg;
+    திரும்பு reg;
 }
 
 // Internal API
-void ggml_backend_register(ggml_backend_reg_t reg) {
+வெறுமை ggml_backend_register(ggml_backend_reg_t reg) {
     get_reg().register_backend(reg);
 }
 
-void ggml_backend_device_register(ggml_backend_dev_t device) {
+வெறுமை ggml_backend_device_register(ggml_backend_dev_t device) {
     get_reg().register_device(device);
 }
 
 // Backend (reg) enumeration
-static bool striequals(const char * a, const char * b) {
-    for (; *a && *b; a++, b++) {
-        if (std::tolower(*a) != std::tolower(*b)) {
-            return false;
+நிலையான தருக்க striequals(மாறிலி எழுத்து * a, மாறிலி எழுத்து * b) {
+    க்கு (; *a && *b; a++, b++) {
+        எனில் (std::tolower(*a) != std::tolower(*b)) {
+            திரும்பு பொய்;
         }
     }
-    return *a == *b;
+    திரும்பு *a == *b;
 }
 
-size_t ggml_backend_reg_count() {
-    return get_reg().backends.size();
+size_t ggml_backend_reg_மொத்தம்() {
+    திரும்பு get_reg().backends.size();
 }
 
 ggml_backend_reg_t ggml_backend_reg_get(size_t index) {
-    GGML_ASSERT(index < ggml_backend_reg_count());
-    return get_reg().backends[index].reg;
+    GGML_ASSERT(index < ggml_backend_reg_மொத்தம்());
+    திரும்பு get_reg().backends[index].reg;
 }
 
-ggml_backend_reg_t ggml_backend_reg_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_reg_count(); i++) {
+ggml_backend_reg_t ggml_backend_reg_by_name(மாறிலி எழுத்து * name) {
+    க்கு (size_t i = 0; i < ggml_backend_reg_மொத்தம்(); i++) {
         ggml_backend_reg_t reg = ggml_backend_reg_get(i);
-        if (striequals(ggml_backend_reg_name(reg), name)) {
-            return reg;
+        எனில் (striequals(ggml_backend_reg_name(reg), name)) {
+            திரும்பு reg;
         }
     }
-    return nullptr;
+    திரும்பு nullptr;
 }
 
 // Device enumeration
-size_t ggml_backend_dev_count() {
-    return get_reg().devices.size();
+size_t ggml_backend_dev_மொத்தம்() {
+    திரும்பு get_reg().devices.size();
 }
 
 ggml_backend_dev_t ggml_backend_dev_get(size_t index) {
-    GGML_ASSERT(index < ggml_backend_dev_count());
-    return get_reg().devices[index];
+    GGML_ASSERT(index < ggml_backend_dev_மொத்தம்());
+    திரும்பு get_reg().devices[index];
 }
 
-ggml_backend_dev_t ggml_backend_dev_by_name(const char * name) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+ggml_backend_dev_t ggml_backend_dev_by_name(மாறிலி எழுத்து * name) {
+    க்கு (size_t i = 0; i < ggml_backend_dev_மொத்தம்(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
-        if (striequals(ggml_backend_dev_name(dev), name)) {
-            return dev;
+        எனில் (striequals(ggml_backend_dev_name(dev), name)) {
+            திரும்பு dev;
         }
     }
-    return nullptr;
+    திரும்பு nullptr;
 }
 
-ggml_backend_dev_t ggml_backend_dev_by_type(enum ggml_backend_dev_type type) {
-    for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
+ggml_backend_dev_t ggml_backend_dev_by_type(எண்ணிக்கை ggml_backend_dev_type type) {
+    க்கு (size_t i = 0; i < ggml_backend_dev_மொத்தம்(); i++) {
         ggml_backend_dev_t dev = ggml_backend_dev_get(i);
-        if (ggml_backend_dev_type(dev) == type) {
-            return dev;
+        எனில் (ggml_backend_dev_type(dev) == type) {
+            திரும்பு dev;
         }
     }
-    return nullptr;
+    திரும்பு nullptr;
 }
 
 // Convenience functions
-ggml_backend_t ggml_backend_init_by_name(const char * name, const char * params) {
+ggml_backend_t ggml_backend_init_by_name(மாறிலி எழுத்து * name, மாறிலி எழுத்து * params) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_name(name);
-    if (!dev) {
-        return nullptr;
+    எனில் (!dev) {
+        திரும்பு nullptr;
     }
-    return ggml_backend_dev_init(dev, params);
+    திரும்பு ggml_backend_dev_init(dev, params);
 }
 
-ggml_backend_t ggml_backend_init_by_type(enum ggml_backend_dev_type type, const char * params) {
+ggml_backend_t ggml_backend_init_by_type(எண்ணிக்கை ggml_backend_dev_type type, மாறிலி எழுத்து * params) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_type(type);
-    if (!dev) {
-        return nullptr;
+    எனில் (!dev) {
+        திரும்பு nullptr;
     }
-    return ggml_backend_dev_init(dev, params);
+    திரும்பு ggml_backend_dev_init(dev, params);
 }
 
-ggml_backend_t ggml_backend_init_best(void) {
+ggml_backend_t ggml_backend_init_best(வெறுமை) {
     ggml_backend_dev_t dev = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_GPU);
     dev = dev ? dev : ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_IGPU);
     dev = dev ? dev : ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);
-    if (!dev) {
-        return nullptr;
+    எனில் (!dev) {
+        திரும்பு nullptr;
     }
-    return ggml_backend_dev_init(dev, nullptr);
+    திரும்பு ggml_backend_dev_init(dev, nullptr);
 }
 
 // Dynamic loading
-ggml_backend_reg_t ggml_backend_load(const char * path) {
-    return get_reg().load_backend(path, false);
+ggml_backend_reg_t ggml_backend_load(மாறிலி எழுத்து * path) {
+    திரும்பு get_reg().load_backend(path, பொய்);
 }
 
-void ggml_backend_unload(ggml_backend_reg_t reg) {
-    get_reg().unload_backend(reg, true);
+வெறுமை ggml_backend_unload(ggml_backend_reg_t reg) {
+    get_reg().unload_backend(reg, உண்மை);
 }
 
-static fs::path get_executable_path() {
-#if defined(__APPLE__)
+நிலையான fs::path get_executable_path() {
+#எனில் defined(__APPLE__)
     // get executable path
-    std::vector<char> path;
+    std::vector<எழுத்து> path;
     uint32_t size;
-    while (true) {
+    போது (உண்மை) {
         size = path.size();
-        if (_NSGetExecutablePath(path.data(), &size) == 0) {
-            break;
+        எனில் (_NSGetExecutablePath(path.data(), &size) == 0) {
+            நிறுத்து;
         }
         path.resize(size);
     }
     std::string base_path(path.data(), size);
     // remove executable name
     auto last_slash = base_path.find_last_of('/');
-    if (last_slash != std::string::npos) {
+    எனில் (last_slash != std::string::npos) {
         base_path = base_path.substr(0, last_slash);
     }
-    return base_path + "/";
-#elif defined(__linux__) || defined(__FreeBSD__)
+    திரும்பு base_path + "/";
+#அல்லதெனில் defined(__linux__) || defined(__FreeBSD__)
     std::string base_path = ".";
-    std::vector<char> path(1024);
-    while (true) {
+    std::vector<எழுத்து> path(1024);
+    போது (உண்மை) {
         // get executable path
-#    if defined(__linux__)
+#    எனில் defined(__linux__)
         ssize_t len = readlink("/proc/self/exe", path.data(), path.size());
 #    elif defined(__FreeBSD__)
         ssize_t len = readlink("/proc/curproc/file", path.data(), path.size());
 #    endif
-        if (len == -1) {
-            break;
+        எனில் (len == -1) {
+            நிறுத்து;
         }
-        if (len < (ssize_t) path.size()) {
+        எனில் (len < (ssize_t) path.size()) {
             base_path = std::string(path.data(), len);
             // remove executable name
             auto last_slash = base_path.find_last_of('/');
-            if (last_slash != std::string::npos) {
+            எனில் (last_slash != std::string::npos) {
                 base_path = base_path.substr(0, last_slash);
             }
-            break;
+            நிறுத்து;
         }
         path.resize(path.size() * 2);
     }
 
-    return base_path + "/";
-#elif defined(_WIN32)
+    திரும்பு base_path + "/";
+#அல்லதெனில் defined(_WIN32)
     std::vector<wchar_t> path(MAX_PATH);
-    DWORD len = GetModuleFileNameW(NULL, path.data(), path.size());
-    if (len == 0) {
-        return {};
+    DWORD len = GetModuleFileNameW(வெற்று, path.data(), path.size());
+    எனில் (len == 0) {
+        திரும்பு {};
     }
     std::wstring base_path(path.data(), len);
     // remove executable name
     auto last_slash = base_path.find_last_of('\\');
-    if (last_slash != std::string::npos) {
+    எனில் (last_slash != std::string::npos) {
         base_path = base_path.substr(0, last_slash);
     }
-    return base_path + L"\\";
-#else
-    return {};
+    திரும்பு base_path + L"\\";
+#இல்லையெனில்
+    திரும்பு {};
 #endif
 }
 
-static fs::path backend_filename_prefix() {
+நிலையான fs::path backend_filename_prefix() {
 #ifdef _WIN32
-    return fs::u8path("ggml-");
-#else
-    return fs::u8path("libggml-");
+    திரும்பு fs::u8path("ggml-");
+#இல்லையெனில்
+    திரும்பு fs::u8path("libggml-");
 #endif
 }
 
-static fs::path backend_filename_extension() {
+நிலையான fs::path backend_filename_extension() {
 #ifdef _WIN32
-    return fs::u8path(".dll");
-#else
-    return fs::u8path(".so");
+    திரும்பு fs::u8path(".dll");
+#இல்லையெனில்
+    திரும்பு fs::u8path(".so");
 #endif
 }
 
-static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent, const char * user_search_path) {
+நிலையான ggml_backend_reg_t ggml_backend_load_best(மாறிலி எழுத்து * name, தருக்க silent, மாறிலி எழுத்து * user_தேடல்_path) {
     // enumerate all the files that match [lib]ggml-name-*.[so|dll] in the search paths
-    const fs::path name_path = fs::u8path(name);
-    const fs::path file_prefix = backend_filename_prefix().native() + name_path.native() + fs::u8path("-").native();
-    const fs::path file_extension = backend_filename_extension();
+    மாறிலி fs::path name_path = fs::u8path(name);
+    மாறிலி fs::path file_prefix = backend_filename_prefix().native() + name_path.native() + fs::u8path("-").native();
+    மாறிலி fs::path file_extension = backend_filename_extension();
 
-    std::vector<fs::path> search_paths;
-    if (user_search_path == nullptr) {
+    std::vector<fs::path> தேடல்_paths;
+    எனில் (user_தேடல்_path == nullptr) {
 #ifdef GGML_BACKEND_DIR
-        search_paths.push_back(fs::u8path(GGML_BACKEND_DIR));
+        தேடல்_paths.push_back(fs::u8path(GGML_BACKEND_DIR));
 #endif
         // default search paths: executable directory, current directory
-        search_paths.push_back(get_executable_path());
+        தேடல்_paths.push_back(get_executable_path());
         std::error_code cwd_ec;
-        const fs::path cwd = fs::current_path(cwd_ec);
-        if (cwd_ec) {
+        மாறிலி fs::path cwd = fs::current_path(cwd_ec);
+        எனில் (cwd_ec) {
             GGML_LOG_DEBUG("%s: failed to get current directory: %s\n", __func__, cwd_ec.message().c_str());
-        } else {
-            search_paths.push_back(cwd);
+        } இல்லையெனில் {
+            தேடல்_paths.push_back(cwd);
         }
-    } else {
-        search_paths.push_back(fs::u8path(user_search_path));
+    } இல்லையெனில் {
+        தேடல்_paths.push_back(fs::u8path(user_தேடல்_path));
     }
 
-    int best_score = 0;
+    முழு best_score = 0;
     fs::path best_path;
     std::error_code ec;
 
-    for (const auto & search_path : search_paths) {
+    க்கு (மாறிலி auto & தேடல்_path : தேடல்_paths) {
         std::error_code dir_ec;
-        fs::directory_iterator dir_it(search_path, dir_ec);
+        fs::directory_iterator dir_it(தேடல்_path, dir_ec);
 
-        for (const fs::directory_iterator end; dir_it != end; dir_it.increment(dir_ec)) {
-            const auto & entry = *dir_it;
-            if (entry.is_regular_file(ec)) {
+        க்கு (மாறிலி fs::directory_iterator end; dir_it != end; dir_it.increment(dir_ec)) {
+            மாறிலி auto & entry = *dir_it;
+            எனில் (entry.is_regular_file(ec)) {
                 auto filename = entry.path().filename();
                 auto ext = entry.path().extension();
-                if (filename.native().find(file_prefix) == 0 && ext == file_extension) {
+                எனில் (filename.native().find(file_prefix) == 0 && ext == file_extension) {
                     dl_handle_ptr handle { dl_load_library(entry) };
-                    if (!handle && !silent) {
+                    எனில் (!handle && !silent) {
                         GGML_LOG_ERROR("%s: failed to load %s: %s\n", __func__, path_str(entry.path()).c_str(), dl_error());
                     }
-                    if (handle) {
+                    எனில் (handle) {
                         auto score_fn = (ggml_backend_score_t) dl_get_sym(handle.get(), "ggml_backend_score");
-                        if (score_fn) {
-                            int s = score_fn();
+                        எனில் (score_fn) {
+                            முழு s = score_fn();
 #ifndef NDEBUG
                             GGML_LOG_DEBUG("%s: %s score: %d\n", __func__, path_str(entry.path()).c_str(), s);
 #endif
-                            if (s > best_score) {
+                            எனில் (s > best_score) {
                                 best_score = s;
                                 best_path = entry.path();
                             }
-                        } else {
-                            if (!silent) {
+                        } இல்லையெனில் {
+                            எனில் (!silent) {
                                 GGML_LOG_INFO("%s: failed to find ggml_backend_score in %s\n", __func__, path_str(entry.path()).c_str());
                             }
                         }
@@ -540,39 +540,39 @@ static ggml_backend_reg_t ggml_backend_load_best(const char * name, bool silent,
             }
         }
 
-        if (dir_ec) {
-            GGML_LOG_DEBUG("%s: failed to enumerate %s: %s\n", __func__, path_str(search_path).c_str(), dir_ec.message().c_str());
+        எனில் (dir_ec) {
+            GGML_LOG_DEBUG("%s: failed to enumerate %s: %s\n", __func__, path_str(தேடல்_path).c_str(), dir_ec.message().c_str());
         }
     }
 
-    if (best_score == 0) {
+    எனில் (best_score == 0) {
         // try to load the base backend
-        for (const auto & search_path : search_paths) {
+        க்கு (மாறிலி auto & தேடல்_path : தேடல்_paths) {
             fs::path filename = backend_filename_prefix().native() + name_path.native() + backend_filename_extension().native();
-            fs::path path = search_path / filename;
-            if (std::error_code ec; fs::exists(path, ec)) {
-                return get_reg().load_backend(path, silent);
-            } else {
-                if (ec) {
+            fs::path path = தேடல்_path / filename;
+            எனில் (std::error_code ec; fs::exists(path, ec)) {
+                திரும்பு get_reg().load_backend(path, silent);
+            } இல்லையெனில் {
+                எனில் (ec) {
                     GGML_LOG_DEBUG("%s: posix_stat(%s) failure, error-message: %s\n", __func__, path_str(path).c_str(), ec.message().c_str());
                 }
             }
         }
-        return nullptr;
+        திரும்பு nullptr;
     }
 
-    return get_reg().load_backend(best_path, silent);
+    திரும்பு get_reg().load_backend(best_path, silent);
 }
 
-void ggml_backend_load_all() {
+வெறுமை ggml_backend_load_all() {
     ggml_backend_load_all_from_path(nullptr);
 }
 
-void ggml_backend_load_all_from_path(const char * dir_path) {
+வெறுமை ggml_backend_load_all_from_path(மாறிலி எழுத்து * dir_path) {
 #ifdef NDEBUG
-    bool silent = true;
-#else
-    bool silent = false;
+    தருக்க silent = உண்மை;
+#இல்லையெனில்
+    தருக்க silent = பொய்;
 #endif
 
     ggml_backend_load_best("blas", silent, dir_path);
@@ -591,8 +591,8 @@ void ggml_backend_load_all_from_path(const char * dir_path) {
     ggml_backend_load_best("openvino", silent, dir_path);
     ggml_backend_load_best("cpu", silent, dir_path);
     // check the environment variable GGML_BACKEND_PATH to load an out-of-tree backend
-    const char * backend_path = std::getenv("GGML_BACKEND_PATH");
-    if (backend_path) {
+    மாறிலி எழுத்து * backend_path = std::getenv("GGML_BACKEND_PATH");
+    எனில் (backend_path) {
         ggml_backend_load(backend_path);
     }
 }

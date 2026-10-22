@@ -1,30 +1,30 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#அந்தர்பாவ "../node_context.h"
+#அந்தர்பாவ "../op_table.h"
+#அந்தர்பாவ "../utils.h"
 
-#include <cstring>
-#include <openvino/op/clamp.hpp>
+#அந்தர்பாவ <cstring>
+#அந்தர்பாவ <openvino/op/clamp.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+நாமாகாஶ ov {
+நாமாகாஶ frontend {
+நாமாகாஶ ggml {
+நாமாகாஶ op {
 
-OutputVector translate_clamp(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_clamp(மாறிலி முனை_Context & context) {
+    இலக்கம்_inputs_check(context, 1, 1);
 
-    auto input = process_view_input_new(context, 0);
+    auto உள்ளீடு = process_view_உள்ளீடு_new(context, 0);
 
-    const int32_t * op_params = context.get_output_op_params();
+    மாறிலி int32_t * op_params = context.get_output_op_params();
     FRONT_END_CHECK_IMPLEMENTED(op_params != nullptr, "CLAMP requires output op params");
 
-    float min;
-    float max;
-    std::memcpy(&min, reinterpret_cast<const float *>(op_params) + 0, sizeof(float));
-    std::memcpy(&max, reinterpret_cast<const float *>(op_params) + 1, sizeof(float));
+    தசம min;
+    தசம max;
+    std::memcpy(&min, reinterpret_cast<மாறிலி தசம *>(op_params) + 0, அளவு(தசம));
+    std::memcpy(&max, reinterpret_cast<மாறிலி தசம *>(op_params) + 1, அளவு(தசம));
 
-    auto res = std::make_shared<ov::op::v0::Clamp>(input, min, max);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    auto res = std::make_shared<ov::op::v0::Clamp>(உள்ளீடு, min, max);
+    திரும்பு rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

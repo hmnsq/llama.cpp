@@ -1,26 +1,26 @@
-#include "frontend.h"
+#அந்தர்பாவ "frontend.h"
 
-#include "input_model.h"
-#include "op_table.h"
-#include "translate_session.h"
-#include <openvino/core/type.hpp>
+#அந்தர்பாவ "input_model.h"
+#அந்தர்பாவ "op_table.h"
+#அந்தர்பாவ "translate_session.h"
+#அந்தர்பாவ <openvino/core/type.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+நாமாகாஶ ov {
+நாமாகாஶ frontend {
+நாமாகாஶ ggml {
 
 FrontEnd::FrontEnd() {}
 
-std::shared_ptr<Model> FrontEnd::convert(const InputModel::Ptr & model, bool naive) {
-    auto ggml_model = ov::as_type_ptr<ggml::InputModel>(model);
+std::shared_ptr<Model> FrontEnd::convert(மாறிலி உள்ளீடு_Model::Ptr & model, தருக்க naive) {
+    auto ggml_model = ov::as_type_ptr<ggml::உள்ளீடு_Model>(model);
     FRONT_END_GENERAL_CHECK(ggml_model, "Invalid input model");
     std::shared_ptr<Model> converted_model;
-    const auto & supported_ops = get_supported_ops();
+    மாறிலி auto & supported_ops = get_supported_ops();
     {
         TranslateSession translate_session(model, supported_ops, naive);
         converted_model = translate_session.get_converted_model();
     }
-    return converted_model;
+    திரும்பு converted_model;
 }
 
 }  // namespace ggml

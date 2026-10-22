@@ -1,221 +1,221 @@
-#include "utils.h"
+#அந்தர்பாவ "utils.h"
 
-#include <cmath>
-#include <cstddef>
-#include <ctime>
-#include <memory>
-#include <openvino/op/add.hpp>
-#include <openvino/op/clamp.hpp>
-#include <openvino/op/convert.hpp>
-#include <openvino/op/cos.hpp>
-#include <openvino/op/divide.hpp>
-#include <openvino/op/gather.hpp>
-#include <openvino/op/maximum.hpp>
-#include <openvino/op/multiply.hpp>
-#include <openvino/op/reshape.hpp>
-#include <openvino/op/shape_of.hpp>
-#include <openvino/op/sin.hpp>
-#include <openvino/op/slice.hpp>
-#include <openvino/op/split.hpp>
-#include <openvino/op/squeeze.hpp>
-#include <openvino/op/subtract.hpp>
-#include <openvino/op/transpose.hpp>
-#include <string>
+#அந்தர்பாவ <cmath>
+#அந்தர்பாவ <cstddef>
+#அந்தர்பாவ <ctime>
+#அந்தர்பாவ <memory>
+#அந்தர்பாவ <openvino/op/add.hpp>
+#அந்தர்பாவ <openvino/op/clamp.hpp>
+#அந்தர்பாவ <openvino/op/convert.hpp>
+#அந்தர்பாவ <openvino/op/cos.hpp>
+#அந்தர்பாவ <openvino/op/divide.hpp>
+#அந்தர்பாவ <openvino/op/gather.hpp>
+#அந்தர்பாவ <openvino/op/maximum.hpp>
+#அந்தர்பாவ <openvino/op/multiply.hpp>
+#அந்தர்பாவ <openvino/op/reshape.hpp>
+#அந்தர்பாவ <openvino/op/shape_of.hpp>
+#அந்தர்பாவ <openvino/op/sin.hpp>
+#அந்தர்பாவ <openvino/op/slice.hpp>
+#அந்தர்பாவ <openvino/op/split.hpp>
+#அந்தர்பாவ <openvino/op/squeeze.hpp>
+#அந்தர்பாவ <openvino/op/subtract.hpp>
+#அந்தர்பாவ <openvino/op/transpose.hpp>
+#அந்தர்பாவ <string>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
+நாமாகாஶ ov {
+நாமாகாஶ frontend {
+நாமாகாஶ ggml {
 
-void num_inputs_check(const NodeContext & context, size_t min_inputs, size_t max_inputs) {
-    auto input_size = context.get_input_size();
-    FRONT_END_OP_CONVERSION_CHECK(input_size >= min_inputs, "Got less inputs than expected");
-    FRONT_END_OP_CONVERSION_CHECK(input_size <= max_inputs, "Got more inputs than expected");
+வெறுமை இலக்கம்_inputs_check(மாறிலி முனை_Context & context, size_t min_inputs, size_t max_inputs) {
+    auto உள்ளீடு_size = context.get_உள்ளீடு_size();
+    FRONT_END_OP_CONVERSION_CHECK(உள்ளீடு_size >= min_inputs, "Got less inputs than expected");
+    FRONT_END_OP_CONVERSION_CHECK(உள்ளீடு_size <= max_inputs, "Got more inputs than expected");
 }
 
-int non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb) {
-    int dim = nb.size() - 1;
+முழு non_cont_dim(std::vector<size_t> ne, std::vector<size_t> nb) {
+    முழு dim = nb.size() - 1;
     size_t bytes = nb[dim];
-    for (int i = dim; i > 0; i--) {
+    க்கு (முழு i = dim; i > 0; i--) {
         bytes *= ne[i];
-        if (bytes != nb[i - 1]) {
-            return i;
+        எனில் (bytes != nb[i - 1]) {
+            திரும்பு i;
         }
     }
-    return 0;
+    திரும்பு 0;
 }
 
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::op::v3::ShapeOf> & shape,
-                                         const std::vector<int> & dims) {
-    using namespace ov::op;
-    const auto zero = v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
-    const auto dims_const = v0::Constant::create(ov::element::i32, ov::Shape{dims.size()}, dims);
-    return std::make_shared<v8::Gather>(shape, dims_const, zero);
+std::shared_ptr<ov::Node> get_dimensions(மாறிலி std::shared_ptr<ov::op::v3::ShapeOf> & shape,
+                                         மாறிலி std::vector<முழு> & dims) {
+    using நாமாகாஶ ov::op;
+    மாறிலி auto zero = v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
+    மாறிலி auto dims_const = v0::Constant::create(ov::element::i32, ov::Shape{dims.size()}, dims);
+    திரும்பு std::make_shared<v8::Gather>(shape, dims_const, zero);
 }
 
-std::shared_ptr<ov::Node> get_dimensions(const std::shared_ptr<ov::Node> & node, const std::vector<int> & dims) {
-    return get_dimensions(std::make_shared<ov::op::v3::ShapeOf>(node), dims);
+std::shared_ptr<ov::Node> get_dimensions(மாறிலி std::shared_ptr<ov::Node> & முனை, மாறிலி std::vector<முழு> & dims) {
+    திரும்பு get_dimensions(std::make_shared<ov::op::v3::ShapeOf>(முனை), dims);
 }
 
-OutputVector rename_outputs_with_suffix(const OutputVector & outputs, const std::string & suffix) {
-    for (const auto & output : outputs) {
-        auto node = output.get_node_shared_ptr();
-        std::string name = node->get_friendly_name();
+OutputVector rename_outputs_with_suffix(மாறிலி OutputVector & outputs, மாறிலி std::string & suffix) {
+    க்கு (மாறிலி auto & output : outputs) {
+        auto முனை = output.get_முனை_shared_ptr();
+        std::string name = முனை->get_friendly_name();
         name += "_";
         name += suffix;
-        node->set_friendly_name(name);
+        முனை->set_friendly_name(name);
         // Uncomment to dump every node's inferred shape (used to hunt down dynamic dims on NPU).
         // std::cout << name << "  " << output.get_partial_shape() << std::endl;
     }
-    return outputs;
+    திரும்பு outputs;
 }
 
-namespace {
-ov::Output<ov::Node> rope_yarn_ramp_mix(int num_elements, const float corr_dims[2], float ext_factor) {
-    std::vector<float> dim_ids_vec(num_elements);
+நாமாகாஶ {
+ov::Output<ov::Node> rope_yarn_ramp_mix(முழு இலக்கம்_elements, மாறிலி தசம corr_dims[2], தசம ext_factor) {
+    std::vector<தசம> dim_ids_vec(இலக்கம்_elements);
     std::iota(dim_ids_vec.begin(), dim_ids_vec.end(), 0.0f);
-    auto dim_ids = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, (size_t) num_elements}, dim_ids_vec);
-    auto corr_low = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {corr_dims[0]});
-    auto corr_high = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {corr_dims[1]});
+    auto dim_ids = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, (size_t) இலக்கம்_elements}, dim_ids_vec);
+    auto corr_கீழ் = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {corr_dims[0]});
+    auto corr_உயர்வு = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {corr_dims[1]});
     auto denom = std::make_shared<ov::op::v1::Maximum>(
-        std::make_shared<ov::op::v1::Subtract>(corr_high, corr_low),
+        std::make_shared<ov::op::v1::Subtract>(corr_உயர்வு, corr_கீழ்),
         ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {0.001f}));
     auto ramp_y =
-        std::make_shared<ov::op::v1::Divide>(std::make_shared<ov::op::v1::Subtract>(dim_ids, corr_low), denom);
+        std::make_shared<ov::op::v1::Divide>(std::make_shared<ov::op::v1::Subtract>(dim_ids, corr_கீழ்), denom);
     auto ramp_clamped = std::make_shared<ov::op::v0::Clamp>(ramp_y, 0.0f, 1.0f);
     // rope_yarn_ramp returns (1 - clamp(y)), so invert before scaling
     auto one = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {1.0f});
     auto ramp_inverted = std::make_shared<ov::op::v1::Subtract>(one, ramp_clamped);
-    auto ext_factor_node = ov::op::v0::Constant::create(ov::element::f32, Shape{}, {ext_factor});
-    auto ramp_mix = std::make_shared<ov::op::v1::Multiply>(ramp_inverted, ext_factor_node);
-    return ramp_mix;
+    auto ext_factor_முனை = ov::op::v0::Constant::create(ov::element::f32, Shape{}, {ext_factor});
+    auto ramp_mix = std::make_shared<ov::op::v1::Multiply>(ramp_inverted, ext_factor_முனை);
+    திரும்பு ramp_mix;
 }
 
-float ggml_rope_yarn_corr_dim(int n_dims, int n_ctx_orig, float n_rot, float base) {
+தசம ggml_rope_yarn_corr_dim(முழு n_dims, முழு n_ctx_orig, தசம n_rot, தசம base) {
 #ifndef M_PI
 #    define M_PI 3.14159265358979323846
 #endif
-    return n_dims * logf(n_ctx_orig / (n_rot * 2 * (float) M_PI)) / (2 * logf(base));
+    திரும்பு n_dims * logf(n_ctx_orig / (n_rot * 2 * (தசம) M_PI)) / (2 * logf(base));
 }
 
-void ggml_rope_yarn_corr_dims(int n_dims,
-                              int n_ctx_orig,
-                              float freq_base,
-                              float beta_fast,
-                              float beta_slow,
-                              float dims[2]) {
-    float start = floorf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_fast, freq_base));
-    float end = ceilf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_slow, freq_base));
+வெறுமை ggml_rope_yarn_corr_dims(முழு n_dims,
+                              முழு n_ctx_orig,
+                              தசம freq_base,
+                              தசம beta_fast,
+                              தசம beta_slow,
+                              தசம dims[2]) {
+    தசம start = floorf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_fast, freq_base));
+    தசம end = ceilf(ggml_rope_yarn_corr_dim(n_dims, n_ctx_orig, beta_slow, freq_base));
     dims[0] = std::max(0.0f, start);
-    dims[1] = std::min(static_cast<float>(n_dims - 1), end);
+    dims[1] = std::min(static_cast<தசம>(n_dims - 1), end);
 }
 }  // namespace
 
 std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params,
                                                            std::shared_ptr<ov::Node> inp_pos,
                                                            std::shared_ptr<ov::Node> rope_freqs_weight,
-                                                           int mode,
-                                                           bool stateful,
+                                                           முழு mode,
+                                                           தருக்க stateful,
                                                            int64_t head_dim) {
-    constexpr int TYPE_IMROPE = 2;
-    constexpr int TYPE_VISION = 3;
-    constexpr int TYPE_MROPE = 4;
+    constexpr முழு TYPE_IMROPE = 2;
+    constexpr முழு TYPE_VISION = 3;
+    constexpr முழு TYPE_MROPE = 4;
 
-    const bool is_imrope = (mode == TYPE_IMROPE);
-    const bool is_vision = (mode == TYPE_VISION);
-    const bool is_mrope = (mode == TYPE_MROPE);
-    const bool is_multi = is_imrope || is_vision || is_mrope;
+    மாறிலி தருக்க is_imrope = (mode == TYPE_IMROPE);
+    மாறிலி தருக்க is_vision = (mode == TYPE_VISION);
+    மாறிலி தருக்க is_mrope = (mode == TYPE_MROPE);
+    மாறிலி தருக்க is_multi = is_imrope || is_vision || is_mrope;
 
-    if (stateful) {
+    எனில் (stateful) {
         inp_pos =
             std::make_shared<ov::op::v0::Squeeze>(inp_pos, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
         inp_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::f32);
         auto pos_perm =
             std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{3}, std::vector<int64_t>{2, 1, 0});
         inp_pos = std::make_shared<ov::op::v1::Transpose>(inp_pos, pos_perm);
-    } else if (is_multi) {
+    } இல்லையெனில் எனில் (is_multi) {
         inp_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::f32);
         auto pos_shape = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{5}, {0, 0, 0, 4, -1});
-        inp_pos = std::make_shared<ov::op::v1::Reshape>(inp_pos, pos_shape, true);
+        inp_pos = std::make_shared<ov::op::v1::Reshape>(inp_pos, pos_shape, உண்மை);
         auto pos_transpose_shape =
             std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{5}, std::vector<int64_t>{0, 1, 2, 4, 3});
         inp_pos = std::make_shared<ov::op::v1::Transpose>(inp_pos, pos_transpose_shape);
-    } else {
+    } இல்லையெனில் {
         inp_pos = std::make_shared<ov::op::v0::Convert>(inp_pos, ov::element::f32);
         auto pos_perm =
             std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{4}, std::vector<int64_t>{0, 3, 1, 2});
         inp_pos = std::make_shared<ov::op::v1::Transpose>(inp_pos, pos_perm);
     }
 
-    float freq_base;
-    float freq_scale;
-    float ext_factor;
-    float attn_factor;
-    float beta_fast;
-    float beta_slow;
-    const int n_dims = rope_params[1];
-    const size_t n_dims_half = n_dims >> 1;
-    const int n_ctx_orig = rope_params[4];
-    memcpy(&freq_base, rope_params + 5, sizeof(float));
-    memcpy(&freq_scale, rope_params + 6, sizeof(float));
-    memcpy(&ext_factor, rope_params + 7, sizeof(float));
-    memcpy(&attn_factor, rope_params + 8, sizeof(float));
-    memcpy(&beta_fast, rope_params + 9, sizeof(float));
-    memcpy(&beta_slow, rope_params + 10, sizeof(float));
+    தசம freq_base;
+    தசம freq_scale;
+    தசம ext_factor;
+    தசம attn_factor;
+    தசம beta_fast;
+    தசம beta_slow;
+    மாறிலி முழு n_dims = rope_params[1];
+    மாறிலி size_t n_dims_half = n_dims >> 1;
+    மாறிலி முழு n_ctx_orig = rope_params[4];
+    memcpy(&freq_base, rope_params + 5, அளவு(தசம));
+    memcpy(&freq_scale, rope_params + 6, அளவு(தசம));
+    memcpy(&ext_factor, rope_params + 7, அளவு(தசம));
+    memcpy(&attn_factor, rope_params + 8, அளவு(தசம));
+    memcpy(&beta_fast, rope_params + 9, அளவு(தசம));
+    memcpy(&beta_slow, rope_params + 10, அளவு(தசம));
 
-    const float theta_scale = powf(freq_base, -2.0f / n_dims);
+    மாறிலி தசம theta_scale = powf(freq_base, -2.0f / n_dims);
 
     Output<Node> theta;
-    float mscale = attn_factor;
-    if (is_multi) {
-        const size_t num_pairs = is_vision ? (n_dims > 0 ? (size_t) n_dims : (size_t) (head_dim / 2)) : n_dims_half;
-        int sections[4];
-        memcpy(sections, rope_params + 11, sizeof(int) * 4);
-        int sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
-        if (sect_dims <= 0) {
-            sect_dims = num_pairs;
+    தசம mscale = attn_factor;
+    எனில் (is_multi) {
+        மாறிலி size_t இலக்கம்_pairs = is_vision ? (n_dims > 0 ? (size_t) n_dims : (size_t) (head_dim / 2)) : n_dims_half;
+        முழு sections[4];
+        memcpy(sections, rope_params + 11, அளவு(முழு) * 4);
+        முழு sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
+        எனில் (sect_dims <= 0) {
+            sect_dims = இலக்கம்_pairs;
         }
-        int sec_w = sections[0] + sections[1];
-        int sec_e = sec_w + sections[2];
-        std::vector<int64_t> gather_indices(num_pairs);
-        std::vector<float> factor(num_pairs);
-        for (size_t j = 0; j < num_pairs; j++) {
-            int sector = j % sect_dims;
-            int plane = 0;
-            if (is_imrope) {
-                if (sector % 3 == 1 && sector < 3 * sections[1]) {
+        முழு sec_w = sections[0] + sections[1];
+        முழு sec_e = sec_w + sections[2];
+        std::vector<int64_t> gather_indices(இலக்கம்_pairs);
+        std::vector<தசம> factor(இலக்கம்_pairs);
+        க்கு (size_t j = 0; j < இலக்கம்_pairs; j++) {
+            முழு sector = j % sect_dims;
+            முழு plane = 0;
+            எனில் (is_imrope) {
+                எனில் (sector % 3 == 1 && sector < 3 * sections[1]) {
                     plane = 1;
-                } else if (sector % 3 == 2 && sector < 3 * sections[2]) {
+                } இல்லையெனில் எனில் (sector % 3 == 2 && sector < 3 * sections[2]) {
                     plane = 2;
-                } else if (sector % 3 == 0 && sector < 3 * sections[0]) {
+                } இல்லையெனில் எனில் (sector % 3 == 0 && sector < 3 * sections[0]) {
                     plane = 0;
-                } else {
+                } இல்லையெனில் {
                     plane = 3;
                 }
                 factor[j] = std::pow(theta_scale, j);
-            } else if (is_vision) {
-                int p_idx = 0;
-                if (sector < sections[0]) {
+            } இல்லையெனில் எனில் (is_vision) {
+                முழு p_idx = 0;
+                எனில் (sector < sections[0]) {
                     plane = 0;
                     p_idx = sector;
-                } else if (sector < sections[0] + sections[1]) {
+                } இல்லையெனில் எனில் (sector < sections[0] + sections[1]) {
                     plane = 1;
                     p_idx = sector - sections[0];
-                } else if (sector < sec_w + sections[2]) {
+                } இல்லையெனில் எனில் (sector < sec_w + sections[2]) {
                     plane = 2;
                     p_idx = sector - sec_w;
-                } else {
+                } இல்லையெனில் {
                     plane = 3;
                     p_idx = sector - sec_e;
                 }
                 factor[j] = std::pow(theta_scale, p_idx);
-            } else {
-                if (sector >= sections[0] && sector < sec_w) {
+            } இல்லையெனில் {
+                எனில் (sector >= sections[0] && sector < sec_w) {
                     plane = 1;
-                } else if (sector >= sec_w && sector < sec_e) {
+                } இல்லையெனில் எனில் (sector >= sec_w && sector < sec_e) {
                     plane = 2;
-                } else if (sector >= sec_e) {
+                } இல்லையெனில் எனில் (sector >= sec_e) {
                     plane = 3;
-                } else {
+                } இல்லையெனில் {
                     plane = 0;
                 }
                 factor[j] = std::pow(theta_scale, j);
@@ -223,33 +223,33 @@ std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params
             gather_indices[j] = plane;
         }
         auto gather_indices_const =
-            std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{num_pairs}, gather_indices);
+            std::make_shared<ov::op::v0::Constant>(ov::element::i64, ov::Shape{இலக்கம்_pairs}, gather_indices);
         auto gather_axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {4});
         inp_pos = std::make_shared<ov::op::v8::Gather>(inp_pos, gather_indices_const, gather_axis);
-        Output<Node> factor_node =
-            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{num_pairs}, factor);
-        if (rope_freqs_weight) {
+        Output<Node> factor_முனை =
+            std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{இலக்கம்_pairs}, factor);
+        எனில் (rope_freqs_weight) {
             Output<Node> rope_factors = std::make_shared<ov::op::v8::Slice>(
                 rope_freqs_weight,
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {0}),
-                ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) num_pairs}),
+                ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) இலக்கம்_pairs}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {rope_freqs_weight->get_output_partial_shape(0).rank().get_length() - 1}));
             rope_factors = std::make_shared<ov::op::v1::Reshape>(
                 rope_factors,
-                ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) num_pairs}),
-                false);
-            factor_node = std::make_shared<ov::op::v1::Divide>(factor_node, rope_factors);
+                ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) இலக்கம்_pairs}),
+                பொய்);
+            factor_முனை = std::make_shared<ov::op::v1::Divide>(factor_முனை, rope_factors);
         }
-        auto theta_extrap = std::make_shared<ov::op::v1::Multiply>(inp_pos, factor_node);
+        auto theta_extrap = std::make_shared<ov::op::v1::Multiply>(inp_pos, factor_முனை);
         auto theta_interp = std::make_shared<ov::op::v1::Multiply>(
             theta_extrap, ov::op::v0::Constant::create(ov::element::f32, {1}, {freq_scale}));
-        if (ext_factor == 0.0f) {
+        எனில் (ext_factor == 0.0f) {
             theta = theta_interp;
-        } else {
-            float corr_dims[2];
+        } இல்லையெனில் {
+            தசம corr_dims[2];
             ggml_rope_yarn_corr_dims(n_dims, n_ctx_orig, freq_base, beta_fast, beta_slow, corr_dims);
-            auto ramp_mix = rope_yarn_ramp_mix(num_pairs, corr_dims, ext_factor);
+            auto ramp_mix = rope_yarn_ramp_mix(இலக்கம்_pairs, corr_dims, ext_factor);
             Output<Node> one = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {1.0f});
             auto one_minus_ramp = std::make_shared<ov::op::v1::Subtract>(one, ramp_mix);
             theta = std::make_shared<ov::op::v1::Add>(
@@ -257,39 +257,39 @@ std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params
                 std::make_shared<ov::op::v1::Multiply>(theta_extrap, ramp_mix));
             mscale *= (1.0f + 0.1f * std::log(1.0f / freq_scale));
         }
-    } else {
-        std::vector<float> factor(n_dims_half);
+    } இல்லையெனில் {
+        std::vector<தசம> factor(n_dims_half);
         Output<Node> freq_factors;
-        float corr_dims[2];
+        தசம corr_dims[2];
         ggml_rope_yarn_corr_dims(n_dims, n_ctx_orig, freq_base, beta_fast, beta_slow, corr_dims);
         factor[0] = 1.0f;
-        for (size_t i = 1; i < factor.size(); i++) {
+        க்கு (size_t i = 1; i < factor.size(); i++) {
             factor[i] = theta_scale * factor[i - 1];
         }
-        if (stateful) {
+        எனில் (stateful) {
             freq_factors =
                 std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{1, 1, factor.size()}, factor);
-        } else {
+        } இல்லையெனில் {
             freq_factors =
                 std::make_shared<ov::op::v0::Constant>(ov::element::f32, ov::Shape{1, 1, 1, factor.size()}, factor);
         }
-        if (rope_freqs_weight) {
+        எனில் (rope_freqs_weight) {
             Output<Node> rope_factors = std::make_shared<ov::op::v8::Slice>(
                 rope_freqs_weight,
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {0}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {(int64_t) n_dims_half}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                 ov::op::v0::Constant::create(ov::element::i64, {1}, {rope_freqs_weight->get_output_partial_shape(0).rank().get_length() - 1}));
-            if (stateful) {
+            எனில் (stateful) {
                 rope_factors = std::make_shared<ov::op::v1::Reshape>(
                     rope_factors,
                     ov::op::v0::Constant::create(ov::element::i64, {3}, {(int64_t) 1, (int64_t) 1, (int64_t) n_dims_half}),
-                    false);
-            } else {
+                    பொய்);
+            } இல்லையெனில் {
                 rope_factors = std::make_shared<ov::op::v1::Reshape>(
                     rope_factors,
                     ov::op::v0::Constant::create(ov::element::i64, {4}, {(int64_t) 1, (int64_t) 1, (int64_t) 1, (int64_t) n_dims_half}),
-                    false);
+                    பொய்);
             }
             freq_factors = std::make_shared<ov::op::v1::Divide>(freq_factors, rope_factors);
         }
@@ -298,14 +298,14 @@ std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params
         auto theta_interp = std::make_shared<ov::op::v1::Multiply>(
             theta_extrap, ov::op::v0::Constant::create(ov::element::f32, {1}, {freq_scale}));
 
-        if (ext_factor == 0.0f) {
+        எனில் (ext_factor == 0.0f) {
             theta = theta_interp;
-        } else {
+        } இல்லையெனில் {
             auto ramp_mix = rope_yarn_ramp_mix(n_dims_half, corr_dims, ext_factor);
             Output<Node> one;
-            if (stateful) {
+            எனில் (stateful) {
                 one = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1}, {1.0f});
-            } else {
+            } இல்லையெனில் {
                 one = ov::op::v0::Constant::create(ov::element::f32, Shape{1, 1, 1, 1}, {1.0f});
             }
             auto one_minus_ramp = std::make_shared<ov::op::v1::Subtract>(one, ramp_mix);
@@ -320,28 +320,28 @@ std::pair<ov::Output<Node>, ov::Output<Node>> make_sin_cos(int32_t * rope_params
     Output<Node> cos_theta = std::make_shared<ov::op::v0::Cos>(theta);
     Output<Node> sin_theta = std::make_shared<ov::op::v0::Sin>(theta);
 
-    if (mscale != 1.0f) {
-        auto mscale_node = ov::op::v0::Constant::create(ov::element::f32, Shape{}, {mscale});
+    எனில் (mscale != 1.0f) {
+        auto mscale_முனை = ov::op::v0::Constant::create(ov::element::f32, Shape{}, {mscale});
 
-        cos_theta = std::make_shared<ov::op::v1::Multiply>(cos_theta, mscale_node);
-        sin_theta = std::make_shared<ov::op::v1::Multiply>(sin_theta, mscale_node);
+        cos_theta = std::make_shared<ov::op::v1::Multiply>(cos_theta, mscale_முனை);
+        sin_theta = std::make_shared<ov::op::v1::Multiply>(sin_theta, mscale_முனை);
     }
 
-    return std::make_pair(sin_theta, cos_theta);
+    திரும்பு std::make_pair(sin_theta, cos_theta);
 }
 
-ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_index, int slice_len, int axis) {
+ov::Output<ov::Node> process_view_உள்ளீடு(மாறிலி முனை_Context & context, முழு உள்ளீடு_index, முழு slice_len, முழு axis) {
     // Only works for VIEW operations that does a non-strided slice with optinal reshape on the slice result.
     // The function only does the slice part, the reshape (if any) should be handled by the caller.
     // Default axis is -1, which means slicing the last dimension.
     // If the VIEW reshapes the result, `slice_len` should be provided
-    auto input = context.get_input(input_index);
-    auto * op_params = (size_t *) context.get_input_op_params(input_index);
-    auto src_stride = context.get_input_stride(input_index);
+    auto உள்ளீடு = context.get_உள்ளீடு(உள்ளீடு_index);
+    auto * op_params = (size_t *) context.get_உள்ளீடு_op_params(உள்ளீடு_index);
+    auto src_stride = context.get_உள்ளீடு_stride(உள்ளீடு_index);
 
     int64_t slice_start = op_params[0] / src_stride[3];
-    if (slice_len == 0) {
-        slice_len = context.get_input_shape(input_index)[3].get_length();
+    எனில் (slice_len == 0) {
+        slice_len = context.get_உள்ளீடு_shape(உள்ளீடு_index)[3].get_length();
     }
     int64_t slice_end = slice_start + slice_len;
 
@@ -349,23 +349,23 @@ ov::Output<ov::Node> process_view_input(const NodeContext & context, int input_i
     auto end = ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_end});
     auto stride = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
     ov::Output<ov::Node> axes;
-    if (axis == -1) {
+    எனில் (axis == -1) {
         axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {context.is_stateful() ? 2 : 3});
-    } else {
+    } இல்லையெனில் {
         axes = ov::op::v0::Constant::create(ov::element::i64, {1}, {axis});
     }
-    auto sliced = std::make_shared<ov::op::v8::Slice>(input, begin, end, stride, axes);
-    return sliced;
+    auto sliced = std::make_shared<ov::op::v8::Slice>(உள்ளீடு, begin, end, stride, axes);
+    திரும்பு sliced;
 }
 
-ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int input_index) {
-    auto input = context.get_input(input_index);
+ov::Output<ov::Node> process_view_உள்ளீடு_new(மாறிலி முனை_Context & context, முழு உள்ளீடு_index) {
+    auto உள்ளீடு = context.get_உள்ளீடு(உள்ளீடு_index);
 
     // Check if this input has view inputs
-    size_t view_input_size = context.get_view_input_size(input_index);
-    if (view_input_size == 0) {
+    size_t view_உள்ளீடு_size = context.get_view_உள்ளீடு_size(உள்ளீடு_index);
+    எனில் (view_உள்ளீடு_size == 0) {
         // No view inputs, return the input as is
-        return input;
+        திரும்பு உள்ளீடு;
     }
 
     // If translate_view already resolved this VIEW (produced a Slice), the input
@@ -396,34 +396,34 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
     // resolved view is one rank lower. Compare the common trailing dims and require the
     // leading expected dims we skip to be 1. Without this the rank test below never matches on
     // the stateful path and every already-resolved MoE expert-plane view is re-sliced.
-    auto expected_ov_shape = context.get_view_input_ov_shape(input_index, 0);
-    auto actual_shape = input.get_partial_shape();
-    if (expected_ov_shape.rank().is_static() && actual_shape.rank().is_static() &&
+    auto expected_ov_shape = context.get_view_உள்ளீடு_ov_shape(உள்ளீடு_index, 0);
+    auto actual_shape = உள்ளீடு.get_partial_shape();
+    எனில் (expected_ov_shape.rank().is_static() && actual_shape.rank().is_static() &&
         expected_ov_shape.rank().get_length() >= actual_shape.rank().get_length()) {
-        const int64_t n_actual = actual_shape.rank().get_length();
-        const int64_t shift = expected_ov_shape.rank().get_length() - n_actual;
-        bool shapes_match = true;
-        for (int64_t i = 0; i < shift; ++i) {
-            if (!expected_ov_shape[i].is_static() || expected_ov_shape[i].get_length() != 1) {
-                shapes_match = false;
-                break;
+        மாறிலி int64_t n_actual = actual_shape.rank().get_length();
+        மாறிலி int64_t shift = expected_ov_shape.rank().get_length() - n_actual;
+        தருக்க shapes_match = உண்மை;
+        க்கு (int64_t i = 0; i < shift; ++i) {
+            எனில் (!expected_ov_shape[i].is_static() || expected_ov_shape[i].get_length() != 1) {
+                shapes_match = பொய்;
+                நிறுத்து;
             }
         }
-        for (int64_t i = 0; i < n_actual && shapes_match; ++i) {
-            const auto & exp = expected_ov_shape[i + shift];
-            const bool both_dynamic = exp.is_dynamic() && actual_shape[i].is_dynamic();
-            const bool both_static_equal =
+        க்கு (int64_t i = 0; i < n_actual && shapes_match; ++i) {
+            மாறிலி auto & exp = expected_ov_shape[i + shift];
+            மாறிலி தருக்க both_dynamic = exp.is_dynamic() && actual_shape[i].is_dynamic();
+            மாறிலி தருக்க both_static_equal =
                 exp.is_static() && actual_shape[i].is_static() && exp == actual_shape[i];
             // expected dynamic, actual static: the resolved view already carries the
             // concrete size for this fragment; reuse it rather than re-materializing.
-            const bool expected_dyn_actual_static = exp.is_dynamic() && actual_shape[i].is_static();
-            if (!both_dynamic && !both_static_equal && !expected_dyn_actual_static) {
-                shapes_match = false;
-                break;
+            மாறிலி தருக்க expected_dyn_actual_static = exp.is_dynamic() && actual_shape[i].is_static();
+            எனில் (!both_dynamic && !both_static_equal && !expected_dyn_actual_static) {
+                shapes_match = பொய்;
+                நிறுத்து;
             }
         }
-        if (shapes_match) {
-            return input;
+        எனில் (shapes_match) {
+            திரும்பு உள்ளீடு;
         }
     }
 
@@ -431,62 +431,62 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
     // This ensures NPUW's FOLD doesn't parametrize per-layer slice indices (which
     // would introduce dynamic shapes). A shared Split node sits outside the repeated
     // subgraph boundary; each layer receives one of its output ports.
-    if (context.is_static() && view_input_size == 1) {
-        auto view_stride_v = context.get_view_input_stride(input_index, 0);
-        auto view_src_stride_v = context.get_view_input_src_stride(input_index, 0);
-        auto view_ggml_shape = context.get_view_input_ggml_shape(input_index, 0);
-        auto view_src_ggml_shape = context.get_view_input_src_ggml_shape(input_index, 0);
-        auto view_offset = context.get_view_input_offset(input_index, 0);
-        auto view_src_offset = context.get_view_input_src_offset(input_index, 0);
+    எனில் (context.is_static() && view_உள்ளீடு_size == 1) {
+        auto view_stride_v = context.get_view_உள்ளீடு_stride(உள்ளீடு_index, 0);
+        auto view_src_stride_v = context.get_view_உள்ளீடு_src_stride(உள்ளீடு_index, 0);
+        auto view_ggml_shape = context.get_view_உள்ளீடு_ggml_shape(உள்ளீடு_index, 0);
+        auto view_src_ggml_shape = context.get_view_உள்ளீடு_src_ggml_shape(உள்ளீடு_index, 0);
+        auto view_offset = context.get_view_உள்ளீடு_offset(உள்ளீடு_index, 0);
+        auto view_src_offset = context.get_view_உள்ளீடு_src_offset(உள்ளீடு_index, 0);
 
         size_t ndims = view_ggml_shape.size();
-        std::vector<int> diff_dims;
-        if (view_src_ggml_shape.size() == ndims) {
-            for (size_t i = 0; i < ndims; ++i) {
-                if (view_ggml_shape[i] != view_src_ggml_shape[i]) {
-                    diff_dims.push_back(static_cast<int>(i));
+        std::vector<முழு> diff_dims;
+        எனில் (view_src_ggml_shape.size() == ndims) {
+            க்கு (size_t i = 0; i < ndims; ++i) {
+                எனில் (view_ggml_shape[i] != view_src_ggml_shape[i]) {
+                    diff_dims.push_back(static_cast<முழு>(i));
                 }
             }
         }
 
-        if (diff_dims.size() == 1) {
-            int split_dim = diff_dims[0];
-            int64_t num_splits = static_cast<int64_t>(view_src_ggml_shape[split_dim]);
+        எனில் (diff_dims.size() == 1) {
+            முழு split_dim = diff_dims[0];
+            int64_t இலக்கம்_splits = static_cast<int64_t>(view_src_ggml_shape[split_dim]);
             int64_t chunk_size = static_cast<int64_t>(view_ggml_shape[split_dim]);
 
             // Only apply when slicing exactly 1 element from a multi-element dimension
-            if (chunk_size == 1 && num_splits > 1) {
+            எனில் (chunk_size == 1 && இலக்கம்_splits > 1) {
                 // Check suffix strides match (dimensions after split_dim)
-                bool suffix_ok = view_stride_v.size() == view_src_stride_v.size();
-                if (suffix_ok) {
-                    for (size_t i = static_cast<size_t>(split_dim) + 1; i < ndims; ++i) {
-                        if (view_stride_v[i] != view_src_stride_v[i]) {
-                            suffix_ok = false;
-                            break;
+                தருக்க suffix_ok = view_stride_v.size() == view_src_stride_v.size();
+                எனில் (suffix_ok) {
+                    க்கு (size_t i = static_cast<size_t>(split_dim) + 1; i < ndims; ++i) {
+                        எனில் (view_stride_v[i] != view_src_stride_v[i]) {
+                            suffix_ok = பொய்;
+                            நிறுத்து;
                         }
                     }
                 }
 
-                if (suffix_ok && view_src_stride_v[split_dim] > 0) {
+                எனில் (suffix_ok && view_src_stride_v[split_dim] > 0) {
                     size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
                     int64_t split_index = static_cast<int64_t>(relative_offset / view_src_stride_v[split_dim]);
 
-                    if (split_index >= 0 && split_index < num_splits) {
-                        auto src_node = input.get_node_shared_ptr();
-                        std::string rt_key = "split_dim_" + std::to_string(split_dim);
-                        auto & rt_info = src_node->get_rt_info();
+                    எனில் (split_index >= 0 && split_index < இலக்கம்_splits) {
+                        auto src_முனை = உள்ளீடு.get_முனை_shared_ptr();
+                        std::string rt_சாவி = "split_dim_" + std::to_string(split_dim);
+                        auto & rt_info = src_முனை->get_rt_info();
 
-                        if (rt_info.find(rt_key) == rt_info.end()) {
+                        எனில் (rt_info.find(rt_சாவி) == rt_info.end()) {
                             auto axis_const =
                                 ov::op::v0::Constant::create(ov::element::i64, {}, {static_cast<int64_t>(split_dim)});
-                            auto split_node =
-                                std::make_shared<ov::op::v1::Split>(input, axis_const, static_cast<size_t>(num_splits));
-                            split_node->set_friendly_name(src_node->get_friendly_name() + "_split");
-                            rt_info[rt_key] = split_node;
+                            auto split_முனை =
+                                std::make_shared<ov::op::v1::Split>(உள்ளீடு, axis_const, static_cast<size_t>(இலக்கம்_splits));
+                            split_முனை->set_friendly_name(src_முனை->get_friendly_name() + "_split");
+                            rt_info[rt_சாவி] = split_முனை;
                         }
 
-                        auto split_node = rt_info[rt_key].as<std::shared_ptr<ov::op::v1::Split>>();
-                        return split_node->output(static_cast<size_t>(split_index));
+                        auto split_முனை = rt_info[rt_சாவி].as<std::shared_ptr<ov::op::v1::Split>>();
+                        திரும்பு split_முனை->output(static_cast<size_t>(split_index));
                     }
                 }
             }
@@ -495,171 +495,171 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
 
     // Lambda function to process a single view operation
     auto process_single_view =
-        [](ov::Output<ov::Node> current, size_t view_offset, const std::vector<size_t> & view_stride,
-           const ov::Shape & view_ggml_shape, const ov::PartialShape & view_ov_shape, const std::string & view_name,
-           size_t view_src_offset, const std::vector<size_t> & view_src_stride, const ov::Shape & view_src_ggml_shape,
-           const ov::PartialShape & view_src_ov_shape, const std::string & view_src_name) -> ov::Output<ov::Node> {
+        [](ov::Output<ov::Node> current, size_t view_offset, மாறிலி std::vector<size_t> & view_stride,
+           மாறிலி ov::Shape & view_ggml_shape, மாறிலி ov::PartialShape & view_ov_shape, மாறிலி std::string & view_name,
+           size_t view_src_offset, மாறிலி std::vector<size_t> & view_src_stride, மாறிலி ov::Shape & view_src_ggml_shape,
+           மாறிலி ov::PartialShape & view_src_ov_shape, மாறிலி std::string & view_src_name) -> ov::Output<ov::Node> {
         // Stateful execution drops a leading size-1 axis, so `current` can be one rank lower
         // than the ggml shape metadata (view_stride/view_ggml_shape, always GGML_MAX_DIMS
         // entries) assumes. Shift any axis index built from that metadata down by the
         // difference before using it as an OV Slice axis.
-        const auto current_rank = current.get_partial_shape().rank();
-        const int axis_shift = current_rank.is_static() ?
-                                    static_cast<int>(view_stride.size()) - static_cast<int>(current_rank.get_length()) :
+        மாறிலி auto current_rank = current.get_partial_shape().rank();
+        மாறிலி முழு axis_shift = current_rank.is_static() ?
+                                    static_cast<முழு>(view_stride.size()) - static_cast<முழு>(current_rank.get_length()) :
                                     0;
 
-        auto build_reshape_pattern = [](const ov::PartialShape & target_ov_shape,
-                                        const ov::Shape & target_ggml_shape) -> std::vector<int64_t> {
-            const size_t ndims = target_ggml_shape.size();
+        auto build_reshape_pattern = [](மாறிலி ov::PartialShape & target_ov_shape,
+                                        மாறிலி ov::Shape & target_ggml_shape) -> std::vector<int64_t> {
+            மாறிலி size_t ndims = target_ggml_shape.size();
             std::vector<int64_t> reshape_pattern(ndims);
             size_t dynamic_dims = 0;
 
-            if (target_ov_shape.rank().is_static() &&
+            எனில் (target_ov_shape.rank().is_static() &&
                 target_ov_shape.rank().get_length() == static_cast<int64_t>(ndims)) {
-                for (size_t i = 0; i < ndims; ++i) {
-                    if (target_ov_shape[i].is_static()) {
+                க்கு (size_t i = 0; i < ndims; ++i) {
+                    எனில் (target_ov_shape[i].is_static()) {
                         reshape_pattern[i] = target_ov_shape[i].get_length();
-                    } else {
+                    } இல்லையெனில் {
                         reshape_pattern[i] = -1;
                         ++dynamic_dims;
                     }
                 }
-            } else {
+            } இல்லையெனில் {
                 dynamic_dims = 2;
             }
 
-            if (dynamic_dims > 1) {
-                for (size_t i = 0; i < ndims; ++i) {
+            எனில் (dynamic_dims > 1) {
+                க்கு (size_t i = 0; i < ndims; ++i) {
                     reshape_pattern[i] = static_cast<int64_t>(target_ggml_shape[i]);
                 }
             }
 
-            return reshape_pattern;
+            திரும்பு reshape_pattern;
         };
 
-        auto build_prefix_tail_reshape_pattern = [](const ov::PartialShape & target_ov_shape,
-                                                    const ov::Shape & target_ggml_shape, size_t prefix_dims,
+        auto build_prefix_tail_reshape_pattern = [](மாறிலி ov::PartialShape & target_ov_shape,
+                                                    மாறிலி ov::Shape & target_ggml_shape, size_t prefix_dims,
                                                     int64_t tail_dim) -> std::vector<int64_t> {
             std::vector<int64_t> reshape_pattern(prefix_dims + 1);
             size_t dynamic_dims = 0;
 
-            if (target_ov_shape.rank().is_static() &&
+            எனில் (target_ov_shape.rank().is_static() &&
                 target_ov_shape.rank().get_length() == static_cast<int64_t>(target_ggml_shape.size())) {
-                for (size_t i = 0; i < prefix_dims; ++i) {
-                    if (target_ov_shape[i].is_static()) {
+                க்கு (size_t i = 0; i < prefix_dims; ++i) {
+                    எனில் (target_ov_shape[i].is_static()) {
                         reshape_pattern[i] = target_ov_shape[i].get_length();
-                    } else {
+                    } இல்லையெனில் {
                         reshape_pattern[i] = -1;
                         ++dynamic_dims;
                     }
                 }
-            } else {
+            } இல்லையெனில் {
                 dynamic_dims = 2;
             }
 
-            if (dynamic_dims > 1) {
-                for (size_t i = 0; i < prefix_dims; ++i) {
+            எனில் (dynamic_dims > 1) {
+                க்கு (size_t i = 0; i < prefix_dims; ++i) {
                     reshape_pattern[i] = static_cast<int64_t>(target_ggml_shape[i]);
                 }
             }
 
             reshape_pattern[prefix_dims] = tail_dim;
-            return reshape_pattern;
+            திரும்பு reshape_pattern;
         };
 
-        bool same_stride = view_stride.size() == view_src_stride.size();
-        if (same_stride) {
-            for (size_t i = 0; i < view_stride.size(); ++i) {
-                if (view_stride[i] != view_src_stride[i]) {
-                    same_stride = false;
-                    break;
+        தருக்க same_stride = view_stride.size() == view_src_stride.size();
+        எனில் (same_stride) {
+            க்கு (size_t i = 0; i < view_stride.size(); ++i) {
+                எனில் (view_stride[i] != view_src_stride[i]) {
+                    same_stride = பொய்;
+                    நிறுத்து;
                 }
             }
         }
 
-        bool same_ggml_shape = view_ggml_shape.size() == view_src_ggml_shape.size();
-        if (same_ggml_shape) {
-            for (size_t i = 0; i < view_ggml_shape.size(); ++i) {
-                if (view_ggml_shape[i] != view_src_ggml_shape[i]) {
-                    same_ggml_shape = false;
-                    break;
+        தருக்க same_ggml_shape = view_ggml_shape.size() == view_src_ggml_shape.size();
+        எனில் (same_ggml_shape) {
+            க்கு (size_t i = 0; i < view_ggml_shape.size(); ++i) {
+                எனில் (view_ggml_shape[i] != view_src_ggml_shape[i]) {
+                    same_ggml_shape = பொய்;
+                    நிறுத்து;
                 }
             }
         }
 
-        if (same_stride && same_ggml_shape) {
-            return current;
+        எனில் (same_stride && same_ggml_shape) {
+            திரும்பு current;
         }
 
-        if (same_stride) {
-            const size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
-            const size_t ndims = view_stride.size();
+        எனில் (same_stride) {
+            மாறிலி size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
+            மாறிலி size_t ndims = view_stride.size();
 
-            std::vector<int> diff_dims;
-            if (view_ggml_shape.size() == ndims && view_src_ggml_shape.size() == ndims) {
-                for (size_t i = 0; i < ndims; ++i) {
-                    if (view_ggml_shape[i] != view_src_ggml_shape[i]) {
-                        diff_dims.push_back(static_cast<int>(i));
+            std::vector<முழு> diff_dims;
+            எனில் (view_ggml_shape.size() == ndims && view_src_ggml_shape.size() == ndims) {
+                க்கு (size_t i = 0; i < ndims; ++i) {
+                    எனில் (view_ggml_shape[i] != view_src_ggml_shape[i]) {
+                        diff_dims.push_back(static_cast<முழு>(i));
                     }
                 }
             }
 
-            if (diff_dims.size() == 1) {
-                const int slice_dim = diff_dims[0];
-                const int64_t dim_size = static_cast<int64_t>(view_src_ggml_shape[slice_dim]);
+            எனில் (diff_dims.size() == 1) {
+                மாறிலி முழு slice_dim = diff_dims[0];
+                மாறிலி int64_t dim_size = static_cast<int64_t>(view_src_ggml_shape[slice_dim]);
 
-                if (view_stride[slice_dim] > 0 && relative_offset % view_stride[slice_dim] == 0) {
-                    const int64_t begin_val = static_cast<int64_t>((relative_offset / view_stride[slice_dim]) %
+                எனில் (view_stride[slice_dim] > 0 && relative_offset % view_stride[slice_dim] == 0) {
+                    மாறிலி int64_t begin_val = static_cast<int64_t>((relative_offset / view_stride[slice_dim]) %
                                                                    static_cast<size_t>(dim_size));
-                    const int64_t end_val = begin_val + static_cast<int64_t>(view_ggml_shape[slice_dim]);
+                    மாறிலி int64_t end_val = begin_val + static_cast<int64_t>(view_ggml_shape[slice_dim]);
 
-                    if (begin_val >= 0 && end_val <= dim_size) {
+                    எனில் (begin_val >= 0 && end_val <= dim_size) {
                         auto sliced = std::make_shared<ov::op::v8::Slice>(
                             current, ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val}),
                             ov::op::v0::Constant::create(ov::element::i64, {1}, {end_val}),
                             ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                             ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_dim - axis_shift}));
 
-                        if (view_ov_shape.is_static()) {
+                        எனில் (view_ov_shape.is_static()) {
                             auto reshaped = std::make_shared<ov::op::v1::Reshape>(
                                 sliced,
                                 ov::op::v0::Constant::create(ov::element::i64, {ndims}, view_ov_shape.to_shape()),
-                                false);
+                                பொய்);
                             reshaped->set_friendly_name(view_name);
-                            return reshaped;
+                            திரும்பு reshaped;
                         }
 
                         sliced->set_friendly_name(view_name);
-                        return sliced;
+                        திரும்பு sliced;
                     }
                 }
 
                 int64_t tail_src_elems = 1;
                 int64_t tail_dst_elems = 1;
-                for (size_t i = slice_dim; i < ndims; ++i) {
+                க்கு (size_t i = slice_dim; i < ndims; ++i) {
                     tail_src_elems *= static_cast<int64_t>(view_src_ggml_shape[i]);
                     tail_dst_elems *= static_cast<int64_t>(view_ggml_shape[i]);
                 }
 
-                const size_t elem_stride = view_stride[ndims - 1];
+                மாறிலி size_t elem_stride = view_stride[ndims - 1];
                 int64_t tail_begin = 0;
-                if (elem_stride > 0) {
+                எனில் (elem_stride > 0) {
                     tail_begin =
                         static_cast<int64_t>((relative_offset / elem_stride) % static_cast<size_t>(tail_src_elems));
                 }
-                const int64_t tail_end = tail_begin + tail_dst_elems;
+                மாறிலி int64_t tail_end = tail_begin + tail_dst_elems;
 
-                if (tail_begin >= 0 && tail_end <= tail_src_elems) {
+                எனில் (tail_begin >= 0 && tail_end <= tail_src_elems) {
                     std::vector<int64_t> flat_shape;
                     flat_shape.reserve(slice_dim);
-                    for (int i = 0; i < slice_dim; ++i) {
+                    க்கு (முழு i = 0; i < slice_dim; ++i) {
                         flat_shape.push_back(static_cast<int64_t>(view_src_ggml_shape[i]));
                     }
                     flat_shape.push_back(tail_src_elems);
-                    const size_t flat_ndims = flat_shape.size();
+                    மாறிலி size_t flat_ndims = flat_shape.size();
 
                     auto flat = std::make_shared<ov::op::v1::Reshape>(
-                        current, ov::op::v0::Constant::create(ov::element::i64, {flat_ndims}, flat_shape), false);
+                        current, ov::op::v0::Constant::create(ov::element::i64, {flat_ndims}, flat_shape), பொய்);
 
                     auto sliced = std::make_shared<ov::op::v8::Slice>(
                         flat, ov::op::v0::Constant::create(ov::element::i64, {1}, {tail_begin}),
@@ -667,16 +667,16 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                         ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                         ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_dim}));
 
-                    if (view_ov_shape.is_static()) {
+                    எனில் (view_ov_shape.is_static()) {
                         auto reshaped = std::make_shared<ov::op::v1::Reshape>(
                             sliced, ov::op::v0::Constant::create(ov::element::i64, {ndims}, view_ov_shape.to_shape()),
-                            false);
+                            பொய்);
                         reshaped->set_friendly_name(view_name);
-                        return reshaped;
+                        திரும்பு reshaped;
                     }
 
                     sliced->set_friendly_name(view_name);
-                    return sliced;
+                    திரும்பு sliced;
                 }
             }
 
@@ -686,26 +686,26 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
             std::vector<int64_t> axes(ndims, 0);
 
             size_t remaining_offset = relative_offset;
-            for (size_t i = 0; i < ndims; ++i) {
+            க்கு (size_t i = 0; i < ndims; ++i) {
                 axes[i] = static_cast<int64_t>(i);
-                if (view_stride[i] > 0) {
+                எனில் (view_stride[i] > 0) {
                     begin[i] = static_cast<int64_t>(remaining_offset / view_stride[i]);
                     remaining_offset %= view_stride[i];
                 }
                 end[i] = begin[i] + static_cast<int64_t>(view_ggml_shape[i]);
             }
 
-            bool in_bounds = view_src_ggml_shape.size() == ndims && view_ggml_shape.size() == ndims;
-            if (in_bounds) {
-                for (size_t i = 0; i < ndims; ++i) {
-                    if (end[i] > static_cast<int64_t>(view_src_ggml_shape[i])) {
-                        in_bounds = false;
-                        break;
+            தருக்க in_bounds = view_src_ggml_shape.size() == ndims && view_ggml_shape.size() == ndims;
+            எனில் (in_bounds) {
+                க்கு (size_t i = 0; i < ndims; ++i) {
+                    எனில் (end[i] > static_cast<int64_t>(view_src_ggml_shape[i])) {
+                        in_bounds = பொய்;
+                        நிறுத்து;
                     }
                 }
             }
 
-            if (in_bounds && remaining_offset == 0) {
+            எனில் (in_bounds && remaining_offset == 0) {
                 auto sliced = std::make_shared<ov::op::v8::Slice>(
                     current, ov::op::v0::Constant::create(ov::element::i64, {ndims}, begin),
                     ov::op::v0::Constant::create(ov::element::i64, {ndims}, end),
@@ -713,47 +713,47 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                     ov::op::v0::Constant::create(ov::element::i64, {ndims}, axes));
 
                 sliced->set_friendly_name(view_name);
-                return sliced;
+                திரும்பு sliced;
             }
-        } else {
-            bool same_rank = view_stride.size() == view_src_stride.size() &&
+        } இல்லையெனில் {
+            தருக்க same_rank = view_stride.size() == view_src_stride.size() &&
                              view_ggml_shape.size() == view_src_ggml_shape.size() &&
                              view_stride.size() == view_ggml_shape.size();
-            const size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
+            மாறிலி size_t relative_offset = view_offset >= view_src_offset ? view_offset - view_src_offset : 0;
 
-            if (same_rank) {
-                const size_t ndims = view_ggml_shape.size();
-                std::vector<int> diff_dims;
-                for (size_t i = 0; i < ndims; ++i) {
-                    if (view_ggml_shape[i] != view_src_ggml_shape[i]) {
-                        diff_dims.push_back(static_cast<int>(i));
+            எனில் (same_rank) {
+                மாறிலி size_t ndims = view_ggml_shape.size();
+                std::vector<முழு> diff_dims;
+                க்கு (size_t i = 0; i < ndims; ++i) {
+                    எனில் (view_ggml_shape[i] != view_src_ggml_shape[i]) {
+                        diff_dims.push_back(static_cast<முழு>(i));
                     }
                 }
 
-                if (diff_dims.size() == 1) {
-                    const size_t slice_dim = static_cast<size_t>(diff_dims[0]);
-                    bool suffix_stride_match = true;
-                    for (size_t i = slice_dim + 1; i < ndims; ++i) {
-                        if (view_stride[i] != view_src_stride[i]) {
-                            suffix_stride_match = false;
-                            break;
+                எனில் (diff_dims.size() == 1) {
+                    மாறிலி size_t slice_dim = static_cast<size_t>(diff_dims[0]);
+                    தருக்க suffix_stride_match = உண்மை;
+                    க்கு (size_t i = slice_dim + 1; i < ndims; ++i) {
+                        எனில் (view_stride[i] != view_src_stride[i]) {
+                            suffix_stride_match = பொய்;
+                            நிறுத்து;
                         }
                     }
 
-                    if (suffix_stride_match && view_src_stride[slice_dim] > 0 &&
+                    எனில் (suffix_stride_match && view_src_stride[slice_dim] > 0 &&
                         relative_offset % view_src_stride[slice_dim] == 0) {
-                        const int64_t begin_val = static_cast<int64_t>(relative_offset / view_src_stride[slice_dim]);
-                        const int64_t end_val = begin_val + static_cast<int64_t>(view_ggml_shape[slice_dim]);
-                        const int64_t dim_size = static_cast<int64_t>(view_src_ggml_shape[slice_dim]);
+                        மாறிலி int64_t begin_val = static_cast<int64_t>(relative_offset / view_src_stride[slice_dim]);
+                        மாறிலி int64_t end_val = begin_val + static_cast<int64_t>(view_ggml_shape[slice_dim]);
+                        மாறிலி int64_t dim_size = static_cast<int64_t>(view_src_ggml_shape[slice_dim]);
 
-                        if (begin_val >= 0 && end_val <= dim_size) {
+                        எனில் (begin_val >= 0 && end_val <= dim_size) {
                             auto sliced = std::make_shared<ov::op::v8::Slice>(
                                 current, ov::op::v0::Constant::create(ov::element::i64, {1}, {begin_val}),
                                 ov::op::v0::Constant::create(ov::element::i64, {1}, {end_val}),
                                 ov::op::v0::Constant::create(ov::element::i64, {1}, {1}),
                                 ov::op::v0::Constant::create(ov::element::i64, {1}, {static_cast<int64_t>(slice_dim)}));
                             sliced->set_friendly_name(view_name);
-                            return sliced;
+                            திரும்பு sliced;
                         }
                     }
                 }
@@ -761,72 +761,72 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
 
             size_t view_elems = 1;
             size_t src_elems = 1;
-            if (same_rank) {
-                for (size_t i = 0; i < view_ggml_shape.size(); ++i) {
+            எனில் (same_rank) {
+                க்கு (size_t i = 0; i < view_ggml_shape.size(); ++i) {
                     view_elems *= view_ggml_shape[i];
                     src_elems *= view_src_ggml_shape[i];
                 }
             }
 
-            bool same_num_elements = same_rank && view_elems == src_elems;
+            தருக்க same_இலக்கம்_elements = same_rank && view_elems == src_elems;
 
-            if (same_rank && relative_offset == 0 && same_num_elements) {
+            எனில் (same_rank && relative_offset == 0 && same_இலக்கம்_elements) {
                 auto reshape_pattern = build_reshape_pattern(view_ov_shape, view_ggml_shape);
 
                 auto reshaped = std::make_shared<ov::op::v1::Reshape>(
                     current, ov::op::v0::Constant::create(ov::element::i64, {reshape_pattern.size()}, reshape_pattern),
-                    false);
+                    பொய்);
                 reshaped->set_friendly_name(view_name);
-                return reshaped;
+                திரும்பு reshaped;
             }
 
-            if (same_rank) {
-                const size_t ndims = view_ggml_shape.size();
+            எனில் (same_rank) {
+                மாறிலி size_t ndims = view_ggml_shape.size();
 
                 // Match views that can be expressed as a regular strided slice over the
                 // already reconstructed source tensor, e.g. offset on one axis plus step > 1
                 // on another axis.
-                bool is_regular_slice = view_src_ggml_shape.size() == ndims;
+                தருக்க is_regular_slice = view_src_ggml_shape.size() == ndims;
                 std::vector<int64_t> begin(ndims, 0);
                 std::vector<int64_t> end(ndims, 0);
                 std::vector<int64_t> step(ndims, 1);
                 std::vector<int64_t> axes(ndims, 0);
                 size_t remaining_offset = relative_offset;
 
-                if (is_regular_slice) {
-                    for (size_t i = 0; i < ndims; ++i) {
+                எனில் (is_regular_slice) {
+                    க்கு (size_t i = 0; i < ndims; ++i) {
                         axes[i] = static_cast<int64_t>(i);
 
-                        if (view_src_stride[i] == 0 || view_stride[i] == 0 ||
+                        எனில் (view_src_stride[i] == 0 || view_stride[i] == 0 ||
                             view_stride[i] % view_src_stride[i] != 0) {
-                            is_regular_slice = false;
-                            break;
+                            is_regular_slice = பொய்;
+                            நிறுத்து;
                         }
 
                         step[i] = static_cast<int64_t>(view_stride[i] / view_src_stride[i]);
-                        if (step[i] <= 0) {
-                            is_regular_slice = false;
-                            break;
+                        எனில் (step[i] <= 0) {
+                            is_regular_slice = பொய்;
+                            நிறுத்து;
                         }
 
                         begin[i] = static_cast<int64_t>(remaining_offset / view_src_stride[i]);
                         remaining_offset %= view_src_stride[i];
 
-                        if (view_ggml_shape[i] == 0) {
+                        எனில் (view_ggml_shape[i] == 0) {
                             end[i] = begin[i];
-                            continue;
+                            தொடர்;
                         }
 
                         end[i] = begin[i] + step[i] * static_cast<int64_t>(view_ggml_shape[i] - 1) + 1;
 
-                        if (begin[i] < 0 || end[i] > static_cast<int64_t>(view_src_ggml_shape[i])) {
-                            is_regular_slice = false;
-                            break;
+                        எனில் (begin[i] < 0 || end[i] > static_cast<int64_t>(view_src_ggml_shape[i])) {
+                            is_regular_slice = பொய்;
+                            நிறுத்து;
                         }
                     }
                 }
 
-                if (is_regular_slice && remaining_offset == 0) {
+                எனில் (is_regular_slice && remaining_offset == 0) {
                     auto sliced = std::make_shared<ov::op::v8::Slice>(
                         current, ov::op::v0::Constant::create(ov::element::i64, {ndims}, begin),
                         ov::op::v0::Constant::create(ov::element::i64, {ndims}, end),
@@ -834,38 +834,38 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                         ov::op::v0::Constant::create(ov::element::i64, {ndims}, axes));
 
                     sliced->set_friendly_name(view_name);
-                    return sliced;
+                    திரும்பு sliced;
                 }
 
-                const size_t elem_stride = view_src_stride.back();
-                const bool aligned_offset = elem_stride > 0 && relative_offset % elem_stride == 0;
+                மாறிலி size_t elem_stride = view_src_stride.back();
+                மாறிலி தருக்க aligned_offset = elem_stride > 0 && relative_offset % elem_stride == 0;
 
-                if (aligned_offset) {
+                எனில் (aligned_offset) {
                     size_t suffix_start = 0;
                     size_t expected_stride = elem_stride;
-                    for (int i = static_cast<int>(ndims) - 1; i >= 0; --i) {
-                        if (view_stride[i] != expected_stride) {
+                    க்கு (முழு i = static_cast<முழு>(ndims) - 1; i >= 0; --i) {
+                        எனில் (view_stride[i] != expected_stride) {
                             suffix_start = static_cast<size_t>(i + 1);
-                            break;
+                            நிறுத்து;
                         }
                         expected_stride *= view_ggml_shape[i];
                     }
 
                     size_t prefix_elems = 1;
                     size_t suffix_elems = 1;
-                    for (size_t i = 0; i < suffix_start; ++i) {
+                    க்கு (size_t i = 0; i < suffix_start; ++i) {
                         prefix_elems *= view_ggml_shape[i];
                     }
-                    for (size_t i = suffix_start; i < ndims; ++i) {
+                    க்கு (size_t i = suffix_start; i < ndims; ++i) {
                         suffix_elems *= view_ggml_shape[i];
                     }
 
-                    if (prefix_elems > 0 && src_elems % prefix_elems == 0) {
-                        const size_t src_tail_elems = src_elems / prefix_elems;
-                        const int64_t tail_begin = static_cast<int64_t>(relative_offset / elem_stride);
-                        const int64_t tail_end = tail_begin + static_cast<int64_t>(suffix_elems);
+                    எனில் (prefix_elems > 0 && src_elems % prefix_elems == 0) {
+                        மாறிலி size_t src_tail_elems = src_elems / prefix_elems;
+                        மாறிலி int64_t tail_begin = static_cast<int64_t>(relative_offset / elem_stride);
+                        மாறிலி int64_t tail_end = tail_begin + static_cast<int64_t>(suffix_elems);
 
-                        if (tail_begin >= 0 && tail_end <= static_cast<int64_t>(src_tail_elems)) {
+                        எனில் (tail_begin >= 0 && tail_end <= static_cast<int64_t>(src_tail_elems)) {
                             auto prefix_tail_pattern = build_prefix_tail_reshape_pattern(
                                 view_ov_shape, view_ggml_shape, suffix_start, static_cast<int64_t>(src_tail_elems));
 
@@ -873,10 +873,10 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                                 current,
                                 ov::op::v0::Constant::create(ov::element::i64, {prefix_tail_pattern.size()},
                                                              prefix_tail_pattern),
-                                false);
+                                பொய்);
 
                             ov::Output<ov::Node> selected = prefix_tail;
-                            if (tail_begin != 0 || tail_end != static_cast<int64_t>(src_tail_elems)) {
+                            எனில் (tail_begin != 0 || tail_end != static_cast<int64_t>(src_tail_elems)) {
                                 selected = std::make_shared<ov::op::v8::Slice>(
                                     prefix_tail, ov::op::v0::Constant::create(ov::element::i64, {1}, {tail_begin}),
                                     ov::op::v0::Constant::create(ov::element::i64, {1}, {tail_end}),
@@ -890,22 +890,22 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                                 selected,
                                 ov::op::v0::Constant::create(ov::element::i64, {reshape_pattern.size()},
                                                              reshape_pattern),
-                                false);
+                                பொய்);
                             reshaped->set_friendly_name(view_name);
-                            return reshaped;
+                            திரும்பு reshaped;
                         }
                     }
                 }
             }
 
-            return current;
+            திரும்பு current;
         }
 
-        (void) view_name;
-        (void) view_src_ov_shape;
-        (void) view_src_name;
+        (வெறுமை) view_name;
+        (வெறுமை) view_src_ov_shape;
+        (வெறுமை) view_src_name;
 
-        return current;
+        திரும்பு current;
     };
 
     // Special case: ggml collapses VIEW-of-VIEW chains so that `view_offs` is always an
@@ -922,38 +922,38 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
     // re-slice directly from the untouched root using the innermost view's absolute
     // offset against the ROOT's own shape/stride instead of chaining through src[0].
     {
-        auto innermost_offset = context.get_view_input_offset(input_index, 0);
-        auto innermost_src_offset = context.get_view_input_src_offset(input_index, 0);
-        auto innermost_shape = context.get_view_input_ggml_shape(input_index, 0);
-        auto innermost_src_shape = context.get_view_input_src_ggml_shape(input_index, 0);
-        if (innermost_offset != innermost_src_offset && innermost_shape == innermost_src_shape) {
-            size_t root_view_idx = view_input_size - 1;
-            auto root_ggml_shape = context.get_view_input_src_ggml_shape(input_index, root_view_idx);
-            auto root_stride = context.get_view_input_src_stride(input_index, root_view_idx);
-            auto root_offset = context.get_view_input_src_offset(input_index, root_view_idx);
-            auto root_ov_shape = context.get_view_input_src_ov_shape(input_index, root_view_idx);
-            auto root_name = context.get_view_input_src_name(input_index, root_view_idx);
-            auto innermost_stride = context.get_view_input_stride(input_index, 0);
-            auto innermost_ov_shape = context.get_view_input_ov_shape(input_index, 0);
-            auto innermost_name = context.get_view_input_name(input_index, 0);
+        auto innermost_offset = context.get_view_உள்ளீடு_offset(உள்ளீடு_index, 0);
+        auto innermost_src_offset = context.get_view_உள்ளீடு_src_offset(உள்ளீடு_index, 0);
+        auto innermost_shape = context.get_view_உள்ளீடு_ggml_shape(உள்ளீடு_index, 0);
+        auto innermost_src_shape = context.get_view_உள்ளீடு_src_ggml_shape(உள்ளீடு_index, 0);
+        எனில் (innermost_offset != innermost_src_offset && innermost_shape == innermost_src_shape) {
+            size_t வேர்_view_idx = view_உள்ளீடு_size - 1;
+            auto வேர்_ggml_shape = context.get_view_உள்ளீடு_src_ggml_shape(உள்ளீடு_index, வேர்_view_idx);
+            auto வேர்_stride = context.get_view_உள்ளீடு_src_stride(உள்ளீடு_index, வேர்_view_idx);
+            auto வேர்_offset = context.get_view_உள்ளீடு_src_offset(உள்ளீடு_index, வேர்_view_idx);
+            auto வேர்_ov_shape = context.get_view_உள்ளீடு_src_ov_shape(உள்ளீடு_index, வேர்_view_idx);
+            auto வேர்_name = context.get_view_உள்ளீடு_src_name(உள்ளீடு_index, வேர்_view_idx);
+            auto innermost_stride = context.get_view_உள்ளீடு_stride(உள்ளீடு_index, 0);
+            auto innermost_ov_shape = context.get_view_உள்ளீடு_ov_shape(உள்ளீடு_index, 0);
+            auto innermost_name = context.get_view_உள்ளீடு_name(உள்ளீடு_index, 0);
 
-            return process_single_view(input, innermost_offset, innermost_stride, innermost_shape, innermost_ov_shape,
-                                       innermost_name, root_offset, root_stride, root_ggml_shape, root_ov_shape,
-                                       root_name);
+            திரும்பு process_single_view(உள்ளீடு, innermost_offset, innermost_stride, innermost_shape, innermost_ov_shape,
+                                       innermost_name, வேர்_offset, வேர்_stride, வேர்_ggml_shape, வேர்_ov_shape,
+                                       வேர்_name);
         }
     }
 
     // Process views from the base tensor (last) to the current view (first)
     // Start with the base tensor
-    ov::Output<ov::Node> current = input;
+    ov::Output<ov::Node> current = உள்ளீடு;
 
     // Process each view in reverse order (from base to current)
-    for (int view_idx = view_input_size - 1; view_idx >= 0; view_idx--) {
-        auto view_offset = context.get_view_input_offset(input_index, view_idx);
-        auto view_stride = context.get_view_input_stride(input_index, view_idx);
-        auto view_ggml_shape = context.get_view_input_ggml_shape(input_index, view_idx);
-        auto view_ov_shape = context.get_view_input_ov_shape(input_index, view_idx);
-        auto view_name = context.get_view_input_name(input_index, view_idx);
+    க்கு (முழு view_idx = view_உள்ளீடு_size - 1; view_idx >= 0; view_idx--) {
+        auto view_offset = context.get_view_உள்ளீடு_offset(உள்ளீடு_index, view_idx);
+        auto view_stride = context.get_view_உள்ளீடு_stride(உள்ளீடு_index, view_idx);
+        auto view_ggml_shape = context.get_view_உள்ளீடு_ggml_shape(உள்ளீடு_index, view_idx);
+        auto view_ov_shape = context.get_view_உள்ளீடு_ov_shape(உள்ளீடு_index, view_idx);
+        auto view_name = context.get_view_உள்ளீடு_name(உள்ளீடு_index, view_idx);
 
         // print view info
         // std::cout << "View " << view_idx << ": name = " << view_name << ", offset = " << view_offset << ", stride = ["
@@ -961,11 +961,11 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
         //       << "], ggml shape = [" << view_ggml_shape[0] << "," << view_ggml_shape[1] << ","
         //       << view_ggml_shape[2] << "," << view_ggml_shape[3] << "], ov shape = " << view_ov_shape << std::endl;
 
-        auto view_src_offset = context.get_view_input_src_offset(input_index, view_idx);
-        auto view_src_stride = context.get_view_input_src_stride(input_index, view_idx);
-        auto view_src_ggml_shape = context.get_view_input_src_ggml_shape(input_index, view_idx);
-        auto view_src_ov_shape = context.get_view_input_src_ov_shape(input_index, view_idx);
-        auto view_src_name = context.get_view_input_src_name(input_index, view_idx);
+        auto view_src_offset = context.get_view_உள்ளீடு_src_offset(உள்ளீடு_index, view_idx);
+        auto view_src_stride = context.get_view_உள்ளீடு_src_stride(உள்ளீடு_index, view_idx);
+        auto view_src_ggml_shape = context.get_view_உள்ளீடு_src_ggml_shape(உள்ளீடு_index, view_idx);
+        auto view_src_ov_shape = context.get_view_உள்ளீடு_src_ov_shape(உள்ளீடு_index, view_idx);
+        auto view_src_name = context.get_view_உள்ளீடு_src_name(உள்ளீடு_index, view_idx);
         // print source view info
         // std::cout << "View " << view_idx << ": source name = " << view_src_name
         //           << ", source offset = " << view_src_offset << ", source stride = [" << view_src_stride[0] << ","
@@ -979,7 +979,7 @@ ov::Output<ov::Node> process_view_input_new(const NodeContext & context, int inp
                                       view_src_name);
     }
 
-    return current;
+    திரும்பு current;
 }
 
 }  // namespace ggml

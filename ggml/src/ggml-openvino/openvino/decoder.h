@@ -1,131 +1,131 @@
 #pragma once
 
-#include <cstdint>
-#include <map>
-#include <openvino/core/node.hpp>
-#include <openvino/core/partial_shape.hpp>
-#include <openvino/core/shape.hpp>
-#include <openvino/frontend/decoder.hpp>
-#include <set>
-#include <string>
+#அந்தர்பாவ <cstdint>
+#அந்தர்பாவ <map>
+#அந்தர்பாவ <openvino/core/node.hpp>
+#அந்தர்பாவ <openvino/core/partial_shape.hpp>
+#அந்தர்பாவ <openvino/core/shape.hpp>
+#அந்தர்பாவ <openvino/frontend/decoder.hpp>
+#அந்தர்பாவ <set>
+#அந்தர்பாவ <string>
 
 namespace ov {
 namespace frontend {
 namespace ggml {
 
-struct ModelInputInfo {
+கட்டமைப்பு Model_உள்ளீடு_Info {
     element::Type type;
     PartialShape shape;
 };
 
-struct ModelExtraInputInfo {
+கட்டமைப்பு Model_Extra_உள்ளீடு_Info {
     element::Type type;
     Shape shape;
-    int64_t value;
+    int64_t மதிப்பு;
     bool is_parameter;
 };
 
-class GgmlDecoder : public DecoderBase {
-public:
-    virtual ov::Any get_attribute(const std::string & name) const = 0;
+class GgmlDecoder : பொது DecoderBase {
+பொது:
+    மெய்நிகர் ov::Any get_attribute(மாறிலி std::string & name) மாறிலி = 0;
 
-    virtual PartialShape get_input_shape(int node_idx, const std::string & name) const = 0;
+    மெய்நிகர் PartialShape get_உள்ளீடு_shape(முழு முனை_idx, மாறிலி std::string & name) மாறிலி = 0;
 
-    virtual std::vector<size_t> get_input_stride(int node_idx, const std::string & name) const = 0;
+    மெய்நிகர் std::vector<size_t> get_உள்ளீடு_stride(முழு முனை_idx, மாறிலி std::string & name) மாறிலி = 0;
 
-    virtual size_t get_view_input_size(int node_idx, const std::string & name) const = 0;
+    மெய்நிகர் size_t get_view_உள்ளீடு_size(முழு முனை_idx, மாறிலி std::string & name) மாறிலி = 0;
 
-    virtual size_t get_view_input_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    மெய்நிகர் size_t get_view_உள்ளீடு_offset(முழு முனை_idx, மாறிலி std::string & name, size_t view_index) மாறிலி = 0;
 
-    virtual size_t get_view_input_src_offset(int node_idx, const std::string & name, size_t view_index) const = 0;
+    மெய்நிகர் size_t get_view_உள்ளீடு_src_offset(முழு முனை_idx, மாறிலி std::string & name, size_t view_index) மாறிலி = 0;
 
-    virtual std::vector<size_t> get_view_input_stride(int node_idx,
-                                                      const std::string & name,
-                                                      size_t view_index) const = 0;
+    மெய்நிகர் std::vector<size_t> get_view_உள்ளீடு_stride(முழு முனை_idx,
+                                                      மாறிலி std::string & name,
+                                                      size_t view_index) மாறிலி = 0;
 
-    virtual std::vector<size_t> get_view_input_src_stride(int node_idx,
-                                                          const std::string & name,
-                                                          size_t view_index) const = 0;
+    மெய்நிகர் std::vector<size_t> get_view_உள்ளீடு_src_stride(முழு முனை_idx,
+                                                          மாறிலி std::string & name,
+                                                          size_t view_index) மாறிலி = 0;
 
-    virtual Shape get_view_input_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    மெய்நிகர் Shape get_view_உள்ளீடு_ggml_shape(முழு முனை_idx, மாறிலி std::string & name, size_t view_index) மாறிலி = 0;
 
-    virtual Shape get_view_input_src_ggml_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    மெய்நிகர் Shape get_view_உள்ளீடு_src_ggml_shape(முழு முனை_idx, மாறிலி std::string & name, size_t view_index) மாறிலி = 0;
 
-    virtual PartialShape get_view_input_ov_shape(int node_idx, const std::string & name, size_t view_index) const = 0;
+    மெய்நிகர் PartialShape get_view_உள்ளீடு_ov_shape(முழு முனை_idx, மாறிலி std::string & name, size_t view_index) மாறிலி = 0;
 
-    virtual PartialShape get_view_input_src_ov_shape(int node_idx,
-                                                     const std::string & name,
-                                                     size_t view_index) const = 0;
+    மெய்நிகர் PartialShape get_view_உள்ளீடு_src_ov_shape(முழு முனை_idx,
+                                                     மாறிலி std::string & name,
+                                                     size_t view_index) மாறிலி = 0;
 
-    virtual std::string get_view_input_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    மெய்நிகர் std::string get_view_உள்ளீடு_name(முழு முனை_idx, மாறிலி std::string & name, size_t view_index) மாறிலி = 0;
 
-    virtual std::string get_view_input_src_name(int node_idx, const std::string & name, size_t view_index) const = 0;
+    மெய்நிகர் std::string get_view_உள்ளீடு_src_name(முழு முனை_idx, மாறிலி std::string & name, size_t view_index) மாறிலி = 0;
 
-    virtual element::Type get_input_type(int node_idx, const std::string & name) const = 0;
+    மெய்நிகர் element::Type get_உள்ளீடு_type(முழு முனை_idx, மாறிலி std::string & name) மாறிலி = 0;
 
-    virtual size_t get_input_size() const = 0;
+    மெய்நிகர் size_t get_உள்ளீடு_size() மாறிலி = 0;
 
-    virtual size_t get_input_size(int node_idx) const = 0;
+    மெய்நிகர் size_t get_உள்ளீடு_size(முழு முனை_idx) மாறிலி = 0;
 
-    virtual void get_input_node(size_t input_port_idx,
+    மெய்நிகர் வெறுமை get_உள்ளீடு_முனை(size_t உள்ளீடு_port_idx,
                                 std::string & producer_name,
                                 std::string & producer_output_port_name,
-                                size_t & producer_output_port_index) const = 0;
+                                size_t & producer_output_port_index) மாறிலி = 0;
 
-    virtual std::vector<std::string> get_input_names(int node_idx) const = 0;
+    மெய்நிகர் std::vector<std::string> get_உள்ளீடு_names(முழு முனை_idx) மாறிலி = 0;
 
-    virtual PartialShape get_output_shape(int node_idx) const = 0;
+    மெய்நிகர் PartialShape get_output_shape(முழு முனை_idx) மாறிலி = 0;
 
-    virtual element::Type get_output_type(const int node_idx) const = 0;
+    மெய்நிகர் element::Type get_output_type(மாறிலி முழு முனை_idx) மாறிலி = 0;
 
-    virtual std::vector<size_t> get_output_stride(int node_idx) const = 0;
+    மெய்நிகர் std::vector<size_t> get_output_stride(முழு முனை_idx) மாறிலி = 0;
 
-    virtual int32_t * get_input_op_params(int node_idx, const std::string & name) const = 0;
+    மெய்நிகர் int32_t * get_உள்ளீடு_op_params(முழு முனை_idx, மாறிலி std::string & name) மாறிலி = 0;
 
-    virtual int32_t * get_output_op_params(int node_idx) const = 0;
+    மெய்நிகர் int32_t * get_output_op_params(முழு முனை_idx) மாறிலி = 0;
 
-    virtual size_t get_output_op_offset(int node_idx) const = 0;
+    மெய்நிகர் size_t get_output_op_offset(முழு முனை_idx) மாறிலி = 0;
 
-    virtual std::vector<std::string> get_output_names(int node_idx) const = 0;
+    மெய்நிகர் std::vector<std::string> get_output_names(முழு முனை_idx) மாறிலி = 0;
 
-    virtual std::string get_inplace_op_src(int node_idx) const = 0;
+    மெய்நிகர் std::string get_inplace_op_src(முழு முனை_idx) மாறிலி = 0;
 
-    virtual bool is_view_like_alias_of(int node_idx, const std::string & view_src_name) const = 0;
+    மெய்நிகர் bool is_view_like_alias_of(முழு முனை_idx, மாறிலி std::string & view_src_name) மாறிலி = 0;
 
-    virtual const std::string & get_op_type() const = 0;
+    மெய்நிகர் மாறிலி std::string & get_op_type() மாறிலி = 0;
 
-    virtual const std::string & get_op_type(int node_idx) const = 0;
+    மெய்நிகர் மாறிலி std::string & get_op_type(முழு முனை_idx) மாறிலி = 0;
 
-    virtual const std::string & get_op_name() const = 0;
+    மெய்நிகர் மாறிலி std::string & get_op_name() மாறிலி = 0;
 
-    virtual const std::string & get_op_name(int node_idx) const = 0;
+    மெய்நிகர் மாறிலி std::string & get_op_name(முழு முனை_idx) மாறிலி = 0;
 
-    virtual void visit_subgraph(std::function<void(std::shared_ptr<GgmlDecoder>, int node_idx)> node_visitor) const = 0;
+    மெய்நிகர் வெறுமை visit_subgraph(std::function<வெறுமை(std::shared_ptr<GgmlDecoder>, முழு முனை_idx)> முனை_visitor) மாறிலி = 0;
 
-    virtual int get_op_case(int node_idx) const = 0;
+    மெய்நிகர் முழு get_op_case(முழு முனை_idx) மாறிலி = 0;
 
-    virtual const std::map<std::string, ModelInputInfo> & get_model_inputs() const = 0;
-    virtual const std::map<std::string, ModelExtraInputInfo> & get_model_extra_inputs() const = 0;
-    virtual const std::map<std::string, std::shared_ptr<ov::Node>> & get_model_weights() const = 0;
-    virtual std::set<std::string> get_model_output_names() const = 0;
+    மெய்நிகர் மாறிலி std::map<std::string, Model_உள்ளீடு_Info> & get_model_inputs() மாறிலி = 0;
+    மெய்நிகர் மாறிலி std::map<std::string, Model_Extra_உள்ளீடு_Info> & get_model_extra_inputs() மாறிலி = 0;
+    மெய்நிகர் மாறிலி std::map<std::string, std::shared_ptr<ov::முனை_2>> & get_model_weights() மாறிலி = 0;
+    மெய்நிகர் std::set<std::string> get_model_output_names() மாறிலி = 0;
 
-    virtual int32_t * get_rope_params() const = 0;
+    மெய்நிகர் int32_t * get_rope_params() மாறிலி = 0;
 
-    virtual bool has_mixed_rope_params() const = 0;
+    மெய்நிகர் bool has_mixed_rope_params() மாறிலி = 0;
 
-    virtual int get_ssm_state_size() const = 0;
+    மெய்நிகர் முழு get_ssm_state_size() மாறிலி = 0;
 
-    virtual std::map<std::string, std::string> get_kv_param_res_names() const = 0;
+    மெய்நிகர் std::map<std::string, std::string> get_kv_param_res_names() மாறிலி = 0;
 
-    virtual bool is_static() const = 0;
+    மெய்நிகர் bool is_static() மாறிலி = 0;
 
-    virtual bool is_stateful() const = 0;
+    மெய்நிகர் bool is_stateful() மாறிலி = 0;
 
-    virtual bool is_splited_model() const = 0;
+    மெய்நிகர் bool is_splited_model() மாறிலி = 0;
 
-    virtual int is_swa_layer(int layer) const = 0;
+    மெய்நிகர் முழு is_swa_layer(முழு layer) மாறிலி = 0;
 
-    virtual int32_t get_op_dynamic_dim(int node_idx) const = 0;
+    மெய்நிகர் int32_t get_op_dynamic_dim(முழு முனை_idx) மாறிலி = 0;
 };
 
 }  // namespace ggml

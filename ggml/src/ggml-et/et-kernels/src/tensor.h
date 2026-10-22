@@ -2,15 +2,15 @@
 #define __TENSORS_H
 
 #ifdef __cplusplus
-extern "C" {
+வெளி "C" {
 #endif
 
-#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#எனில் defined(__cplusplus) && (__cplusplus >= 201103L)
 #    include <cinttypes>
-#    if (__cplusplus < 202002L)
+#    எனில் (__cplusplus < 202002L)
 #        include <cstdbool>
 #    endif
-#else
+#இல்லையெனில்
 #    include <inttypes.h>
 #    include <stdbool.h>
 #endif
@@ -216,11 +216,11 @@ ger values in the vector register file.
 /*! \struct et_tensor_load_l2scp_conf
     \brief Tensor load from scp instruction configuration structure.
 */
-typedef struct et_tensor_load_l2scp_conf {
+வகைவரை கட்டமைப்பு et_tensor_load_l2scp_conf {
     bool     use_tmask;
     uint64_t dst_start;
     uint64_t addr;
-    uint64_t num_lines;
+    uint64_t இலக்கம்_வரிகள்;
     uint64_t stride;
     uint64_t id;
 } et_tensor_load_l2scp_conf_t;
@@ -228,7 +228,7 @@ typedef struct et_tensor_load_l2scp_conf {
 /*! \enum reduce_transform_t
     \brief enum transform mode for tensor reduce.
 */
-typedef enum {
+வகைவரை எண்ணிக்கை {
     FADD = 0x0ULL,
     FSUB = 0x1ULL,
     FMAX = 0x2ULL,
@@ -243,7 +243,7 @@ typedef enum {
 /*! \struct et_tensor_load_conf
     \brief Tensor load instruction configuration structure.
 */
-typedef struct et_tensor_load_conf {
+வகைவரை கட்டமைப்பு et_tensor_load_conf {
     bool     use_tmask;
     bool     use_coop;
     bool     use_tenb;
@@ -252,7 +252,7 @@ typedef struct et_tensor_load_conf {
     uint64_t rd_l2scp;
     uint64_t addr;
     uint64_t offset;
-    uint64_t num_lines;
+    uint64_t இலக்கம்_வரிகள்;
     uint64_t stride;
     uint64_t id;
 } et_tensor_load_conf_t;
@@ -264,7 +264,7 @@ typedef struct et_tensor_load_conf {
     \return none
     \tensorops Implementation of tensor_wait api
 */
-inline __attribute__((always_inline)) void tensor_wait(long id) {
+உள்வரி __attribute__((always_inline)) வெறுமை tensor_wait(long id) {
     __asm__ __volatile__(" csrw 0x830, %[id]\n" : : [id] "r"(id) : "memory");
 }
 
@@ -290,14 +290,14 @@ inline __attribute__((always_inline)) void tensor_wait(long id) {
 // tensor_load(false, false, 0, 0, 0,
 //             (uint64_t)(src0_data + m * K + kb), 0, 1, 0, 0);
 
-inline void __attribute__((always_inline)) tensor_load(bool     use_tmask,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_load(bool     use_tmask,
                                                        bool     use_coop,
                                                        uint64_t dst_start,
                                                        uint64_t transformation,
                                                        uint64_t use_tenb,
                                                        uint64_t addr,
                                                        uint64_t offset,
-                                                       uint64_t num_lines,
+                                                       uint64_t இலக்கம்_வரிகள்,
                                                        uint64_t stride,
                                                        uint64_t id) {
     // Address alignment depends on transformation type:
@@ -309,7 +309,7 @@ inline void __attribute__((always_inline)) tensor_load(bool     use_tmask,
                                                                         0xFFFFFFFFFFC0ULL;
     uint64_t csr_enc   = (((uint64_t) use_tmask & 1) << 63) | (((uint64_t) use_coop & 1) << 62) |
                          ((transformation & 0x7) << 59) | ((dst_start & 0x3F) << 53) | ((use_tenb & 0x1) << 52) |
-                         ((addr & addr_mask)) | ((offset & 0x3) << 4) | ((num_lines & 0xF));
+                         ((addr & addr_mask)) | ((offset & 0x3) << 4) | ((இலக்கம்_வரிகள் & 0xF));
 
     uint64_t x31_enc = (stride & 0xFFFFFFFFFFC0ULL) | (id & 0x1);
 
@@ -328,9 +328,9 @@ inline void __attribute__((always_inline)) tensor_load(bool     use_tmask,
     \return none
     \tensorops Implementation of et_tensor_load api
 */
-inline void __attribute__((always_inline)) et_tensor_load(et_tensor_load_conf_t * conf) {
+உள்வரி வெறுமை __attribute__((always_inline)) et_tensor_load(et_tensor_load_conf_t * conf) {
     tensor_load(conf->use_tmask, conf->use_coop, conf->dst_start, conf->transformation, (uint64_t) conf->use_tenb,
-                conf->addr, conf->offset, conf->num_lines, conf->stride, conf->id);
+                conf->addr, conf->offset, conf->இலக்கம்_வரிகள், conf->stride, conf->id);
 }
 
 /*! \fn inline void tensor_load_setup_b(bool use_coop, uint64_t addr, uint64_t num_lines, uint64_t stride, uint64_t id)
@@ -343,13 +343,13 @@ inline void __attribute__((always_inline)) et_tensor_load(et_tensor_load_conf_t 
     \return none
     \tensorops Implementation of tensor_load_setup_b api
 */
-inline void __attribute__((always_inline)) tensor_load_setup_b(bool     use_coop,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_load_setup_b(bool     use_coop,
                                                                uint64_t addr,
-                                                               uint64_t num_lines,
+                                                               uint64_t இலக்கம்_வரிகள்,
                                                                uint64_t stride,
                                                                uint64_t id) {
     uint64_t csr_enc =
-        (((uint64_t) use_coop & 1) << 62) | (0x1ULL << 52) | ((addr & 0xFFFFFFFFFFC0ULL)) | ((num_lines & 0xF));
+        (((uint64_t) use_coop & 1) << 62) | (0x1ULL << 52) | ((addr & 0xFFFFFFFFFFC0ULL)) | ((இலக்கம்_வரிகள் & 0xF));
     uint64_t x31_enc = (stride & 0xFFFFFFFFFFC0ULL) | (id & 0x1);
 
     __asm__ __volatile__(
@@ -366,10 +366,10 @@ inline void __attribute__((always_inline)) tensor_load_setup_b(bool     use_coop
    \return none
    \tensorops Implementation of et_tensor_load_l2scp api
 */
-inline void __attribute__((always_inline)) et_tensor_load_l2scp(et_tensor_load_l2scp_conf_t * conf) {
+உள்வரி வெறுமை __attribute__((always_inline)) et_tensor_load_l2scp(et_tensor_load_l2scp_conf_t * conf) {
     uint64_t csr_enc =
         (((((uint64_t) conf->use_tmask) & 1) << 63) | ((conf->dst_start & 0x1FFFCUL) << (48 - 2)) |
-         ((conf->dst_start & 0x3UL) << 4) | ((conf->addr & 0xFFFFFFFFFFC0UL)) | ((conf->num_lines & 0x0FUL)));
+         ((conf->dst_start & 0x3UL) << 4) | ((conf->addr & 0xFFFFFFFFFFC0UL)) | ((conf->இலக்கம்_வரிகள் & 0x0FUL)));
     uint64_t x31_enc = (conf->stride & 0xFFFFFFFFFFC0ULL) | (conf->id & 0x1);
 
     __asm__ __volatile__(
@@ -395,7 +395,7 @@ inline void __attribute__((always_inline)) et_tensor_load_l2scp(et_tensor_load_l
    \return none
    \tensorops Implementation of tensor_store_scp api
 */
-inline void __attribute__((always_inline)) tensor_store_scp(uint64_t entry_stride,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_store_scp(uint64_t entry_stride,
                                                             uint64_t start_scp_entry,
                                                             uint64_t Arows,
                                                             uint64_t addr,
@@ -432,7 +432,7 @@ inline void __attribute__((always_inline)) tensor_store_scp(uint64_t entry_strid
    \return none
    \tensorops Implementation of tensor_store api
 */
-inline void __attribute__((always_inline)) tensor_store(uint64_t reg_stride,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_store(uint64_t reg_stride,
                                                         uint64_t start_reg,
                                                         uint64_t cols,
                                                         uint64_t Arows,
@@ -485,10 +485,10 @@ inline void __attribute__((always_inline)) tensor_store(uint64_t reg_stride,
    \return none
    \tensorops Implementation of tensor_fma api
 */
-inline void __attribute__((always_inline)) tensor_fma(bool     use_tmask,
-                                                      uint64_t b_num_col,
-                                                      uint64_t a_num_rows,
-                                                      uint64_t a_num_cols,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_fma(bool     use_tmask,
+                                                      uint64_t b_இலக்கம்_col,
+                                                      uint64_t a_இலக்கம்_rows,
+                                                      uint64_t a_இலக்கம்_cols,
                                                       uint64_t offset,
                                                       bool     tenc_loc,
                                                       bool     tenb_unsigned,
@@ -498,8 +498,8 @@ inline void __attribute__((always_inline)) tensor_fma(bool     use_tmask,
                                                       uint64_t scp_loc_a,
                                                       uint64_t opcode,
                                                       bool     first_pass) {
-    uint64_t csr_enc = (((uint64_t) use_tmask & 1) << 63) | ((b_num_col & 0x3) << 55) | ((a_num_rows & 0xF) << 51) |
-                       ((a_num_cols & 0xF) << 47) | ((offset & 0xF) << 43) | (((uint64_t) tenc_loc & 1) << 23) |
+    uint64_t csr_enc = (((uint64_t) use_tmask & 1) << 63) | ((b_இலக்கம்_col & 0x3) << 55) | ((a_இலக்கம்_rows & 0xF) << 51) |
+                       ((a_இலக்கம்_cols & 0xF) << 47) | ((offset & 0xF) << 43) | (((uint64_t) tenc_loc & 1) << 23) |
                        (((uint64_t) tena_unsigned & 1) << 22) | (((uint64_t) tenb_unsigned & 1) << 21) |
                        (((uint64_t) tenb_loc & 1) << 20) | ((scp_loc_b & 0xFF) << 12) | ((scp_loc_a & 0xFF) << 4) |
                        ((opcode & 0x7) << 1) | ((uint64_t) first_pass & 1);
@@ -517,7 +517,7 @@ inline void __attribute__((always_inline)) tensor_fma(bool     use_tmask,
    \return uint32_t value after reduction
    \tensorops Implementation of tensor_reduce_uint32 api
 */
-inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t value,
+உள்வரி uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t மதிப்பு,
                                                                     uint64_t operation,
                                                                     uint64_t partnerID,
                                                                     uint64_t action) {
@@ -532,10 +532,10 @@ inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t val
         "csrw 0x800, %[csr_enc]\n"
         "fmv.x.s     %[out], f0\n"
         : [out] "=r"(out)
-        : [csr_enc] "r"(csr_enc), [value] "r"(value)
+        : [csr_enc] "r"(csr_enc), [மதிப்பு] "r"(மதிப்பு)
         : "f0");
 
-    return out;
+    திரும்பு out;
 }
 
 /*! \fn inline float tensor_reduce_float(float freg, uint64_t operation, uint64_t num_reg, uint64_t partnerID, uint64_t action) {
@@ -549,15 +549,15 @@ inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t val
    \return float value after reduction
    \tensorops Implementation of tensor_reduce_float api
 */
-inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
+உள்வரி தசம __attribute__((always_inline)) tensor_reduce_float(தசம    freg,
                                                                 uint64_t operation,
-                                                                uint64_t num_reg,
+                                                                uint64_t இலக்கம்_reg,
                                                                 uint64_t partnerID,
                                                                 uint64_t action) {
     uint64_t warl = 0;
-    float    out;
+    தசம    out;
     uint64_t csr_enc = ((warl & 0x2) << 62) | ((0ULL & 0x1F) << 57) | ((warl & 0x1FFFFFFF) << 28) |
-                       ((operation & 0xF) << 24) | ((num_reg & 0xFF) << 16) | ((partnerID & 0x1FFF) << 3) |
+                       ((operation & 0xF) << 24) | ((இலக்கம்_reg & 0xFF) << 16) | ((partnerID & 0x1FFF) << 3) |
                        ((warl & 0x1) << 2) | ((action & 0x3));
 
     __asm__ __volatile__(
@@ -568,7 +568,7 @@ inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
         : [csr_enc] "r"(csr_enc), [freg] "f"(freg)
         : "f0");
 
-    return out;
+    திரும்பு out;
 }
 
 //#define tensor_reduce_float1(fval, operation, partnerID, action) do {
@@ -631,15 +631,15 @@ inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
    \tensorops Implementation of tensor_reduce api
 */
 
-inline void __attribute__((always_inline)) tensor_reduce(uint64_t start_reg,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_reduce(uint64_t start_reg,
                                                          uint64_t operation,
-                                                         uint64_t num_reg,
+                                                         uint64_t இலக்கம்_reg,
                                                          uint64_t partnerID,
                                                          uint64_t action) {
     uint64_t warl = 0;
 
     uint64_t csr_enc = ((warl & 0x2) << 62) | ((start_reg & 0x1F) << 57) | ((warl & 0x1FFFFFFF) << 28) |
-                       ((operation & 0xF) << 24) | ((num_reg & 0xFF) << 16) | ((partnerID & 0x1FFF) << 3) |
+                       ((operation & 0xF) << 24) | ((இலக்கம்_reg & 0xFF) << 16) | ((partnerID & 0x1FFF) << 3) |
                        ((warl & 0x1) << 2) | ((action & 0x3));
 
     __asm__ __volatile__("csrw 0x800, %[csr_enc]\n" : : [csr_enc] "r"(csr_enc) :);
@@ -653,11 +653,11 @@ inline void __attribute__((always_inline)) tensor_reduce(uint64_t start_reg,
    \return none
    \tensorops Implementation of tensor_reduce_send api
 */
-inline void __attribute__((always_inline)) tensor_reduce_send(uint64_t start_reg,
-                                                              uint64_t num_reg,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_reduce_send(uint64_t start_reg,
+                                                              uint64_t இலக்கம்_reg,
                                                               uint64_t partnerID) {
     uint64_t warl = 0;
-    tensor_reduce(start_reg, warl, num_reg, partnerID, 0);
+    tensor_reduce(start_reg, warl, இலக்கம்_reg, partnerID, 0);
 }
 
 /*! \fn inline void tensor_reduce_recv(uint64_t start_reg, uint64_t operation, uint64_t num_reg, uint64_t partnerID)
@@ -669,11 +669,11 @@ inline void __attribute__((always_inline)) tensor_reduce_send(uint64_t start_reg
    \return none
    \tensorops Implementation of tensor_reduce_recv api
 */
-inline void __attribute__((always_inline)) tensor_reduce_recv(uint64_t start_reg,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_reduce_recv(uint64_t start_reg,
                                                               uint64_t operation,
-                                                              uint64_t num_reg,
+                                                              uint64_t இலக்கம்_reg,
                                                               uint64_t partnerID) {
-    tensor_reduce(start_reg, operation, num_reg, partnerID, 1);
+    tensor_reduce(start_reg, operation, இலக்கம்_reg, partnerID, 1);
 }
 
 /*! \fn inline void tensor_reduce_auto(uint64_t start_reg, uint64_t operation, uint64_t num_reg, uint64_t tree_depth)
@@ -685,11 +685,11 @@ inline void __attribute__((always_inline)) tensor_reduce_recv(uint64_t start_reg
    \return none
    \tensorops Implementation of tensor_reduce_auto api
 */
-inline void __attribute__((always_inline)) tensor_reduce_auto(uint64_t start_reg,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_reduce_auto(uint64_t start_reg,
                                                               uint64_t operation,
-                                                              uint64_t num_reg,
-                                                              uint64_t tree_depth) {
-    tensor_reduce(start_reg, operation, num_reg, (0ULL << 4) | (tree_depth & 0xF), 3);
+                                                              uint64_t இலக்கம்_reg,
+                                                              uint64_t மரம்_depth) {
+    tensor_reduce(start_reg, operation, இலக்கம்_reg, (0ULL << 4) | (மரம்_depth & 0xF), 3);
 }
 
 /*! \fn inline void tensor_broadcast(uint64_t start_reg, uint64_t operation, uint64_t num_reg, uint64_t tree_depth) {
@@ -703,11 +703,11 @@ inline void __attribute__((always_inline)) tensor_reduce_auto(uint64_t start_reg
    \return none
    \tensorops Implementation of tensor_broadcast api
 */
-inline void __attribute__((always_inline)) tensor_broadcast(uint64_t start_reg,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_broadcast(uint64_t start_reg,
                                                             uint64_t operation,
-                                                            uint64_t num_reg,
-                                                            uint64_t tree_depth) {
-    tensor_reduce(start_reg, operation, num_reg, (0ULL << 4) | (tree_depth & 0xF), 2);
+                                                            uint64_t இலக்கம்_reg,
+                                                            uint64_t மரம்_depth) {
+    tensor_reduce(start_reg, operation, இலக்கம்_reg, (0ULL << 4) | (மரம்_depth & 0xF), 2);
 }
 
 /*! \fn inline void tensor_reduce_autopair(uint64_t start_reg, uint64_t operation, uint64_t num_reg, uint64_t start_lvl, uint64_t end_lvl, uint64_t action) {
@@ -722,9 +722,9 @@ inline void __attribute__((always_inline)) tensor_broadcast(uint64_t start_reg,
    \tensorops Implementation of tensor_reduce_autopair api
 
 */
-inline void __attribute__((always_inline)) tensor_reduce_autopair(uint64_t start_reg,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_reduce_autopair(uint64_t start_reg,
                                                                   uint64_t operation,
-                                                                  uint64_t num_reg,
+                                                                  uint64_t இலக்கம்_reg,
                                                                   uint64_t start_lvl,
                                                                   uint64_t end_lvl,
                                                                   uint64_t action) {
@@ -740,7 +740,7 @@ inline void __attribute__((always_inline)) tensor_reduce_autopair(uint64_t start
     //
     // Action encoding:
     // 00=send, 01=receive, 10=auto-pair broadcast derive from hartid,11=auto-pair reduce derive from hartid
-    tensor_reduce(start_reg, operation, num_reg, (partnerID >> 3), action);
+    tensor_reduce(start_reg, operation, இலக்கம்_reg, (partnerID >> 3), action);
 }
 
 /*! \fn inline void tensor_quant(uint64_t start_reg, uint64_t col, uint64_t row, uint64_t scp_loc, uint64_t transf9, uint64_t transf8, uint64_t transf7, uint64_t transf6, uint64_t transf5, uint64_t transf4, uint64_t transf3, uint64_t transf2, uint64_t transf1, uint64_t transf0 )
@@ -763,7 +763,7 @@ inline void __attribute__((always_inline)) tensor_reduce_autopair(uint64_t start
    \return none
    \tensorops Implementation of tensor_quant api
 */
-inline void __attribute__((always_inline)) tensor_quant(uint64_t start_reg,
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_quant(uint64_t start_reg,
                                                         uint64_t col,
                                                         uint64_t row,
                                                         uint64_t scp_loc,
@@ -795,7 +795,7 @@ inline void __attribute__((always_inline)) tensor_quant(uint64_t start_reg,
    \return none
    \tensorops Implementation of tensor_mask api
 */
-inline void __attribute__((always_inline)) tensor_mask(uint64_t zeros, uint64_t mask_bits) {
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_mask(uint64_t zeros, uint64_t mask_bits) {
     uint64_t csr_enc = ((zeros & 0x000000000000) << 16) | (mask_bits & 0xFFFF);
 
     __asm__ __volatile__("csrw 0x805, %[csr_enc]\n" : : [csr_enc] "r"(csr_enc) :);
@@ -808,7 +808,7 @@ inline void __attribute__((always_inline)) tensor_mask(uint64_t zeros, uint64_t 
    \return none
    \tensorops Implementation of tensor_coop api
 */
-inline void __attribute__((always_inline)) tensor_coop(uint64_t val) {
+உள்வரி வெறுமை __attribute__((always_inline)) tensor_coop(uint64_t val) {
     __asm__ __volatile__("csrw 0x804, %[val]\n" : : [val] "r"(val) :);
 }
 
@@ -820,7 +820,7 @@ inline void __attribute__((always_inline)) tensor_coop(uint64_t val) {
    \return none
    \tensorops Implementation of convolution_ctrl api
 */
-inline void __attribute__((always_inline)) convolution_ctrl(uint64_t row_start, uint64_t col_start) {
+உள்வரி வெறுமை __attribute__((always_inline)) convolution_ctrl(uint64_t row_start, uint64_t col_start) {
     uint64_t csr_enc = ((row_start & 0xFFFF) << 32) | (col_start & 0xFFFF);
 
     __asm__ __volatile__("csrw 0x803, %[csr_enc]\n" : : [csr_enc] "r"(csr_enc) :);
@@ -837,7 +837,7 @@ inline void __attribute__((always_inline)) convolution_ctrl(uint64_t row_start, 
    \return none
    \tensorops Implementation of convolution_size api
 */
-inline void __attribute__((always_inline)) convolution_size(uint64_t srow,
+உள்வரி வெறுமை __attribute__((always_inline)) convolution_size(uint64_t srow,
                                                             uint64_t nrow,
                                                             uint64_t scol,
                                                             uint64_t ncol) {
@@ -854,12 +854,12 @@ inline void __attribute__((always_inline)) convolution_size(uint64_t srow,
    \return Tensor error value
    \tensorops Implementation of get_tensor_error api
 */
-inline unsigned long __attribute__((always_inline)) get_tensor_error() {
+உள்வரி unsigned long __attribute__((always_inline)) get_tensor_error() {
     unsigned long error;
 
     __asm__ __volatile__("csrr %0, 0x808" : "=r"(error));
 
-    return error;
+    திரும்பு error;
 }
 
 /*! \fn inline uint64_t get_tensor_mask()
@@ -867,28 +867,28 @@ inline unsigned long __attribute__((always_inline)) get_tensor_error() {
    \return Tensor mask value
    \tensorops Implementation of get_tensor_mask api
 */
-inline uint64_t __attribute__((always_inline)) get_tensor_mask() {
+உள்வரி uint64_t __attribute__((always_inline)) get_tensor_mask() {
     uint64_t val;
 
     __asm__ __volatile__("csrr %0, 0x805" : "=r"(val));
 
-    return val;
+    திரும்பு val;
 }
 
 #define mask_set(msk, val)                                          \
-    do {                                                            \
-        __asm__ volatile("mov.m.x m" #msk ", zero, %0" ::"n"(val)); \
-    } while (0)
+    செய் {                                                            \
+        __asm__ நிலையற்ற("mov.m.x m" #msk ", zero, %0" ::"n"(val)); \
+    } போது (0)
 
 #define flw_ps(fd, ptr)                                       \
-    do {                                                      \
-        __asm__ volatile("flw.ps f" #fd ", (%0)" ::"r"(ptr)); \
-    } while (0)
+    செய் {                                                      \
+        __asm__ நிலையற்ற("flw.ps f" #fd ", (%0)" ::"r"(ptr)); \
+    } போது (0)
 
 #define fsw_ps(fd, ptr)                                                  \
-    do {                                                                 \
-        __asm__ volatile("fsw.ps f" #fd ", (%0)" ::"r"(ptr) : "memory"); \
-    } while (0)
+    செய் {                                                                 \
+        __asm__ நிலையற்ற("fsw.ps f" #fd ", (%0)" ::"r"(ptr) : "memory"); \
+    } போது (0)
 
 #ifdef __cplusplus
 }

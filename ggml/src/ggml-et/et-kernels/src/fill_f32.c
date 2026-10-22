@@ -4,84 +4,84 @@
 // dst[i] = c  for all elements
 //******************************************************************************
 
-#include "ggml_tensor.h"
-#include "platform.h"
+#அந்தர்பாவ "ggml_tensor.h"
+#அந்தர்பாவ "platform.h"
 
-#include <stdint.h>
+#அந்தர்பாவ <stdint.h>
 
-struct ggml_et_fill_params {
-    struct ggml_tensor dst;  // F32 output tensor (contiguous)
-    float              c;    // Constant value to fill
+கட்டமைப்பு ggml_et_fill_params {
+    கட்டமைப்பு ggml_tensor dst;  // F32 output tensor (contiguous)
+    தசம              c;    // Constant value to fill
 };
 
-int entry_point(struct ggml_et_fill_params * params, void * env) {
+முழு entry_point(கட்டமைப்பு ggml_et_fill_params * params, வெறுமை * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    எனில் (!kernel_env) {
+        திரும்பு -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    முழு thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    முழு இலக்கம்_threads = get_இலக்கம்_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    எனில் (thread_id < 0) {
+        திரும்பு 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    எனில் (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        திரும்பு -1;
     }
 
-    struct ggml_tensor * dst = &params->dst;
+    கட்டமைப்பு ggml_tensor * dst = &params->dst;
 
-    if (dst->type != GGML_TYPE_F32) {
-        return -1;
+    எனில் (dst->type != GGML_TYPE_F32) {
+        திரும்பு -1;
     }
 
-    float * dst_data = (float *) dst->data;
-    if (!dst_data) {
-        return -1;
+    தசம * dst_data = (தசம *) dst->data;
+    எனில் (!dst_data) {
+        திரும்பு -1;
     }
 
-    const int64_t total_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
+    மாறிலி int64_t total_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
 
-    if (total_elements == 0) {
-        return 0;
+    எனில் (total_elements == 0) {
+        திரும்பு 0;
     }
 
     // Distribute by cache lines (16 floats = 64 bytes)
-    const int64_t elems_per_cl  = 16;
-    const int64_t total_cl      = (total_elements + elems_per_cl - 1) / elems_per_cl;
-    const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
-    const int64_t cl_start      = thread_id * cl_per_thread;
+    மாறிலி int64_t elems_per_cl  = 16;
+    மாறிலி int64_t total_cl      = (total_elements + elems_per_cl - 1) / elems_per_cl;
+    மாறிலி int64_t cl_per_thread = (total_cl + இலக்கம்_threads - 1) / இலக்கம்_threads;
+    மாறிலி int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
+    எனில் (cl_end > total_cl) {
         cl_end = total_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
+    எனில் (cl_start >= total_cl) {
+        திரும்பு 0;
     }
 
-    const int64_t es = cl_start * elems_per_cl;
+    மாறிலி int64_t es = cl_start * elems_per_cl;
     int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
+    எனில் (ee > total_elements) {
         ee = total_elements;
     }
 
     // Broadcast constant to all SIMD lanes
-    float c = params->c;
-    __asm__ volatile("fbc.ps f10, %[v]\n" : : [v] "m"(c) : "f10");
+    தசம c = params->c;
+    __asm__ நிலையற்ற("fbc.ps f10, %[v]\n" : : [v] "m"(c) : "f10");
 
     // Vector fill (8-wide)
     int64_t       i       = es;
-    const int64_t vec_end = es + ((ee - es) / 8) * 8;
-    for (; i < vec_end; i += 8) {
-        __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_data[i])::"f10");
+    மாறிலி int64_t vec_end = es + ((ee - es) / 8) * 8;
+    க்கு (; i < vec_end; i += 8) {
+        __asm__ நிலையற்ற("fsw.ps f10, %[d]\n" : [d] "=m"(*(தசம (*)[8]) & dst_data[i])::"f10");
     }
     // Scalar tail
-    for (; i < ee; i++) {
+    க்கு (; i < ee; i++) {
         dst_data[i] = c;
     }
 
-    return 0;
+    திரும்பு 0;
 }

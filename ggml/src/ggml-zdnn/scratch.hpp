@@ -1,15 +1,15 @@
 #ifndef GGML_ZDNN_SCRATCH_HPP
 #define GGML_ZDNN_SCRATCH_HPP
 
-#include "ggml.h"
+#அந்தர்பாவ "ggml.h"
 
-#include <cstddef>
-#include <vector>
+#அந்தர்பாவ <cstddef>
+#அந்தர்பாவ <vector>
 
 // 4K aligned host buffers that are cached for reuse, see ggml_cuda_pool_leg
-struct ggml_zdnn_pool {
-    struct buffer {
-        void * ptr  = nullptr;
+கட்டமைப்பு ggml_zdnn_pool {
+    கட்டமைப்பு buffer {
+        வெறுமை * ptr  = nullptr;
         size_t size = 0;
     };
 
@@ -17,44 +17,44 @@ struct ggml_zdnn_pool {
 
     ~ggml_zdnn_pool();
 
-    void * alloc(size_t size, size_t * actual_size);
-    void   free(void * ptr, size_t size);
+    வெறுமை * alloc(size_t size, size_t * actual_size);
+    வெறுமை   விடுவி(வெறுமை * ptr, size_t size);
 };
 
 // a buffer of the pool that goes back to it at the end of its scope, see ggml_cuda_pool_alloc
 template <typename T>
-struct ggml_zdnn_pool_alloc {
+கட்டமைப்பு ggml_zdnn_pool_alloc {
     ggml_zdnn_pool * pool = nullptr;
     T * ptr = nullptr;
     size_t actual_size = 0;
 
-    ggml_zdnn_pool_alloc() = default;
+    ggml_zdnn_pool_alloc() = இயல்பு;
 
     ggml_zdnn_pool_alloc(ggml_zdnn_pool & pool, size_t size) {
         alloc(pool, size);
     }
 
     ~ggml_zdnn_pool_alloc() {
-        if (ptr != nullptr) {
-            pool->free(ptr, actual_size);
+        எனில் (ptr != nullptr) {
+            pool->விடுவி(ptr, actual_size);
         }
     }
 
     // size is in number of elements
     T * alloc(ggml_zdnn_pool & pool, size_t size) {
         GGML_ASSERT(ptr == nullptr);
-        this->pool = &pool;
-        ptr = (T *) pool.alloc(size * sizeof(T), &actual_size);
-        return ptr;
+        இது->pool = &pool;
+        ptr = (T *) pool.alloc(size * அளவு(T), &actual_size);
+        திரும்பு ptr;
     }
 
     T * get() {
-        return ptr;
+        திரும்பு ptr;
     }
 
-    ggml_zdnn_pool_alloc(const ggml_zdnn_pool_alloc &) = delete;
+    ggml_zdnn_pool_alloc(மாறிலி ggml_zdnn_pool_alloc &) = delete;
     ggml_zdnn_pool_alloc(ggml_zdnn_pool_alloc &&) = delete;
-    ggml_zdnn_pool_alloc & operator=(const ggml_zdnn_pool_alloc &) = delete;
+    ggml_zdnn_pool_alloc & operator=(மாறிலி ggml_zdnn_pool_alloc &) = delete;
     ggml_zdnn_pool_alloc & operator=(ggml_zdnn_pool_alloc &&) = delete;
 };
 

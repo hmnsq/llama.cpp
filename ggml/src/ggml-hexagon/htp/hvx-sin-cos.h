@@ -1,12 +1,12 @@
 #ifndef HVX_SIN_COS_H
 #define HVX_SIN_COS_H
 
-#include "hvx-base.h"
-#include "hvx-floor.h"
+#அந்தர்பாவ "hvx-base.h"
+#அந்தர்பாவ "hvx-floor.h"
 
 // Range-reduce x to y in [-pi/2, pi/2] and the quadrant sign (-1)^n.
 // Floor/truncate need IEEE bits, so convert qf32 back to sf before them.
-static inline void hvx_vec_sincos_reduce_f32(HVX_Vector x, HVX_Vector * y, HVX_Vector * sign) {
+நிலையான உள்வரி வெறுமை hvx_vec_sincos_reduce_f32(HVX_Vector x, HVX_Vector * y, HVX_Vector * sign) {
     HVX_Vector const_inv_pi  = hvx_vec_splat_f32(0.3183098861837907f);
     HVX_Vector const_half    = hvx_vec_splat_f32(0.5f);
     HVX_Vector const_pi      = hvx_vec_splat_f32(3.141592653589793f);
@@ -27,7 +27,7 @@ static inline void hvx_vec_sincos_reduce_f32(HVX_Vector x, HVX_Vector * y, HVX_V
     *sign = Q6_V_vmux_QVV(is_odd, const_neg_one, const_one);
 }
 
-static inline void hvx_vec_sincos_f32(HVX_Vector x, HVX_Vector * vcos, HVX_Vector * vsin) {
+நிலையான உள்வரி வெறுமை hvx_vec_sincos_f32(HVX_Vector x, HVX_Vector * vcos, HVX_Vector * vsin) {
     HVX_Vector y;
     HVX_Vector sign;
     hvx_vec_sincos_reduce_f32(x, &y, &sign);
@@ -61,18 +61,18 @@ static inline void hvx_vec_sincos_f32(HVX_Vector x, HVX_Vector * vcos, HVX_Vecto
     *vsin = Q6_Vsf_equals_Vqf32(Q6_Vqf32_vmpy_VsfVsf(sin_y, sign));
 }
 
-static inline HVX_Vector hvx_vec_cos_f32(HVX_Vector x) {
+நிலையான உள்வரி HVX_Vector hvx_vec_cos_f32(HVX_Vector x) {
     HVX_Vector vcos;
     HVX_Vector vsin;
     hvx_vec_sincos_f32(x, &vcos, &vsin);
-    return vcos;
+    திரும்பு vcos;
 }
 
-static inline HVX_Vector hvx_vec_sin_f32(HVX_Vector x) {
+நிலையான உள்வரி HVX_Vector hvx_vec_sin_f32(HVX_Vector x) {
     HVX_Vector vcos;
     HVX_Vector vsin;
     hvx_vec_sincos_f32(x, &vcos, &vsin);
-    return vsin;
+    திரும்பு vsin;
 }
 
 #endif /* HVX_SIN_COS_H */

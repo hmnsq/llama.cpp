@@ -1,28 +1,28 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#அந்தர்பாவ "../node_context.h"
+#அந்தர்பாவ "../op_table.h"
+#அந்தர்பாவ "../utils.h"
 
-#include <cstring>
-#include <memory>
-#include <openvino/op/constant.hpp>
-#include <openvino/op/mvn.hpp>
+#அந்தர்பாவ <cstring>
+#அந்தர்பாவ <memory>
+#அந்தர்பாவ <openvino/op/constant.hpp>
+#அந்தர்பாவ <openvino/op/mvn.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+நாமாகாஶ ov {
+நாமாகாஶ frontend {
+நாமாகாஶ ggml {
+நாமாகாஶ op {
 
-OutputVector translate_norm(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_norm(மாறிலி முனை_Context & context) {
+    இலக்கம்_inputs_check(context, 1, 1);
 
-    auto input_node = process_view_input_new(context, 0);
-    float eps;
-    memcpy(&eps, context.get_output_op_params(), sizeof(float));
+    auto உள்ளீடு_முனை = process_view_உள்ளீடு_new(context, 0);
+    தசம eps;
+    memcpy(&eps, context.get_output_op_params(), அளவு(தசம));
 
     auto axes = ov::op::v0::Constant::create(ov::element::i64, ov::Shape{1}, {-1});
-    auto res = std::make_shared<ov::op::v6::MVN>(input_node, axes, true, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
+    auto res = std::make_shared<ov::op::v6::MVN>(உள்ளீடு_முனை, axes, உண்மை, eps, ov::op::MVNEpsMode::INSIDE_SQRT);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    திரும்பு rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

@@ -3,13 +3,13 @@
 // Matrix multiplication: C[M,N] = A[M,K] * B[K,N]
 //******************************************************************************
 
-#include "block_ops.h"
-#include "ggml_tensor.h"
-#include "math_fp.h"
-#include "platform.h"
-#include "quants.h"
+#அந்தர்பாவ "block_ops.h"
+#அந்தர்பாவ "ggml_tensor.h"
+#அந்தர்பாவ "math_fp.h"
+#அந்தர்பாவ "platform.h"
+#அந்தர்பாவ "quants.h"
 
-#include <stdint.h>
+#அந்தர்பாவ <stdint.h>
 
 #define STRIDE_M                   2048 /* 32 shires x 32 minions x 2 harts */
 #define STRIDE_M_KSPLIT            1024 /* 32 shires x 32 minions (both harts share rows) */
@@ -20,46 +20,46 @@
 #define KSPLIT_GROUP_ROWS          4
 #define SIMPLE_X2_ROWS             2
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+முழு entry_point(கட்டமைப்பு ggml_et_இருமம்_params * params, வெறுமை * env) {
     uint64_t hart_id = get_hart_id();
 
     // Matrix dimensions
-    const int64_t K    = params->src0.ne[0];
-    const int64_t M    = params->src0.ne[1];
-    const int64_t N    = params->src1.ne[1];
-    const int64_t ne02 = params->src0.ne[2];
-    const int64_t ne03 = params->src0.ne[3];
-    const int64_t ne12 = params->src1.ne[2];
-    const int64_t ne13 = params->src1.ne[3];
+    மாறிலி int64_t K    = params->src0.ne[0];
+    மாறிலி int64_t M    = params->src0.ne[1];
+    மாறிலி int64_t N    = params->src1.ne[1];
+    மாறிலி int64_t ne02 = params->src0.ne[2];
+    மாறிலி int64_t ne03 = params->src0.ne[3];
+    மாறிலி int64_t ne12 = params->src1.ne[2];
+    மாறிலி int64_t ne13 = params->src1.ne[3];
 
     // Strides (in bytes)
-    const size_t nb01 = params->src0.nb[1];
-    const size_t nb02 = params->src0.nb[2];
-    const size_t nb03 = params->src0.nb[3];
+    மாறிலி size_t nb01 = params->src0.nb[1];
+    மாறிலி size_t nb02 = params->src0.nb[2];
+    மாறிலி size_t nb03 = params->src0.nb[3];
 
-    const size_t nb11 = params->src1.nb[1];
-    const size_t nb12 = params->src1.nb[2];
-    const size_t nb13 = params->src1.nb[3];
+    மாறிலி size_t nb11 = params->src1.nb[1];
+    மாறிலி size_t nb12 = params->src1.nb[2];
+    மாறிலி size_t nb13 = params->src1.nb[3];
 
-    const size_t nbd1 = params->dst.nb[1];
-    const size_t nbd2 = params->dst.nb[2];
-    const size_t nbd3 = params->dst.nb[3];
+    மாறிலி size_t nbd1 = params->dst.nb[1];
+    மாறிலி size_t nbd2 = params->dst.nb[2];
+    மாறிலி size_t nbd3 = params->dst.nb[3];
 
     // Q4_0 block size is 32
-    const int64_t K_blocks      = K / 32;
-    const int     use_simple_x2 = ((nb01 & 31) == 0);
+    மாறிலி int64_t K_blocks      = K / 32;
+    மாறிலி முழு     use_simple_x2 = ((nb01 & 31) == 0);
 
     // Broadcasting ratios
-    const int64_t r2 = ne12 / ne02;
-    const int64_t r3 = ne13 / ne03;
+    மாறிலி int64_t r2 = ne12 / ne02;
+    மாறிலி int64_t r3 = ne13 / ne03;
 
     // K-split decision
-    const int64_t minion_id             = hart_id >> 1;          /* 0..1023 global */
-    const int64_t local_minion          = (hart_id >> 1) & 0x1F; /* 0..31 within shire */
-    const int     is_hart1              = hart_id & 1;
-    const int64_t rows_per_minion       = (M + STRIDE_M_KSPLIT - 1) / STRIDE_M_KSPLIT;
-    const int64_t k_half                = K_blocks / 2;
-    const int     use_ksplit_small_rows = (rows_per_minion <= 2) && (K_blocks >= KSPLIT_SMALL_ROWS_K_BLOCKS);
+    மாறிலி int64_t minion_id             = hart_id >> 1;          /* 0..1023 global */
+    மாறிலி int64_t local_minion          = (hart_id >> 1) & 0x1F; /* 0..31 within shire */
+    மாறிலி முழு     is_hart1              = hart_id & 1;
+    மாறிலி int64_t rows_per_minion       = (M + STRIDE_M_KSPLIT - 1) / STRIDE_M_KSPLIT;
+    மாறிலி int64_t k_half                = K_blocks / 2;
+    மாறிலி முழு     use_ksplit_small_rows = (rows_per_minion <= 2) && (K_blocks >= KSPLIT_SMALL_ROWS_K_BLOCKS);
     /*
      * K-split when K is large enough to benefit, and either:
      *   - few rows (≤4): always safe, proven working
@@ -70,60 +70,60 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
      * that case the simple row-striped path leaves half the machine idle, so
      * using both harts on each row pays off even for moderate K.
      */
-    const int     use_ksplit            = ((K_blocks >= KSPLIT_MIN_K_BLOCKS) && (rows_per_minion <= KSPLIT_MAX_ROWS) &&
+    மாறிலி முழு     use_ksplit            = ((K_blocks >= KSPLIT_MIN_K_BLOCKS) && (rows_per_minion <= KSPLIT_MAX_ROWS) &&
                                            (rows_per_minion <= 4 || k_half <= TILE_KB)) ||
                                           use_ksplit_small_rows;
-    const int     use_ksplit_group      = !use_ksplit && (K_blocks >= KSPLIT_MIN_K_BLOCKS) && (rows_per_minion > 4) &&
+    மாறிலி முழு     use_ksplit_group      = !use_ksplit && (K_blocks >= KSPLIT_MIN_K_BLOCKS) && (rows_per_minion > 4) &&
                                           (rows_per_minion <= KSPLIT_MAX_ROWS);
 
-    if (use_ksplit) {
+    எனில் (use_ksplit) {
         /* Each hart processes half the K dimension */
-        const int64_t k_start = is_hart1 ? k_half : 0;
-        const int64_t k_len   = is_hart1 ? (K_blocks - k_half) : k_half;
+        மாறிலி int64_t k_start = is_hart1 ? k_half : 0;
+        மாறிலி int64_t k_len   = is_hart1 ? (K_blocks - k_half) : k_half;
 
         /* One cache-line-aligned L2SCP slot per minion for exchange */
-        volatile float * l2scp_slot = (volatile float *) et_shire_l2scp_local(local_minion * 64);
+        நிலையற்ற தசம * l2scp_slot = (நிலையற்ற தசம *) et_shire_l2scp_local(local_minion * 64);
 
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        க்கு (int64_t i3 = 0; i3 < ne13; i3++) {
+            மாறிலி int64_t i03       = i3 / r3;
+            மாறிலி எழுத்து *  src0_ptr3 = (மாறிலி எழுத்து *) params->src0.data + i03 * nb03;
+            மாறிலி எழுத்து *  src1_ptr3 = (மாறிலி எழுத்து *) params->src1.data + i3 * nb13;
+            எழுத்து *        dst_ptr3  = (எழுத்து *) params->dst.data + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            க்கு (int64_t i2 = 0; i2 < ne12; i2++) {
+                மாறிலி int64_t i02       = i2 / r2;
+                மாறிலி எழுத்து *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                மாறிலி எழுத்து *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                எழுத்து *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                க்கு (int64_t n = 0; n < N; n++) {
+                    மாறிலி தசம * b_col_base = (மாறிலி தசம *) (src1_ptr2 + n * nb11);
 
-                    for (int64_t m = minion_id; m < M; m += STRIDE_M_KSPLIT) {
-                        const block_q4_0 * q_row = (const block_q4_0 *) (src0_ptr2 + m * nb01);
+                    க்கு (int64_t m = minion_id; m < M; m += STRIDE_M_KSPLIT) {
+                        மாறிலி block_q4_0 * q_row = (மாறிலி block_q4_0 *) (src0_ptr2 + m * nb01);
 
-                        float partial = compute_row_dot_q4_0(q_row + k_start, b_col_base + k_start * 32, k_len);
+                        தசம partial = compute_row_dot_q4_0(q_row + k_start, b_col_base + k_start * 32, k_len);
 
-                        if (is_hart1) {
+                        எனில் (is_hart1) {
                             *l2scp_slot = partial;
                             FENCE;
-                            flush_to_l2((const void *) l2scp_slot, 1, 64);
+                            flush_to_l2((மாறிலி வெறுமை *) l2scp_slot, 1, 64);
                             WAIT_CACHEOPS;
                             et_sem_post(ET_BARRIER_MINION);
                             et_sem_wait(ET_BARRIER_MINION);
-                        } else {
+                        } இல்லையெனில் {
                             et_sem_wait(ET_BARRIER_MINION);
-                            float other = *l2scp_slot;
+                            தசம other = *l2scp_slot;
                             et_sem_post(ET_BARRIER_MINION);
 
-                            float * dst_entry = (float *) (dst_ptr2 + n * nbd1 + m * sizeof(float));
-                            atomic_store_f32((volatile float *) dst_entry, partial + other);
+                            தசம * dst_entry = (தசம *) (dst_ptr2 + n * nbd1 + m * அளவு(தசம));
+                            atomic_store_f32((நிலையற்ற தசம *) dst_entry, partial + other);
                         }
                     }
                 }
             }
         }
-    } else if (use_ksplit_group) {
+    } இல்லையெனில் எனில் (use_ksplit_group) {
         /*
          * Grouped K-split for the 5-8 rows/minion regime.
          *
@@ -132,99 +132,99 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
          * This keeps the K-split bandwidth benefit while cutting semaphore
          * traffic by 4x relative to the old per-row exchange.
          */
-        const int64_t    k_start    = is_hart1 ? k_half : 0;
-        const int64_t    k_len      = is_hart1 ? (K_blocks - k_half) : k_half;
-        volatile float * l2scp_slot = (volatile float *) et_shire_l2scp_local(local_minion * 64);
+        மாறிலி int64_t    k_start    = is_hart1 ? k_half : 0;
+        மாறிலி int64_t    k_len      = is_hart1 ? (K_blocks - k_half) : k_half;
+        நிலையற்ற தசம * l2scp_slot = (நிலையற்ற தசம *) et_shire_l2scp_local(local_minion * 64);
 
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        க்கு (int64_t i3 = 0; i3 < ne13; i3++) {
+            மாறிலி int64_t i03       = i3 / r3;
+            மாறிலி எழுத்து *  src0_ptr3 = (மாறிலி எழுத்து *) params->src0.data + i03 * nb03;
+            மாறிலி எழுத்து *  src1_ptr3 = (மாறிலி எழுத்து *) params->src1.data + i3 * nb13;
+            எழுத்து *        dst_ptr3  = (எழுத்து *) params->dst.data + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            க்கு (int64_t i2 = 0; i2 < ne12; i2++) {
+                மாறிலி int64_t i02       = i2 / r2;
+                மாறிலி எழுத்து *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                மாறிலி எழுத்து *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                எழுத்து *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                க்கு (int64_t n = 0; n < N; n++) {
+                    மாறிலி தசம * b_col_base = (மாறிலி தசம *) (src1_ptr2 + n * nb11);
 
-                    for (int64_t m_base = minion_id; m_base < M; m_base += STRIDE_M_KSPLIT * KSPLIT_GROUP_ROWS) {
-                        const int64_t m0 = m_base;
-                        const int64_t m1 = m0 + STRIDE_M_KSPLIT;
-                        const int64_t m2 = m1 + STRIDE_M_KSPLIT;
-                        const int64_t m3 = m2 + STRIDE_M_KSPLIT;
+                    க்கு (int64_t m_base = minion_id; m_base < M; m_base += STRIDE_M_KSPLIT * KSPLIT_GROUP_ROWS) {
+                        மாறிலி int64_t m0 = m_base;
+                        மாறிலி int64_t m1 = m0 + STRIDE_M_KSPLIT;
+                        மாறிலி int64_t m2 = m1 + STRIDE_M_KSPLIT;
+                        மாறிலி int64_t m3 = m2 + STRIDE_M_KSPLIT;
 
-                        float s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
+                        தசம s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
 
-                        for (int64_t kb = 0; kb < K_blocks; kb += TILE_KB) {
+                        க்கு (int64_t kb = 0; kb < K_blocks; kb += TILE_KB) {
                             int64_t tile_len = k_len - kb;
-                            if (tile_len > TILE_KB) {
+                            எனில் (tile_len > TILE_KB) {
                                 tile_len = TILE_KB;
                             }
-                            if (tile_len <= 0) {
-                                break;
+                            எனில் (tile_len <= 0) {
+                                நிறுத்து;
                             }
-                            const float * b_tile = b_col_base + (k_start + kb) * 32;
-                            const int64_t row_kb = k_start + kb;
+                            மாறிலி தசம * b_tile = b_col_base + (k_start + kb) * 32;
+                            மாறிலி int64_t row_kb = k_start + kb;
 
-                            if (m0 < M) {
-                                s0 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m0 * nb01) + row_kb,
+                            எனில் (m0 < M) {
+                                s0 += compute_row_dot_q4_0((மாறிலி block_q4_0 *) (src0_ptr2 + m0 * nb01) + row_kb,
                                                            b_tile, tile_len);
                             }
-                            if (m1 < M) {
-                                s1 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m1 * nb01) + row_kb,
+                            எனில் (m1 < M) {
+                                s1 += compute_row_dot_q4_0((மாறிலி block_q4_0 *) (src0_ptr2 + m1 * nb01) + row_kb,
                                                            b_tile, tile_len);
                             }
-                            if (m2 < M) {
-                                s2 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m2 * nb01) + row_kb,
+                            எனில் (m2 < M) {
+                                s2 += compute_row_dot_q4_0((மாறிலி block_q4_0 *) (src0_ptr2 + m2 * nb01) + row_kb,
                                                            b_tile, tile_len);
                             }
-                            if (m3 < M) {
-                                s3 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m3 * nb01) + row_kb,
+                            எனில் (m3 < M) {
+                                s3 += compute_row_dot_q4_0((மாறிலி block_q4_0 *) (src0_ptr2 + m3 * nb01) + row_kb,
                                                            b_tile, tile_len);
                             }
                         }
 
-                        if (is_hart1) {
+                        எனில் (is_hart1) {
                             l2scp_slot[0] = s0;
                             l2scp_slot[1] = s1;
                             l2scp_slot[2] = s2;
                             l2scp_slot[3] = s3;
                             FENCE;
-                            flush_to_l2((const void *) l2scp_slot, 1, 64);
+                            flush_to_l2((மாறிலி வெறுமை *) l2scp_slot, 1, 64);
                             WAIT_CACHEOPS;
                             et_sem_post(ET_BARRIER_MINION);
                             et_sem_wait(ET_BARRIER_MINION);
-                        } else {
+                        } இல்லையெனில் {
                             et_sem_wait(ET_BARRIER_MINION);
-                            const float p0 = l2scp_slot[0];
-                            const float p1 = l2scp_slot[1];
-                            const float p2 = l2scp_slot[2];
-                            const float p3 = l2scp_slot[3];
+                            மாறிலி தசம p0 = l2scp_slot[0];
+                            மாறிலி தசம p1 = l2scp_slot[1];
+                            மாறிலி தசம p2 = l2scp_slot[2];
+                            மாறிலி தசம p3 = l2scp_slot[3];
                             et_sem_post(ET_BARRIER_MINION);
 
-                            float * c_base = (float *) (dst_ptr2 + n * nbd1);
-                            if (m0 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m0), s0 + p0);
+                            தசம * c_base = (தசம *) (dst_ptr2 + n * nbd1);
+                            எனில் (m0 < M) {
+                                atomic_store_f32((நிலையற்ற தசம *) (c_base + m0), s0 + p0);
                             }
-                            if (m1 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m1), s1 + p1);
+                            எனில் (m1 < M) {
+                                atomic_store_f32((நிலையற்ற தசம *) (c_base + m1), s1 + p1);
                             }
-                            if (m2 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m2), s2 + p2);
+                            எனில் (m2 < M) {
+                                atomic_store_f32((நிலையற்ற தசம *) (c_base + m2), s2 + p2);
                             }
-                            if (m3 < M) {
-                                atomic_store_f32((volatile float *) (c_base + m3), s3 + p3);
+                            எனில் (m3 < M) {
+                                atomic_store_f32((நிலையற்ற தசம *) (c_base + m3), s3 + p3);
                             }
                         }
                     }
                 }
             }
         }
-    } else if (K_blocks > TILE_KB) {
+    } இல்லையெனில் எனில் (K_blocks > TILE_KB) {
         /*
          * Tile-outer with scalar row groups: process up to 4 rows per
          * hart sharing each B tile before advancing to the next tile.
@@ -232,67 +232,67 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
          * tiles — avoids the flw/fadd.s/fsw stack ops that corrupt vector
          * register state on ET-SoC-1's MMX-style shared FP file.
          */
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        க்கு (int64_t i3 = 0; i3 < ne13; i3++) {
+            மாறிலி int64_t i03       = i3 / r3;
+            மாறிலி எழுத்து *  src0_ptr3 = (மாறிலி எழுத்து *) params->src0.data + i03 * nb03;
+            மாறிலி எழுத்து *  src1_ptr3 = (மாறிலி எழுத்து *) params->src1.data + i3 * nb13;
+            எழுத்து *        dst_ptr3  = (எழுத்து *) params->dst.data + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            க்கு (int64_t i2 = 0; i2 < ne12; i2++) {
+                மாறிலி int64_t i02       = i2 / r2;
+                மாறிலி எழுத்து *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                மாறிலி எழுத்து *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                எழுத்து *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                க்கு (int64_t n = 0; n < N; n++) {
+                    மாறிலி தசம * b_col_base = (மாறிலி தசம *) (src1_ptr2 + n * nb11);
 
-                    for (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * 4) {
-                        const int64_t m1 = m0 + STRIDE_M;
-                        const int64_t m2 = m0 + STRIDE_M * 2;
-                        const int64_t m3 = m0 + STRIDE_M * 3;
+                    க்கு (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * 4) {
+                        மாறிலி int64_t m1 = m0 + STRIDE_M;
+                        மாறிலி int64_t m2 = m0 + STRIDE_M * 2;
+                        மாறிலி int64_t m3 = m0 + STRIDE_M * 3;
 
-                        float s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
+                        தசம s0 = 0.0f, s1 = 0.0f, s2 = 0.0f, s3 = 0.0f;
 
-                        for (int64_t kb = 0; kb < K_blocks; kb += TILE_KB) {
+                        க்கு (int64_t kb = 0; kb < K_blocks; kb += TILE_KB) {
                             int64_t tile_len = K_blocks - kb;
-                            if (tile_len > TILE_KB) {
+                            எனில் (tile_len > TILE_KB) {
                                 tile_len = TILE_KB;
                             }
-                            const float * b_tile = b_col_base + kb * 32;
+                            மாறிலி தசம * b_tile = b_col_base + kb * 32;
 
-                            s0 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m0 * nb01) + kb, b_tile,
+                            s0 += compute_row_dot_q4_0((மாறிலி block_q4_0 *) (src0_ptr2 + m0 * nb01) + kb, b_tile,
                                                        tile_len);
-                            if (m1 < M) {
-                                s1 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m1 * nb01) + kb, b_tile,
+                            எனில் (m1 < M) {
+                                s1 += compute_row_dot_q4_0((மாறிலி block_q4_0 *) (src0_ptr2 + m1 * nb01) + kb, b_tile,
                                                            tile_len);
                             }
-                            if (m2 < M) {
-                                s2 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m2 * nb01) + kb, b_tile,
+                            எனில் (m2 < M) {
+                                s2 += compute_row_dot_q4_0((மாறிலி block_q4_0 *) (src0_ptr2 + m2 * nb01) + kb, b_tile,
                                                            tile_len);
                             }
-                            if (m3 < M) {
-                                s3 += compute_row_dot_q4_0((const block_q4_0 *) (src0_ptr2 + m3 * nb01) + kb, b_tile,
+                            எனில் (m3 < M) {
+                                s3 += compute_row_dot_q4_0((மாறிலி block_q4_0 *) (src0_ptr2 + m3 * nb01) + kb, b_tile,
                                                            tile_len);
                             }
                         }
 
-                        float * dst_base = (float *) (dst_ptr2 + n * nbd1);
-                        atomic_store_f32((volatile float *) (dst_base + m0), s0);
-                        if (m1 < M) {
-                            atomic_store_f32((volatile float *) (dst_base + m1), s1);
+                        தசம * dst_base = (தசம *) (dst_ptr2 + n * nbd1);
+                        atomic_store_f32((நிலையற்ற தசம *) (dst_base + m0), s0);
+                        எனில் (m1 < M) {
+                            atomic_store_f32((நிலையற்ற தசம *) (dst_base + m1), s1);
                         }
-                        if (m2 < M) {
-                            atomic_store_f32((volatile float *) (dst_base + m2), s2);
+                        எனில் (m2 < M) {
+                            atomic_store_f32((நிலையற்ற தசம *) (dst_base + m2), s2);
                         }
-                        if (m3 < M) {
-                            atomic_store_f32((volatile float *) (dst_base + m3), s3);
+                        எனில் (m3 < M) {
+                            atomic_store_f32((நிலையற்ற தசம *) (dst_base + m3), s3);
                         }
                     }
                 }
             }
         }
-    } else {
+    } இல்லையெனில் {
         /*
          * Simple path for small K.
          *
@@ -300,51 +300,51 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
          * pattern. That lets us compute two rows together and reuse each loaded
          * B chunk across both rows instead of reloading it in a second dot call.
          */
-        for (int64_t i3 = 0; i3 < ne13; i3++) {
-            const int64_t i03       = i3 / r3;
-            const char *  src0_ptr3 = (const char *) params->src0.data + i03 * nb03;
-            const char *  src1_ptr3 = (const char *) params->src1.data + i3 * nb13;
-            char *        dst_ptr3  = (char *) params->dst.data + i3 * nbd3;
+        க்கு (int64_t i3 = 0; i3 < ne13; i3++) {
+            மாறிலி int64_t i03       = i3 / r3;
+            மாறிலி எழுத்து *  src0_ptr3 = (மாறிலி எழுத்து *) params->src0.data + i03 * nb03;
+            மாறிலி எழுத்து *  src1_ptr3 = (மாறிலி எழுத்து *) params->src1.data + i3 * nb13;
+            எழுத்து *        dst_ptr3  = (எழுத்து *) params->dst.data + i3 * nbd3;
 
-            for (int64_t i2 = 0; i2 < ne12; i2++) {
-                const int64_t i02       = i2 / r2;
-                const char *  src0_ptr2 = src0_ptr3 + i02 * nb02;
-                const char *  src1_ptr2 = src1_ptr3 + i2 * nb12;
-                char *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
+            க்கு (int64_t i2 = 0; i2 < ne12; i2++) {
+                மாறிலி int64_t i02       = i2 / r2;
+                மாறிலி எழுத்து *  src0_ptr2 = src0_ptr3 + i02 * nb02;
+                மாறிலி எழுத்து *  src1_ptr2 = src1_ptr3 + i2 * nb12;
+                எழுத்து *        dst_ptr2  = dst_ptr3 + i2 * nbd2;
 
-                for (int64_t n = 0; n < N; n++) {
-                    const float * b_col_base = (const float *) (src1_ptr2 + n * nb11);
+                க்கு (int64_t n = 0; n < N; n++) {
+                    மாறிலி தசம * b_col_base = (மாறிலி தசம *) (src1_ptr2 + n * nb11);
                     q4_dot_state  q4_state;
                     q4_dot_begin(&q4_state);
 
-                    if (use_simple_x2) {
-                        for (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * SIMPLE_X2_ROWS) {
-                            const int64_t      m1     = m0 + STRIDE_M;
-                            const block_q4_0 * q_row0 = (const block_q4_0 *) (src0_ptr2 + m0 * nb01);
+                    எனில் (use_simple_x2) {
+                        க்கு (int64_t m0 = hart_id; m0 < M; m0 += STRIDE_M * SIMPLE_X2_ROWS) {
+                            மாறிலி int64_t      m1     = m0 + STRIDE_M;
+                            மாறிலி block_q4_0 * q_row0 = (மாறிலி block_q4_0 *) (src0_ptr2 + m0 * nb01);
 
-                            if (m1 < M) {
-                                const block_q4_0 * q_row1 = (const block_q4_0 *) (src0_ptr2 + m1 * nb01);
-                                float              s0, s1;
+                            எனில் (m1 < M) {
+                                மாறிலி block_q4_0 * q_row1 = (மாறிலி block_q4_0 *) (src0_ptr2 + m1 * nb01);
+                                தசம              s0, s1;
                                 q4_dot_compute_x2_aligned(q_row0, q_row1, b_col_base, K_blocks, &s0, &s1);
 
-                                float * dst0 = (float *) (dst_ptr2 + n * nbd1 + m0 * sizeof(float));
-                                float * dst1 = (float *) (dst_ptr2 + n * nbd1 + m1 * sizeof(float));
-                                atomic_store_f32((volatile float *) dst0, s0);
-                                atomic_store_f32((volatile float *) dst1, s1);
-                            } else {
-                                float   sum = q4_dot_compute(q_row0, b_col_base, K_blocks);
-                                float * dst = (float *) (dst_ptr2 + n * nbd1 + m0 * sizeof(float));
-                                atomic_store_f32((volatile float *) dst, sum);
+                                தசம * dst0 = (தசம *) (dst_ptr2 + n * nbd1 + m0 * அளவு(தசம));
+                                தசம * dst1 = (தசம *) (dst_ptr2 + n * nbd1 + m1 * அளவு(தசம));
+                                atomic_store_f32((நிலையற்ற தசம *) dst0, s0);
+                                atomic_store_f32((நிலையற்ற தசம *) dst1, s1);
+                            } இல்லையெனில் {
+                                தசம   sum = q4_dot_compute(q_row0, b_col_base, K_blocks);
+                                தசம * dst = (தசம *) (dst_ptr2 + n * nbd1 + m0 * அளவு(தசம));
+                                atomic_store_f32((நிலையற்ற தசம *) dst, sum);
                             }
                         }
-                    } else {
-                        for (int64_t m = hart_id; m < M; m += STRIDE_M) {
-                            const block_q4_0 * q_row = (const block_q4_0 *) (src0_ptr2 + m * nb01);
+                    } இல்லையெனில் {
+                        க்கு (int64_t m = hart_id; m < M; m += STRIDE_M) {
+                            மாறிலி block_q4_0 * q_row = (மாறிலி block_q4_0 *) (src0_ptr2 + m * nb01);
 
-                            float sum = q4_dot_compute(q_row, b_col_base, K_blocks);
+                            தசம sum = q4_dot_compute(q_row, b_col_base, K_blocks);
 
-                            float * dst_entry = (float *) (dst_ptr2 + n * nbd1 + m * sizeof(float));
-                            atomic_store_f32((volatile float *) dst_entry, sum);
+                            தசம * dst_entry = (தசம *) (dst_ptr2 + n * nbd1 + m * அளவு(தசம));
+                            atomic_store_f32((நிலையற்ற தசம *) dst_entry, sum);
                         }
                     }
 
@@ -354,5 +354,5 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
     }
 
-    return 0;
+    திரும்பு 0;
 }

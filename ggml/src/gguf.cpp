@@ -1,21 +1,21 @@
-#include "ggml.h"
-#include "ggml-backend.h"
-#include "ggml-impl.h"
-#include "gguf.h"
+#அந்தர்பாவ "ggml.h"
+#அந்தர்பாவ "ggml-backend.h"
+#அந்தர்பாவ "ggml-impl.h"
+#அந்தர்பாவ "gguf.h"
 
-#include <cinttypes>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cerrno>
-#include <map>
-#include <new>
-#include <stdexcept>
-#include <string>
-#include <unordered_set>
-#include <vector>
+#அந்தர்பாவ <cinttypes>
+#அந்தர்பாவ <cstddef>
+#அந்தர்பாவ <cstdint>
+#அந்தர்பாவ <cstdio>
+#அந்தர்பாவ <cstdlib>
+#அந்தர்பாவ <cstring>
+#அந்தர்பாவ <cerrno>
+#அந்தர்பாவ <map>
+#அந்தர்பாவ <new>
+#அந்தர்பாவ <stdexcept>
+#அந்தர்பாவ <string>
+#அந்தர்பாவ <unordered_set>
+#அந்தர்பாவ <vector>
 
 #define GGUF_MAX_STRING_LENGTH  (1024*1024*1024)
 #define GGUF_MAX_ARRAY_ELEMENTS (1024*1024*1024)
@@ -23,92 +23,92 @@
 #ifdef _WIN32
 #    define gguf_ftell _ftelli64
 #    define gguf_fseek _fseeki64
-#else
+#இல்லையெனில்
 #    define gguf_ftell ftello
 #    define gguf_fseek fseeko
 #endif
 
 template <typename T>
-struct type_to_gguf_type;
+கட்டமைப்பு type_to_gguf_type;
 
 template <>
-struct type_to_gguf_type<uint8_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_UINT8;
+கட்டமைப்பு type_to_gguf_type<uint8_t> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_UINT8;
 };
 
 template <>
-struct type_to_gguf_type<int8_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_INT8;
+கட்டமைப்பு type_to_gguf_type<int8_t> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_INT8;
 };
 
 template <>
-struct type_to_gguf_type<uint16_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_UINT16;
+கட்டமைப்பு type_to_gguf_type<uint16_t> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_UINT16;
 };
 
 template <>
-struct type_to_gguf_type<int16_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_INT16;
+கட்டமைப்பு type_to_gguf_type<int16_t> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_INT16;
 };
 
 template <>
-struct type_to_gguf_type<uint32_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_UINT32;
+கட்டமைப்பு type_to_gguf_type<uint32_t> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_UINT32;
 };
 
 template <>
-struct type_to_gguf_type<int32_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_INT32;
+கட்டமைப்பு type_to_gguf_type<int32_t> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_INT32;
 };
 
 template <>
-struct type_to_gguf_type<float> {
-    static constexpr enum gguf_type value = GGUF_TYPE_FLOAT32;
+கட்டமைப்பு type_to_gguf_type<தசம> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_FLOAT32;
 };
 
 template <>
-struct type_to_gguf_type<bool> {
-    static constexpr enum gguf_type value = GGUF_TYPE_BOOL;
+கட்டமைப்பு type_to_gguf_type<தருக்க> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_BOOL;
 };
 
 template <>
-struct type_to_gguf_type<std::string> {
-    static constexpr enum gguf_type value = GGUF_TYPE_STRING;
+கட்டமைப்பு type_to_gguf_type<std::string> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_STRING;
 };
 
 template <>
-struct type_to_gguf_type<uint64_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_UINT64;
+கட்டமைப்பு type_to_gguf_type<uint64_t> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_UINT64;
 };
 
 template <>
-struct type_to_gguf_type<int64_t> {
-    static constexpr enum gguf_type value = GGUF_TYPE_INT64;
+கட்டமைப்பு type_to_gguf_type<int64_t> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_INT64;
 };
 
 template <>
-struct type_to_gguf_type<double> {
-    static constexpr enum gguf_type value = GGUF_TYPE_FLOAT64;
+கட்டமைப்பு type_to_gguf_type<இரட்டை> {
+    நிலையான constexpr எண்ணிக்கை gguf_type value = GGUF_TYPE_FLOAT64;
 };
 
-static const std::map<gguf_type, size_t> GGUF_TYPE_SIZE = {
-    {GGUF_TYPE_UINT8,   sizeof(uint8_t)},
-    {GGUF_TYPE_INT8,    sizeof(int8_t)},
-    {GGUF_TYPE_UINT16,  sizeof(uint16_t)},
-    {GGUF_TYPE_INT16,   sizeof(int16_t)},
-    {GGUF_TYPE_UINT32,  sizeof(uint32_t)},
-    {GGUF_TYPE_INT32,   sizeof(int32_t)},
-    {GGUF_TYPE_FLOAT32, sizeof(float)},
-    {GGUF_TYPE_BOOL,    sizeof(int8_t)},
+நிலையான மாறிலி std::map<gguf_type, size_t> GGUF_TYPE_SIZE = {
+    {GGUF_TYPE_UINT8,   அளவு(uint8_t)},
+    {GGUF_TYPE_INT8,    அளவு(int8_t)},
+    {GGUF_TYPE_UINT16,  அளவு(uint16_t)},
+    {GGUF_TYPE_INT16,   அளவு(int16_t)},
+    {GGUF_TYPE_UINT32,  அளவு(uint32_t)},
+    {GGUF_TYPE_INT32,   அளவு(int32_t)},
+    {GGUF_TYPE_FLOAT32, அளவு(தசம)},
+    {GGUF_TYPE_BOOL,    அளவு(int8_t)},
     {GGUF_TYPE_STRING,  0}, // undefined
     {GGUF_TYPE_ARRAY,   0}, // undefined
-    {GGUF_TYPE_UINT64,  sizeof(uint64_t)},
-    {GGUF_TYPE_INT64,   sizeof(int64_t)},
-    {GGUF_TYPE_FLOAT64, sizeof(double)},
+    {GGUF_TYPE_UINT64,  அளவு(uint64_t)},
+    {GGUF_TYPE_INT64,   அளவு(int64_t)},
+    {GGUF_TYPE_FLOAT64, அளவு(இரட்டை)},
 };
-static_assert(GGUF_TYPE_COUNT == 13, "GGUF_TYPE_COUNT != 13");
+static_assert(GGUF_TYPE_மொத்தம் == 13, "GGUF_TYPE_COUNT != 13");
 
-static const std::map<gguf_type, const char *> GGUF_TYPE_NAME = {
+நிலையான மாறிலி std::map<gguf_type, மாறிலி எழுத்து *> GGUF_TYPE_NAME = {
     {GGUF_TYPE_UINT8,   "u8"},
     {GGUF_TYPE_INT8,    "i8"},
     {GGUF_TYPE_UINT16,  "u16"},
@@ -123,116 +123,116 @@ static const std::map<gguf_type, const char *> GGUF_TYPE_NAME = {
     {GGUF_TYPE_INT64,   "i64"},
     {GGUF_TYPE_FLOAT64, "f64"},
 };
-static_assert(GGUF_TYPE_COUNT == 13, "GGUF_TYPE_COUNT != 13");
+static_assert(GGUF_TYPE_மொத்தம் == 13, "GGUF_TYPE_COUNT != 13");
 
-size_t gguf_type_size(enum gguf_type type) {
+size_t gguf_type_size(எண்ணிக்கை gguf_type type) {
     auto it = GGUF_TYPE_SIZE.find(type);
-    return it == GGUF_TYPE_SIZE.end() ? 0 : it->second;
+    திரும்பு it == GGUF_TYPE_SIZE.end() ? 0 : it->second;
 }
 
-struct gguf_kv {
-    std::string key;
+கட்டமைப்பு gguf_kv {
+    std::string சாவி;
 
-    bool is_array;
-    enum gguf_type type;
+    தருக்க is_array;
+    எண்ணிக்கை gguf_type type;
 
     std::vector<int8_t>      data;
     std::vector<std::string> data_string;
 
     template <typename T>
-    gguf_kv(const std::string & key, const T value)
-            : key(key), is_array(false), type(type_to_gguf_type<T>::value) {
-        GGML_ASSERT(!key.empty());
-        data.resize(sizeof(T));
-        memcpy(data.data(), &value, sizeof(T));
+    gguf_kv(மாறிலி std::string & சாவி, மாறிலி T value)
+            : சாவி(சாவி), is_array(பொய்), type(type_to_gguf_type<T>::value) {
+        GGML_ASSERT(!சாவி.empty());
+        data.resize(அளவு(T));
+        memcpy(data.data(), &value, அளவு(T));
     }
 
     template <typename T>
-    gguf_kv(const std::string & key, const std::vector<T> & value)
-            : key(key), is_array(true), type(type_to_gguf_type<T>::value) {
-        GGML_ASSERT(!key.empty());
-        data.resize(value.size()*sizeof(T));
-        for (size_t i = 0; i < value.size(); ++i) {
-            const T tmp = value[i];
-            memcpy(data.data() + i*sizeof(T), &tmp, sizeof(T));
+    gguf_kv(மாறிலி std::string & சாவி, மாறிலி std::vector<T> & value)
+            : சாவி(சாவி), is_array(உண்மை), type(type_to_gguf_type<T>::value) {
+        GGML_ASSERT(!சாவி.empty());
+        data.resize(value.size()*அளவு(T));
+        க்கு (size_t i = 0; i < value.size(); ++i) {
+            மாறிலி T tmp = value[i];
+            memcpy(data.data() + i*அளவு(T), &tmp, அளவு(T));
         }
     }
 
-    gguf_kv(const std::string & key, const std::string & value)
-            : key(key), is_array(false), type(GGUF_TYPE_STRING) {
-        GGML_ASSERT(!key.empty());
+    gguf_kv(மாறிலி std::string & சாவி, மாறிலி std::string & value)
+            : சாவி(சாவி), is_array(பொய்), type(GGUF_TYPE_STRING) {
+        GGML_ASSERT(!சாவி.empty());
         data_string.push_back(value);
     }
 
-    gguf_kv(const std::string & key, const std::vector<std::string> & value)
-            : key(key), is_array(true), type(GGUF_TYPE_STRING) {
-        GGML_ASSERT(!key.empty());
+    gguf_kv(மாறிலி std::string & சாவி, மாறிலி std::vector<std::string> & value)
+            : சாவி(சாவி), is_array(உண்மை), type(GGUF_TYPE_STRING) {
+        GGML_ASSERT(!சாவி.empty());
         data_string = value;
     }
 
-    const std::string & get_key() const {
-        return key;
+    மாறிலி std::string & get_சாவி() மாறிலி {
+        திரும்பு சாவி;
     }
 
-    const enum gguf_type & get_type() const {
-        return type;
+    மாறிலி எண்ணிக்கை gguf_type & get_type() மாறிலி {
+        திரும்பு type;
     }
 
-    size_t get_ne() const {
-        if (type == GGUF_TYPE_STRING) {
-            const size_t ne = data_string.size();
+    size_t get_ne() மாறிலி {
+        எனில் (type == GGUF_TYPE_STRING) {
+            மாறிலி size_t ne = data_string.size();
             GGML_ASSERT(is_array || ne == 1);
-            return ne;
+            திரும்பு ne;
         }
-        const size_t type_size = gguf_type_size(type);
+        மாறிலி size_t type_size = gguf_type_size(type);
         GGML_ASSERT(data.size() % type_size == 0);
-        const size_t ne = data.size() / type_size;
+        மாறிலி size_t ne = data.size() / type_size;
         GGML_ASSERT(is_array || ne == 1);
-        return ne;
+        திரும்பு ne;
     }
 
     template <typename T>
-    const T & get_val(const size_t i = 0) const {
+    மாறிலி T & get_val(மாறிலி size_t i = 0) மாறிலி {
         GGML_ASSERT(type_to_gguf_type<T>::value == type);
-        if constexpr (std::is_same<T, std::string>::value) {
+        எனில் constexpr (std::is_same<T, std::string>::value) {
             GGML_ASSERT(data_string.size() >= i+1);
-            return data_string[i];
+            திரும்பு data_string[i];
         }
-        const size_t type_size = gguf_type_size(type);
+        மாறிலி size_t type_size = gguf_type_size(type);
         GGML_ASSERT(data.size() % type_size == 0);
         GGML_ASSERT(data.size() >= (i+1)*type_size);
-        return reinterpret_cast<const T *>(data.data())[i];
+        திரும்பு reinterpret_cast<மாறிலி T *>(data.data())[i];
     }
 
-    void cast(const enum gguf_type new_type) {
-        const size_t new_type_size = gguf_type_size(new_type);
+    வெறுமை cast(மாறிலி எண்ணிக்கை gguf_type new_type) {
+        மாறிலி size_t new_type_size = gguf_type_size(new_type);
         GGML_ASSERT(data.size() % new_type_size == 0);
         type = new_type;
     }
 };
 
-struct gguf_tensor_info {
-    struct ggml_tensor t; // for holding the equivalent info
+கட்டமைப்பு gguf_tensor_info {
+    கட்டமைப்பு ggml_tensor t; // for holding the equivalent info
     uint64_t offset;      // offset from start of `data`, must be a multiple of `ALIGNMENT`
 };
 
-struct gguf_context {
+கட்டமைப்பு gguf_context {
     uint32_t version = GGUF_VERSION;
 
-    std::vector<struct gguf_kv> kv;
-    std::vector<struct gguf_tensor_info> info;
+    std::vector<கட்டமைப்பு gguf_kv> kv;
+    std::vector<கட்டமைப்பு gguf_tensor_info> info;
 
     size_t alignment = GGUF_DEFAULT_ALIGNMENT;
     size_t offset    = 0; // offset of `data` from beginning of file
     size_t size      = 0; // size of `data` in bytes
 
-    void * data = nullptr;
+    வெறுமை * data = nullptr;
 };
 
-struct gguf_reader {
+கட்டமைப்பு gguf_reader {
     gguf_reader(
             gguf_reader_callback_t callback,
-            void * userdata,
+            வெறுமை * userdata,
             size_t max_chunk_read,
             uint64_t data_offset = 0,
             uint64_t nbytes_remain = 0)
@@ -246,165 +246,165 @@ struct gguf_reader {
     }
 
     // helper for remaining bytes in a file
-    static uint64_t file_remain(FILE * file) {
-        const int64_t cur = gguf_ftell(file);
-        if (cur < 0) {
-            return 0;
+    நிலையான uint64_t file_remain(FILE * file) {
+        மாறிலி int64_t cur = gguf_ftell(file);
+        எனில் (cur < 0) {
+            திரும்பு 0;
         }
-        if (gguf_fseek(file, 0, SEEK_END) != 0) {
+        எனில் (gguf_fseek(file, 0, SEEK_END) != 0) {
             gguf_fseek(file, cur, SEEK_SET);
 
-            return 0;
+            திரும்பு 0;
         }
-        const int64_t end = gguf_ftell(file);
-        if (end < 0) {
+        மாறிலி int64_t end = gguf_ftell(file);
+        எனில் (end < 0) {
             gguf_fseek(file, cur, SEEK_SET);
 
-            return 0;
+            திரும்பு 0;
         }
         gguf_fseek(file, cur, SEEK_SET);
-        return static_cast<uint64_t>(end - cur);
+        திரும்பு static_cast<uint64_t>(end - cur);
     }
 
     template <typename T>
-    bool read(T & dst) const {
-        const size_t size = sizeof(dst);
-        if (size > nbytes_remain) {
-            return false;
+    தருக்க பட(T & dst) மாறிலி {
+        மாறிலி size_t size = அளவு(dst);
+        எனில் (size > nbytes_remain) {
+            திரும்பு பொய்;
         }
-        return read_raw(&dst, size) == size;
+        திரும்பு read_raw(&dst, size) == size;
     }
 
     template <typename T>
-    bool read(std::vector<T> & dst, const size_t n) const {
-        if (n > GGUF_MAX_ARRAY_ELEMENTS) {
-            return false;
+    தருக்க பட(std::vector<T> & dst, மாறிலி size_t n) மாறிலி {
+        எனில் (n > GGUF_MAX_ARRAY_ELEMENTS) {
+            திரும்பு பொய்;
         }
-        if constexpr (std::is_same<T, std::string>::value) {
+        எனில் constexpr (std::is_same<T, std::string>::value) {
             // strings are prefixed with their length, so we need to account for that
-            if (n > SIZE_MAX / sizeof(uint64_t)) {
-                return false;
+            எனில் (n > SIZE_MAX / அளவு(uint64_t)) {
+                திரும்பு பொய்;
             }
-            if (nbytes_remain < n * sizeof(uint64_t)) {
-                return false;
+            எனில் (nbytes_remain < n * அளவு(uint64_t)) {
+                திரும்பு பொய்;
             }
-        } else {
-            if (n > SIZE_MAX / sizeof(T)) {
-                return false;
+        } இல்லையெனில் {
+            எனில் (n > SIZE_MAX / அளவு(T)) {
+                திரும்பு பொய்;
             }
-            if (nbytes_remain < n * sizeof(T)) {
-                return false;
+            எனில் (nbytes_remain < n * அளவு(T)) {
+                திரும்பு பொய்;
             }
         }
         dst.resize(n);
-        for (size_t i = 0; i < dst.size(); ++i) {
-            if constexpr (std::is_same<T, bool>::value) {
-                bool tmp;
-                if (!read(tmp)) {
-                    return false;
+        க்கு (size_t i = 0; i < dst.size(); ++i) {
+            எனில் constexpr (std::is_same<T, தருக்க>::value) {
+                தருக்க tmp;
+                எனில் (!பட(tmp)) {
+                    திரும்பு பொய்;
                 }
                 dst[i] = tmp;
-            } else {
-                if (!read(dst[i])) {
-                    return false;
+            } இல்லையெனில் {
+                எனில் (!பட(dst[i])) {
+                    திரும்பு பொய்;
                 }
             }
         }
-        return true;
+        திரும்பு உண்மை;
     }
 
-    bool read(bool & dst) const {
+    தருக்க பட(தருக்க & dst) மாறிலி {
         int8_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
+        எனில் (!பட(tmp)) {
+            திரும்பு பொய்;
         }
         dst = tmp != 0;
-        return true;
+        திரும்பு உண்மை;
     }
 
-    bool read(enum ggml_type & dst) const {
+    தருக்க பட(எண்ணிக்கை ggml_type & dst) மாறிலி {
         int32_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
+        எனில் (!பட(tmp)) {
+            திரும்பு பொய்;
         }
         dst = ggml_type(tmp);
-        return true;
+        திரும்பு உண்மை;
     }
 
-    bool read(enum gguf_type & dst) const {
+    தருக்க பட(எண்ணிக்கை gguf_type & dst) மாறிலி {
         int32_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
+        எனில் (!பட(tmp)) {
+            திரும்பு பொய்;
         }
         dst = gguf_type(tmp);
-        return true;
+        திரும்பு உண்மை;
     }
 
-    bool read(std::string & dst) const {
+    தருக்க பட(std::string & dst) மாறிலி {
         uint64_t size = 0;
-        if (!read(size)) {
-            return false;
+        எனில் (!பட(size)) {
+            திரும்பு பொய்;
         }
-        if (size > GGUF_MAX_STRING_LENGTH) {
+        எனில் (size > GGUF_MAX_STRING_LENGTH) {
             GGML_LOG_ERROR("%s: string length %" PRIu64 " exceeds maximum %" PRIu64 "\n", __func__, size, (uint64_t) GGUF_MAX_STRING_LENGTH);
-            return false;
+            திரும்பு பொய்;
         }
-        if (size > nbytes_remain) {
+        எனில் (size > nbytes_remain) {
             GGML_LOG_ERROR("%s: string length %" PRIu64 " exceeds remaining file size %" PRIu64 " bytes\n", __func__, size, nbytes_remain);
-            return false;
+            திரும்பு பொய்;
         }
         dst.resize(static_cast<size_t>(size));
-        return read_raw(dst.data(), static_cast<size_t>(size)) == size;
+        திரும்பு read_raw(dst.data(), static_cast<size_t>(size)) == size;
     }
 
-    bool read(void * dst, const size_t size) const {
-        if (size > nbytes_remain) {
-            return false;
+    தருக்க பட(வெறுமை * dst, மாறிலி size_t size) மாறிலி {
+        எனில் (size > nbytes_remain) {
+            திரும்பு பொய்;
         }
-        return read_raw(dst, size) == size;
+        திரும்பு read_raw(dst, size) == size;
     }
 
-    uint64_t tell() const {
-        return data_offset;
+    uint64_t tell() மாறிலி {
+        திரும்பு data_offset;
     }
 
     // position in the file where the GGUF data starts, alignment is relative to it, not to the file
-    uint64_t start() const {
-        return start_offset;
+    uint64_t start() மாறிலி {
+        திரும்பு start_offset;
     }
 
-    bool seek(uint64_t absolute_offset) const {
-        const uint64_t end_offset = uint64_t(data_offset) + nbytes_remain;
-        if (absolute_offset > end_offset) {
-            return false;
+    தருக்க seek(uint64_t absolute_offset) மாறிலி {
+        மாறிலி uint64_t end_offset = uint64_t(data_offset) + nbytes_remain;
+        எனில் (absolute_offset > end_offset) {
+            திரும்பு பொய்;
         }
 
         data_offset = absolute_offset;
         nbytes_remain = end_offset - absolute_offset;
 
-        return true;
+        திரும்பு உண்மை;
     }
 
-private:
-    size_t read_raw(void * dst, size_t size) const {
-        if (callback == nullptr || size == 0) {
-            return 0;
+தனிப்பட்ட:
+    size_t read_raw(வெறுமை * dst, size_t size) மாறிலி {
+        எனில் (callback == nullptr || size == 0) {
+            திரும்பு 0;
         }
 
         uint8_t * data = static_cast<uint8_t *>(dst);
         size_t total_nread = 0;
-        bool reached_eof = false;
+        தருக்க reached_eof = பொய்;
 
-        while (total_nread < size) {
-            const size_t chunk_size = std::min(max_chunk_read, size - total_nread);
-            if (data_offset + total_nread < data_offset) {
-                break;
+        போது (total_nread < size) {
+            மாறிலி size_t chunk_size = std::min(max_chunk_read, size - total_nread);
+            எனில் (data_offset + total_nread < data_offset) {
+                நிறுத்து;
             }
-            const size_t nread = callback(userdata, static_cast<void *>(data + total_nread), data_offset + total_nread, chunk_size);
+            மாறிலி size_t nread = callback(userdata, static_cast<வெறுமை *>(data + total_nread), data_offset + total_nread, chunk_size);
             total_nread += nread;
-            if (nread != chunk_size) {
-                reached_eof = true;
-                break;
+            எனில் (nread != chunk_size) {
+                reached_eof = உண்மை;
+                நிறுத்து;
             }
         }
 
@@ -412,76 +412,76 @@ private:
         GGML_ASSERT(total_nread <= nbytes_remain);
         nbytes_remain -= total_nread;
 
-        if (reached_eof) {
+        எனில் (reached_eof) {
             nbytes_remain = 0;
         }
 
-        return total_nread;
+        திரும்பு total_nread;
     }
 
     gguf_reader_callback_t callback = nullptr;
-    void * userdata = nullptr;
+    வெறுமை * userdata = nullptr;
     size_t max_chunk_read = 0;
     uint64_t start_offset = 0;
     mutable uint64_t data_offset = 0;
     mutable uint64_t nbytes_remain = 0;
 };
 
-struct gguf_context * gguf_init_empty(void) {
-    return new gguf_context;
+கட்டமைப்பு gguf_context * gguf_init_empty(வெறுமை) {
+    திரும்பு புதிய gguf_context;
 }
 
 template<typename T>
-bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct gguf_kv> & kv, const std::string & key, const bool is_array, const size_t n) {
-    if (is_array) {
+தருக்க gguf_read_emplace_helper(மாறிலி கட்டமைப்பு gguf_reader & gr, std::vector<கட்டமைப்பு gguf_kv> & kv, மாறிலி std::string & சாவி, மாறிலி தருக்க is_array, மாறிலி size_t n) {
+    எனில் (is_array) {
         std::vector<T> value;
-        try {
-            if (!gr.read(value, n)) {
-                return false;
+        முயல் {
+            எனில் (!gr.பட(value, n)) {
+                திரும்பு பொய்;
             }
-        } catch (std::length_error &) {
-            GGML_LOG_ERROR("%s: encountered length_error while reading value for key '%s'\n", __func__, key.c_str());
-            return false;
-        } catch (std::bad_alloc &) {
-            GGML_LOG_ERROR("%s: encountered bad_alloc error while reading value for key '%s'\n", __func__, key.c_str());
-            return false;
+        } பிடி (std::length_error &) {
+            GGML_LOG_ERROR("%s: encountered length_error while reading value for key '%s'\n", __func__, சாவி.c_str());
+            திரும்பு பொய்;
+        } பிடி (std::bad_alloc &) {
+            GGML_LOG_ERROR("%s: encountered bad_alloc error while reading value for key '%s'\n", __func__, சாவி.c_str());
+            திரும்பு பொய்;
         }
-        kv.emplace_back(key, value);
-    } else {
+        kv.emplace_back(சாவி, value);
+    } இல்லையெனில் {
         T value;
-        if (!gr.read(value)) {
-            return false;
+        எனில் (!gr.பட(value)) {
+            திரும்பு பொய்;
         }
-        kv.emplace_back(key, value);
+        kv.emplace_back(சாவி, value);
     }
-    return true;
+    திரும்பு உண்மை;
 }
 
-static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr, struct gguf_init_params params) {
-    struct gguf_context * ctx = new gguf_context;
+நிலையான கட்டமைப்பு gguf_context * gguf_init_from_reader(மாறிலி கட்டமைப்பு gguf_reader & gr, கட்டமைப்பு gguf_init_params params) {
+    கட்டமைப்பு gguf_context * ctx = புதிய gguf_context;
 
-    bool ok = true;
+    தருக்க ok = உண்மை;
 
     // file magic
     {
-        std::vector<char> magic;
-        ok = ok && gr.read(magic, 4);
+        std::vector<எழுத்து> magic;
+        ok = ok && gr.பட(magic, 4);
 
-        if (!ok) {
+        எனில் (!ok) {
             GGML_LOG_ERROR("%s: failed to read magic\n", __func__);
             gguf_free(ctx);
-            return nullptr;
+            திரும்பு nullptr;
         }
 
-        for (uint32_t i = 0; i < magic.size(); i++) {
-            if (magic[i] != GGUF_MAGIC[i]) {
-                char c0 = isprint(magic[0]) ? magic[0] : '?';
-                char c1 = isprint(magic[1]) ? magic[1] : '?';
-                char c2 = isprint(magic[2]) ? magic[2] : '?';
-                char c3 = isprint(magic[3]) ? magic[3] : '?';
+        க்கு (uint32_t i = 0; i < magic.size(); i++) {
+            எனில் (magic[i] != GGUF_MAGIC[i]) {
+                எழுத்து c0 = isprint(magic[0]) ? magic[0] : '?';
+                எழுத்து c1 = isprint(magic[1]) ? magic[1] : '?';
+                எழுத்து c2 = isprint(magic[2]) ? magic[2] : '?';
+                எழுத்து c3 = isprint(magic[3]) ? magic[3] : '?';
                 GGML_LOG_ERROR("%s: invalid magic characters: '%c%c%c%c', expected 'GGUF'\n", __func__, c0, c1, c2, c3);
                 gguf_free(ctx);
-                return nullptr;
+                திரும்பு nullptr;
             }
         }
     }
@@ -490,10 +490,10 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
     int64_t n_kv      = 0;
     int64_t n_tensors = 0;
 
-    if (ok && gr.read(ctx->version)) {
-        if (ok && ctx->version == 0) {
+    எனில் (ok && gr.பட(ctx->version)) {
+        எனில் (ok && ctx->version == 0) {
             GGML_LOG_ERROR("%s: bad GGUF version: %" PRIu32 "\n", __func__, ctx->version);
-            ok = false;
+            ok = பொய்;
         }
 
         /*
@@ -503,285 +503,285 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
          * the last 4 hexadecimal digits to check if the model is the same
          * endianness as the host system.
         */
-        if (ok && (ctx->version & 0x0000FFFF) == 0x00000000) {
+        எனில் (ok && (ctx->version & 0x0000FFFF) == 0x00000000) {
             GGML_LOG_ERROR("%s: failed to load model: this GGUF file version %" PRIu32 " is extremely large, is there a mismatch between the host and model endianness?\n", __func__, ctx->version);
-            ok = false;
+            ok = பொய்;
         }
 
-        if (ok && ctx->version == 1) {
+        எனில் (ok && ctx->version == 1) {
             GGML_LOG_ERROR("%s: GGUFv1 is no longer supported, please use a more up-to-date version\n", __func__);
-            ok = false;
+            ok = பொய்;
         }
-        if (ok && ctx->version > GGUF_VERSION) {
+        எனில் (ok && ctx->version > GGUF_VERSION) {
             GGML_LOG_ERROR("%s: this GGUF file is version %" PRIu32 " but this software only supports up to version %d\n",
                 __func__, ctx->version, GGUF_VERSION);
-            ok = false;
+            ok = பொய்;
         }
-    } else {
-        ok = false;
+    } இல்லையெனில் {
+        ok = பொய்;
     }
 
-    if (ok && gr.read(n_tensors)) {
-        static_assert(sizeof(size_t) <= 8 && sizeof(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
-        if (n_tensors < 0 || n_tensors > int64_t(SIZE_MAX/sizeof(gguf_tensor_info))) {
+    எனில் (ok && gr.பட(n_tensors)) {
+        static_assert(அளவு(size_t) <= 8 && அளவு(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
+        எனில் (n_tensors < 0 || n_tensors > int64_t(SIZE_MAX/அளவு(gguf_tensor_info))) {
             GGML_LOG_ERROR("%s: number of tensors is %" PRIi64 " but must be in [0, %zu]\n",
-                __func__, n_tensors, SIZE_MAX/sizeof(gguf_tensor_info));
-            ok = false;
+                __func__, n_tensors, SIZE_MAX/அளவு(gguf_tensor_info));
+            ok = பொய்;
         }
-    } else {
-        ok = false;
+    } இல்லையெனில் {
+        ok = பொய்;
     }
 
-    if (ok && gr.read(n_kv)) {
-        static_assert(sizeof(size_t) <= 8 && sizeof(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
-        if (n_kv < 0 || n_kv > int64_t(SIZE_MAX/sizeof(gguf_kv))) {
+    எனில் (ok && gr.பட(n_kv)) {
+        static_assert(அளவு(size_t) <= 8 && அளவு(gguf_tensor_info) >= 2, "int64_t insufficient for indexing");
+        எனில் (n_kv < 0 || n_kv > int64_t(SIZE_MAX/அளவு(gguf_kv))) {
             GGML_LOG_ERROR("%s: number of key value pairs is %" PRIi64 " but must be in [0, %zu]\n",
-                    __func__, n_kv, SIZE_MAX/sizeof(gguf_kv));
-            ok = false;
+                    __func__, n_kv, SIZE_MAX/அளவு(gguf_kv));
+            ok = பொய்;
         }
-    } else {
-        ok = false;
+    } இல்லையெனில் {
+        ok = பொய்;
     }
 
-    if (!ok) {
+    எனில் (!ok) {
         GGML_LOG_ERROR("%s: failed to read header\n", __func__);
         gguf_free(ctx);
-        return nullptr;
+        திரும்பு nullptr;
     }
 
     // KV pairs
     {
-        std::unordered_set<std::string> seen_keys;
+        std::unordered_set<std::string> seen_சாவிகள்;
 
-        for (int64_t i = 0; ok && i < n_kv; ++i) {
-            std::string key;
+        க்கு (int64_t i = 0; ok && i < n_kv; ++i) {
+            std::string சாவி;
             gguf_type   type     = gguf_type(-1);
-            bool        is_array = false;
+            தருக்க        is_array = பொய்;
             uint64_t    n        = 1;
 
-            try {
-                ok = ok && gr.read(key);
-            } catch (std::length_error &) {
+            முயல் {
+                ok = ok && gr.பட(சாவி);
+            } பிடி (std::length_error &) {
                 GGML_LOG_ERROR("%s: encountered length_error while reading key %" PRIi64 "\n", __func__, i);
-                ok = false;
-            } catch (std::bad_alloc &) {
+                ok = பொய்;
+            } பிடி (std::bad_alloc &) {
                 GGML_LOG_ERROR("%s: encountered bad_alloc error while reading key %" PRIi64 "\n", __func__, i);
-                ok = false;
+                ok = பொய்;
             }
-            if (ok && key.empty()) {
+            எனில் (ok && சாவி.empty()) {
                 GGML_LOG_ERROR("%s: key %" PRIi64 " is empty\n", __func__, i);
-                ok = false;
+                ok = பொய்;
             }
-            if (ok && !seen_keys.insert(key).second) {
-                GGML_LOG_ERROR("%s: duplicate key '%s' for KV pair %" PRIi64 "\n", __func__, key.c_str(), i);
-                ok = false;
+            எனில் (ok && !seen_சாவிகள்.insert(சாவி).second) {
+                GGML_LOG_ERROR("%s: duplicate key '%s' for KV pair %" PRIi64 "\n", __func__, சாவி.c_str(), i);
+                ok = பொய்;
             }
-            if (!ok) {
-                break;
-            }
-
-            ok = ok && gr.read(type);
-            if (type == GGUF_TYPE_ARRAY) {
-                is_array = true;
-                ok = ok && gr.read(type);
-                ok = ok && gr.read(n);
-            }
-            if (!ok) {
-                break;
+            எனில் (!ok) {
+                நிறுத்து;
             }
 
-            switch (type) {
-                case GGUF_TYPE_UINT8:   ok = ok && gguf_read_emplace_helper<uint8_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT8:    ok = ok && gguf_read_emplace_helper<int8_t>     (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_UINT16:  ok = ok && gguf_read_emplace_helper<uint16_t>   (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT16:   ok = ok && gguf_read_emplace_helper<int16_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_UINT32:  ok = ok && gguf_read_emplace_helper<uint32_t>   (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT32:   ok = ok && gguf_read_emplace_helper<int32_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_FLOAT32: ok = ok && gguf_read_emplace_helper<float>      (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_BOOL:    ok = ok && gguf_read_emplace_helper<bool>       (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_STRING:  ok = ok && gguf_read_emplace_helper<std::string>(gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_UINT64:  ok = ok && gguf_read_emplace_helper<uint64_t>   (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_INT64:   ok = ok && gguf_read_emplace_helper<int64_t>    (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_FLOAT64: ok = ok && gguf_read_emplace_helper<double>     (gr, ctx->kv, key, is_array, n); break;
-                case GGUF_TYPE_ARRAY:
-                default:
+            ok = ok && gr.பட(type);
+            எனில் (type == GGUF_TYPE_ARRAY) {
+                is_array = உண்மை;
+                ok = ok && gr.பட(type);
+                ok = ok && gr.பட(n);
+            }
+            எனில் (!ok) {
+                நிறுத்து;
+            }
+
+            தேர்வு (type) {
+                நிலை GGUF_TYPE_UINT8:   ok = ok && gguf_read_emplace_helper<uint8_t>    (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_INT8:    ok = ok && gguf_read_emplace_helper<int8_t>     (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_UINT16:  ok = ok && gguf_read_emplace_helper<uint16_t>   (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_INT16:   ok = ok && gguf_read_emplace_helper<int16_t>    (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_UINT32:  ok = ok && gguf_read_emplace_helper<uint32_t>   (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_INT32:   ok = ok && gguf_read_emplace_helper<int32_t>    (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_FLOAT32: ok = ok && gguf_read_emplace_helper<தசம>      (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_BOOL:    ok = ok && gguf_read_emplace_helper<தருக்க>       (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_STRING:  ok = ok && gguf_read_emplace_helper<std::string>(gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_UINT64:  ok = ok && gguf_read_emplace_helper<uint64_t>   (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_INT64:   ok = ok && gguf_read_emplace_helper<int64_t>    (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_FLOAT64: ok = ok && gguf_read_emplace_helper<இரட்டை>     (gr, ctx->kv, சாவி, is_array, n); நிறுத்து;
+                நிலை GGUF_TYPE_ARRAY:
+                இயல்பு:
                     {
-                        GGML_LOG_ERROR("%s: key '%s' has invalid GGUF type %d\n", __func__, key.c_str(), type);
-                        ok = false;
-                    } break;
+                        GGML_LOG_ERROR("%s: key '%s' has invalid GGUF type %d\n", __func__, சாவி.c_str(), type);
+                        ok = பொய்;
+                    } நிறுத்து;
             }
         }
 
-        if (!ok) {
+        எனில் (!ok) {
             GGML_LOG_ERROR("%s: failed to read key-value pairs\n", __func__);
             gguf_free(ctx);
-            return nullptr;
+            திரும்பு nullptr;
         }
         GGML_ASSERT(int64_t(ctx->kv.size()) == n_kv);
 
-        const int alignment_idx = gguf_find_key(ctx, GGUF_KEY_GENERAL_ALIGNMENT);
-        if (alignment_idx != -1 && gguf_get_kv_type(ctx, alignment_idx) != GGUF_TYPE_UINT32) {
+        மாறிலி முழு alignment_idx = gguf_find_சாவி(ctx, GGUF_சாவி_GENERAL_ALIGNMENT);
+        எனில் (alignment_idx != -1 && gguf_get_kv_type(ctx, alignment_idx) != GGUF_TYPE_UINT32) {
             GGML_LOG_ERROR("%s: key '%s' must be of type %s but is %s\n",
-                __func__, GGUF_KEY_GENERAL_ALIGNMENT, gguf_type_name(GGUF_TYPE_UINT32),
+                __func__, GGUF_சாவி_GENERAL_ALIGNMENT, gguf_type_name(GGUF_TYPE_UINT32),
                 gguf_type_name(gguf_get_kv_type(ctx, alignment_idx)));
             gguf_free(ctx);
-            return nullptr;
+            திரும்பு nullptr;
         }
         ctx->alignment = alignment_idx == -1 ? GGUF_DEFAULT_ALIGNMENT : gguf_get_val_u32(ctx, alignment_idx);
 
-        if (ctx->alignment == 0 || (ctx->alignment & (ctx->alignment - 1)) != 0) {
+        எனில் (ctx->alignment == 0 || (ctx->alignment & (ctx->alignment - 1)) != 0) {
             GGML_LOG_ERROR("%s: alignment %zu is not a power of 2\n", __func__, ctx->alignment);
             gguf_free(ctx);
-            return nullptr;
+            திரும்பு nullptr;
         }
     }
 
     // read the tensor info
     std::unordered_set<std::string> seen_tensor_names;
 
-    for (int64_t i = 0; ok && i < n_tensors; ++i) {
-        struct gguf_tensor_info info;
+    க்கு (int64_t i = 0; ok && i < n_tensors; ++i) {
+        கட்டமைப்பு gguf_tensor_info info;
 
         // tensor name
         {
             std::string name;
-            try {
-                ok = ok && gr.read(name);
-            } catch (std::length_error &) {
+            முயல் {
+                ok = ok && gr.பட(name);
+            } பிடி (std::length_error &) {
                 GGML_LOG_ERROR("%s: encountered length_error while reading tensor name %" PRIi64 "\n", __func__, i);
-                ok = false;
-            } catch (std::bad_alloc &) {
+                ok = பொய்;
+            } பிடி (std::bad_alloc &) {
                 GGML_LOG_ERROR("%s: encountered bad_alloc error while reading tensor name %" PRIi64 "\n", __func__, i);
-                ok = false;
+                ok = பொய்;
             }
-            if (name.length() >= GGML_MAX_NAME) {
+            எனில் (name.length() >= GGML_MAX_NAME) {
                 GGML_LOG_ERROR("%s: tensor name %" PRIi64 " is too long: %zu >= %d\n", __func__, i, name.length(), GGML_MAX_NAME);
-                ok = false;
-                break;
+                ok = பொய்;
+                நிறுத்து;
             }
             ggml_set_name(&info.t, name.c_str());
 
             // make sure there are no duplicate tensor names
-            if (ok && !seen_tensor_names.insert(name).second) {
+            எனில் (ok && !seen_tensor_names.insert(name).second) {
                 GGML_LOG_ERROR("%s: duplicate tensor name '%s' for tensor %" PRIi64 "\n", __func__, info.t.name, i);
-                ok = false;
-                break;
+                ok = பொய்;
+                நிறுத்து;
             }
         }
-        if (!ok) {
-            break;
+        எனில் (!ok) {
+            நிறுத்து;
         }
 
         // tensor shape
         {
             uint32_t n_dims = 0;
-            ok = ok && gr.read(n_dims);
-            if (n_dims > GGML_MAX_DIMS) {
+            ok = ok && gr.பட(n_dims);
+            எனில் (n_dims > GGML_MAX_DIMS) {
                 GGML_LOG_ERROR("%s: tensor '%s' has invalid number of dimensions: %" PRIu32 " > %" PRIu32 "\n",
                     __func__, info.t.name, n_dims, GGML_MAX_DIMS);
-                ok = false;
-                break;
+                ok = பொய்;
+                நிறுத்து;
             }
-            for (uint32_t j = 0; ok && j < GGML_MAX_DIMS; ++j) {
+            க்கு (uint32_t j = 0; ok && j < GGML_MAX_DIMS; ++j) {
                 info.t.ne[j] = 1;
-                if (j < n_dims) {
-                    ok = ok && gr.read(info.t.ne[j]);
+                எனில் (j < n_dims) {
+                    ok = ok && gr.பட(info.t.ne[j]);
                 }
 
                 // check that all ne are non-negative
-                if (info.t.ne[j] < 0) {
+                எனில் (info.t.ne[j] < 0) {
                     GGML_LOG_ERROR("%s: tensor '%s' dimension %" PRIu32 " has invalid number of elements: %" PRIi64 " < 0\n",
                         __func__, info.t.name, j, info.t.ne[j]);
-                    ok = false;
-                    break;
+                    ok = பொய்;
+                    நிறுத்து;
                 }
             }
 
             // check that the total number of elements is representable
             // (a zero-element tensor is trivially representable)
-            if (ok) {
+            எனில் (ok) {
                 int64_t current_nelements = info.t.ne[0];
-                for (int i = 1; i < GGML_MAX_DIMS; ++i) {
-                    if (info.t.ne[i] > 1) { // 1 or 0 won't cause an overflow
-                        if (INT64_MAX / info.t.ne[i] < current_nelements) {
-                             ok = false;
-                             break;
+                க்கு (முழு i = 1; i < GGML_MAX_DIMS; ++i) {
+                    எனில் (info.t.ne[i] > 1) { // 1 or 0 won't cause an overflow
+                        எனில் (INT64_MAX / info.t.ne[i] < current_nelements) {
+                             ok = பொய்;
+                             நிறுத்து;
                          }
                      }
                      current_nelements *= info.t.ne[i];
                  }
-                 if (!ok) {
+                 எனில் (!ok) {
                      GGML_LOG_ERROR("%s: incorrect shape for a tensor '%s' may cause overflow errors: "
                          "(%" PRIi64 ", %" PRIi64 ", %" PRIi64 ", %" PRIi64 ") is >= INT64_MAX (%" PRIi64 ")\n",
                          __func__, info.t.name, info.t.ne[0], info.t.ne[1], info.t.ne[2], info.t.ne[3], INT64_MAX);
-                     break;
+                     நிறுத்து;
                  }
             }
         }
-        if (!ok) {
-            break;
+        எனில் (!ok) {
+            நிறுத்து;
         }
 
         // tensor type
         {
-            ok = ok && gr.read(info.t.type);
+            ok = ok && gr.பட(info.t.type);
 
             // check that tensor type is within defined range
-            if (info.t.type < 0 || info.t.type >= GGML_TYPE_COUNT) {
+            எனில் (info.t.type < 0 || info.t.type >= GGML_TYPE_மொத்தம்) {
                 GGML_LOG_ERROR("%s: tensor '%s' has invalid ggml type %d. should be in [0, %d)\n",
-                    __func__, info.t.name, info.t.type, GGML_TYPE_COUNT);
-                ok = false;
-                break;
+                    __func__, info.t.name, info.t.type, GGML_TYPE_மொத்தம்);
+                ok = பொய்;
+                நிறுத்து;
             }
-            const size_t  type_size = ggml_type_size(info.t.type);
-            const int64_t blck_size = ggml_blck_size(info.t.type);
+            மாறிலி size_t  type_size = ggml_type_size(info.t.type);
+            மாறிலி int64_t blck_size = ggml_blck_size(info.t.type);
 
             // check that row size is divisible by block size
-            if (blck_size == 0 || info.t.ne[0] % blck_size != 0) {
+            எனில் (blck_size == 0 || info.t.ne[0] % blck_size != 0) {
                 GGML_LOG_ERROR("%s: tensor '%s' of type %d (%s) has %" PRId64 " elements per row, "
                     "not a multiple of block size (%" PRId64 ")\n",
-                    __func__, info.t.name, (int) info.t.type, ggml_type_name(info.t.type), info.t.ne[0], blck_size);
-                ok = false;
-                break;
+                    __func__, info.t.name, (முழு) info.t.type, ggml_type_name(info.t.type), info.t.ne[0], blck_size);
+                ok = பொய்;
+                நிறுத்து;
             }
 
             // check that the size of the tensor in bytes is representable
-            if (ok && uint64_t(ggml_nelements(&info.t)/ggml_blck_size(info.t.type)) > SIZE_MAX/ggml_type_size(info.t.type)) {
+            எனில் (ok && uint64_t(ggml_nelements(&info.t)/ggml_blck_size(info.t.type)) > SIZE_MAX/ggml_type_size(info.t.type)) {
                 GGML_LOG_ERROR("%s: tensor '%s' with shape (%" PRIi64 ", %" PRIi64 ", %" PRIi64 ", %" PRIi64 ") has a size in bytes > %zu\n",
                     __func__, info.t.name, info.t.ne[0], info.t.ne[1], info.t.ne[2], info.t.ne[3], SIZE_MAX);
-                ok = false;
-                break;
+                ok = பொய்;
+                நிறுத்து;
             }
 
             // calculate byte offsets given the tensor shape and type
             info.t.nb[0] = type_size;
             info.t.nb[1] = info.t.nb[0]*(info.t.ne[0]/blck_size);
-            for (int j = 2; j < GGML_MAX_DIMS; ++j) {
+            க்கு (முழு j = 2; j < GGML_MAX_DIMS; ++j) {
                 info.t.nb[j] = info.t.nb[j - 1]*info.t.ne[j - 1];
             }
         }
-        if (!ok) {
-            break;
+        எனில் (!ok) {
+            நிறுத்து;
         }
 
         // tensor data offset within buffer
-        ok = ok && gr.read(info.offset);
+        ok = ok && gr.பட(info.offset);
 
         ctx->info.push_back(info);
     }
 
-    if (!ok) {
+    எனில் (!ok) {
         GGML_LOG_ERROR("%s: failed to read tensor info\n", __func__);
         gguf_free(ctx);
-        return nullptr;
+        திரும்பு nullptr;
     }
     GGML_ASSERT(int64_t(ctx->info.size()) == n_tensors);
 
     // we require the data section to be aligned, so take into account any padding
-    if (n_tensors > 0 && !gr.seek(gr.start() + GGML_PAD(gr.tell() - gr.start(), ctx->alignment))) {
+    எனில் (n_tensors > 0 && !gr.seek(gr.start() + GGML_PAD(gr.tell() - gr.start(), ctx->alignment))) {
         GGML_LOG_ERROR("%s: failed to seek to beginning of data section\n", __func__);
         gguf_free(ctx);
-        return nullptr;
+        திரும்பு nullptr;
     }
 
     // store the current file offset - this is where the data section starts
@@ -790,806 +790,806 @@ static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr
     // compute the total size of the data section, taking into account the alignment
     {
         ctx->size = 0;
-        for (size_t i = 0; i < ctx->info.size(); ++i) {
-            const gguf_tensor_info & ti = ctx->info[i];
-            if (ti.offset != ctx->size) {
+        க்கு (size_t i = 0; i < ctx->info.size(); ++i) {
+            மாறிலி gguf_tensor_info & ti = ctx->info[i];
+            எனில் (ti.offset != ctx->size) {
                 GGML_LOG_ERROR("%s: tensor '%s' has offset %" PRIu64 ", expected %zu\n",
                     __func__, ti.t.name, ti.offset, ctx->size);
                 GGML_LOG_ERROR("%s: failed to read tensor data\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                திரும்பு nullptr;
             }
-            const size_t nbytes = ggml_nbytes(&ti.t);
+            மாறிலி size_t nbytes = ggml_nbytes(&ti.t);
             // GGML_PAD adds (alignment - 1) to nbytes. when nbytes is near
             // SIZE_MAX this wraps to 0 and makes the check below dead.
-            if (nbytes > SIZE_MAX - (ctx->alignment - 1)) {
+            எனில் (nbytes > SIZE_MAX - (ctx->alignment - 1)) {
                 GGML_LOG_ERROR("%s: tensor '%s' size %zu overflows after padding (alignment %zu)\n",
                     __func__, ti.t.name, nbytes, ctx->alignment);
                 gguf_free(ctx);
-                return nullptr;
+                திரும்பு nullptr;
             }
-            const size_t padded_size = GGML_PAD(nbytes, ctx->alignment);
-            if (SIZE_MAX - ctx->size < padded_size) {
+            மாறிலி size_t padded_size = GGML_PAD(nbytes, ctx->alignment);
+            எனில் (SIZE_MAX - ctx->size < padded_size) {
                 GGML_LOG_ERROR("%s: tensor '%s' size overflow, cannot accumulate size %zu + %zu\n",
                     __func__, ti.t.name, ctx->size, padded_size);
                 gguf_free(ctx);
-                return nullptr;
+                திரும்பு nullptr;
             }
             ctx->size += padded_size;
         }
     }
 
     // load the tensor data only if requested
-    if (params.ctx != nullptr) {
+    எனில் (params.ctx != nullptr) {
         // if the provided gguf_context is no_alloc, then we create "empty" tensors and do not read the binary blob
         // otherwise, we load the binary blob into the created ggml_context as well, and point the "data" members of
         //   the ggml_tensor structs to the appropriate locations in the binary blob
 
         // compute the exact size needed for the new ggml_context
         size_t mem_size = 0;
-        if (params.no_alloc) {
-            if (n_tensors != 0 && SIZE_MAX / n_tensors < ggml_tensor_overhead()) {
+        எனில் (params.no_alloc) {
+            எனில் (n_tensors != 0 && SIZE_MAX / n_tensors < ggml_tensor_overhead()) {
                 GGML_LOG_ERROR("%s: memory size overflow while allocating ggml context\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                திரும்பு nullptr;
             }
 
-            const size_t overhead = n_tensors * ggml_tensor_overhead();
+            மாறிலி size_t overhead = n_tensors * ggml_tensor_overhead();
 
             mem_size = overhead;
-        } else {
-            if ((n_tensors + 1) != 0 && SIZE_MAX / (n_tensors + 1) < ggml_tensor_overhead()) {
+        } இல்லையெனில் {
+            எனில் ((n_tensors + 1) != 0 && SIZE_MAX / (n_tensors + 1) < ggml_tensor_overhead()) {
                 GGML_LOG_ERROR("%s: memory size overflow while allocating ggml context\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                திரும்பு nullptr;
             }
 
-            const size_t overhead = (n_tensors + 1) * ggml_tensor_overhead();
+            மாறிலி size_t overhead = (n_tensors + 1) * ggml_tensor_overhead();
 
-            if (SIZE_MAX - overhead < ctx->size) {
+            எனில் (SIZE_MAX - overhead < ctx->size) {
                 GGML_LOG_ERROR("%s: memory size overflow while allocating ggml context\n", __func__);
                 gguf_free(ctx);
-                return nullptr;
+                திரும்பு nullptr;
             }
 
             mem_size = overhead + ctx->size;
         }
 
-        struct ggml_init_params pdata = {
+        கட்டமைப்பு ggml_init_params pdata = {
             /*mem_size   =*/ mem_size,
             /*mem_buffer =*/ nullptr,
             /*no_alloc   =*/ params.no_alloc,
         };
 
         *params.ctx = ggml_init(pdata);
-        if (*params.ctx == nullptr) {
+        எனில் (*params.ctx == nullptr) {
             GGML_LOG_ERROR("%s: failed to initialize ggml context for storing tensors\n", __func__);
             gguf_free(ctx);
-            return nullptr;
+            திரும்பு nullptr;
         }
 
-        struct ggml_context * ctx_data = *params.ctx;
+        கட்டமைப்பு ggml_context * ctx_data = *params.ctx;
 
-        struct ggml_tensor * data = nullptr;
+        கட்டமைப்பு ggml_tensor * data = nullptr;
 
-        if (!params.no_alloc) {
+        எனில் (!params.no_alloc) {
             data = ggml_new_tensor_1d(ctx_data, GGML_TYPE_I8, ctx->size);
 
             ok = ok && data != nullptr;
 
-            if (ok) {
+            எனில் (ok) {
                 ggml_set_name(data, "GGUF tensor data binary blob");
             }
 
             // read the binary blob with the tensor data
-            ok = ok && gr.read(data->data, ctx->size);
+            ok = ok && gr.பட(data->data, ctx->size);
 
-            if (!ok) {
+            எனில் (!ok) {
                 GGML_LOG_ERROR("%s: failed to read tensor data binary blob\n", __func__);
                 ggml_free(ctx_data);
                 *params.ctx = nullptr;
                 gguf_free(ctx);
-                return nullptr;
+                திரும்பு nullptr;
             }
 
             ctx->data = data->data;
         }
 
-        ggml_set_no_alloc(ctx_data, true);
+        ggml_set_no_alloc(ctx_data, உண்மை);
 
         // create the tensors
-        for (size_t i = 0; i < ctx->info.size(); ++i) {
-            const struct gguf_tensor_info & info = ctx->info[i];
+        க்கு (size_t i = 0; i < ctx->info.size(); ++i) {
+            மாறிலி கட்டமைப்பு gguf_tensor_info & info = ctx->info[i];
 
-            struct ggml_tensor * cur = ggml_new_tensor(ctx_data, info.t.type, GGML_MAX_DIMS, info.t.ne);
+            கட்டமைப்பு ggml_tensor * cur = ggml_new_tensor(ctx_data, info.t.type, GGML_MAX_DIMS, info.t.ne);
 
             ok = ok && cur != nullptr;
 
-            if (!ok) {
-                break;
+            எனில் (!ok) {
+                நிறுத்து;
             }
 
             ggml_set_name(cur, info.t.name);
 
             // point the data member to the appropriate location in the binary blob using the tensor info
-            if (!params.no_alloc) {
-                cur->data = (char *) data->data + info.offset;
+            எனில் (!params.no_alloc) {
+                cur->data = (எழுத்து *) data->data + info.offset;
             }
         }
 
-        if (!ok) {
+        எனில் (!ok) {
             GGML_LOG_ERROR("%s: failed to create tensors\n", __func__);
             ggml_free(ctx_data);
             *params.ctx = nullptr;
             gguf_free(ctx);
-            return nullptr;
+            திரும்பு nullptr;
         }
 
         ggml_set_no_alloc(ctx_data, params.no_alloc);
     }
 
-    return ctx;
+    திரும்பு ctx;
 }
 
-struct gguf_context * gguf_init_from_callback(gguf_reader_callback_t callback, void * userdata, size_t max_chunk_read, uint64_t max_expected_size, struct gguf_init_params params) {
-    if (callback == nullptr) {
-        return nullptr;
+கட்டமைப்பு gguf_context * gguf_init_from_callback(gguf_reader_callback_t callback, வெறுமை * userdata, size_t max_chunk_read, uint64_t max_expected_size, கட்டமைப்பு gguf_init_params params) {
+    எனில் (callback == nullptr) {
+        திரும்பு nullptr;
     }
 
-    const struct gguf_reader gr(callback, userdata, max_chunk_read == 0 ? SIZE_MAX : max_chunk_read, 0, max_expected_size);
-    return gguf_init_from_reader(gr, params);
+    மாறிலி கட்டமைப்பு gguf_reader gr(callback, userdata, max_chunk_read == 0 ? SIZE_MAX : max_chunk_read, 0, max_expected_size);
+    திரும்பு gguf_init_from_reader(gr, params);
 }
 
-struct gguf_file_reader {
+கட்டமைப்பு gguf_file_reader {
     FILE * file;
     uint64_t offset;
 };
 
-static size_t gguf_file_reader_callback(void * userdata, void * output, uint64_t offset, size_t len) {
+நிலையான size_t gguf_file_reader_callback(வெறுமை * userdata, வெறுமை * output, uint64_t offset, size_t len) {
     GGML_ASSERT(len > 0);
 
     gguf_file_reader & reader = *static_cast<gguf_file_reader *>(userdata);
 
-    if (reader.offset != offset) {
-        if (offset > INT64_MAX || gguf_fseek(reader.file, static_cast<int64_t>(offset), SEEK_SET) != 0) {
-            return 0;
+    எனில் (reader.offset != offset) {
+        எனில் (offset > INT64_MAX || gguf_fseek(reader.file, static_cast<int64_t>(offset), SEEK_SET) != 0) {
+            திரும்பு 0;
         }
 
         reader.offset = offset;
     }
 
-    const size_t nread = fread(static_cast<uint8_t *>(output), 1, len, reader.file);
+    மாறிலி size_t nread = fread(static_cast<uint8_t *>(output), 1, len, reader.file);
     reader.offset += nread;
-    return nread;
+    திரும்பு nread;
 }
 
-struct gguf_context * gguf_init_from_file_ptr(FILE * file, struct gguf_init_params params) {
-    if (!file) {
-        return nullptr;
+கட்டமைப்பு gguf_context * gguf_init_from_file_ptr(FILE * file, கட்டமைப்பு gguf_init_params params) {
+    எனில் (!file) {
+        திரும்பு nullptr;
     }
 
-    const int64_t cur = gguf_ftell(file);
-    if (cur < 0) {
-        return nullptr;
+    மாறிலி int64_t cur = gguf_ftell(file);
+    எனில் (cur < 0) {
+        திரும்பு nullptr;
     }
 
     gguf_file_reader reader = {
         /*.file   = */ file,
         /*.offset = */ static_cast<uint64_t>(cur),
     };
-    const struct gguf_reader gr(gguf_file_reader_callback, &reader, SIZE_MAX, reader.offset, gguf_reader::file_remain(file));
-    return gguf_init_from_reader(gr, params);
+    மாறிலி கட்டமைப்பு gguf_reader gr(gguf_file_reader_callback, &reader, SIZE_MAX, reader.offset, gguf_reader::file_remain(file));
+    திரும்பு gguf_init_from_reader(gr, params);
 }
 
-struct gguf_buffer_reader {
-    const uint8_t * data;
+கட்டமைப்பு gguf_buffer_reader {
+    மாறிலி uint8_t * data;
     size_t          size;
 };
 
-static size_t gguf_buffer_reader_callback(void * userdata, void * output, uint64_t offset, size_t len) {
+நிலையான size_t gguf_buffer_reader_callback(வெறுமை * userdata, வெறுமை * output, uint64_t offset, size_t len) {
     GGML_ASSERT(len > 0);
 
-    const gguf_buffer_reader & reader = *static_cast<gguf_buffer_reader *>(userdata);
+    மாறிலி gguf_buffer_reader & reader = *static_cast<gguf_buffer_reader *>(userdata);
 
-    if (offset > reader.size || len > reader.size - offset) {
-        return 0;
+    எனில் (offset > reader.size || len > reader.size - offset) {
+        திரும்பு 0;
     }
 
-    const size_t data_offset = static_cast<size_t>(offset);
-    const size_t nread = std::min(len, reader.size - data_offset);
+    மாறிலி size_t data_offset = static_cast<size_t>(offset);
+    மாறிலி size_t nread = std::min(len, reader.size - data_offset);
     memcpy(static_cast<uint8_t *>(output), reader.data + data_offset, nread);
-    return nread;
+    திரும்பு nread;
 }
 
-struct gguf_context * gguf_init_from_buffer(const void * data, size_t size, struct gguf_init_params params) {
-    if (data == nullptr || size == 0) {
-        return nullptr;
+கட்டமைப்பு gguf_context * gguf_init_from_buffer(மாறிலி வெறுமை * data, size_t size, கட்டமைப்பு gguf_init_params params) {
+    எனில் (data == nullptr || size == 0) {
+        திரும்பு nullptr;
     }
 
     gguf_buffer_reader reader = {
-        /*.data = */ static_cast<const uint8_t *>(data),
+        /*.data = */ static_cast<மாறிலி uint8_t *>(data),
         /*.size = */ size,
     };
-    const struct gguf_reader gr(gguf_buffer_reader_callback, &reader, SIZE_MAX, 0, size);
-    return gguf_init_from_reader(gr, params);
+    மாறிலி கட்டமைப்பு gguf_reader gr(gguf_buffer_reader_callback, &reader, SIZE_MAX, 0, size);
+    திரும்பு gguf_init_from_reader(gr, params);
 }
 
-struct gguf_context * gguf_init_from_file(const char * fname, struct gguf_init_params params) {
+கட்டமைப்பு gguf_context * gguf_init_from_file(மாறிலி எழுத்து * fname, கட்டமைப்பு gguf_init_params params) {
     FILE * file = ggml_fopen(fname, "rb");
 
-    if (!file) {
+    எனில் (!file) {
         GGML_LOG_ERROR("%s: failed to open GGUF file '%s' (%s)\n", __func__, fname, strerror(errno));
-        return nullptr;
+        திரும்பு nullptr;
     }
 
-    struct gguf_context * result = gguf_init_from_file_ptr(file, params);
+    கட்டமைப்பு gguf_context * result = gguf_init_from_file_ptr(file, params);
     fclose(file);
-    return result;
+    திரும்பு result;
 }
 
-void gguf_free(struct gguf_context * ctx) {
-    if (ctx == nullptr) {
-        return;
+வெறுமை gguf_free(கட்டமைப்பு gguf_context * ctx) {
+    எனில் (ctx == nullptr) {
+        திரும்பு;
     }
     delete ctx;
 }
 
-const char * gguf_type_name(enum gguf_type type) {
+மாறிலி எழுத்து * gguf_type_name(எண்ணிக்கை gguf_type type) {
     auto it = GGUF_TYPE_NAME.find(type);
-    return it == GGUF_TYPE_NAME.end() ? nullptr : it->second;
+    திரும்பு it == GGUF_TYPE_NAME.end() ? nullptr : it->second;
 }
 
-uint32_t gguf_get_version(const struct gguf_context * ctx) {
-    return ctx->version;
+uint32_t gguf_get_version(மாறிலி கட்டமைப்பு gguf_context * ctx) {
+    திரும்பு ctx->version;
 }
 
-size_t gguf_get_alignment(const struct gguf_context * ctx) {
-    return ctx->alignment;
+size_t gguf_get_alignment(மாறிலி கட்டமைப்பு gguf_context * ctx) {
+    திரும்பு ctx->alignment;
 }
 
-size_t gguf_get_data_offset(const struct gguf_context * ctx) {
-    return ctx->offset;
+size_t gguf_get_data_offset(மாறிலி கட்டமைப்பு gguf_context * ctx) {
+    திரும்பு ctx->offset;
 }
 
-int64_t gguf_get_n_kv(const struct gguf_context * ctx) {
-    return ctx->kv.size();
+int64_t gguf_get_n_kv(மாறிலி கட்டமைப்பு gguf_context * ctx) {
+    திரும்பு ctx->kv.size();
 }
 
-int64_t gguf_find_key(const struct gguf_context * ctx, const char * key) {
+int64_t gguf_find_சாவி(மாறிலி கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி) {
     // return -1 if key not found
     int64_t keyfound = -1;
 
-    const int64_t n_kv = gguf_get_n_kv(ctx);
+    மாறிலி int64_t n_kv = gguf_get_n_kv(ctx);
 
-    for (int64_t i = 0; i < n_kv; ++i) {
-        if (strcmp(key, gguf_get_key(ctx, i)) == 0) {
+    க்கு (int64_t i = 0; i < n_kv; ++i) {
+        எனில் (strcmp(சாவி, gguf_get_சாவி(ctx, i)) == 0) {
             keyfound = i;
-            break;
+            நிறுத்து;
         }
     }
 
-    return keyfound;
+    திரும்பு keyfound;
 }
 
-const char * gguf_get_key(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    return ctx->kv[key_id].get_key().c_str();
+மாறிலி எழுத்து * gguf_get_சாவி(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    திரும்பு ctx->kv[சாவி_id].get_சாவி().c_str();
 }
 
-enum gguf_type gguf_get_kv_type(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    return ctx->kv[key_id].is_array ? GGUF_TYPE_ARRAY : ctx->kv[key_id].get_type();
+எண்ணிக்கை gguf_type gguf_get_kv_type(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    திரும்பு ctx->kv[சாவி_id].is_array ? GGUF_TYPE_ARRAY : ctx->kv[சாவி_id].get_type();
 }
 
-enum gguf_type gguf_get_arr_type(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].is_array);
-    return ctx->kv[key_id].get_type();
+எண்ணிக்கை gguf_type gguf_get_arr_type(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].is_array);
+    திரும்பு ctx->kv[சாவி_id].get_type();
 }
 
-const void * gguf_get_arr_data(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_type() != GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data.data();
+மாறிலி வெறுமை * gguf_get_arr_data(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_type() != GGUF_TYPE_STRING);
+    திரும்பு ctx->kv[சாவி_id].data.data();
 }
 
-const char * gguf_get_arr_str(const struct gguf_context * ctx, int64_t key_id, size_t i) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_type() == GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data_string[i].c_str();
+மாறிலி எழுத்து * gguf_get_arr_str(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id, size_t i) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_type() == GGUF_TYPE_STRING);
+    திரும்பு ctx->kv[சாவி_id].data_string[i].c_str();
 }
 
-size_t gguf_get_arr_n(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
+size_t gguf_get_arr_n(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
 
-    if (ctx->kv[key_id].type == GGUF_TYPE_STRING) {
-        return ctx->kv[key_id].data_string.size();
+    எனில் (ctx->kv[சாவி_id].type == GGUF_TYPE_STRING) {
+        திரும்பு ctx->kv[சாவி_id].data_string.size();
     }
 
-    const size_t type_size = gguf_type_size(ctx->kv[key_id].type);
-    GGML_ASSERT(ctx->kv[key_id].data.size() % type_size == 0);
-    return ctx->kv[key_id].data.size() / type_size;
+    மாறிலி size_t type_size = gguf_type_size(ctx->kv[சாவி_id].type);
+    GGML_ASSERT(ctx->kv[சாவி_id].data.size() % type_size == 0);
+    திரும்பு ctx->kv[சாவி_id].data.size() / type_size;
 }
 
-uint8_t gguf_get_val_u8(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint8_t>();
+uint8_t gguf_get_val_u8(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<uint8_t>();
 }
 
-int8_t gguf_get_val_i8(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int8_t>();
+int8_t gguf_get_val_i8(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<int8_t>();
 }
 
-uint16_t gguf_get_val_u16(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint16_t>();
+uint16_t gguf_get_val_u16(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<uint16_t>();
 }
 
-int16_t gguf_get_val_i16(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int16_t>();
+int16_t gguf_get_val_i16(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<int16_t>();
 }
 
-uint32_t gguf_get_val_u32(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint32_t>();
+uint32_t gguf_get_val_u32(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<uint32_t>();
 }
 
-int32_t gguf_get_val_i32(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int32_t>();
+int32_t gguf_get_val_i32(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<int32_t>();
 }
 
-float gguf_get_val_f32(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<float>();
+தசம gguf_get_val_f32(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<தசம>();
 }
 
-uint64_t gguf_get_val_u64(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<uint64_t>();
+uint64_t gguf_get_val_u64(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<uint64_t>();
 }
 
-int64_t gguf_get_val_i64(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<int64_t>();
+int64_t gguf_get_val_i64(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<int64_t>();
 }
 
-double gguf_get_val_f64(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<double>();
+இரட்டை gguf_get_val_f64(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<இரட்டை>();
 }
 
-bool gguf_get_val_bool(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<bool>();
+தருக்க gguf_get_val_bool(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<தருக்க>();
 }
 
-const char * gguf_get_val_str(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    return ctx->kv[key_id].get_val<std::string>().c_str();
+மாறிலி எழுத்து * gguf_get_val_str(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    திரும்பு ctx->kv[சாவி_id].get_val<std::string>().c_str();
 }
 
-const void * gguf_get_val_data(const struct gguf_context * ctx, int64_t key_id) {
-    GGML_ASSERT(key_id >= 0 && key_id < gguf_get_n_kv(ctx));
-    GGML_ASSERT(ctx->kv[key_id].get_ne() == 1);
-    GGML_ASSERT(ctx->kv[key_id].get_type() != GGUF_TYPE_STRING);
-    return ctx->kv[key_id].data.data();
+மாறிலி வெறுமை * gguf_get_val_data(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t சாவி_id) {
+    GGML_ASSERT(சாவி_id >= 0 && சாவி_id < gguf_get_n_kv(ctx));
+    GGML_ASSERT(ctx->kv[சாவி_id].get_ne() == 1);
+    GGML_ASSERT(ctx->kv[சாவி_id].get_type() != GGUF_TYPE_STRING);
+    திரும்பு ctx->kv[சாவி_id].data.data();
 }
 
-int64_t gguf_get_n_tensors(const struct gguf_context * ctx) {
-    return ctx->info.size();
+int64_t gguf_get_n_tensors(மாறிலி கட்டமைப்பு gguf_context * ctx) {
+    திரும்பு ctx->info.size();
 }
 
-int64_t gguf_find_tensor(const struct gguf_context * ctx, const char * name) {
+int64_t gguf_find_tensor(மாறிலி கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * name) {
     // return -1 if tensor not found
     int64_t tensor_id = -1;
 
-    const int64_t n_tensors = gguf_get_n_tensors(ctx);
+    மாறிலி int64_t n_tensors = gguf_get_n_tensors(ctx);
 
-    for (int64_t i = 0; i < n_tensors; ++i) {
-        if (strcmp(name, gguf_get_tensor_name(ctx, i)) == 0) {
+    க்கு (int64_t i = 0; i < n_tensors; ++i) {
+        எனில் (strcmp(name, gguf_get_tensor_name(ctx, i)) == 0) {
             tensor_id = i;
-            break;
+            நிறுத்து;
         }
     }
 
-    return tensor_id;
+    திரும்பு tensor_id;
 }
 
-size_t gguf_get_tensor_offset(const struct gguf_context * ctx, int64_t tensor_id) {
+size_t gguf_get_tensor_offset(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].offset;
+    திரும்பு ctx->info[tensor_id].offset;
 }
 
-const char * gguf_get_tensor_name(const struct gguf_context * ctx, int64_t tensor_id) {
+மாறிலி எழுத்து * gguf_get_tensor_name(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].t.name;
+    திரும்பு ctx->info[tensor_id].t.name;
 }
 
-const int64_t * gguf_get_tensor_ne(const struct gguf_context * ctx, int64_t tensor_id) {
+மாறிலி int64_t * gguf_get_tensor_ne(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].t.ne;
+    திரும்பு ctx->info[tensor_id].t.ne;
 }
 
-enum ggml_type gguf_get_tensor_type(const struct gguf_context * ctx, int64_t tensor_id) {
+எண்ணிக்கை ggml_type gguf_get_tensor_type(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ctx->info[tensor_id].t.type;
+    திரும்பு ctx->info[tensor_id].t.type;
 }
 
-size_t gguf_get_tensor_size(const struct gguf_context * ctx, int64_t tensor_id) {
+size_t gguf_get_tensor_size(மாறிலி கட்டமைப்பு gguf_context * ctx, int64_t tensor_id) {
     GGML_ASSERT(tensor_id >= 0 && tensor_id < gguf_get_n_tensors(ctx));
-    return ggml_nbytes(&ctx->info[tensor_id].t);
+    திரும்பு ggml_nbytes(&ctx->info[tensor_id].t);
 }
 
-int64_t gguf_remove_key(struct gguf_context * ctx, const char * key) {
-    const int64_t key_id = gguf_find_key(ctx, key);
-    if (key_id >= 0) {
-        ctx->kv.erase(ctx->kv.begin() + key_id);
+int64_t gguf_remove_சாவி(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி) {
+    மாறிலி int64_t சாவி_id = gguf_find_சாவி(ctx, சாவி);
+    எனில் (சாவி_id >= 0) {
+        ctx->kv.erase(ctx->kv.begin() + சாவி_id);
     }
-    return key_id;
+    திரும்பு சாவி_id;
 }
 
 template<typename T>
-static void gguf_check_reserved_keys(const std::string & key, const T val) {
-    if (key == GGUF_KEY_GENERAL_ALIGNMENT) {
-        if constexpr (std::is_same<T, uint32_t>::value) {
-            GGML_ASSERT(val > 0 && (val & (val - 1)) == 0 && GGUF_KEY_GENERAL_ALIGNMENT " must be power of 2");
-        } else {
+நிலையான வெறுமை gguf_check_reserved_சாவிகள்(மாறிலி std::string & சாவி, மாறிலி T val) {
+    எனில் (சாவி == GGUF_சாவி_GENERAL_ALIGNMENT) {
+        எனில் constexpr (std::is_same<T, uint32_t>::value) {
+            GGML_ASSERT(val > 0 && (val & (val - 1)) == 0 && GGUF_சாவி_GENERAL_ALIGNMENT " must be power of 2");
+        } இல்லையெனில் {
             GGML_UNUSED(val);
-            GGML_ABORT(GGUF_KEY_GENERAL_ALIGNMENT " must be type u32");
+            GGML_ABORT(GGUF_சாவி_GENERAL_ALIGNMENT " must be type u32");
         }
     }
 }
 
-void gguf_set_val_u8(struct gguf_context * ctx, const char * key, uint8_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_u8(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, uint8_t val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_i8(struct gguf_context * ctx, const char * key, int8_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_i8(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, int8_t val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_u16(struct gguf_context * ctx, const char * key, uint16_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_u16(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, uint16_t val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_i16(struct gguf_context * ctx, const char * key, int16_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_i16(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, int16_t val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_u32(struct gguf_context * ctx, const char * key, uint32_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_u32(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, uint32_t val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_i32(struct gguf_context * ctx, const char * key, int32_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_i32(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, int32_t val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_f32(struct gguf_context * ctx, const char * key, float val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_f32(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, தசம val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_u64(struct gguf_context * ctx, const char * key, uint64_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_u64(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, uint64_t val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_i64(struct gguf_context * ctx, const char * key, int64_t val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_i64(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, int64_t val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_f64(struct gguf_context * ctx, const char * key, double val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_f64(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, இரட்டை val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_bool(struct gguf_context * ctx, const char * key, bool val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, val);
+வெறுமை gguf_set_val_bool(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, தருக்க val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, val);
 }
 
-void gguf_set_val_str(struct gguf_context * ctx, const char * key, const char * val) {
-    gguf_check_reserved_keys(key, val);
-    gguf_remove_key(ctx, key);
-    ctx->kv.emplace_back(key, std::string(val));
+வெறுமை gguf_set_val_str(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, மாறிலி எழுத்து * val) {
+    gguf_check_reserved_சாவிகள்(சாவி, val);
+    gguf_remove_சாவி(ctx, சாவி);
+    ctx->kv.emplace_back(சாவி, std::string(val));
 }
 
-void gguf_set_arr_data(struct gguf_context * ctx, const char * key, enum gguf_type type, const void * data, size_t n) {
-    gguf_check_reserved_keys(key, data);
-    gguf_remove_key(ctx, key);
+வெறுமை gguf_set_arr_data(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, எண்ணிக்கை gguf_type type, மாறிலி வெறுமை * data, size_t n) {
+    gguf_check_reserved_சாவிகள்(சாவி, data);
+    gguf_remove_சாவி(ctx, சாவி);
 
-    const size_t nbytes = n*gguf_type_size(type);
+    மாறிலி size_t nbytes = n*gguf_type_size(type);
     std::vector<int8_t> tmp(nbytes);
-    if (!tmp.empty()) {
+    எனில் (!tmp.empty()) {
         memcpy(tmp.data(), data, nbytes);
     }
-    ctx->kv.emplace_back(key, tmp);
+    ctx->kv.emplace_back(சாவி, tmp);
     ctx->kv.back().cast(type);
 }
 
-void gguf_set_arr_str(struct gguf_context * ctx, const char * key, const char ** data, size_t n) {
-    gguf_check_reserved_keys(key, data);
-    gguf_remove_key(ctx, key);
+வெறுமை gguf_set_arr_str(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * சாவி, மாறிலி எழுத்து ** data, size_t n) {
+    gguf_check_reserved_சாவிகள்(சாவி, data);
+    gguf_remove_சாவி(ctx, சாவி);
 
     std::vector<std::string> tmp(n);
-    for (size_t i = 0; i < n; ++i) {
+    க்கு (size_t i = 0; i < n; ++i) {
         tmp[i] = data[i];
     }
-    ctx->kv.emplace_back(key, tmp);
+    ctx->kv.emplace_back(சாவி, tmp);
 }
 
 // set or add KV pairs from another context
-void gguf_set_kv(struct gguf_context * ctx, const struct gguf_context * src) {
-    const int64_t n_kv = gguf_get_n_kv(src);
-    for (int64_t i = 0; i < n_kv; ++i) {
-        const struct gguf_kv & kv = src->kv[i];
+வெறுமை gguf_set_kv(கட்டமைப்பு gguf_context * ctx, மாறிலி கட்டமைப்பு gguf_context * src) {
+    மாறிலி int64_t n_kv = gguf_get_n_kv(src);
+    க்கு (int64_t i = 0; i < n_kv; ++i) {
+        மாறிலி கட்டமைப்பு gguf_kv & kv = src->kv[i];
 
-        if (!kv.is_array) {
-            switch (kv.get_type()) {
-                case GGUF_TYPE_UINT8:   gguf_set_val_u8  (ctx, kv.get_key().c_str(), kv.get_val<uint8_t>());             break;
-                case GGUF_TYPE_INT8:    gguf_set_val_i8  (ctx, kv.get_key().c_str(), kv.get_val<int8_t>());              break;
-                case GGUF_TYPE_UINT16:  gguf_set_val_u16 (ctx, kv.get_key().c_str(), kv.get_val<uint16_t>());            break;
-                case GGUF_TYPE_INT16:   gguf_set_val_i16 (ctx, kv.get_key().c_str(), kv.get_val<int16_t>());             break;
-                case GGUF_TYPE_UINT32:  gguf_set_val_u32 (ctx, kv.get_key().c_str(), kv.get_val<uint32_t>());            break;
-                case GGUF_TYPE_INT32:   gguf_set_val_i32 (ctx, kv.get_key().c_str(), kv.get_val<int32_t>());             break;
-                case GGUF_TYPE_FLOAT32: gguf_set_val_f32 (ctx, kv.get_key().c_str(), kv.get_val<float>());               break;
-                case GGUF_TYPE_UINT64:  gguf_set_val_u64 (ctx, kv.get_key().c_str(), kv.get_val<uint64_t>());            break;
-                case GGUF_TYPE_INT64:   gguf_set_val_i64 (ctx, kv.get_key().c_str(), kv.get_val<int64_t>());             break;
-                case GGUF_TYPE_FLOAT64: gguf_set_val_f64 (ctx, kv.get_key().c_str(), kv.get_val<double>());              break;
-                case GGUF_TYPE_BOOL:    gguf_set_val_bool(ctx, kv.get_key().c_str(), kv.get_val<bool>());                break;
-                case GGUF_TYPE_STRING:  gguf_set_val_str (ctx, kv.get_key().c_str(), kv.get_val<std::string>().c_str()); break;
-                case GGUF_TYPE_ARRAY:
-                default: GGML_ABORT("invalid type");
+        எனில் (!kv.is_array) {
+            தேர்வு (kv.get_type()) {
+                நிலை GGUF_TYPE_UINT8:   gguf_set_val_u8  (ctx, kv.get_சாவி().c_str(), kv.get_val<uint8_t>());             நிறுத்து;
+                நிலை GGUF_TYPE_INT8:    gguf_set_val_i8  (ctx, kv.get_சாவி().c_str(), kv.get_val<int8_t>());              நிறுத்து;
+                நிலை GGUF_TYPE_UINT16:  gguf_set_val_u16 (ctx, kv.get_சாவி().c_str(), kv.get_val<uint16_t>());            நிறுத்து;
+                நிலை GGUF_TYPE_INT16:   gguf_set_val_i16 (ctx, kv.get_சாவி().c_str(), kv.get_val<int16_t>());             நிறுத்து;
+                நிலை GGUF_TYPE_UINT32:  gguf_set_val_u32 (ctx, kv.get_சாவி().c_str(), kv.get_val<uint32_t>());            நிறுத்து;
+                நிலை GGUF_TYPE_INT32:   gguf_set_val_i32 (ctx, kv.get_சாவி().c_str(), kv.get_val<int32_t>());             நிறுத்து;
+                நிலை GGUF_TYPE_FLOAT32: gguf_set_val_f32 (ctx, kv.get_சாவி().c_str(), kv.get_val<தசம>());               நிறுத்து;
+                நிலை GGUF_TYPE_UINT64:  gguf_set_val_u64 (ctx, kv.get_சாவி().c_str(), kv.get_val<uint64_t>());            நிறுத்து;
+                நிலை GGUF_TYPE_INT64:   gguf_set_val_i64 (ctx, kv.get_சாவி().c_str(), kv.get_val<int64_t>());             நிறுத்து;
+                நிலை GGUF_TYPE_FLOAT64: gguf_set_val_f64 (ctx, kv.get_சாவி().c_str(), kv.get_val<இரட்டை>());              நிறுத்து;
+                நிலை GGUF_TYPE_BOOL:    gguf_set_val_bool(ctx, kv.get_சாவி().c_str(), kv.get_val<தருக்க>());                நிறுத்து;
+                நிலை GGUF_TYPE_STRING:  gguf_set_val_str (ctx, kv.get_சாவி().c_str(), kv.get_val<std::string>().c_str()); நிறுத்து;
+                நிலை GGUF_TYPE_ARRAY:
+                இயல்பு: GGML_ABORT("invalid type");
             }
-            continue;
+            தொடர்;
         }
 
-        const size_t ne = kv.get_ne();
+        மாறிலி size_t ne = kv.get_ne();
 
-        switch (kv.get_type()) {
-            case GGUF_TYPE_UINT8:
-            case GGUF_TYPE_INT8:
-            case GGUF_TYPE_UINT16:
-            case GGUF_TYPE_INT16:
-            case GGUF_TYPE_UINT32:
-            case GGUF_TYPE_INT32:
-            case GGUF_TYPE_FLOAT32:
-            case GGUF_TYPE_UINT64:
-            case GGUF_TYPE_INT64:
-            case GGUF_TYPE_FLOAT64:
-            case GGUF_TYPE_BOOL: {
-                gguf_set_arr_data(ctx, kv.get_key().c_str(), kv.get_type(), kv.data.data(), ne);
-            } break;
-            case GGUF_TYPE_STRING: {
-                std::vector<const char *> tmp(ne);
-                for (size_t j = 0; j < ne; ++j) {
+        தேர்வு (kv.get_type()) {
+            நிலை GGUF_TYPE_UINT8:
+            நிலை GGUF_TYPE_INT8:
+            நிலை GGUF_TYPE_UINT16:
+            நிலை GGUF_TYPE_INT16:
+            நிலை GGUF_TYPE_UINT32:
+            நிலை GGUF_TYPE_INT32:
+            நிலை GGUF_TYPE_FLOAT32:
+            நிலை GGUF_TYPE_UINT64:
+            நிலை GGUF_TYPE_INT64:
+            நிலை GGUF_TYPE_FLOAT64:
+            நிலை GGUF_TYPE_BOOL: {
+                gguf_set_arr_data(ctx, kv.get_சாவி().c_str(), kv.get_type(), kv.data.data(), ne);
+            } நிறுத்து;
+            நிலை GGUF_TYPE_STRING: {
+                std::vector<மாறிலி எழுத்து *> tmp(ne);
+                க்கு (size_t j = 0; j < ne; ++j) {
                     tmp[j] = kv.data_string[j].c_str();
                 }
-                gguf_set_arr_str(ctx, kv.get_key().c_str(), tmp.data(), ne);
-            } break;
-            case GGUF_TYPE_ARRAY:
-            default: GGML_ABORT("invalid type");
+                gguf_set_arr_str(ctx, kv.get_சாவி().c_str(), tmp.data(), ne);
+            } நிறுத்து;
+            நிலை GGUF_TYPE_ARRAY:
+            இயல்பு: GGML_ABORT("invalid type");
         }
     }
 }
 
-void gguf_add_tensor(
-             struct gguf_context * ctx,
-        const struct ggml_tensor * tensor) {
+வெறுமை gguf_add_tensor(
+             கட்டமைப்பு gguf_context * ctx,
+        மாறிலி கட்டமைப்பு ggml_tensor * tensor) {
     GGML_ASSERT(tensor);
-    if (gguf_find_tensor(ctx, tensor->name) != -1) {
+    எனில் (gguf_find_tensor(ctx, tensor->name) != -1) {
         GGML_ABORT("duplicate tensor name: %s", tensor->name);
     }
 
-    struct gguf_tensor_info ti;
+    கட்டமைப்பு gguf_tensor_info ti;
     ti.t = *tensor;
     ti.offset = ctx->info.empty() ? 0 :
         ctx->info.back().offset + GGML_PAD(ggml_nbytes(&ctx->info.back().t), ctx->alignment);
     ctx->info.push_back(ti);
 }
 
-void gguf_set_tensor_type(struct gguf_context * ctx, const char * name, enum ggml_type type) {
-    const int64_t tensor_id = gguf_find_tensor(ctx, name);
-    if (tensor_id < 0) {
+வெறுமை gguf_set_tensor_type(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * name, எண்ணிக்கை ggml_type type) {
+    மாறிலி int64_t tensor_id = gguf_find_tensor(ctx, name);
+    எனில் (tensor_id < 0) {
         GGML_ABORT("tensor not found: %s", name);
     }
-    struct ggml_tensor * tensor = &ctx->info[tensor_id].t;
-    const size_t  type_size = ggml_type_size(type);
-    const int64_t blck_size = ggml_blck_size(type);
+    கட்டமைப்பு ggml_tensor * tensor = &ctx->info[tensor_id].t;
+    மாறிலி size_t  type_size = ggml_type_size(type);
+    மாறிலி int64_t blck_size = ggml_blck_size(type);
 
     tensor->type = type;
     GGML_ASSERT(tensor->ne[0] % blck_size == 0 && "tensor row size not divisible by block size of new type");
 
     tensor->nb[0] = type_size;
     tensor->nb[1] = tensor->nb[0]*(tensor->ne[0]/blck_size);
-    for (int i = 2; i < GGML_MAX_DIMS; i++) {
+    க்கு (முழு i = 2; i < GGML_MAX_DIMS; i++) {
         tensor->nb[i] = tensor->nb[i - 1]*tensor->ne[i - 1];
     }
 
     // update offsets
-    const int64_t n_tensors = gguf_get_n_tensors(ctx);
-    for (int64_t i = tensor_id + 1; i < n_tensors; ++i) {
+    மாறிலி int64_t n_tensors = gguf_get_n_tensors(ctx);
+    க்கு (int64_t i = tensor_id + 1; i < n_tensors; ++i) {
         ctx->info[i].offset = ctx->info[i - 1].offset + GGML_PAD(ggml_nbytes(&ctx->info[i - 1].t), ctx->alignment);
     }
 }
 
-void gguf_set_tensor_data(struct gguf_context * ctx, const char * name, const void * data) {
-    const int64_t tensor_id = gguf_find_tensor(ctx, name);
-    if (tensor_id < 0) {
+வெறுமை gguf_set_tensor_data(கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * name, மாறிலி வெறுமை * data) {
+    மாறிலி int64_t tensor_id = gguf_find_tensor(ctx, name);
+    எனில் (tensor_id < 0) {
         GGML_ABORT("tensor not found: %s", name);
     }
 
-    ctx->info[tensor_id].t.data = (void *)(uintptr_t)data; // double cast suppresses warning about casting away const
+    ctx->info[tensor_id].t.data = (வெறுமை *)(uintptr_t)data; // double cast suppresses warning about casting away const
 }
 
-struct gguf_writer_base {
+கட்டமைப்பு gguf_writer_base {
     size_t written_bytes {0u};
 
-    virtual ~gguf_writer_base(void) = default;
+    மெய்நிகர் ~gguf_writer_base(வெறுமை) = இயல்பு;
 
     // we bet on devirtualization
-    virtual void write(int8_t val) = 0;
-    virtual void write(const std::vector<int8_t> & val) = 0;
-    virtual void write_tensor_data(const struct gguf_tensor_info & info, size_t offset_data, size_t alignment) = 0;
+    மெய்நிகர் வெறுமை லிக(int8_t val) = 0;
+    மெய்நிகர் வெறுமை லிக(மாறிலி std::vector<int8_t> & val) = 0;
+    மெய்நிகர் வெறுமை write_tensor_data(மாறிலி கட்டமைப்பு gguf_tensor_info & info, size_t offset_data, size_t alignment) = 0;
 
     template <typename T>
-    void write(const T & val) {
-        for (size_t i = 0; i < sizeof(val); ++i) {
-            write(reinterpret_cast<const int8_t *>(&val)[i]);
+    வெறுமை லிக(மாறிலி T & val) {
+        க்கு (size_t i = 0; i < அளவு(val); ++i) {
+            லிக(reinterpret_cast<மாறிலி int8_t *>(&val)[i]);
         }
     }
 
-    void write(const bool & val) {
-        const int8_t val8 = val ? 1 : 0;
-        write(val8);
+    வெறுமை லிக(மாறிலி தருக்க & val) {
+        மாறிலி int8_t val8 = val ? 1 : 0;
+        லிக(val8);
     }
 
-    void write(const std::string & val) {
+    வெறுமை லிக(மாறிலி std::string & val) {
         {
-            const uint64_t n = val.length();
-            write(n);
+            மாறிலி uint64_t n = val.length();
+            லிக(n);
         }
-        for (size_t i = 0; i < val.length(); ++i) {
-            write((val.data())[i]);
+        க்கு (size_t i = 0; i < val.length(); ++i) {
+            லிக((val.data())[i]);
         }
     }
 
-    void write(const char * val) {
-        write(std::string(val));
+    வெறுமை லிக(மாறிலி எழுத்து * val) {
+        லிக(std::string(val));
     }
 
-    void write(const enum ggml_type & val) {
-        write(int32_t(val));
+    வெறுமை லிக(மாறிலி எண்ணிக்கை ggml_type & val) {
+        லிக(int32_t(val));
     }
 
-    void write(const enum gguf_type & val) {
-        write(int32_t(val));
+    வெறுமை லிக(மாறிலி எண்ணிக்கை gguf_type & val) {
+        லிக(int32_t(val));
     }
 
-    void write(const struct gguf_kv & kv) {
-        const uint64_t ne = kv.get_ne();
+    வெறுமை லிக(மாறிலி கட்டமைப்பு gguf_kv & kv) {
+        மாறிலி uint64_t ne = kv.get_ne();
 
-        write(kv.get_key());
+        லிக(kv.get_சாவி());
 
-        if (kv.is_array) {
-            write(GGUF_TYPE_ARRAY);
-            write(kv.get_type());
-            write(ne);
-        } else {
-            write(kv.get_type());
+        எனில் (kv.is_array) {
+            லிக(GGUF_TYPE_ARRAY);
+            லிக(kv.get_type());
+            லிக(ne);
+        } இல்லையெனில் {
+            லிக(kv.get_type());
         }
 
-        switch (kv.get_type()) {
-            case GGUF_TYPE_UINT8:
-            case GGUF_TYPE_INT8:
-            case GGUF_TYPE_UINT16:
-            case GGUF_TYPE_INT16:
-            case GGUF_TYPE_UINT32:
-            case GGUF_TYPE_INT32:
-            case GGUF_TYPE_FLOAT32:
-            case GGUF_TYPE_UINT64:
-            case GGUF_TYPE_INT64:
-            case GGUF_TYPE_FLOAT64: {
-                write(kv.data);
-            } break;
-            case GGUF_TYPE_BOOL: {
-                for (size_t i = 0; i < ne; ++i) {
-                    write(kv.get_val<bool>(i));
+        தேர்வு (kv.get_type()) {
+            நிலை GGUF_TYPE_UINT8:
+            நிலை GGUF_TYPE_INT8:
+            நிலை GGUF_TYPE_UINT16:
+            நிலை GGUF_TYPE_INT16:
+            நிலை GGUF_TYPE_UINT32:
+            நிலை GGUF_TYPE_INT32:
+            நிலை GGUF_TYPE_FLOAT32:
+            நிலை GGUF_TYPE_UINT64:
+            நிலை GGUF_TYPE_INT64:
+            நிலை GGUF_TYPE_FLOAT64: {
+                லிக(kv.data);
+            } நிறுத்து;
+            நிலை GGUF_TYPE_BOOL: {
+                க்கு (size_t i = 0; i < ne; ++i) {
+                    லிக(kv.get_val<தருக்க>(i));
                 }
-            } break;
-            case GGUF_TYPE_STRING: {
-                for (size_t i = 0; i < ne; ++i) {
-                    write(kv.get_val<std::string>(i));
+            } நிறுத்து;
+            நிலை GGUF_TYPE_STRING: {
+                க்கு (size_t i = 0; i < ne; ++i) {
+                    லிக(kv.get_val<std::string>(i));
                 }
-            } break;
-            case GGUF_TYPE_ARRAY:
-            default: GGML_ABORT("invalid type");
+            } நிறுத்து;
+            நிலை GGUF_TYPE_ARRAY:
+            இயல்பு: GGML_ABORT("invalid type");
         }
     }
 
-    void write_tensor_meta(const struct gguf_tensor_info & info) {
-        write(info.t.name);
+    வெறுமை write_tensor_meta(மாறிலி கட்டமைப்பு gguf_tensor_info & info) {
+        லிக(info.t.name);
 
-        const uint32_t n_dims = ggml_n_dims(&info.t);
-        write(n_dims);
+        மாறிலி uint32_t n_dims = ggml_n_dims(&info.t);
+        லிக(n_dims);
 
-        for (uint32_t j = 0; j < n_dims; ++j) {
-            write(info.t.ne[j]);
+        க்கு (uint32_t j = 0; j < n_dims; ++j) {
+            லிக(info.t.ne[j]);
         }
-        write(info.t.type);
-        write(info.offset);
+        லிக(info.t.type);
+        லிக(info.offset);
     }
 
-    void pad(const size_t alignment) {
-        while (written_bytes % alignment != 0) {
-            const int8_t zero = 0;
-            write(zero);
+    வெறுமை pad(மாறிலி size_t alignment) {
+        போது (written_bytes % alignment != 0) {
+            மாறிலி int8_t zero = 0;
+            லிக(zero);
         }
     }
 };
 
 // vector buffer based writer
-struct gguf_writer_buf final : public gguf_writer_base {
+கட்டமைப்பு gguf_writer_buf final : பொது gguf_writer_base {
     std::vector<int8_t> & buf;
 
     gguf_writer_buf(std::vector<int8_t> & buf) : buf(buf) {}
 
-    using gguf_writer_base::write;
+    using gguf_writer_base::லிக;
 
-    void write(const int8_t val) override {
+    வெறுமை லிக(மாறிலி int8_t val) override {
         buf.push_back(val);
         written_bytes++;
     }
 
-    void write(const std::vector<int8_t> & val) override {
+    வெறுமை லிக(மாறிலி std::vector<int8_t> & val) override {
         buf.insert(buf.end(), val.begin(), val.end());
         written_bytes += val.size();
     }
 
-    void write_tensor_data(const struct gguf_tensor_info & info, const size_t offset_data, const size_t alignment) override {
+    வெறுமை write_tensor_data(மாறிலி கட்டமைப்பு gguf_tensor_info & info, மாறிலி size_t offset_data, மாறிலி size_t alignment) override {
         GGML_ASSERT(buf.size() - offset_data == info.offset);
 
         GGML_ASSERT(ggml_is_contiguous(&info.t));
-        const size_t offset = buf.size();
-        const size_t nbytes = ggml_nbytes(&info.t);
+        மாறிலி size_t offset = buf.size();
+        மாறிலி size_t nbytes = ggml_nbytes(&info.t);
 
         buf.resize(offset + nbytes);
-        if (info.t.buffer) {
+        எனில் (info.t.buffer) {
             ggml_backend_tensor_get(&info.t, buf.data() + offset, 0, nbytes);
-        } else {
+        } இல்லையெனில் {
             GGML_ASSERT(info.t.data);
             memcpy(buf.data() + offset, info.t.data, nbytes);
         }
@@ -1600,132 +1600,132 @@ struct gguf_writer_buf final : public gguf_writer_base {
 };
 
 // file based writer
-struct gguf_writer_file final : public gguf_writer_base {
+கட்டமைப்பு gguf_writer_file final : பொது gguf_writer_base {
     FILE * file;
 
     gguf_writer_file(FILE* file) : file(file) {}
 
-    using gguf_writer_base::write;
+    using gguf_writer_base::லிக;
 
-    void write(const int8_t val) override {
-        const auto real_val = static_cast<uint8_t>(val);
-        const auto ret = fputc(real_val, file);
+    வெறுமை லிக(மாறிலி int8_t val) override {
+        மாறிலி auto real_val = static_cast<uint8_t>(val);
+        மாறிலி auto ret = fputc(real_val, file);
         written_bytes++;
-        if (ret != real_val) {
-            throw std::runtime_error("unexpected fputc result '" + std::to_string(ret) + "' instead of '" + std::to_string((int)real_val) + "'");
+        எனில் (ret != real_val) {
+            எறி std::runtime_error("unexpected fputc result '" + std::to_string(ret) + "' instead of '" + std::to_string((முழு)real_val) + "'");
         }
     }
 
-    void write(const std::vector<int8_t> & val) override {
-        const auto ret = fwrite(val.data(), 1, val.size(), file);
+    வெறுமை லிக(மாறிலி std::vector<int8_t> & val) override {
+        மாறிலி auto ret = fwrite(val.data(), 1, val.size(), file);
         written_bytes += val.size();
-        if (ret != val.size()) {
-            throw std::runtime_error("unexpected fwrite number of bytes written, '" + std::to_string(ret) + "' instead of '" + std::to_string(val.size()) + "'");
+        எனில் (ret != val.size()) {
+            எறி std::runtime_error("unexpected fwrite number of bytes written, '" + std::to_string(ret) + "' instead of '" + std::to_string(val.size()) + "'");
         }
     }
 
-    void write_tensor_data(const struct gguf_tensor_info & info, const size_t offset_data, const size_t alignment) override {
+    வெறுமை write_tensor_data(மாறிலி கட்டமைப்பு gguf_tensor_info & info, மாறிலி size_t offset_data, மாறிலி size_t alignment) override {
         GGML_ASSERT(written_bytes - offset_data == info.offset);
 
         GGML_ASSERT(ggml_is_contiguous(&info.t));
-        const size_t nbytes = ggml_nbytes(&info.t);
+        மாறிலி size_t nbytes = ggml_nbytes(&info.t);
 
         std::vector<int8_t> buf(nbytes);
-        if (info.t.buffer) {
+        எனில் (info.t.buffer) {
             ggml_backend_tensor_get(&info.t, buf.data(), 0, nbytes);
-        } else {
+        } இல்லையெனில் {
             GGML_ASSERT(info.t.data);
             memcpy(buf.data(), info.t.data, nbytes);
         }
-        write(buf);
+        லிக(buf);
 
         pad(alignment);
     }
 };
 
 template <typename writer_t>
-static void gguf_write_out(const struct gguf_context * ctx, writer_t & gw, bool only_meta) {
-    const int64_t n_kv      = gguf_get_n_kv(ctx);
-    const int64_t n_tensors = gguf_get_n_tensors(ctx);
+நிலையான வெறுமை gguf_write_out(மாறிலி கட்டமைப்பு gguf_context * ctx, writer_t & gw, தருக்க only_meta) {
+    மாறிலி int64_t n_kv      = gguf_get_n_kv(ctx);
+    மாறிலி int64_t n_tensors = gguf_get_n_tensors(ctx);
 
     // write header
-    gw.write(GGUF_MAGIC[0]);
-    gw.write(GGUF_MAGIC[1]);
-    gw.write(GGUF_MAGIC[2]);
-    gw.write(GGUF_MAGIC[3]);
-    gw.write(ctx->version);
-    gw.write(n_tensors);
-    gw.write(n_kv);
+    gw.லிக(GGUF_MAGIC[0]);
+    gw.லிக(GGUF_MAGIC[1]);
+    gw.லிக(GGUF_MAGIC[2]);
+    gw.லிக(GGUF_MAGIC[3]);
+    gw.லிக(ctx->version);
+    gw.லிக(n_tensors);
+    gw.லிக(n_kv);
 
     // write key-value pairs
-    for (int64_t i = 0; i < n_kv; ++i) {
-        gw.write(ctx->kv[i]);
+    க்கு (int64_t i = 0; i < n_kv; ++i) {
+        gw.லிக(ctx->kv[i]);
     }
 
     // write tensor info
-    for (int64_t i = 0; i < n_tensors; ++i) {
+    க்கு (int64_t i = 0; i < n_tensors; ++i) {
         gw.write_tensor_meta(ctx->info[i]);
     }
 
     // we require the data section to be aligned
     gw.pad(ctx->alignment);
 
-    if (only_meta) {
-        return;
+    எனில் (only_meta) {
+        திரும்பு;
     }
 
-    const size_t offset_data = gw.written_bytes;
+    மாறிலி size_t offset_data = gw.written_bytes;
 
     // write tensor data
-    for (int64_t i = 0; i < n_tensors; ++i) {
+    க்கு (int64_t i = 0; i < n_tensors; ++i) {
         gw.write_tensor_data(ctx->info[i], offset_data, ctx->alignment);
     }
 }
 
-void gguf_write_to_buf(const struct gguf_context * ctx, std::vector<int8_t> & buf, bool only_meta) {
+வெறுமை gguf_write_to_buf(மாறிலி கட்டமைப்பு gguf_context * ctx, std::vector<int8_t> & buf, தருக்க only_meta) {
     gguf_writer_buf gw(buf);
     gguf_write_out(ctx, gw, only_meta);
 }
 
-bool gguf_write_to_file_ptr(const struct gguf_context * ctx, FILE * file, bool only_meta) {
+தருக்க gguf_write_to_file_ptr(மாறிலி கட்டமைப்பு gguf_context * ctx, FILE * file, தருக்க only_meta) {
     GGML_ASSERT(file);
 
-    try {
+    முயல் {
         gguf_writer_file gw(file);
         gguf_write_out(ctx, gw, only_meta);
-    } catch (const std::runtime_error& ex) {
+    } பிடி (மாறிலி std::runtime_error& ex) {
         GGML_LOG_ERROR("%s: failed to write GGUF data: %s\n", __func__, ex.what());
-        return false;
+        திரும்பு பொய்;
     }
-    return true;
+    திரும்பு உண்மை;
 }
 
-bool gguf_write_to_file(const struct gguf_context * ctx, const char * fname, bool only_meta) {
+தருக்க gguf_write_to_file(மாறிலி கட்டமைப்பு gguf_context * ctx, மாறிலி எழுத்து * fname, தருக்க only_meta) {
     FILE * file = ggml_fopen(fname, "wb");
 
-    if (!file) {
+    எனில் (!file) {
         GGML_LOG_ERROR("%s: failed to open file '%s' for writing GGUF data\n", __func__, fname);
-        return false;
+        திரும்பு பொய்;
     }
 
-    const bool success = gguf_write_to_file_ptr(ctx, file, only_meta);
-    if (!success) {
+    மாறிலி தருக்க success = gguf_write_to_file_ptr(ctx, file, only_meta);
+    எனில் (!success) {
         GGML_LOG_ERROR("%s: failed to write GGUF data into '%s'\n", __func__, fname);
     }
 
     fclose(file);
-    return success;
+    திரும்பு success;
 }
 
-size_t gguf_get_meta_size(const struct gguf_context * ctx) {
+size_t gguf_get_meta_size(மாறிலி கட்டமைப்பு gguf_context * ctx) {
     // only return size
     std::vector<int8_t> buf;
-    gguf_write_to_buf(ctx, buf, /*only_meta =*/ true);
-    return buf.size();
+    gguf_write_to_buf(ctx, buf, /*only_meta =*/ உண்மை);
+    திரும்பு buf.size();
 }
 
-void gguf_get_meta_data(const struct gguf_context * ctx, void * data) {
+வெறுமை gguf_get_meta_data(மாறிலி கட்டமைப்பு gguf_context * ctx, வெறுமை * data) {
     std::vector<int8_t> buf;
-    gguf_write_to_buf(ctx, buf, /*only_meta =*/ true);
+    gguf_write_to_buf(ctx, buf, /*only_meta =*/ உண்மை);
     memcpy(data, buf.data(), buf.size());
 }

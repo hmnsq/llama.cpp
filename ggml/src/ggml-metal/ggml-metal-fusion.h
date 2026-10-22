@@ -8,21 +8,21 @@
 
 #pragma once
 
-#include "ggml-impl.h"
+#அந்தர்பாவ "ggml-impl.h"
 
-#include <stdbool.h>
+#அந்தர்பாவ <stdbool.h>
 
 #ifdef __cplusplus
-extern "C" {
+வெளி "C" {
 #endif
 
-struct ggml_metal_device_props;
+கட்டமைப்பு ggml_metal_device_props;
 
 // the maximum number of nodes that can be fused in a single kernel
 // (also the maximum length of a packed fusion group during graph optimization)
 #define GGML_METAL_FUSION_MAX 16
 
-typedef enum ggml_metal_fusion_mode {
+வகைவரை எண்ணிக்கை ggml_metal_fusion_mode {
     // structural checks for the graph optimizer, which runs before the graph tensors are allocated (weights
     // already are); a check may skip conditions that differ between batch sizes, and so accept more than FULL
     GGML_METAL_FUSION_STRUCTURAL = 0,
@@ -31,7 +31,7 @@ typedef enum ggml_metal_fusion_mode {
 } ggml_metal_fusion_mode;
 
 // identifier of each fusion pattern so the op encoders know which kernel to use
-typedef enum ggml_metal_fusion_id {
+வகைவரை எண்ணிக்கை ggml_metal_fusion_id {
     GGML_METAL_FUSION_NONE = 0,
     GGML_METAL_FUSION_NORM_MUL,     // NORM/RMS_NORM + MUL
     GGML_METAL_FUSION_NORM_MUL_ADD, // NORM/RMS_NORM + MUL + ADD
@@ -45,57 +45,57 @@ typedef enum ggml_metal_fusion_id {
     GGML_METAL_FUSION_MUL_MAT_ADD,  // MUL_MAT + ADD (residual added in the few-row MMA store)
 } ggml_metal_fusion_id;
 
-struct ggml_metal_fusion; // defined in ggml-metal-fusion.cpp
+கட்டமைப்பு ggml_metal_fusion; // defined in ggml-metal-fusion.cpp
 
-typedef struct ggml_metal_fusion ggml_metal_fusion;
+வகைவரை கட்டமைப்பு ggml_metal_fusion ggml_metal_fusion;
 
 // access the fusion identifier without exposing the full pattern definition
-ggml_metal_fusion_id ggml_metal_fusion_get_id(const struct ggml_metal_fusion * fusion);
+ggml_metal_fusion_id ggml_metal_fusion_get_id(மாறிலி கட்டமைப்பு ggml_metal_fusion * fusion);
 
 // apply any alloc-dependencies required by the fused kernels during graph optimize
-void ggml_metal_fusion_add_alloc_deps(
-        void * user_data,
-        void (*add_alloc_dep)(void *, struct ggml_tensor *, struct ggml_tensor *),
-        struct ggml_cgraph * gf);
+வெறுமை ggml_metal_fusion_add_alloc_deps(
+        வெறுமை * user_data,
+        வெறுமை (*add_alloc_dep)(வெறுமை *, கட்டமைப்பு ggml_tensor *, கட்டமைப்பு ggml_tensor *),
+        கட்டமைப்பு ggml_cgraph * gf);
 
 // ---- shared fusion info ---------------------------------------------------
 
 // shared fusion debugging context, owned by the device; newly created backend contexts for that
 // device register with it so the fusion counters are race-free and accumulate across contexts.
-struct ggml_metal_fusion_info; // defined in ggml-metal-fusion.cpp
+கட்டமைப்பு ggml_metal_fusion_info; // defined in ggml-metal-fusion.cpp
 
-struct ggml_metal_fusion_info * ggml_metal_fusion_info_init(bool enabled, int debug);
-void ggml_metal_fusion_info_free(struct ggml_metal_fusion_info * finfo);
+கட்டமைப்பு ggml_metal_fusion_info * ggml_metal_fusion_info_init(bool enabled, முழு debug);
+வெறுமை ggml_metal_fusion_info_free(கட்டமைப்பு ggml_metal_fusion_info * finfo);
 
-bool ggml_metal_fusion_info_enabled(const struct ggml_metal_fusion_info * finfo);
-bool ggml_metal_fusion_info_stats  (const struct ggml_metal_fusion_info * finfo);
-int  ggml_metal_fusion_info_debug  (const struct ggml_metal_fusion_info * finfo);
+bool ggml_metal_fusion_info_enabled(மாறிலி கட்டமைப்பு ggml_metal_fusion_info * finfo);
+bool ggml_metal_fusion_info_stats  (மாறிலி கட்டமைப்பு ggml_metal_fusion_info * finfo);
+முழு  ggml_metal_fusion_info_debug  (மாறிலி கட்டமைப்பு ggml_metal_fusion_info * finfo);
 
-int          ggml_metal_fusion_info_n_fusions(const struct ggml_metal_fusion_info * finfo);
-const char * ggml_metal_fusion_info_label    (const struct ggml_metal_fusion_info * finfo, int idx);
-uint64_t     ggml_metal_fusion_info_count    (const struct ggml_metal_fusion_info * finfo, int idx);
+முழு          ggml_metal_fusion_info_n_fusions(மாறிலி கட்டமைப்பு ggml_metal_fusion_info * finfo);
+மாறிலி எழுத்து * ggml_metal_fusion_info_label    (மாறிலி கட்டமைப்பு ggml_metal_fusion_info * finfo, முழு idx);
+uint64_t     ggml_metal_fusion_info_மொத்தம்    (மாறிலி கட்டமைப்பு ggml_metal_fusion_info * finfo, முழு idx);
 
-void ggml_metal_fusion_info_count_fusion(struct ggml_metal_fusion_info * finfo, const struct ggml_metal_fusion * fusion);
-void ggml_metal_fusion_info_set_enabled (struct ggml_metal_fusion_info * finfo, bool enabled);
+வெறுமை ggml_metal_fusion_info_மொத்தம்_fusion(கட்டமைப்பு ggml_metal_fusion_info * finfo, மாறிலி கட்டமைப்பு ggml_metal_fusion * fusion);
+வெறுமை ggml_metal_fusion_info_set_enabled (கட்டமைப்பு ggml_metal_fusion_info * finfo, bool enabled);
 
-void ggml_metal_fusion_info_stats_init (      struct ggml_metal_fusion_info * finfo);
-void ggml_metal_fusion_info_stats_reset(      struct ggml_metal_fusion_info * finfo);
-int  ggml_metal_fusion_info_stats_get  (const struct ggml_metal_fusion_info * finfo, const char ** labels, uint64_t * counts, int n);
-void ggml_metal_fusion_info_labels_init(      struct ggml_metal_fusion_info * finfo);
+வெறுமை ggml_metal_fusion_info_stats_init (      கட்டமைப்பு ggml_metal_fusion_info * finfo);
+வெறுமை ggml_metal_fusion_info_stats_reset(      கட்டமைப்பு ggml_metal_fusion_info * finfo);
+முழு  ggml_metal_fusion_info_stats_get  (மாறிலி கட்டமைப்பு ggml_metal_fusion_info * finfo, மாறிலி எழுத்து ** labels, uint64_t * counts, முழு n);
+வெறுமை ggml_metal_fusion_info_labels_init(      கட்டமைப்பு ggml_metal_fusion_info * finfo);
 
 // compute phase: longest fusion starting at idx (a position in node_idxs) that matches in `mode` on a device with
 // props. returns the matching pattern (nullptr if no fusion) and sets *n_out to the number of nodes consumed.
-const ggml_metal_fusion * ggml_metal_fusion_next(
-        const struct ggml_cgraph * gf,
-        const int * node_idxs,
-        int n_idxs,
-        int idx,
+மாறிலி ggml_metal_fusion * ggml_metal_fusion_next(
+        மாறிலி கட்டமைப்பு ggml_cgraph * gf,
+        மாறிலி முழு * முனை_idxs,
+        முழு n_idxs,
+        முழு idx,
         ggml_metal_fusion_mode mode,
-        int * n_out);
+        முழு * n_out);
 
 // optimize phase: maximum number of nodes starting at idx (a raw sequential graph index) that
 // could be fused on a device with props, chaining patterns back-to-back. returns at least 1.
-int ggml_metal_fusion_max(const struct ggml_cgraph * gf, int idx);
+முழு ggml_metal_fusion_max(மாறிலி கட்டமைப்பு ggml_cgraph * gf, முழு idx);
 
 #ifdef __cplusplus
 }

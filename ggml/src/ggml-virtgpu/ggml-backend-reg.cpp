@@ -1,58 +1,58 @@
-#include "ggml-remoting.h"
-#include "ggml-virtgpu.h"
+#அந்தர்பாவ "ggml-remoting.h"
+#அந்தர்பாவ "ggml-virtgpu.h"
 
-#include <iostream>
-#include <mutex>
+#அந்தர்பாவ <iostream>
+#அந்தர்பாவ <mutex>
 
-void ggml_virtgpu_cleanup(virtgpu * gpu);
+வெறுமை ggml_virtgpu_cleanup(virtgpu * gpu);
 
-static virtgpu * apir_initialize() {
-    static virtgpu *         gpu         = NULL;
-    static std::atomic<bool> initialized = false;
+நிலையான virtgpu * apir_initialize() {
+    நிலையான virtgpu *         gpu         = வெற்று;
+    நிலையான std::atomic<தருக்க> initialized = பொய்;
 
-    if (initialized) {
+    எனில் (initialized) {
         // fast track
-        return gpu;
+        திரும்பு gpu;
     }
 
     {
-        static std::mutex           mutex;
+        நிலையான std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
 
-        if (initialized) {
+        எனில் (initialized) {
             // thread safe
-            return gpu;
+            திரும்பு gpu;
         }
 
         gpu = create_virtgpu();
-        if (!gpu) {
-            initialized = true;
-            return NULL;
+        எனில் (!gpu) {
+            initialized = உண்மை;
+            திரும்பு வெற்று;
         }
 
         // Pre-fetch and cache all device information, it will not change
         gpu->cached_device_info.description = apir_device_get_description(gpu);
-        if (!gpu->cached_device_info.description) {
+        எனில் (!gpu->cached_device_info.description) {
             GGML_ABORT(GGML_VIRTGPU "%s: failed to initialize the virtgpu device description", __func__);
         }
-        gpu->cached_device_info.device_count = apir_device_get_count(gpu);
+        gpu->cached_device_info.device_மொத்தம் = apir_device_get_மொத்தம்(gpu);
         gpu->cached_device_info.type         = apir_device_get_type(gpu);
 
         {
             // Get the remote name and create prefixed version
-            char * rmt_device_name = apir_device_get_name(gpu);
-            if (!rmt_device_name) {
+            எழுத்து * rmt_device_name = apir_device_get_name(gpu);
+            எனில் (!rmt_device_name) {
                 GGML_ABORT(GGML_VIRTGPU "%s: failed to get the virtgpu device name", __func__);
             }
 
             size_t device_name_len       = strlen(rmt_device_name) + 11;  // "[virtgpu] " + null terminator
-            gpu->cached_device_info.name = (char *) malloc(device_name_len);
-            if (!gpu->cached_device_info.name) {
-                free(rmt_device_name);
+            gpu->cached_device_info.name = (எழுத்து *) malloc(device_name_len);
+            எனில் (!gpu->cached_device_info.name) {
+                விடுவி(rmt_device_name);
                 GGML_ABORT(GGML_VIRTGPU "%s: failed to allocate memory for prefixed device name", __func__);
             }
             snprintf(gpu->cached_device_info.name, device_name_len, "[virtgpu] %s", rmt_device_name);
-            free(rmt_device_name);
+            விடுவி(rmt_device_name);
         }
 
         apir_device_get_memory(gpu, &gpu->cached_device_info.memory_free, &gpu->cached_device_info.memory_total);
@@ -61,150 +61,150 @@ static virtgpu * apir_initialize() {
         gpu->cached_buffer_type.host_handle             = buft_host_handle;
         {
             // Get the remote name and create prefixed version
-            char * rmt_name = apir_buffer_type_get_name(gpu, buft_host_handle);
-            if (!rmt_name) {
+            எழுத்து * rmt_name = apir_buffer_type_get_name(gpu, buft_host_handle);
+            எனில் (!rmt_name) {
                 GGML_ABORT(GGML_VIRTGPU "%s: failed to get the virtgpu buffer type name", __func__);
             }
 
             size_t prefixed_len          = strlen(rmt_name) + 11;  // "[virtgpu] " + null terminator
-            gpu->cached_buffer_type.name = (char *) malloc(prefixed_len);
-            if (!gpu->cached_buffer_type.name) {
-                free(rmt_name);
+            gpu->cached_buffer_type.name = (எழுத்து *) malloc(prefixed_len);
+            எனில் (!gpu->cached_buffer_type.name) {
+                விடுவி(rmt_name);
                 GGML_ABORT(GGML_VIRTGPU "%s: failed to allocate memory for prefixed buffer type name", __func__);
             }
             snprintf(gpu->cached_buffer_type.name, prefixed_len, "[virtgpu] %s", rmt_name);
-            free(rmt_name);
+            விடுவி(rmt_name);
         }
 
         gpu->cached_buffer_type.alignment = apir_buffer_type_get_alignment(gpu, buft_host_handle);
         gpu->cached_buffer_type.max_size  = apir_buffer_type_get_max_size(gpu, buft_host_handle);
 
-        initialized = true;
+        initialized = உண்மை;
     }
 
-    return gpu;
+    திரும்பு gpu;
 }
 
-static int ggml_backend_remoting_get_device_count() {
+நிலையான முழு ggml_backend_remoting_get_device_மொத்தம்() {
     virtgpu * gpu = apir_initialize();
-    if (!gpu) {
-        return 0;
+    எனில் (!gpu) {
+        திரும்பு 0;
     }
 
-    return gpu->cached_device_info.device_count;
+    திரும்பு gpu->cached_device_info.device_மொத்தம்;
 }
 
-static size_t ggml_backend_remoting_reg_get_device_count(ggml_backend_reg_t reg) {
+நிலையான size_t ggml_backend_remoting_reg_get_device_மொத்தம்(ggml_backend_reg_t reg) {
     UNUSED(reg);
 
-    return ggml_backend_remoting_get_device_count();
+    திரும்பு ggml_backend_remoting_get_device_மொத்தம்();
 }
 
-static std::vector<ggml_backend_dev_t> devices;
+நிலையான std::vector<ggml_backend_dev_t> devices;
 
 ggml_backend_dev_t ggml_backend_remoting_get_device(size_t device) {
     GGML_ASSERT(device < devices.size());
-    return devices[device];
+    திரும்பு devices[device];
 }
 
-static void ggml_backend_remoting_reg_init_devices(ggml_backend_reg_t reg) {
-    if (devices.size() > 0) {
+நிலையான வெறுமை ggml_backend_remoting_reg_init_devices(ggml_backend_reg_t reg) {
+    எனில் (devices.size() > 0) {
         GGML_LOG_INFO(GGML_VIRTGPU "%s: already initialized\n", __func__);
-        return;
+        திரும்பு;
     }
 
     virtgpu * gpu = apir_initialize();
-    if (!gpu) {
+    எனில் (!gpu) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: apir_initialize failed\n", __func__);
-        return;
+        திரும்பு;
     }
 
-    static std::atomic<bool> initialized = false;
+    நிலையான std::atomic<தருக்க> initialized = பொய்;
 
-    if (initialized) {
-        return;  // fast track
+    எனில் (initialized) {
+        திரும்பு;  // fast track
     }
 
     {
-        static std::mutex           mutex;
+        நிலையான std::mutex           mutex;
         std::lock_guard<std::mutex> lock(mutex);
-        if (!initialized) {
-            for (int i = 0; i < ggml_backend_remoting_get_device_count(); i++) {
-                ggml_backend_remoting_device_context * ctx       = new ggml_backend_remoting_device_context;
-                char                                   desc[256] = "ggml-virtgpu API Remoting device";
+        எனில் (!initialized) {
+            க்கு (முழு i = 0; i < ggml_backend_remoting_get_device_மொத்தம்(); i++) {
+                ggml_backend_remoting_device_context * ctx       = புதிய ggml_backend_remoting_device_context;
+                எழுத்து                                   desc[256] = "ggml-virtgpu API Remoting device";
 
                 ctx->device      = i;
                 ctx->name        = GGML_VIRTGPU_NAME + std::to_string(i);
                 ctx->description = desc;
                 ctx->gpu         = gpu;
 
-                ggml_backend_dev_t dev = new ggml_backend_device{
+                ggml_backend_dev_t dev = புதிய ggml_backend_device{
                     /* .iface   = */ ggml_backend_remoting_device_interface,
                     /* .reg     = */ reg,
                     /* .context = */ ctx,
                 };
                 devices.push_back(dev);
             }
-            initialized = true;
+            initialized = உண்மை;
         }
     }
 }
 
-static ggml_backend_dev_t ggml_backend_remoting_reg_get_device(ggml_backend_reg_t reg, size_t device) {
+நிலையான ggml_backend_dev_t ggml_backend_remoting_reg_get_device(ggml_backend_reg_t reg, size_t device) {
     UNUSED(reg);
 
-    return ggml_backend_remoting_get_device(device);
+    திரும்பு ggml_backend_remoting_get_device(device);
 }
 
-static const char * ggml_backend_remoting_reg_get_name(ggml_backend_reg_t reg) {
+நிலையான மாறிலி எழுத்து * ggml_backend_remoting_reg_get_name(ggml_backend_reg_t reg) {
     UNUSED(reg);
 
-    return GGML_VIRTGPU_NAME;
+    திரும்பு GGML_VIRTGPU_NAME;
 }
 
-static const ggml_backend_reg_i ggml_backend_remoting_reg_i = {
+நிலையான மாறிலி ggml_backend_reg_i ggml_backend_remoting_reg_i = {
     /* .get_name         = */ ggml_backend_remoting_reg_get_name,
-    /* .get_device_count = */ ggml_backend_remoting_reg_get_device_count,
+    /* .get_device_count = */ ggml_backend_remoting_reg_get_device_மொத்தம்,
     /* .get_device       = */ ggml_backend_remoting_reg_get_device,
-    /* .get_proc_address = */ NULL,
+    /* .get_proc_address = */ வெற்று,
 };
 
 ggml_backend_reg_t ggml_backend_virtgpu_reg() {
     virtgpu * gpu = apir_initialize();
-    if (!gpu) {
+    எனில் (!gpu) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: virtgpu_apir_initialize failed\n", __func__);
     }
 
-    static ggml_backend_reg reg = {
+    நிலையான ggml_backend_reg reg = {
         /* .api_version = */ GGML_BACKEND_API_VERSION,
         /* .iface       = */ ggml_backend_remoting_reg_i,
         /* .context     = */ gpu,
     };
 
-    static bool initialized = false;
-    if (initialized) {
-        return &reg;
+    நிலையான தருக்க initialized = பொய்;
+    எனில் (initialized) {
+        திரும்பு &reg;
     }
-    initialized = true;
+    initialized = உண்மை;
 
     ggml_backend_remoting_reg_init_devices(&reg);
 
-    return &reg;
+    திரும்பு &reg;
 }
 
 // public function, not exposed in the GGML interface at the moment
-void ggml_virtgpu_cleanup(virtgpu * gpu) {
-    if (gpu->cached_device_info.name) {
-        free(gpu->cached_device_info.name);
-        gpu->cached_device_info.name = NULL;
+வெறுமை ggml_virtgpu_cleanup(virtgpu * gpu) {
+    எனில் (gpu->cached_device_info.name) {
+        விடுவி(gpu->cached_device_info.name);
+        gpu->cached_device_info.name = வெற்று;
     }
-    if (gpu->cached_device_info.description) {
-        free(gpu->cached_device_info.description);
-        gpu->cached_device_info.description = NULL;
+    எனில் (gpu->cached_device_info.description) {
+        விடுவி(gpu->cached_device_info.description);
+        gpu->cached_device_info.description = வெற்று;
     }
-    if (gpu->cached_buffer_type.name) {
-        free(gpu->cached_buffer_type.name);
-        gpu->cached_buffer_type.name = NULL;
+    எனில் (gpu->cached_buffer_type.name) {
+        விடுவி(gpu->cached_buffer_type.name);
+        gpu->cached_buffer_type.name = வெற்று;
     }
 
     mtx_destroy(&gpu->data_shmem_mutex);

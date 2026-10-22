@@ -1,22 +1,22 @@
 #ifndef PRE_WGSL_HPP
 #define PRE_WGSL_HPP
 
-#include <cctype>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+#அந்தர்பாவ <cctype>
+#அந்தர்பாவ <fstream>
+#அந்தர்பாவ <sstream>
+#அந்தர்பாவ <stdexcept>
+#அந்தர்பாவ <string>
+#அந்தர்பாவ <string_view>
+#அந்தர்பாவ <unordered_map>
+#அந்தர்பாவ <unordered_set>
+#அந்தர்பாவ <vector>
 
-namespace pre_wgsl {
+நாமாகாஶ pre_wgsl {
 
 //==============================================================
 // Options
 //==============================================================
-struct Options {
+கட்டமைப்பு Options {
     std::string              include_path = ".";
     std::vector<std::string> macros;
 };
@@ -24,186 +24,186 @@ struct Options {
 //==============================================================
 // Utility: trim
 //==============================================================
-static std::string trim(const std::string & s) {
+நிலையான std::string trim(மாறிலி std::string & s) {
     size_t a = 0;
-    while (a < s.size() && std::isspace((unsigned char) s[a])) {
+    போது (a < s.size() && std::isspace((unsigned எழுத்து) s[a])) {
         a++;
     }
     size_t b = s.size();
-    while (b > a && std::isspace((unsigned char) s[b - 1])) {
+    போது (b > a && std::isspace((unsigned எழுத்து) s[b - 1])) {
         b--;
     }
-    return s.substr(a, b - a);
+    திரும்பு s.substr(a, b - a);
 }
 
-static std::string trim_value(std::istream & is) {
+நிலையான std::string trim_மதிப்பு(std::istream & is) {
     std::ostringstream ss;
     ss << is.rdbuf();
-    return trim(ss.str());
+    திரும்பு trim(ss.str());
 }
 
-static bool isIdentChar(char c) {
-    return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
+நிலையான தருக்க isIdentChar(எழுத்து c) {
+    திரும்பு std::isalnum(static_cast<unsigned எழுத்து>(c)) || c == '_';
 }
 
-static bool endsWithContinuation(const std::string & line) {
-    size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+நிலையான தருக்க endsWithContinuation(மாறிலி std::string & வரி) {
+    size_t i = வரி.size();
+    போது (i > 0 && std::isspace((unsigned எழுத்து) வரி[i - 1])) {
         i--;
     }
-    return i > 0 && line[i - 1] == '\\';
+    திரும்பு i > 0 && வரி[i - 1] == '\\';
 }
 
-static void stripContinuation(std::string & line) {
-    size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+நிலையான வெறுமை stripContinuation(std::string & வரி) {
+    size_t i = வரி.size();
+    போது (i > 0 && std::isspace((unsigned எழுத்து) வரி[i - 1])) {
         i--;
     }
-    if (i > 0 && line[i - 1] == '\\') {
-        line.erase(i - 1);
+    எனில் (i > 0 && வரி[i - 1] == '\\') {
+        வரி.erase(i - 1);
     }
 }
 
-static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
-                                                 const std::unordered_map<std::string, std::string> & macros,
+நிலையான std::string expandMacrosRecursiveInternal(மாறிலி std::string &                                  வரி,
+                                                 மாறிலி std::unordered_map<std::string, std::string> & macros,
                                                  std::unordered_set<std::string> &                    visiting);
 
-static std::string expandMacroValue(const std::string &                                  name,
-                                    const std::unordered_map<std::string, std::string> & macros,
+நிலையான std::string expand_Macro_மதிப்பு(மாறிலி std::string &                                  name,
+                                    மாறிலி std::unordered_map<std::string, std::string> & macros,
                                     std::unordered_set<std::string> &                    visiting) {
-    if (visiting.count(name)) {
-        throw std::runtime_error("Recursive macro: " + name);
+    எனில் (visiting.count(name)) {
+        எறி std::runtime_error("Recursive macro: " + name);
     }
     visiting.insert(name);
 
     auto it = macros.find(name);
-    if (it == macros.end()) {
+    எனில் (it == macros.end()) {
         visiting.erase(name);
-        return name;
+        திரும்பு name;
     }
 
-    const std::string & value = it->second;
-    if (value.empty()) {
+    மாறிலி std::string & value = it->second;
+    எனில் (value.empty()) {
         visiting.erase(name);
-        return "";
+        திரும்பு "";
     }
 
     std::string expanded = expandMacrosRecursiveInternal(value, macros, visiting);
     visiting.erase(name);
-    return expanded;
+    திரும்பு expanded;
 }
 
-static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
-                                                 const std::unordered_map<std::string, std::string> & macros,
+நிலையான std::string expandMacrosRecursiveInternal(மாறிலி std::string &                                  வரி,
+                                                 மாறிலி std::unordered_map<std::string, std::string> & macros,
                                                  std::unordered_set<std::string> &                    visiting) {
     std::string result;
-    result.reserve(line.size());
+    result.reserve(வரி.size());
 
     size_t i = 0;
-    while (i < line.size()) {
-        if (isIdentChar(line[i])) {
+    போது (i < வரி.size()) {
+        எனில் (isIdentChar(வரி[i])) {
             size_t start = i;
-            while (i < line.size() && isIdentChar(line[i])) {
+            போது (i < வரி.size() && isIdentChar(வரி[i])) {
                 i++;
             }
-            std::string token = line.substr(start, i - start);
+            std::string token = வரி.substr(start, i - start);
 
             auto it = macros.find(token);
-            if (it != macros.end()) {
-                result += expandMacroValue(token, macros, visiting);
-            } else {
+            எனில் (it != macros.end()) {
+                result += expand_Macro_மதிப்பு(token, macros, visiting);
+            } இல்லையெனில் {
                 result += token;
             }
-        } else {
-            result += line[i];
+        } இல்லையெனில் {
+            result += வரி[i];
             i++;
         }
     }
 
-    return result;
+    திரும்பு result;
 }
 
-static std::string expandMacrosRecursive(const std::string &                                  line,
-                                         const std::unordered_map<std::string, std::string> & macros) {
+நிலையான std::string expandMacrosRecursive(மாறிலி std::string &                                  வரி,
+                                         மாறிலி std::unordered_map<std::string, std::string> & macros) {
     std::unordered_set<std::string> visiting;
-    return expandMacrosRecursiveInternal(line, macros, visiting);
+    திரும்பு expandMacrosRecursiveInternal(வரி, macros, visiting);
 }
 
 //==============================================================
 // Tokenizer for expressions in #if/#elif
 //==============================================================
-class ExprLexer {
-  public:
-    enum Kind { END, IDENT, NUMBER, OP, LPAREN, RPAREN };
+வகுப்பு கோவை_Lexer {
+  பொது:
+    எண்ணிக்கை Kind { END, IDENT, எண்_2, OP, LPAREN, RPAREN };
 
-    struct Tok {
+    கட்டமைப்பு Tok {
         Kind        kind;
         std::string text;
     };
 
-    explicit ExprLexer(std::string_view sv) : src(sv), pos(0) {}
+    explicit கோவை_Lexer(std::string_view sv) : src(sv), pos(0) {}
 
     Tok next() {
         skipWS();
-        if (pos >= src.size()) {
-            return { END, "" };
+        எனில் (pos >= src.size()) {
+            திரும்பு { END, "" };
         }
 
-        char c = src[pos];
+        எழுத்து c = src[pos];
 
-        // number
-        if (std::isdigit((unsigned char) c)) {
+        //எண்
+        எனில் (std::isdigit((unsigned எழுத்து) c)) {
             size_t start = pos;
-            while (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
+            போது (pos < src.size() && std::isdigit((unsigned எழுத்து) src[pos])) {
                 pos++;
             }
-            return { NUMBER, std::string(src.substr(start, pos - start)) };
+            திரும்பு { எண்_2, std::string(src.substr(start, pos - start)) };
         }
 
         // identifier
-        if (std::isalpha((unsigned char) c) || c == '_') {
+        எனில் (std::isalpha((unsigned எழுத்து) c) || c == '_') {
             size_t start = pos;
-            while (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
+            போது (pos < src.size() && (std::isalnum((unsigned எழுத்து) src[pos]) || src[pos] == '_')) {
                 pos++;
             }
-            return { IDENT, std::string(src.substr(start, pos - start)) };
+            திரும்பு { IDENT, std::string(src.substr(start, pos - start)) };
         }
 
-        if (c == '(') {
+        எனில் (c == '(') {
             pos++;
-            return { LPAREN, "(" };
+            திரும்பு { LPAREN, "(" };
         }
-        if (c == ')') {
+        எனில் (c == ')') {
             pos++;
-            return { RPAREN, ")" };
+            திரும்பு { RPAREN, ")" };
         }
 
         // multi-char operators
-        static const char * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
-        for (auto op : two_ops) {
-            if (src.substr(pos, 2) == op) {
+        நிலையான மாறிலி எழுத்து * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
+        க்கு (auto op : two_ops) {
+            எனில் (src.substr(pos, 2) == op) {
                 pos += 2;
-                return { OP, std::string(op) };
+                திரும்பு { OP, std::string(op) };
             }
         }
 
         // single-char operators
-        if (std::string("+-*/%<>!").find(c) != std::string::npos) {
+        எனில் (std::string("+-*/%<>!").find(c) != std::string::npos) {
             pos++;
-            return { OP, std::string(1, c) };
+            திரும்பு { OP, std::string(1, c) };
         }
 
         // unexpected
         pos++;
-        return { END, "" };
+        திரும்பு { END, "" };
     }
 
-  private:
+  தனிப்பட்ட:
     std::string_view src;
     size_t           pos;
 
-    void skipWS() {
-        while (pos < src.size() && std::isspace((unsigned char) src[pos])) {
+    வெறுமை skipWS() {
+        போது (pos < src.size() && std::isspace((unsigned எழுத்து) src[pos])) {
             pos++;
         }
     }
@@ -212,308 +212,308 @@ class ExprLexer {
 //==============================================================
 // Expression Parser (recursive descent)
 //==============================================================
-class ExprParser {
-  public:
-    ExprParser(std::string_view                                     expr,
-               const std::unordered_map<std::string, std::string> & macros,
+வகுப்பு கோவை_Parser {
+  பொது:
+    கோவை_Parser(std::string_view                                     கோவை,
+               மாறிலி std::unordered_map<std::string, std::string> & macros,
                std::unordered_set<std::string> &                    visiting) :
-        lex(expr),
+        lex(கோவை),
         macros(macros),
         visiting(visiting) {
         advance();
     }
 
-    int parse() { return parseLogicalOr(); }
+    முழு parse() { திரும்பு parseLogicalOr(); }
 
-  private:
-    ExprLexer                                            lex;
-    ExprLexer::Tok                                       tok;
-    const std::unordered_map<std::string, std::string> & macros;
+  தனிப்பட்ட:
+    கோவை_Lexer                                            lex;
+    கோவை_Lexer::Tok                                       tok;
+    மாறிலி std::unordered_map<std::string, std::string> & macros;
     std::unordered_set<std::string> &                    visiting;
 
-    void advance() { tok = lex.next(); }
+    வெறுமை advance() { tok = lex.next(); }
 
-    bool acceptOp(const std::string & s) {
-        if (tok.kind == ExprLexer::OP && tok.text == s) {
+    தருக்க acceptOp(மாறிலி std::string & s) {
+        எனில் (tok.kind == கோவை_Lexer::OP && tok.text == s) {
             advance();
-            return true;
+            திரும்பு உண்மை;
         }
-        return false;
+        திரும்பு பொய்;
     }
 
-    bool acceptKind(ExprLexer::Kind k) {
-        if (tok.kind == k) {
+    தருக்க acceptKind(கோவை_Lexer::Kind k) {
+        எனில் (tok.kind == k) {
             advance();
-            return true;
+            திரும்பு உண்மை;
         }
-        return false;
+        திரும்பு பொய்;
     }
 
-    int parseLogicalOr() {
-        int v = parseLogicalAnd();
-        while (acceptOp("||")) {
-            int rhs = parseLogicalAnd();
+    முழு parseLogicalOr() {
+        முழு v = parseLogicalAnd();
+        போது (acceptOp("||")) {
+            முழு rhs = parseLogicalAnd();
             v       = (v || rhs);
         }
-        return v;
+        திரும்பு v;
     }
 
-    int parseLogicalAnd() {
-        int v = parseEquality();
-        while (acceptOp("&&")) {
-            int rhs = parseEquality();
+    முழு parseLogicalAnd() {
+        முழு v = parseEquality();
+        போது (acceptOp("&&")) {
+            முழு rhs = parseEquality();
             v       = (v && rhs);
         }
-        return v;
+        திரும்பு v;
     }
 
-    int parseEquality() {
-        int v = parseRelational();
-        for (;;) {
-            if (acceptOp("==")) {
-                int rhs = parseRelational();
+    முழு parseEquality() {
+        முழு v = parseRelational();
+        க்கு (;;) {
+            எனில் (acceptOp("==")) {
+                முழு rhs = parseRelational();
                 v       = (v == rhs);
-            } else if (acceptOp("!=")) {
-                int rhs = parseRelational();
+            } இல்லையெனில் எனில் (acceptOp("!=")) {
+                முழு rhs = parseRelational();
                 v       = (v != rhs);
-            } else {
-                break;
+            } இல்லையெனில் {
+                நிறுத்து;
             }
         }
-        return v;
+        திரும்பு v;
     }
 
-    int parseRelational() {
-        int v = parseShift();
-        for (;;) {
-            if (acceptOp("<")) {
-                int rhs = parseShift();
+    முழு parseRelational() {
+        முழு v = parseShift();
+        க்கு (;;) {
+            எனில் (acceptOp("<")) {
+                முழு rhs = parseShift();
                 v       = (v < rhs);
-            } else if (acceptOp(">")) {
-                int rhs = parseShift();
+            } இல்லையெனில் எனில் (acceptOp(">")) {
+                முழு rhs = parseShift();
                 v       = (v > rhs);
-            } else if (acceptOp("<=")) {
-                int rhs = parseShift();
+            } இல்லையெனில் எனில் (acceptOp("<=")) {
+                முழு rhs = parseShift();
                 v       = (v <= rhs);
-            } else if (acceptOp(">=")) {
-                int rhs = parseShift();
+            } இல்லையெனில் எனில் (acceptOp(">=")) {
+                முழு rhs = parseShift();
                 v       = (v >= rhs);
-            } else {
-                break;
+            } இல்லையெனில் {
+                நிறுத்து;
             }
         }
-        return v;
+        திரும்பு v;
     }
 
-    int parseShift() {
-        int v = parseAdd();
-        for (;;) {
-            if (acceptOp("<<")) {
-                int rhs = parseAdd();
+    முழு parseShift() {
+        முழு v = parseAdd();
+        க்கு (;;) {
+            எனில் (acceptOp("<<")) {
+                முழு rhs = parseAdd();
                 v       = (v << rhs);
-            } else if (acceptOp(">>")) {
-                int rhs = parseAdd();
+            } இல்லையெனில் எனில் (acceptOp(">>")) {
+                முழு rhs = parseAdd();
                 v       = (v >> rhs);
-            } else {
-                break;
+            } இல்லையெனில் {
+                நிறுத்து;
             }
         }
-        return v;
+        திரும்பு v;
     }
 
-    int parseAdd() {
-        int v = parseMult();
-        for (;;) {
-            if (acceptOp("+")) {
-                int rhs = parseMult();
+    முழு parseAdd() {
+        முழு v = parseMult();
+        க்கு (;;) {
+            எனில் (acceptOp("+")) {
+                முழு rhs = parseMult();
                 v       = (v + rhs);
-            } else if (acceptOp("-")) {
-                int rhs = parseMult();
+            } இல்லையெனில் எனில் (acceptOp("-")) {
+                முழு rhs = parseMult();
                 v       = (v - rhs);
-            } else {
-                break;
+            } இல்லையெனில் {
+                நிறுத்து;
             }
         }
-        return v;
+        திரும்பு v;
     }
 
-    int parseMult() {
-        int v = parseUnary();
-        for (;;) {
-            if (acceptOp("*")) {
-                int rhs = parseUnary();
+    முழு parseMult() {
+        முழு v = parseUnary();
+        க்கு (;;) {
+            எனில் (acceptOp("*")) {
+                முழு rhs = parseUnary();
                 v       = (v * rhs);
-            } else if (acceptOp("/")) {
-                int rhs = parseUnary();
+            } இல்லையெனில் எனில் (acceptOp("/")) {
+                முழு rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v / rhs);
-            } else if (acceptOp("%")) {
-                int rhs = parseUnary();
+            } இல்லையெனில் எனில் (acceptOp("%")) {
+                முழு rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v % rhs);
-            } else {
-                break;
+            } இல்லையெனில் {
+                நிறுத்து;
             }
         }
-        return v;
+        திரும்பு v;
     }
 
-    int parseUnary() {
-        if (acceptOp("!")) {
-            return !parseUnary();
+    முழு parseUnary() {
+        எனில் (acceptOp("!")) {
+            திரும்பு !parseUnary();
         }
-        if (acceptOp("-")) {
-            return -parseUnary();
+        எனில் (acceptOp("-")) {
+            திரும்பு -parseUnary();
         }
-        if (acceptOp("+")) {
-            return +parseUnary();
+        எனில் (acceptOp("+")) {
+            திரும்பு +parseUnary();
         }
-        return parsePrimary();
+        திரும்பு parsePrimary();
     }
 
-    int parsePrimary() {
+    முழு parsePrimary() {
         // '(' expr ')'
-        if (acceptKind(ExprLexer::LPAREN)) {
-            int v = parse();
-            if (!acceptKind(ExprLexer::RPAREN)) {
-                throw std::runtime_error("missing ')'");
+        எனில் (acceptKind(கோவை_Lexer::LPAREN)) {
+            முழு v = parse();
+            எனில் (!acceptKind(கோவை_Lexer::RPAREN)) {
+                எறி std::runtime_error("missing ')'");
             }
-            return v;
+            திரும்பு v;
         }
 
-        // number
-        if (tok.kind == ExprLexer::NUMBER) {
-            int v = std::stoi(tok.text);
+        //எண்
+        எனில் (tok.kind == கோவை_Lexer::எண்_2) {
+            முழு v = std::stoi(tok.text);
             advance();
-            return v;
+            திரும்பு v;
         }
 
         // defined(identifier)
-        if (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
+        எனில் (tok.kind == கோவை_Lexer::IDENT && tok.text == "defined") {
             advance();
-            if (acceptKind(ExprLexer::LPAREN)) {
-                if (tok.kind != ExprLexer::IDENT) {
-                    throw std::runtime_error("expected identifier in defined()");
+            எனில் (acceptKind(கோவை_Lexer::LPAREN)) {
+                எனில் (tok.kind != கோவை_Lexer::IDENT) {
+                    எறி std::runtime_error("expected identifier in defined()");
                 }
                 std::string name = tok.text;
                 advance();
-                if (!acceptKind(ExprLexer::RPAREN)) {
-                    throw std::runtime_error("missing ) in defined()");
+                எனில் (!acceptKind(கோவை_Lexer::RPAREN)) {
+                    எறி std::runtime_error("missing ) in defined()");
                 }
-                return macros.count(name) ? 1 : 0;
-            } else {
+                திரும்பு macros.count(name) ? 1 : 0;
+            } இல்லையெனில் {
                 // defined NAME
-                if (tok.kind != ExprLexer::IDENT) {
-                    throw std::runtime_error("expected identifier in defined NAME");
+                எனில் (tok.kind != கோவை_Lexer::IDENT) {
+                    எறி std::runtime_error("expected identifier in defined NAME");
                 }
                 std::string name = tok.text;
                 advance();
-                return macros.count(name) ? 1 : 0;
+                திரும்பு macros.count(name) ? 1 : 0;
             }
         }
 
         // identifier -> treat as integer, if defined use its value else 0
-        if (tok.kind == ExprLexer::IDENT) {
+        எனில் (tok.kind == கோவை_Lexer::IDENT) {
             std::string name = tok.text;
             advance();
             auto it = macros.find(name);
-            if (it == macros.end()) {
-                return 0;
+            எனில் (it == macros.end()) {
+                திரும்பு 0;
             }
-            if (it->second.empty()) {
-                return 1;
+            எனில் (it->second.empty()) {
+                திரும்பு 1;
             }
-            return evalMacroExpression(name, it->second);
+            திரும்பு evalMacroExpression(name, it->second);
         }
 
         // unexpected
-        return 0;
+        திரும்பு 0;
     }
 
-    int evalMacroExpression(const std::string & name, const std::string & value) {
-        if (visiting.count(name)) {
-            throw std::runtime_error("Recursive macro: " + name);
+    முழு evalMacroExpression(மாறிலி std::string & name, மாறிலி std::string & value) {
+        எனில் (visiting.count(name)) {
+            எறி std::runtime_error("Recursive macro: " + name);
         }
 
         visiting.insert(name);
-        ExprParser ep(value, macros, visiting);
-        int        v = ep.parse();
+        கோவை_Parser ep(value, macros, visiting);
+        முழு        v = ep.parse();
         visiting.erase(name);
-        return v;
+        திரும்பு v;
     }
 };
 
 //==============================================================
 // Preprocessor
 //==============================================================
-class Preprocessor {
-  public:
+வகுப்பு Preprocessor {
+  பொது:
     explicit Preprocessor(Options opts = {}) : opts_(std::move(opts)) {
         // Treat empty include path as current directory
-        if (opts_.include_path.empty()) {
+        எனில் (opts_.include_path.empty()) {
             opts_.include_path = ".";
         }
         parseMacroDefinitions(opts_.macros);
     }
 
-    std::string preprocess_file(const std::string & filename, const std::vector<std::string> & additional_macros = {}) {
+    std::string preprocess_file(மாறிலி std::string & filename, மாறிலி std::vector<std::string> & additional_macros = {}) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
+        std::unordered_set<std::string>              include_அடுக்கு;
         buildMacros(additional_macros, macros, predefined);
 
-        std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        std::string result = processFile(filename, macros, predefined, include_அடுக்கு, DirectiveMode::All);
+        திரும்பு result;
     }
 
-    std::string preprocess(const std::string & contents, const std::vector<std::string> & additional_macros = {}) {
+    std::string preprocess(மாறிலி std::string & contents, மாறிலி std::vector<std::string> & additional_macros = {}) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
+        std::unordered_set<std::string>              include_அடுக்கு;
         buildMacros(additional_macros, macros, predefined);
 
-        std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        std::string result = processString(contents, macros, predefined, include_அடுக்கு, DirectiveMode::All);
+        திரும்பு result;
     }
 
-    std::string preprocess_includes_file(const std::string & filename) {
+    std::string preprocess_includes_file(மாறிலி std::string & filename) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
-        std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        std::unordered_set<std::string>              include_அடுக்கு;
+        std::string result = processFile(filename, macros, predefined, include_அடுக்கு, DirectiveMode::IncludesOnly);
+        திரும்பு result;
     }
 
-    std::string preprocess_includes(const std::string & contents) {
+    std::string preprocess_includes(மாறிலி std::string & contents) {
         std::unordered_map<std::string, std::string> macros;
         std::unordered_set<std::string>              predefined;
-        std::unordered_set<std::string>              include_stack;
-        std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        std::unordered_set<std::string>              include_அடுக்கு;
+        std::string result = processString(contents, macros, predefined, include_அடுக்கு, DirectiveMode::IncludesOnly);
+        திரும்பு result;
     }
 
-  private:
+  தனிப்பட்ட:
     Options                                      opts_;
     std::unordered_map<std::string, std::string> global_macros;
 
-    enum class DirectiveMode { All, IncludesOnly };
+    எண்ணிக்கை வகுப்பு DirectiveMode { All, IncludesOnly };
 
-    struct Cond {
-        bool parent_active;
-        bool active;
-        bool taken;
+    கட்டமைப்பு Cond {
+        தருக்க parent_active;
+        தருக்க active;
+        தருக்க taken;
     };
 
     //----------------------------------------------------------
     // Parse macro definitions into global_macros
     //----------------------------------------------------------
-    void parseMacroDefinitions(const std::vector<std::string> & macro_defs) {
-        for (const auto & def : macro_defs) {
+    வெறுமை parseMacroDefinitions(மாறிலி std::vector<std::string> & macro_defs) {
+        க்கு (மாறிலி auto & def : macro_defs) {
             size_t eq_pos = def.find('=');
-            if (eq_pos != std::string::npos) {
+            எனில் (eq_pos != std::string::npos) {
                 // Format: NAME=VALUE
                 std::string name    = trim(def.substr(0, eq_pos));
                 std::string value   = trim(def.substr(eq_pos + 1));
                 global_macros[name] = value;
-            } else {
+            } இல்லையெனில் {
                 // Format: NAME
                 std::string name    = trim(def);
                 global_macros[name] = "";
@@ -524,23 +524,23 @@ class Preprocessor {
     //----------------------------------------------------------
     // Build combined macro map and predefined set for a preprocessing operation
     //----------------------------------------------------------
-    void buildMacros(const std::vector<std::string> &               additional_macros,
+    வெறுமை buildMacros(மாறிலி std::vector<std::string> &               additional_macros,
                      std::unordered_map<std::string, std::string> & macros,
                      std::unordered_set<std::string> &              predefined) {
         macros = global_macros;
         predefined.clear();
 
-        for (const auto & [name, value] : global_macros) {
+        க்கு (மாறிலி auto & [name, value] : global_macros) {
             predefined.insert(name);
         }
 
-        for (const auto & def : additional_macros) {
+        க்கு (மாறிலி auto & def : additional_macros) {
             size_t      eq_pos = def.find('=');
             std::string name, value;
-            if (eq_pos != std::string::npos) {
+            எனில் (eq_pos != std::string::npos) {
                 name  = trim(def.substr(0, eq_pos));
                 value = trim(def.substr(eq_pos + 1));
-            } else {
+            } இல்லையெனில் {
                 name  = trim(def);
                 value = "";
             }
@@ -554,88 +554,88 @@ class Preprocessor {
     //----------------------------------------------------------
     // Helpers
     //----------------------------------------------------------
-    std::string loadFile(const std::string & fname) {
+    std::string loadFile(மாறிலி std::string & fname) {
         std::ifstream f(fname);
-        if (!f.is_open()) {
-            throw std::runtime_error("Could not open file: " + fname);
+        எனில் (!f.is_open()) {
+            எறி std::runtime_error("Could not open file: " + fname);
         }
         std::stringstream ss;
         ss << f.rdbuf();
-        return ss.str();
+        திரும்பு ss.str();
     }
 
-    bool condActive(const std::vector<Cond> & cond) const {
-        if (cond.empty()) {
-            return true;
+    தருக்க condActive(மாறிலி std::vector<Cond> & cond) மாறிலி {
+        எனில் (cond.empty()) {
+            திரும்பு உண்மை;
         }
-        return cond.back().active;
+        திரும்பு cond.back().active;
     }
 
     //----------------------------------------------------------
     // Process a file
     //----------------------------------------------------------
-    std::string processFile(const std::string &                            name,
+    std::string processFile(மாறிலி std::string &                            name,
                             std::unordered_map<std::string, std::string> & macros,
-                            const std::unordered_set<std::string> &        predefined_macros,
-                            std::unordered_set<std::string> &              include_stack,
+                            மாறிலி std::unordered_set<std::string> &        predefined_macros,
+                            std::unordered_set<std::string> &              include_அடுக்கு,
                             DirectiveMode                                  mode) {
-        if (include_stack.count(name)) {
-            throw std::runtime_error("Recursive include: " + name);
+        எனில் (include_அடுக்கு.count(name)) {
+            எறி std::runtime_error("Recursive include: " + name);
         }
 
-        include_stack.insert(name);
+        include_அடுக்கு.insert(name);
         std::string shader_code = loadFile(name);
-        std::string out         = processString(shader_code, macros, predefined_macros, include_stack, mode);
-        include_stack.erase(name);
-        return out;
+        std::string out         = processString(shader_code, macros, predefined_macros, include_அடுக்கு, mode);
+        include_அடுக்கு.erase(name);
+        திரும்பு out;
     }
 
-    std::string processIncludeFile(const std::string &                            fname,
+    std::string processIncludeFile(மாறிலி std::string &                            fname,
                                    std::unordered_map<std::string, std::string> & macros,
-                                   const std::unordered_set<std::string> &        predefined_macros,
-                                   std::unordered_set<std::string> &              include_stack,
+                                   மாறிலி std::unordered_set<std::string> &        predefined_macros,
+                                   std::unordered_set<std::string> &              include_அடுக்கு,
                                    DirectiveMode                                  mode) {
         std::string full_path = opts_.include_path + "/" + fname;
-        return processFile(full_path, macros, predefined_macros, include_stack, mode);
+        திரும்பு processFile(full_path, macros, predefined_macros, include_அடுக்கு, mode);
     }
 
     //----------------------------------------------------------
     // Process text
     //----------------------------------------------------------
-    std::string processString(const std::string &                            shader_code,
+    std::string processString(மாறிலி std::string &                            shader_code,
                               std::unordered_map<std::string, std::string> & macros,
-                              const std::unordered_set<std::string> &        predefined_macros,
-                              std::unordered_set<std::string> &              include_stack,
+                              மாறிலி std::unordered_set<std::string> &        predefined_macros,
+                              std::unordered_set<std::string> &              include_அடுக்கு,
                               DirectiveMode                                  mode) {
         std::vector<Cond>  cond;  // Conditional stack for this shader
         std::stringstream  out;
         std::istringstream in(shader_code);
-        std::string        line;
+        std::string        வரி;
 
-        while (std::getline(in, line)) {
-            std::string logical = line;
+        போது (std::getline(in, வரி)) {
+            std::string logical = வரி;
             std::string t       = trim(logical);
-            if (!t.empty() && t[0] == '#') {
-                while (endsWithContinuation(logical)) {
+            எனில் (!t.empty() && t[0] == '#') {
+                போது (endsWithContinuation(logical)) {
                     stripContinuation(logical);
-                    if (!std::getline(in, line)) {
-                        break;
+                    எனில் (!std::getline(in, வரி)) {
+                        நிறுத்து;
                     }
                     logical += "\n";
-                    logical += line;
+                    logical += வரி;
                 }
                 t = trim(logical);
             }
 
-            if (!t.empty() && t[0] == '#') {
-                bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_stack, mode);
-                if (mode == DirectiveMode::IncludesOnly && !handled) {
+            எனில் (!t.empty() && t[0] == '#') {
+                தருக்க handled = handleDirective(t, out, macros, predefined_macros, cond, include_அடுக்கு, mode);
+                எனில் (mode == DirectiveMode::IncludesOnly && !handled) {
                     out << logical << "\n";
                 }
-            } else {
-                if (mode == DirectiveMode::IncludesOnly) {
+            } இல்லையெனில் {
+                எனில் (mode == DirectiveMode::IncludesOnly) {
                     out << logical << "\n";
-                } else if (condActive(cond)) {
+                } இல்லையெனில் எனில் (condActive(cond)) {
                     // Expand macros in the line before outputting
                     std::string expanded = expandMacrosRecursive(logical, macros);
                     out << expanded << "\n";
@@ -643,22 +643,22 @@ class Preprocessor {
             }
         }
 
-        if (mode == DirectiveMode::All && !cond.empty()) {
-            throw std::runtime_error("Unclosed #if directive");
+        எனில் (mode == DirectiveMode::All && !cond.empty()) {
+            எறி std::runtime_error("Unclosed #if directive");
         }
 
-        return out.str();
+        திரும்பு out.str();
     }
 
     //----------------------------------------------------------
     // Directive handler
     //----------------------------------------------------------
-    bool handleDirective(const std::string &                            t,
+    தருக்க handleDirective(மாறிலி std::string &                            t,
                          std::stringstream &                            out,
                          std::unordered_map<std::string, std::string> & macros,
-                         const std::unordered_set<std::string> &        predefined_macros,
+                         மாறிலி std::unordered_set<std::string> &        predefined_macros,
                          std::vector<Cond> &                            cond,
-                         std::unordered_set<std::string> &              include_stack,
+                         std::unordered_set<std::string> &              include_அடுக்கு,
                          DirectiveMode                                  mode) {
         // split into tokens
         std::string        body = t.substr(1);
@@ -666,140 +666,140 @@ class Preprocessor {
         std::string        cmd;
         iss >> cmd;
 
-        if (cmd == "include") {
-            if (mode == DirectiveMode::All && !condActive(cond)) {
-                return true;
+        எனில் (cmd == "include") {
+            எனில் (mode == DirectiveMode::All && !condActive(cond)) {
+                திரும்பு உண்மை;
             }
             std::string file;
             iss >> file;
-            if (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
+            எனில் (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
                 file = file.substr(1, file.size() - 2);
             }
-            out << processIncludeFile(file, macros, predefined_macros, include_stack, mode);
-            return true;
+            out << processIncludeFile(file, macros, predefined_macros, include_அடுக்கு, mode);
+            திரும்பு உண்மை;
         }
 
-        if (mode == DirectiveMode::IncludesOnly) {
-            return false;
+        எனில் (mode == DirectiveMode::IncludesOnly) {
+            திரும்பு பொய்;
         }
 
-        if (cmd == "define") {
-            if (!condActive(cond)) {
-                return true;
+        எனில் (cmd == "define") {
+            எனில் (!condActive(cond)) {
+                திரும்பு உண்மை;
             }
             std::string name;
             iss >> name;
             // Don't override predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            எனில் (predefined_macros.count(name)) {
+                திரும்பு உண்மை;
             }
-            std::string value = trim_value(iss);
+            std::string value = trim_மதிப்பு(iss);
             macros[name]      = value;
-            return true;
+            திரும்பு உண்மை;
         }
 
-        if (cmd == "undef") {
-            if (!condActive(cond)) {
-                return true;
+        எனில் (cmd == "undef") {
+            எனில் (!condActive(cond)) {
+                திரும்பு உண்மை;
             }
             std::string name;
             iss >> name;
             // Don't undef predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            எனில் (predefined_macros.count(name)) {
+                திரும்பு உண்மை;
             }
             macros.erase(name);
-            return true;
+            திரும்பு உண்மை;
         }
 
-        if (cmd == "ifdef") {
+        எனில் (cmd == "ifdef") {
             std::string name;
             iss >> name;
-            bool p = condActive(cond);
-            bool v = macros.count(name);
+            தருக்க p = condActive(cond);
+            தருக்க v = macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            திரும்பு உண்மை;
         }
 
-        if (cmd == "ifndef") {
+        எனில் (cmd == "ifndef") {
             std::string name;
             iss >> name;
-            bool p = condActive(cond);
-            bool v = !macros.count(name);
+            தருக்க p = condActive(cond);
+            தருக்க v = !macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            திரும்பு உண்மை;
         }
 
-        if (cmd == "if") {
-            std::string expr = trim_value(iss);
-            bool        p    = condActive(cond);
-            bool        v    = false;
-            if (p) {
+        எனில் (cmd == "if") {
+            std::string கோவை = trim_மதிப்பு(iss);
+            தருக்க        p    = condActive(cond);
+            தருக்க        v    = பொய்;
+            எனில் (p) {
                 std::unordered_set<std::string> visiting;
-                ExprParser                      ep(expr, macros, visiting);
+                கோவை_Parser                      ep(கோவை, macros, visiting);
                 v = ep.parse() != 0;
             }
             cond.push_back({ p, p && v, p && v });
-            return true;
+            திரும்பு உண்மை;
         }
 
-        if (cmd == "elif") {
-            std::string expr = trim_value(iss);
+        எனில் (cmd == "elif") {
+            std::string கோவை = trim_மதிப்பு(iss);
 
-            if (cond.empty()) {
-                throw std::runtime_error("#elif without #if");
+            எனில் (cond.empty()) {
+                எறி std::runtime_error("#elif without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
-                c.active = false;
-                return true;
+            எனில் (!c.parent_active) {
+                c.active = பொய்;
+                திரும்பு உண்மை;
             }
 
-            if (c.taken) {
-                c.active = false;
-                return true;
+            எனில் (c.taken) {
+                c.active = பொய்;
+                திரும்பு உண்மை;
             }
 
             std::unordered_set<std::string> visiting;
-            ExprParser                      ep(expr, macros, visiting);
-            bool                            v = ep.parse() != 0;
+            கோவை_Parser                      ep(கோவை, macros, visiting);
+            தருக்க                            v = ep.parse() != 0;
             c.active                          = v;
-            if (v) {
-                c.taken = true;
+            எனில் (v) {
+                c.taken = உண்மை;
             }
-            return true;
+            திரும்பு உண்மை;
         }
 
-        if (cmd == "else") {
-            if (cond.empty()) {
-                throw std::runtime_error("#else without #if");
+        எனில் (cmd == "else") {
+            எனில் (cond.empty()) {
+                எறி std::runtime_error("#else without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
-                c.active = false;
-                return true;
+            எனில் (!c.parent_active) {
+                c.active = பொய்;
+                திரும்பு உண்மை;
             }
-            if (c.taken) {
-                c.active = false;
-            } else {
-                c.active = true;
-                c.taken  = true;
+            எனில் (c.taken) {
+                c.active = பொய்;
+            } இல்லையெனில் {
+                c.active = உண்மை;
+                c.taken  = உண்மை;
             }
-            return true;
+            திரும்பு உண்மை;
         }
 
-        if (cmd == "endif") {
-            if (cond.empty()) {
-                throw std::runtime_error("#endif without #if");
+        எனில் (cmd == "endif") {
+            எனில் (cond.empty()) {
+                எறி std::runtime_error("#endif without #if");
             }
             cond.pop_back();
-            return true;
+            திரும்பு உண்மை;
         }
 
         // Unknown directive
-        throw std::runtime_error("Unknown directive: #" + cmd);
+        எறி std::runtime_error("Unknown directive: #" + cmd);
     }
 };
 

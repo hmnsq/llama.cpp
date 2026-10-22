@@ -7,11 +7,11 @@
 #   endif
 #   include <windows.h>
 #   include <winevt.h>
-#else
+#இல்லையெனில்
 #    include <dlfcn.h>
 #    include <unistd.h>
 #endif
-#include <filesystem>
+#அந்தர்பாவ <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -19,13 +19,13 @@ namespace fs = std::filesystem;
 
 using dl_handle = std::remove_pointer_t<HMODULE>;
 
-struct dl_handle_deleter {
-    void operator()(HMODULE handle) {
+கட்டமைப்பு dl_handle_deleter {
+    வெறுமை operator()(HMODULE handle) {
         FreeLibrary(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+நிலையான உள்வரி dl_handle * dl_load_library(மாறிலி fs::path & path) {
     // suppress error dialogs for missing DLLs
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
@@ -34,46 +34,46 @@ static inline dl_handle * dl_load_library(const fs::path & path) {
 
     SetErrorMode(old_mode);
 
-    return handle;
+    திரும்பு handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
+நிலையான உள்வரி வெறுமை * dl_get_sym(dl_handle * handle, மாறிலி எழுத்து * name) {
     DWORD old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
     SetErrorMode(old_mode | SEM_FAILCRITICALERRORS);
 
-    void * p = (void *) GetProcAddress(handle, name);
+    வெறுமை * p = (வெறுமை *) GetProcAddress(handle, name);
 
     SetErrorMode(old_mode);
 
-    return p;
+    திரும்பு p;
 }
 
-static inline const char * dl_error() {
-    return "";
+நிலையான உள்வரி மாறிலி எழுத்து * dl_error() {
+    திரும்பு "";
 }
 
-#else
+#இல்லையெனில்
 
-using dl_handle = void;
+using dl_handle = வெறுமை;
 
-struct dl_handle_deleter {
-    void operator()(void * handle) {
+கட்டமைப்பு dl_handle_deleter {
+    வெறுமை operator()(வெறுமை * handle) {
         dlclose(handle);
     }
 };
 
-static inline dl_handle * dl_load_library(const fs::path & path) {
+நிலையான உள்வரி dl_handle * dl_load_library(மாறிலி fs::path & path) {
     dl_handle * handle = dlopen(path.string().c_str(), RTLD_NOW | RTLD_LOCAL);
-    return handle;
+    திரும்பு handle;
 }
 
-static inline void * dl_get_sym(dl_handle * handle, const char * name) {
-    return dlsym(handle, name);
+நிலையான உள்வரி வெறுமை * dl_get_sym(dl_handle * handle, மாறிலி எழுத்து * name) {
+    திரும்பு dlsym(handle, name);
 }
 
-static inline const char * dl_error() {
-    const char *rslt = dlerror();
-    return rslt != nullptr ? rslt : "";
+நிலையான உள்வரி மாறிலி எழுத்து * dl_error() {
+    மாறிலி எழுத்து *rslt = dlerror();
+    திரும்பு rslt != nullptr ? rslt : "";
 }
 
 #endif

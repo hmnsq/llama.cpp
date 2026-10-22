@@ -1,15 +1,15 @@
-#include "../node_context.h"
-#include "../op_table.h"
-#include "../utils.h"
+#அந்தர்பாவ "../node_context.h"
+#அந்தர்பாவ "../op_table.h"
+#அந்தர்பாவ "../utils.h"
 
-#include <openvino/op/constant.hpp>
-#include <openvino/op/eye.hpp>
-#include <openvino/op/multiply.hpp>
+#அந்தர்பாவ <openvino/op/constant.hpp>
+#அந்தர்பாவ <openvino/op/eye.hpp>
+#அந்தர்பாவ <openvino/op/multiply.hpp>
 
-namespace ov {
-namespace frontend {
-namespace ggml {
-namespace op {
+நாமாகாஶ ov {
+நாமாகாஶ frontend {
+நாமாகாஶ ggml {
+நாமாகாஶ op {
 
 // GGML DIAG takes a 1D vector (ne0, 1, ne2, ne3) and produces a diagonal matrix
 // of shape (ne0, ne0, ne2, ne3).
@@ -17,18 +17,18 @@ namespace op {
 //   input:  [ne3, ne2, 1, ne0]
 //   output: [ne3, ne2, ne0, ne0]
 // The diagonal: output[..., i, j] = input[..., 0, j] if i == j, else 0.
-OutputVector translate_diag(const NodeContext & context) {
-    num_inputs_check(context, 1, 1);
+OutputVector translate_diag(மாறிலி முனை_Context & context) {
+    இலக்கம்_inputs_check(context, 1, 1);
 
-    auto x = process_view_input_new(context, 0);  // OV shape: [ne3, ne2, 1, ne0]
+    auto x = process_view_உள்ளீடு_new(context, 0);  // OV shape: [ne3, ne2, 1, ne0]
 
-    auto n = get_dimensions(x.get_node_shared_ptr(), {3});
+    auto n = get_dimensions(x.get_முனை_shared_ptr(), {3});
     auto zero_diag = ov::op::v0::Constant::create(ov::element::i64, {}, {0});
 
     auto eye = std::make_shared<ov::op::v9::Eye>(n, n, zero_diag, x.get_element_type());
     auto res = std::make_shared<ov::op::v1::Multiply>(x, eye);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    திரும்பு rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

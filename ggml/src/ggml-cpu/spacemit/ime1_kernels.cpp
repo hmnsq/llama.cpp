@@ -1,35 +1,35 @@
-#include "ggml-impl.h"
-#include "ggml.h"
-#include "ime_kernels.h"
-#include "rvv_kernels.h"
+#அந்தர்பாவ "ggml-impl.h"
+#அந்தர்பாவ "ggml.h"
+#அந்தர்பாவ "ime_kernels.h"
+#அந்தர்பாவ "rvv_kernels.h"
 
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
+#அந்தர்பாவ <algorithm>
+#அந்தர்பாவ <cmath>
+#அந்தர்பாவ <stdexcept>
 
-#if !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
+#எனில் !defined(__riscv_v) || !defined(__riscv_v_intrinsic)
 #    error "riscv v extension or v_intrinsic not enabled"
-#else
+#இல்லையெனில்
 #    include <riscv_vector.h>
 #endif
 
-#if !defined(__riscv_zfh)
+#எனில் !defined(__riscv_zfh)
 #    error "riscv zfh extension not enabled"
 #endif
 
-#if defined(RISCV64_SPACEMIT_IME1)
-#else
+#எனில் defined(RISCV64_SPACEMIT_IME1)
+#இல்லையெனில்
 #    error "RISCV64_SPACEMIT_IME1 not defined"
 #endif
 
 // clang-format off
-#if defined(__GNUC__)
+#எனில் defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Woverlength-strings"
 #pragma GCC diagnostic ignored "-Wcast-qual"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 // clang-format on
-namespace spacemit_kernels {
+நாமாகாஶ spacemit_kernels {
 
 #define QUANTIZEM4ROW_KERNEL                           \
     "vmv.s.x            v16, zero                \n\t" \
@@ -93,18 +93,18 @@ namespace spacemit_kernels {
     "vsetvli            t0, t1, e8, mf4          \n\t" \
     "vse8.v             v31, (s1)                \n\t"
 
-namespace ime1 {
-void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * QuantA) {
-    constexpr float range_max_reciprocal = 1.0f / ((1 << 7) - 1);
-    const float     fone                 = 1.0f;
+நாமாகாஶ ime1 {
+வெறுமை quantize_a_4row_i8(size_t BlkLen, மாறிலி தசம * A, size_t மொத்தம்_K, uint8_t * QuantA) {
+    constexpr தசம range_max_reciprocal = 1.0f / ((1 << 7) - 1);
+    மாறிலி தசம     fone                 = 1.0f;
 
-    for (size_t row_index = 0; row_index < 4; ++row_index) {
-        const float * SRC = A + row_index * CountK;
-        uint8_t *     DST = QuantA + row_index * sizeof(float);
+    க்கு (size_t row_index = 0; row_index < 4; ++row_index) {
+        மாறிலி தசம * SRC = A + row_index * மொத்தம்_K;
+        uint8_t *     DST = QuantA + row_index * அளவு(தசம);
 
-        const size_t offset = (4 - row_index) * 4 + row_index * 8;
-        const size_t stride = 4 * (sizeof(float) + BlkLen);
-        __asm__ volatile(
+        மாறிலி size_t offset = (4 - row_index) * 4 + row_index * 8;
+        மாறிலி size_t stride = 4 * (அளவு(தசம) + BlkLen);
+        __asm__ நிலையற்ற(
             "vsetvli            t0, zero, e32, m8        \n\t"
             "addi               t2, %[CountK], 0         \n\t"
             "addi               a1, %[DST], 0            \n\t"
@@ -148,21 +148,21 @@ void quantize_a_4row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t *
 
             "QUIT%=:                                     \n\t"
             : [SRC] "+r"(SRC)
-            : [DST] "r"(DST), [BlkLen] "r"(BlkLen), [OFFSET] "r"(offset), [STRIDE] "r"(stride), [CountK] "r"(CountK),
+            : [DST] "r"(DST), [BlkLen] "r"(BlkLen), [OFFSET] "r"(offset), [STRIDE] "r"(stride), [மொத்தம்_K] "r"(மொத்தம்_K),
               [FONE] "f"(fone), [RMAXREC] "f"(range_max_reciprocal)
             : "cc", "t0", "t1", "t2", "t3", "a1", "s1", "s2", "f10", "f11");
     }
 }
 
-void quantize_a_row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * QuantA) {
-    const float *   SRC                  = A;
+வெறுமை quantize_a_row_i8(size_t BlkLen, மாறிலி தசம * A, size_t மொத்தம்_K, uint8_t * QuantA) {
+    மாறிலி தசம *   SRC                  = A;
     uint8_t *       DST                  = QuantA;
-    constexpr float range_max_reciprocal = 1.0f / ((1 << 7) - 1);
-    const float     fone                 = 1.0f;
-    uint8_t *       QuantA_offset        = QuantA + CountK + 4 * ((CountK + BlkLen - 1) / BlkLen);
-    size_t          offset               = (CountK + BlkLen - 1) / BlkLen * BlkLen - CountK;
+    constexpr தசம range_max_reciprocal = 1.0f / ((1 << 7) - 1);
+    மாறிலி தசம     fone                 = 1.0f;
+    uint8_t *       QuantA_offset        = QuantA + மொத்தம்_K + 4 * ((மொத்தம்_K + BlkLen - 1) / BlkLen);
+    size_t          offset               = (மொத்தம்_K + BlkLen - 1) / BlkLen * BlkLen - மொத்தம்_K;
 
-    __asm__ volatile(
+    __asm__ நிலையற்ற(
         "addi         t3, zero, 32*4          \n\t"
         "addi         t2, zero, 32            \n\t"
 
@@ -293,14 +293,14 @@ void quantize_a_row_i8(size_t BlkLen, const float * A, size_t CountK, uint8_t * 
         "vxor.vv      v16, v16, v16           \n\t"
         "jal          x0, LOOP_K%=            \n\t"
         "END%=:                               \n\t"
-        : [K] "+r"(CountK)
+        : [K] "+r"(மொத்தம்_K)
         : [FONE] "f"(fone), [RMAXREC] "f"(range_max_reciprocal), [SRC] "r"(SRC), [DST] "r"(DST)
         : "cc", "t3", "t2", "t1", "t0", "a1", "a2", "a3", "a4", "s1", "s2", "s3", "s4", "f10", "f11", "f12", "f13");
 }
 
 }  // namespace ime1
 
-namespace {
+நாமாகாஶ {
 #define SQ4BIT_KERNEL_COMP_1x8x2_4X8X4          \
     "vmadot       v16, v14, v0            \n\t" \
     "vmadot       v18, v14, v1            \n\t" \
@@ -583,32 +583,32 @@ namespace {
     "vrgather.vv  v15, v11, v1            \n\t" \
     "vadd.vi      v1, v1, -12             \n\t"
 
-template <bool HasZeroPoint>
-void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
-                                                const uint8_t * QuantA,
-                                                const uint8_t * QuantBData,
-                                                float *         C,
-                                                size_t          CountN,
-                                                size_t          BlockCountK,
-                                                const size_t    ldc) {
-    size_t       LDC   = ldc * sizeof(float);
-    const size_t INNER = BlkLen / 16;
-    float        tmp[4 * 16];
+template <தருக்க HasZeroPoint>
+வெறுமை SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
+                                                மாறிலி uint8_t * QuantA,
+                                                மாறிலி uint8_t * QuantBData,
+                                                தசம *         C,
+                                                size_t          மொத்தம்_N,
+                                                size_t          Block_மொத்தம்_K,
+                                                மாறிலி size_t    ldc) {
+    size_t       LDC   = ldc * அளவு(தசம);
+    மாறிலி size_t INNER = BlkLen / 16;
+    தசம        tmp[4 * 16];
 
-    if constexpr (HasZeroPoint) {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
+    எனில் constexpr (HasZeroPoint) {
+        க்கு (size_t n = 0; n < மொத்தம்_N; n += 16) {
+            size_t    NBLKS         = (மொத்தம்_N - n) > 16 ? 16 : மொத்தம்_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(uint8_t) +  // zp
-                                      n * BlockCountK * sizeof(_Float16);  // scale
-            float * CPtr = C + n;
-            if (NBLKS < 16) {
+                                      n * Block_மொத்தம்_K * BlkLen / 2 +       // b data
+                                      n * Block_மொத்தம்_K * அளவு(uint8_t) +  // zp
+                                      n * Block_மொத்தம்_K * அளவு(_Float16);  // scale
+            தசம * CPtr = C + n;
+            எனில் (NBLKS < 16) {
                 CPtr = tmp;
-                LDC  = 16 * sizeof(float);
+                LDC  = 16 * அளவு(தசம);
             }
 
-            __asm__ volatile(
+            __asm__ நிலையற்ற(
                 "vsetvli            t0, zero, e32, m8           \n\t"
                 "vxor.vv            v24, v24, v24               \n\t"
                 "addi               t3, %[BlockCountK], 0       \n\t"
@@ -681,23 +681,23 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
                 :
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [LDC] "r"(LDC),
-                  [BlockCountK] "r"(BlockCountK), [C] "r"(CPtr)
+                  [Block_மொத்தம்_K] "r"(Block_மொத்தம்_K), [C] "r"(CPtr)
                 : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4",
                   "s5", "s6");
         }
-    } else {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    NBLKS         = (CountN - n) > 16 ? 16 : CountN - n;
+    } இல்லையெனில் {
+        க்கு (size_t n = 0; n < மொத்தம்_N; n += 16) {
+            size_t    NBLKS         = (மொத்தம்_N - n) > 16 ? 16 : மொத்தம்_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(_Float16);  // scale
-            float * CPtr = C + n;
-            if (NBLKS < 16) {
+                                      n * Block_மொத்தம்_K * BlkLen / 2 +       // b data
+                                      n * Block_மொத்தம்_K * அளவு(_Float16);  // scale
+            தசம * CPtr = C + n;
+            எனில் (NBLKS < 16) {
                 CPtr = tmp;
-                LDC  = 16 * sizeof(float);
+                LDC  = 16 * அளவு(தசம);
             }
 
-            __asm__ volatile(
+            __asm__ நிலையற்ற(
                 "vsetvli            t0, zero, e32, m8           \n\t"
                 "vxor.vv            v24, v24, v24               \n\t"
                 "addi               t3, %[BlockCountK], 0       \n\t"
@@ -754,35 +754,35 @@ void SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
                 :
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [LDC] "r"(LDC),
-                  [BlockCountK] "r"(BlockCountK), [C] "r"(CPtr)
+                  [Block_மொத்தம்_K] "r"(Block_மொத்தம்_K), [C] "r"(CPtr)
                 : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4", "s1", "s2", "s3", "s4",
                   "s5", "s6");
         }
     }
 }
 
-template <bool HasZeroPoint>
-void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
-                                                const uint8_t * QuantA,
-                                                const uint8_t * QuantBData,
-                                                float *         C,
-                                                size_t          CountN,
-                                                size_t          BlockCountK,
-                                                const size_t    ldc) {
+template <தருக்க HasZeroPoint>
+வெறுமை SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
+                                                மாறிலி uint8_t * QuantA,
+                                                மாறிலி uint8_t * QuantBData,
+                                                தசம *         C,
+                                                size_t          மொத்தம்_N,
+                                                size_t          Block_மொத்தம்_K,
+                                                மாறிலி size_t    ldc) {
     GGML_UNUSED(ldc);
     size_t INNER = BlkLen / 16;
 
-    if constexpr (HasZeroPoint) {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
+    எனில் constexpr (HasZeroPoint) {
+        க்கு (size_t n = 0; n < மொத்தம்_N; n += 16) {
+            size_t    nblks         = (மொத்தம்_N - n) > 16 ? 16 : மொத்தம்_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(uint8_t) +  // zp
-                                      n * BlockCountK * sizeof(_Float16);  // scale
-            float * CPtr = C + n;
-            size_t  cnt  = BlockCountK;
+                                      n * Block_மொத்தம்_K * BlkLen / 2 +       // b data
+                                      n * Block_மொத்தம்_K * அளவு(uint8_t) +  // zp
+                                      n * Block_மொத்தம்_K * அளவு(_Float16);  // scale
+            தசம * CPtr = C + n;
+            size_t  cnt  = Block_மொத்தம்_K;
 
-            __asm__ volatile(
+            __asm__ நிலையற்ற(
                 "vsetvli      t0, zero, e32, m4       \n\t"
                 "vxor.vv      v28, v28, v28           \n\t"
 
@@ -889,16 +889,16 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
                 : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [C] "r"(CPtr)
                 : "cc", "t0", "t5", "t3", "f1", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
         }
-    } else {
-        for (size_t n = 0; n < CountN; n += 16) {
-            size_t    nblks         = (CountN - n) > 16 ? 16 : CountN - n;
+    } இல்லையெனில் {
+        க்கு (size_t n = 0; n < மொத்தம்_N; n += 16) {
+            size_t    nblks         = (மொத்தம்_N - n) > 16 ? 16 : மொத்தம்_N - n;
             uint8_t * QuantBDataPtr = (uint8_t *) QuantBData +             //
-                                      n * BlockCountK * BlkLen / 2 +       // b data
-                                      n * BlockCountK * sizeof(_Float16);  // scale
-            float * CPtr = C + n;
-            size_t  cnt  = BlockCountK;
+                                      n * Block_மொத்தம்_K * BlkLen / 2 +       // b data
+                                      n * Block_மொத்தம்_K * அளவு(_Float16);  // scale
+            தசம * CPtr = C + n;
+            size_t  cnt  = Block_மொத்தம்_K;
 
-            __asm__ volatile(
+            __asm__ நிலையற்ற(
                 "vsetvli      t0, zero, e32, m4       \n\t"
                 "vxor.vv      v28, v28, v28           \n\t"
                 "addi         s1, %[B], 0             \n\t"
@@ -1000,27 +1000,27 @@ void SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 // directly onto vmadot's 4-lane row dimension, so the A side is identical to Q4_0.
 // B is block_q8_0x16 as in the M1 kernel: 32B of fp16 scales then 512B of interleaved
 // int8, loaded with 8 plain vle8 into v2..v9 (no nibble unpack).
-static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
-                                                       const uint8_t * QuantA,
-                                                       const uint8_t * QuantBData,
-                                                       float *         C,
-                                                       size_t          CountN,
-                                                       size_t          BlockCountK,
-                                                       const size_t    ldc) {
+நிலையான வெறுமை SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
+                                                       மாறிலி uint8_t * QuantA,
+                                                       மாறிலி uint8_t * QuantBData,
+                                                       தசம *         C,
+                                                       size_t          மொத்தம்_N,
+                                                       size_t          Block_மொத்தம்_K,
+                                                       மாறிலி size_t    ldc) {
     // Same invariant as the Q4_0 M4 kernel: SAVE_RESULT_4x16 stores a full 4x16 tile with no tail
     // handling. Q8_0 is only admitted to the IME1 path when ne[1] % 16 == 0 (ime.cpp),
     // and the n-tiling step is NB_COLS == 16, so a partial tile never reaches here.
-    GGML_ASSERT(CountN % 16 == 0);
+    GGML_ASSERT(மொத்தம்_N % 16 == 0);
 
-    const size_t INNER = BlkLen / 16;
-    const size_t LDC   = ldc * sizeof(float);
+    மாறிலி size_t INNER = BlkLen / 16;
+    மாறிலி size_t LDC   = ldc * அளவு(தசம);
 
-    for (size_t n = 0; n < CountN; n += 16) {
+    க்கு (size_t n = 0; n < மொத்தம்_N; n += 16) {
         uint8_t * QuantBDataPtr =
-            (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
-        float * CPtr = C + n;
+            (uint8_t *) QuantBData + (n / 16) * Block_மொத்தம்_K * (16 * அளவு(_Float16) + 512);
+        தசம * CPtr = C + n;
 
-        __asm__ volatile(
+        __asm__ நிலையற்ற(
             "vsetvli            t0, zero, e32, m8           \n\t"
             "vxor.vv            v24, v24, v24               \n\t"
             "addi               t3, %[BlockCountK], 0       \n\t"
@@ -1081,7 +1081,7 @@ static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
             :
             : [INNER] "r"(INNER), [A] "r"(QuantA), [B] "r"(QuantBDataPtr), [LDC] "r"(LDC),
-              [BlockCountK] "r"(BlockCountK), [C] "r"(CPtr)
+              [Block_மொத்தம்_K] "r"(Block_மொத்தம்_K), [C] "r"(CPtr)
             : "cc", "t0", "t1", "t2", "t3", "a1", "a2", "a3", "a4", "f1", "f2", "f3", "f4",
               "s1", "s2", "s3", "s4", "s5", "s6");
     }
@@ -1092,24 +1092,24 @@ static void SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 // int8 weights laid out as [INNER0: reg0..reg7][INNER1: reg0..reg7], each reg 32B = 4 columns x
 // (even=K-first-half / odd=K-second-half). A comes from quantize_a_row_i8 (same as Q4_0 path).
 // Reuses the vmadot COMP macro and the ACC_F16 dequant tail from the Q4_0 kernel.
-static void SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
-                                                       const uint8_t * QuantA,
-                                                       const uint8_t * QuantBData,
-                                                       float *         C,
-                                                       size_t          CountN,
-                                                       size_t          BlockCountK,
-                                                       const size_t    ldc) {
+நிலையான வெறுமை SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
+                                                       மாறிலி uint8_t * QuantA,
+                                                       மாறிலி uint8_t * QuantBData,
+                                                       தசம *         C,
+                                                       size_t          மொத்தம்_N,
+                                                       size_t          Block_மொத்தம்_K,
+                                                       மாறிலி size_t    ldc) {
     GGML_UNUSED(ldc);
-    const size_t INNER = BlkLen / 16;  // = 2 for QK8_0=32
+    மாறிலி size_t INNER = BlkLen / 16;  // = 2 for QK8_0=32
 
-    for (size_t n = 0; n < CountN; n += 16) {
-        size_t    nblks = (CountN - n) > 16 ? 16 : CountN - n;
+    க்கு (size_t n = 0; n < மொத்தம்_N; n += 16) {
+        size_t    nblks = (மொத்தம்_N - n) > 16 ? 16 : மொத்தம்_N - n;
         // Each x16 K-block is {16 fp16 scales (32B), 512B interleaved int8}; stride = 544B.
-        uint8_t * QuantBDataPtr = (uint8_t *) QuantBData + (n / 16) * BlockCountK * (16 * sizeof(_Float16) + 512);
-        float *   CPtr = C + n;
-        size_t    cnt  = BlockCountK;
+        uint8_t * QuantBDataPtr = (uint8_t *) QuantBData + (n / 16) * Block_மொத்தம்_K * (16 * அளவு(_Float16) + 512);
+        தசம *   CPtr = C + n;
+        size_t    cnt  = Block_மொத்தம்_K;
 
-        __asm__ volatile(
+        __asm__ நிலையற்ற(
             "vsetvli      t0, zero, e32, m4       \n\t"
             "vxor.vv      v28, v28, v28           \n\t"
             // s7 = per-K-block base (scale@+0, data@+32, block stride 544)
@@ -1211,54 +1211,54 @@ static void SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(size_t          BlkLen,
 
 }  // namespace
 
-namespace ime1 {
+நாமாகாஶ ime1 {
 size_t gemm_kernel_i8i4(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        மாறிலி uint8_t * quant_a_ptr,
+                        மாறிலி uint8_t * quant_b_data,
+                        மாறிலி uint8_t * quant_b_zp,
+                        தசம *         c_ptr,
+                        size_t          மொத்தம்_m,
+                        size_t          மொத்தம்_n,
                         size_t          k_blks,
                         size_t          ldc) {
-    if (count_m >= 4) {
-        if (quant_b_zp != nullptr) {
-            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
+    எனில் (மொத்தம்_m >= 4) {
+        எனில் (quant_b_zp != nullptr) {
+            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<உண்மை>(blk_len, quant_a_ptr, quant_b_data, c_ptr, மொத்தம்_n, k_blks,
                                                              ldc);
-        } else {
-            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
+        } இல்லையெனில் {
+            SQ4BitGemmM4Kernel_CompInt8_ScaleFp16_Impl<பொய்>(blk_len, quant_a_ptr, quant_b_data, c_ptr, மொத்தம்_n,
                                                               k_blks, ldc);
         }
-        return 4;
-    } else {
-        if (quant_b_zp != nullptr) {
-            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<true>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
+        திரும்பு 4;
+    } இல்லையெனில் {
+        எனில் (quant_b_zp != nullptr) {
+            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<உண்மை>(blk_len, quant_a_ptr, quant_b_data, c_ptr, மொத்தம்_n, k_blks,
                                                              ldc);
-        } else {
-            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<false>(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n,
+        } இல்லையெனில் {
+            SQ4BitGemmM1Kernel_CompInt8_ScaleFp16_Impl<பொய்>(blk_len, quant_a_ptr, quant_b_data, c_ptr, மொத்தம்_n,
                                                               k_blks, ldc);
         }
-        return 1;
+        திரும்பு 1;
     }
 }
 
 size_t gemm_kernel_i8i8(size_t          blk_len,
-                        const uint8_t * quant_a_ptr,
-                        const uint8_t * quant_b_data,
-                        const uint8_t * quant_b_zp,
-                        float *         c_ptr,
-                        size_t          count_m,
-                        size_t          count_n,
+                        மாறிலி uint8_t * quant_a_ptr,
+                        மாறிலி uint8_t * quant_b_data,
+                        மாறிலி uint8_t * quant_b_zp,
+                        தசம *         c_ptr,
+                        size_t          மொத்தம்_m,
+                        size_t          மொத்தம்_n,
                         size_t          k_blks,
                         size_t          ldc) {
     GGML_UNUSED(quant_b_zp);
-    if (count_m >= 4) {
-        SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks,
+    எனில் (மொத்தம்_m >= 4) {
+        SQ8BitGemmM4Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, மொத்தம்_n, k_blks,
                                                    ldc);
-        return 4;
+        திரும்பு 4;
     }
-    SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, count_n, k_blks, ldc);
-    return 1;
+    SQ8BitGemmM1Kernel_CompInt8_ScaleFp16_Impl(blk_len, quant_a_ptr, quant_b_data, c_ptr, மொத்தம்_n, k_blks, ldc);
+    திரும்பு 1;
 }
 }  // namespace ime1
 }  // namespace spacemit_kernels
