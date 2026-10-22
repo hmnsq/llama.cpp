@@ -1,343 +1,343 @@
-#include "fusion.hpp"
-#include "binbcast.hpp"
+#अन्तर्भाव "fusion.hpp"
+#अन्तर्भाव "binbcast.hpp"
 
-#include <algorithm>
+#अन्तर्भाव <algorithm>
 
 // mul_mat(gate) + mul_mat(up) + GLU: graph shape and tensor properties only. Backend state
 // (weight layout, split buffers, DMMV) is checked by ggml_sycl_op_mul_mat_glu_fused().
-static bool ggml_sycl_should_fuse_mul_mat_glu(const ggml_tensor * gate, const ggml_tensor * up,
-                                              const ggml_tensor * glu) {
+स्थिर तार्किक ggml_sycl_should_fuse_mul_mat_glu(ध्रुव ggml_tensor * gate, ध्रुव ggml_tensor * up,
+                                              ध्रुव ggml_tensor * glu) {
     // the fused epilogue implements these two; the rest fall back to the standalone GLU kernels
-    const ggml_glu_op glu_op = ggml_get_glu_op(glu);
-    if (glu_op != GGML_GLU_OP_SWIGLU && glu_op != GGML_GLU_OP_GEGLU) {
-        return false;
+    ध्रुव ggml_glu_op glu_op = ggml_get_glu_op(glu);
+    यदि (glu_op != GGML_GLU_OP_SWIGLU && glu_op != GGML_GLU_OP_GEGLU) {
+        प्रत्यागम असत्य;
     }
 
     // the kernel always treats src[0] as the activated operand and src[1] as the multiplier
-    if (ggml_get_op_params_i32(glu, 1) /* swapped */) {
-        return false;
+    यदि (ggml_get_op_params_i32(glu, 1) /* swapped */) {
+        प्रत्यागम असत्य;
     }
 
-    const ggml_tensor * wu  = up->src[0];
-    const ggml_tensor * wg  = gate->src[0];
-    const ggml_tensor * act = up->src[1];
+    ध्रुव ggml_tensor * wu  = up->src[0];
+    ध्रुव ggml_tensor * wg  = gate->src[0];
+    ध्रुव ggml_tensor * act = up->src[1];
 
     // one activation and one output indexing must serve both weights; the block types
     // may differ, since the plain-layout fused kernel runs each operand's own vec_dot
     // (different types then imply different byte strides, so only the shape must agree)
-    if (!ggml_are_same_shape(wu, wg)) {
-        return false;
+    यदि (!ggml_are_same_shape(wu, wg)) {
+        प्रत्यागम असत्य;
     }
-    if (act != gate->src[1]) {
-        return false;
+    यदि (act != gate->src[1]) {
+        प्रत्यागम असत्य;
     }
 
     // fused K-quant GEMVs walk whole QK_K super-blocks: the reorder kernel covers same-type
     // q4_K, the plain-layout kernel covers q5_K / iq4_xs pairs incl. mixed gate/up types
-    const bool reorder_pair = wu->type == GGML_TYPE_Q4_K && wg->type == GGML_TYPE_Q4_K;
-    const bool plain_pair   = (wu->type == GGML_TYPE_Q5_K || wu->type == GGML_TYPE_IQ4_XS) &&
+    ध्रुव तार्किक reorder_pair = wu->type == GGML_TYPE_Q4_K && wg->type == GGML_TYPE_Q4_K;
+    ध्रुव तार्किक plain_pair   = (wu->type == GGML_TYPE_Q5_K || wu->type == GGML_TYPE_IQ4_XS) &&
                             (wg->type == GGML_TYPE_Q5_K || wg->type == GGML_TYPE_IQ4_XS);
     // the ESIMD kernel covers same-type q2_K..q6_K and q8_0, single column only (as unfused DMMV)
 #ifdef GGML_SYCL_DMMV_HAS_ESIMD
-    const bool esimd_pair   = g_ggml_sycl_enable_esimd && wu->type == wg->type && act->ne[1] == 1 &&
+    ध्रुव तार्किक esimd_pair   = g_ggml_sycl_enable_esimd && wu->type == wg->type && act->ne[1] == 1 &&
                             (wu->type == GGML_TYPE_Q2_K || wu->type == GGML_TYPE_Q3_K || wu->type == GGML_TYPE_Q4_K ||
                              wu->type == GGML_TYPE_Q5_K || wu->type == GGML_TYPE_Q6_K || wu->type == GGML_TYPE_Q8_0);
-#else
-    const bool esimd_pair   = false;
+#अन्यथा
+    ध्रुव तार्किक esimd_pair   = असत्य;
 #endif
     // q8_0 rows are walked in 32-wide blocks, so they only need to be a multiple of QK8_0
-    const int64_t row_align = esimd_pair && wu->type == GGML_TYPE_Q8_0 ? QK8_0 : QK_K;
-    if ((!reorder_pair && !plain_pair && !esimd_pair) || wu->ne[0] % row_align != 0) {
-        return false;
+    ध्रुव int64_t row_align = esimd_pair && wu->type == GGML_TYPE_Q8_0 ? QK8_0 : QK_K;
+    यदि ((!reorder_pair && !plain_pair && !esimd_pair) || wu->ne[0] % row_align != 0) {
+        प्रत्यागम असत्य;
     }
 
     // one 2D reorder-layout matrix in, a plain column stride out: no broadcast or padding
-    if (!ggml_is_contiguous(wu) || !ggml_is_contiguous(wg) || !ggml_is_contiguous(act) ||
+    यदि (!ggml_is_contiguous(wu) || !ggml_is_contiguous(wg) || !ggml_is_contiguous(act) ||
         !ggml_is_contiguous(glu)) {
-        return false;
+        प्रत्यागम असत्य;
     }
-    if (act->type != GGML_TYPE_F32 || glu->type != GGML_TYPE_F32) {
-        return false;
+    यदि (act->type != GGML_TYPE_F32 || glu->type != GGML_TYPE_F32) {
+        प्रत्यागम असत्य;
     }
-    if (act->ne[2] != 1 || act->ne[3] != 1 || wu->ne[2] != 1 || wu->ne[3] != 1) {
-        return false;
+    यदि (act->ne[2] != 1 || act->ne[3] != 1 || wu->ne[2] != 1 || wu->ne[3] != 1) {
+        प्रत्यागम असत्य;
     }
     // the kernel writes rows [0, wu->ne[1]) of each glu column, strided by glu->ne[0]
-    if (glu->ne[0] != wu->ne[1] || glu->ne[1] != act->ne[1]) {
-        return false;
+    यदि (glu->ne[0] != wu->ne[1] || glu->ne[1] != act->ne[1]) {
+        प्रत्यागम असत्य;
     }
     // mat-vec only: one column per decoded token, up to the batch the reorder kernels cover
-    if (act->ne[1] > MMVQ_MAX_BATCH_SIZE) {
-        return false;
+    यदि (act->ne[1] > MMVQ_MAX_BATCH_SIZE) {
+        प्रत्यागम असत्य;
     }
 
-    return true;
+    प्रत्यागम सत्य;
 }
 
 // the unary ops the fused unary chains in element_wise.cpp have a functor for
-static bool ggml_sycl_fused_unary_has_kernel(ggml_unary_op unary_op) {
-    return unary_op == GGML_UNARY_OP_SILU || unary_op == GGML_UNARY_OP_SIGMOID ||
+स्थिर तार्किक ggml_sycl_fused_unary_has_kernel(ggml_unary_op unary_op) {
+    प्रत्यागम unary_op == GGML_UNARY_OP_SILU || unary_op == GGML_UNARY_OP_SIGMOID ||
            unary_op == GGML_UNARY_OP_SOFTPLUS;
 }
 
-bool ggml_sycl_can_fuse(const ggml_cgraph * cgraph, int node_idx, std::initializer_list<enum ggml_op> ops,
-                        std::initializer_list<enum ggml_unary_op> unary_ops) {
+तार्किक ggml_sycl_can_fuse(ध्रुव ggml_cgraph * cgraph, पूर्णाङ्क गाँठ_idx, std::initializer_list<गणना ggml_op> ops,
+                        std::initializer_list<गणना ggml_unary_op> unary_ops) {
 #ifndef NDEBUG
-    const size_t num_unary = std::count(ops.begin(), ops.end(), GGML_OP_UNARY);
-    GGML_ASSERT(unary_ops.size() == num_unary);
+    ध्रुव size_t अंक_unary = std::count(ops.begin(), ops.end(), GGML_OP_UNARY);
+    GGML_ASSERT(unary_ops.size() == अंक_unary);
 #endif
 
-    if (!g_ggml_sycl_enable_fusion) {
-        return false;
+    यदि (!g_ggml_sycl_enable_fusion) {
+        प्रत्यागम असत्य;
     }
 
     // gate and up are siblings, not a chain, so ggml_can_fuse cannot express this: use the
     // subgraph form with the GLU as the only materialised output.
-    if (ops.size() == 3 && ops.begin()[0] == GGML_OP_MUL_MAT && ops.begin()[1] == GGML_OP_MUL_MAT &&
+    यदि (ops.size() == 3 && ops.begin()[0] == GGML_OP_MUL_MAT && ops.begin()[1] == GGML_OP_MUL_MAT &&
         ops.begin()[2] == GGML_OP_GLU) {
-        if (!ggml_can_fuse_subgraph(cgraph, node_idx, ops, { node_idx + 2 })) {
-            return false;
+        यदि (!ggml_can_fuse_subgraph(cgraph, गाँठ_idx, ops, { गाँठ_idx + 2 })) {
+            प्रत्यागम असत्य;
         }
 
-        const ggml_tensor * glu  = cgraph->nodes[node_idx + 2];
-        const ggml_tensor * gate = glu->src[0];
-        const ggml_tensor * up   = glu->src[1];
+        ध्रुव ggml_tensor * glu  = cgraph->nodes[गाँठ_idx + 2];
+        ध्रुव ggml_tensor * gate = glu->src[0];
+        ध्रुव ggml_tensor * up   = glu->src[1];
 
         // don't assume which of the two mat-muls is the gate; infer it from the GLU's operands
-        const bool ok = (gate == cgraph->nodes[node_idx] && up == cgraph->nodes[node_idx + 1]) ||
-                        (gate == cgraph->nodes[node_idx + 1] && up == cgraph->nodes[node_idx]);
-        if (!ok) {
-            return false;
+        ध्रुव तार्किक ok = (gate == cgraph->nodes[गाँठ_idx] && up == cgraph->nodes[गाँठ_idx + 1]) ||
+                        (gate == cgraph->nodes[गाँठ_idx + 1] && up == cgraph->nodes[गाँठ_idx]);
+        यदि (!ok) {
+            प्रत्यागम असत्य;
         }
 
-        return ggml_sycl_should_fuse_mul_mat_glu(gate, up, glu);
+        प्रत्यागम ggml_sycl_should_fuse_mul_mat_glu(gate, up, glu);
     }
 
-    if (!ggml_can_fuse(cgraph, node_idx, ops)) {
-        return false;
+    यदि (!ggml_can_fuse(cgraph, गाँठ_idx, ops)) {
+        प्रत्यागम असत्य;
     }
 
-    if ((ops.size() == 2 || ops.size() == 3) && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_MUL) {
-        if (ops.size() == 3 && ops.begin()[2] != GGML_OP_ADD) {
-            return false;
+    यदि ((ops.size() == 2 || ops.size() == 3) && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_MUL) {
+        यदि (ops.size() == 3 && ops.begin()[2] != GGML_OP_ADD) {
+            प्रत्यागम असत्य;
         }
 
-        const ggml_tensor * rms_norm = cgraph->nodes[node_idx];
-        const ggml_tensor * mul      = cgraph->nodes[node_idx + 1];
-        const ggml_tensor * add      = ops.size() == 3 ? cgraph->nodes[node_idx + 2] : nullptr;
+        ध्रुव ggml_tensor * rms_norm = cgraph->nodes[गाँठ_idx];
+        ध्रुव ggml_tensor * mul      = cgraph->nodes[गाँठ_idx + 1];
+        ध्रुव ggml_tensor * add      = ops.size() == 3 ? cgraph->nodes[गाँठ_idx + 2] : nullptr;
 
         GGML_ASSERT(rms_norm->src[0]->type == GGML_TYPE_F32);
         GGML_ASSERT(rms_norm->type == GGML_TYPE_F32);
 
-        if (mul->src[0]->type != GGML_TYPE_F32 ||
+        यदि (mul->src[0]->type != GGML_TYPE_F32 ||
             mul->src[1]->type != GGML_TYPE_F32 ||
             mul->type != GGML_TYPE_F32) {
-            return false;
+            प्रत्यागम असत्य;
         }
 
         // if rms norm is the B operand, then we don't handle broadcast
-        if (rms_norm == mul->src[1] && !ggml_are_same_shape(mul->src[0], rms_norm)) {
-            return false;
+        यदि (rms_norm == mul->src[1] && !ggml_are_same_shape(mul->src[0], rms_norm)) {
+            प्रत्यागम असत्य;
         }
 
-        const ggml_tensor * mul_w = (mul->src[0] == rms_norm) ? mul->src[1] : mul->src[0];
+        ध्रुव ggml_tensor * mul_w = (mul->src[0] == rms_norm) ? mul->src[1] : mul->src[0];
         // the fused kernel indexes the weight as mul[col], so it must span ncols contiguously
-        if (mul_w->ne[0] != rms_norm->ne[0] || mul_w->nb[0] != ggml_type_size(mul_w->type)) {
-            return false;
+        यदि (mul_w->ne[0] != rms_norm->ne[0] || mul_w->nb[0] != ggml_type_size(mul_w->type)) {
+            प्रत्यागम असत्य;
         }
 
-        if (!ggml_is_contiguous_rows(mul->src[0]) || !ggml_is_contiguous_rows(mul->src[1])) {
-            return false;
+        यदि (!ggml_is_contiguous_rows(mul->src[0]) || !ggml_is_contiguous_rows(mul->src[1])) {
+            प्रत्यागम असत्य;
         }
 
-        if (add != nullptr) {
-            if (add->src[0]->type != GGML_TYPE_F32 ||
+        यदि (add != nullptr) {
+            यदि (add->src[0]->type != GGML_TYPE_F32 ||
                 add->src[1]->type != GGML_TYPE_F32 ||
                 add->type != GGML_TYPE_F32) {
-                return false;
+                प्रत्यागम असत्य;
             }
 
             // the fused kernel indexes the residual as add[col] and does not broadcast it
-            const ggml_tensor * add_w = (add->src[0] == mul) ? add->src[1] : add->src[0];
-            if (!ggml_are_same_shape(add_w, add)) {
-                return false;
+            ध्रुव ggml_tensor * add_w = (add->src[0] == mul) ? add->src[1] : add->src[0];
+            यदि (!ggml_are_same_shape(add_w, add)) {
+                प्रत्यागम असत्य;
             }
 
-            if (!ggml_is_contiguous(add->src[0]) || !ggml_is_contiguous_rows(add->src[1])) {
-                return false;
+            यदि (!ggml_is_contiguous(add->src[0]) || !ggml_is_contiguous_rows(add->src[1])) {
+                प्रत्यागम असत्य;
             }
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    if (ops.size() == 2 && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_ADD) {
-        const ggml_tensor * add0 = cgraph->nodes[node_idx];
-        const ggml_tensor * add1 = cgraph->nodes[node_idx + 1];
+    यदि (ops.size() == 2 && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_ADD) {
+        ध्रुव ggml_tensor * add0 = cgraph->nodes[गाँठ_idx];
+        ध्रुव ggml_tensor * add1 = cgraph->nodes[गाँठ_idx + 1];
         // ggml_can_fuse already guarantees add1 consumes add0 and that add0 has a single use.
         // Keep the CUDA association: the running sum is src0 of the next ADD so the fused
         // float fold matches two sequential add() launches.
-        if (add1->src[0] != add0) {
-            return false;
+        यदि (add1->src[0] != add0) {
+            प्रत्यागम असत्य;
         }
 
-        const ggml_tensor * c = add1->src[1];
-        if (!ggml_sycl_add_kernel_supports(add0->src[0]->type, add0->src[1]->type, add0->type) ||
+        ध्रुव ggml_tensor * c = add1->src[1];
+        यदि (!ggml_sycl_add_kernel_supports(add0->src[0]->type, add0->src[1]->type, add0->type) ||
             !ggml_sycl_add_kernel_supports(add0->type, c->type, add1->type)) {
-            return false;
+            प्रत्यागम असत्य;
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    if (ops.size() == 2 && ops.begin()[0] == GGML_OP_UNARY && ops.begin()[1] == GGML_OP_MUL &&
+    यदि (ops.size() == 2 && ops.begin()[0] == GGML_OP_UNARY && ops.begin()[1] == GGML_OP_MUL &&
         unary_ops.size() == 1) {
-        const ggml_tensor * unary = cgraph->nodes[node_idx];
-        const ggml_tensor * mul   = cgraph->nodes[node_idx + 1];
+        ध्रुव ggml_tensor * unary = cgraph->nodes[गाँठ_idx];
+        ध्रुव ggml_tensor * mul   = cgraph->nodes[गाँठ_idx + 1];
 
-        const ggml_unary_op unary_op = ggml_get_unary_op(unary);
-        if (unary_op != unary_ops.begin()[0]) {
-            return false;
+        ध्रुव ggml_unary_op unary_op = ggml_get_unary_op(unary);
+        यदि (unary_op != unary_ops.begin()[0]) {
+            प्रत्यागम असत्य;
         }
 
-        if (!ggml_sycl_fused_unary_has_kernel(unary_op)) {
-            return false;
+        यदि (!ggml_sycl_fused_unary_has_kernel(unary_op)) {
+            प्रत्यागम असत्य;
         }
 
-        if (unary->type != GGML_TYPE_F32 && unary->type != GGML_TYPE_F16) {
-            return false;
+        यदि (unary->type != GGML_TYPE_F32 && unary->type != GGML_TYPE_F16) {
+            प्रत्यागम असत्य;
         }
 
-        const ggml_tensor * other = (mul->src[0] == unary) ? mul->src[1] : mul->src[0];
-        if (other->type != unary->type) {
-            return false;
+        ध्रुव ggml_tensor * other = (mul->src[0] == unary) ? mul->src[1] : mul->src[0];
+        यदि (other->type != unary->type) {
+            प्रत्यागम असत्य;
         }
 
         // one row stride per source comes from nb[1], so rows must be contiguous and equally
         // shaped; the destination is written flat, so it must be fully contiguous
-        if (!ggml_is_contiguous_1(unary->src[0]) || !ggml_is_contiguous_1(other) ||
+        यदि (!ggml_is_contiguous_1(unary->src[0]) || !ggml_is_contiguous_1(other) ||
             !ggml_are_same_shape(other, unary) || !ggml_is_contiguous(mul)) {
-            return false;
+            प्रत्यागम असत्य;
         }
 
         // the 32-bit fastdiv is inexact past 2^31; decline, the unfused path handles it
-        if (ggml_nelements(mul) >= ((int64_t) 1 << 31)) {
-            return false;
+        यदि (ggml_nelements(mul) >= ((int64_t) 1 << 31)) {
+            प्रत्यागम असत्य;
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    if (ops.size() == 2 && ops.begin()[0] == GGML_OP_SSM_CONV && ops.begin()[1] == GGML_OP_UNARY &&
+    यदि (ops.size() == 2 && ops.begin()[0] == GGML_OP_SSM_CONV && ops.begin()[1] == GGML_OP_UNARY &&
         unary_ops.size() == 1 && unary_ops.begin()[0] == GGML_UNARY_OP_SILU) {
-        const ggml_tensor * ssm_conv = cgraph->nodes[node_idx];
-        const ggml_tensor * silu     = cgraph->nodes[node_idx + 1];
+        ध्रुव ggml_tensor * ssm_conv = cgraph->nodes[गाँठ_idx];
+        ध्रुव ggml_tensor * silu     = cgraph->nodes[गाँठ_idx + 1];
 
-        if (ggml_get_unary_op(silu) != unary_ops.begin()[0]) {
-            return false;
+        यदि (ggml_get_unary_op(silu) != unary_ops.begin()[0]) {
+            प्रत्यागम असत्य;
         }
-        if (ssm_conv->type != GGML_TYPE_F32 || silu->type != GGML_TYPE_F32) {
-            return false;
+        यदि (ssm_conv->type != GGML_TYPE_F32 || silu->type != GGML_TYPE_F32) {
+            प्रत्यागम असत्य;
         }
         // the fused kernel writes the SiLU output with dense strides, so it must be contiguous
-        if (!ggml_is_contiguous(silu)) {
-            return false;
+        यदि (!ggml_is_contiguous(silu)) {
+            प्रत्यागम असत्य;
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
     // ADD(bias) + UNARY + MUL(scale): the delta-net alpha gate, softplus(alpha + dt) * a.
     // The broadcast is what stops the same-shape UNARY + MUL branch above firing past one token.
-    if (ops.size() == 3 && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_UNARY &&
+    यदि (ops.size() == 3 && ops.begin()[0] == GGML_OP_ADD && ops.begin()[1] == GGML_OP_UNARY &&
         ops.begin()[2] == GGML_OP_MUL && unary_ops.size() == 1) {
-        const ggml_tensor * add   = cgraph->nodes[node_idx];
-        const ggml_tensor * unary = cgraph->nodes[node_idx + 1];
-        const ggml_tensor * mul   = cgraph->nodes[node_idx + 2];
+        ध्रुव ggml_tensor * add   = cgraph->nodes[गाँठ_idx];
+        ध्रुव ggml_tensor * unary = cgraph->nodes[गाँठ_idx + 1];
+        ध्रुव ggml_tensor * mul   = cgraph->nodes[गाँठ_idx + 2];
 
-        const ggml_unary_op unary_op = ggml_get_unary_op(unary);
-        if (unary_op != unary_ops.begin()[0]) {
-            return false;
+        ध्रुव ggml_unary_op unary_op = ggml_get_unary_op(unary);
+        यदि (unary_op != unary_ops.begin()[0]) {
+            प्रत्यागम असत्य;
         }
 
-        if (!ggml_sycl_fused_unary_has_kernel(unary_op)) {
-            return false;
+        यदि (!ggml_sycl_fused_unary_has_kernel(unary_op)) {
+            प्रत्यागम असत्य;
         }
 
         // ggml_can_fuse() has already pinned the chain: unary consumes add, mul consumes
         // unary, add and unary have one use each, and all three have the same shape
-        const ggml_tensor * a     = add->src[0];
-        const ggml_tensor * bias  = add->src[1];
-        const ggml_tensor * scale = (mul->src[0] == unary) ? mul->src[1] : mul->src[0];
+        ध्रुव ggml_tensor * a     = add->src[0];
+        ध्रुव ggml_tensor * bias  = add->src[1];
+        ध्रुव ggml_tensor * scale = (mul->src[0] == unary) ? mul->src[1] : mul->src[0];
 
-        if (a->type != GGML_TYPE_F32 || bias->type != GGML_TYPE_F32 ||
+        यदि (a->type != GGML_TYPE_F32 || bias->type != GGML_TYPE_F32 ||
             scale->type != GGML_TYPE_F32 || mul->type != GGML_TYPE_F32) {
-            return false;
+            प्रत्यागम असत्य;
         }
 
         // the activation and the destination are indexed flat
-        if (!ggml_is_contiguous(a) || !ggml_is_contiguous(mul) || !ggml_are_same_shape(a, mul)) {
-            return false;
+        यदि (!ggml_is_contiguous(a) || !ggml_is_contiguous(mul) || !ggml_are_same_shape(a, mul)) {
+            प्रत्यागम असत्य;
         }
 
         // the kernel reads the bias and the scale as v[col], so each must be a single
         // contiguous row spanning ne0
-        if (bias->ne[0] != a->ne[0] || scale->ne[0] != a->ne[0] ||
+        यदि (bias->ne[0] != a->ne[0] || scale->ne[0] != a->ne[0] ||
             ggml_nrows(bias) != 1 || ggml_nrows(scale) != 1 ||
             !ggml_is_contiguous(bias) || !ggml_is_contiguous(scale)) {
-            return false;
+            प्रत्यागम असत्य;
         }
 
         // the 32-bit fastdiv is inexact past 2^31; decline, the unfused path handles it
-        if (ggml_nelements(mul) >= ((int64_t) 1 << 31)) {
-            return false;
+        यदि (ggml_nelements(mul) >= ((int64_t) 1 << 31)) {
+            प्रत्यागम असत्य;
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    if (ops.size() == 3 && ops.begin()[0] == GGML_OP_SSM_CONV && ops.begin()[1] == GGML_OP_ADD &&
+    यदि (ops.size() == 3 && ops.begin()[0] == GGML_OP_SSM_CONV && ops.begin()[1] == GGML_OP_ADD &&
         ops.begin()[2] == GGML_OP_UNARY && unary_ops.size() == 1 && unary_ops.begin()[0] == GGML_UNARY_OP_SILU) {
-        const ggml_tensor * ssm_conv = cgraph->nodes[node_idx];
-        const ggml_tensor * add      = cgraph->nodes[node_idx + 1];
-        const ggml_tensor * silu     = cgraph->nodes[node_idx + 2];
+        ध्रुव ggml_tensor * ssm_conv = cgraph->nodes[गाँठ_idx];
+        ध्रुव ggml_tensor * add      = cgraph->nodes[गाँठ_idx + 1];
+        ध्रुव ggml_tensor * silu     = cgraph->nodes[गाँठ_idx + 2];
 
-        if (ggml_get_unary_op(silu) != unary_ops.begin()[0]) {
-            return false;
+        यदि (ggml_get_unary_op(silu) != unary_ops.begin()[0]) {
+            प्रत्यागम असत्य;
         }
-        if (ssm_conv->type != GGML_TYPE_F32 || add->type != GGML_TYPE_F32 || silu->type != GGML_TYPE_F32) {
-            return false;
+        यदि (ssm_conv->type != GGML_TYPE_F32 || add->type != GGML_TYPE_F32 || silu->type != GGML_TYPE_F32) {
+            प्रत्यागम असत्य;
         }
         // the fused kernel writes the SiLU output with dense strides, so it must be contiguous
-        if (!ggml_is_contiguous(silu)) {
-            return false;
+        यदि (!ggml_is_contiguous(silu)) {
+            प्रत्यागम असत्य;
         }
 
         // ADD must consume ssm_conv's output and broadcast a 1-D channel-wise bias
-        const ggml_tensor * bias = (add->src[0] == ssm_conv) ? add->src[1] : add->src[0];
-        if (bias->type != GGML_TYPE_F32 || !ggml_is_contiguous(bias)) {
-            return false;
+        ध्रुव ggml_tensor * bias = (add->src[0] == ssm_conv) ? add->src[1] : add->src[0];
+        यदि (bias->type != GGML_TYPE_F32 || !ggml_is_contiguous(bias)) {
+            प्रत्यागम असत्य;
         }
-        if (ggml_nelements(bias) != ssm_conv->ne[0] || bias->ne[0] != ssm_conv->ne[0]) {
-            return false;
+        यदि (ggml_nelements(bias) != ssm_conv->ne[0] || bias->ne[0] != ssm_conv->ne[0]) {
+            प्रत्यागम असत्य;
         }
 
-        return true;
+        प्रत्यागम सत्य;
     }
 
-    if (ops.size() == 2 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_SCALE) {
-        const ggml_tensor * rms_norm = cgraph->nodes[node_idx];
-        const ggml_tensor * scale    = cgraph->nodes[node_idx + 1];
+    यदि (ops.size() == 2 && ops.begin()[0] == GGML_OP_RMS_NORM && ops.begin()[1] == GGML_OP_SCALE) {
+        ध्रुव ggml_tensor * rms_norm = cgraph->nodes[गाँठ_idx];
+        ध्रुव ggml_tensor * scale    = cgraph->nodes[गाँठ_idx + 1];
         GGML_ASSERT(rms_norm->src[0]->type == GGML_TYPE_F32);
         GGML_ASSERT(rms_norm->type == GGML_TYPE_F32);
-        if (scale->src[0]->type != GGML_TYPE_F32 || scale->type != GGML_TYPE_F32) {
-            return false;
+        यदि (scale->src[0]->type != GGML_TYPE_F32 || scale->type != GGML_TYPE_F32) {
+            प्रत्यागम असत्य;
         }
         // the fused kernel reads/writes rows flat like the unfused pair
-        if (!ggml_is_contiguous_rows(rms_norm) || !ggml_is_contiguous_rows(scale)) {
-            return false;
+        यदि (!ggml_is_contiguous_rows(rms_norm) || !ggml_is_contiguous_rows(scale)) {
+            प्रत्यागम असत्य;
         }
-        return true;
+        प्रत्यागम सत्य;
     }
-    return false;
+    प्रत्यागम असत्य;
 }
