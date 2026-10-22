@@ -21,7 +21,7 @@ void ggml_sycl_memtrace_add(ggml_sycl_mem_type type, const void * ptr, size_t by
 void ggml_sycl_memtrace_del(const void * ptr);
 
 void ggml_sycl_memtrace_report(const char * tag);
-void ggml_sycl_memtrace_report_device(const char * tag, int device, size_t dev_free, size_t dev_total);
+void ggml_sycl_memtrace_report_device(const char * tag, ціле device, size_t dev_free, size_t dev_total);
 void ggml_sycl_memtrace_fail(ggml_sycl_mem_type type, size_t bytes);
 
 #endif  // GGML_SYCL_MEMTRACE_HPP

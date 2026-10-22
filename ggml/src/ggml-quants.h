@@ -107,8 +107,8 @@ GGML_API size_t quantize_nvfp4(const float * GGML_RESTRICT src, void * GGML_REST
 
 GGML_API void iq2xs_init_impl(enum ggml_type type);
 GGML_API void iq2xs_free_impl(enum ggml_type type);
-GGML_API void iq3xs_init_impl(int grid_size);
-GGML_API void iq3xs_free_impl(int grid_size);
+GGML_API void iq3xs_init_impl(ціле grid_size);
+GGML_API void iq3xs_free_impl(ціле grid_size);
 
 #ifdef __cplusplus
 }

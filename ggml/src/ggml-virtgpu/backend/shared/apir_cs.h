@@ -32,7 +32,7 @@ static apir_decoder apir_new_decoder(const char * ptr, size_t size) {
         .fatal = false,
     };
 
-    return dec;
+    повернути dec;
 }
 
 static apir_encoder apir_new_encoder(char * ptr, size_t size) {
@@ -43,7 +43,7 @@ static apir_encoder apir_new_encoder(char * ptr, size_t size) {
         .fatal = false,
     };
 
-    return enc;
+    повернути enc;
 }
 
 /*
@@ -59,7 +59,7 @@ static inline void apir_encoder_set_fatal(apir_encoder * enc) {
 }
 
 static inline bool apir_encoder_get_fatal(const apir_encoder * enc) {
-    return enc->fatal;
+    повернути enc->fatal;
 }
 
 static inline void apir_decoder_reset_fatal(apir_decoder * dec) {
@@ -71,7 +71,7 @@ static inline void apir_decoder_set_fatal(apir_decoder * dec) {
 }
 
 static inline bool apir_decoder_get_fatal(const apir_decoder * dec) {
-    return dec->fatal;
+    повернути dec->fatal;
 }
 
 /*
@@ -81,16 +81,16 @@ static inline bool apir_decoder_get_fatal(const apir_decoder * dec) {
 static inline bool apir_decoder_peek_internal(apir_decoder * dec, size_t size, void * val, size_t val_size) {
     assert(val_size <= size);
 
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+    якщо (unlikely(size > (size_t) (dec->end - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
         apir_decoder_set_fatal(dec);
         memset(val, 0, val_size);
-        return false;
+        повернути false;
     }
 
     /* we should not rely on the compiler to optimize away memcpy... */
     memcpy(val, dec->cur, val_size);
-    return true;
+    повернути true;
 }
 
 static inline void apir_decoder_peek(apir_decoder * dec, size_t size, void * val, size_t val_size) {
@@ -98,15 +98,15 @@ static inline void apir_decoder_peek(apir_decoder * dec, size_t size, void * val
 }
 
 static inline const void * apir_decoder_use_inplace(apir_decoder * dec, size_t size) {
-    if (unlikely(size > (size_t) (dec->end - dec->cur))) {
+    якщо (unlikely(size > (size_t) (dec->end - dec->cur))) {
         GGML_LOG_ERROR("%s: reading too much from the decoder ...\n", __func__);
         apir_decoder_set_fatal(dec);
-        return NULL;
+        повернути NULL;
     }
     const void * addr = dec->cur;
     dec->cur += size;
 
-    return addr;
+    повернути addr;
 }
 
 /*
@@ -114,7 +114,7 @@ static inline const void * apir_decoder_use_inplace(apir_decoder * dec, size_t s
  */
 
 static inline void apir_decoder_read(apir_decoder * dec, size_t size, void * val, size_t val_size) {
-    if (apir_decoder_peek_internal(dec, size, val, val_size)) {
+    якщо (apir_decoder_peek_internal(dec, size, val, val_size)) {
         dec->cur += size;
     }
 }
@@ -128,7 +128,7 @@ static inline char * apir_encoder_write(apir_encoder * enc, size_t size, const v
     memcpy(write_addr, val, val_size);
     enc->cur += size;
 
-    return write_addr;
+    повернути write_addr;
 }
 
 /*
@@ -152,11 +152,11 @@ static inline void apir_encode(apir_encoder * enc, size_t size, const void * dat
 /* uint8_t */
 
 static inline void apir_encode_uint8_t(apir_encoder * enc, const uint8_t * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(*val));
+    apir_encode(enc, sizeof(ціле), val, sizeof(*val));
 }
 
 static inline void apir_decode_uint8_t(apir_decoder * dec, uint8_t * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(*val));
+    apir_decode(dec, sizeof(ціле), val, sizeof(*val));
 }
 
 /* uint64_t */
@@ -182,7 +182,7 @@ static inline void apir_decode_uint64_t_array(apir_decoder * dec, uint64_t * val
 }
 
 static inline const uint64_t * apir_decode_uint64_t_array_inplace(apir_decoder * dec, uint32_t count) {
-    return (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, count * sizeof(uint64_t));
+    повернути (uint64_t *) (uintptr_t) apir_decoder_use_inplace(dec, count * sizeof(uint64_t));
 }
 
 /* int32_t */
@@ -216,29 +216,29 @@ static inline void apir_encode_array_size(apir_encoder * enc, uint64_t size) {
 static inline uint64_t apir_decode_array_size(apir_decoder * dec, uint64_t expected_size) {
     uint64_t size;
     apir_decode_uint64_t(dec, &size);
-    if (size != expected_size) {
+    якщо (size != expected_size) {
         GGML_LOG_ERROR("%s: Couldn't decode array from the decoder\n", __func__);
         apir_decoder_set_fatal(dec);
         size = 0;
     }
-    return size;
+    повернути size;
 }
 
 static inline uint64_t apir_decode_array_size_unchecked(apir_decoder * dec) {
     uint64_t size;
     apir_decode_uint64_t(dec, &size);
-    return size;
+    повернути size;
 }
 
 /* non-array pointer */
 
 static inline bool apir_encode_simple_pointer(apir_encoder * enc, const void * val) {
     apir_encode_array_size(enc, val ? 1 : 0);
-    return val;
+    повернути val;
 }
 
 static inline bool apir_decode_simple_pointer(apir_decoder * dec) {
-    return apir_decode_array_size_unchecked(dec);
+    повернути apir_decode_array_size_unchecked(dec);
 }
 
 /* uint32_t */
@@ -277,20 +277,20 @@ static inline void apir_decode_size_t(apir_decoder * dec, size_t * val) {
 }
 
 static inline void apir_encode_size_t_array(apir_encoder * enc, const size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
+    якщо (sizeof(size_t) == sizeof(uint64_t)) {
         apir_encode_uint64_t_array(enc, (const uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
+    } інакше {
+        для (uint32_t i = 0; i < count; i++) {
             apir_encode_size_t(enc, &val[i]);
         }
     }
 }
 
 static inline void apir_decode_size_t_array(apir_decoder * dec, size_t * val, uint32_t count) {
-    if (sizeof(size_t) == sizeof(uint64_t)) {
+    якщо (sizeof(size_t) == sizeof(uint64_t)) {
         apir_decode_uint64_t_array(dec, (uint64_t *) val, count);
-    } else {
-        for (uint32_t i = 0; i < count; i++) {
+    } інакше {
+        для (uint32_t i = 0; i < count; i++) {
             apir_decode_size_t(dec, &val[i]);
         }
     }
@@ -315,9 +315,9 @@ static inline void apir_encode_char_array(apir_encoder * enc, const char * val, 
 
 static inline void apir_decode_char_array(apir_decoder * dec, char * val, size_t size) {
     apir_decode_blob_array(dec, val, size);
-    if (size) {
+    якщо (size) {
         val[size - 1] = '\0';
-    } else {
+    } інакше {
         GGML_LOG_ERROR("%s: Couldn't decode the blog array\n", __func__);
         apir_decoder_set_fatal(dec);
     }
@@ -327,22 +327,22 @@ static inline void apir_decode_char_array(apir_decoder * dec, char * val, size_t
 
 static inline void * apir_decoder_alloc_array(size_t size, size_t count) {
     size_t alloc_size;
-    if (unlikely(__builtin_mul_overflow(size, count, &alloc_size))) {
+    якщо (unlikely(__builtin_mul_overflow(size, count, &alloc_size))) {
         GGML_LOG_ERROR("%s: overflow in array allocation of %zu * %zu bytes\n", __func__, size, count);
-        return NULL;
+        повернути NULL;
     }
 
-    return malloc(alloc_size);
+    повернути malloc(alloc_size);
 }
 
 /* bool */
 
 static inline void apir_encode_bool_t(apir_encoder * enc, const bool * val) {
-    apir_encode(enc, sizeof(int), val, sizeof(bool));
+    apir_encode(enc, sizeof(ціле), val, sizeof(bool));
 }
 
 static inline void apir_decode_bool_t(apir_decoder * dec, bool * val) {
-    apir_decode(dec, sizeof(int), val, sizeof(bool));
+    apir_decode(dec, sizeof(ціле), val, sizeof(bool));
 }
 
 /* apir_buffer_type_host_handle_t */

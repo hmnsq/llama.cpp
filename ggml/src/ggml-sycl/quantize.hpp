@@ -23,7 +23,7 @@
 
 #include "ggml-sycl/dpct/helper.hpp"
 
-template <int ElementsPerWI>
+template <ціле ElementsPerWI>
 __dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
                                                sycl::vec<int8_t, ElementsPerWI> & quantized_values, float & d,
                                                float & sum, const sycl::nd_item<1> & it) {
@@ -38,7 +38,7 @@ __dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
     float amax = 0.0f;
 
 #pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
+    для (ціле i = 0; i < ElementsPerWI; i++) {
         sum += wi_f32_vals[i];
         amax                = sycl::fmax(amax, sycl::fabs(wi_f32_vals[i]));
         quantized_values[i] = 0;
@@ -48,7 +48,7 @@ __dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
     d    = amax == 0 ? 1 : amax / 127;
 
 #pragma unroll(ElementsPerWI)
-    for (int i = 0; i < ElementsPerWI; i++) {
+    для (ціле i = 0; i < ElementsPerWI; i++) {
         quantized_values[i] = sycl::round(wi_f32_vals[i] / d);
     }
 
@@ -56,13 +56,13 @@ __dpct_inline__ static void quantize_q8_1_impl(const float * __restrict__ x,
 }
 
 // No op to control codepath in ggml_sycl_op_mul_mat
-template <int ElementsPerWI> struct no_quantize_q8_1 {
-    void operator()(const float *, void *, int, int, const sycl::nd_item<1> &) const {}
+template <ціле ElementsPerWI> struct no_quantize_q8_1 {
+    void operator()(const float *, void *, ціле, ціле, const sycl::nd_item<1> &) const {}
 };
 
-template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * reordered_q8_tensor, const int kx,
-                                    const int kx_padded, const sycl::nd_item<1> & it) const {
+template <ціле ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
+    __dpct_inline__ void operator()(const float * __restrict__ x, void * reordered_q8_tensor, const ціле kx,
+                                    const ціле kx_padded, const sycl::nd_item<1> & it) const {
         /*
         Quantizes and reorders the resultant q8 tensor in a per row fashion
         Each sub-group calculates one quant block. i.e. QK8_1 quant values and the d and sum values
@@ -75,7 +75,7 @@ template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
         float                            sum = 0.0f;
         quantize_q8_1_impl<ElementsPerWI>(x, quantized_values, d, sum, it);
 
-        const int num_blocks_per_row = kx / QK8_1;
+        const ціле num_blocks_per_row = kx / QK8_1;
         auto      row                = subgroup_id / num_blocks_per_row;
         auto      col                = subgroup_id % num_blocks_per_row;
         auto      row_offset         = row * (kx_padded / QK8_1) * sizeof(block_q8_1);
@@ -85,21 +85,21 @@ template <int ElementsPerWI> struct quantize_and_reorder_q8_1_soa {
         *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(quant_ptr) = quantized_values;
 
         auto ds_ptr = (sycl::half2 *) ((char *) reordered_q8_tensor + row_offset + kx + col * sizeof(sycl::half2));
-        if (wi_id == 0) {
+        якщо (wi_id == 0) {
             *ds_ptr = sycl::half2(sycl::half(d), sycl::half(sum));
         }
     }
 };
 
-template <int ElementsPerWI> struct quantize_q8_1 {
-    __dpct_inline__ void operator()(const float * __restrict__ x, void * q8_tensor, const int kx, const int kx_padded,
+template <ціле ElementsPerWI> struct quantize_q8_1 {
+    __dpct_inline__ void operator()(const float * __restrict__ x, void * q8_tensor, const ціле kx, const ціле kx_padded,
                                     const sycl::nd_item<1> & it) const {
         auto subgroup_id = it.get_group(0);
         auto wi_id       = it.get_local_id(0);
 
-        const int num_blocks_per_row = kx / QK8_1;
+        const ціле num_blocks_per_row = kx / QK8_1;
         auto      row                = subgroup_id / num_blocks_per_row;
-        const int pitch              = kx_padded / QK8_1;
+        const ціле pitch              = kx_padded / QK8_1;
 
         sycl::vec<int8_t, ElementsPerWI> quantized_values;
         float                            d   = 0.0f;
@@ -111,14 +111,14 @@ template <int ElementsPerWI> struct quantize_q8_1 {
 
         int8_t * qs                                               = &(quant_ptr[block_id].qs[wi_id * ElementsPerWI]);
         *reinterpret_cast<sycl::vec<int8_t, ElementsPerWI> *>(qs) = quantized_values;
-        if (wi_id == 0) {
+        якщо (wi_id == 0) {
             quant_ptr[block_id].ds = sycl::half2(sycl::half(d), sycl::half(sum));
         }
     }
 };
 
-template <template <int> typename quantize_f>
-void quantize_row_q8_1_sycl(const float * x, void * vy, const int kx, const int ky, const int kx_padded,
+template <template <ціле> typename quantize_f>
+void quantize_row_q8_1_sycl(const float * x, void * vy, const ціле kx, const ціле ky, const ціле kx_padded,
                             dpct::queue_ptr stream) {
     static_assert(QK8_1 % WARP_SIZE == 0);
     auto local_range      = std::size_t(WARP_SIZE);

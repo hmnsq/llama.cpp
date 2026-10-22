@@ -8,7 +8,7 @@
 namespace utils {
 template<typename T>
 static constexpr bool is_arithmetic_v() {
-    return std::is_arithmetic_v<T> || std::is_same_v<T, sycl::half>
+    повернути std::is_arithmetic_v<T> || std::is_same_v<T, sycl::half>
 #ifdef GGML_SYCL_HAS_BF16
         || std::is_same_v<T, sycl::ext::oneapi::bfloat16>
 #endif
@@ -34,7 +34,7 @@ inline void convert<sycl::half, sycl::ext::oneapi::bfloat16>(const char* src, ch
 }
 #endif
 
-template <typename TIn, typename TIdx, typename blockType, int qk, cpy_kernel_t cpyblck>
+template <typename TIn, typename TIdx, typename blockType, ціле qk, cpy_kernel_t cpyblck>
 static void set_rows_sycl_q(const char * __restrict__ src0_d,
                             const TIdx * __restrict__ src1_d,
                             blockType * __restrict__ dst_d,
@@ -63,13 +63,13 @@ static void set_rows_sycl_q(const char * __restrict__ src0_d,
                             const size_t  nb3,
                             queue_ptr     stream) {
     const int64_t total_blocks = (ne00 * ne01 * ne02 * ne03) / qk;
-    constexpr int block_size   = 256;
+    constexpr ціле block_size   = 256;
     const int64_t grid_size    = ceil_div(total_blocks, block_size);
 
     stream->parallel_for(sycl::nd_range<1>(grid_size * block_size, block_size), [=](sycl::nd_item<1> item_ct1) {
         const int64_t i = item_ct1.get_global_linear_id();
-        if (i >= total_blocks) {
-            return;
+        якщо (i >= total_blocks) {
+            повернути;
         }
         const int64_t i_base      = i * qk;
         const int64_t i03         = i_base / (ne00 * ne01 * ne02);
@@ -88,12 +88,12 @@ static void set_rows_sycl_q(const char * __restrict__ src0_d,
         const size_t  dst_offset =
             calculate_offset<3>({ nb1, nb2, nb3 }, { dst_row, i02, i03 }) + (i00 / qk) * sizeof(blockType);
         char * dst_block = reinterpret_cast<char *>(reinterpret_cast<char *>(dst_d) + dst_offset);
-        if constexpr (std::is_same_v<TIn, float>) {
+        якщо constexpr (std::is_same_v<TIn, float>) {
             cpyblck(src_block, dst_block);
-        } else {
+        } інакше {
             float src_block_f32[qk];
             const TIn * src_block_t = reinterpret_cast<const TIn *>(src_block);
-            for (int j = 0; j < qk; ++j) {
+            для (ціле j = 0; j < qk; ++j) {
                 src_block_f32[j] = (float) src_block_t[j];
             }
             cpyblck(reinterpret_cast<const char *>(src_block_f32), dst_block);
@@ -110,7 +110,7 @@ using quantize_row_qk_t = void (*)(const float *, blockType *, int64_t);
 
 using quantize_rows_f_t = size_t (*)(const float *, void *, int64_t, int64_t, const float *);
 
-template <typename TIn, typename TIdx, typename blockType, int qk, quantize_row_qk_t<blockType> quantize_row>
+template <typename TIn, typename TIdx, typename blockType, ціле qk, quantize_row_qk_t<blockType> quantize_row>
 static void set_rows_sycl_qk_host(
         const ggml_tensor * src0,
         const ggml_tensor * src1,
@@ -147,9 +147,9 @@ static void set_rows_sycl_qk_host(
     const int64_t nblocks = ne00 / qk;
     std::vector<blockType> dst_row_q(nblocks);
 
-    for (int64_t i03 = 0; i03 < ne03; ++i03) {
-        for (int64_t i02 = 0; i02 < ne02; ++i02) {
-            for (int64_t i01 = 0; i01 < ne01; ++i01) {
+    для (int64_t i03 = 0; i03 < ne03; ++i03) {
+        для (int64_t i02 = 0; i02 < ne02; ++i02) {
+            для (int64_t i01 = 0; i01 < ne01; ++i01) {
                 const int64_t i12 = i03 % ne12;
                 const int64_t i11 = i02 % ne11;
                 const int64_t i10 = i01;
@@ -160,7 +160,7 @@ static void set_rows_sycl_qk_host(
                 const size_t src0_row_offset = calculate_offset<3>({ nb01, nb02, nb03 }, { i01, i02, i03 });
                 const TIn * src_row = reinterpret_cast<const TIn *>(src0_host.data() + src0_row_offset);
 
-                for (int64_t i00 = 0; i00 < ne00; ++i00) {
+                для (int64_t i00 = 0; i00 < ne00; ++i00) {
                     src_row_f32[i00] = (float) src_row[i00];
                 }
 
@@ -174,7 +174,7 @@ static void set_rows_sycl_qk_host(
     }
 }
 
-template <typename TIn, typename TIdx, typename blockType, int qk, quantize_rows_f_t quantize_rows>
+template <typename TIn, typename TIdx, typename blockType, ціле qk, quantize_rows_f_t quantize_rows>
 static void set_rows_sycl_iq_host(
         const ggml_tensor * src0,
         const ggml_tensor * src1,
@@ -211,9 +211,9 @@ static void set_rows_sycl_iq_host(
     const int64_t nblocks = ne00 / qk;
     std::vector<blockType> dst_row_q(nblocks);
 
-    for (int64_t i03 = 0; i03 < ne03; ++i03) {
-        for (int64_t i02 = 0; i02 < ne02; ++i02) {
-            for (int64_t i01 = 0; i01 < ne01; ++i01) {
+    для (int64_t i03 = 0; i03 < ne03; ++i03) {
+        для (int64_t i02 = 0; i02 < ne02; ++i02) {
+            для (int64_t i01 = 0; i01 < ne01; ++i01) {
                 const int64_t i12 = i03 % ne12;
                 const int64_t i11 = i02 % ne11;
                 const int64_t i10 = i01;
@@ -224,7 +224,7 @@ static void set_rows_sycl_iq_host(
                 const size_t src0_row_offset = calculate_offset<3>({ nb01, nb02, nb03 }, { i01, i02, i03 });
                 const TIn * src_row = reinterpret_cast<const TIn *>(src0_host.data() + src0_row_offset);
 
-                for (int64_t i00 = 0; i00 < ne00; ++i00) {
+                для (int64_t i00 = 0; i00 < ne00; ++i00) {
                     src_row_f32[i00] = (float) src_row[i00];
                 }
 
@@ -251,8 +251,8 @@ static void k_set_rows(
         const sycl::nd_item<1> & item_ct1) {
 
     const int64_t i = item_ct1.get_global_linear_id();
-    if (i >= total_elements) {
-        return;
+    якщо (i >= total_elements) {
+        повернути;
     }
 
     const int64_t i03 = i / (ne00 * ne01 * ne02);
@@ -286,7 +286,7 @@ static void set_rows_sycl(
 
     const int64_t total_elements = ne00 * ne01 * ne02 * ne03;
 
-    constexpr int block_size = 64;
+    constexpr ціле block_size = 64;
     const int64_t grid_size = ceil_div(total_elements, block_size);
 
     stream->parallel_for(
@@ -561,16 +561,16 @@ void ggml_sycl_op_set_rows(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     GGML_ASSERT(dst->src[1]->type == GGML_TYPE_I64 || dst->src[1]->type == GGML_TYPE_I32);
 
     // dispatch on the index type (src1) and the source value type (src0)
-    if (src0->type == GGML_TYPE_F16) {
-        if (src1->type == GGML_TYPE_I64) {
+    якщо (src0->type == GGML_TYPE_F16) {
+        якщо (src1->type == GGML_TYPE_I64) {
             set_rows_sycl<sycl::half, int64_t>(ctx, src0, src1, dst);
-        } else {
+        } інакше {
             set_rows_sycl<sycl::half, int32_t>(ctx, src0, src1, dst);
         }
-    } else {
-        if (src1->type == GGML_TYPE_I64) {
+    } інакше {
+        якщо (src1->type == GGML_TYPE_I64) {
             set_rows_sycl<float, int64_t>(ctx, src0, src1, dst);
-        } else {
+        } інакше {
             set_rows_sycl<float, int32_t>(ctx, src0, src1, dst);
         }
     }

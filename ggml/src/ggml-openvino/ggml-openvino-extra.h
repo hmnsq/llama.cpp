@@ -107,7 +107,7 @@ std::string ggml_openvino_get_device_description(const std::string & device_name
 // boolean use, `if (ggml_openvino_getenv_int(name))` is true iff the value
 // is a non-zero integer (so "0" disables, "1" enables).
 const char * ggml_openvino_getenv_str(const char * var, const char * default_value = nullptr);
-int ggml_openvino_getenv_int(const char * var, int default_value = 0);
+ціле ggml_openvino_getenv_int(const char * var, ціле default_value = 0);
 
 // Memory optimization toggles. GGML_OPENVINO_MEMORY_OPTIMIZE is an umbrella
 // switch; the fine-grained env vars still override it when explicitly set.
@@ -225,7 +225,7 @@ void ggml_openvino_buffer_register_extra(ggml_tensor * tensor, ggml_openvino_ext
 // OpenVINO Backend Context and Interface
 // =====================================================
 struct ggml_backend_openvino_context {
-    int device = 0;
+    ціле device = 0;
     std::string name = "OpenVINO";
     std::string description = "OpenVINO Backend Context";
 

@@ -14,39 +14,39 @@ struct ggml_et_fill_params {
     float              c;    // Constant value to fill
 };
 
-int entry_point(struct ggml_et_fill_params * params, void * env) {
+ціле entry_point(struct ggml_et_fill_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    якщо (!kernel_env) {
+        повернути -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ціле thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    ціле num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    якщо (thread_id < 0) {
+        повернути 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    якщо (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        повернути -1;
     }
 
     struct ggml_tensor * dst = &params->dst;
 
-    if (dst->type != GGML_TYPE_F32) {
-        return -1;
+    якщо (dst->type != GGML_TYPE_F32) {
+        повернути -1;
     }
 
     float * dst_data = (float *) dst->data;
-    if (!dst_data) {
-        return -1;
+    якщо (!dst_data) {
+        повернути -1;
     }
 
     const int64_t total_elements = dst->ne[0] * dst->ne[1] * dst->ne[2] * dst->ne[3];
 
-    if (total_elements == 0) {
-        return 0;
+    якщо (total_elements == 0) {
+        повернути 0;
     }
 
     // Distribute by cache lines (16 floats = 64 bytes)
@@ -55,16 +55,16 @@ int entry_point(struct ggml_et_fill_params * params, void * env) {
     const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
     const int64_t cl_start      = thread_id * cl_per_thread;
     int64_t       cl_end        = cl_start + cl_per_thread;
-    if (cl_end > total_cl) {
+    якщо (cl_end > total_cl) {
         cl_end = total_cl;
     }
-    if (cl_start >= total_cl) {
-        return 0;
+    якщо (cl_start >= total_cl) {
+        повернути 0;
     }
 
     const int64_t es = cl_start * elems_per_cl;
     int64_t       ee = cl_end * elems_per_cl;
-    if (ee > total_elements) {
+    якщо (ee > total_elements) {
         ee = total_elements;
     }
 
@@ -75,13 +75,13 @@ int entry_point(struct ggml_et_fill_params * params, void * env) {
     // Vector fill (8-wide)
     int64_t       i       = es;
     const int64_t vec_end = es + ((ee - es) / 8) * 8;
-    for (; i < vec_end; i += 8) {
+    для (; i < vec_end; i += 8) {
         __asm__ volatile("fsw.ps f10, %[d]\n" : [d] "=m"(*(float (*)[8]) & dst_data[i])::"f10");
     }
     // Scalar tail
-    for (; i < ee; i++) {
+    для (; i < ee; i++) {
         dst_data[i] = c;
     }
 
-    return 0;
+    повернути 0;
 }

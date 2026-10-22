@@ -17,9 +17,9 @@
 extern "C" {
 #endif
 
-#if __HVX_ARCH__ > 79
+#якщо __HVX_ARCH__ > 79
 #define HMX_QUEUE_POLL_COUNT 2000
-#else
+#інакше
 #define HMX_QUEUE_POLL_COUNT 1
 #endif
 
@@ -43,7 +43,7 @@ struct hmx_queue_s {
     struct hmx_queue_desc * desc;
     atomic_uint      idx_write; // updated by producer (push)
     atomic_uint      idx_read;  // updated by consumer (process)
-    unsigned int     idx_pop;   // updated by producer (pop)
+    unsigned ціле     idx_pop;   // updated by producer (pop)
     uint32_t         idx_mask;
     uint32_t         capacity;
 
@@ -65,16 +65,16 @@ void        hmx_queue_free(hmx_queue_t q);
 
 static inline struct hmx_queue_desc hmx_queue_make_desc(hmx_queue_func func, void * data) {
     struct hmx_queue_desc d = { func, data };
-    return d;
+    повернути d;
 }
 
 static inline bool hmx_queue_push(hmx_queue_t q, struct hmx_queue_desc d) {
-    unsigned int ir = atomic_load(&q->idx_read);
-    unsigned int iw = atomic_load(&q->idx_write);
+    unsigned ціле ir = atomic_load(&q->idx_read);
+    unsigned ціле iw = atomic_load(&q->idx_write);
 
-    if (((iw + 1) & q->idx_mask) == ir) {
+    якщо (((iw + 1) & q->idx_mask) == ir) {
         FARF(HIGH, "hmx-queue-push: queue is full\n");
-        return false;
+        повернути false;
     }
 
     atomic_store(&d.done, 0);
@@ -87,37 +87,37 @@ static inline bool hmx_queue_push(hmx_queue_t q, struct hmx_queue_desc d) {
     atomic_fetch_add(&q->seqn, 1);
     qurt_futex_wake(&q->seqn, 1);
 
-    return true;
+    повернути true;
 }
 
 static inline bool hmx_queue_signal(hmx_queue_t q, enum hmx_queue_signal sig) {
-    return hmx_queue_push(q, hmx_queue_make_desc((hmx_queue_func) sig, NULL));
+    повернути hmx_queue_push(q, hmx_queue_make_desc((hmx_queue_func) sig, NULL));
 }
 
 static inline bool hmx_queue_empty(hmx_queue_t q) {
-    return q->idx_pop == atomic_load(&q->idx_write);
+    повернути q->idx_pop == atomic_load(&q->idx_write);
 }
 
 static inline uint32_t hmx_queue_depth(hmx_queue_t q) {
-    return (atomic_load(&q->idx_write) - atomic_load(&q->idx_read)) & q->idx_mask;
+    повернути (atomic_load(&q->idx_write) - atomic_load(&q->idx_read)) & q->idx_mask;
 }
 
 static inline uint32_t hmx_queue_capacity(hmx_queue_t q) {
-    return q->capacity;
+    повернути q->capacity;
 }
 
 static inline struct hmx_queue_desc hmx_queue_pop_one(hmx_queue_t q) {
-    unsigned int ip = q->idx_pop;
-    unsigned int iw = atomic_load(&q->idx_write);
+    unsigned ціле ip = q->idx_pop;
+    unsigned ціле iw = atomic_load(&q->idx_write);
 
     struct hmx_queue_desc rd = { NULL, NULL };
-    if (ip == iw) {
-        return rd;
+    якщо (ip == iw) {
+        повернути rd;
     }
 
     // Wait for desc to complete
     struct hmx_queue_desc * d = &q->desc[ip];
-    while (!atomic_load(&d->done)) {
+    поки (!atomic_load(&d->done)) {
         FARF(HIGH, "hmx-queue-pop: waiting for HMX queue : %u\n", ip);
         hex_pause();
     }
@@ -126,23 +126,23 @@ static inline struct hmx_queue_desc hmx_queue_pop_one(hmx_queue_t q) {
     q->idx_pop = (ip + 1) & q->idx_mask;
 
     FARF(HIGH, "hmx-queue-pop: ip %u func %p data %p\n", ip, rd.func, rd.data);
-    return rd;
+    повернути rd;
 }
 
 static inline struct hmx_queue_desc hmx_queue_pop(hmx_queue_t q) {
-    while (1) {
+    поки (1) {
         struct hmx_queue_desc d = hmx_queue_pop_one(q);
 
         uint32_t sig = (uint32_t) d.func;
-        if (sig && sig <= HMX_QUEUE_KILL)
+        якщо (sig && sig <= HMX_QUEUE_KILL)
             continue;
 
-        return d;
+        повернути d;
     }
 }
 
 static inline void hmx_queue_flush(hmx_queue_t q) {
-    while (hmx_queue_pop_one(q).func != NULL) ;
+    поки (hmx_queue_pop_one(q).func != NULL) ;
 }
 
 static inline void hmx_queue_wakeup(hmx_queue_t q) {

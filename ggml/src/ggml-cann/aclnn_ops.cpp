@@ -104,12 +104,12 @@ void bcast_shape(ggml_tensor *    src0,
                  acl_tensor_ptr & acl_dst) {
     GGML_ASSERT(ggml_are_same_shape(src0, dst) && ggml_can_repeat(src1, src0));
     // Need bcast
-    if (!ggml_are_same_shape(src0, src1) && ggml_cann_need_bcast(src0, src1)) {
+    якщо (!ggml_are_same_shape(src0, src1) && ggml_cann_need_bcast(src0, src1)) {
         BCAST_SHAPE(src0, src1)
         acl_src0 = ggml_cann_create_tensor(src0, BCAST_PARAM(src0));
         acl_src1 = ggml_cann_create_tensor(src1, BCAST_PARAM(src1));
         acl_dst  = ggml_cann_create_tensor(dst, BCAST_PARAM(src0));
-    } else {
+    } інакше {
         acl_src0 = ggml_cann_create_tensor(src0);
         acl_src1 = ggml_cann_create_tensor(src1);
         acl_dst  = ggml_cann_create_tensor(dst);
@@ -139,18 +139,18 @@ void ggml_cann_op_unary_gated(std::function<void(ggml_backend_cann_context &, ac
 
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst);
     acl_tensor_ptr acl_src0, acl_src1;
-    if (src1) {
+    якщо (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
 
         acl_src0 = ggml_cann_create_tensor(src0);
         acl_src1 = ggml_cann_create_tensor(src1);
-    } else {
+    } інакше {
         int64_t ne[] = { src0->ne[0] / 2, src0->ne[1], src0->ne[2], src0->ne[3] };
         size_t  nb[] = { src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3] };
         acl_src0     = ggml_cann_create_tensor(src0, ne, nb, GGML_MAX_DIMS, ACL_FORMAT_ND, 0);
         acl_src1 = ggml_cann_create_tensor(src0, ne, nb, GGML_MAX_DIMS, ACL_FORMAT_ND, ne[0] * ggml_element_size(src0));
-        if (swapped) {
+        якщо (swapped) {
             std::swap(acl_src0, acl_src1);
         }
     }
@@ -176,15 +176,15 @@ void ggml_cann_swiglu(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     };
 
     const int32_t swapped = ggml_get_op_params_i32(dst, 1);
-    if (dst->src[1] != nullptr || swapped != 0) {
+    якщо (dst->src[1] != nullptr || swapped != 0) {
         ggml_cann_op_unary_gated(silu_fn, ctx, dst);
-        return;
+        повернути;
     }
 
     // aclnnSwiGlu requires the split dim (src->ne[0]) to be even; fall back otherwise.
-    if (dst->src[0]->ne[0] % 2 != 0) {
+    якщо (dst->src[0]->ne[0] % 2 != 0) {
         ggml_cann_op_unary_gated(silu_fn, ctx, dst);
-        return;
+        повернути;
     }
 
     ggml_tensor * src0 = dst->src[0];
@@ -221,17 +221,17 @@ void ggml_cann_swiglu_clamp(ggml_backend_cann_context & ctx, ggml_tensor * dst) 
     const int32_t  swapped = ggml_get_op_params_i32(dst, 1);
     acl_tensor_ptr acl_gate;
     acl_tensor_ptr acl_up;
-    if (src1) {
+    якщо (src1) {
         GGML_ASSERT(ggml_is_contiguous_1(src1));
         GGML_ASSERT(src0->type == src1->type);
         acl_gate = ggml_cann_create_tensor(src0);
         acl_up   = ggml_cann_create_tensor(src1);
-    } else {
+    } інакше {
         int64_t ne[] = { src0->ne[0] / 2, src0->ne[1], src0->ne[2], src0->ne[3] };
         size_t  nb[] = { src0->nb[0], src0->nb[1], src0->nb[2], src0->nb[3] };
         acl_gate     = ggml_cann_create_tensor(src0, ne, nb, GGML_MAX_DIMS, ACL_FORMAT_ND, 0);
         acl_up = ggml_cann_create_tensor(src0, ne, nb, GGML_MAX_DIMS, ACL_FORMAT_ND, ne[0] * ggml_element_size(src0));
-        if (swapped) {
+        якщо (swapped) {
             std::swap(acl_gate, acl_up);
         }
     }
@@ -269,15 +269,15 @@ void ggml_cann_geglu(ggml_backend_cann_context & ctx, ggml_tensor * dst, int64_t
     };
 
     const int32_t swapped = ggml_get_op_params_i32(dst, 1);
-    if (dst->src[1] != nullptr || swapped != 0) {
+    якщо (dst->src[1] != nullptr || swapped != 0) {
         ggml_cann_op_unary_gated(gelu_fn, ctx, dst);
-        return;
+        повернути;
     }
 
     // aclnnGeGluV3 requires the split dim (src->ne[0]) to be even; fall back otherwise.
-    if (dst->src[0]->ne[0] % 2 != 0) {
+    якщо (dst->src[0]->ne[0] % 2 != 0) {
         ggml_cann_op_unary_gated(gelu_fn, ctx, dst);
-        return;
+        повернути;
     }
 
     ggml_tensor * src0 = dst->src[0];
@@ -290,7 +290,7 @@ void ggml_cann_geglu(ggml_backend_cann_context & ctx, ggml_tensor * dst, int64_t
     int64_t ne[GGML_MAX_DIMS] = { dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3] };
     size_t  nb[GGML_MAX_DIMS];
     nb[0] = elem_size;
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         nb[i] = nb[i - 1] * ne[i - 1];
     }
     size_t gelu_out_size = nb[GGML_MAX_DIMS - 1] * ne[GGML_MAX_DIMS - 1];
@@ -360,9 +360,9 @@ void ggml_cann_repeat(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 void aclnn_add(ggml_backend_cann_context & ctx, aclTensor * acl_src0, aclTensor * acl_src1, aclTensor * acl_dst) {
     float          alphaValue = 1.0f;
     acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
-    if (acl_dst != nullptr) {
+    якщо (acl_dst != nullptr) {
         GGML_CANN_CALL_ACLNN_OP(ctx, Add, acl_src0, acl_src1, alpha.get(), acl_dst);
-    } else {
+    } інакше {
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceAdd, acl_src0, acl_src1, alpha.get());
     }
 }
@@ -370,25 +370,25 @@ void aclnn_add(ggml_backend_cann_context & ctx, aclTensor * acl_src0, aclTensor 
 void aclnn_sub(ggml_backend_cann_context & ctx, aclTensor * acl_src0, aclTensor * acl_src1, aclTensor * acl_dst) {
     float          alphaValue = 1.0f;
     acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
-    if (acl_dst != nullptr) {
+    якщо (acl_dst != nullptr) {
         GGML_CANN_CALL_ACLNN_OP(ctx, Sub, acl_src0, acl_src1, alpha.get(), acl_dst);
-    } else {
+    } інакше {
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceSub, acl_src0, acl_src1, alpha.get());
     }
 }
 
 void aclnn_mul(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_other, aclTensor * acl_dst) {
-    if (acl_dst != nullptr) {
+    якщо (acl_dst != nullptr) {
         GGML_CANN_CALL_ACLNN_OP(ctx, Mul, acl_src, acl_other, acl_dst);
-    } else {
+    } інакше {
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceMul, acl_src, acl_other);
     }
 }
 
 void aclnn_div(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_other, aclTensor * acl_dst) {
-    if (acl_dst != nullptr) {
+    якщо (acl_dst != nullptr) {
         GGML_CANN_CALL_ACLNN_OP(ctx, Div, acl_src, acl_other, acl_dst);
-    } else {
+    } інакше {
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceDiv, acl_src, acl_other);
     }
 }
@@ -421,9 +421,9 @@ static void aclnn_muls(ggml_backend_cann_context & ctx,
                        aclTensor *                 acl_dst,
                        bool                        inplace) {
     acl_scalar_ptr acl_scale = ggml_cann_create_scalar(&scale, aclDataType::ACL_FLOAT);
-    if (inplace) {
+    якщо (inplace) {
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceMuls, acl_src, acl_scale.get());
-    } else {
+    } інакше {
         GGML_CANN_CALL_ACLNN_OP(ctx, Muls, acl_src, acl_scale.get(), acl_dst);
     }
 }
@@ -601,7 +601,7 @@ void ggml_cann_l2_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     int64_t norm_ne[] = { 1, src->ne[1], src->ne[2], src->ne[3] };
     size_t  norm_nb[GGML_MAX_DIMS];
     norm_nb[0] = sizeof(float);
-    for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; ++i) {
         norm_nb[i] = norm_nb[i - 1] * norm_ne[i - 1];
     }
     acl_tensor_ptr acl_norm = ggml_cann_create_tensor(buffer, ACL_FLOAT, sizeof(float), norm_ne, norm_nb, GGML_MAX_DIMS);
@@ -616,7 +616,7 @@ void ggml_cann_l2_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_cann_pool_alloc clamp_buffer_allocator(ctx.pool());
     acl_tensor_ptr       acl_clamped;
 
-    if (eps > 0.0f) {
+    якщо (eps > 0.0f) {
         void *         clamp_buf  = clamp_buffer_allocator.alloc(n_bytes);
         acl_clamped               = ggml_cann_create_tensor(clamp_buf, ACL_FLOAT, sizeof(float), norm_ne, norm_nb, GGML_MAX_DIMS);
         acl_scalar_ptr eps_scalar = ggml_cann_create_scalar(&eps, aclDataType::ACL_FLOAT);
@@ -698,7 +698,7 @@ void ggml_cann_group_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     acl_tensor_ptr acl_src = ggml_cann_create_tensor(src);
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst);
 
-    int n_groups = dst->op_params[0];
+    ціле n_groups = dst->op_params[0];
 
     float eps;
     memcpy(&eps, dst->op_params + 1, sizeof(float));
@@ -738,7 +738,7 @@ void ggml_cann_set(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     acl_tensor_ptr acl_dst  = ggml_cann_create_tensor(dst, src1->ne, param_nb, GGML_MAX_DIMS, ACL_FORMAT_ND, offset);
     acl_tensor_ptr acl_src1 = ggml_cann_create_tensor(src1);
 
-    if (!inplace) {
+    якщо (!inplace) {
         // First copy src0 to dst entirely
         size_t cpy_size = ggml_nbytes(dst);
         ACL_CHECK(
@@ -768,7 +768,7 @@ void ggml_cann_acc(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     float          alphaValue = 1.0f;
     alpha                     = ggml_cann_create_scalar(&alphaValue, aclDataType::ACL_FLOAT);
 
-    if (!inplace) {
+    якщо (!inplace) {
         size_t cpy_size = ggml_nbytes(dst);
         ACL_CHECK(
             aclrtMemcpyAsync(dst->data, cpy_size, src0->data, cpy_size, ACL_MEMCPY_DEVICE_TO_DEVICE, ctx.stream()));
@@ -776,7 +776,7 @@ void ggml_cann_acc(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
             ggml_cann_create_tensor(src0, src1->ne, src0->nb, GGML_MAX_DIMS, ACL_FORMAT_ND, offset);
 
         GGML_CANN_CALL_ACLNN_OP(ctx, Add, acl_src0.get(), acl_src1.get(), alpha.get(), acl_dst.get());
-    } else {
+    } інакше {
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceAdd, acl_dst.get(), acl_src1.get(), alpha.get());
     }
 }
@@ -998,12 +998,12 @@ static void ggml_cann_avg_pool2d(ggml_backend_cann_context & ctx, ggml_tensor * 
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst, nullptr, nullptr, 0, ACL_FORMAT_NCHW);
 
     const int32_t * opts = (const int32_t *) dst->op_params;
-    const int       k0   = opts[1];
-    const int       k1   = opts[2];
-    const int       s0   = opts[3];
-    const int       s1   = opts[4];
-    const int       p0   = opts[5];
-    const int       p1   = opts[6];
+    const ціле       k0   = opts[1];
+    const ціле       k1   = opts[2];
+    const ціле       s0   = opts[3];
+    const ціле       s1   = opts[4];
+    const ціле       p0   = opts[5];
+    const ціле       p1   = opts[6];
 
     std::vector<int64_t> kernel_dims      = { k1, k0 };
     std::vector<int64_t> stride_dims      = { s1, s0 };
@@ -1046,18 +1046,18 @@ static void ggml_cann_max_pool2d(ggml_backend_cann_context & ctx, ggml_tensor * 
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst, nullptr, nullptr, 0, ACL_FORMAT_NCHW);
 
     const int32_t * opts = (const int32_t *) dst->op_params;
-    const int       k0   = opts[1];
-    const int       k1   = opts[2];
-    const int       s0   = opts[3];
-    const int       s1   = opts[4];
-    const int       p0   = opts[5];
-    const int       p1   = opts[6];
+    const ціле       k0   = opts[1];
+    const ціле       k1   = opts[2];
+    const ціле       s0   = opts[3];
+    const ціле       s1   = opts[4];
+    const ціле       p0   = opts[5];
+    const ціле       p1   = opts[6];
 
     int64_t temp_ne[] = { src->ne[0] + p0 * 2, src->ne[1] + p1 * 2, src->ne[2], src->ne[3] };
     size_t  temp_nb[GGML_MAX_DIMS];
 
     temp_nb[0] = ggml_element_size(src);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         temp_nb[i] = temp_nb[i - 1] * temp_ne[i - 1];
     }
 
@@ -1121,24 +1121,24 @@ static void cann_copy(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclT
 void ggml_cann_dup(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_tensor * src0 = dst->src[0];
 
-    if (ggml_are_same_shape(src0, dst)) {
+    якщо (ggml_are_same_shape(src0, dst)) {
         acl_tensor_ptr acl_src = ggml_cann_create_tensor(src0);
         acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst);
-        if (dst->type == src0->type) {
+        якщо (dst->type == src0->type) {
             cann_copy(ctx, acl_src.get(), acl_dst.get());
-        } else {
+        } інакше {
             aclnn_cast(ctx, acl_src.get(), acl_dst.get(), ggml_cann_type_mapping(dst->type));
         }
-    } else {
+    } інакше {
         void *               src_trans_buffer = src0->data;
         ggml_cann_pool_alloc src_buffer_allocator;
-        if (!ggml_is_contiguous(src0)) {
+        якщо (!ggml_is_contiguous(src0)) {
             acl_tensor_ptr acl_src = ggml_cann_create_tensor(src0);
             src_buffer_allocator.alloc(ctx.pool(), ggml_nelements(src0) * ggml_type_size(src0->type));
             src_trans_buffer = src_buffer_allocator.get();
             size_t src_trans_nb[GGML_MAX_DIMS];
             src_trans_nb[0] = ggml_type_size(src0->type);
-            for (int i = 1; i < GGML_MAX_DIMS; i++) {
+            для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
                 src_trans_nb[i] = src_trans_nb[i - 1] * src0->ne[i - 1];
             }
             acl_tensor_ptr src_trans_tensor =
@@ -1149,7 +1149,7 @@ void ggml_cann_dup(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
         size_t src_reshape_nb[GGML_MAX_DIMS];
         src_reshape_nb[0] = ggml_type_size(src0->type);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             src_reshape_nb[i] = src_reshape_nb[i - 1] * dst->ne[i - 1];
         }
 
@@ -1158,9 +1158,9 @@ void ggml_cann_dup(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
                                     dst->ne, src_reshape_nb, GGML_MAX_DIMS, ACL_FORMAT_ND);
         acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst);
 
-        if (dst->type == src0->type) {
+        якщо (dst->type == src0->type) {
             cann_copy(ctx, trans_acl_src.get(), acl_dst.get());
-        } else {
+        } інакше {
             aclnn_cast(ctx, trans_acl_src.get(), acl_dst.get(), ggml_cann_type_mapping(dst->type));
         }
     }
@@ -1191,13 +1191,13 @@ static acl_tensor_ptr aclnn_zero(ggml_backend_cann_context & ctx,
                                  size_t                      type_size) {
     size_t nb[GGML_MAX_DIMS];
     nb[0] = type_size;
-    for (int i = 1; i < dims; i++) {
+    для (ціле i = 1; i < dims; i++) {
         nb[i] = nb[i - 1] * ne[i - 1];
     }
 
     acl_tensor_ptr zero = ggml_cann_create_tensor(buffer, type, type_size, ne, nb, dims);
     GGML_CANN_CALL_ACLNN_OP(ctx, InplaceZero, zero.get());
-    return zero;
+    повернути zero;
     GGML_UNUSED(n_bytes);
 }
 
@@ -1232,7 +1232,7 @@ static acl_tensor_ptr aclnn_values(ggml_backend_cann_context & ctx,
     acl_scalar_ptr alpha      = ggml_cann_create_scalar(&alpha_host, aclDataType::ACL_FLOAT);
     acl_scalar_ptr other      = ggml_cann_create_scalar(&value, aclDataType::ACL_FLOAT);
     GGML_CANN_CALL_ACLNN_OP(ctx, InplaceAdds, acl_tensor.get(), other.get(), alpha.get());
-    return acl_tensor;
+    повернути acl_tensor;
 }
 
 /**
@@ -1282,14 +1282,14 @@ static acl_tensor_ptr get_cache_acl_tensor(ggml_backend_cann_context & ctx,
                                            float                       value) {
     // Calculate total number of elements
     int64_t n_element = 1;
-    for (int i = 0; i < dims; i++) {
+    для (ціле i = 0; i < dims; i++) {
         n_element *= ne[i];
     }
     size_t size = n_element * ggml_type_size(dtype);
 
     // Allocate or expand cache if needed
-    if (cache_element < n_element) {
-        if (*buffer != nullptr) {
+    якщо (cache_element < n_element) {
+        якщо (*buffer != nullptr) {
             aclrtFree(*buffer);
             *buffer = nullptr;
         }
@@ -1305,7 +1305,7 @@ static acl_tensor_ptr get_cache_acl_tensor(ggml_backend_cann_context & ctx,
         aclnn_fill_scalar(ctx, value, acl_value.get());
     }
 
-    return ggml_cann_create_tensor(*buffer, ggml_cann_type_mapping(dtype), ggml_type_size(dtype), ne, nb, dims);
+    повернути ggml_cann_create_tensor(*buffer, ggml_cann_type_mapping(dtype), ggml_type_size(dtype), ne, nb, dims);
 }
 
 void ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
@@ -1321,7 +1321,7 @@ void ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     size_t acl_gamma_nb[GGML_MAX_DIMS];
     // gamma's type is the same with dst.
     acl_gamma_nb[0] = ggml_type_size(dst->type);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         acl_gamma_nb[i] = acl_gamma_nb[i - 1] * src->ne[i - 1];
     }
     acl_tensor_ptr acl_gamma = get_cache_acl_tensor(
@@ -1335,7 +1335,7 @@ void ggml_cann_rms_norm(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     size_t  acl_rstd_nb[GGML_MAX_DIMS - 1];
     // rstd will always be F32.
     acl_rstd_nb[0] = sizeof(float);
-    for (int i = 1; i < GGML_MAX_DIMS - 1; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS - 1; i++) {
         acl_rstd_nb[i] = acl_rstd_nb[i - 1] * acl_rstd_ne[i - 1];
     }
     acl_tensor_ptr acl_rstd =
@@ -1354,7 +1354,7 @@ void ggml_cann_diag_mask(ggml_backend_cann_context & ctx, ggml_tensor * dst, flo
     acl_tensor_ptr acl_src = ggml_cann_create_tensor(src);
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst);
 
-    const int n_past = ((int32_t *) dst->op_params)[0];
+    const ціле n_past = ((int32_t *) dst->op_params)[0];
 
     ggml_cann_pool_alloc one_tensor_allocator(ctx.pool(), ggml_nbytes(src));
     void *               buffer = one_tensor_allocator.get();
@@ -1407,9 +1407,9 @@ static void ggml_cann_im2col_2d_post_process(ggml_backend_cann_context & ctx,
     acl_tensor_ptr acl_dst  = ggml_cann_create_tensor(dst, dst_ne, dst_nb, GGML_MAX_DIMS - 1);
 
     int64_t permute_dim[] = { 0, 2, 1 };
-    if (src1->type != dst->type) {
+    якщо (src1->type != dst->type) {
         aclnn_permute(ctx, tmp_cast_tensor, acl_dst.get(), permute_dim, 3);
-    } else {
+    } інакше {
         aclnn_permute(ctx, tmp_im2col_tensor, acl_dst.get(), permute_dim, 3);
     }
 }
@@ -1442,7 +1442,7 @@ static void ggml_cann_im2col_1d_post_process(ggml_backend_cann_context &  ctx,
     int64_t tmp_permute_ne[] = { IC * KH * KW, OW * OH * n_bytes_factor, N };
     size_t  tmp_permute_nb[GGML_MAX_DIMS - 1];
     tmp_permute_nb[0] = ggml_type_size(dst->type);
-    for (int i = 1; i < GGML_MAX_DIMS - 1; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS - 1; i++) {
         tmp_permute_nb[i] = tmp_permute_nb[i - 1] * tmp_permute_ne[i - 1];
     }
 
@@ -1451,34 +1451,34 @@ static void ggml_cann_im2col_1d_post_process(ggml_backend_cann_context &  ctx,
                                 tmp_permute_ne, tmp_permute_nb, GGML_MAX_DIMS - 1, ACL_FORMAT_ND);
 
     int64_t permute_dim[] = { 0, 2, 1 };
-    if (src1->type != dst->type) {
+    якщо (src1->type != dst->type) {
         aclnn_permute(ctx, tmp_cast_tensor, tmp_permute_tensor.get(), permute_dim, 3);
-    } else {
+    } інакше {
         aclnn_permute(ctx, tmp_im2col_tensor, tmp_permute_tensor.get(), permute_dim, 3);
     }
 
     // number of times the kernel moves in W dimension
-    const int n_step_w = (IW + 2 * p0 - d0 * (KW - 1) - 1) / s0 + 1;
+    const ціле n_step_w = (IW + 2 * p0 - d0 * (KW - 1) - 1) / s0 + 1;
     size_t    offset;
     void *    cur_dst_buffer = dst->data, *cur_permute_buffer = tmp_permute_buffer;
 
     // memory copy with offset to restore 1D im2col from 2d
-    if (IC > 1) {
+    якщо (IC > 1) {
         offset          = IC * KH * KW * n_step_w * ggml_type_size(dst->type);
         size_t cpy_size = KH * KW * ggml_type_size(dst->type);
 
-        for (int c = 0; c < IC; c++) {
+        для (ціле c = 0; c < IC; c++) {
             cur_permute_buffer = (char *) tmp_permute_buffer + offset + KH * KW * c * ggml_type_size(dst->type);
             cur_dst_buffer     = (char *) dst->data + c * KH * KW * n_step_w * ggml_type_size(dst->type);
 
-            for (int i = 0; i < n_step_w; i++) {
+            для (ціле i = 0; i < n_step_w; i++) {
                 ACL_CHECK(aclrtMemcpyAsync(cur_dst_buffer, cpy_size, cur_permute_buffer, cpy_size,
                                            ACL_MEMCPY_DEVICE_TO_DEVICE, ctx.stream()));
                 cur_dst_buffer     = (char *) cur_dst_buffer + KH * KW * ggml_type_size(dst->type);
                 cur_permute_buffer = (char *) cur_permute_buffer + KH * KW * IC * ggml_type_size(dst->type);
             }
         }
-    } else {
+    } інакше {
         offset = KH * KW * n_step_w * ggml_type_size(dst->type);  // equal to ggml_nbytes(dst)
         ACL_CHECK(aclrtMemcpyAsync(dst->data, offset, (char *) tmp_permute_buffer + offset, offset,
                                    ACL_MEMCPY_DEVICE_TO_DEVICE, ctx.stream()));
@@ -1519,7 +1519,7 @@ void ggml_cann_im2col(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     size_t         tmp_im2col_nb[GGML_MAX_DIMS - 1];
 
     tmp_im2col_nb[0] = ggml_type_size(src1->type);
-    for (int i = 1; i < GGML_MAX_DIMS - 1; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS - 1; i++) {
         tmp_im2col_nb[i] = tmp_im2col_nb[i - 1] * tmp_im2col_ne[i - 1];
     }
 
@@ -1548,12 +1548,12 @@ void ggml_cann_im2col(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     acl_tensor_ptr       tmp_cast_tensor;
     ggml_cann_pool_alloc tmp_cast_allocator(ctx.pool());
     void *               tmp_cast_buffer = nullptr;
-    if (src1->type != dst->type) {
+    якщо (src1->type != dst->type) {
         tmp_cast_allocator.alloc(ggml_nbytes(dst) * n_bytes_factor);
         tmp_cast_buffer = tmp_cast_allocator.get();
         size_t temp_cast_nb[GGML_MAX_DIMS - 1];
         temp_cast_nb[0] = ggml_type_size(dst->type);
-        for (int i = 1; i < GGML_MAX_DIMS - 1; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS - 1; i++) {
             temp_cast_nb[i] = temp_cast_nb[i - 1] * tmp_im2col_ne[i - 1];
         }
 
@@ -1564,9 +1564,9 @@ void ggml_cann_im2col(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     }
 
     // post-processing
-    if (is_2D) {
+    якщо (is_2D) {
         ggml_cann_im2col_2d_post_process(ctx, dst, src1, tmp_cast_tensor.get(), tmp_im2col_tensor.get());
-    } else {
+    } інакше {
         std::vector<int64_t> im2col_op_params = { KH, KW, IW, IC, N, OH, OW, s0, p0, d0, n_bytes_factor };
         ggml_cann_im2col_1d_post_process(ctx, dst, src1, tmp_cast_tensor.get(), tmp_im2col_tensor.get(),
                                          im2col_op_params);
@@ -1591,17 +1591,17 @@ static void aclnn_exp(ggml_backend_cann_context & ctx, aclTensor * acl_src) {
 }
 
 void aclnn_cos(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst) {
-    if (acl_dst == nullptr) {
+    якщо (acl_dst == nullptr) {
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceCos, acl_src);
-    } else {
+    } інакше {
         GGML_CANN_CALL_ACLNN_OP(ctx, Cos, acl_src, acl_dst);
     }
 }
 
 void aclnn_sin(ggml_backend_cann_context & ctx, aclTensor * acl_src, aclTensor * acl_dst) {
-    if (acl_dst == nullptr) {
+    якщо (acl_dst == nullptr) {
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceSin, acl_src);
-    } else {
+    } інакше {
         GGML_CANN_CALL_ACLNN_OP(ctx, Sin, acl_src, acl_dst);
     }
 }
@@ -1612,9 +1612,9 @@ void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor *
     GGML_ASSERT(src->type == GGML_TYPE_F32);
     GGML_ASSERT(dst->type == GGML_TYPE_F32);
 
-    const int dim        = dst->op_params[0];
-    const int max_period = dst->op_params[1];
-    int       half       = dim / 2;
+    const ціле dim        = dst->op_params[0];
+    const ціле max_period = dst->op_params[1];
+    ціле       half       = dim / 2;
 
     acl_tensor_ptr acl_src = ggml_cann_create_tensor(src);
 
@@ -1644,7 +1644,7 @@ void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor *
     int64_t tmp_permute_ne[] = { src->ne[1], src->ne[0], src->ne[2], src->ne[3] };
     size_t  tmp_permute_nb[GGML_MAX_DIMS];
     tmp_permute_nb[0] = ggml_type_size(src->type);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         tmp_permute_nb[i] = tmp_permute_nb[i - 1] * tmp_permute_ne[i - 1];
     }
 
@@ -1661,11 +1661,11 @@ void ggml_cann_timestep_embedding(ggml_backend_cann_context & ctx, ggml_tensor *
     int64_t tmp_mul_ne[] = { src->ne[1] * half, src->ne[0], src->ne[2], src->ne[3] };
     size_t  tmp_mul_nb[GGML_MAX_DIMS];
     tmp_mul_nb[0] = ggml_type_size(src->type);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         tmp_mul_nb[i] = tmp_mul_nb[i - 1] * tmp_mul_ne[i - 1];
     }
 
-    int mul_nelements = src->ne[1] * half * src->ne[0] * src->ne[2] * src->ne[3];
+    ціле mul_nelements = src->ne[1] * half * src->ne[0] * src->ne[2] * src->ne[3];
 
     ggml_cann_pool_alloc mul_allocator(ctx.pool(), mul_nelements * ggml_type_size(src->type));
     void *               tmp_mul_buffer = mul_allocator.get();
@@ -1798,7 +1798,7 @@ static void aclnn_get_slope(ggml_backend_cann_context & ctx,
                             void *                      slope_buffer,
                             float                       max_bias,
                             ggml_type                   dtype) {
-    const int n_head_log2 = 1u << (uint32_t) floor(log2(n_head));
+    const ціле n_head_log2 = 1u << (uint32_t) floor(log2(n_head));
 
     float m0 = powf(2.0f, -(max_bias) / n_head_log2);
     float m1 = powf(2.0f, -(max_bias / 2.0f) / n_head_log2);
@@ -1815,7 +1815,7 @@ static void aclnn_get_slope(ggml_backend_cann_context & ctx,
     float count = n_head_log2;
     // end needs to be +1 because aclnn uses a left-closed, right-open interval.
     aclnn_get_slope_inner(ctx, slope_buffer, m0, count, start, end + 1, step, dtype);
-    if (n_head_log2 < n_head) {
+    якщо (n_head_log2 < n_head) {
         // arange2
         start = 2 * (n_head_log2 - n_head_log2) + 1;
         end   = 2 * ((n_head - 1) - n_head_log2) + 1;
@@ -1855,7 +1855,7 @@ static void aclnn_add_alibi(ggml_backend_cann_context & ctx,
     void * slope_buffer = nullptr;
     void * bias_buffer  = nullptr;
 
-    if (max_bias > 0.0f) {
+    якщо (max_bias > 0.0f) {
         int64_t              n_heads = dst->ne[2];
         ggml_cann_pool_alloc slope_allocator(ctx.pool(), n_heads * sizeof(float));
         slope_buffer = slope_allocator.get();
@@ -1881,7 +1881,7 @@ static void aclnn_add_alibi(ggml_backend_cann_context & ctx,
     int64_t slope_ne[] = { 1, 1, mask->ne[2], nr2, 1, 1 };
     size_t  slope_nb[GGML_MAX_DIMS + 2];
     slope_nb[0] = sizeof(float);
-    for (int i = 1; i < GGML_MAX_DIMS + 2; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS + 2; i++) {
         slope_nb[i] = slope_nb[i - 1] * slope_ne[i - 1];
     }
 
@@ -1893,11 +1893,11 @@ static void aclnn_add_alibi(ggml_backend_cann_context & ctx,
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst_ptr, ggml_cann_type_mapping(dst->type),
                                                      ggml_type_size(dst->type), dst_ne, dst_nb, GGML_MAX_DIMS + 2);
 
-    if (max_bias > 0.0f) {
+    якщо (max_bias > 0.0f) {
         int64_t bias_ne[] = { mask->ne[0], dst->ne[1], mask->ne[2], nr2, mask->ne[3], 1 };
         size_t  bias_nb[GGML_MAX_DIMS + 2];
         bias_nb[0] = sizeof(float);
-        for (int i = 1; i < GGML_MAX_DIMS + 2; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS + 2; i++) {
             bias_nb[i] = bias_nb[i - 1] * bias_ne[i - 1];
         }
         acl_tensor_ptr bias_tensor =
@@ -1905,7 +1905,7 @@ static void aclnn_add_alibi(ggml_backend_cann_context & ctx,
 
         aclnn_mul(ctx, acl_slope.get(), acl_mask.get(), bias_tensor.get());
         aclnn_add(ctx, acl_dst.get(), bias_tensor.get());
-    } else {
+    } інакше {
         aclnn_add(ctx, acl_dst.get(), acl_mask.get());
     }
 }
@@ -1955,7 +1955,7 @@ void ggml_cann_softmax(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     aclnn_muls(ctx, acl_src0.get(), scale, softmax_tensor.get(), false);
 
     // mask
-    if (src1) {
+    якщо (src1) {
         aclnn_add_alibi(ctx, src1, src0, src_tensor_buffer, max_bias);
     }
     // softmax
@@ -1988,8 +1988,8 @@ void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         int64_t idx_ne[1]  = { n_idx };
         size_t  idx_nb[1]  = { (size_t)ggml_element_size(src1) };
 
-        for (int64_t i3 = 0; i3 < src0->ne[3]; i3++) {
-            for (int64_t i2 = 0; i2 < src0->ne[2]; i2++) {
+        для (int64_t i3 = 0; i3 < src0->ne[3]; i3++) {
+            для (int64_t i2 = 0; i2 < src0->ne[2]; i2++) {
                 acl_tensor_ptr acl_src = ggml_cann_create_tensor(
                     (char *)src_base + i3 * nb[3] + i2 * nb[2],
                     acl_type, type_size, src_ne, src_nb_2d, 2);
@@ -2009,17 +2009,17 @@ void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         case GGML_TYPE_BF16:
         case GGML_TYPE_F16:
         case GGML_TYPE_F32:
-            if (src0->type == dst->type) {
+            якщо (src0->type == dst->type) {
                 gather_batched(src0->data,
                                ggml_cann_type_mapping(src0->type), ggml_type_size(src0->type),
                                src0->nb);
-            } else {
+            } інакше {
                 // Cast src0 to dst type, then gather.
                 ggml_cann_pool_alloc src_cast_allocator(ctx.pool(),
                                                         ggml_nelements(src0) * ggml_element_size(dst));
                 size_t src_cast_nb[GGML_MAX_DIMS];
                 src_cast_nb[0] = ggml_type_size(dst->type);
-                for (int i = 1; i < GGML_MAX_DIMS; i++) {
+                для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
                     src_cast_nb[i] = src_cast_nb[i - 1] * src0->ne[i - 1];
                 }
                 acl_tensor_ptr acl_src0     = ggml_cann_create_tensor(src0);
@@ -2042,7 +2042,7 @@ void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
                 weight_ne[1] = src0->ne[0] / QK8_0;
                 weight_nb[0] = sizeof(int8_t);
                 weight_nb[1] = weight_nb[0] * weight_ne[0];
-                for (int i = 2; i < GGML_MAX_DIMS + 1; i++) {
+                для (ціле i = 2; i < GGML_MAX_DIMS + 1; i++) {
                     weight_ne[i] = src0->ne[i - 1];
                     weight_nb[i] = weight_nb[i - 1] * weight_ne[i - 1];
                 }
@@ -2050,13 +2050,13 @@ void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
                 scale_ne[1] = src0->ne[0] / QK8_0;
                 scale_nb[0] = sizeof(uint16_t);
                 scale_nb[1] = scale_nb[0] * scale_ne[0];
-                for (int i = 2; i < GGML_MAX_DIMS + 1; i++) {
+                для (ціле i = 2; i < GGML_MAX_DIMS + 1; i++) {
                     scale_ne[i] = src0->ne[i - 1];
                     scale_nb[i] = scale_nb[i - 1] * scale_ne[i - 1];
                 }
                 dequant_ne    = weight_ne;
                 dequant_nb[0] = ggml_type_size(dst->type);
-                for (int i = 1; i < GGML_MAX_DIMS + 1; i++) {
+                для (ціле i = 1; i < GGML_MAX_DIMS + 1; i++) {
                     dequant_nb[i] = dequant_nb[i - 1] * dequant_ne[i - 1];
                 }
                 const int64_t scale_offset = ggml_nelements(src0) * sizeof(int8_t);
@@ -2075,7 +2075,7 @@ void ggml_cann_get_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
                 // Reinterpret dequant buffer as 4D [src0->ne] with contiguous strides.
                 dequant_ne    = src0->ne;
                 dequant_nb[0] = ggml_type_size(dst->type);
-                for (int i = 1; i < GGML_MAX_DIMS; i++) {
+                для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
                     dequant_nb[i] = dequant_nb[i - 1] * src0->ne[i - 1];
                 }
                 gather_batched(dequant_allocator.get(),
@@ -2111,8 +2111,8 @@ void ggml_cann_set_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         int64_t i_ne[1]    = { n_idx };
         size_t  i_nb[1]    = { (size_t)ggml_element_size(src1) };
 
-        for (int64_t i3 = 0; i3 < dst->ne[3]; i3++) {
-            for (int64_t i2 = 0; i2 < dst->ne[2]; i2++) {
+        для (int64_t i3 = 0; i3 < dst->ne[3]; i3++) {
+            для (int64_t i2 = 0; i2 < dst->ne[2]; i2++) {
                 acl_tensor_ptr acl_dst = ggml_cann_create_tensor(
                     (char *)dst->data + i3 * dst->nb[3] + i2 * dst->nb[2],
                     acl_type, type_size, d_ne, d_nb, 2);
@@ -2142,7 +2142,7 @@ void ggml_cann_set_rows(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
                                                         ggml_nelements(src0) * ggml_type_size(dst->type));
                 size_t src_cast_nb[GGML_MAX_DIMS];
                 src_cast_nb[0] = ggml_type_size(dst->type);
-                for (int i = 1; i < GGML_MAX_DIMS; i++) {
+                для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
                     src_cast_nb[i] = src_cast_nb[i - 1] * src0->ne[i - 1];
                 }
                 acl_tensor_ptr acl_src0     = ggml_cann_create_tensor(src0);
@@ -2207,10 +2207,10 @@ static void ggml_cann_mat_mul_fp(ggml_backend_cann_context & ctx, ggml_tensor * 
     BCAST_MUL_MAT_SHAPE(input, weight, dst);
 
     int64_t n_dims = bcast_dims;
-    if (bcast_input_ne[3] == bcast_weight_ne[3] && bcast_input_ne[3] == 1) {
-        if (bcast_input_ne[2] == 1 && bcast_weight_ne[2] == 1) {
+    якщо (bcast_input_ne[3] == bcast_weight_ne[3] && bcast_input_ne[3] == 1) {
+        якщо (bcast_input_ne[2] == 1 && bcast_weight_ne[2] == 1) {
             n_dims = 2;
-        } else if (bcast_input_ne[2] == 1) {
+        } інакше якщо (bcast_input_ne[2] == 1) {
             n_dims = 3;
         }
     }
@@ -2224,9 +2224,9 @@ static void ggml_cann_mat_mul_fp(ggml_backend_cann_context & ctx, ggml_tensor * 
 
     // Only check env once.
     static bool weight_to_nz = parse_bool(get_env_as_lowercase("GGML_CANN_WEIGHT_NZ").value_or("on"));
-    if (weight_to_nz && weight->type != GGML_TYPE_BF16 && is_matmul_weight(weight)) {
+    якщо (weight_to_nz && weight->type != GGML_TYPE_BF16 && is_matmul_weight(weight)) {
         acl_weight_tensor = ggml_cann_create_tensor(weight, transpose_ne, transpose_nb, n_dims, ACL_FORMAT_FRACTAL_NZ);
-    } else {
+    } інакше {
         acl_weight_tensor = ggml_cann_create_tensor(weight, transpose_ne, transpose_nb, n_dims, ACL_FORMAT_ND);
     }
     acl_tensor_ptr acl_dst = ggml_cann_create_tensor(dst, bcast_dst_ne, bcast_dst_nb, n_dims);
@@ -2269,11 +2269,11 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
     // HC is regarded as batch.
     // weight need transpose.
     float weight_elem_size;
-    if (type == GGML_TYPE_Q4_0) {
+    якщо (type == GGML_TYPE_Q4_0) {
         weight_elem_size = float(sizeof(uint8_t)) / 2;
-    } else if (type == GGML_TYPE_Q8_0) {
+    } інакше якщо (type == GGML_TYPE_Q8_0) {
         weight_elem_size = float(sizeof(uint8_t));
-    } else {
+    } інакше {
         GGML_ABORT("Only support Q4_0 and Q8_0 MUL_MAT");
     }
     float  weight_nb[]   = { src0->ne[0] * weight_elem_size, weight_elem_size };
@@ -2295,14 +2295,14 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
     void *               input_buffer = src1->data;
 
     // case in
-    if (src1->type != GGML_TYPE_F16) {
+    якщо (src1->type != GGML_TYPE_F16) {
         acl_tensor_ptr acl_src1_tensor = ggml_cann_create_tensor(src1);
         input_buffer                   = input_alloctor.alloc(ggml_nelements(src1) * input_elem_size);
 
         int64_t * input_cast_ne = src1->ne;
         size_t    input_cast_nb[GGML_MAX_DIMS];
         input_cast_nb[0] = sizeof(uint16_t);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             input_cast_nb[i] = input_cast_nb[i - 1] * input_cast_ne[i - 1];
         }
 
@@ -2322,8 +2322,8 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
     int64_t              max_elem_size = 65535;
     int64_t              split_size    = (src0->ne[1] / max_elem_size) + 1;
     ggml_cann_pool_alloc workspace_allocator(ctx.pool());
-    for (int64_t n1 = 0; n1 < src1->ne[3]; n1++) {
-        for (int64_t c1 = 0; c1 < src1->ne[2]; c1++) {
+    для (int64_t n1 = 0; n1 < src1->ne[3]; n1++) {
+        для (int64_t c1 = 0; c1 < src1->ne[2]; c1++) {
             int64_t n0 = n1 / (src1->ne[3] / src0->ne[3]);
             int64_t c0 = c1 / (src1->ne[2] / src0->ne[2]);
 
@@ -2351,7 +2351,7 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
                 ggml_cann_create_tensor((char *) output_buffer + batch1 * output_stride, ACL_FLOAT16, output_elem_size,
                                         output_ne, output_nb, 2, ACL_FORMAT_ND, output_ne_offset);
             int64_t antiquantGroupSize = 0;
-            if (src0->ne[0] > QK8_0) {
+            якщо (src0->ne[0] > QK8_0) {
                 antiquantGroupSize = QK8_0;
             }
             GGML_CANN_CALL_ACLNN_OP(ctx, WeightQuantBatchMatmulV2, acl_input_tensor.get(), acl_weight_tensor.get(),
@@ -2359,7 +2359,7 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
                                     acl_output_tensor.get());
 
             // other splits
-            for (int64_t split = 1; split < split_size; split++) {
+            для (int64_t split = 1; split < split_size; split++) {
                 weight_ne_offset += weight_elem_size * weight_ne[0] * weight_ne[1];
                 weight_ne[0] =
                     max_elem_size * (split + 1) > src0->ne[1] ? src0->ne[1] - (max_elem_size * split) : max_elem_size;
@@ -2385,11 +2385,11 @@ static void ggml_cann_mul_mat_quant(ggml_backend_cann_context & ctx, ggml_tensor
     }
 
     // cast out
-    if (dst->type != GGML_TYPE_F16) {
+    якщо (dst->type != GGML_TYPE_F16) {
         int64_t * output_cast_ne = dst->ne;
         size_t    output_cast_nb[GGML_MAX_DIMS];
         output_cast_nb[0] = sizeof(uint16_t);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             output_cast_nb[i] = output_cast_nb[i - 1] * output_cast_ne[i - 1];
         }
 
@@ -2512,7 +2512,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
                                   float                       freq_scale,
                                   float                       attn_factor,
                                   bool                        is_neox,
-                                  int                         sections[4],
+                                  ціле                         sections[4],
                                   bool                        mrope_used,
                                   bool                        is_imrope,
                                   bool                        indep_sects,
@@ -2524,11 +2524,11 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
     int64_t position_length    = dst->ne[2];
 
     // TODO: check theta_scale_length and position_length.
-    if (src2 == nullptr && ctx.rope_cache.cached &&
+    якщо (src2 == nullptr && ctx.rope_cache.cached &&
         ctx.rope_cache.equal(theta_scale_length, position_length, ext_factor, theta_scale, freq_scale, attn_factor,
                              is_neox, indep_sects, mrope_used, is_imrope, sections)) {
         // use cache.
-        return;
+        повернути;
     }
 
     // Step0: calculate tensor shape.
@@ -2543,7 +2543,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
     int64_t cache_ne[] = { theta_scale_length, 1, position_length, 1 };
     size_t  cache_nb[GGML_MAX_DIMS];
     cache_nb[0] = sizeof(float);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         cache_nb[i] = cache_nb[i - 1] * cache_ne[i - 1];
     }
 
@@ -2557,28 +2557,28 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
     // Step1.1: prepare theta_scale exponent. if this exponent updated, should update theta_scale_tensor.
     acl_tensor_ptr acl_theta_scale_tensor;
     bool           theta_scale_updated = false;
-    if (ctx.rope_cache.theta_scale_length != theta_scale_length || ctx.rope_cache.theta_scale != theta_scale ||
+    якщо (ctx.rope_cache.theta_scale_length != theta_scale_length || ctx.rope_cache.theta_scale != theta_scale ||
         ctx.rope_cache.indep_sects != indep_sects) {
         theta_scale_updated = true;
-        if (ctx.rope_cache.theta_scale_exp_host != nullptr) {
+        якщо (ctx.rope_cache.theta_scale_exp_host != nullptr) {
             free(ctx.rope_cache.theta_scale_exp_host);
         }
         ctx.rope_cache.theta_scale_exp_host = (float *) malloc(theta_scale_length * sizeof(float));
         GGML_ASSERT(ctx.rope_cache.theta_scale_exp_host != nullptr);
-        if (!indep_sects) {
+        якщо (!indep_sects) {
             ctx.rope_cache.theta_scale_exp_host[0] = 1;
-            for (int i = 1; i < theta_scale_length; i++) {
+            для (ціле i = 1; i < theta_scale_length; i++) {
                 ctx.rope_cache.theta_scale_exp_host[i] = ctx.rope_cache.theta_scale_exp_host[i - 1] * theta_scale;
             }
-        } else {
-            int sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
-            int sec_w     = sections[1] + sections[0];
-            int sec_e     = sections[2] + sec_w;
+        } інакше {
+            ціле sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
+            ціле sec_w     = sections[1] + sections[0];
+            ціле sec_e     = sections[2] + sec_w;
 
             ctx.rope_cache.theta_scale_exp_host[0] = 1;
-            for (int i = 1; i < theta_scale_length; i++) {
-                int sector = i % sect_dims;
-                if (sector == 0 || sector == sections[0] || sector == sec_w || sector == sec_e) {
+            для (ціле i = 1; i < theta_scale_length; i++) {
+                ціле sector = i % sect_dims;
+                якщо (sector == 0 || sector == sections[0] || sector == sec_w || sector == sec_e) {
                     ctx.rope_cache.theta_scale_exp_host[i] = 1;
                     continue;
                 }
@@ -2586,7 +2586,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
             }
         }
 
-        if (ctx.rope_cache.theta_scale_cache != nullptr) {
+        якщо (ctx.rope_cache.theta_scale_cache != nullptr) {
             ACL_CHECK(aclrtFree(ctx.rope_cache.theta_scale_cache));
         }
         ACL_CHECK(aclrtMalloc(&ctx.rope_cache.theta_scale_cache, theta_scale_length * sizeof(float),
@@ -2603,10 +2603,10 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
     // TODO: acl_yarn_ramp_tensor use rope cache.
     bool           yarn_ramp_tensor_updated = false;
     acl_tensor_ptr acl_yarn_ramp_tensor;
-    if (ext_factor != 0 && (theta_scale_updated || ctx.rope_cache.theta_scale_length != theta_scale_length ||
+    якщо (ext_factor != 0 && (theta_scale_updated || ctx.rope_cache.theta_scale_length != theta_scale_length ||
                             ctx.rope_cache.freq_scale != freq_scale)) {
         yarn_ramp_tensor_updated = true;
-        if (ctx.rope_cache.yarn_ramp_cache != nullptr) {
+        якщо (ctx.rope_cache.yarn_ramp_cache != nullptr) {
             ACL_CHECK(aclrtFree(ctx.rope_cache.yarn_ramp_cache));
         }
         ACL_CHECK(aclrtMalloc(&ctx.rope_cache.yarn_ramp_cache, theta_scale_length * sizeof(float),
@@ -2645,88 +2645,88 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
         acl_scalar_ptr freq_scale_1_sc = ggml_cann_create_scalar(&freq_scale_1, aclDataType::ACL_FLOAT);
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceMuls, acl_yarn_ramp_tensor.get(), freq_scale_1_sc.get());
         GGML_CANN_CALL_ACLNN_OP(ctx, InplaceAdds, acl_yarn_ramp_tensor.get(), freq_scale_sc.get(), one.get());
-    } else {
+    } інакше {
         acl_yarn_ramp_tensor = ggml_cann_create_tensor(ctx.rope_cache.yarn_ramp_cache, ACL_FLOAT, sizeof(float),
                                                        theta_scale_ne, theta_scale_nb, 1);
     }
     // Step 1.3: update theta_scale_tensor according to ext_factor or freq_scale.
-    if (ext_factor != 0) {
-        if (theta_scale_updated || yarn_ramp_tensor_updated) {
+    якщо (ext_factor != 0) {
+        якщо (theta_scale_updated || yarn_ramp_tensor_updated) {
             theta_scale_updated = true;
             aclnn_mul(ctx, acl_theta_scale_tensor.get(), acl_yarn_ramp_tensor.get());
         }
-    } else {
-        if (freq_scale != 1 && (ctx.rope_cache.freq_scale != freq_scale || theta_scale_updated)) {
+    } інакше {
+        якщо (freq_scale != 1 && (ctx.rope_cache.freq_scale != freq_scale || theta_scale_updated)) {
             theta_scale_updated = true;
             aclnn_muls(ctx, acl_theta_scale_tensor.get(), freq_scale, nullptr, true);
         }
     }
 
     // Nothing changed, use cache.
-    if (!theta_scale_updated) {
+    якщо (!theta_scale_updated) {
         acl_theta_scale_tensor = ggml_cann_create_tensor(ctx.rope_cache.theta_scale_cache, ACL_FLOAT, sizeof(float),
                                                          theta_scale_ne, theta_scale_nb, GGML_MAX_DIMS);
     }
 
     // Step 1.4: prepare select index if mrope
     acl_tensor_ptr position_select_index_tensor;
-    if (mrope_used) {
-        if (ctx.rope_cache.sections[0] != sections[0] || ctx.rope_cache.sections[1] != sections[1] ||
+    якщо (mrope_used) {
+        якщо (ctx.rope_cache.sections[0] != sections[0] || ctx.rope_cache.sections[1] != sections[1] ||
             ctx.rope_cache.sections[2] != sections[2] || ctx.rope_cache.sections[3] != sections[3] ||
             ctx.rope_cache.theta_scale_length != theta_scale_length || ctx.rope_cache.is_imrope != is_imrope) {
-            if (ctx.rope_cache.position_select_index_host != nullptr) {
+            якщо (ctx.rope_cache.position_select_index_host != nullptr) {
                 free(ctx.rope_cache.position_select_index_host);
             }
-            ctx.rope_cache.position_select_index_host = (int *) malloc(theta_scale_length * sizeof(int));
+            ctx.rope_cache.position_select_index_host = (ціле *) malloc(theta_scale_length * sizeof(ціле));
             GGML_ASSERT(ctx.rope_cache.position_select_index_host != nullptr);
-            int sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
-            int sec_w     = sections[1] + sections[0];
-            int sec_e     = sections[2] + sec_w;
+            ціле sect_dims = sections[0] + sections[1] + sections[2] + sections[3];
+            ціле sec_w     = sections[1] + sections[0];
+            ціле sec_e     = sections[2] + sec_w;
             // t,h,w,e
-            for (int i = 0; i < theta_scale_length; i++) {
-                int sector = i % sect_dims;
+            для (ціле i = 0; i < theta_scale_length; i++) {
+                ціле sector = i % sect_dims;
 
-                if (is_imrope) {  // qwen3vl apply interleaved mrope
-                    if (sector % 3 == 1 && sector < 3 * sections[1]) {
+                якщо (is_imrope) {  // qwen3vl apply interleaved mrope
+                    якщо (sector % 3 == 1 && sector < 3 * sections[1]) {
                         ctx.rope_cache.position_select_index_host[i] = 1;
-                    } else if (sector % 3 == 2 && sector < 3 * sections[2]) {
+                    } інакше якщо (sector % 3 == 2 && sector < 3 * sections[2]) {
                         ctx.rope_cache.position_select_index_host[i] = 2;
-                    } else if (sector % 3 == 0 && sector < 3 * sections[0]) {
+                    } інакше якщо (sector % 3 == 0 && sector < 3 * sections[0]) {
                         ctx.rope_cache.position_select_index_host[i] = 0;
-                    } else {
+                    } інакше {
                         ctx.rope_cache.position_select_index_host[i] = 3;
                     }
-                } else {
-                    if (sector >= sections[0] && sector < sec_w) {
+                } інакше {
+                    якщо (sector >= sections[0] && sector < sec_w) {
                         ctx.rope_cache.position_select_index_host[i] = 1;
-                    } else if (sector >= sec_w && sector < sec_e) {
+                    } інакше якщо (sector >= sec_w && sector < sec_e) {
                         ctx.rope_cache.position_select_index_host[i] = 2;
-                    } else if (sector >= sec_e) {
+                    } інакше якщо (sector >= sec_e) {
                         ctx.rope_cache.position_select_index_host[i] = 3;
-                    } else {
+                    } інакше {
                         ctx.rope_cache.position_select_index_host[i] = 0;
                     }
                 }
             }
 
-            if (ctx.rope_cache.position_select_index != nullptr) {
+            якщо (ctx.rope_cache.position_select_index != nullptr) {
                 ACL_CHECK(aclrtFree(ctx.rope_cache.position_select_index));
             }
-            ACL_CHECK(aclrtMalloc(&ctx.rope_cache.position_select_index, theta_scale_length * sizeof(int),
+            ACL_CHECK(aclrtMalloc(&ctx.rope_cache.position_select_index, theta_scale_length * sizeof(ціле),
                                   ACL_MEM_MALLOC_HUGE_FIRST));
 
-            ACL_CHECK(aclrtMemcpyAsync(ctx.rope_cache.position_select_index, theta_scale_length * sizeof(int),
-                                       ctx.rope_cache.position_select_index_host, theta_scale_length * sizeof(int),
+            ACL_CHECK(aclrtMemcpyAsync(ctx.rope_cache.position_select_index, theta_scale_length * sizeof(ціле),
+                                       ctx.rope_cache.position_select_index_host, theta_scale_length * sizeof(ціле),
                                        ACL_MEMCPY_HOST_TO_DEVICE, ctx.stream()));
         }
 
         position_select_index_tensor = ggml_cann_create_tensor(ctx.rope_cache.position_select_index, ACL_INT32,
-                                                               sizeof(int), theta_scale_ne, theta_scale_nb, 1);
+                                                               sizeof(ціле), theta_scale_ne, theta_scale_nb, 1);
     }
 
     // Step2: divide by freq_factors
     ggml_cann_pool_alloc freq_fac_res_allocator(ctx.pool());
-    if (src2) {
+    якщо (src2) {
         freq_fac_res_allocator.alloc(theta_scale_length * sizeof(float));
         void *         freq_fac_res_ptr = freq_fac_res_allocator.get();
         acl_tensor_ptr acl_freq_factors_tensor =
@@ -2741,7 +2741,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
     // Step3: prepare position_tensor
     acl_tensor_ptr       acl_position_tensor;
     ggml_cann_pool_alloc mrope_position_acllocator(ctx.pool());
-    if (mrope_used) {
+    якщо (mrope_used) {
         // Step3.1: select current position;
         // position :
         // pos1: [[0, 1 ,2 ,3 ],
@@ -2769,7 +2769,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
         // [theta_scale^0, theta_scale^1, ..., theta_scale ^ n]
 
         int64_t        mrope_position_ne[] = { position_length, 4 };
-        size_t         mrope_position_nb[] = { sizeof(int), position_length * sizeof(int) };
+        size_t         mrope_position_nb[] = { sizeof(ціле), position_length * sizeof(ціле) };
         acl_tensor_ptr mrope_position =
             ggml_cann_create_tensor(src1->data, ggml_cann_type_mapping(src1->type), ggml_type_size(src1->type),
                                     mrope_position_ne, mrope_position_nb, 2);
@@ -2789,7 +2789,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
         int64_t transposed_ne[] = { position_length, 1, theta_scale_length, 1 };
         size_t  transposed_nb[GGML_MAX_DIMS];
         transposed_nb[0] = sizeof(float);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             transposed_nb[i] = transposed_nb[i - 1] * transposed_ne[i - 1];
         }
 
@@ -2800,7 +2800,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
             ggml_cann_create_tensor(mrope_position_buffer, ggml_cann_type_mapping(src1->type),
                                     ggml_type_size(src1->type), transposed_ne, transposed_nb, GGML_MAX_DIMS);
 
-    } else {
+    } інакше {
         // auto bcast.
         acl_position_tensor =
             ggml_cann_create_tensor(src1->data, ggml_cann_type_mapping(src1->type), ggml_type_size(src1->type),
@@ -2818,12 +2818,12 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
 
     // Step5: calculate sin cos.
     // init sin_repeat && cos_repeat, only to accelerate first layer on each device
-    if (position_length > ctx.rope_cache.position_length) {
+    якщо (position_length > ctx.rope_cache.position_length) {
         ctx.rope_cache.position_length = position_length;
-        if (ctx.rope_cache.sin_cache != nullptr) {
+        якщо (ctx.rope_cache.sin_cache != nullptr) {
             ACL_CHECK(aclrtFree(ctx.rope_cache.sin_cache));
         }
-        if (ctx.rope_cache.cos_cache != nullptr) {
+        якщо (ctx.rope_cache.cos_cache != nullptr) {
             ACL_CHECK(aclrtFree(ctx.rope_cache.cos_cache));
         }
         int64_t repeat_theta_length = theta_scale_length * position_length * 2;
@@ -2846,12 +2846,12 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
         ggml_cann_create_tensor(cos_buffer, ACL_FLOAT, sizeof(float), cache_ne, cache_nb, GGML_MAX_DIMS, ACL_FORMAT_ND);
     aclnn_cos(ctx, acl_theta_tensor.get(), acl_cos_tensor.get());
 
-    if (ext_factor != 0) {
+    якщо (ext_factor != 0) {
         attn_factor *= 1.0f + 0.1f * logf(1.0f / freq_scale);
     }
 
     // Step 5: multiply by attn_factor
-    if (attn_factor != 1) {
+    якщо (attn_factor != 1) {
         aclnn_muls(ctx, acl_sin_tensor.get(), attn_factor, nullptr, true);
         aclnn_muls(ctx, acl_cos_tensor.get(), attn_factor, nullptr, true);
     }
@@ -2859,7 +2859,7 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
     int64_t sin_reshape_ne[4] = { rope_dims, 1, dst->ne[2], 1 };
     size_t  sin_reshape_nb[GGML_MAX_DIMS];
     sin_reshape_nb[0] = sizeof(float);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         sin_reshape_nb[i] = sin_reshape_nb[i - 1] * sin_reshape_ne[i - 1];
     }
     acl_tensor_ptr acl_sin_repeat_tensor = ggml_cann_create_tensor(ctx.rope_cache.sin_cache, ACL_FLOAT, sizeof(float),
@@ -2868,12 +2868,12 @@ static void aclnn_rope_cache_init(ggml_backend_cann_context & ctx,
                                                                    sin_reshape_ne, sin_reshape_nb, GGML_MAX_DIMS);
 
     // Step 6: repeat
-    if (is_neox) {
+    якщо (is_neox) {
         // [sinθ1, sinθ1, sinθ2, sinθ2, ..., sinθn, sinθn]
         int64_t repeatsArray[] = { 1, 1, 1, 2 };
         aclnn_repeat(ctx, acl_sin_tensor.get(), acl_sin_repeat_tensor.get(), repeatsArray);
         aclnn_repeat(ctx, acl_cos_tensor.get(), acl_cos_repeat_tensor.get(), repeatsArray);
-    } else {
+    } інакше {
         int64_t num_repeats = 2;
         int64_t dim         = 3;
         int64_t output_size = theta_scale_length * num_repeats;
@@ -2911,12 +2911,12 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     // param
     float     freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow;
-    int       sections[4];
+    ціле       sections[4];
     // const int n_past     = ((int32_t *) dst->op_params)[0];
-    const int n_dims     = ((int32_t *) dst->op_params)[1];
-    const int mode       = ((int32_t *) dst->op_params)[2];
+    const ціле n_dims     = ((int32_t *) dst->op_params)[1];
+    const ціле mode       = ((int32_t *) dst->op_params)[2];
     // const int n_ctx      = ((int32_t *) dst->op_params)[3];
-    const int n_ctx_orig = ((int32_t *) dst->op_params)[4];
+    const ціле n_ctx_orig = ((int32_t *) dst->op_params)[4];
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
@@ -2926,7 +2926,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     memcpy(&attn_factor, (int32_t *) dst->op_params + 8, sizeof(float));
     memcpy(&beta_fast, (int32_t *) dst->op_params + 9, sizeof(float));
     memcpy(&beta_slow, (int32_t *) dst->op_params + 10, sizeof(float));
-    memcpy(&sections, (int32_t *) dst->op_params + 11, sizeof(int) * 4);
+    memcpy(&sections, (int32_t *) dst->op_params + 11, sizeof(ціле) * 4);
 
     GGML_ASSERT(n_dims % 2 == 0);
     GGML_ASSERT(n_dims <= ne00);
@@ -2944,15 +2944,15 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     const bool mrope_used = mode & GGML_ROPE_TYPE_MROPE;
     const bool is_vision  = mode == GGML_ROPE_TYPE_VISION;
 
-    if (mrope_used) {
+    якщо (mrope_used) {
         GGML_ASSERT(sections[0] > 0 || sections[1] > 0 || sections[2] > 0);
     }
 
-    if (is_vision) {
+    якщо (is_vision) {
         GGML_ASSERT(n_dims == ne0 / 2);
     }
 
-    if (is_imrope || mrope_used) {
+    якщо (is_imrope || mrope_used) {
         is_neox = true;
     }
 
@@ -2962,7 +2962,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     //but essentially it only modifies theta_base in mrope,
     //then repeats it at the end in the same way as is_neox.
     //In fact, RoPE is still applied across all dimensions.
-    if (is_vision) {
+    якщо (is_vision) {
         rope_dims = src0->ne[0];
     }
     int64_t tail_dims = ne00 - rope_dims;
@@ -2976,7 +2976,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     int64_t sin_reshape_ne[4] = { rope_dims, 1, ne02, 1 };
     size_t  sin_reshape_nb[GGML_MAX_DIMS];
     sin_reshape_nb[0] = sizeof(float);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         sin_reshape_nb[i] = sin_reshape_nb[i - 1] * sin_reshape_ne[i - 1];
     }
     acl_tensor_ptr acl_sin_reshape_tensor = ggml_cann_create_tensor(ctx.rope_cache.sin_cache, ACL_FLOAT, sizeof(float),
@@ -2995,13 +2995,13 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     void *               minus_one_scale_buffer = nullptr;
     ggml_cann_pool_alloc roll_allocator(ctx.pool(), ggml_nbytes(src0));
     ggml_cann_pool_alloc minus_one_scale_allocator(ctx.pool(), sizeof(float) * src0->ne[0]);
-    if (!is_neox) {
+    якщо (!is_neox) {
         // roll input: [q0,q1,q2,q3,...] -> [q1,q0,q3,q2,...]
         input_roll_buffer        = roll_allocator.get();
         int64_t input_roll_ne[4] = { 2, src0->ne[1] * (src0->ne[0] / 2), src0->ne[2], src0->ne[3] };
         size_t  input_roll_nb[GGML_MAX_DIMS];
         input_roll_nb[0] = ggml_type_size(src0->type);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             input_roll_nb[i] = input_roll_nb[i - 1] * input_roll_ne[i - 1];
         }
         acl_tensor_ptr acl_input_roll_tensor =
@@ -3021,20 +3021,20 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         int64_t minus_one_ne[4] = { src0->ne[0], 1, 1, 1 };
         size_t  minus_one_nb[GGML_MAX_DIMS];
         minus_one_nb[0] = sizeof(float);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             minus_one_nb[i] = minus_one_nb[i - 1] * minus_one_ne[i - 1];
         }
         acl_minus_one_tensor = aclnn_values(ctx, minus_one_scale_buffer, sizeof(float) * src0->ne[0], minus_one_ne,
                                             GGML_MAX_DIMS, ACL_FLOAT, sizeof(float), 1);
         int64_t   dim        = 3;
         int64_t * index      = new int64_t[src0->ne[0]];
-        for (int i = 0; i < src0->ne[0]; i++) {
+        для (ціле i = 0; i < src0->ne[0]; i++) {
             index[i] = i / 2 * 2;
         }
         int64_t index_num = src0->ne[0];
         float   value     = -1;
         aclnn_index_fill_tensor(ctx, acl_minus_one_tensor.get(), dim, index, index_num, value);
-    } else {
+    } інакше {
         // roll input: [q0,q1,q2,...] ->
         // [q_half,q_half+1,...,q_end,q0,q1,...q_half-1]
         input_roll_buffer = roll_allocator.get();
@@ -3052,7 +3052,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         int64_t minus_one_ne[4] = { src0->ne[0], 1, 1, 1 };
         size_t  minus_one_nb[GGML_MAX_DIMS];
         minus_one_nb[0] = sizeof(float);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             minus_one_nb[i] = minus_one_nb[i - 1] * minus_one_ne[i - 1];
         }
         acl_minus_one_tensor     = aclnn_values(ctx, minus_one_scale_buffer, sizeof(float) * src0->ne[0], minus_one_ne,
@@ -3061,7 +3061,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         int64_t first_half_ne[4] = { src0->ne[0] / 2, 1, 1, 1 };
         size_t  first_half_nb[GGML_MAX_DIMS];
         first_half_nb[0] = sizeof(float);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             first_half_nb[i] = first_half_nb[i - 1] * first_half_ne[i - 1];
         }
         acl_tensor_ptr acl_first_half_tensor = ggml_cann_create_tensor(minus_one_scale_buffer, ACL_FLOAT, sizeof(float),
@@ -3079,7 +3079,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     void *               input_roll_mul_scale_buffer = roll_mul_scale_allocator.get();
     size_t               input_nb[GGML_MAX_DIMS];
     input_nb[0] = ggml_type_size(src0->type);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         input_nb[i] = input_nb[i - 1] * src0->ne[i - 1];
     }
     acl_tensor_ptr acl_input_roll_mul_scale_tensor =
@@ -3094,15 +3094,15 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
     // output
     void * output_fp32_buffer;
-    if (src0->type == GGML_TYPE_F32) {
+    якщо (src0->type == GGML_TYPE_F32) {
         aclnn_mul(ctx, acl_src.get(), acl_cos_reshape_tensor.get());
         aclnn_mul(ctx, acl_input_roll_mul_scale_tensor.get(), acl_sin_reshape_tensor.get());
         aclnn_add(ctx, acl_src.get(), acl_input_roll_mul_scale_tensor.get(), acl_dst.get());
         // TODO: ne0 != n_dims in mode2
-    } else if (src0->type == GGML_TYPE_F16) {
+    } інакше якщо (src0->type == GGML_TYPE_F16) {
         size_t input_fp32_nb[GGML_MAX_DIMS];
         input_fp32_nb[0] = sizeof(float);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             input_fp32_nb[i] = input_fp32_nb[i - 1] * dst->ne[i - 1];
         }
         ggml_cann_pool_alloc fp32_allocator1(ctx.pool(), ggml_nelements(dst) * sizeof(float));
@@ -3123,7 +3123,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         aclnn_add(ctx, input_fp32_tensor1.get(), input_fp32_tensor2.get(), output_fp32_tensor.get());
         aclnn_cast(ctx, output_fp32_tensor.get(), acl_dst.get(), ACL_FLOAT16);
     }
-    return;
+    повернути;
 #endif
     int64_t acl_mode = is_neox ? 0 : 1;
 
@@ -3140,13 +3140,13 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     void *               src_trans_buffer = nullptr;
     void *               dst_trans_buffer = nullptr;
     size_t               src_dst_trans_nb[GGML_MAX_DIMS];
-    if (src0->type == GGML_TYPE_F16) {
+    якщо (src0->type == GGML_TYPE_F16) {
         src_dst_need_trans = true;
         src_trans_buffer   = src_trans_allocator.alloc(ggml_nelements(src0) * sizeof(float));
         dst_trans_buffer   = dst_trans_allocator.alloc(ggml_nelements(dst) * sizeof(float));
 
         src_dst_trans_nb[0] = sizeof(float);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             src_dst_trans_nb[i] = src_dst_trans_nb[i - 1] * src0->ne[i - 1];
         }
         acl_src_trans_tensor = ggml_cann_create_tensor(src_trans_buffer, ACL_FLOAT, sizeof(float), src0->ne,
@@ -3159,14 +3159,14 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     // Step 2: Prepare head tensors for tail splitting if needed
     acl_tensor_ptr acl_src_head;
     acl_tensor_ptr acl_dst_head;
-    if (has_tail) {
+    якщо (has_tail) {
         // Create head views for RotaryPositionEmbedding (only first rope_dims dimensions)
         // RotaryPositionEmbedding requires contiguous dst tensor, so we use a temporary buffer
-        if (src_dst_need_trans) {
+        якщо (src_dst_need_trans) {
             // Use F32 trans tensor strides
             acl_src_head = ggml_cann_create_tensor((char *) src_trans_buffer, ACL_FLOAT, sizeof(float), head_ne,
                                                    src_dst_trans_nb, GGML_MAX_DIMS);
-        } else {
+        } інакше {
             // Use original F32 tensor strides
             acl_src_head = ggml_cann_create_tensor((char *) src0->data, ACL_FLOAT, sizeof(float), head_ne, src0->nb,
                                                    GGML_MAX_DIMS);
@@ -3178,7 +3178,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
 
         size_t head_contiguous_nb[GGML_MAX_DIMS];
         head_contiguous_nb[0] = sizeof(float);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             head_contiguous_nb[i] = head_contiguous_nb[i - 1] * head_ne[i - 1];
         }
         acl_dst_head = ggml_cann_create_tensor(dst_head_contiguous_buffer, ACL_FLOAT, sizeof(float), head_ne,
@@ -3186,31 +3186,31 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     }
 
     // Step 3: Execute RotaryPositionEmbedding
-    if (has_tail) {
+    якщо (has_tail) {
         // Rotate only the head portion (first rope_dims dimensions)
         GGML_CANN_CALL_ACLNN_OP(ctx, RotaryPositionEmbedding, acl_src_head.get(), acl_cos_reshape_tensor.get(),
                                 acl_sin_reshape_tensor.get(), acl_mode, acl_dst_head.get());
 
         // Copy head result from contiguous buffer back to destination tensor
-        if (src_dst_need_trans) {
+        якщо (src_dst_need_trans) {
             acl_tensor_ptr acl_dst_head_target = ggml_cann_create_tensor(
                 (char *) dst_trans_buffer, ACL_FLOAT, sizeof(float), head_ne, src_dst_trans_nb, GGML_MAX_DIMS);
             cann_copy(ctx, acl_dst_head.get(), acl_dst_head_target.get());
-        } else {
+        } інакше {
             acl_tensor_ptr acl_dst_head_target =
                 ggml_cann_create_tensor((char *) dst->data, ACL_FLOAT, sizeof(float), head_ne, dst->nb, GGML_MAX_DIMS);
             cann_copy(ctx, acl_dst_head.get(), acl_dst_head_target.get());
         }
-    } else if (src_dst_need_trans) {
+    } інакше якщо (src_dst_need_trans) {
         // Rotate full tensor (no tail), using trans tensors
         GGML_CANN_CALL_ACLNN_OP(ctx, RotaryPositionEmbedding, acl_src_trans_tensor.get(), acl_cos_reshape_tensor.get(),
                                 acl_sin_reshape_tensor.get(), acl_mode, acl_dst_trans_tensor.get());
-    } else if (src0->data == dst->data && !ggml_is_contiguous(src0)) {
+    } інакше якщо (src0->data == dst->data && !ggml_is_contiguous(src0)) {
         // In-place on non-contiguous tensor: RotaryPositionEmbedding cannot safely
         // read and write the same non-contiguous buffer. Use contiguous temporaries.
         size_t contiguous_nb[GGML_MAX_DIMS];
         contiguous_nb[0] = sizeof(float);
-        for (int i = 1; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
             contiguous_nb[i] = contiguous_nb[i - 1] * src0->ne[i - 1];
         }
         int64_t              total_elements = ggml_nelements(src0);
@@ -3226,14 +3226,14 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
         GGML_CANN_CALL_ACLNN_OP(ctx, RotaryPositionEmbedding, acl_src_contig.get(), acl_cos_reshape_tensor.get(),
                                 acl_sin_reshape_tensor.get(), acl_mode, acl_dst_contig.get());
         cann_copy(ctx, acl_dst_contig.get(), acl_dst.get());
-    } else {
+    } інакше {
         // Rotate full tensor (no tail), using original tensors
         GGML_CANN_CALL_ACLNN_OP(ctx, RotaryPositionEmbedding, acl_src.get(), acl_cos_reshape_tensor.get(),
                                 acl_sin_reshape_tensor.get(), acl_mode, acl_dst.get());
     }
 
     // Step 4: Copy unrotated tail portion from source to destination
-    if (has_tail) {
+    якщо (has_tail) {
         size_t src_tail_offset;
         size_t dst_tail_offset;
 
@@ -3246,13 +3246,13 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
             cann_copy(ctx, acl_src_tail.get(), acl_dst_tail.get());
         };
 
-        if (src_dst_need_trans) {
+        якщо (src_dst_need_trans) {
             // Use F32 trans tensor strides and offsets
             src_tail_offset = rope_dims * src_dst_trans_nb[0];
             dst_tail_offset = rope_dims * src_dst_trans_nb[0];
             copy_tail_device((char *) src_trans_buffer + src_tail_offset, (char *) dst_trans_buffer + dst_tail_offset,
                              ACL_FLOAT, sizeof(float), src_dst_trans_nb, src_dst_trans_nb);
-        } else {
+        } інакше {
             // Use original tensor strides and offsets
             src_tail_offset = rope_dims * nb00;
             dst_tail_offset = rope_dims * nb0;
@@ -3262,7 +3262,7 @@ void ggml_cann_rope(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     }
 
     // Step 5: Cast back to F16 if needed
-    if (src_dst_need_trans) {
+    якщо (src_dst_need_trans) {
         aclnn_cast(ctx, acl_dst_trans_tensor.get(), acl_dst.get(), ACL_FLOAT16);
     }
 }
@@ -3271,10 +3271,10 @@ void ggml_cann_rope_cache_preload(ggml_backend_cann_context & ctx, ggml_tensor *
     ggml_tensor * src0 = dst->src[0];
 
     float     freq_base, freq_scale, ext_factor, attn_factor, beta_fast, beta_slow;
-    int       sections[4];
-    const int n_dims     = ((int32_t *) dst->op_params)[1];
-    const int mode       = ((int32_t *) dst->op_params)[2];
-    const int n_ctx_orig = ((int32_t *) dst->op_params)[4];
+    ціле       sections[4];
+    const ціле n_dims     = ((int32_t *) dst->op_params)[1];
+    const ціле mode       = ((int32_t *) dst->op_params)[2];
+    const ціле n_ctx_orig = ((int32_t *) dst->op_params)[4];
 
     GGML_TENSOR_UNARY_OP_LOCALS
 
@@ -3284,7 +3284,7 @@ void ggml_cann_rope_cache_preload(ggml_backend_cann_context & ctx, ggml_tensor *
     memcpy(&attn_factor, (int32_t *) dst->op_params + 8, sizeof(float));
     memcpy(&beta_fast, (int32_t *) dst->op_params + 9, sizeof(float));
     memcpy(&beta_slow, (int32_t *) dst->op_params + 10, sizeof(float));
-    memcpy(&sections, (int32_t *) dst->op_params + 11, sizeof(int) * 4);
+    memcpy(&sections, (int32_t *) dst->op_params + 11, sizeof(ціле) * 4);
 
     const float theta_scale = powf(freq_base, -2.0f / n_dims);
 
@@ -3296,12 +3296,12 @@ void ggml_cann_rope_cache_preload(ggml_backend_cann_context & ctx, ggml_tensor *
     const bool mrope_used = mode & GGML_ROPE_TYPE_MROPE;
     const bool is_vision  = mode == GGML_ROPE_TYPE_VISION;
 
-    if (is_imrope || mrope_used) {
+    якщо (is_imrope || mrope_used) {
         is_neox = true;
     }
 
     int64_t rope_dims = n_dims;
-    if (is_vision) {
+    якщо (is_vision) {
         rope_dims = src0->ne[0];
     }
 
@@ -3386,25 +3386,25 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
     // set zero to destination
     GGML_CANN_CALL_ACLNN_OP(ctx, InplaceZero, acl_dst.get());
 
-    for (int k = 0; k < part_num; k++) {
+    для (ціле k = 0; k < part_num; k++) {
         // create part kernel tensor and slice from big kernel
         slice_start = max_kernel_size * k;
-        if (k == part_num - 1) {
+        якщо (k == part_num - 1) {
             slice_end = kernel_size;
             interval  = kernel_size - max_kernel_size * k;
-        } else {
+        } інакше {
             slice_end = max_kernel_size * (k + 1);
         }
 
         int64_t part_ne[4];
-        for (int i = 0; i < 4; i++) {
+        для (ціле i = 0; i < 4; i++) {
             part_ne[i] = *(src0->ne + i);
         }
         part_ne[0] = interval;
 
         size_t part_nb[4];
         part_nb[0] = sizeof(weight_type);
-        for (int i = 1; i < 4; i++) {
+        для (ціле i = 1; i < 4; i++) {
             part_nb[i] = part_nb[i - 1] * part_ne[i - 1];
         }
 
@@ -3420,14 +3420,14 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
 
         // create the part conv result tensor
         int64_t part_dst_ne[4];
-        for (int i = 0; i < 4; i++) {
+        для (ціле i = 0; i < 4; i++) {
             part_dst_ne[i] = *(dst->ne + i);
         }
         part_dst_ne[0] = (input_len - 1) * strideVal[0] - 2 * paddingVal[0] + dilationVal[0] * (part_ne[0] - 1) + 1;
 
         size_t part_dst_nb[4];
         part_dst_nb[0] = sizeof(weight_type);
-        for (int i = 1; i < 4; i++) {
+        для (ціле i = 1; i < 4; i++) {
             part_dst_nb[i] = part_dst_nb[i - 1] * part_dst_ne[i - 1];
         }
         ggml_cann_pool_alloc part_dst_allocator;
@@ -3458,13 +3458,13 @@ void ggml_cann_conv_transpose_1d(ggml_backend_cann_context & ctx, ggml_tensor * 
         pad_value                   = ggml_cann_create_scalar(&pad_valueVal, aclDataType::ACL_FLOAT);
 
         int64_t conv_result_ne[4];
-        for (int i = 0; i < 4; i++) {
+        для (ціле i = 0; i < 4; i++) {
             conv_result_ne[i] = *(dst->ne + i);
         }
 
         size_t conv_result_nb[4];
         conv_result_nb[0] = sizeof(weight_type);
-        for (int i = 1; i < 4; i++) {
+        для (ціле i = 1; i < 4; i++) {
             conv_result_nb[i] = conv_result_nb[i - 1] * conv_result_ne[i - 1];
         }
 
@@ -3541,7 +3541,7 @@ void ggml_cann_count_equal(ggml_backend_cann_context & ctx, ggml_tensor * dst) {
     ggml_cann_pool_alloc eq_alloc(ctx.pool(), ggml_nelements(src0) * ggml_element_size(src0));
     size_t eq_nb[GGML_MAX_DIMS];
     eq_nb[0] = ggml_element_size(src0);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         eq_nb[i] = eq_nb[i - 1] * src0->ne[i - 1];
     }
     acl_tensor_ptr acl_eq = ggml_cann_create_tensor(
@@ -3627,14 +3627,14 @@ static void ggml_cann_mul_mat_id_fp(ggml_backend_cann_context & ctx, ggml_tensor
 
     ggml_cann_pool_alloc export_allocator(ctx.pool(), src0->ne[0] * src0->ne[1] * ids->ne[0] * ggml_element_size(src0));
     void *               export_ptr = export_allocator.get();
-    for (int64_t i = 0; i < batch; i++) {
+    для (int64_t i = 0; i < batch; i++) {
         acl_tensor_ptr select_index  = ggml_cann_create_tensor(ids, ids->ne, ids->nb, 1, ACL_FORMAT_ND, i * ids->nb[1]);
         acl_tensor_ptr export_weight = ggml_cann_create_tensor(src0, src0->ne, src0->nb, 3);
 
         int64_t select_export_ne[] = { src0->ne[0], src0->ne[1], ids->ne[0] };
         size_t  select_export_nb[3];
         select_export_nb[0] = src0->nb[0];
-        for (int k = 1; k < 3; k++) {
+        для (ціле k = 1; k < 3; k++) {
             select_export_nb[k] = select_export_nb[k - 1] * select_export_ne[k - 1];
         }
 
@@ -3734,25 +3734,25 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
     constexpr size_t f16_elem_size      = sizeof(uint16_t);
     auto             prepare_f16_buffer = [&](ggml_tensor * tensor, ggml_cann_pool_alloc & allocator,
                                   bool need_cast = false) -> void * {
-        if (tensor->type == GGML_TYPE_F16) {
-            return tensor->data;
+        якщо (tensor->type == GGML_TYPE_F16) {
+            повернути tensor->data;
         }
 
         size_t total_size = f16_elem_size;
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 0; i < GGML_MAX_DIMS; i++) {
             total_size *= tensor->ne[i];
         }
         void * buffer = allocator.alloc(total_size);
 
-        if (need_cast == false) {
-            return buffer;
+        якщо (need_cast == false) {
+            повернути buffer;
         }
 
         int64_t ne[GGML_MAX_DIMS];
         size_t  nb[GGML_MAX_DIMS] = { f16_elem_size };
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 0; i < GGML_MAX_DIMS; i++) {
             ne[i] = tensor->ne[i];
-            if (i > 0) {
+            якщо (i > 0) {
                 nb[i] = nb[i - 1] * ne[i - 1];
             }
         }
@@ -3761,7 +3761,7 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
         acl_tensor_ptr f16_tensor = ggml_cann_create_tensor(buffer, ACL_FLOAT16, f16_elem_size, ne, nb, GGML_MAX_DIMS);
         aclnn_cast(ctx, src_tensor.get(), f16_tensor.get(), ACL_FLOAT16);
 
-        return buffer;
+        повернути buffer;
     };
 
     // Prepare input and output buffers
@@ -3772,7 +3772,7 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
     void *               output_buffer = prepare_f16_buffer(dst, output_alloc, false);
 
     // Process each batch
-    for (int64_t batch_idx = 0; batch_idx < n_batches; batch_idx++) {
+    для (int64_t batch_idx = 0; batch_idx < n_batches; batch_idx++) {
         // Create index tensor for current batch
         const size_t   index_offset  = batch_idx * ids->nb[1];
         acl_tensor_ptr batch_indices = ggml_cann_create_tensor(ids, ids->ne, ids->nb, 1, ACL_FORMAT_ND, index_offset);
@@ -3818,7 +3818,7 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
         // Process each expert for current batch
         // IndexSelect output layout: [D, M, K] in contiguous format
         // WeightQuantBatchMatmulV2 expects: [M, D] with row-major stride
-        for (int64_t expert_idx = 0; expert_idx < n_select_experts; expert_idx++) {
+        для (int64_t expert_idx = 0; expert_idx < n_select_experts; expert_idx++) {
             // Determine input offset: broadcast if src1->ne[1]==1, otherwise use per-expert input
             const size_t input_offset =
                 (batch_idx * src1->ne[1] + (src1->ne[1] == 1 ? 0 : expert_idx)) * src1->ne[0] * f16_elem_size;
@@ -3864,12 +3864,12 @@ static void ggml_cann_mul_mat_id_quant(ggml_backend_cann_context & ctx, ggml_ten
     }
 
     // Cast output back to original type if we used a temporary F16 buffer
-    if (dst->type != GGML_TYPE_F16) {
+    якщо (dst->type != GGML_TYPE_F16) {
         int64_t ne[GGML_MAX_DIMS];
         size_t  nb[GGML_MAX_DIMS] = { f16_elem_size };
-        for (int i = 0; i < GGML_MAX_DIMS; i++) {
+        для (ціле i = 0; i < GGML_MAX_DIMS; i++) {
             ne[i] = dst->ne[i];
-            if (i > 0) {
+            якщо (i > 0) {
                 nb[i] = nb[i - 1] * ne[i - 1];
             }
         }
@@ -3939,7 +3939,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
     memcpy(&maxBias, (float *) dst->op_params + 1, sizeof(float));
     memcpy(&logitSoftcap, (float *) dst->op_params + 2, sizeof(float));
 
-    if (logitSoftcap == 0.0f) {
+    якщо (logitSoftcap == 0.0f) {
         size_t faElemSize = sizeof(uint16_t);
         auto   faDataType = ACL_FLOAT16;  //ACL_BF16;
 
@@ -3951,7 +3951,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         ggml_cann_pool_alloc src0_f16_allocator(ctx.pool());
         void *               src0_f16_buffer = nullptr;
 
-        if (ggml_cann_type_mapping(src0->type) != faDataType) {
+        якщо (ggml_cann_type_mapping(src0->type) != faDataType) {
             acl_tensor_ptr acl_src0_f32_tensor =
                 ggml_cann_create_tensor(src0, src0_bsnd_ne, src0_bsnd_nb, GGML_MAX_DIMS);
             src0_f16_buffer = src0_f16_allocator.alloc(ggml_nelements(src0) * faElemSize);
@@ -3959,14 +3959,14 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
             int64_t * src0_f16_ne = src0_bsnd_ne;
             size_t    src0_f16_nb[GGML_MAX_DIMS];
             src0_f16_nb[0] = sizeof(uint16_t);
-            for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+            для (ціле i = 1; i < GGML_MAX_DIMS; ++i) {
                 src0_f16_nb[i] = src0_f16_nb[i - 1] * src0_f16_ne[i - 1];
             }
 
             acl_q_tensor = ggml_cann_create_tensor(src0_f16_buffer, faDataType, faElemSize, src0_f16_ne, src0_f16_nb,
                                                    GGML_MAX_DIMS);
             aclnn_cast(ctx, acl_src0_f32_tensor.get(), acl_q_tensor.get(), faDataType);
-        } else {
+        } інакше {
             acl_q_tensor = ggml_cann_create_tensor(src0, src0_bsnd_ne, src0_bsnd_nb, GGML_MAX_DIMS);
         }
 
@@ -3986,7 +3986,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         ggml_cann_pool_alloc k_pad_allocator(ctx.pool());
         ggml_cann_pool_alloc v_pad_allocator(ctx.pool());
 
-        if (needs_padding) {
+        якщо (needs_padding) {
             int64_t paddings[] = { 0, D_padded - D, 0, 0, 0, 0, 0, 0 };
 
             auto pad_fa_tensor = [&](acl_tensor_ptr & tensor, const int64_t * bsnd_ne,
@@ -3994,7 +3994,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
                 int64_t pad_ne[GGML_MAX_DIMS] = { D_padded, bsnd_ne[1], bsnd_ne[2], bsnd_ne[3] };
                 size_t  pad_nb[GGML_MAX_DIMS];
                 pad_nb[0] = faElemSize;
-                for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+                для (ціле i = 1; i < GGML_MAX_DIMS; ++i) {
                     pad_nb[i] = pad_nb[i - 1] * pad_ne[i - 1];
                 }
                 int64_t nelements = pad_ne[0] * pad_ne[1] * pad_ne[2] * pad_ne[3];
@@ -4018,7 +4018,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         //         this tensor is considered as mask (f16) in the llama.cpp
         acl_tensor_ptr       bcast_pse_tensor;
         ggml_cann_pool_alloc bcast_pse_allocator(ctx.pool());
-        if (src3 != nullptr) {
+        якщо (src3 != nullptr) {
             // Construct the truncated pse tensor (common for prefill/decode)
             int64_t trunc_pse_ne[GGML_MAX_DIMS] = {
                 src3->ne[0],  // D
@@ -4037,7 +4037,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
             bcast_pse_ne[1] = src0->ne[1];  // S
             bcast_pse_ne[2] = src0->ne[2];  // N (num_heads)
             bcast_pse_ne[3] = src3->ne[3];  // B
-            if (maxBias == 0.0f) {
+            якщо (maxBias == 0.0f) {
                 // When maxBias == 0.0f, use nb = 0 reduce once repeat (Qwen2)
                 // Construct the bcast tensor (simulate repeat on the head dimension using stride=0)
                 bcast_pse_nb[0] = sizeof(uint16_t);
@@ -4048,9 +4048,9 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
                 bcast_pse_tensor = ggml_cann_create_tensor(src3->data, ACL_FLOAT16, sizeof(uint16_t), bcast_pse_ne,
                                                            bcast_pse_nb, GGML_MAX_DIMS);
 
-            } else {
+            } інакше {
                 bcast_pse_nb[0] = sizeof(uint16_t);
-                for (int i = 1; i < GGML_MAX_DIMS; i++) {
+                для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
                     bcast_pse_nb[i] = bcast_pse_nb[i - 1] * bcast_pse_ne[i - 1];
                 }
 
@@ -4073,7 +4073,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
                 int64_t slope_ne[] = { 1, 1, n_heads, 1 };
                 size_t  slope_nb[GGML_MAX_DIMS];
                 slope_nb[0] = sizeof(uint16_t);
-                for (int i = 1; i < GGML_MAX_DIMS; i++) {
+                для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
                     slope_nb[i] = slope_nb[i - 1] * slope_ne[0];
                 }
 
@@ -4104,11 +4104,11 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         GGML_ASSERT(dst->type == GGML_TYPE_F32 || dst->type == GGML_TYPE_F16);
         acl_tensor_ptr       fa_dst_tensor;
         ggml_cann_pool_alloc out_f16_allocator(ctx.pool());
-        if (dst->type == GGML_TYPE_F32 || needs_padding) {
+        якщо (dst->type == GGML_TYPE_F32 || needs_padding) {
             int64_t * out_f16_ne = src0_bsnd_ne;
             size_t    out_f16_nb[GGML_MAX_DIMS];
             out_f16_nb[0] = faElemSize;
-            for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+            для (ціле i = 1; i < GGML_MAX_DIMS; ++i) {
                 out_f16_nb[i] = out_f16_nb[i - 1] * out_f16_ne[i - 1];
             }
             int64_t out_nelements = out_f16_ne[0] * out_f16_ne[1] * out_f16_ne[2] * out_f16_ne[3];
@@ -4116,7 +4116,7 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
 
             fa_dst_tensor =
                 ggml_cann_create_tensor(out_f16_buffer, faDataType, faElemSize, out_f16_ne, out_f16_nb, GGML_MAX_DIMS);
-        } else {
+        } інакше {
             fa_dst_tensor = ggml_cann_create_tensor(dst);
         }
 
@@ -4145,14 +4145,14 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
         );
 
         // Step 6: post-processing — slice padded output and/or cast to f32
-        if (needs_padding) {
+        якщо (needs_padding) {
             ggml_cann_pool_alloc sliced_f16_allocator(ctx.pool());
 
-            if (dst->type == GGML_TYPE_F32) {
+            якщо (dst->type == GGML_TYPE_F32) {
                 int64_t sliced_ne[GGML_MAX_DIMS] = { D, src0_bsnd_ne[1], src0_bsnd_ne[2], src0_bsnd_ne[3] };
                 size_t  sliced_nb[GGML_MAX_DIMS];
                 sliced_nb[0] = faElemSize;
-                for (int i = 1; i < GGML_MAX_DIMS; ++i) {
+                для (ціле i = 1; i < GGML_MAX_DIMS; ++i) {
                     sliced_nb[i] = sliced_nb[i - 1] * sliced_ne[i - 1];
                 }
                 int64_t sliced_nelements = sliced_ne[0] * sliced_ne[1] * sliced_ne[2] * sliced_ne[3];
@@ -4165,16 +4165,16 @@ void ggml_cann_flash_attn_ext(ggml_backend_cann_context & ctx, ggml_tensor * dst
 
                 acl_tensor_ptr acl_dst_tensor = ggml_cann_create_tensor(dst);
                 aclnn_cast(ctx, sliced_f16_tensor.get(), acl_dst_tensor.get(), ggml_cann_type_mapping(dst->type));
-            } else {
+            } інакше {
                 acl_tensor_ptr acl_dst_tensor = ggml_cann_create_tensor(dst);
                 GGML_CANN_CALL_ACLNN_OP(ctx, Slice, fa_dst_tensor.get(),
                                         (int64_t) -1, (int64_t) 0, D, (int64_t) 1, acl_dst_tensor.get());
             }
-        } else if (dst->type == GGML_TYPE_F32) {
+        } інакше якщо (dst->type == GGML_TYPE_F32) {
             acl_tensor_ptr acl_dst_tensor = ggml_cann_create_tensor(dst);
             aclnn_cast(ctx, fa_dst_tensor.get(), acl_dst_tensor.get(), ggml_cann_type_mapping(dst->type));
         }
-    } else {
+    } інакше {
         GGML_ABORT("Function is not implemented.");
     }
 }
@@ -4210,8 +4210,8 @@ static void ggml_cann_out_prod_fp(ggml_backend_cann_context & ctx, ggml_tensor *
     const int64_t dps2 = ne2 / ne02;
     const int64_t dps3 = ne3 / ne03;
 
-    for (int64_t i3 = 0; i3 < ne3; i3++) {
-        for (int64_t i2 = 0; i2 < ne2; i2++) {
+    для (int64_t i3 = 0; i3 < ne3; i3++) {
+        для (int64_t i2 = 0; i2 < ne2; i2++) {
             const int64_t i02 = i2 / dps2;
             const int64_t i03 = i3 / dps3;
 
@@ -4375,7 +4375,7 @@ void ggml_cann_op_add_rms_norm_fused(ggml_backend_cann_context & ctx,
     // Gamma should match the normalized dimensions (last dimension of x1)
     size_t acl_gamma_nb[GGML_MAX_DIMS];
     acl_gamma_nb[0] = ggml_type_size(rms_norm_node->type);
-    for (int i = 1; i < GGML_MAX_DIMS; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS; i++) {
         acl_gamma_nb[i] = acl_gamma_nb[i - 1] * x1->ne[i - 1];
     }
     acl_tensor_ptr acl_gamma =
@@ -4390,7 +4390,7 @@ void ggml_cann_op_add_rms_norm_fused(ggml_backend_cann_context & ctx,
     int64_t acl_rstd_ne[] = { 1, x1->ne[1], x1->ne[2], x1->ne[3] };
     size_t  acl_rstd_nb[GGML_MAX_DIMS - 1];
     acl_rstd_nb[0] = sizeof(float);
-    for (int i = 1; i < GGML_MAX_DIMS - 1; i++) {
+    для (ціле i = 1; i < GGML_MAX_DIMS - 1; i++) {
         acl_rstd_nb[i] = acl_rstd_nb[i - 1] * acl_rstd_ne[i - 1];
     }
     acl_tensor_ptr acl_rstd =
@@ -4442,15 +4442,15 @@ void ggml_cann_gated_linear_attn(ggml_backend_cann_context & ctx, ggml_tensor * 
     acl_tensor_ptr new_state = ggml_cann_create_tensor(dst, s->ne, s->nb, 2, ACL_FORMAT_ND, (B * L * H * D) * nb_base);
     cann_copy(ctx, acl_s.get(), new_state.get());
 
-    for (int64_t b = 0; b < B; b++) {
-        for (int64_t h = 0; h < H; h++) {
+    для (int64_t b = 0; b < B; b++) {
+        для (int64_t h = 0; h < H; h++) {
             size_t         s_offset = (b * (H * D * D) + h * (D * D)) * nb_base;
             // D * D
             acl_tensor_ptr acl_s_new =
                 ggml_cann_create_tensor(dst, ne_s, nb_s, 2, ACL_FORMAT_ND, (B * L * H * D) * nb_base + s_offset);
             acl_tensor_ptr acl_s_new_t =
                 ggml_cann_create_tensor(dst, ne_st, nb_st, 2, ACL_FORMAT_ND, (B * L * H * D) * nb_base + s_offset);
-            for (int64_t l = 0; l < L; l++) {
+            для (int64_t l = 0; l < L; l++) {
                 size_t               qkvgo_offset = (b * (L * H * D) + l * (H * D) + h * (D)) * nb_base;
                 // D * 1
                 acl_tensor_ptr       acl_k = ggml_cann_create_tensor(k, ne_qkg, nb_qkg, 2, ACL_FORMAT_ND, qkvgo_offset);

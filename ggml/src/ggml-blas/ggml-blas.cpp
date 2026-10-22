@@ -7,7 +7,7 @@
 #include <vector>
 #include <cstring>
 
-#if defined(GGML_BLAS_USE_ACCELERATE)
+#якщо defined(GGML_BLAS_USE_ACCELERATE)
 #   include <Accelerate/Accelerate.h>
 #elif defined(GGML_BLAS_USE_MKL)
 #   include <mkl.h>
@@ -15,12 +15,12 @@
 #   include <blis.h>
 #elif defined(GGML_BLAS_USE_NVPL)
 #   include <nvpl_blas.h>
-#else
+#інакше
 #   include <cblas.h>
 #endif
 
 struct ggml_backend_blas_context {
-    int n_threads = GGML_DEFAULT_N_THREADS;
+    ціле n_threads = GGML_DEFAULT_N_THREADS;
     std::unique_ptr<char[]> work_data;
     size_t work_size = 0;
 #ifndef GGML_USE_OPENMP
@@ -58,38 +58,38 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
     const int64_t ne_plane      = ne01*ne00;
     const size_t  desired_wsize = type == GGML_TYPE_F32 ? 0 : ne03*ne02*ne_plane*sizeof(float);
 
-    if (ctx->work_size < desired_wsize) {
+    якщо (ctx->work_size < desired_wsize) {
         ctx->work_data.reset(new char[desired_wsize]);
         ctx->work_size = desired_wsize;
     }
     void * wdata = ctx->work_data.get();
 
     // convert src0 to float
-    if (type != GGML_TYPE_F32) {
+    якщо (type != GGML_TYPE_F32) {
         const auto * type_traits = ggml_get_type_traits(type);
         ggml_to_float_t const to_float = type_traits->to_float;
 
-        for (int64_t i03 = 0; i03 < ne03; i03++) {
-            for (int64_t i02 = 0; i02 < ne02; i02++) {
+        для (int64_t i03 = 0; i03 < ne03; i03++) {
+            для (int64_t i02 = 0; i02 < ne02; i02++) {
                 const void  *       x      = (char *)  src0->data + i02*nb02          + i03*nb03;
                       float * const wplane = (float *) wdata      + i02*ne_plane      + i03*ne02*ne_plane;
 
-                const int min_cols_per_thread = 4096;
-                const int min_rows_per_thread = std::max((int)(min_cols_per_thread/ne00), 1);
-                const int n_threads = std::max(std::min(ctx->n_threads, (int)(ne01/min_rows_per_thread)), 1);
+                const ціле min_cols_per_thread = 4096;
+                const ціле min_rows_per_thread = std::max((ціле)(min_cols_per_thread/ne00), 1);
+                const ціле n_threads = std::max(std::min(ctx->n_threads, (ціле)(ne01/min_rows_per_thread)), 1);
 
 #ifdef GGML_USE_OPENMP
-                #pragma omp parallel for num_threads(n_threads)
-                for (int64_t i01 = 0; i01 < ne01; i01++) {
+                #pragma omp parallel для num_threads(n_threads)
+                для (int64_t i01 = 0; i01 < ne01; i01++) {
                     to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
                 }
-#else
-                for (int i = 1; i < n_threads; i++) {
+#інакше
+                для (ціле i = 1; i < n_threads; i++) {
                     const int64_t start =       i*ne01/n_threads;
                     const int64_t end   = (i + 1)*ne01/n_threads;
-                    if (start < end) {
+                    якщо (start < end) {
                         ctx->tasks.push_back(std::async(std::launch::async, [=]() {
-                            for (int64_t i01 = start; i01 < end; i01++) {
+                            для (int64_t i01 = start; i01 < end; i01++) {
                                 to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
                             }
                         }));
@@ -99,7 +99,7 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
                     // reuse the current thread for the first task
                     const int64_t start = 0;
                     const int64_t end   = ne01/n_threads;
-                    for (int64_t i01 = start; i01 < end; i01++) {
+                    для (int64_t i01 = start; i01 < end; i01++) {
                         to_float((const char *) x + i01*nb01, wplane + i01*ne00, ne00);
                     }
                 }
@@ -109,14 +109,14 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
 
 #ifndef GGML_USE_OPENMP
         // wait for all tasks to finish
-        for (auto & task : ctx->tasks) {
+        для (auto & task : ctx->tasks) {
             task.get();
         }
         ctx->tasks.clear();
 #endif
     }
 
-#if defined(GGML_BLAS_USE_OPENBLAS)
+#якщо defined(GGML_BLAS_USE_OPENBLAS)
     openblas_set_num_threads(ctx->n_threads);
 #elif defined(GGML_BLAS_USE_BLIS)
     bli_thread_set_num_threads(ctx->n_threads);
@@ -126,8 +126,8 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
     mkl_set_num_threads(ctx->n_threads);
 #endif
 
-    for (int64_t i13 = 0; i13 < ne13; i13++) {
-        for (int64_t i12 = 0; i12 < ne12; i12++) {
+    для (int64_t i13 = 0; i13 < ne13; i13++) {
+        для (int64_t i12 = 0; i12 < ne12; i12++) {
             const int64_t i03 = i13/r3;
             const int64_t i02 = i12/r2;
 
@@ -135,7 +135,7 @@ static void ggml_backend_blas_mul_mat(ggml_backend_blas_context * ctx, struct gg
             const float * y = (float *) ((char *) src1->data + i12*nb12 + i13*nb13);
                   float * d = (float *) ((char *)  dst->data + i12*nb2  + i13*nb3);
 
-            if (type != GGML_TYPE_F32) {
+            якщо (type != GGML_TYPE_F32) {
                 x = (float *) wdata + i02*ne_plane + i03*ne02*ne_plane;
             }
 
@@ -185,17 +185,17 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
     // src1->data already contains a transposed version, so sgemm mustn't
     // transpose it further.
 
-    int n = src0->ne[0];
-    int k = src0->ne[1];
-    int m = src1->ne[0];
+    ціле n = src0->ne[0];
+    ціле k = src0->ne[1];
+    ціле m = src1->ne[0];
 
     CBLAS_TRANSPOSE transposeA;
-    int lda;
+    ціле lda;
 
-    if (!ggml_is_transposed(src1)) {
+    якщо (!ggml_is_transposed(src1)) {
         transposeA = CblasTrans;
         lda = m;
-    } else {
+    } інакше {
         transposeA = CblasNoTrans;
         lda = k;
     }
@@ -212,7 +212,7 @@ static void ggml_backend_blas_out_prod(ggml_backend_blas_context * ctx, struct g
 // backend interface
 
 static const char * ggml_backend_blas_get_name(ggml_backend_t backend) {
-    return "BLAS";
+    повернути "BLAS";
 
     GGML_UNUSED(backend);
 }
@@ -226,10 +226,10 @@ static void ggml_backend_blas_free(ggml_backend_t backend) {
 static enum ggml_status ggml_backend_blas_graph_compute(ggml_backend_t backend, struct ggml_cgraph * cgraph) {
     ggml_backend_blas_context * ctx = (ggml_backend_blas_context *)backend->context;
 
-    for (int i = 0; i < cgraph->n_nodes; i++) {
+    для (ціле i = 0; i < cgraph->n_nodes; i++) {
         struct ggml_tensor * node = cgraph->nodes[i];
 
-        if ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
+        якщо ((node->flags & GGML_TENSOR_FLAG_COMPUTE) == 0) {
             continue;
         }
 
@@ -254,7 +254,7 @@ static enum ggml_status ggml_backend_blas_graph_compute(ggml_backend_t backend, 
         }
     }
 
-    return GGML_STATUS_SUCCESS;
+    повернути GGML_STATUS_SUCCESS;
 
     GGML_UNUSED(backend);
 }
@@ -280,7 +280,7 @@ static struct ggml_backend_i blas_backend_i = {
 
 static ggml_guid_t ggml_backend_blas_guid(void) {
     static ggml_guid guid = { 0x12, 0xa8, 0xae, 0xf4, 0xc0, 0x1e, 0x61, 0x97, 0x8f, 0xeb, 0x33, 0x04, 0xa1, 0x33, 0x51, 0x2d };
-    return &guid;
+    повернути &guid;
 }
 
 ggml_backend_t ggml_backend_blas_init(void) {
@@ -293,24 +293,24 @@ ggml_backend_t ggml_backend_blas_init(void) {
         /* .context = */ ctx,
     };
 
-#if defined(GGML_BLAS_USE_OPENBLAS) && defined(GGML_USE_OPENMP)
-    if (openblas_get_parallel() != OPENBLAS_OPENMP) {
+#якщо defined(GGML_BLAS_USE_OPENBLAS) && defined(GGML_USE_OPENMP)
+    якщо (openblas_get_parallel() != OPENBLAS_OPENMP) {
         GGML_LOG_DEBUG("%s: warning: ggml is using OpenMP, but OpenBLAS was compiled without OpenMP support\n", __func__);
     }
 #endif
 
-#if defined(BLIS_ENABLE_CBLAS) && defined(GGML_USE_OPENMP) && !defined(BLIS_ENABLE_OPENMP)
+#якщо defined(BLIS_ENABLE_CBLAS) && defined(GGML_USE_OPENMP) && !defined(BLIS_ENABLE_OPENMP)
     GGML_LOG_DEBUG("%s: warning: ggml is using OpenMP, but BLIS was compiled without OpenMP support\n", __func__);
 #endif
 
-    return backend;
+    повернути backend;
 }
 
 bool ggml_backend_is_blas(ggml_backend_t backend) {
-    return backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_blas_guid());
+    повернути backend != NULL && ggml_guid_matches(backend->guid, ggml_backend_blas_guid());
 }
 
-void ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, int n_threads) {
+void ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, ціле n_threads) {
     GGML_ASSERT(ggml_backend_is_blas(backend_blas));
 
     ggml_backend_blas_context * ctx = (ggml_backend_blas_context *)backend_blas->context;
@@ -320,26 +320,26 @@ void ggml_backend_blas_set_n_threads(ggml_backend_t backend_blas, int n_threads)
 // device interface
 
 static const char * ggml_backend_blas_device_get_name(ggml_backend_dev_t dev) {
-    return "BLAS";
+    повернути "BLAS";
 
     GGML_UNUSED(dev);
 }
 
 static const char * ggml_backend_blas_device_get_description(ggml_backend_dev_t dev) {
-    #if defined(GGML_BLAS_USE_ACCELERATE)
-        return "Accelerate";
+    #якщо defined(GGML_BLAS_USE_ACCELERATE)
+        повернути "Accelerate";
     #elif defined(GGML_BLAS_USE_MKL)
-        return "MKL";
+        повернути "MKL";
     #elif defined(GGML_BLAS_USE_AOCL)
-        return "AOCL-BLAS";
+        повернути "AOCL-BLAS";
     #elif defined(GGML_BLAS_USE_BLIS)
-        return "BLIS";
+        повернути "BLIS";
     #elif defined(GGML_BLAS_USE_NVPL)
-        return "NVPL";
+        повернути "NVPL";
     #elif defined(GGML_BLAS_USE_OPENBLAS)
-        return "OpenBLAS";
-    #else
-        return "BLAS";
+        повернути "OpenBLAS";
+    #інакше
+        повернути "BLAS";
     #endif
 
     GGML_UNUSED(dev);
@@ -354,7 +354,7 @@ static void ggml_backend_blas_device_get_memory(ggml_backend_dev_t dev, size_t *
 }
 
 static enum ggml_backend_dev_type ggml_backend_blas_device_get_type(ggml_backend_dev_t dev) {
-    return GGML_BACKEND_DEVICE_TYPE_ACCEL;
+    повернути GGML_BACKEND_DEVICE_TYPE_ACCEL;
 
     GGML_UNUSED(dev);
 }
@@ -374,20 +374,20 @@ static void ggml_backend_blas_device_get_props(ggml_backend_dev_t dev, struct gg
 }
 
 static ggml_backend_t ggml_backend_blas_device_init_backend(ggml_backend_dev_t dev, const char * params) {
-    return ggml_backend_blas_init();
+    повернути ggml_backend_blas_init();
 
     GGML_UNUSED(dev);
     GGML_UNUSED(params);
 }
 
 static ggml_backend_buffer_type_t ggml_backend_blas_device_get_buffer_type(ggml_backend_dev_t dev) {
-    return ggml_backend_cpu_buffer_type();
+    повернути ggml_backend_cpu_buffer_type();
 
     GGML_UNUSED(dev);
 }
 
 static ggml_backend_buffer_t ggml_backend_blas_device_buffer_from_host_ptr(ggml_backend_dev_t dev, void * ptr, size_t size, size_t max_tensor_size) {
-    return ggml_backend_cpu_buffer_from_ptr(ptr, size);
+    повернути ggml_backend_cpu_buffer_from_ptr(ptr, size);
 
     GGML_UNUSED(dev);
     GGML_UNUSED(max_tensor_size);
@@ -403,7 +403,7 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
         case GGML_OP_VIEW:
         case GGML_OP_PERMUTE:
         case GGML_OP_TRANSPOSE:
-            return true;
+            повернути true;
 
         case GGML_OP_MUL_MAT:
         {
@@ -421,11 +421,11 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
 
             // default back to CPU fast path
             // see: https://github.com/ggml-org/llama.cpp/issues/25565
-            if (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
-                return false;
+            якщо (ggml_get_op_params_i32(op, 1) == GGML_HINT_SRC0_IS_HADAMARD) {
+                повернути false;
             }
 
-            return ggml_is_contiguous(src0) &&
+            повернути ggml_is_contiguous(src0) &&
                    ggml_is_contiguous(src1) &&
                    src1->type == GGML_TYPE_F32 &&
                    (ne0 >= min_batch && ne1 >= min_batch && ne10 >= min_batch) &&
@@ -433,7 +433,7 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
         }
 
         case GGML_OP_OUT_PROD:
-            return op->src[0]->type == GGML_TYPE_F32 &&
+            повернути op->src[0]->type == GGML_TYPE_F32 &&
                    op->src[1]->type == GGML_TYPE_F32 &&
                    ggml_is_matrix(src0) &&
                    ggml_is_matrix(src1) &&
@@ -442,7 +442,7 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
                    (src0->type == GGML_TYPE_F32 || ggml_get_type_traits(src0->type)->to_float != NULL);
 
         default:
-            return false;
+            повернути false;
 
     }
 
@@ -450,7 +450,7 @@ static bool ggml_backend_blas_device_supports_op(ggml_backend_dev_t dev, const s
 }
 
 static bool ggml_backend_blas_device_supports_buft(ggml_backend_dev_t dev, ggml_backend_buffer_type_t buft) {
-    return ggml_backend_buft_is_host(buft);
+    повернути ggml_backend_buft_is_host(buft);
 
     GGML_UNUSED(dev);
 }
@@ -476,13 +476,13 @@ static const struct ggml_backend_device_i ggml_backend_blas_device_i = {
 // backend reg interface
 
 static const char * ggml_backend_blas_reg_get_name(ggml_backend_reg_t reg) {
-    return "BLAS";
+    повернути "BLAS";
 
     GGML_UNUSED(reg);
 }
 
 static size_t ggml_backend_blas_reg_get_device_count(ggml_backend_reg_t reg) {
-    return 1;
+    повернути 1;
 
     GGML_UNUSED(reg);
 }
@@ -496,17 +496,17 @@ static ggml_backend_dev_t ggml_backend_blas_reg_get_device(ggml_backend_reg_t re
         /* .context = */ nullptr,
     };
 
-    return &ggml_backend_blas_device;
+    повернути &ggml_backend_blas_device;
 
     GGML_UNUSED(reg);
     GGML_UNUSED(index);
 }
 
 static void * ggml_backend_blas_get_proc_address(ggml_backend_reg_t reg, const char * name) {
-    if (std::strcmp(name, "ggml_backend_set_n_threads") == 0) {
-        return (void *)ggml_backend_blas_set_n_threads;
+    якщо (std::strcmp(name, "ggml_backend_set_n_threads") == 0) {
+        повернути (void *)ggml_backend_blas_set_n_threads;
     }
-    return NULL;
+    повернути NULL;
 
     GGML_UNUSED(reg);
     GGML_UNUSED(name);
@@ -526,7 +526,7 @@ ggml_backend_reg_t ggml_backend_blas_reg(void) {
         /* .context     = */ NULL,
     };
 
-    return &ggml_backend_blas_reg;
+    повернути &ggml_backend_blas_reg;
 }
 
 GGML_BACKEND_DL_IMPL(ggml_backend_blas_reg)

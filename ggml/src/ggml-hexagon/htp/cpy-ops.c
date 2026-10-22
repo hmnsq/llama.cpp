@@ -61,14 +61,14 @@ struct htp_copy_context {
     const uint32_t  nb3 = dst->nb[3];
 
 #define DEFINE_CPY_RESHAPE(NAME, ELEM_TYPE, ELEM_SIZE)                                                \
-static void cpy_thread_##NAME##_reshape(unsigned int nth, unsigned int ith, void * data) {            \
+static void cpy_thread_##NAME##_reshape(unsigned ціле nth, unsigned ціле ith, void * data) {            \
     struct htp_copy_context * ct = (struct htp_copy_context *) data;                                  \
     struct htp_ops_context * octx = ct->octx;                                                         \
     cpy_preamble;                                                                                     \
     const uint32_t th_nelem = ct->elem_per_thread;                                                    \
     const uint32_t th_start = ct->elem_start + ith * th_nelem;                                        \
     const uint32_t th_end   = MIN(th_start + th_nelem, ct->elem_start + ct->nelem);                   \
-    if (th_start >= th_end) return;                                                                   \
+    якщо (th_start >= th_end) повернути;                                                                   \
                                                                                                       \
     dma_queue * dma_q = octx->ctx->dma[ith];                                                          \
                                                                                                       \
@@ -98,22 +98,22 @@ static void cpy_thread_##NAME##_reshape(unsigned int nth, unsigned int ith, void
                                                                                                       \
     const bool rows_contig = (nb00 == ELEM_SIZE) && (nb0 == ELEM_SIZE);                               \
                                                                                                       \
-    while (e < th_end) {                                                                              \
+    поки (e < th_end) {                                                                              \
         const uint32_t run = MIN(MIN(ne00 - i00, ne0 - i10), th_end - e);                             \
-        if (rows_contig) {                                                                            \
+        якщо (rows_contig) {                                                                            \
             dma_cpy_sametype_reshape_contig(dma_q, dst_addr, src0_addr, run * ELEM_SIZE);             \
-        } else {                                                                                      \
+        } інакше {                                                                                      \
             dma_cpy_push_2d_chunked(dma_q, dst_addr, src0_addr, nb0, nb00, ELEM_SIZE, run);           \
         }                                                                                             \
         e += run;                                                                                     \
                                                                                                       \
         dst_addr += run * nb0;                                                                        \
         i10      += run;                                                                              \
-        if (i10 == ne0) {                                                                             \
+        якщо (i10 == ne0) {                                                                             \
             i10 = 0;                                                                                  \
-            if (++i11 == ne1) {                                                                       \
+            якщо (++i11 == ne1) {                                                                       \
                 i11 = 0;                                                                              \
-                if (++i12 == ne2) {                                                                   \
+                якщо (++i12 == ne2) {                                                                   \
                     i12 = 0;                                                                          \
                     i13++;                                                                            \
                 }                                                                                     \
@@ -123,11 +123,11 @@ static void cpy_thread_##NAME##_reshape(unsigned int nth, unsigned int ith, void
                                                                                                       \
         src0_addr += run * nb00;                                                                      \
         i00       += run;                                                                             \
-        if (i00 == ne00) {                                                                            \
+        якщо (i00 == ne00) {                                                                            \
             i00 = 0;                                                                                  \
-            if (++i01 == ne01) {                                                                      \
+            якщо (++i01 == ne01) {                                                                      \
                 i01 = 0;                                                                              \
-                if (++i02 == ne02) {                                                                  \
+                якщо (++i02 == ne02) {                                                                  \
                     i02 = 0;                                                                          \
                     i03++;                                                                            \
                 }                                                                                     \
@@ -152,9 +152,9 @@ struct cpy_row_cursor {
 static inline void cpy_cursor_advance(struct cpy_row_cursor * c, uint32_t n, uint32_t ne01, uint32_t ne02) {
     c->r   += n;
     c->i01 += n;
-    if (c->i01 == ne01) {
+    якщо (c->i01 == ne01) {
         c->i01 = 0;
-        if (++c->i02 == ne02) {
+        якщо (++c->i02 == ne02) {
             c->i02 = 0;
             c->i03++;
         }
@@ -162,7 +162,7 @@ static inline void cpy_cursor_advance(struct cpy_row_cursor * c, uint32_t n, uin
 }
 
 #define DEFINE_CPY_CONVERT_SAMESHAPE(NAME, CONV_FUNC)                                        \
-static void cpy_thread_##NAME##_sameshape(unsigned int nth, unsigned int ith, void * data) { \
+static void cpy_thread_##NAME##_sameshape(unsigned ціле nth, unsigned ціле ith, void * data) { \
     struct htp_copy_context * ct = (struct htp_copy_context *) data;                         \
     struct htp_ops_context * octx = ct->octx;                                                \
     cpy_preamble;                                                                            \
@@ -170,7 +170,7 @@ static void cpy_thread_##NAME##_sameshape(unsigned int nth, unsigned int ith, vo
     const uint32_t dr  = ct->src0_nrows_per_thread;                                          \
     const uint32_t ir0 = ct->row_start + dr * ith;                                           \
     const uint32_t ir1 = MIN(ir0 + dr, ct->row_start + ct->nrows);                           \
-    if (ir0 >= ir1) return;                                                                  \
+    якщо (ir0 >= ir1) повернути;                                                                  \
                                                                                              \
     dma_queue * dma_q = octx->ctx->dma[ith];                                                 \
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                   \
@@ -195,7 +195,7 @@ static void cpy_thread_##NAME##_sameshape(unsigned int nth, unsigned int ith, vo
     struct cpy_row_cursor f = { ir0, i01, i02, i03 };                                        \
     struct cpy_row_cursor c = f;                                                             \
                                                                                              \
-    for (uint32_t b = 0; b < 2 && f.r < ir1; ++b) {                                          \
+    для (uint32_t b = 0; b < 2 && f.r < ir1; ++b) {                                          \
         uint8_t * src_spad = vtcm_src0_base + b * src0_buf_size;                             \
         uint8_t * dst_spad = vtcm_dst_base  + b * dst_buf_size;                              \
         const uint32_t nr = MIN(blk_rows, MIN(ne01 - f.i01, ir1 - f.r));                     \
@@ -207,13 +207,13 @@ static void cpy_thread_##NAME##_sameshape(unsigned int nth, unsigned int ith, vo
         cpy_cursor_advance(&f, nr, ne01, ne02);                                              \
     }                                                                                        \
                                                                                              \
-    for (uint32_t blk = 0; c.r < ir1; ++blk) {                                               \
+    для (uint32_t blk = 0; c.r < ir1; ++blk) {                                               \
         const uint32_t nr = MIN(blk_rows, MIN(ne01 - c.i01, ir1 - c.r));                     \
         uint8_t * dst_spad = (uint8_t *) (uintptr_t) dma_queue_pop(dma_q).src;               \
         uint8_t * src_spad = (uint8_t *) (uintptr_t) dma_queue_pop(dma_q).dst;               \
                                                                                              \
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) blk);                   \
-        for (uint32_t r = 0; r < nr; ++r) {                                                  \
+        для (uint32_t r = 0; r < nr; ++r) {                                                  \
             CONV_FUNC(dst_spad + r * dst_row_stride, src_spad + r * src0_row_stride, ne00);  \
         }                                                                                    \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) blk);                    \
@@ -223,7 +223,7 @@ static void cpy_thread_##NAME##_sameshape(unsigned int nth, unsigned int ith, vo
                        nb1, dst_row_stride, dst_row_size, nr);                               \
         cpy_cursor_advance(&c, nr, ne01, ne02);                                              \
                                                                                              \
-        if (f.r < ir1) {                                                                     \
+        якщо (f.r < ir1) {                                                                     \
             const uint32_t fnr = MIN(blk_rows, MIN(ne01 - f.i01, ir1 - f.r));                \
             dma_addr_t f_src0_addr = src0->data + f.i01*nb01 + f.i02*nb02 + f.i03*nb03;      \
             dma_queue_push(dma_q, dma_make_data(src_spad, f_src0_addr),                      \
@@ -239,18 +239,18 @@ DEFINE_CPY_CONVERT_SAMESHAPE(f32_f16, hvx_copy_f32_f16_aa)
 DEFINE_CPY_CONVERT_SAMESHAPE(i32_f32, hvx_copy_i32_f32_aa)
 DEFINE_CPY_CONVERT_SAMESHAPE(f32_i32, hvx_copy_f32_i32_aa)
 
-static int cpy_scalar(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
-    if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-        return HTP_STATUS_OK;
+static ціле cpy_scalar(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
+    якщо (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
+        повернути HTP_STATUS_OK;
     }
 
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst  = octx->dst;
 
-    if (src0->type == dst->type) {
+    якщо (src0->type == dst->type) {
         dma_cpy_sametype_reshape_contig(octx->ctx->dma[0], dst->data, src0->data, kparams->src0_type_size);
         dma_queue_flush(octx->ctx->dma[0]);
-        return HTP_STATUS_OK;
+        повернути HTP_STATUS_OK;
     }
 
     dma_queue * dma_q = octx->ctx->dma[0];
@@ -268,40 +268,40 @@ static int cpy_scalar(struct htp_ops_context * octx, const struct htp_copy_kerne
     const HVX_Vector v_src = hvx_vmem(s_ptr);
     HVX_Vector v_dst;
 
-    if (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_I32) {
+    якщо (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_I32) {
         v_dst = Q6_Vw_equals_Vsf(v_src);
-    } else if (src0->type == HTP_TYPE_I32 && dst->type == HTP_TYPE_F32) {
+    } інакше якщо (src0->type == HTP_TYPE_I32 && dst->type == HTP_TYPE_F32) {
         v_dst = Q6_Vsf_equals_Vw(v_src);
-    } else if (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_F16) {
+    } інакше якщо (src0->type == HTP_TYPE_F32 && dst->type == HTP_TYPE_F16) {
         v_dst = hvx_vec_f32_to_f16(v_src, v_src);
-    } else if (src0->type == HTP_TYPE_F16 && dst->type == HTP_TYPE_F32) {
+    } інакше якщо (src0->type == HTP_TYPE_F16 && dst->type == HTP_TYPE_F32) {
         v_dst = Q6_V_lo_W(hvx_vec_f16_to_f32(v_src));
-    } else {
-        return HTP_STATUS_NO_SUPPORT;
+    } інакше {
+        повернути HTP_STATUS_NO_SUPPORT;
     }
 
     hvx_vmem(d_ptr) = v_dst;
 
     dma_queue_push(dma_q, dma_make_data(dst->data, d_vtcm), d_size, d_size, d_size, 1);
     dma_queue_flush(dma_q);
-    return HTP_STATUS_OK;
+    повернути HTP_STATUS_OK;
 }
 
-static int cpy_1d_contig(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
+static ціле cpy_1d_contig(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst  = octx->dst;
 
     uint32_t elem_start = 0;
     uint32_t nelem      = kparams->total_elems;
 
-    if (octx->ctx->mdev.count > 1) {
+    якщо (octx->ctx->mdev.count > 1) {
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             kparams->total_elems, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         elem_start = range.start;
         nelem      = range.count;
     }
 
-    if (nelem > 0) {
+    якщо (nelem > 0) {
         dma_queue * q = octx->ctx->dma[0];
         const uint32_t type_size = kparams->src0_type_size;
         dma_addr_t dst_addr  = dst->data  + elem_start * type_size;
@@ -310,56 +310,56 @@ static int cpy_1d_contig(struct htp_ops_context * octx, const struct htp_copy_ke
         dma_queue_flush(q);
     }
 
-    return HTP_STATUS_OK;
+    повернути HTP_STATUS_OK;
 }
 
-static int cpy_sameshape_sametype(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
+static ціле cpy_sameshape_sametype(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst  = octx->dst;
 
     uint32_t row_start = 0;
     uint32_t nrows     = kparams->total_rows;
 
-    if (octx->ctx->mdev.count > 1) {
+    якщо (octx->ctx->mdev.count > 1) {
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             kparams->total_rows, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
     }
 
-    if (nrows > 0) {
+    якщо (nrows > 0) {
         dma_queue * q = octx->ctx->dma[0];
         dma_cpy_sametype_sameshape_range(q, dst, src0, kparams->src0_type_size, row_start, nrows);
         dma_queue_flush(q);
     }
 
-    return HTP_STATUS_OK;
+    повернути HTP_STATUS_OK;
 }
 
-static int cpy_sameshape_convert(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
+static ціле cpy_sameshape_convert(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst  = octx->dst;
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    якщо (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
 
     uint32_t row_start = 0;
     uint32_t nrows     = kparams->total_rows;
 
-    if (octx->ctx->mdev.count > 1) {
+    якщо (octx->ctx->mdev.count > 1) {
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             kparams->total_rows, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         row_start = range.start;
         nrows     = range.count;
     }
 
-    if (nrows == 0) {
-        return HTP_STATUS_OK;
+    якщо (nrows == 0) {
+        повернути HTP_STATUS_OK;
     }
 
-    if (kparams->vtcm_size > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
+    якщо (kparams->vtcm_size > octx->ctx->vtcm_size) {
+        повернути HTP_STATUS_VTCM_TOO_SMALL;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -377,42 +377,42 @@ static int cpy_sameshape_convert(struct htp_ops_context * octx, const struct htp
     ct.vtcm_dst  = vtcm_base + (size_t) n_threads * cvt->spad0_size_per_thread;
 
     work_queue_func_t copy_fun = NULL;
-    if (dst->type == HTP_TYPE_F16 && src0->type == HTP_TYPE_F32) {
+    якщо (dst->type == HTP_TYPE_F16 && src0->type == HTP_TYPE_F32) {
         copy_fun = cpy_thread_f16_f32_sameshape;
-    } else if (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_F16) {
+    } інакше якщо (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_F16) {
         copy_fun = cpy_thread_f32_f16_sameshape;
-    } else if (dst->type == HTP_TYPE_I32 && src0->type == HTP_TYPE_F32) {
+    } інакше якщо (dst->type == HTP_TYPE_I32 && src0->type == HTP_TYPE_F32) {
         copy_fun = cpy_thread_i32_f32_sameshape;
-    } else if (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_I32) {
+    } інакше якщо (dst->type == HTP_TYPE_F32 && src0->type == HTP_TYPE_I32) {
         copy_fun = cpy_thread_f32_i32_sameshape;
-    } else {
-        return HTP_STATUS_NO_SUPPORT;
+    } інакше {
+        повернути HTP_STATUS_NO_SUPPORT;
     }
 
     work_queue_run(octx->ctx->work_queue, copy_fun, &ct, n_threads);
-    return HTP_STATUS_OK;
+    повернути HTP_STATUS_OK;
 }
 
-static int cpy_reshape(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
+static ціле cpy_reshape(struct htp_ops_context * octx, const struct htp_copy_kernel_params * kparams) {
     const struct htp_tensor * src0 = octx->src[0];
     const struct htp_tensor * dst  = octx->dst;
 
-    if (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
-        return HTP_STATUS_INVAL_PARAMS;
+    якщо (!htp_ops_context_set_n_threads(octx, kparams->n_threads)) {
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
 
     uint32_t elem_start = 0;
     uint32_t nelem      = kparams->total_elems;
 
-    if (octx->ctx->mdev.count > 1) {
+    якщо (octx->ctx->mdev.count > 1) {
         const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(
             kparams->total_elems, 1, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
         elem_start = range.start;
         nelem      = range.count;
     }
 
-    if (nelem == 0) {
-        return HTP_STATUS_OK;
+    якщо (nelem == 0) {
+        повернути HTP_STATUS_OK;
     }
 
     const uint32_t n_threads = octx->n_threads;
@@ -429,16 +429,16 @@ static int cpy_reshape(struct htp_ops_context * octx, const struct htp_copy_kern
         case HTP_TYPE_F32: copy_fun = cpy_thread_f32_reshape; break;
         case HTP_TYPE_F16: copy_fun = cpy_thread_f16_reshape; break;
         case HTP_TYPE_I32: copy_fun = cpy_thread_i32_reshape; break;
-        default: return HTP_STATUS_NO_SUPPORT;
+        default: повернути HTP_STATUS_NO_SUPPORT;
     }
 
     work_queue_run(octx->ctx->work_queue, copy_fun, &ct, n_threads);
-    return HTP_STATUS_OK;
+    повернути HTP_STATUS_OK;
 }
 
-int op_cpy(struct htp_ops_context * octx) {
+ціле op_cpy(struct htp_ops_context * octx) {
     const struct htp_copy_kernel_params * kparams = (const struct htp_copy_kernel_params *) octx->kernel_params;
-    int status = HTP_STATUS_OK;
+    ціле status = HTP_STATUS_OK;
 
     switch (kparams->kernel_type) {
         case HTP_COPY_KERNEL_SCALAR:
@@ -466,12 +466,12 @@ int op_cpy(struct htp_ops_context * octx) {
 
     htp_ops_context_set_status(octx, status);
 
-    if (octx->op == HTP_OP_CPY_FENCE) {
-        if (octx->ctx->mdev.count > 1) {
+    якщо (octx->op == HTP_OP_CPY_FENCE) {
+        якщо (octx->ctx->mdev.count > 1) {
             htp_mdev_group_barrier(octx);
         }
 
-        if (octx->ctx->mdev.idx == 0) {
+        якщо (octx->ctx->mdev.idx == 0) {
             const struct htp_tensor * sync = octx->src[1];
             const uint32_t seq = (uint32_t) octx->op_params[0];
             atomic_uint * sync_fence = (atomic_uint *) (uintptr_t) sync->data;
@@ -481,5 +481,5 @@ int op_cpy(struct htp_ops_context * octx) {
         }
     }
 
-    return octx->status;
+    повернути octx->status;
 }

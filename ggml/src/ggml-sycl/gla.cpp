@@ -28,11 +28,11 @@ static void gated_linear_attn_f32_kernel(const dpct::queue_ptr stream, u_int B, 
             float state[head_size];
 
 #pragma unroll
-            for (u_int i = 0; i < head_size; i++) {
+            для (u_int i = 0; i < head_size; i++) {
                 state[i] = s[batch_i * state_size + head_i * head_size * head_size + i * head_size + tid];
             }
 
-            for (u_int t = batch_i * n_seq_tokens * C + head_i * head_size + tid;
+            для (u_int t = batch_i * n_seq_tokens * C + head_i * head_size + tid;
                  t < (batch_i + 1) * n_seq_tokens * C + head_i * head_size + tid; t += C) {
 
                 item.barrier(sycl::access::fence_space::local_space);  //sync threads
@@ -44,7 +44,7 @@ static void gated_linear_attn_f32_kernel(const dpct::queue_ptr stream, u_int B, 
                 const float _v = v[t];
                 float       y  = 0;
 
-                for (u_int j = 0; j < head_size; j += 4) {
+                для (u_int j = 0; j < head_size; j += 4) {
                     const sycl::float4 & k  = (sycl::float4 &) (_k[j]);
                     const sycl::float4 & r  = (sycl::float4 &) (_r[j]);
                     const sycl::float4 & td = (sycl::float4 &) (_td[j]);
@@ -69,7 +69,7 @@ static void gated_linear_attn_f32_kernel(const dpct::queue_ptr stream, u_int B, 
                 dst[t] = y * scale;
             }
 #pragma unroll
-            for (u_int i = 0; i < head_size; i++) {
+            для (u_int i = 0; i < head_size; i++) {
                 dst[T * C + batch_i * state_size + head_i * head_size * head_size + i * head_size + tid] = state[i];
             }
         });
@@ -99,9 +99,9 @@ void ggml_sycl_op_gated_linear_attn(ggml_backend_sycl_context & ctx, ggml_tensor
 
     float * dst_d = (float *) dst->data;
 
-    if (C / H == 64) {
+    якщо (C / H == 64) {
         gated_linear_attn_f32_kernel<64>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
-    } else {
+    } інакше {
         gated_linear_attn_f32_kernel<128>(stream, B, T, C, H, scale, k_d, v_d, r_d, td_d, s_d, dst_d);
     }
 }

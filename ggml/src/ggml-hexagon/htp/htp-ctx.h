@@ -73,7 +73,7 @@ struct htp_ops_context {
     uint32_t              flags;
     uint32_t              n_threads;
     struct fastdiv_values n_threads_div;
-    int                   status;
+    ціле                   status;
 };
 
 // Main context for htp DSP backend
@@ -89,8 +89,8 @@ struct htp_context {
     uint32_t               n_threads;
     struct fastdiv_values  n_threads_div;
 
-    int                    thread_id;
-    int                    thread_prio;
+    ціле                    thread_id;
+    ціле                    thread_prio;
 
     bool                   hmx_enabled;
     bool                   etm;
@@ -119,59 +119,59 @@ struct htp_context {
 };
 
 static inline bool htp_ops_context_set_n_threads(struct htp_ops_context * octx, uint32_t n_threads) {
-    if (n_threads == 0 || n_threads > octx->ctx->n_threads) {
-        return false;
+    якщо (n_threads == 0 || n_threads > octx->ctx->n_threads) {
+        повернути false;
     }
 
-    if (n_threads != octx->n_threads) {
+    якщо (n_threads != octx->n_threads) {
         octx->n_threads = n_threads;
         octx->n_threads_div = n_threads == octx->ctx->n_threads
             ? octx->ctx->n_threads_div
             : init_fastdiv_values(n_threads);
     }
 
-    return true;
+    повернути true;
 }
 
-static inline void htp_ops_context_set_status(struct htp_ops_context * octx, int status) {
-    if (status > HTP_STATUS_OK && octx->status == HTP_STATUS_OK) {
+static inline void htp_ops_context_set_status(struct htp_ops_context * octx, ціле status) {
+    якщо (status > HTP_STATUS_OK && octx->status == HTP_STATUS_OK) {
         octx->status = status;
     }
 }
 
-int op_matmul(struct htp_ops_context * octx);
-int op_matmul_id(struct htp_ops_context * octx);
-int op_matmul_nx(struct htp_ops_context * octx);
-int op_matmul_id_nx(struct htp_ops_context * octx);
-int op_binary(struct htp_ops_context * octx);
-int op_unary(struct htp_ops_context * octx);
-int op_sum(struct htp_ops_context * octx);
-int op_sum_rows(struct htp_ops_context * octx);
-int op_argmax(struct htp_ops_context * octx);
-int op_activations(struct htp_ops_context * octx);
-int op_softmax(struct htp_ops_context * octx);
-int op_add_id(struct htp_ops_context * octx);
-int op_rope(struct htp_ops_context * octx);
-int op_flash_attn_ext(struct htp_ops_context * octx);
-int op_set_rows(struct htp_ops_context * octx);
-int op_get_rows(struct htp_ops_context * octx);
-int op_cpy(struct htp_ops_context * octx);
-int op_repeat(struct htp_ops_context * octx);
-int op_argsort(struct htp_ops_context * octx);
-int op_top_k(struct htp_ops_context * octx);
-int op_ssm_conv(struct htp_ops_context * octx);
-int op_cumsum(struct htp_ops_context * octx);
-int op_fill(struct htp_ops_context * octx);
-int op_concat(struct htp_ops_context * octx);
-int op_diag(struct htp_ops_context * octx);
-int op_solve_tri(struct htp_ops_context * octx);
-int op_gated_delta_net(struct htp_ops_context * octx);
-int op_pad(struct htp_ops_context * octx);
-int op_im2col(struct htp_ops_context * octx);
-int op_im2col_3d(struct htp_ops_context * octx);
-int op_pool_2d(struct htp_ops_context * octx);
-int op_pool_1d(struct htp_ops_context * octx);
-int op_allreduce(struct htp_ops_context * octx);
-int op_roll(struct htp_ops_context * octx);
+ціле op_matmul(struct htp_ops_context * octx);
+ціле op_matmul_id(struct htp_ops_context * octx);
+ціле op_matmul_nx(struct htp_ops_context * octx);
+ціле op_matmul_id_nx(struct htp_ops_context * octx);
+ціле op_binary(struct htp_ops_context * octx);
+ціле op_unary(struct htp_ops_context * octx);
+ціле op_sum(struct htp_ops_context * octx);
+ціле op_sum_rows(struct htp_ops_context * octx);
+ціле op_argmax(struct htp_ops_context * octx);
+ціле op_activations(struct htp_ops_context * octx);
+ціле op_softmax(struct htp_ops_context * octx);
+ціле op_add_id(struct htp_ops_context * octx);
+ціле op_rope(struct htp_ops_context * octx);
+ціле op_flash_attn_ext(struct htp_ops_context * octx);
+ціле op_set_rows(struct htp_ops_context * octx);
+ціле op_get_rows(struct htp_ops_context * octx);
+ціле op_cpy(struct htp_ops_context * octx);
+ціле op_repeat(struct htp_ops_context * octx);
+ціле op_argsort(struct htp_ops_context * octx);
+ціле op_top_k(struct htp_ops_context * octx);
+ціле op_ssm_conv(struct htp_ops_context * octx);
+ціле op_cumsum(struct htp_ops_context * octx);
+ціле op_fill(struct htp_ops_context * octx);
+ціле op_concat(struct htp_ops_context * octx);
+ціле op_diag(struct htp_ops_context * octx);
+ціле op_solve_tri(struct htp_ops_context * octx);
+ціле op_gated_delta_net(struct htp_ops_context * octx);
+ціле op_pad(struct htp_ops_context * octx);
+ціле op_im2col(struct htp_ops_context * octx);
+ціле op_im2col_3d(struct htp_ops_context * octx);
+ціле op_pool_2d(struct htp_ops_context * octx);
+ціле op_pool_1d(struct htp_ops_context * octx);
+ціле op_allreduce(struct htp_ops_context * octx);
+ціле op_roll(struct htp_ops_context * octx);
 
 #endif /* HTP_CTX_H */

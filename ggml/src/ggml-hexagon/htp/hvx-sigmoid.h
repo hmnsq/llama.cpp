@@ -37,7 +37,7 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f32(HVX_Vector v) {
     HVX_Vector res = hvx_vec_inverse_f32(v5);
     res            = Q6_Vqf32_vmpy_VsfVsf(v3, res);
 
-    return Q6_Vsf_equals_Vqf32(res);
+    повернути Q6_Vsf_equals_Vqf32(res);
 }
 
 static inline HVX_Vector hvx_vec_fast_sigmoid_f32_guard(HVX_Vector v,
@@ -49,7 +49,7 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f32_guard(HVX_Vector v,
 
     HVX_Vector out = hvx_vec_fast_sigmoid_f32(v);
     out            = Q6_V_vmux_QVV(pred_max, out, one);
-    return Q6_V_vmux_QVV(pred_min, out, Q6_V_vzero());
+    повернути Q6_V_vmux_QVV(pred_min, out, Q6_V_vzero());
 }
 
 static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
@@ -65,7 +65,7 @@ static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
 
     HVX_Vector res = Q6_Vqf32_vmpy_VsfVsf(sig2x, two);
     res = Q6_Vqf32_vsub_Vqf32Vsf(res, one);
-    return Q6_Vsf_equals_Vqf32(res);
+    повернути Q6_Vsf_equals_Vqf32(res);
 }
 
 #define hvx_sigmoid_loop_body(dst_type, src_type, vec_store)                                  \
@@ -84,14 +84,14 @@ static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
         uint32_t i = 0;                                                                       \
                                                                                               \
         _Pragma("unroll(4)")                                                                  \
-        for (; i < nvec; i++) {                                                               \
+        для (; i < nvec; i++) {                                                               \
              vdst[i] = hvx_vec_fast_sigmoid_f32_guard(vsrc[i], one, max_exp, min_exp);        \
         }                                                                                     \
-        if (nloe) {                                                                           \
+        якщо (nloe) {                                                                           \
              HVX_Vector tmp = hvx_vec_fast_sigmoid_f32_guard(vsrc[i], one, max_exp, min_exp); \
              vec_store((void *) &vdst[i], nloe * sizeof(float), tmp);                         \
         }                                                                                     \
-    } while(0)
+    } поки(0)
 
 #define hvx_tanh_loop_body(dst_type, src_type, vec_store)             \
     do {                                                              \
@@ -105,14 +105,14 @@ static inline HVX_Vector hvx_vec_tanh_f32(HVX_Vector x) {
         uint32_t i = 0;                                               \
                                                                       \
         _Pragma("unroll(4)")                                          \
-        for (; i < nvec; i++) {                                       \
+        для (; i < nvec; i++) {                                       \
              vdst[i] = hvx_vec_tanh_f32(vsrc[i]);                     \
         }                                                             \
-        if (nloe) {                                                   \
+        якщо (nloe) {                                                   \
              HVX_Vector tmp = hvx_vec_tanh_f32(vsrc[i]);              \
              vec_store((void *) &vdst[i], nloe * sizeof(float), tmp); \
         }                                                             \
-    } while(0)
+    } поки(0)
 
 static inline void hvx_sigmoid_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);
@@ -164,7 +164,7 @@ static inline HVX_Vector hvx_vec_fast_sigmoid_f16(HVX_Vector x_v) {
 
     // If x_v < 0, return 1.0f - sig_abs
     HVX_Vector sig_neg = Q6_Vhf_equals_Vqf16(Q6_Vqf16_vsub_VhfVhf(v_one, sig_abs));
-    return Q6_V_vmux_QVV(is_neg, sig_neg, sig_abs);
+    повернути Q6_V_vmux_QVV(is_neg, sig_neg, sig_abs);
 }
 
 static inline HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
@@ -175,7 +175,7 @@ static inline HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
     HVX_Vector sig2x = hvx_vec_fast_sigmoid_f16(x2);
 
     const HVX_Vector v_neg_one = hvx_vec_splat_f16(-1.0f);
-    return hvx_vec_add_f16_f16(hvx_vec_mul_f16_f16(sig2x, v_two), v_neg_one);
+    повернути hvx_vec_add_f16_f16(hvx_vec_mul_f16_f16(sig2x, v_two), v_neg_one);
 }
 
 #define hvx_sigmoid_f16_loop_body(dst_type, src_type, vec_store)         \
@@ -190,14 +190,14 @@ static inline HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
         uint32_t i = 0;                                                  \
                                                                          \
         _Pragma("unroll(4)")                                             \
-        for (; i < nvec; i++) {                                          \
+        для (; i < nvec; i++) {                                          \
              vdst[i] = hvx_vec_fast_sigmoid_f16(vsrc[i]);                \
         }                                                                \
-        if (nloe) {                                                      \
+        якщо (nloe) {                                                      \
              HVX_Vector tmp = hvx_vec_fast_sigmoid_f16(vsrc[i]);         \
              vec_store((void *) &vdst[i], nloe * sizeof(_Float16), tmp); \
         }                                                                \
-    } while(0)
+    } поки(0)
 
 #define hvx_tanh_f16_loop_body(dst_type, src_type, vec_store)            \
     do {                                                                 \
@@ -211,14 +211,14 @@ static inline HVX_Vector hvx_vec_tanh_f16(HVX_Vector x) {
         uint32_t i = 0;                                                  \
                                                                          \
         _Pragma("unroll(4)")                                             \
-        for (; i < nvec; i++) {                                          \
+        для (; i < nvec; i++) {                                          \
              vdst[i] = hvx_vec_tanh_f16(vsrc[i]);                        \
         }                                                                \
-        if (nloe) {                                                      \
+        якщо (nloe) {                                                      \
              HVX_Vector tmp = hvx_vec_tanh_f16(vsrc[i]);                 \
              vec_store((void *) &vdst[i], nloe * sizeof(_Float16), tmp); \
         }                                                                \
-    } while(0)
+    } поки(0)
 
 static inline void hvx_sigmoid_f16_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
     assert((unsigned long) dst % 128 == 0);

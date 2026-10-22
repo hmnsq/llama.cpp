@@ -32,14 +32,14 @@ OutputVector translate_unary_gelu(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
     auto input = process_view_input_new(context, 0);
     auto res = std::make_shared<ov::op::v7::Gelu>(input, ov::op::GeluApproximationMode::TANH);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_unary_gelu_erf(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
     auto input = process_view_input_new(context, 0);
     auto res = std::make_shared<ov::op::v7::Gelu>(input, ov::op::GeluApproximationMode::ERF);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_unary_gelu_quick(const NodeContext & context) {
@@ -49,14 +49,14 @@ OutputVector translate_unary_gelu_quick(const NodeContext & context) {
     auto mul = std::make_shared<ov::op::v1::Multiply>(input, scale);
     auto sig = std::make_shared<ov::op::v0::Sigmoid>(mul);
     auto res = std::make_shared<ov::op::v1::Multiply>(input, sig);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_unary_elu(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
     auto input = process_view_input_new(context, 0);
     auto res = std::make_shared<ov::op::v0::Elu>(input, 1.0);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_unary_hardsigmoid(const NodeContext & context) {
@@ -65,16 +65,16 @@ OutputVector translate_unary_hardsigmoid(const NodeContext & context) {
     auto input = process_view_input_new(context, 0);
     const auto type = ggml_openvino_is_npu() ? input.get_element_type() : ov::element::f32;
     ov::Output<ov::Node> x = input;
-    if (type != input.get_element_type()) {
+    якщо (type != input.get_element_type()) {
         x = std::make_shared<ov::op::v0::Convert>(input, type);
     }
     auto alpha = ov::op::v0::Constant::create(type, ov::Shape{}, {1.0f / 6.0f});
     auto beta = ov::op::v0::Constant::create(type, ov::Shape{}, {0.5f});
     ov::Output<ov::Node> res = std::make_shared<ov::op::v0::HardSigmoid>(x, alpha, beta);
-    if (type != input.get_element_type()) {
+    якщо (type != input.get_element_type()) {
         res = std::make_shared<ov::op::v0::Convert>(res, input.get_element_type());
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_unary_step(const NodeContext & context) {
@@ -83,14 +83,14 @@ OutputVector translate_unary_step(const NodeContext & context) {
     auto zero = ov::op::v0::Constant::create(input.get_element_type(), ov::Shape{}, {0.0f});
     auto cond = std::make_shared<ov::op::v1::Greater>(input, zero);
     auto res = std::make_shared<ov::op::v0::Convert>(cond, input.get_element_type());
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_unary_round(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
     auto input = process_view_input_new(context, 0);
     auto res = std::make_shared<ov::op::v5::Round>(input, ov::op::v5::Round::RoundMode::HALF_AWAY_FROM_ZERO);
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_unary_expm1(const NodeContext & context) {
@@ -99,23 +99,23 @@ OutputVector translate_unary_expm1(const NodeContext & context) {
     auto input = process_view_input_new(context, 0);
     const auto type = ggml_openvino_is_npu() ? input.get_element_type() : ov::element::f32;
     ov::Output<ov::Node> x = input;
-    if (type != input.get_element_type()) {
+    якщо (type != input.get_element_type()) {
         x = std::make_shared<ov::op::v0::Convert>(input, type);
     }
     auto exp = std::make_shared<ov::op::v0::Exp>(x);
     auto one = ov::op::v0::Constant::create(type, ov::Shape{}, {1.0f});
     ov::Output<ov::Node> res = std::make_shared<ov::op::v1::Subtract>(exp, one);
-    if (type != input.get_element_type()) {
+    якщо (type != input.get_element_type()) {
         res = std::make_shared<ov::op::v0::Convert>(res, input.get_element_type());
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 OutputVector translate_unary_softplus(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
 
-    if (ggml_openvino_getenv_int("GGML_OPENVINO_NATIVE_SOFTPLUS") != 0) {
-        return translate_1to1_match_1_input<ov::op::v4::SoftPlus>(context);
+    якщо (ggml_openvino_getenv_int("GGML_OPENVINO_NATIVE_SOFTPLUS") != 0) {
+        повернути translate_1to1_match_1_input<ov::op::v4::SoftPlus>(context);
     }
 
     auto input = process_view_input_new(context, 0);
@@ -129,7 +129,7 @@ OutputVector translate_unary_softplus(const NodeContext & context) {
     auto log_term = std::make_shared<ov::op::v0::Log>(std::make_shared<ov::op::v1::Add>(one, exp_neg_abs));
     auto res = std::make_shared<ov::op::v1::Add>(positive, log_term);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

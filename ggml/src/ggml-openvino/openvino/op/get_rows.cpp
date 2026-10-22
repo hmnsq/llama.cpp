@@ -27,7 +27,7 @@ OutputVector translate_get_rows(const NodeContext & context) {
     Output<Node> res;
     Output<Node> data;
     int64_t row_offset = 0;
-    if (context.get_view_input_size(0) > 0 && context.get_input(0).get_partial_shape().rank() == 2) {
+    якщо (context.get_view_input_size(0) > 0 && context.get_input(0).get_partial_shape().rank() == 2) {
         // A row range view over a 2D weight Constant folds into the gather indices,
         // which keeps the dequantization subgraph intact for the plugins.
         const auto view_shape = context.get_view_input_ggml_shape(0, 0);
@@ -39,17 +39,17 @@ OutputVector translate_get_rows(const NodeContext & context) {
                                           data.get_partial_shape()[1].compatible(view_shape[3]),
                                       "GET_ROWS: view over a weight must be a row range");
         row_offset = static_cast<int64_t>(view_offset / row_bytes);
-    } else {
+    } інакше {
         data = process_view_input_new(context, 0);
     }
 
     auto op_case = context.get_op_case();
-    if (op_case == 3 || op_case == 4) {
-        return {data};
+    якщо (op_case == 3 || op_case == 4) {
+        повернути {data};
     }
 
     ov::Output<ov::Node> indices;
-    if ((op_case == 1 || op_case == 2) && context.has_input("s_copy_active_slot_len")) {
+    якщо ((op_case == 1 || op_case == 2) && context.has_input("s_copy_active_slot_len")) {
         // Recurrent state reorder (inp->s_copy): slice the active (op_case 1) or extra (op_case 2)
         // segment from the s_copy index list at runtime, instead of baking the static view offset,
         // so the cached IR works for any number of active sequences.
@@ -57,14 +57,14 @@ OutputVector translate_get_rows(const NodeContext & context) {
         auto len = context.get_input("s_copy_active_slot_len");
         auto step = ov::op::v0::Constant::create(ov::element::i64, {1}, {1});
         auto axis = ov::op::v0::Constant::create(ov::element::i64, {1}, {3});
-        if (op_case == 1) {
+        якщо (op_case == 1) {
             auto begin = ov::op::v0::Constant::create(ov::element::i64, {1}, {0});
             indices = std::make_shared<ov::op::v8::Slice>(s_copy, begin, len, step, axis);
-        } else {
+        } інакше {
             auto end = ov::op::v0::Constant::create(ov::element::i64, {1}, {INT_MAX});
             indices = std::make_shared<ov::op::v8::Slice>(s_copy, len, end, step, axis);
         }
-    } else {
+    } інакше {
         indices = process_view_input_new(context, 1);
     }
 
@@ -75,26 +75,26 @@ OutputVector translate_get_rows(const NodeContext & context) {
     const auto indices_rank = indices.get_partial_shape().rank();
     FRONT_END_OP_CONVERSION_CHECK(indices_rank.is_static(), "Expected static rank for GET_ROWS indices");
     std::vector<int64_t> indices_squeeze_axes;
-    for (int64_t i = 0; i + 2 < indices_rank.get_length(); ++i) {
+    для (int64_t i = 0; i + 2 < indices_rank.get_length(); ++i) {
         indices_squeeze_axes.push_back(i);
     }
-    if (!indices_squeeze_axes.empty()) {
+    якщо (!indices_squeeze_axes.empty()) {
         indices = std::make_shared<ov::op::v0::Squeeze>(
             indices, ov::op::v0::Constant::create(ov::element::i64, {indices_squeeze_axes.size()},
                                                   indices_squeeze_axes));
     }
-    if (row_offset != 0) {
+    якщо (row_offset != 0) {
         indices = std::make_shared<ov::op::v1::Add>(
             indices, ov::op::v0::Constant::create(indices.get_element_type(), {}, {row_offset}));
     }
-    if (data.get_partial_shape().rank() == 4) {
-        if (!(data.get_partial_shape()[1].is_dynamic()) && data.get_partial_shape()[1].get_length() == 1) {
+    якщо (data.get_partial_shape().rank() == 4) {
+        якщо (!(data.get_partial_shape()[1].is_dynamic()) && data.get_partial_shape()[1].get_length() == 1) {
             // Work-around for a bug in ov cpu plugin for test-backend-ops
             data = std::make_shared<ov::op::v0::Squeeze>(data,
                                                          ov::op::v0::Constant::create(ov::element::i64, {2}, {0, 1}));
             auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
             res = std::make_shared<ov::op::v8::Gather>(data, indices, axis);
-        } else {
+        } інакше {
             auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {1});
             data =
                 std::make_shared<ov::op::v0::Squeeze>(data, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
@@ -109,7 +109,7 @@ OutputVector translate_get_rows(const NodeContext & context) {
             const bool data_batch_static = data_ps.rank().is_static() && data_ps[0].is_static();
             const bool idx_batch_dynamic = idx_ps.rank().is_dynamic() || idx_ps[0].is_dynamic();
 
-            if (data_batch_static && idx_batch_dynamic) {
+            якщо (data_batch_static && idx_batch_dynamic) {
                 // MoE per-expert-scale path: `data` is a statically-tiled REPEAT
                 // (ggml_repeat_4d(scale, 1, n_expert, n_tokens, 1)) whose batch dim is a
                 // compile-time-constant n_tokens, and every batch slice is IDENTICAL (it was
@@ -132,8 +132,8 @@ OutputVector translate_get_rows(const NodeContext & context) {
                 auto idx_batch = get_dimensions(idx_shape, {0});  // [batch] (dynamic)
                 auto data_b1_shape = std::make_shared<ov::op::v3::ShapeOf>(data_b1, ov::element::i64);
                 const auto rank = data_ps.rank().get_length();
-                std::vector<int> rest_axes;
-                for (int a = 1; a < rank; ++a) {
+                std::vector<ціле> rest_axes;
+                для (ціле a = 1; a < rank; ++a) {
                     rest_axes.push_back(a);
                 }
                 auto data_rest = get_dimensions(data_b1_shape, rest_axes);  // [rows, ...]
@@ -141,7 +141,7 @@ OutputVector translate_get_rows(const NodeContext & context) {
                 data =
                     std::make_shared<ov::op::v3::Broadcast>(data_b1, data_target, ov::op::BroadcastType::BIDIRECTIONAL);
                 res = std::make_shared<ov::op::v8::Gather>(data, indices, axis, 1);
-            } else {
+            } інакше {
                 // General case: tie the indices batch to the data batch (the data batch is
                 // already dynamic, e.g. the routing-weights gather whose data comes from the
                 // activations). Broadcast indices to [data_batch, indices_n].
@@ -155,21 +155,21 @@ OutputVector translate_get_rows(const NodeContext & context) {
                 res = std::make_shared<ov::op::v8::Gather>(data, indices, axis, 1);
             }
         }
-    } else if (context.is_stateful() && data.get_partial_shape().rank() == 3) {
+    } інакше якщо (context.is_stateful() && data.get_partial_shape().rank() == 3) {
         auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {1});
         res = std::make_shared<ov::op::v8::Gather>(data, indices, axis, 1);
-    } else {
+    } інакше {
         auto axis = ov::op::v0::Constant::create(ov::element::i32, ov::Shape{}, {0});
         res = std::make_shared<ov::op::v8::Gather>(data, indices, axis);
     }
 
-    if (res.get_element_type() != context.get_output_type()) {
+    якщо (res.get_element_type() != context.get_output_type()) {
         res = std::make_shared<ov::op::v0::Convert>(res, context.get_output_type());
     }
-    if (!(context.is_stateful())) {
+    якщо (!(context.is_stateful())) {
         res = std::make_shared<ov::op::v0::Unsqueeze>(res, ov::op::v0::Constant::create(ov::element::i64, {1}, {0}));
     }
-    return rename_outputs_with_suffix({res}, context.get_name());
+    повернути rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

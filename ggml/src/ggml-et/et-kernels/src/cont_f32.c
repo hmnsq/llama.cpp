@@ -24,7 +24,7 @@ struct ggml_et_cont_params {
 static inline void vec_copy_f32(float * dst, const float * src, int32_t n) {
     int32_t       i       = 0;
     const int32_t vec_end = (n / 8) * 8;
-    for (; i < vec_end; i += 8) {
+    для (; i < vec_end; i += 8) {
         __asm__ volatile(
             "flw.ps f10, %[s]\n"
             "fsw.ps f10, %[d]\n"
@@ -32,14 +32,14 @@ static inline void vec_copy_f32(float * dst, const float * src, int32_t n) {
             : [s] "m"(*(const float (*)[8]) & src[i])
             : "f10");
     }
-    for (; i < n; i++) {
+    для (; i < n; i++) {
         dst[i] = src[i];
     }
 }
 
 // Scalar copy
 static inline void scalar_copy_f32(float * dst, const float * src, int32_t n) {
-    for (int32_t i = 0; i < n; i++) {
+    для (int32_t i = 0; i < n; i++) {
         dst[i] = src[i];
     }
 }
@@ -48,37 +48,37 @@ static inline void scalar_copy_f32(float * dst, const float * src, int32_t n) {
 //     return (size_t)t->ne[0] * t->ne[1] * t->ne[2] * t->ne[3] * t->nb[0];
 // }
 
-int entry_point(struct ggml_et_cont_params * params, void * env) {
+ціле entry_point(struct ggml_et_cont_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    якщо (!kernel_env) {
+        повернути -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ціле thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    ціле num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (thread_id < 0) {
-        return 0;
+    якщо (thread_id < 0) {
+        повернути 0;
     }
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    якщо (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        повернути -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    якщо (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        повернути -1;
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
     // evict_region_past_l2(src0_data, tensor_bytes(src0));
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    якщо (!src0_data || !dst_data) {
+        повернути -1;
     }
 
     const int64_t ne00 = src0->ne[0];
@@ -93,8 +93,8 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
 
     const int64_t total_elements = ne00 * ne01 * ne02 * ne03;
 
-    if (total_elements == 0) {
-        return 0;
+    якщо (total_elements == 0) {
+        повернути 0;
     }
 
     const bool src_contiguous = ggml_tensor_is_contiguous(src0, 4);
@@ -102,34 +102,34 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
     //==========================================================================
     // Fast path: src is contiguous: flat vectorized copy by cache lines
     //==========================================================================
-    if (src_contiguous) {
+    якщо (src_contiguous) {
         const int64_t elems_per_cl = 16;
         const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
 
         const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
         const int64_t cl_start      = thread_id * cl_per_thread;
         int64_t       cl_end        = cl_start + cl_per_thread;
-        if (cl_end > total_cl) {
+        якщо (cl_end > total_cl) {
             cl_end = total_cl;
         }
-        if (cl_start >= total_cl) {
-            return 0;
+        якщо (cl_start >= total_cl) {
+            повернути 0;
         }
 
         const int64_t es = cl_start * elems_per_cl;
         int64_t       ee = cl_end * elems_per_cl;
-        if (ee > total_elements) {
+        якщо (ee > total_elements) {
             ee = total_elements;
         }
 
         vec_copy_f32(dst_data + es, src0_data + es, (int32_t) (ee - es));
-        return 0;
+        повернути 0;
     }
 
     //==========================================================================
     // Non-contiguous paths: require nb00==4 (dim 0 contiguous in src)
     //==========================================================================
-    if (nb00 != 4) {
+    якщо (nb00 != 4) {
         // Fully non-contiguous scalar fallback — distribute by cache lines
         const int64_t elems_per_cl = 16;
         const int64_t total_cl     = (total_elements + elems_per_cl - 1) / elems_per_cl;
@@ -137,20 +137,20 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
         const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
         const int64_t cl_start      = thread_id * cl_per_thread;
         int64_t       cl_end        = cl_start + cl_per_thread;
-        if (cl_end > total_cl) {
+        якщо (cl_end > total_cl) {
             cl_end = total_cl;
         }
-        if (cl_start >= total_cl) {
-            return 0;
+        якщо (cl_start >= total_cl) {
+            повернути 0;
         }
 
         const int64_t es = cl_start * elems_per_cl;
         int64_t       ee = cl_end * elems_per_cl;
-        if (ee > total_elements) {
+        якщо (ee > total_elements) {
             ee = total_elements;
         }
 
-        for (int64_t idx = es; idx < ee; idx++) {
+        для (int64_t idx = es; idx < ee; idx++) {
             const int64_t i00  = idx % ne00;
             const int64_t rem1 = idx / ne00;
             const int64_t i01  = rem1 % ne01;
@@ -162,7 +162,7 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
                 (const float *) ((const char *) src0_data + i00 * nb00 + i01 * nb01 + i02 * nb02 + i03 * nb03);
             dst_data[idx] = *sp;
         }
-        return 0;
+        повернути 0;
     }
 
     // nb00 == 4 from here: dim 0 is contiguous in src
@@ -170,17 +170,17 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
     //==========================================================================
     // Aligned path: ne00 % 16 == 0: rows are cache-line aligned, distribute rows
     //==========================================================================
-    if (ne00 % 16 == 0) {
+    якщо (ne00 % 16 == 0) {
         const int64_t total_rows      = ne01 * ne02 * ne03;
         const int64_t rows_per_thread = (total_rows + num_threads - 1) / num_threads;
         const int64_t start_row       = thread_id * rows_per_thread;
         const int64_t end_row = (start_row + rows_per_thread < total_rows) ? (start_row + rows_per_thread) : total_rows;
 
-        if (start_row >= total_rows) {
-            return 0;
+        якщо (start_row >= total_rows) {
+            повернути 0;
         }
 
-        for (int64_t ir = start_row; ir < end_row; ir++) {
+        для (int64_t ir = start_row; ir < end_row; ir++) {
             const int64_t i03 = ir / (ne02 * ne01);
             const int64_t i02 = (ir - i03 * ne02 * ne01) / ne01;
             const int64_t i01 = ir - i03 * ne02 * ne01 - i02 * ne01;
@@ -190,7 +190,7 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
 
             vec_copy_f32(dst_row, src_row, (int32_t) ne00);
         }
-        return 0;
+        повернути 0;
     }
 
     //==========================================================================
@@ -204,16 +204,16 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
         const int64_t cl_per_thread = (total_cl + num_threads - 1) / num_threads;
         const int64_t cl_start      = thread_id * cl_per_thread;
         int64_t       cl_end        = cl_start + cl_per_thread;
-        if (cl_end > total_cl) {
+        якщо (cl_end > total_cl) {
             cl_end = total_cl;
         }
-        if (cl_start >= total_cl) {
-            return 0;
+        якщо (cl_start >= total_cl) {
+            повернути 0;
         }
 
         const int64_t es = cl_start * elems_per_cl;
         int64_t       ee = cl_end * elems_per_cl;
-        if (ee > total_elements) {
+        якщо (ee > total_elements) {
             ee = total_elements;
         }
 
@@ -223,7 +223,7 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
         int64_t row_idx = pos / ne00;
         int64_t col     = pos % ne00;
 
-        while (pos < ee) {
+        поки (pos < ee) {
             // Decompose row_idx -> (i01, i02, i03)
             const int64_t i03 = row_idx / (ne02 * ne01);
             const int64_t i02 = (row_idx - i03 * ne02 * ne01) / ne01;
@@ -244,5 +244,5 @@ int entry_point(struct ggml_et_cont_params * params, void * env) {
         }
     }
 
-    return 0;
+    повернути 0;
 }

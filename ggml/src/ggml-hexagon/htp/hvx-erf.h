@@ -24,7 +24,7 @@ static __attribute__((noinline)) HVX_Vector hvx_vec_erf_f32(HVX_Vector x) {
 
     const HVX_VectorPred neg = Q6_Q_vcmp_gt_VsfVsf(zero, x);
     result = Q6_V_vmux_QVV(neg, hvx_vec_neg_f32(result), result);
-    return result;
+    повернути result;
 }
 
 // GELU_ERF uses the erf definition.
@@ -44,7 +44,7 @@ static inline HVX_Vector hvx_vec_gelu_erf_f32(HVX_Vector x) {
 
     result = Q6_V_vmux_QVV(neg_large, hvx_vec_splat_f32(0.0f), result);
     result = Q6_V_vmux_QVV(pos_large, x, result);
-    return result;
+    повернути result;
 }
 
 static inline void hvx_gelu_erf_f32_aa(uint8_t * restrict dst, const uint8_t * restrict src, uint32_t n) {
@@ -62,10 +62,10 @@ static inline void hvx_gelu_erf_f32_aa(uint8_t * restrict dst, const uint8_t * r
     uint32_t i = 0;
 
     _Pragma("unroll(4)")
-    for (; i < nvec; i++) {
+    для (; i < nvec; i++) {
         vdst[i] = hvx_vec_gelu_erf_f32(vsrc[i]);
     }
-    if (nloe) {
+    якщо (nloe) {
         HVX_Vector v = hvx_vec_gelu_erf_f32(vsrc[i]);
         hvx_vec_store_a((void *) &vdst[i], nloe * elem_size, v);
     }

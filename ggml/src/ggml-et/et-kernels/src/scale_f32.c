@@ -15,32 +15,32 @@ struct ggml_et_scale_params {
     float              bias;   // Bias (additive offset)
 };
 
-int entry_point(struct ggml_et_scale_params * params, void * env) {
+ціле entry_point(struct ggml_et_scale_params * params, void * env) {
     kernel_environment_t * kernel_env = (kernel_environment_t *) env;
 
-    if (!kernel_env) {
-        return -1;
+    якщо (!kernel_env) {
+        повернути -1;
     }
 
-    int thread_id   = get_relative_thread_id(kernel_env->shire_mask);
-    int num_threads = get_num_threads(kernel_env->shire_mask);
+    ціле thread_id   = get_relative_thread_id(kernel_env->shire_mask);
+    ціле num_threads = get_num_threads(kernel_env->shire_mask);
 
-    if (params == 0 || ((uint64_t) params & 0x7) != 0) {
-        return -1;
+    якщо (params == 0 || ((uint64_t) params & 0x7) != 0) {
+        повернути -1;
     }
 
     struct ggml_tensor * src0 = &params->src0;
     struct ggml_tensor * dst  = &params->dst;
 
-    if (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
-        return -1;
+    якщо (src0->type != GGML_TYPE_F32 || dst->type != GGML_TYPE_F32) {
+        повернути -1;
     }
 
     float * src0_data = (float *) src0->data;
     float * dst_data  = (float *) dst->data;
 
-    if (!src0_data || !dst_data) {
-        return -1;
+    якщо (!src0_data || !dst_data) {
+        повернути -1;
     }
 
 
@@ -59,17 +59,17 @@ int entry_point(struct ggml_et_scale_params * params, void * env) {
     int64_t start_cacheline       = thread_id * cachelines_per_thread;
     int64_t end_cacheline         = start_cacheline + cachelines_per_thread;
 
-    if (end_cacheline > total_cachelines) {
+    якщо (end_cacheline > total_cachelines) {
         end_cacheline = total_cachelines;
     }
 
-    if (start_cacheline >= total_cachelines) {
-        return 0;
+    якщо (start_cacheline >= total_cachelines) {
+        повернути 0;
     }
 
     int64_t start_elem = start_cacheline * elements_per_cacheline;
     int64_t end_elem   = end_cacheline * elements_per_cacheline;
-    if (end_elem > total_elements) {
+    якщо (end_elem > total_elements) {
         end_elem = total_elements;
     }
 
@@ -79,7 +79,7 @@ int entry_point(struct ggml_et_scale_params * params, void * env) {
     __asm__ volatile("fbc.ps f20, %[scale_ptr]\n" : : [scale_ptr] "m"(scale) : "f20");
     __asm__ volatile("fbc.ps f21, %[bias_ptr]\n" : : [bias_ptr] "m"(bias) : "f21");
 
-    for (int64_t i = start_elem; i < end_elem; i += 8) {
+    для (int64_t i = start_elem; i < end_elem; i += 8) {
         __asm__ volatile(
             "flw.ps f10, %[src]\n"
             "fmadd.ps f10, f10, f20, f21\n"  // dst = src*scale + bias
@@ -90,5 +90,5 @@ int entry_point(struct ggml_et_scale_params * params, void * env) {
     }
     __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
 
-    return 0;
+    повернути 0;
 }

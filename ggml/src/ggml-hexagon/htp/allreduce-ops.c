@@ -39,7 +39,7 @@ struct htp_allreduce_context {
 };
 
 #define DEFINE_ALLREDUCE_THREAD_DMA_1D(SUFFIX, TYPE, HVX_ADD_FN, HAS_ADD)                                         \
-static void allreduce_thread_dma_1d_##SUFFIX(unsigned int nth, unsigned int ith, void * data) {                   \
+static void allreduce_thread_dma_1d_##SUFFIX(unsigned ціле nth, unsigned ціле ith, void * data) {                   \
     struct htp_allreduce_context * actx = (struct htp_allreduce_context *) data;                                  \
     struct htp_ops_context * octx = actx->octx;                                                                   \
                                                                                                                   \
@@ -50,7 +50,7 @@ static void allreduce_thread_dma_1d_##SUFFIX(unsigned int nth, unsigned int ith,
     const uint32_t dr  = actx->elems_per_thread;                                                                  \
     const uint32_t ir0 = actx->rank_elem_start + dr * ith;                                                        \
     const uint32_t ir1 = MIN(ir0 + dr, actx->rank_elem_start + actx->rank_nelem);                                 \
-    if (ir0 >= ir1) return;                                                                                       \
+    якщо (ir0 >= ir1) повернути;                                                                                       \
                                                                                                                   \
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                                        \
     dma_queue * dma_q = octx->ctx->dma[ith];                                                                      \
@@ -61,22 +61,22 @@ static void allreduce_thread_dma_1d_##SUFFIX(unsigned int nth, unsigned int ith,
                                                                                                                   \
     const size_t spad_half = actx->vtcm_size_per_thread / 2;                                                      \
     uint32_t ir_prefetch = ir0;                                                                                   \
-    int spad_idx = 0;                                                                                             \
+    ціле spad_idx = 0;                                                                                             \
                                                                                                                   \
-    for (int k = 0; k < 2 && ir_prefetch < ir1; k++) {                                                            \
+    для (ціле k = 0; k < 2 && ir_prefetch < ir1; k++) {                                                            \
         uint32_t cur_elems = MIN(block_elems, ir1 - ir_prefetch);                                                 \
         size_t   cur_bytes = cur_elems * sizeof(TYPE);                                                            \
         uint8_t * d_spad = dst_spad_base + spad_idx * spad_half;                                                  \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
+        для (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
             dma_addr_t d_ddr = octx->dsts[d]->data + ir_prefetch * sizeof(TYPE);                                  \
             dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), cur_bytes, cur_bytes, cur_bytes, 0);              \
         }                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
+        для (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
             uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + spad_idx * spad_half;                \
             const dma_addr_t s_ddr = octx->src[s]->data + ir_prefetch * sizeof(TYPE);                             \
             dma_queue_push(dma_q, dma_make_data(s_spad, s_ddr), cur_bytes, cur_bytes, cur_bytes, 1);              \
         }                                                                                                         \
-        if (HAS_ADD) {                                                                                            \
+        якщо (HAS_ADD) {                                                                                            \
             uint8_t * r_spad = res_spad_base + spad_idx * spad_half;                                              \
             const dma_addr_t r_ddr = octx->src[2 * n_ranks]->data + ir_prefetch * sizeof(TYPE);                   \
             dma_queue_push(dma_q, dma_make_data(r_spad, r_ddr), cur_bytes, cur_bytes, cur_bytes, 1);              \
@@ -85,17 +85,17 @@ static void allreduce_thread_dma_1d_##SUFFIX(unsigned int nth, unsigned int ith,
         spad_idx ^= 1;                                                                                            \
     }                                                                                                             \
                                                                                                                   \
-    int comp_spad_idx = 0;                                                                                        \
-    for (uint32_t ir = ir0; ir < ir1; ) {                                                                         \
+    ціле comp_spad_idx = 0;                                                                                        \
+    для (uint32_t ir = ir0; ir < ir1; ) {                                                                         \
         uint32_t cur_elems = MIN(block_elems, ir1 - ir);                                                          \
         size_t   cur_bytes = cur_elems * sizeof(TYPE);                                                            \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
+        для (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
             dma_queue_pop(dma_q);                                                                                 \
         }                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
+        для (uint32_t s = 0; s < n_ranks; s++) {                                                                  \
             dma_queue_pop(dma_q);                                                                                 \
         }                                                                                                         \
-        if (HAS_ADD) {                                                                                            \
+        якщо (HAS_ADD) {                                                                                            \
             dma_queue_pop(dma_q);                                                                                 \
         }                                                                                                         \
         uint8_t * d_spad  = dst_spad_base + comp_spad_idx * spad_half;                                            \
@@ -104,27 +104,27 @@ static void allreduce_thread_dma_1d_##SUFFIX(unsigned int nth, unsigned int ith,
         uint8_t * r_spad  = HAS_ADD ? (res_spad_base + comp_spad_idx * spad_half) : NULL;                         \
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);                                         \
         HVX_ADD_FN(d_spad, s0_spad, s1_spad, cur_elems);                                                          \
-        for (uint32_t s = 2; s < n_ranks; s++) {                                                                  \
+        для (uint32_t s = 2; s < n_ranks; s++) {                                                                  \
             uint8_t * ss_spad = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half;          \
             HVX_ADD_FN(d_spad, d_spad, ss_spad, cur_elems);                                                       \
         }                                                                                                         \
-        if (HAS_ADD) {                                                                                            \
+        якщо (HAS_ADD) {                                                                                            \
             HVX_ADD_FN(d_spad, d_spad, r_spad, cur_elems);                                                        \
         }                                                                                                         \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) ir);                                          \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
+        для (uint32_t d = 0; d < n_dsts; d++) {                                                                   \
             dma_addr_t d_ddr = octx->dsts[d]->data + ir * sizeof(TYPE);                                           \
             dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), cur_bytes, cur_bytes, cur_bytes, 1);              \
         }                                                                                                         \
-        if (ir_prefetch < ir1) {                                                                                  \
+        якщо (ir_prefetch < ir1) {                                                                                  \
             uint32_t next_elems = MIN(block_elems, ir1 - ir_prefetch);                                            \
             size_t   next_bytes = next_elems * sizeof(TYPE);                                                      \
-            for (uint32_t s = 0; s < n_ranks; s++) {                                                              \
+            для (uint32_t s = 0; s < n_ranks; s++) {                                                              \
                 uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half;       \
                 const dma_addr_t s_next = octx->src[s]->data + ir_prefetch * sizeof(TYPE);                        \
                 dma_queue_push(dma_q, dma_make_data(s_spad, s_next), next_bytes, next_bytes, next_bytes, 1);      \
             }                                                                                                     \
-            if (HAS_ADD) {                                                                                        \
+            якщо (HAS_ADD) {                                                                                        \
                 uint8_t * r_spad_next = res_spad_base + comp_spad_idx * spad_half;                                \
                 const dma_addr_t r_next = octx->src[2 * n_ranks]->data + ir_prefetch * sizeof(TYPE);              \
                 dma_queue_push(dma_q, dma_make_data(r_spad_next, r_next), next_bytes, next_bytes, next_bytes, 1); \
@@ -143,7 +143,7 @@ DEFINE_ALLREDUCE_THREAD_DMA_1D(add_f16, __fp16, hvx_add_f16_aaa, 1)
 DEFINE_ALLREDUCE_THREAD_DMA_1D(add_f32, float,  hvx_add_f32_aaa, 1)
 
 #define DEFINE_ALLREDUCE_THREAD_DMA_2D(SUFFIX, TYPE, HVX_ADD_FN, HAS_ADD, IS_ROW_BCAST)                                                           \
-static void allreduce_thread_dma_2d_##SUFFIX(unsigned int nth, unsigned int ith, void * data) {                                                   \
+static void allreduce_thread_dma_2d_##SUFFIX(unsigned ціле nth, unsigned ціле ith, void * data) {                                                   \
     struct htp_allreduce_context * actx = (struct htp_allreduce_context *) data;                                                                  \
     struct htp_ops_context * octx = actx->octx;                                                                                                   \
                                                                                                                                                   \
@@ -157,7 +157,7 @@ static void allreduce_thread_dma_2d_##SUFFIX(unsigned int nth, unsigned int ith,
     const uint32_t dr  = actx->elems_per_thread;                                                                                                  \
     const uint32_t r0  = actx->rank_elem_start + dr * ith;                                                                                        \
     const uint32_t r1  = MIN(r0 + dr, actx->rank_elem_start + actx->rank_nelem);                                                                  \
-    if (r0 >= r1) return;                                                                                                                         \
+    якщо (r0 >= r1) повернути;                                                                                                                         \
                                                                                                                                                   \
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];                                                                                        \
     dma_queue * dma_q = octx->ctx->dma[ith];                                                                                                      \
@@ -168,21 +168,21 @@ static void allreduce_thread_dma_2d_##SUFFIX(unsigned int nth, unsigned int ith,
                                                                                                                                                   \
     const size_t spad_half = actx->vtcm_size_per_thread / 2;                                                                                      \
     uint32_t r_prefetch = r0;                                                                                                                     \
-    int spad_idx = 0;                                                                                                                             \
+    ціле spad_idx = 0;                                                                                                                             \
                                                                                                                                                   \
-    for (int k = 0; k < 2 && r_prefetch < r1; k++) {                                                                                              \
+    для (ціле k = 0; k < 2 && r_prefetch < r1; k++) {                                                                                              \
         uint32_t cur_rows = MIN(block_rows, r1 - r_prefetch);                                                                                     \
         uint8_t * d_spad = dst_spad_base + spad_idx * spad_half;                                                                                  \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
+        для (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
             dma_addr_t d_ddr = octx->dsts[d]->data + r_prefetch * octx->dsts[d]->nb[1];                                                           \
             dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), octx->dsts[d]->nb[1], row_size_aligned, row_bytes, 0);                            \
         }                                                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
+        для (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
             uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + spad_idx * spad_half;                                                \
             const dma_addr_t s_ddr = octx->src[s]->data + r_prefetch * octx->src[s]->nb[1];                                                       \
             dma_queue_push(dma_q, dma_make_data(s_spad, s_ddr), row_size_aligned, octx->src[s]->nb[1], row_bytes, cur_rows);                      \
         }                                                                                                                                         \
-        if (HAS_ADD && !IS_ROW_BCAST) {                                                                                                           \
+        якщо (HAS_ADD && !IS_ROW_BCAST) {                                                                                                           \
             uint8_t * r_spad = res_spad_base + spad_idx * spad_half;                                                                              \
             const dma_addr_t r_ddr = octx->src[2 * n_ranks]->data + r_prefetch * octx->src[2 * n_ranks]->nb[1];                                   \
             dma_queue_push(dma_q, dma_make_data(r_spad, r_ddr), row_size_aligned, octx->src[2 * n_ranks]->nb[1], row_bytes, cur_rows);            \
@@ -191,16 +191,16 @@ static void allreduce_thread_dma_2d_##SUFFIX(unsigned int nth, unsigned int ith,
         spad_idx ^= 1;                                                                                                                            \
     }                                                                                                                                             \
                                                                                                                                                   \
-    int comp_spad_idx = 0;                                                                                                                        \
-    for (uint32_t r = r0; r < r1; ) {                                                                                                             \
+    ціле comp_spad_idx = 0;                                                                                                                        \
+    для (uint32_t r = r0; r < r1; ) {                                                                                                             \
         uint32_t cur_rows = MIN(block_rows, r1 - r);                                                                                              \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
+        для (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
             dma_queue_pop(dma_q);                                                                                                                 \
         }                                                                                                                                         \
-        for (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
+        для (uint32_t s = 0; s < n_ranks; s++) {                                                                                                  \
             dma_queue_pop(dma_q);                                                                                                                 \
         }                                                                                                                                         \
-        if (HAS_ADD && !IS_ROW_BCAST) {                                                                                                           \
+        якщо (HAS_ADD && !IS_ROW_BCAST) {                                                                                                           \
             dma_queue_pop(dma_q);                                                                                                                 \
         }                                                                                                                                         \
         uint8_t * d_spad  = dst_spad_base + comp_spad_idx * spad_half;                                                                            \
@@ -208,33 +208,33 @@ static void allreduce_thread_dma_2d_##SUFFIX(unsigned int nth, unsigned int ith,
         uint8_t * s1_spad = actx->src_spad_base[1] + vtcm_thread_offset + comp_spad_idx * spad_half;                                              \
         uint8_t * r_spad  = (HAS_ADD && !IS_ROW_BCAST) ? (res_spad_base + comp_spad_idx * spad_half) : NULL;                                      \
         htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);                                                                          \
-        for (uint32_t row = 0; row < cur_rows; row++) {                                                                                           \
+        для (uint32_t row = 0; row < cur_rows; row++) {                                                                                           \
             uint8_t * d_row = d_spad + row * row_size_aligned;                                                                                    \
             const uint8_t * s0_row = s0_spad + row * row_size_aligned;                                                                            \
             const uint8_t * s1_row = s1_spad + row * row_size_aligned;                                                                            \
             HVX_ADD_FN(d_row, s0_row, s1_row, ne0);                                                                                               \
-            for (uint32_t s = 2; s < n_ranks; s++) {                                                                                              \
+            для (uint32_t s = 2; s < n_ranks; s++) {                                                                                              \
                 const uint8_t * ss_row = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half + row * row_size_aligned;        \
                 HVX_ADD_FN(d_row, d_row, ss_row, ne0);                                                                                            \
             }                                                                                                                                     \
-            if (HAS_ADD) {                                                                                                                        \
+            якщо (HAS_ADD) {                                                                                                                        \
                 const uint8_t * res_row = IS_ROW_BCAST ? res_spad_base : (r_spad + row * row_size_aligned);                                       \
                 HVX_ADD_FN(d_row, d_row, res_row, ne0);                                                                                           \
             }                                                                                                                                     \
         }                                                                                                                                         \
         htp_trace_event_stop(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) r);                                                                           \
-        for (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
+        для (uint32_t d = 0; d < n_dsts; d++) {                                                                                                   \
             dma_addr_t d_ddr = octx->dsts[d]->data + r * octx->dsts[d]->nb[1];                                                                    \
             dma_queue_push(dma_q, dma_make_data(d_ddr, d_spad), octx->dsts[d]->nb[1], row_size_aligned, row_bytes, cur_rows);                     \
         }                                                                                                                                         \
-        if (r_prefetch < r1) {                                                                                                                    \
+        якщо (r_prefetch < r1) {                                                                                                                    \
             uint32_t next_rows = MIN(block_rows, r1 - r_prefetch);                                                                                \
-            for (uint32_t s = 0; s < n_ranks; s++) {                                                                                              \
+            для (uint32_t s = 0; s < n_ranks; s++) {                                                                                              \
                 uint8_t * s_spad = actx->src_spad_base[s] + vtcm_thread_offset + comp_spad_idx * spad_half;                                       \
                 const dma_addr_t s_next = octx->src[s]->data + r_prefetch * octx->src[s]->nb[1];                                                  \
                 dma_queue_push(dma_q, dma_make_data(s_spad, s_next), row_size_aligned, octx->src[s]->nb[1], row_bytes, next_rows);                \
             }                                                                                                                                     \
-            if (HAS_ADD && !IS_ROW_BCAST) {                                                                                                       \
+            якщо (HAS_ADD && !IS_ROW_BCAST) {                                                                                                       \
                 uint8_t * r_spad_next = res_spad_base + comp_spad_idx * spad_half;                                                                \
                 const dma_addr_t r_next = octx->src[2 * n_ranks]->data + r_prefetch * octx->src[2 * n_ranks]->nb[1];                              \
                 dma_queue_push(dma_q, dma_make_data(r_spad_next, r_next), row_size_aligned, octx->src[2 * n_ranks]->nb[1], row_bytes, next_rows); \
@@ -254,41 +254,41 @@ DEFINE_ALLREDUCE_THREAD_DMA_2D(add_f32,       float,  hvx_add_f32_aaa, 1, 0)
 DEFINE_ALLREDUCE_THREAD_DMA_2D(add_bcast_f16, __fp16, hvx_add_f16_aaa, 1, 1)
 DEFINE_ALLREDUCE_THREAD_DMA_2D(add_bcast_f32, float,  hvx_add_f32_aaa, 1, 1)
 
-static int validate_allreduce(
+static ціле validate_allreduce(
     struct htp_ops_context * octx,
     const struct htp_allreduce_kernel_params * kparams,
     uint32_t n_ranks
 ) {
-    if (kparams->n_threads == 0 || (uint32_t) kparams->n_threads > octx->ctx->n_threads) {
-        return HTP_STATUS_INVAL_PARAMS;
+    якщо (kparams->n_threads == 0 || (uint32_t) kparams->n_threads > octx->ctx->n_threads) {
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
     octx->n_threads = (uint32_t) kparams->n_threads;
 
-    if (kparams->vtcm_size_per_thread <= 0 || kparams->vtcm_size <= 0) {
-        return HTP_STATUS_INVAL_PARAMS;
+    якщо (kparams->vtcm_size_per_thread <= 0 || kparams->vtcm_size <= 0) {
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
 
     const bool has_add = (octx->op == HTP_OP_ALLREDUCE_ADD);
     const size_t n_vtcm_buffers = htp_allreduce_vtcm_buffer_count(
         n_ranks, octx->n_threads, has_add, kparams->is_row_bcast != 0);
     const size_t vtcm_size = n_vtcm_buffers * (size_t) kparams->vtcm_size_per_thread;
-    if (vtcm_size != (size_t) kparams->vtcm_size) {
-        return HTP_STATUS_INVAL_PARAMS;
+    якщо (vtcm_size != (size_t) kparams->vtcm_size) {
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
-    if (vtcm_size > octx->ctx->vtcm_size) {
-        return HTP_STATUS_VTCM_TOO_SMALL;
-    }
-
-    if (octx->dst->type != HTP_TYPE_F16 && octx->dst->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    якщо (vtcm_size > octx->ctx->vtcm_size) {
+        повернути HTP_STATUS_VTCM_TOO_SMALL;
     }
 
-    return HTP_STATUS_OK;
+    якщо (octx->dst->type != HTP_TYPE_F16 && octx->dst->type != HTP_TYPE_F32) {
+        повернути HTP_STATUS_NO_SUPPORT;
+    }
+
+    повернути HTP_STATUS_OK;
 }
 
-int op_allreduce(struct htp_ops_context * octx) {
-    if (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
-        return HTP_STATUS_OK;
+ціле op_allreduce(struct htp_ops_context * octx) {
+    якщо (octx->ctx->mdev.count > 1 && octx->ctx->mdev.idx > 0) {
+        повернути HTP_STATUS_OK;
     }
 
     const struct htp_allreduce_kernel_params * kparams = (const struct htp_allreduce_kernel_params *) octx->kernel_params;
@@ -297,8 +297,8 @@ int op_allreduce(struct htp_ops_context * octx) {
     const uint32_t rank    = (uint32_t) kparams->rank;
     const uint32_t n_ranks = (uint32_t) kparams->n_ranks;
 
-    if (n_ranks < 2 || n_ranks > HTP_ALLREDUCE_MAX_RANKS || rank >= n_ranks) {
-        return HTP_STATUS_INVAL_PARAMS;
+    якщо (n_ranks < 2 || n_ranks > HTP_ALLREDUCE_MAX_RANKS || rank >= n_ranks) {
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
 
     const uint32_t fence_seq_entry = (uint32_t) octx->op_params[0];
@@ -307,13 +307,13 @@ int op_allreduce(struct htp_ops_context * octx) {
     const struct htp_tensor * my_sync = octx->src[n_ranks + rank];
     atomic_uint * my_fence = (atomic_uint *) (uintptr_t) my_sync->data;
 
-    const int status = validate_allreduce(octx, kparams, n_ranks);
-    if (status != HTP_STATUS_OK) {
-        if (status == HTP_STATUS_NO_SUPPORT) {
+    const ціле status = validate_allreduce(octx, kparams, n_ranks);
+    якщо (status != HTP_STATUS_OK) {
+        якщо (status == HTP_STATUS_NO_SUPPORT) {
             FARF(ERROR, "ggml-hex: allreduce unsupported type %d : rank %u\n", dst->type, rank);
         }
         htp_fence_write(my_fence, fence_seq_exit, status);
-        return status;
+        повернути status;
     }
 
     const bool has_add = (octx->op == HTP_OP_ALLREDUCE_ADD);
@@ -326,30 +326,30 @@ int op_allreduce(struct htp_ops_context * octx) {
 
     htp_fence_write(my_fence, fence_seq_entry, octx->status);
 
-    for (uint32_t j = 0; j < n_ranks; j++) {
-        if (j == rank) continue;
+    для (uint32_t j = 0; j < n_ranks; j++) {
+        якщо (j == rank) continue;
         const struct htp_tensor * peer_sync = octx->src[n_ranks + j];
         atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->data;
         uint64_t spins = 0;
-        while (1) {
+        поки (1) {
             uint32_t peer_seq;
             uint32_t peer_status;
             htp_fence_read(peer_fence, &peer_seq, &peer_status);
-            if ((int32_t)(peer_seq - fence_seq_entry) >= 0) {
-                if (peer_status > HTP_STATUS_OK) {
+            якщо ((int32_t)(peer_seq - fence_seq_entry) >= 0) {
+                якщо (peer_status > HTP_STATUS_OK) {
                     FARF(ERROR, "ggml-hex: allreduce entry peer %u failed with status %u\n", j, peer_status);
                     htp_fence_write(my_fence, fence_seq_exit, peer_status);
                     htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
-                    return peer_status;
+                    повернути peer_status;
                 }
                 break;
             }
-            if (++spins > HTP_FENCE_TIMEOUT) {
+            якщо (++spins > HTP_FENCE_TIMEOUT) {
                 FARF(ERROR, "ggml-hex: allreduce entry fence-wait TIMEOUT : rank %u waiting on %u fence %p seq 0x%x peer-seq 0x%x\n",
                      rank, j, peer_fence, fence_seq_entry, peer_seq);
                 htp_fence_write(my_fence, fence_seq_exit, HTP_STATUS_INTERNAL_ERR);
                 htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
-                return HTP_STATUS_INTERNAL_ERR;
+                повернути HTP_STATUS_INTERNAL_ERR;
             }
             hex_pause();
         }
@@ -359,7 +359,7 @@ int op_allreduce(struct htp_ops_context * octx) {
     htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_entry);
 
     // 2. Multi-threaded Reduction across assigned rank chunk
-    if (nelem > 0) {
+    якщо (nelem > 0) {
         const uint32_t n_threads            = (uint32_t) kparams->n_threads;
         const uint32_t block_elems          = (uint32_t) kparams->block_elems;
         const uint32_t elems_per_thread     = (uint32_t) kparams->elems_per_thread;
@@ -383,42 +383,42 @@ int op_allreduce(struct htp_ops_context * octx) {
         work_queue_func_t reduce_fun = NULL;
         switch (kparams->kernel_type) {
             case HTP_ALLREDUCE_KERNEL_DMA_1D:
-                if (has_add) {
+                якщо (has_add) {
                     reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_1d_add_f16 : allreduce_thread_dma_1d_add_f32;
-                } else {
+                } інакше {
                     reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_1d_f16 : allreduce_thread_dma_1d_f32;
                 }
                 break;
             case HTP_ALLREDUCE_KERNEL_DMA_2D:
-                if (has_add) {
-                    if (kparams->is_row_bcast) {
+                якщо (has_add) {
+                    якщо (kparams->is_row_bcast) {
                         reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_add_bcast_f16 : allreduce_thread_dma_2d_add_bcast_f32;
-                    } else {
+                    } інакше {
                         reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_add_f16 : allreduce_thread_dma_2d_add_f32;
                     }
-                } else {
+                } інакше {
                     reduce_fun = (dst->type == HTP_TYPE_F16) ? allreduce_thread_dma_2d_f16 : allreduce_thread_dma_2d_f32;
                 }
                 break;
             default:
                 FARF(ERROR, "ggml-hex: allreduce unsupported kernel %d : rank %u\n", kparams->kernel_type, rank);
                 htp_fence_write(my_fence, fence_seq_exit, HTP_STATUS_NO_SUPPORT);
-                return HTP_STATUS_NO_SUPPORT;
+                повернути HTP_STATUS_NO_SUPPORT;
         }
 
         uint8_t * vtcm_ptr = (uint8_t *) octx->ctx->vtcm_base;
-        for (uint32_t s = 0; s < n_ranks; s++) {
+        для (uint32_t s = 0; s < n_ranks; s++) {
             actx.src_spad_base[s] = vtcm_ptr;
             vtcm_ptr += n_threads * vtcm_size_per_thread;
         }
         actx.dst_spad_base = vtcm_ptr;
         vtcm_ptr += n_threads * vtcm_size_per_thread;
-        if (has_add) {
+        якщо (has_add) {
             actx.res_spad_base = vtcm_ptr;
             vtcm_ptr += (actx.is_row_bcast ? 1 : n_threads) * vtcm_size_per_thread;
         }
 
-        if (has_add && actx.is_row_bcast) {
+        якщо (has_add && actx.is_row_bcast) {
             const dma_addr_t r_ddr = octx->src[2 * n_ranks]->data;
             const uint32_t row_bytes = actx.ne0 * (dst->type == HTP_TYPE_F16 ? sizeof(__fp16) : sizeof(float));
             dma_queue * dma_q = octx->ctx->dma[0];
@@ -433,36 +433,36 @@ int op_allreduce(struct htp_ops_context * octx) {
     htp_trace_event_start(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
 
     // drain fan-out DMA writes before exit barrier
-    if (mode == HTP_ALLREDUCE_SHARDED_FANOUT) {
+    якщо (mode == HTP_ALLREDUCE_SHARDED_FANOUT) {
         asm volatile ("syncht" : : : "memory");
     }
 
     htp_fence_write(my_fence, fence_seq_exit, octx->status);
 
-    for (uint32_t j = 0; j < n_ranks; j++) {
-        if (j == rank) continue;
+    для (uint32_t j = 0; j < n_ranks; j++) {
+        якщо (j == rank) continue;
         const struct htp_tensor * peer_sync = octx->src[n_ranks + j];
         atomic_uint * peer_fence = (atomic_uint *) (uintptr_t) peer_sync->data;
         uint64_t spins = 0;
-        while (1) {
+        поки (1) {
             uint32_t peer_seq;
             uint32_t peer_status;
             htp_fence_read(peer_fence, &peer_seq, &peer_status);
-            if ((int32_t)(peer_seq - fence_seq_exit) >= 0) {
-                if (peer_status > HTP_STATUS_OK) {
+            якщо ((int32_t)(peer_seq - fence_seq_exit) >= 0) {
+                якщо (peer_status > HTP_STATUS_OK) {
                     FARF(ERROR, "ggml-hex: allreduce exit peer %u failed with status %u\n", j, peer_status);
                     htp_fence_write(my_fence, fence_seq_exit, peer_status);
                     htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
-                    return peer_status;
+                    повернути peer_status;
                 }
                 break;
             }
-            if (++spins > HTP_FENCE_TIMEOUT) {
+            якщо (++spins > HTP_FENCE_TIMEOUT) {
                 FARF(ERROR, "ggml-hex: allreduce exit fence-wait TIMEOUT : rank %u waiting on %u fence %p seq 0x%x peer-seq 0x%x\n",
                      rank, j, peer_fence, fence_seq_exit, peer_seq);
                 htp_fence_write(my_fence, fence_seq_exit, HTP_STATUS_INTERNAL_ERR);
                 htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
-                return HTP_STATUS_INTERNAL_ERR;
+                повернути HTP_STATUS_INTERNAL_ERR;
             }
             hex_pause();
         }
@@ -471,5 +471,5 @@ int op_allreduce(struct htp_ops_context * octx) {
 
     htp_trace_event_stop(tr0, HTP_TRACE_EVT_FENCE, (uint16_t) fence_seq_exit);
 
-    return octx->status;
+    повернути octx->status;
 }

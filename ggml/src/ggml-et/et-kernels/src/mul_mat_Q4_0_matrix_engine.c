@@ -43,11 +43,11 @@ static inline void __attribute__((always_inline)) scp_signal(volatile uint32_t *
 
 // Wait for a counter in L2 SCP to reach the expected value.
 static inline void __attribute__((always_inline)) scp_wait(volatile uint32_t * flag, uint32_t expected) {
-    while (1) {
+    поки (1) {
         evict_to_l2((const void *) flag, 1, 64);
         WAIT_CACHEOPS;
-        if (*flag >= expected) {
-            return;
+        якщо (*flag >= expected) {
+            повернути;
         }
     }
 }
@@ -85,7 +85,7 @@ static inline void __attribute__((always_inline)) dequant_q4_0_panel(float *    
         : "f1", "f2");
 
     char * pbase = (char *) panel;
-    for (int j = 0; j < TILE_M; ++j) {
+    для (ціле j = 0; j < TILE_M; ++j) {
         const block_q4_0 * blk       = (const block_q4_0 *) (src0_batch + (mb + j) * nb1_0) + kb_block;
         uint32_t           scale_raw = (uint32_t) blk->d;
         const uint8_t *    qs        = blk->qs;
@@ -129,17 +129,17 @@ static inline void __attribute__((always_inline)) dequant_q4_0_panel(float *    
     __asm__ volatile("mova.m.x %0" ::"r"(old_mask));
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+ціле entry_point(struct ggml_et_binary_params * params, void * env) {
     (void) env;
 
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    якщо (shire_id >= NUM_COMPUTE_SHIRES) {
+        повернути 0;
     }
 
-    const int is_hart1     = hart_id & 1;
+    const ціле is_hart1     = hart_id & 1;
     uint64_t  local_minion = (hart_id >> 1) & 0x1F;
 
     // Dimensions (both harts need these for tile assignment)
@@ -147,11 +147,11 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t M = params->src0.ne[1];
     const int64_t N = params->src1.ne[1];
 
-    if ((M % TILE_M) != 0) {
-        return 0;
+    якщо ((M % TILE_M) != 0) {
+        повернути 0;
     }
-    if ((K % BLOCK_K) != 0) {
-        return 0;
+    якщо ((K % BLOCK_K) != 0) {
+        повернути 0;
     }
 
     const int64_t ne2_0 = params->src0.ne[2], ne3_0 = params->src0.ne[3];
@@ -204,13 +204,13 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     // ================================================================
     // Hart 1: Q4_0 weight dequant producer
     // ================================================================
-    if (is_hart1) {
+    якщо (is_hart1) {
         scp_signal(ready_ctr, 0);
         scp_signal(consumed_ctr, 0);
 
         uint32_t chunk_id = 0;
 
-        for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+        для (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
              tile += tiles_stride) {
             const int64_t tiles_per_batch = m_tiles * n_tiles;
             const int64_t batch_idx       = tile / tiles_per_batch;
@@ -226,11 +226,11 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
             const char *  src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
             const int64_t mb         = mb_idx * TILE_M;
 
-            for (int64_t kb = kb_start; kb < kb_end; ++kb) {
-                int buf = chunk_id & 1;
+            для (int64_t kb = kb_start; kb < kb_end; ++kb) {
+                ціле buf = chunk_id & 1;
 
                 // Back-pressure: wait for hart 0 to finish with this buffer.
-                if (chunk_id >= 2) {
+                якщо (chunk_id >= 2) {
                     scp_wait(consumed_ctr, chunk_id - 1);
                 }
 
@@ -246,7 +246,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         FENCE;
-        return 0;
+        повернути 0;
     }
 
     // ================================================================
@@ -256,7 +256,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const uint64_t group_base_global = my_minion_id - k_split;
 
     setup_cache_scp();
-#if CACHEOP_MAX > 0 || REP_RATE > 0
+#якщо CACHEOP_MAX > 0 || REP_RATE > 0
     ucache_control(1, REP_RATE, CACHEOP_MAX);
 #endif
     CLEAR_TENSOR_ERROR;
@@ -268,7 +268,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
     uint32_t chunk_id = 0;
 
-    for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+    для (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
          tile += tiles_stride) {
         const int64_t tiles_per_batch = m_tiles * n_tiles;
         const int64_t batch_idx       = tile / tiles_per_batch;
@@ -291,7 +291,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         // Errata Type D workaround for n_cur == 4 (AROWS==3): pad A to AROWS==4.
         const int64_t arows_fma = (n_cur == 4) ? 4 : (n_cur - 1);
 
-        if (n_cur == 4) {
+        якщо (n_cur == 4) {
             // Zero the padded 5th A row (line A_L1_START+4) once; the per-pass A
             // load only writes lines A_L1_START..+3, so this persists.
             static const float __attribute__((aligned(64))) zero_line[16] = { 0 };
@@ -301,17 +301,17 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
             tensor_wait(TENSOR_LOAD_WAIT_0);
         }
 
-        int first = 1;  // first_pass=1 only for the very first FMA of the tile
+        ціле first = 1;  // first_pass=1 only for the very first FMA of the tile
 
-        for (int64_t kb = kb_start; kb < kb_end; ++kb) {
-            int buf = chunk_id & 1;
+        для (int64_t kb = kb_start; kb < kb_end; ++kb) {
+            ціле buf = chunk_id & 1;
 
             // Wait for hart 1 to finish dequantizing this block.
             chunk_id++;
             scp_wait(ready_ctr, chunk_id);
 
             // Two FMA passes over the 32-wide block (16 K-cols each).
-            for (int half = 0; half < 2; ++half) {
+            для (ціле half = 0; half < 2; ++half) {
                 const int64_t k_elem = kb * BLOCK_K + half * FMA_K;
 
                 // Load A (activations) for this 16-K sub-tile, PLAIN.
@@ -341,22 +341,22 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         // K-split ring reduce.
-        if (k_splits > 1) {
+        якщо (k_splits > 1) {
             const uint64_t num_regs = (uint64_t) n_cur * 2;
 
-            if (k_split > 0) {
+            якщо (k_split > 0) {
                 tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, num_regs, group_base_global + k_split - 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
 
-            if (k_split < k_splits - 1) {
+            якщо (k_split < k_splits - 1) {
                 tensor_reduce_send(0, num_regs, group_base_global + k_split + 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
         }
 
         // Store FP32 result tile (only the last k-split owns the final sum).
-        if (k_split == k_splits - 1) {
+        якщо (k_split == k_splits - 1) {
             tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * (int64_t) sizeof(float)), 0,
                          (uint64_t) nb1_d);
             tensor_wait(TENSOR_STORE_WAIT);
@@ -364,5 +364,5 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     }
 
     FENCE;
-    return 0;
+    повернути 0;
 }

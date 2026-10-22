@@ -31,9 +31,9 @@ static inline void solve_tri_row_scalar(const float * A_row,
                                         uint32_t      col0,
                                         uint32_t      coln,
                                         float         inv_diag) {
-    for (uint32_t col = col0; col < col0 + coln; ++col) {
+    для (uint32_t col = col0; col < col0 + coln; ++col) {
         float sum = 0.0f;
-        for (uint32_t t = 0; t < row; ++t) {
+        для (uint32_t t = 0; t < row; ++t) {
             sum += A_row[t] * X[t * k + col];
         }
         X[row * k + col] = (B_row[col] - sum) * inv_diag;
@@ -43,7 +43,7 @@ static inline void solve_tri_row_scalar(const float * A_row,
 static inline HVX_Vector hvx_load_partial_f32(const float * src, uint32_t n) {
     HVX_Vector v = *((const HVX_UVector *) src);
     HVX_VectorPred mask = Q6_Q_vsetq2_R(n * sizeof(float));
-    return Q6_V_vmux_QVV(mask, v, Q6_V_vzero());
+    повернути Q6_V_vmux_QVV(mask, v, Q6_V_vzero());
 }
 
 static inline void solve_tri_row_hvx(const float * A_row,
@@ -57,7 +57,7 @@ static inline void solve_tri_row_hvx(const float * A_row,
     const bool full = (coln == VLEN_FP32);
 
     HVX_Vector sum_v = Q6_V_vzero();
-    for (uint32_t t = 0; t < row; ++t) {
+    для (uint32_t t = 0; t < row; ++t) {
         const float   a         = A_row[t];
         const float * x_row_col = X + t * k + col0;
 
@@ -77,7 +77,7 @@ static inline void solve_tri_row_hvx(const float * A_row,
 }
 
 // Batch-level thread: each job is one full batch.
-static void solve_tri_batch_thread_f32(unsigned int nth, unsigned int ith, void * data) {
+static void solve_tri_batch_thread_f32(unsigned ціле nth, unsigned ціле ith, void * data) {
     struct htp_solve_tri_context * sctx = (struct htp_solve_tri_context *) data;
     struct htp_ops_context *       octx = sctx->octx;
 
@@ -99,7 +99,7 @@ static void solve_tri_batch_thread_f32(unsigned int nth, unsigned int ith, void 
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_batch);
 
-    for (uint32_t batch = start_batch; batch < end_batch; ++batch) {
+    для (uint32_t batch = start_batch; batch < end_batch; ++batch) {
         const uint32_t i03 = batch / ne02;
         const uint32_t i02 = batch - i03 * ne02;
 
@@ -109,22 +109,22 @@ static void solve_tri_batch_thread_f32(unsigned int nth, unsigned int ith, void 
             (const float *) ((const uint8_t *) (uintptr_t) src1->data + i02 * src1->nb[2] + i03 * src1->nb[3]);
         float * X_batch = (float *) ((uint8_t *) (uintptr_t) dst->data + i02 * dst->nb[2] + i03 * dst->nb[3]);
 
-        for (uint32_t row = 0; row < n; ++row) {
+        для (uint32_t row = 0; row < n; ++row) {
             const float   diag     = A_batch[row * n + row];
             const float   inv_diag = 1.0f / diag;
             const float * A_row    = A_batch + row * n;
             const float * B_row    = B_batch + row * k;
 
             uint32_t col0 = 0;
-            for (; col0 < k_full; col0 += col_block) {
+            для (; col0 < k_full; col0 += col_block) {
                 solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, col_block, inv_diag);
             }
 
-            if (col0 < k) {
+            якщо (col0 < k) {
                 const uint32_t coln = k - col0;
-                if (coln >= 8) {
+                якщо (coln >= 8) {
                     solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
-                } else {
+                } інакше {
                     solve_tri_row_scalar(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
                 }
             }
@@ -138,7 +138,7 @@ static void solve_tri_batch_thread_f32(unsigned int nth, unsigned int ith, void 
 }
 
 // Chunk-level thread: each job is one (batch, col_chunk) pair.
-static void solve_tri_chunk_thread_f32(unsigned int nth, unsigned int ith, void * data) {
+static void solve_tri_chunk_thread_f32(unsigned ціле nth, unsigned ціле ith, void * data) {
     struct htp_solve_tri_context * sctx = (struct htp_solve_tri_context *) data;
     struct htp_ops_context *       octx = sctx->octx;
 
@@ -157,7 +157,7 @@ static void solve_tri_chunk_thread_f32(unsigned int nth, unsigned int ith, void 
     struct htp_thread_trace * tr = &octx->ctx->trace[ith];
     htp_trace_event_start(tr, HTP_TRACE_EVT_HVX_COMP, (uint16_t) start_job);
 
-    for (uint32_t job = start_job; job < end_job; ++job) {
+    для (uint32_t job = start_job; job < end_job; ++job) {
         const uint32_t batch = job / sctx->k_chunks;
         const uint32_t chunk = job - batch * sctx->k_chunks;
 
@@ -173,16 +173,16 @@ static void solve_tri_chunk_thread_f32(unsigned int nth, unsigned int ith, void 
         const uint32_t col0 = chunk * sctx->col_block;
         const uint32_t coln = MIN(sctx->col_block, k - col0);
 
-        for (uint32_t row = 0; row < n; ++row) {
+        для (uint32_t row = 0; row < n; ++row) {
             const float diag     = A_batch[row * n + row];
             const float inv_diag = 1.0f / diag;
 
             const float * A_row = A_batch + row * n;
             const float * B_row = B_batch + row * k;
 
-            if (coln >= 8) {
+            якщо (coln >= 8) {
                 solve_tri_row_hvx(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
-            } else {
+            } інакше {
                 solve_tri_row_scalar(A_row, B_row, X_batch, row, k, col0, coln, inv_diag);
             }
         }
@@ -194,32 +194,32 @@ static void solve_tri_chunk_thread_f32(unsigned int nth, unsigned int ith, void 
          ith, nth, n, n, k, n, start_job, end_job);
 }
 
-int op_solve_tri(struct htp_ops_context * octx) {
+ціле op_solve_tri(struct htp_ops_context * octx) {
     const struct htp_tensor * src0 = octx->src[0];  // A
     const struct htp_tensor * src1 = octx->src[1];  // B
     const struct htp_tensor * dst  = octx->dst;     // X
 
-    if (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
-        return HTP_STATUS_NO_SUPPORT;
+    якщо (src0->type != HTP_TYPE_F32 || src1->type != HTP_TYPE_F32 || dst->type != HTP_TYPE_F32) {
+        повернути HTP_STATUS_NO_SUPPORT;
     }
 
     // left=true, lower=true, uni=false only
-    if (src0->ne[0] != src0->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    якщо (src0->ne[0] != src0->ne[1]) {
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
-    if (src0->ne[1] != src1->ne[1]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    якщо (src0->ne[1] != src1->ne[1]) {
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
-    if (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+    якщо (src0->ne[2] != src1->ne[2] || src0->ne[3] != src1->ne[3]) {
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
-    if (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] ||
+    якщо (dst->ne[0] != src1->ne[0] || dst->ne[1] != src1->ne[1] || dst->ne[2] != src1->ne[2] ||
         dst->ne[3] != src1->ne[3]) {
-        return HTP_STATUS_INVAL_PARAMS;
+        повернути HTP_STATUS_INVAL_PARAMS;
     }
 
-    if (htp_tensor_is_extended(src0) || htp_tensor_is_extended(src1) || htp_tensor_is_extended(dst)) {
-        return HTP_STATUS_NO_SUPPORT;
+    якщо (htp_tensor_is_extended(src0) || htp_tensor_is_extended(src1) || htp_tensor_is_extended(dst)) {
+        повернути HTP_STATUS_NO_SUPPORT;
     }
 
     const uint32_t k = src1->ne[0];
@@ -234,11 +234,11 @@ int op_solve_tri(struct htp_ops_context * octx) {
          src1->ne[0], src1->ne[1], src1->ne[2], src1->ne[3],
          dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], batched);
 
-    if (batched) {
+    якщо (batched) {
         uint32_t job_start = 0;
         uint32_t njobs     = total_batches;
 
-        if (octx->ctx->mdev.count > 1) {
+        якщо (octx->ctx->mdev.count > 1) {
             const uint32_t batch_size = dst->nb[2];
             const uint32_t batches_per_chunk = (batch_size > 0) ? (HEX_L2_LINE_SIZE / hex_gcd_u32(batch_size, HEX_L2_LINE_SIZE)) : 1;
             const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_batches, htp_tensor_mdev_data_aligned(dst) ? batches_per_chunk : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
@@ -246,8 +246,8 @@ int op_solve_tri(struct htp_ops_context * octx) {
             njobs     = range.count;
         }
 
-        if (njobs == 0) {
-            return HTP_STATUS_OK;
+        якщо (njobs == 0) {
+            повернути HTP_STATUS_OK;
         }
 
         // Batch-level parallelism
@@ -263,22 +263,22 @@ int op_solve_tri(struct htp_ops_context * octx) {
         };
 
         work_queue_run(octx->ctx->work_queue, solve_tri_batch_thread_f32, &sctx, n_threads);
-    } else {
+    } інакше {
         // Chunk-level parallelism
         const uint32_t total_jobs = total_batches * k_chunks;
 
         uint32_t job_start = 0;
         uint32_t njobs     = total_jobs;
 
-        if (octx->ctx->mdev.count > 1) {
+        якщо (octx->ctx->mdev.count > 1) {
             const bool can_split = htp_tensor_mdev_data_aligned(dst) && ((dst->nb[1] & (HTP_TENSOR_MDEV_LINE_SIZE - 1)) == 0);
             const struct htp_tensor_mdev_range range = htp_tensor_mdev_partition(total_jobs, can_split ? 1 : 0, octx->ctx->mdev.idx, octx->ctx->mdev.count, &octx->ctx->mdev.count_div);
             job_start = range.start;
             njobs     = range.count;
         }
 
-        if (njobs == 0) {
-            return HTP_STATUS_OK;
+        якщо (njobs == 0) {
+            повернути HTP_STATUS_OK;
         }
 
         const uint32_t n_threads = octx->n_threads;
@@ -295,5 +295,5 @@ int op_solve_tri(struct htp_ops_context * octx) {
         work_queue_run(octx->ctx->work_queue, solve_tri_chunk_thread_f32, &sctx, n_threads);
     }
 
-    return HTP_STATUS_OK;
+    повернути HTP_STATUS_OK;
 }

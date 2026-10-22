@@ -18,13 +18,13 @@
 #include "ggml-common.h"
 #include "ggml-impl.h"
 
-static inline void hvx_quantize_row_q8_0_f32(void * restrict dst_ptr, const float * restrict src_ptr, int n) {
-    const int nb = n / QK8_0;
+static inline void hvx_quantize_row_q8_0_f32(void * restrict dst_ptr, const float * restrict src_ptr, ціле n) {
+    const ціле nb = n / QK8_0;
     block_q8_0 * dst = (block_q8_0 *) dst_ptr;
     HVX_Vector zero = Q6_V_vzero();
 
-    int i = 0;
-    for (; i + 3 < nb; i += 4) {
+    ціле i = 0;
+    для (; i + 3 < nb; i += 4) {
         HVX_Vector * vx = (HVX_Vector *) (src_ptr + i * QK8_0);
 
         HVX_Vector vmax0_sf = hvx_vec_reduce_max_f32(hvx_vec_abs_f32(vx[0]));
@@ -75,7 +75,7 @@ static inline void hvx_quantize_row_q8_0_f32(void * restrict dst_ptr, const floa
         hvx_vec_store_u(dst[i + 3].qs, 32, Q6_V_vror_VR(vx_i8, 96));
     }
 
-    for (; i < nb; i++) {
+    для (; i < nb; i++) {
         const float * block_src = src_ptr + i * QK8_0;
         HVX_Vector vx = *(const HVX_UVector *) block_src;
         HVX_Vector v_abs = hvx_vec_abs_f32(vx);
@@ -98,10 +98,10 @@ static inline void hvx_quantize_row_q8_0_f32(void * restrict dst_ptr, const floa
 }
 
 static inline void hvx_dequantize_row_flat_q8_0_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK8_0;
+    const ціле nb = n / QK8_0;
     const block_q8_0 * src = (const block_q8_0 *) src_ptr;
 
-    for (int i = 0; i < nb; i++) {
+    для (ціле i = 0; i < nb; i++) {
         HVX_Vector vd_f16     = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
         HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(vd_f16);
         HVX_Vector vd         = Q6_V_lo_W(vp_f32);
@@ -122,10 +122,10 @@ static inline void hvx_dequantize_row_flat_q8_0_f32(float * restrict dst_ptr, co
 }
 
 static inline void hvx_dequantize_row_flat_q8_0_f16(__fp16 * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK8_0;
+    const ціле nb = n / QK8_0;
     const block_q8_0 * src = (const block_q8_0 *) src_ptr;
 
-    for (int i = nb - 1; i >= 0; i--) {
+    для (ціле i = nb - 1; i >= 0; i--) {
         HVX_Vector vd_f16     = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
         HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(vd_f16);
         HVX_Vector vd         = Q6_V_lo_W(vp_f32);
@@ -152,7 +152,7 @@ static inline void hvx_dequantize_row_flat_f16_f32(float * restrict dst_ptr, con
     const uint32_t nloe = n % VLEN_FP32;
     const _Float16 * src = (const _Float16 *) src_ptr;
 
-    for (uint32_t i = 0; i < nvec; i++) {
+    для (uint32_t i = 0; i < nvec; i++) {
         HVX_Vector v_f16 = *(const HVX_UVector *) (src + i * VLEN_FP32);
         HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(v_f16);
         HVX_Vector res = Q6_V_lo_W(vp_f32);
@@ -160,7 +160,7 @@ static inline void hvx_dequantize_row_flat_f16_f32(float * restrict dst_ptr, con
         hvx_vmem(dst_ptr + i * VLEN_FP32) = res;
     }
 
-    if (nloe) {
+    якщо (nloe) {
         HVX_Vector v_f16 = *(const HVX_UVector *) (src + nvec * VLEN_FP32);
         HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(v_f16);
         HVX_Vector res = Q6_V_lo_W(vp_f32);
@@ -174,7 +174,7 @@ static inline void hvx_dequantize_row_flat_bf16_f32(float * restrict dst_ptr, co
     const uint32_t nloe = n % VLEN_FP32;
     const uint16_t * src = (const uint16_t *) src_ptr;
 
-    for (uint32_t i = 0; i < nvec; i++) {
+    для (uint32_t i = 0; i < nvec; i++) {
         HVX_Vector v_bf16 = *(const HVX_UVector *) (src + i * VLEN_FP32);
         HVX_VectorPair p = Q6_Ww_vunpack_Vh(v_bf16);
         HVX_Vector res = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
@@ -182,7 +182,7 @@ static inline void hvx_dequantize_row_flat_bf16_f32(float * restrict dst_ptr, co
         hvx_vmem(dst_ptr + i * VLEN_FP32) = res;
     }
 
-    if (nloe) {
+    якщо (nloe) {
         HVX_Vector v_bf16 = *(const HVX_UVector *) (src + nvec * VLEN_FP32);
         HVX_VectorPair p = Q6_Ww_vunpack_Vh(v_bf16);
         HVX_Vector res = Q6_Vw_vasl_VwR(Q6_V_lo_W(p), 16);
@@ -198,13 +198,13 @@ static inline void hvx_dequantize_row_flat_q1_0_f32(float * restrict dst_ptr, co
         1u << 16, 1u << 17, 1u << 18, 1u << 19, 1u << 20, 1u << 21, 1u << 22, 1u << 23,
         1u << 24, 1u << 25, 1u << 26, 1u << 27, 1u << 28, 1u << 29, 1u << 30, 1u << 31,
     };
-    const int nb = n / QK1_0;
+    const ціле nb = n / QK1_0;
     const block_q1_0 * src = (const block_q1_0 *) src_ptr;
     const HVX_Vector v_bit_mask = *(const HVX_Vector *) bit_mask;
     const HVX_Vector v_zero     = Q6_V_vzero();
     const HVX_Vector v_sign_bit = Q6_V_vsplat_R(0x80000000);
 
-    for (int i = 0; i < nb; i++) {
+    для (ціле i = 0; i < nb; i++) {
         HVX_Vector vd_f16 = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
         HVX_Vector vd     = Q6_V_lo_W(hvx_vec_f16_to_f32(vd_f16));
         HVX_Vector neg_vd = Q6_V_vxor_VV(vd, v_sign_bit);
@@ -212,7 +212,7 @@ static inline void hvx_dequantize_row_flat_q1_0_f32(float * restrict dst_ptr, co
 
         float * block_dst = dst_ptr + i * QK1_0;
         #pragma unroll
-        for (int q = 0; q < 4; q++) {
+        для (ціле q = 0; q < 4; q++) {
             HVX_Vector v_bits = hvx_vec_repl_u32(q == 0 ? v_qs : Q6_V_vror_VR(v_qs, 4 * q));
             HVX_VectorPred q_zero = Q6_Q_vcmp_eq_VwVw(Q6_V_vand_VV(v_bits, v_bit_mask), v_zero);
             hvx_vmem(block_dst + q * 32) = Q6_V_vmux_QVV(q_zero, neg_vd, vd);
@@ -221,12 +221,12 @@ static inline void hvx_dequantize_row_flat_q1_0_f32(float * restrict dst_ptr, co
 }
 
 static inline void hvx_dequantize_row_flat_q2_0_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK2_0;
+    const ціле nb = n / QK2_0;
     const block_q2_0 * src = (const block_q2_0 *) src_ptr;
     const HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
     const HVX_Vector v_one   = Q6_Vb_vsplat_R(1);
 
-    for (int i = 0; i < nb; i++) {
+    для (ціле i = 0; i < nb; i++) {
         HVX_Vector vd_f16 = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
         HVX_Vector vd     = Q6_V_lo_W(hvx_vec_f16_to_f32(vd_f16));
 
@@ -250,14 +250,14 @@ static inline void hvx_dequantize_row_flat_q2_0_f32(float * restrict dst_ptr, co
 }
 
 static inline void hvx_dequantize_row_flat_q4_0_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK4_0;
+    const ціле nb = n / QK4_0;
     const block_q4_0 * src = (const block_q4_0 *) src_ptr;
 
     const HVX_VectorPred q16 = Q6_Q_vsetq_R(16);
     const HVX_Vector v_eight = Q6_Vb_vsplat_R(8);
     const HVX_Vector v_zero  = Q6_V_vzero();
 
-    for (int i = 0; i < nb; i++) {
+    для (ціле i = 0; i < nb; i++) {
         HVX_Vector vd_f16     = Q6_Vh_vsplat_R(*(const int16_t *) &src[i].d);
         HVX_VectorPair vp_f32 = hvx_vec_f16_to_f32(vd_f16);
         HVX_Vector vd         = Q6_V_lo_W(vp_f32);
@@ -284,25 +284,25 @@ static inline void hvx_dequantize_row_flat_q4_0_f32(float * restrict dst_ptr, co
 }
 
 static inline void hvx_dequantize_row_flat_q4_k_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK_K;
+    const ціле nb = n / QK_K;
     const block_q4_K * src = (const block_q4_K *) src_ptr;
 
-    for (int i = 0; i < nb; i++) {
+    для (ціле i = 0; i < nb; i++) {
         const float d   = GGML_FP16_TO_FP32(src[i].d);
         const float min = GGML_FP16_TO_FP32(src[i].dmin);
         const uint8_t * sc = src[i].scales;
 
         float * y = dst_ptr + i * QK_K;
 
-        for (int step = 0; step < 4; ++step) {
+        для (ціле step = 0; step < 4; ++step) {
             uint8_t sc1, m1_u, sc2, m2_u;
-            if (step < 2) {
+            якщо (step < 2) {
                 sc1  = sc[2 * step + 0] & 63;
                 m1_u = sc[2 * step + 4] & 63;
                 sc2  = sc[2 * step + 1] & 63;
                 m2_u = sc[2 * step + 5] & 63;
-            } else {
-                const int s = step - 2;
+            } інакше {
+                const ціле s = step - 2;
                 sc1  = (sc[8 + 2 * s + 0] & 0xF) | ((sc[2 * s + 0] >> 6) << 4);
                 m1_u = (sc[8 + 2 * s + 0] >>  4) | ((sc[4 + 2 * s + 0] >> 6) << 4);
                 sc2  = (sc[8 + 2 * s + 1] & 0xF) | ((sc[2 * s + 1] >> 6) << 4);
@@ -339,10 +339,10 @@ static inline void hvx_dequantize_row_flat_q4_k_f32(float * restrict dst_ptr, co
 }
 
 static inline void hvx_dequantize_row_flat_q5_k_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK_K;
+    const ціле nb = n / QK_K;
     const block_q5_K * src = (const block_q5_K *) src_ptr;
 
-    for (int i = 0; i < nb; i++) {
+    для (ціле i = 0; i < nb; i++) {
         const float d   = GGML_FP16_TO_FP32(src[i].d);
         const float min = GGML_FP16_TO_FP32(src[i].dmin);
         const uint8_t * sc = src[i].scales;
@@ -350,15 +350,15 @@ static inline void hvx_dequantize_row_flat_q5_k_f32(float * restrict dst_ptr, co
         HVX_Vector v_qh = *(const HVX_UVector *) src[i].qh;
         float * y = dst_ptr + i * QK_K;
 
-        for (int step = 0; step < 4; ++step) {
+        для (ціле step = 0; step < 4; ++step) {
             uint8_t sc1, m1_u, sc2, m2_u;
-            if (step < 2) {
+            якщо (step < 2) {
                 sc1  = sc[2 * step + 0] & 63;
                 m1_u = sc[2 * step + 4] & 63;
                 sc2  = sc[2 * step + 1] & 63;
                 m2_u = sc[2 * step + 5] & 63;
-            } else {
-                const int s = step - 2;
+            } інакше {
+                const ціле s = step - 2;
                 sc1  = (sc[8 + 2 * s + 0] & 0xF) | ((sc[2 * s + 0] >> 6) << 4);
                 m1_u = (sc[8 + 2 * s + 0] >>  4) | ((sc[4 + 2 * s + 0] >> 6) << 4);
                 sc2  = (sc[8 + 2 * s + 1] & 0xF) | ((sc[2 * s + 1] >> 6) << 4);
@@ -401,7 +401,7 @@ static inline void hvx_dequantize_row_flat_q5_k_f32(float * restrict dst_ptr, co
 }
 
 static inline void hvx_dequantize_row_flat_q6_k_f32(float * restrict dst_ptr, const void * restrict src_ptr, uint32_t n) {
-    const int nb = n / QK_K;
+    const ціле nb = n / QK_K;
     const block_q6_K * src = (const block_q6_K *) src_ptr;
 
     const HVX_VectorPred q64 = Q6_Q_vsetq_R(64);
@@ -409,7 +409,7 @@ static inline void hvx_dequantize_row_flat_q6_k_f32(float * restrict dst_ptr, co
     const HVX_Vector mask_0f = Q6_Vb_vsplat_R(0x0F);
     const HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
 
-    for (int i = 0; i < nb; i++) {
+    для (ціле i = 0; i < nb; i++) {
         const float d = GGML_FP16_TO_FP32(src[i].d);
 
         const uint8_t * restrict ql = src[i].ql;
@@ -418,9 +418,9 @@ static inline void hvx_dequantize_row_flat_q6_k_f32(float * restrict dst_ptr, co
 
         float * y = dst_ptr + i * QK_K;
 
-        for (int half = 0; half < 2; ++half) {
+        для (ціле half = 0; half < 2; ++half) {
             float s[8];
-            for (int j = 0; j < 8; ++j) {
+            для (ціле j = 0; j < 8; ++j) {
                 s[j] = d * sc[j];
             }
 
@@ -482,19 +482,19 @@ static inline HVX_Vector hvx_dequantize_gather4(HVX_Vector v, uint32_t row) {
     v = Q6_V_vror_VR(v, row);
     HVX_Vector packed = Q6_V_vmux_QVV(Q6_Q_vsetq_R(1), v, Q6_V_vror_VR(v, 31));
     packed = Q6_V_vmux_QVV(Q6_Q_vsetq_R(2), packed, Q6_V_vror_VR(v, 62));
-    return Q6_V_vmux_QVV(Q6_Q_vsetq_R(3), packed, Q6_V_vror_VR(v, 93));
+    повернути Q6_V_vmux_QVV(Q6_Q_vsetq_R(3), packed, Q6_V_vror_VR(v, 93));
 }
 
 static inline void hvx_dequantize_row_tiled_q8_0_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
     const HVX_VectorPred first2 = Q6_Q_vsetq_R(2);
     const HVX_VectorPred first4 = Q6_Q_vsetq_R(4);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+    для (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
         const uint8_t * tile = src_spad + k_tile * tile_stride;
         float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
 
         HVX_Vector vq = Q6_V_vzero();
-        for (int group = 7; group >= 0; --group) {
+        для (ціле group = 7; group >= 0; --group) {
             const HVX_Vector v = Q6_V_vror_VR(hvx_vmem(tile + group * VLEN), 2 * row);
             const HVX_Vector packed = Q6_V_vmux_QVV(first2, v, Q6_V_vror_VR(v, 62));
             vq = Q6_V_vmux_QVV(first4, packed, Q6_V_vror_VR(vq, VLEN - 4));
@@ -513,12 +513,12 @@ static inline void hvx_dequantize_row_tiled_q8_0_f32(float * dst_spad, const uin
 static inline void hvx_dequantize_row_tiled_q4_0_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
     const HVX_VectorPred first4 = Q6_Q_vsetq_R(4);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+    для (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
         const uint8_t * tile = src_spad + k_tile * tile_stride;
         float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
 
         HVX_Vector vq = Q6_V_vzero();
-        for (int group = 3; group >= 0; --group) {
+        для (ціле group = 3; group >= 0; --group) {
             vq = Q6_V_vmux_QVV(first4, hvx_dequantize_gather4(hvx_vmem(tile + group * VLEN), row), Q6_V_vror_VR(vq, VLEN - 4));
         }
 
@@ -540,12 +540,12 @@ static inline void hvx_dequantize_row_tiled_q4_0_f32(float * dst_spad, const uin
 static inline void hvx_dequantize_row_tiled_q4_k_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
     const HVX_VectorPred first4 = Q6_Q_vsetq_R(4);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+    для (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
         const uint8_t * tile = src_spad + k_tile * tile_stride;
         float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
 
         HVX_Vector vq = Q6_V_vzero();
-        for (int group = 3; group >= 0; --group) {
+        для (ціле group = 3; group >= 0; --group) {
             vq = Q6_V_vmux_QVV(first4, hvx_dequantize_gather4(hvx_vmem(tile + group * VLEN), row), Q6_V_vror_VR(vq, VLEN - 4));
         }
 
@@ -570,14 +570,14 @@ static inline void hvx_dequantize_row_tiled_q5_k_f32(float * dst_spad, const uin
     const HVX_VectorPred first4 = Q6_Q_vsetq_R(4);
     const HVX_Vector one = Q6_Vb_vsplat_R(1);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+    для (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
         const uint8_t * tile = src_spad + k_tile * tile_stride;
         float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
 
         const HVX_Vector p5 = hvx_dequantize_gather4(hvx_vmem(tile + 640), row);
         HVX_Vector vq = Q6_V_vzero();
         HVX_Vector vh = Q6_V_vzero();
-        for (int group = 3; group >= 0; --group) {
+        для (ціле group = 3; group >= 0; --group) {
             vq = Q6_V_vmux_QVV(first4, hvx_dequantize_gather4(hvx_vmem(tile + group * VLEN), row), Q6_V_vror_VR(vq, VLEN - 4));
             vh = Q6_V_vmux_QVV(first4, Q6_Vub_vlsr_VubR(p5, 2 * group), Q6_V_vror_VR(vh, VLEN - 4));
         }
@@ -605,12 +605,12 @@ static inline void hvx_dequantize_row_tiled_q6_k_f32(float * dst_spad, const uin
     const HVX_Vector mask_0f = Q6_Vb_vsplat_R(0x0F);
     const HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+    для (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
         const uint8_t * tile = src_spad + k_tile * tile_stride;
         float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
 
         HVX_Vector vq = Q6_V_vzero();
-        for (int group = 7; group >= 0; --group) {
+        для (ціле group = 7; group >= 0; --group) {
             const HVX_Vector lo_plane = Q6_V_vror_VR(hvx_vmem(tile + (group >> 1) * VLEN), 4 * row);
             const HVX_Vector hi_plane = Q6_V_vror_VR(hvx_vmem(tile + 512 + (group >> 2) * VLEN), 4 * row);
             const HVX_Vector lo = (group & 1) ? Q6_Vub_vlsr_VubR(lo_plane, 4) : Q6_V_vand_VV(lo_plane, mask_0f);
@@ -638,13 +638,13 @@ static inline HVX_Vector hvx_dequantize_tiled_f16_gather4(const uint8_t * p, uin
     HVX_Vector w2  = Q6_V_vror_VR(hvx_vmem(p + 2 * VLEN), r_byte);
     HVX_Vector w3  = Q6_V_vror_VR(hvx_vmem(p + 3 * VLEN), r_byte);
     HVX_Vector w23 = Q6_V_lo_W(Q6_W_vshuff_VVR(w3, w2, 4));
-    return Q6_V_lo_W(Q6_W_vshuff_VVR(w23, w01, 8));
+    повернути Q6_V_lo_W(Q6_W_vshuff_VVR(w23, w01, 8));
 }
 
 static inline void hvx_dequantize_row_tiled_f16_f32(float * dst_spad, const uint8_t * src_spad, uint32_t n_k_tiles, uint32_t tile_stride, uint32_t row) {
     const uint32_t r_byte = 4 * row;
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+    для (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
         const uint8_t * tile = src_spad + k_tile * tile_stride;
         float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_N_COLS;
 
@@ -676,7 +676,7 @@ static inline void hvx_dequantize_row_tiled_q1_0_f32(float * dst_spad, const uin
     const HVX_Vector v_zero     = Q6_V_vzero();
     const HVX_Vector v_sign_bit = Q6_V_vsplat_R(0x80000000);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+    для (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
         const uint8_t * tile = src_spad + k_tile * tile_stride;
         float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_K_Q1_0;
 
@@ -686,7 +686,7 @@ static inline void hvx_dequantize_row_tiled_q1_0_f32(float * dst_spad, const uin
         const HVX_Vector neg_vd   = Q6_V_vxor_VV(vd, v_sign_bit);
 
         #pragma unroll
-        for (int q = 0; q < 4; ++q) {
+        для (ціле q = 0; q < 4; ++q) {
             const HVX_Vector v_bits = hvx_vec_repl_u32(Q6_V_vror_VR(hvx_vmem(tile + q * VLEN), 4 * row));
             const HVX_VectorPred q_zero = Q6_Q_vcmp_eq_VwVw(Q6_V_vand_VV(v_bits, v_bit_mask), v_zero);
             hvx_vmem(dst + q * 32) = Q6_V_vmux_QVV(q_zero, neg_vd, vd);
@@ -698,7 +698,7 @@ static inline void hvx_dequantize_row_tiled_q2_0_f32(float * dst_spad, const uin
     const HVX_Vector mask_03 = Q6_Vb_vsplat_R(0x03);
     const HVX_Vector v_one   = Q6_Vb_vsplat_R(1);
 
-    for (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
+    для (uint32_t k_tile = 0; k_tile < n_k_tiles; ++k_tile) {
         const uint8_t * tile = src_spad + k_tile * tile_stride;
         float * dst = dst_spad + k_tile * HTP_TENSOR_TILE_K_Q2_0;
 

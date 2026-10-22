@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#if !defined(SPINE_TCM_BUILD_SHARED) && !defined(SPINE_TCM_DIRECT_LINK)
+#якщо !defined(SPINE_TCM_BUILD_SHARED) && !defined(SPINE_TCM_DIRECT_LINK)
 #    include <dlfcn.h>
 #endif
 
@@ -37,144 +37,144 @@
 extern "C" {
 #endif
 
-#if defined(_WIN32)
-#    if defined(SPINE_TCM_BUILD_SHARED)
+#якщо defined(_WIN32)
+#    якщо defined(SPINE_TCM_BUILD_SHARED)
 #        define SPINE_TCM_API __declspec(dllexport)
-#    else
+#    інакше
 #        define SPINE_TCM_API __declspec(dllimport)
 #    endif
-#else
+#інакше
 #    define SPINE_TCM_API __attribute__((visibility("default")))
 #endif
 
 typedef struct spine_tcm_mem_info {
     size_t blk_size;
     size_t blk_num;
-    int    is_fake_tcm;
+    ціле    is_fake_tcm;
 } spine_tcm_mem_info_t;
 
 typedef struct spine_tcm_block_info {
-    int      id;
+    ціле      id;
     void *   va;
     size_t   size;
     uint64_t phys_addr;
     uint64_t cpu_affinity_mask;
-    int      owner_tid;
-    int      is_acquired;
+    ціле      owner_tid;
+    ціле      is_acquired;
 } spine_tcm_block_info_t;
 
 /* Shared-library runtime ABI exported by libspine_tcm.so. */
 SPINE_TCM_API const char * spine_tcm_runtime_version(void);
-SPINE_TCM_API int          spine_tcm_runtime_is_available(void);
-SPINE_TCM_API int          spine_tcm_runtime_layout_info(spine_tcm_mem_info_t * info);
-SPINE_TCM_API int          spine_tcm_runtime_mem_info(int id, spine_tcm_block_info_t * info);
-SPINE_TCM_API void *       spine_tcm_runtime_mem_get(int id);
-SPINE_TCM_API int          spine_tcm_runtime_mem_free(int id);
-SPINE_TCM_API void *       spine_tcm_runtime_mem_try_wait(int id, size_t timeout_us);
-SPINE_TCM_API int          spine_tcm_runtime_mem_release(int id);
-SPINE_TCM_API int          spine_tcm_runtime_mem_force_release(int id);
-SPINE_TCM_API int          spine_tcm_runtime_mem_query(int id);
+SPINE_TCM_API ціле          spine_tcm_runtime_is_available(void);
+SPINE_TCM_API ціле          spine_tcm_runtime_layout_info(spine_tcm_mem_info_t * info);
+SPINE_TCM_API ціле          spine_tcm_runtime_mem_info(ціле id, spine_tcm_block_info_t * info);
+SPINE_TCM_API void *       spine_tcm_runtime_mem_get(ціле id);
+SPINE_TCM_API ціле          spine_tcm_runtime_mem_free(ціле id);
+SPINE_TCM_API void *       spine_tcm_runtime_mem_try_wait(ціле id, size_t timeout_us);
+SPINE_TCM_API ціле          spine_tcm_runtime_mem_release(ціле id);
+SPINE_TCM_API ціле          spine_tcm_runtime_mem_force_release(ціле id);
+SPINE_TCM_API ціле          spine_tcm_runtime_mem_query(ціле id);
 
-#if defined(SPINE_TCM_DIRECT_LINK)
+#якщо defined(SPINE_TCM_DIRECT_LINK)
 /* Optional no-op in direct-link mode. */
-static inline int spine_tcm_open_handle(const char * so_path) {
+static inline ціле spine_tcm_open_handle(const char * so_path) {
     (void) so_path;
-    return 0;
+    повернути 0;
 }
 
 static inline const char * spine_tcm_version(void) {
-    return spine_tcm_runtime_version();
+    повернути spine_tcm_runtime_version();
 }
 
 /* Returns 1 when the runtime driver is available, otherwise 0. */
-static inline int spine_tcm_is_available(void) {
-    return spine_tcm_runtime_is_available();
+static inline ціле spine_tcm_is_available(void) {
+    повернути spine_tcm_runtime_is_available();
 }
 
 /* Returns runtime memory geometry and whether the current backend is fake TCM. */
-static inline int spine_tcm_mem_info(spine_tcm_mem_info_t * info) {
-    return spine_tcm_runtime_layout_info(info);
+static inline ціле spine_tcm_mem_info(spine_tcm_mem_info_t * info) {
+    повернути spine_tcm_runtime_layout_info(info);
 }
 
 /* Returns per-block runtime metadata for the given TCM id. */
-static inline int spine_tcm_block_info(int id, spine_tcm_block_info_t * info) {
-    return spine_tcm_runtime_mem_info(id, info);
+static inline ціле spine_tcm_block_info(ціле id, spine_tcm_block_info_t * info) {
+    повернути spine_tcm_runtime_mem_info(id, info);
 }
 
 /* Returns a cached buffer for the given TCM id, or NULL on failure. */
-static inline void * spine_tcm_mem_get(int id) {
-    return spine_tcm_runtime_mem_get(id);
+static inline void * spine_tcm_mem_get(ціле id) {
+    повернути spine_tcm_runtime_mem_get(id);
 }
 
 /* Releases one reference acquired by spine_tcm_mem_get(id). */
-static inline int spine_tcm_mem_free(int id) {
-    return spine_tcm_runtime_mem_free(id);
+static inline ціле spine_tcm_mem_free(ціле id) {
+    повернути spine_tcm_runtime_mem_free(id);
 }
 
 /* Waits for a TCM block handoff and returns the driver-owned buffer when available. */
-static inline void * spine_tcm_mem_try_wait(int id, size_t over_time) {
-    return spine_tcm_runtime_mem_try_wait(id, over_time);
+static inline void * spine_tcm_mem_try_wait(ціле id, size_t over_time) {
+    повернути spine_tcm_runtime_mem_try_wait(id, over_time);
 }
 
 /* Releases a buffer acquired by spine_tcm_mem_try_wait(id, over_time). */
-static inline int spine_tcm_mem_release(int id) {
-    return spine_tcm_runtime_mem_release(id);
+static inline ціле spine_tcm_mem_release(ціле id) {
+    повернути spine_tcm_runtime_mem_release(id);
 }
 
 /* Forces a release for the given TCM id when the backend supports it. */
-static inline int spine_tcm_mem_force_release(int id) {
-    return spine_tcm_runtime_mem_force_release(id);
+static inline ціле spine_tcm_mem_force_release(ціле id) {
+    повернути spine_tcm_runtime_mem_force_release(id);
 }
 
 /* Returns whether the given TCM id is currently acquired. */
-static inline int spine_tcm_mem_query(int id) {
-    return spine_tcm_runtime_mem_query(id);
+static inline ціле spine_tcm_mem_query(ціле id) {
+    повернути spine_tcm_runtime_mem_query(id);
 }
 #elif !defined(SPINE_TCM_BUILD_SHARED)
 typedef struct spine_tcm_handle {
     void * module_handle;
-    int    use_global_scope;
-    int    owns_module_handle;
+    ціле    use_global_scope;
+    ціле    owns_module_handle;
     const char * (*runtime_version)(void);
-    int (*runtime_is_available)(void);
-    int (*runtime_layout_info)(spine_tcm_mem_info_t * info);
-    int (*runtime_mem_info)(int id, spine_tcm_block_info_t * info);
-    void * (*runtime_mem_get)(int id);
-    int (*runtime_mem_free)(int id);
-    void * (*runtime_mem_try_wait)(int id, size_t over_time);
-    int (*runtime_mem_release)(int id);
-    int (*runtime_mem_force_release)(int id);
-    int (*runtime_mem_query)(int id);
+    ціле (*runtime_is_available)(void);
+    ціле (*runtime_layout_info)(spine_tcm_mem_info_t * info);
+    ціле (*runtime_mem_info)(ціле id, spine_tcm_block_info_t * info);
+    void * (*runtime_mem_get)(ціле id);
+    ціле (*runtime_mem_free)(ціле id);
+    void * (*runtime_mem_try_wait)(ціле id, size_t over_time);
+    ціле (*runtime_mem_release)(ціле id);
+    ціле (*runtime_mem_force_release)(ціле id);
+    ціле (*runtime_mem_query)(ціле id);
 } spine_tcm_handle_t;
 
 static inline spine_tcm_handle_t * spine_tcm_default_handle(void) {
     static spine_tcm_handle_t handle = { 0 };
-    return &handle;
+    повернути &handle;
 }
 
 static inline void spine_tcm_handle_reset(spine_tcm_handle_t * handle) {
-    if (handle != NULL) {
+    якщо (handle != NULL) {
         memset(handle, 0, sizeof(*handle));
     }
 }
 
-static inline int spine_tcm_handle_bind(spine_tcm_handle_t * handle) {
+static inline ціле spine_tcm_handle_bind(spine_tcm_handle_t * handle) {
     void * symbol_scope = handle->use_global_scope ? RTLD_DEFAULT : handle->module_handle;
 
     handle->runtime_version      = (const char * (*) (void) ) dlsym(symbol_scope, "spine_tcm_runtime_version");
-    handle->runtime_is_available = (int (*)(void)) dlsym(symbol_scope, "spine_tcm_runtime_is_available");
+    handle->runtime_is_available = (ціле (*)(void)) dlsym(symbol_scope, "spine_tcm_runtime_is_available");
     handle->runtime_layout_info =
-        (int (*)(spine_tcm_mem_info_t *)) dlsym(symbol_scope, "spine_tcm_runtime_layout_info");
+        (ціле (*)(spine_tcm_mem_info_t *)) dlsym(symbol_scope, "spine_tcm_runtime_layout_info");
     handle->runtime_mem_info =
-        (int (*)(int, spine_tcm_block_info_t *)) dlsym(symbol_scope, "spine_tcm_runtime_mem_info");
-    handle->runtime_mem_get      = (void * (*) (int) ) dlsym(symbol_scope, "spine_tcm_runtime_mem_get");
-    handle->runtime_mem_free     = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_free");
-    handle->runtime_mem_try_wait = (void * (*) (int, size_t)) dlsym(symbol_scope, "spine_tcm_runtime_mem_try_wait");
-    handle->runtime_mem_release  = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_release");
-    handle->runtime_mem_force_release = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_force_release");
-    handle->runtime_mem_query         = (int (*)(int)) dlsym(symbol_scope, "spine_tcm_runtime_mem_query");
+        (ціле (*)(ціле, spine_tcm_block_info_t *)) dlsym(symbol_scope, "spine_tcm_runtime_mem_info");
+    handle->runtime_mem_get      = (void * (*) (ціле) ) dlsym(symbol_scope, "spine_tcm_runtime_mem_get");
+    handle->runtime_mem_free     = (ціле (*)(ціле)) dlsym(symbol_scope, "spine_tcm_runtime_mem_free");
+    handle->runtime_mem_try_wait = (void * (*) (ціле, size_t)) dlsym(symbol_scope, "spine_tcm_runtime_mem_try_wait");
+    handle->runtime_mem_release  = (ціле (*)(ціле)) dlsym(symbol_scope, "spine_tcm_runtime_mem_release");
+    handle->runtime_mem_force_release = (ціле (*)(ціле)) dlsym(symbol_scope, "spine_tcm_runtime_mem_force_release");
+    handle->runtime_mem_query         = (ціле (*)(ціле)) dlsym(symbol_scope, "spine_tcm_runtime_mem_query");
 
-    return handle->runtime_version != NULL && handle->runtime_is_available != NULL &&
+    повернути handle->runtime_version != NULL && handle->runtime_is_available != NULL &&
                    handle->runtime_layout_info != NULL && handle->runtime_mem_info != NULL &&
                    handle->runtime_mem_get != NULL && handle->runtime_mem_free != NULL &&
                    handle->runtime_mem_try_wait != NULL && handle->runtime_mem_release != NULL &&
@@ -187,13 +187,13 @@ static inline int spine_tcm_handle_bind(spine_tcm_handle_t * handle) {
  * Try to bind against an already-loaded process-global spine_tcm instance.
  * The shared library exports spine_tcm_runtime_marker only for this probe.
  */
-static inline int spine_tcm_try_bind_global(spine_tcm_handle_t * handle) {
-    if (dlsym(RTLD_DEFAULT, "spine_tcm_runtime_marker") == NULL) {
-        return -1;
+static inline ціле spine_tcm_try_bind_global(spine_tcm_handle_t * handle) {
+    якщо (dlsym(RTLD_DEFAULT, "spine_tcm_runtime_marker") == NULL) {
+        повернути -1;
     }
 
     handle->use_global_scope = 1;
-    return spine_tcm_handle_bind(handle);
+    повернути spine_tcm_handle_bind(handle);
 }
 
 /*
@@ -204,16 +204,16 @@ static inline int spine_tcm_try_bind_global(spine_tcm_handle_t * handle) {
  *   - Otherwise loads the shared library from so_path or the default soname.
  *   - Repeated calls are safe and return 0 after the first successful bind.
  */
-static inline int spine_tcm_open_handle(const char * so_path) {
+static inline ціле spine_tcm_open_handle(const char * so_path) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
     const char *         library  = (so_path != NULL && so_path[0] != '\0') ? so_path : "libspine_tcm.so";
 
-    if (resolved->module_handle != NULL || resolved->use_global_scope) {
-        return 0;
+    якщо (resolved->module_handle != NULL || resolved->use_global_scope) {
+        повернути 0;
     }
 
-    if (spine_tcm_try_bind_global(resolved) == 0) {
-        return 0;
+    якщо (spine_tcm_try_bind_global(resolved) == 0) {
+        повернути 0;
     }
 
     spine_tcm_handle_reset(resolved);
@@ -221,182 +221,182 @@ static inline int spine_tcm_open_handle(const char * so_path) {
     resolved->module_handle      = dlopen(library, RTLD_LAZY | RTLD_GLOBAL);
     resolved->owns_module_handle = resolved->module_handle != NULL ? 1 : 0;
 
-    if (resolved->module_handle == NULL) {
+    якщо (resolved->module_handle == NULL) {
         spine_tcm_handle_reset(resolved);
-        return -1;
+        повернути -1;
     }
 
-    if (spine_tcm_handle_bind(resolved) != 0) {
-        if (resolved->owns_module_handle) {
+    якщо (spine_tcm_handle_bind(resolved) != 0) {
+        якщо (resolved->owns_module_handle) {
             dlclose(resolved->module_handle);
         }
         spine_tcm_handle_reset(resolved);
-        return -1;
+        повернути -1;
     }
 
-    return 0;
+    повернути 0;
 }
 
 /* Returns 1 when the runtime driver is available, otherwise 0. */
-static inline int spine_tcm_is_available(void) {
+static inline ціле spine_tcm_is_available(void) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_is_available == NULL) {
-        return 0;
+    якщо ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_is_available == NULL) {
+        повернути 0;
     }
 
-    return resolved->runtime_is_available();
+    повернути resolved->runtime_is_available();
 }
 
 /* Returns runtime memory geometry and whether the current backend is fake TCM. */
-static inline int spine_tcm_mem_info(spine_tcm_mem_info_t * info) {
+static inline ціле spine_tcm_mem_info(spine_tcm_mem_info_t * info) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_layout_info == NULL) {
-        return -1;
+    якщо ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_layout_info == NULL) {
+        повернути -1;
     }
 
-    return resolved->runtime_layout_info(info);
+    повернути resolved->runtime_layout_info(info);
 }
 
 static inline const char * spine_tcm_version(void) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_version == NULL) {
-        return "unknown";
+    якщо ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_version == NULL) {
+        повернути "unknown";
     }
 
-    return resolved->runtime_version();
+    повернути resolved->runtime_version();
 }
 
 /* Returns per-block runtime metadata for the given TCM id. */
-static inline int spine_tcm_block_info(int id, spine_tcm_block_info_t * info) {
+static inline ціле spine_tcm_block_info(ціле id, spine_tcm_block_info_t * info) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_info == NULL) {
-        return -1;
+    якщо ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_info == NULL) {
+        повернути -1;
     }
 
-    return resolved->runtime_mem_info(id, info);
+    повернути resolved->runtime_mem_info(id, info);
 }
 
 /* Returns a cached buffer for the given TCM id, or NULL on failure. */
-static inline void * spine_tcm_mem_get(int id) {
+static inline void * spine_tcm_mem_get(ціле id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        return NULL;
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
+        повернути NULL;
     }
 
-    if (resolved->runtime_mem_get == NULL) {
-        return NULL;
+    якщо (resolved->runtime_mem_get == NULL) {
+        повернути NULL;
     }
 
-    return resolved->runtime_mem_get(id);
+    повернути resolved->runtime_mem_get(id);
 }
 
 /* Releases one reference acquired by spine_tcm_mem_get(id). */
-static inline int spine_tcm_mem_free(int id) {
+static inline ціле spine_tcm_mem_free(ціле id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_free == NULL) {
-        return -1;
+    якщо ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_free == NULL) {
+        повернути -1;
     }
 
-    return resolved->runtime_mem_free(id);
+    повернути resolved->runtime_mem_free(id);
 }
 
 /* Waits for a TCM block handoff and returns the driver-owned buffer when available. */
-static inline void * spine_tcm_mem_try_wait(int id, size_t over_time) {
+static inline void * spine_tcm_mem_try_wait(ціле id, size_t over_time) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
-        return NULL;
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
+        повернути NULL;
     }
 
-    if (resolved->runtime_mem_try_wait == NULL) {
-        return NULL;
+    якщо (resolved->runtime_mem_try_wait == NULL) {
+        повернути NULL;
     }
 
-    return resolved->runtime_mem_try_wait(id, over_time);
+    повернути resolved->runtime_mem_try_wait(id, over_time);
 }
 
 /* Releases a buffer acquired by spine_tcm_mem_try_wait(id, over_time). */
-static inline int spine_tcm_mem_release(int id) {
+static inline ціле spine_tcm_mem_release(ціле id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_release == NULL) {
-        return -1;
+    якщо ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_release == NULL) {
+        повернути -1;
     }
 
-    return resolved->runtime_mem_release(id);
+    повернути resolved->runtime_mem_release(id);
 }
 
 /* Forces a release for the given TCM id when the backend supports it. */
-static inline int spine_tcm_mem_force_release(int id) {
+static inline ціле spine_tcm_mem_force_release(ціле id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) ||
+    якщо ((resolved->module_handle == NULL && !resolved->use_global_scope) ||
         resolved->runtime_mem_force_release == NULL) {
-        return -1;
+        повернути -1;
     }
 
-    return resolved->runtime_mem_force_release(id);
+    повернути resolved->runtime_mem_force_release(id);
 }
 
 /* Returns whether the given TCM id is currently acquired. */
-static inline int spine_tcm_mem_query(int id) {
+static inline ціле spine_tcm_mem_query(ціле id) {
     spine_tcm_handle_t * resolved = spine_tcm_default_handle();
 
-    if (resolved->module_handle == NULL && !resolved->use_global_scope) {
+    якщо (resolved->module_handle == NULL && !resolved->use_global_scope) {
         (void) spine_tcm_open_handle(NULL);
     }
 
-    if ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_query == NULL) {
-        return -1;
+    якщо ((resolved->module_handle == NULL && !resolved->use_global_scope) || resolved->runtime_mem_query == NULL) {
+        повернути -1;
     }
 
-    return resolved->runtime_mem_query(id);
+    повернути resolved->runtime_mem_query(id);
 }
-#else
+#інакше
 static inline const char * spine_tcm_version(void) {
-    return spine_tcm_runtime_version();
+    повернути spine_tcm_runtime_version();
 }
 #endif
 

@@ -26,40 +26,40 @@ struct Options {
 //==============================================================
 static std::string trim(const std::string & s) {
     size_t a = 0;
-    while (a < s.size() && std::isspace((unsigned char) s[a])) {
+    поки (a < s.size() && std::isspace((unsigned char) s[a])) {
         a++;
     }
     size_t b = s.size();
-    while (b > a && std::isspace((unsigned char) s[b - 1])) {
+    поки (b > a && std::isspace((unsigned char) s[b - 1])) {
         b--;
     }
-    return s.substr(a, b - a);
+    повернути s.substr(a, b - a);
 }
 
 static std::string trim_value(std::istream & is) {
     std::ostringstream ss;
     ss << is.rdbuf();
-    return trim(ss.str());
+    повернути trim(ss.str());
 }
 
 static bool isIdentChar(char c) {
-    return std::isalnum(static_cast<unsigned char>(c)) || c == '_';
+    повернути std::isalnum(static_cast<unsigned char>(c)) || c == '_';
 }
 
 static bool endsWithContinuation(const std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    поки (i > 0 && std::isspace((unsigned char) line[i - 1])) {
         i--;
     }
-    return i > 0 && line[i - 1] == '\\';
+    повернути i > 0 && line[i - 1] == '\\';
 }
 
 static void stripContinuation(std::string & line) {
     size_t i = line.size();
-    while (i > 0 && std::isspace((unsigned char) line[i - 1])) {
+    поки (i > 0 && std::isspace((unsigned char) line[i - 1])) {
         i--;
     }
-    if (i > 0 && line[i - 1] == '\\') {
+    якщо (i > 0 && line[i - 1] == '\\') {
         line.erase(i - 1);
     }
 }
@@ -71,26 +71,26 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
 static std::string expandMacroValue(const std::string &                                  name,
                                     const std::unordered_map<std::string, std::string> & macros,
                                     std::unordered_set<std::string> &                    visiting) {
-    if (visiting.count(name)) {
+    якщо (visiting.count(name)) {
         throw std::runtime_error("Recursive macro: " + name);
     }
     visiting.insert(name);
 
     auto it = macros.find(name);
-    if (it == macros.end()) {
+    якщо (it == macros.end()) {
         visiting.erase(name);
-        return name;
+        повернути name;
     }
 
     const std::string & value = it->second;
-    if (value.empty()) {
+    якщо (value.empty()) {
         visiting.erase(name);
-        return "";
+        повернути "";
     }
 
     std::string expanded = expandMacrosRecursiveInternal(value, macros, visiting);
     visiting.erase(name);
-    return expanded;
+    повернути expanded;
 }
 
 static std::string expandMacrosRecursiveInternal(const std::string &                                  line,
@@ -100,33 +100,33 @@ static std::string expandMacrosRecursiveInternal(const std::string &            
     result.reserve(line.size());
 
     size_t i = 0;
-    while (i < line.size()) {
-        if (isIdentChar(line[i])) {
+    поки (i < line.size()) {
+        якщо (isIdentChar(line[i])) {
             size_t start = i;
-            while (i < line.size() && isIdentChar(line[i])) {
+            поки (i < line.size() && isIdentChar(line[i])) {
                 i++;
             }
             std::string token = line.substr(start, i - start);
 
             auto it = macros.find(token);
-            if (it != macros.end()) {
+            якщо (it != macros.end()) {
                 result += expandMacroValue(token, macros, visiting);
-            } else {
+            } інакше {
                 result += token;
             }
-        } else {
+        } інакше {
             result += line[i];
             i++;
         }
     }
 
-    return result;
+    повернути result;
 }
 
 static std::string expandMacrosRecursive(const std::string &                                  line,
                                          const std::unordered_map<std::string, std::string> & macros) {
     std::unordered_set<std::string> visiting;
-    return expandMacrosRecursiveInternal(line, macros, visiting);
+    повернути expandMacrosRecursiveInternal(line, macros, visiting);
 }
 
 //==============================================================
@@ -145,57 +145,57 @@ class ExprLexer {
 
     Tok next() {
         skipWS();
-        if (pos >= src.size()) {
-            return { END, "" };
+        якщо (pos >= src.size()) {
+            повернути { END, "" };
         }
 
         char c = src[pos];
 
         // number
-        if (std::isdigit((unsigned char) c)) {
+        якщо (std::isdigit((unsigned char) c)) {
             size_t start = pos;
-            while (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
+            поки (pos < src.size() && std::isdigit((unsigned char) src[pos])) {
                 pos++;
             }
-            return { NUMBER, std::string(src.substr(start, pos - start)) };
+            повернути { NUMBER, std::string(src.substr(start, pos - start)) };
         }
 
         // identifier
-        if (std::isalpha((unsigned char) c) || c == '_') {
+        якщо (std::isalpha((unsigned char) c) || c == '_') {
             size_t start = pos;
-            while (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
+            поки (pos < src.size() && (std::isalnum((unsigned char) src[pos]) || src[pos] == '_')) {
                 pos++;
             }
-            return { IDENT, std::string(src.substr(start, pos - start)) };
+            повернути { IDENT, std::string(src.substr(start, pos - start)) };
         }
 
-        if (c == '(') {
+        якщо (c == '(') {
             pos++;
-            return { LPAREN, "(" };
+            повернути { LPAREN, "(" };
         }
-        if (c == ')') {
+        якщо (c == ')') {
             pos++;
-            return { RPAREN, ")" };
+            повернути { RPAREN, ")" };
         }
 
         // multi-char operators
         static const char * two_ops[] = { "==", "!=", "<=", ">=", "&&", "||", "<<", ">>" };
-        for (auto op : two_ops) {
-            if (src.substr(pos, 2) == op) {
+        для (auto op : two_ops) {
+            якщо (src.substr(pos, 2) == op) {
                 pos += 2;
-                return { OP, std::string(op) };
+                повернути { OP, std::string(op) };
             }
         }
 
         // single-char operators
-        if (std::string("+-*/%<>!").find(c) != std::string::npos) {
+        якщо (std::string("+-*/%<>!").find(c) != std::string::npos) {
             pos++;
-            return { OP, std::string(1, c) };
+            повернути { OP, std::string(1, c) };
         }
 
         // unexpected
         pos++;
-        return { END, "" };
+        повернути { END, "" };
     }
 
   private:
@@ -203,7 +203,7 @@ class ExprLexer {
     size_t           pos;
 
     void skipWS() {
-        while (pos < src.size() && std::isspace((unsigned char) src[pos])) {
+        поки (pos < src.size() && std::isspace((unsigned char) src[pos])) {
             pos++;
         }
     }
@@ -223,7 +223,7 @@ class ExprParser {
         advance();
     }
 
-    int parse() { return parseLogicalOr(); }
+    ціле parse() { повернути parseLogicalOr(); }
 
   private:
     ExprLexer                                            lex;
@@ -234,210 +234,210 @@ class ExprParser {
     void advance() { tok = lex.next(); }
 
     bool acceptOp(const std::string & s) {
-        if (tok.kind == ExprLexer::OP && tok.text == s) {
+        якщо (tok.kind == ExprLexer::OP && tok.text == s) {
             advance();
-            return true;
+            повернути true;
         }
-        return false;
+        повернути false;
     }
 
     bool acceptKind(ExprLexer::Kind k) {
-        if (tok.kind == k) {
+        якщо (tok.kind == k) {
             advance();
-            return true;
+            повернути true;
         }
-        return false;
+        повернути false;
     }
 
-    int parseLogicalOr() {
-        int v = parseLogicalAnd();
-        while (acceptOp("||")) {
-            int rhs = parseLogicalAnd();
+    ціле parseLogicalOr() {
+        ціле v = parseLogicalAnd();
+        поки (acceptOp("||")) {
+            ціле rhs = parseLogicalAnd();
             v       = (v || rhs);
         }
-        return v;
+        повернути v;
     }
 
-    int parseLogicalAnd() {
-        int v = parseEquality();
-        while (acceptOp("&&")) {
-            int rhs = parseEquality();
+    ціле parseLogicalAnd() {
+        ціле v = parseEquality();
+        поки (acceptOp("&&")) {
+            ціле rhs = parseEquality();
             v       = (v && rhs);
         }
-        return v;
+        повернути v;
     }
 
-    int parseEquality() {
-        int v = parseRelational();
-        for (;;) {
-            if (acceptOp("==")) {
-                int rhs = parseRelational();
+    ціле parseEquality() {
+        ціле v = parseRelational();
+        для (;;) {
+            якщо (acceptOp("==")) {
+                ціле rhs = parseRelational();
                 v       = (v == rhs);
-            } else if (acceptOp("!=")) {
-                int rhs = parseRelational();
+            } інакше якщо (acceptOp("!=")) {
+                ціле rhs = parseRelational();
                 v       = (v != rhs);
-            } else {
+            } інакше {
                 break;
             }
         }
-        return v;
+        повернути v;
     }
 
-    int parseRelational() {
-        int v = parseShift();
-        for (;;) {
-            if (acceptOp("<")) {
-                int rhs = parseShift();
+    ціле parseRelational() {
+        ціле v = parseShift();
+        для (;;) {
+            якщо (acceptOp("<")) {
+                ціле rhs = parseShift();
                 v       = (v < rhs);
-            } else if (acceptOp(">")) {
-                int rhs = parseShift();
+            } інакше якщо (acceptOp(">")) {
+                ціле rhs = parseShift();
                 v       = (v > rhs);
-            } else if (acceptOp("<=")) {
-                int rhs = parseShift();
+            } інакше якщо (acceptOp("<=")) {
+                ціле rhs = parseShift();
                 v       = (v <= rhs);
-            } else if (acceptOp(">=")) {
-                int rhs = parseShift();
+            } інакше якщо (acceptOp(">=")) {
+                ціле rhs = parseShift();
                 v       = (v >= rhs);
-            } else {
+            } інакше {
                 break;
             }
         }
-        return v;
+        повернути v;
     }
 
-    int parseShift() {
-        int v = parseAdd();
-        for (;;) {
-            if (acceptOp("<<")) {
-                int rhs = parseAdd();
+    ціле parseShift() {
+        ціле v = parseAdd();
+        для (;;) {
+            якщо (acceptOp("<<")) {
+                ціле rhs = parseAdd();
                 v       = (v << rhs);
-            } else if (acceptOp(">>")) {
-                int rhs = parseAdd();
+            } інакше якщо (acceptOp(">>")) {
+                ціле rhs = parseAdd();
                 v       = (v >> rhs);
-            } else {
+            } інакше {
                 break;
             }
         }
-        return v;
+        повернути v;
     }
 
-    int parseAdd() {
-        int v = parseMult();
-        for (;;) {
-            if (acceptOp("+")) {
-                int rhs = parseMult();
+    ціле parseAdd() {
+        ціле v = parseMult();
+        для (;;) {
+            якщо (acceptOp("+")) {
+                ціле rhs = parseMult();
                 v       = (v + rhs);
-            } else if (acceptOp("-")) {
-                int rhs = parseMult();
+            } інакше якщо (acceptOp("-")) {
+                ціле rhs = parseMult();
                 v       = (v - rhs);
-            } else {
+            } інакше {
                 break;
             }
         }
-        return v;
+        повернути v;
     }
 
-    int parseMult() {
-        int v = parseUnary();
-        for (;;) {
-            if (acceptOp("*")) {
-                int rhs = parseUnary();
+    ціле parseMult() {
+        ціле v = parseUnary();
+        для (;;) {
+            якщо (acceptOp("*")) {
+                ціле rhs = parseUnary();
                 v       = (v * rhs);
-            } else if (acceptOp("/")) {
-                int rhs = parseUnary();
+            } інакше якщо (acceptOp("/")) {
+                ціле rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v / rhs);
-            } else if (acceptOp("%")) {
-                int rhs = parseUnary();
+            } інакше якщо (acceptOp("%")) {
+                ціле rhs = parseUnary();
                 v       = (rhs == 0 ? 0 : v % rhs);
-            } else {
+            } інакше {
                 break;
             }
         }
-        return v;
+        повернути v;
     }
 
-    int parseUnary() {
-        if (acceptOp("!")) {
-            return !parseUnary();
+    ціле parseUnary() {
+        якщо (acceptOp("!")) {
+            повернути !parseUnary();
         }
-        if (acceptOp("-")) {
-            return -parseUnary();
+        якщо (acceptOp("-")) {
+            повернути -parseUnary();
         }
-        if (acceptOp("+")) {
-            return +parseUnary();
+        якщо (acceptOp("+")) {
+            повернути +parseUnary();
         }
-        return parsePrimary();
+        повернути parsePrimary();
     }
 
-    int parsePrimary() {
+    ціле parsePrimary() {
         // '(' expr ')'
-        if (acceptKind(ExprLexer::LPAREN)) {
-            int v = parse();
-            if (!acceptKind(ExprLexer::RPAREN)) {
+        якщо (acceptKind(ExprLexer::LPAREN)) {
+            ціле v = parse();
+            якщо (!acceptKind(ExprLexer::RPAREN)) {
                 throw std::runtime_error("missing ')'");
             }
-            return v;
+            повернути v;
         }
 
         // number
-        if (tok.kind == ExprLexer::NUMBER) {
-            int v = std::stoi(tok.text);
+        якщо (tok.kind == ExprLexer::NUMBER) {
+            ціле v = std::stoi(tok.text);
             advance();
-            return v;
+            повернути v;
         }
 
         // defined(identifier)
-        if (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
+        якщо (tok.kind == ExprLexer::IDENT && tok.text == "defined") {
             advance();
-            if (acceptKind(ExprLexer::LPAREN)) {
-                if (tok.kind != ExprLexer::IDENT) {
+            якщо (acceptKind(ExprLexer::LPAREN)) {
+                якщо (tok.kind != ExprLexer::IDENT) {
                     throw std::runtime_error("expected identifier in defined()");
                 }
                 std::string name = tok.text;
                 advance();
-                if (!acceptKind(ExprLexer::RPAREN)) {
+                якщо (!acceptKind(ExprLexer::RPAREN)) {
                     throw std::runtime_error("missing ) in defined()");
                 }
-                return macros.count(name) ? 1 : 0;
-            } else {
+                повернути macros.count(name) ? 1 : 0;
+            } інакше {
                 // defined NAME
-                if (tok.kind != ExprLexer::IDENT) {
+                якщо (tok.kind != ExprLexer::IDENT) {
                     throw std::runtime_error("expected identifier in defined NAME");
                 }
                 std::string name = tok.text;
                 advance();
-                return macros.count(name) ? 1 : 0;
+                повернути macros.count(name) ? 1 : 0;
             }
         }
 
         // identifier -> treat as integer, if defined use its value else 0
-        if (tok.kind == ExprLexer::IDENT) {
+        якщо (tok.kind == ExprLexer::IDENT) {
             std::string name = tok.text;
             advance();
             auto it = macros.find(name);
-            if (it == macros.end()) {
-                return 0;
+            якщо (it == macros.end()) {
+                повернути 0;
             }
-            if (it->second.empty()) {
-                return 1;
+            якщо (it->second.empty()) {
+                повернути 1;
             }
-            return evalMacroExpression(name, it->second);
+            повернути evalMacroExpression(name, it->second);
         }
 
         // unexpected
-        return 0;
+        повернути 0;
     }
 
-    int evalMacroExpression(const std::string & name, const std::string & value) {
-        if (visiting.count(name)) {
+    ціле evalMacroExpression(const std::string & name, const std::string & value) {
+        якщо (visiting.count(name)) {
             throw std::runtime_error("Recursive macro: " + name);
         }
 
         visiting.insert(name);
         ExprParser ep(value, macros, visiting);
-        int        v = ep.parse();
+        ціле        v = ep.parse();
         visiting.erase(name);
-        return v;
+        повернути v;
     }
 };
 
@@ -448,7 +448,7 @@ class Preprocessor {
   public:
     explicit Preprocessor(Options opts = {}) : opts_(std::move(opts)) {
         // Treat empty include path as current directory
-        if (opts_.include_path.empty()) {
+        якщо (opts_.include_path.empty()) {
             opts_.include_path = ".";
         }
         parseMacroDefinitions(opts_.macros);
@@ -461,7 +461,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        повернути result;
     }
 
     std::string preprocess(const std::string & contents, const std::vector<std::string> & additional_macros = {}) {
@@ -471,7 +471,7 @@ class Preprocessor {
         buildMacros(additional_macros, macros, predefined);
 
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::All);
-        return result;
+        повернути result;
     }
 
     std::string preprocess_includes_file(const std::string & filename) {
@@ -479,7 +479,7 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processFile(filename, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        повернути result;
     }
 
     std::string preprocess_includes(const std::string & contents) {
@@ -487,7 +487,7 @@ class Preprocessor {
         std::unordered_set<std::string>              predefined;
         std::unordered_set<std::string>              include_stack;
         std::string result = processString(contents, macros, predefined, include_stack, DirectiveMode::IncludesOnly);
-        return result;
+        повернути result;
     }
 
   private:
@@ -506,14 +506,14 @@ class Preprocessor {
     // Parse macro definitions into global_macros
     //----------------------------------------------------------
     void parseMacroDefinitions(const std::vector<std::string> & macro_defs) {
-        for (const auto & def : macro_defs) {
+        для (const auto & def : macro_defs) {
             size_t eq_pos = def.find('=');
-            if (eq_pos != std::string::npos) {
+            якщо (eq_pos != std::string::npos) {
                 // Format: NAME=VALUE
                 std::string name    = trim(def.substr(0, eq_pos));
                 std::string value   = trim(def.substr(eq_pos + 1));
                 global_macros[name] = value;
-            } else {
+            } інакше {
                 // Format: NAME
                 std::string name    = trim(def);
                 global_macros[name] = "";
@@ -530,17 +530,17 @@ class Preprocessor {
         macros = global_macros;
         predefined.clear();
 
-        for (const auto & [name, value] : global_macros) {
+        для (const auto & [name, value] : global_macros) {
             predefined.insert(name);
         }
 
-        for (const auto & def : additional_macros) {
+        для (const auto & def : additional_macros) {
             size_t      eq_pos = def.find('=');
             std::string name, value;
-            if (eq_pos != std::string::npos) {
+            якщо (eq_pos != std::string::npos) {
                 name  = trim(def.substr(0, eq_pos));
                 value = trim(def.substr(eq_pos + 1));
-            } else {
+            } інакше {
                 name  = trim(def);
                 value = "";
             }
@@ -556,19 +556,19 @@ class Preprocessor {
     //----------------------------------------------------------
     std::string loadFile(const std::string & fname) {
         std::ifstream f(fname);
-        if (!f.is_open()) {
+        якщо (!f.is_open()) {
             throw std::runtime_error("Could not open file: " + fname);
         }
         std::stringstream ss;
         ss << f.rdbuf();
-        return ss.str();
+        повернути ss.str();
     }
 
     bool condActive(const std::vector<Cond> & cond) const {
-        if (cond.empty()) {
-            return true;
+        якщо (cond.empty()) {
+            повернути true;
         }
-        return cond.back().active;
+        повернути cond.back().active;
     }
 
     //----------------------------------------------------------
@@ -579,7 +579,7 @@ class Preprocessor {
                             const std::unordered_set<std::string> &        predefined_macros,
                             std::unordered_set<std::string> &              include_stack,
                             DirectiveMode                                  mode) {
-        if (include_stack.count(name)) {
+        якщо (include_stack.count(name)) {
             throw std::runtime_error("Recursive include: " + name);
         }
 
@@ -587,7 +587,7 @@ class Preprocessor {
         std::string shader_code = loadFile(name);
         std::string out         = processString(shader_code, macros, predefined_macros, include_stack, mode);
         include_stack.erase(name);
-        return out;
+        повернути out;
     }
 
     std::string processIncludeFile(const std::string &                            fname,
@@ -596,7 +596,7 @@ class Preprocessor {
                                    std::unordered_set<std::string> &              include_stack,
                                    DirectiveMode                                  mode) {
         std::string full_path = opts_.include_path + "/" + fname;
-        return processFile(full_path, macros, predefined_macros, include_stack, mode);
+        повернути processFile(full_path, macros, predefined_macros, include_stack, mode);
     }
 
     //----------------------------------------------------------
@@ -612,13 +612,13 @@ class Preprocessor {
         std::istringstream in(shader_code);
         std::string        line;
 
-        while (std::getline(in, line)) {
+        поки (std::getline(in, line)) {
             std::string logical = line;
             std::string t       = trim(logical);
-            if (!t.empty() && t[0] == '#') {
-                while (endsWithContinuation(logical)) {
+            якщо (!t.empty() && t[0] == '#') {
+                поки (endsWithContinuation(logical)) {
                     stripContinuation(logical);
-                    if (!std::getline(in, line)) {
+                    якщо (!std::getline(in, line)) {
                         break;
                     }
                     logical += "\n";
@@ -627,15 +627,15 @@ class Preprocessor {
                 t = trim(logical);
             }
 
-            if (!t.empty() && t[0] == '#') {
+            якщо (!t.empty() && t[0] == '#') {
                 bool handled = handleDirective(t, out, macros, predefined_macros, cond, include_stack, mode);
-                if (mode == DirectiveMode::IncludesOnly && !handled) {
+                якщо (mode == DirectiveMode::IncludesOnly && !handled) {
                     out << logical << "\n";
                 }
-            } else {
-                if (mode == DirectiveMode::IncludesOnly) {
+            } інакше {
+                якщо (mode == DirectiveMode::IncludesOnly) {
                     out << logical << "\n";
-                } else if (condActive(cond)) {
+                } інакше якщо (condActive(cond)) {
                     // Expand macros in the line before outputting
                     std::string expanded = expandMacrosRecursive(logical, macros);
                     out << expanded << "\n";
@@ -643,11 +643,11 @@ class Preprocessor {
             }
         }
 
-        if (mode == DirectiveMode::All && !cond.empty()) {
+        якщо (mode == DirectiveMode::All && !cond.empty()) {
             throw std::runtime_error("Unclosed #if directive");
         }
 
-        return out.str();
+        повернути out.str();
     }
 
     //----------------------------------------------------------
@@ -666,136 +666,136 @@ class Preprocessor {
         std::string        cmd;
         iss >> cmd;
 
-        if (cmd == "include") {
-            if (mode == DirectiveMode::All && !condActive(cond)) {
-                return true;
+        якщо (cmd == "include") {
+            якщо (mode == DirectiveMode::All && !condActive(cond)) {
+                повернути true;
             }
             std::string file;
             iss >> file;
-            if (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
+            якщо (file.size() >= 2 && file.front() == '"' && file.back() == '"') {
                 file = file.substr(1, file.size() - 2);
             }
             out << processIncludeFile(file, macros, predefined_macros, include_stack, mode);
-            return true;
+            повернути true;
         }
 
-        if (mode == DirectiveMode::IncludesOnly) {
-            return false;
+        якщо (mode == DirectiveMode::IncludesOnly) {
+            повернути false;
         }
 
-        if (cmd == "define") {
-            if (!condActive(cond)) {
-                return true;
+        якщо (cmd == "define") {
+            якщо (!condActive(cond)) {
+                повернути true;
             }
             std::string name;
             iss >> name;
             // Don't override predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            якщо (predefined_macros.count(name)) {
+                повернути true;
             }
             std::string value = trim_value(iss);
             macros[name]      = value;
-            return true;
+            повернути true;
         }
 
-        if (cmd == "undef") {
-            if (!condActive(cond)) {
-                return true;
+        якщо (cmd == "undef") {
+            якщо (!condActive(cond)) {
+                повернути true;
             }
             std::string name;
             iss >> name;
             // Don't undef predefined macros from options
-            if (predefined_macros.count(name)) {
-                return true;
+            якщо (predefined_macros.count(name)) {
+                повернути true;
             }
             macros.erase(name);
-            return true;
+            повернути true;
         }
 
-        if (cmd == "ifdef") {
+        якщо (cmd == "ifdef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            повернути true;
         }
 
-        if (cmd == "ifndef") {
+        якщо (cmd == "ifndef") {
             std::string name;
             iss >> name;
             bool p = condActive(cond);
             bool v = !macros.count(name);
             cond.push_back({ p, p && v, p && v });
-            return true;
+            повернути true;
         }
 
-        if (cmd == "if") {
+        якщо (cmd == "if") {
             std::string expr = trim_value(iss);
             bool        p    = condActive(cond);
             bool        v    = false;
-            if (p) {
+            якщо (p) {
                 std::unordered_set<std::string> visiting;
                 ExprParser                      ep(expr, macros, visiting);
                 v = ep.parse() != 0;
             }
             cond.push_back({ p, p && v, p && v });
-            return true;
+            повернути true;
         }
 
-        if (cmd == "elif") {
+        якщо (cmd == "elif") {
             std::string expr = trim_value(iss);
 
-            if (cond.empty()) {
+            якщо (cond.empty()) {
                 throw std::runtime_error("#elif without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            якщо (!c.parent_active) {
                 c.active = false;
-                return true;
+                повернути true;
             }
 
-            if (c.taken) {
+            якщо (c.taken) {
                 c.active = false;
-                return true;
+                повернути true;
             }
 
             std::unordered_set<std::string> visiting;
             ExprParser                      ep(expr, macros, visiting);
             bool                            v = ep.parse() != 0;
             c.active                          = v;
-            if (v) {
+            якщо (v) {
                 c.taken = true;
             }
-            return true;
+            повернути true;
         }
 
-        if (cmd == "else") {
-            if (cond.empty()) {
+        якщо (cmd == "else") {
+            якщо (cond.empty()) {
                 throw std::runtime_error("#else without #if");
             }
 
             Cond & c = cond.back();
-            if (!c.parent_active) {
+            якщо (!c.parent_active) {
                 c.active = false;
-                return true;
+                повернути true;
             }
-            if (c.taken) {
+            якщо (c.taken) {
                 c.active = false;
-            } else {
+            } інакше {
                 c.active = true;
                 c.taken  = true;
             }
-            return true;
+            повернути true;
         }
 
-        if (cmd == "endif") {
-            if (cond.empty()) {
+        якщо (cmd == "endif") {
+            якщо (cond.empty()) {
                 throw std::runtime_error("#endif without #if");
             }
             cond.pop_back();
-            return true;
+            повернути true;
         }
 
         // Unknown directive

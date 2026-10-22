@@ -16,14 +16,14 @@ namespace op {
 OutputVector translate_view(const NodeContext & context) {
     num_inputs_check(context, 1, 1);
 
-    if (context.get_op_case() == 1) {
+    якщо (context.get_op_case() == 1) {
         // Static-mode identity pass-through for VIEWs over a GATED_DELTA_NET combined output or
         // the conv_input CONCAT; the consuming op (CPY/RMS_NORM) does its own runtime-correct
         // slicing on the full tensor (see ggml-decoder.cpp compute_op_case, GGML_OP_VIEW).
-        return {context.get_input(0)};
+        повернути {context.get_input(0)};
     }
 
-    if (!context.is_static()) {
+    якщо (!context.is_static()) {
         // On the stateless/non-static path VIEW is normally a no-op (consumers re-slice).
         // EXCEPTION: the MoE expert aggregation slices each expert plane out of
         // ffn_moe_weighted [n_embd, n_expert_used, n_tokens] with ggml_view_2d and then
@@ -33,10 +33,10 @@ OutputVector translate_view(const NodeContext & context) {
         // single-expert slice here. Gated by name (ffn_moe_weighted...view) so it can't
         // affect any other view.
         const std::string & vname = context.get_name();
-        if (vname.find("ffn_moe_weighted") != std::string::npos) {
+        якщо (vname.find("ffn_moe_weighted") != std::string::npos) {
             auto src_ps = context.get_input_shape(0);
             auto dst_ps = context.get_output_shape();
-            if (src_ps.rank().is_static() && dst_ps.rank().is_static() && src_ps.rank() == dst_ps.rank() &&
+            якщо (src_ps.rank().is_static() && dst_ps.rank().is_static() && src_ps.rank() == dst_ps.rank() &&
                 src_ps.is_static() && dst_ps.is_static()) {
                 auto sst = context.get_input_stride(0);
                 auto dst = context.get_output_stride();
@@ -49,56 +49,56 @@ OutputVector translate_view(const NodeContext & context) {
                 // from that metadata must be shifted down by the difference before they are
                 // used as OV axes. Bail out if the dims we would drop are not all 1.
                 const auto in_rank = context.get_input(0).get_partial_shape().rank();
-                const int axis_shift =
-                    in_rank.is_static() ? (int) nd - (int) in_rank.get_length() : 0;
+                const ціле axis_shift =
+                    in_rank.is_static() ? (ціле) nd - (ціле) in_rank.get_length() : 0;
                 bool shift_ok = axis_shift >= 0 && (size_t) axis_shift < nd;
-                for (int a = 0; a < axis_shift && shift_ok; ++a) {
+                для (ціле a = 0; a < axis_shift && shift_ok; ++a) {
                     shift_ok = (ss[a] == 1 && dd[a] == 1);
                 }
-                if (shift_ok && sst.size() == nd && dst.size() == nd) {
+                якщо (shift_ok && sst.size() == nd && dst.size() == nd) {
                     // Map each dst axis of size>1 to a src axis with equal (size,stride);
                     // the unmatched src axis of size>1 is the indexed expert axis.
                     // dst_to_src[d] records which src axis each dst axis came from, so we can
                     // later pull the dynamic (token) dim from the right source axis at runtime.
                     std::vector<bool> used(nd, false);
-                    std::vector<int> dst_to_src(nd, -1);
+                    std::vector<ціле> dst_to_src(nd, -1);
                     bool ok = true;
-                    for (size_t d = 0; d < nd; ++d) {
-                        if (dd[d] == 1) {
+                    для (size_t d = 0; d < nd; ++d) {
+                        якщо (dd[d] == 1) {
                             continue;
                         }
-                        int found = -1;
-                        for (size_t s = 0; s < nd; ++s) {
-                            if (!used[s] && ss[s] == dd[d] && sst[s] == dst[d]) {
-                                found = (int) s;
+                        ціле found = -1;
+                        для (size_t s = 0; s < nd; ++s) {
+                            якщо (!used[s] && ss[s] == dd[d] && sst[s] == dst[d]) {
+                                found = (ціле) s;
                                 break;
                             }
                         }
-                        if (found < 0) {
+                        якщо (found < 0) {
                             ok = false;
                             break;
                         }
                         used[found] = true;
                         dst_to_src[d] = found;
                     }
-                    int dropped = -1;
-                    if (ok) {
-                        for (size_t s = 0; s < nd; ++s) {
-                            if (!used[s] && ss[s] > 1) {
-                                if (dropped >= 0) {
+                    ціле dropped = -1;
+                    якщо (ok) {
+                        для (size_t s = 0; s < nd; ++s) {
+                            якщо (!used[s] && ss[s] > 1) {
+                                якщо (dropped >= 0) {
                                     ok = false;
                                     break;
                                 }
-                                dropped = (int) s;
+                                dropped = (ціле) s;
                             }
                         }
                     }
-                    if (ok && dropped >= 0) {
+                    якщо (ok && dropped >= 0) {
                         const size_t dstr = sst[dropped];
                         const int64_t dsz = (int64_t) ss[dropped];
-                        if (dstr > 0 && voff % dstr == 0) {
+                        якщо (dstr > 0 && voff % dstr == 0) {
                             const int64_t sel = (int64_t) (voff / dstr);
-                            if (sel >= 0 && sel < dsz) {
+                            якщо (sel >= 0 && sel < dsz) {
                                 ov::Output<ov::Node> sl = std::make_shared<ov::op::v8::Slice>(
                                     context.get_input(0),
                                     ov::op::v0::Constant::create(ov::element::i64, {1}, {sel}),
@@ -119,11 +119,11 @@ OutputVector translate_view(const NodeContext & context) {
                                 // and place it at the dst token position.
                                 const int32_t dyn = context.get_op_dynamic_dim();  // output ggml axis, -1 if none
                                 // still in ggml metadata axis space; get_shape() reverses ggml order
-                                int dst_ov_axis = (dyn != -1) ? ((int) nd - 1 - (int) dyn) : -1;
-                                int src_ov_axis = (dst_ov_axis >= axis_shift && dst_ov_axis < (int) nd)
+                                ціле dst_ov_axis = (dyn != -1) ? ((ціле) nd - 1 - (ціле) dyn) : -1;
+                                ціле src_ov_axis = (dst_ov_axis >= axis_shift && dst_ov_axis < (ціле) nd)
                                                       ? dst_to_src[dst_ov_axis]
                                                       : -1;
-                                if (dst_ov_axis >= 0 && src_ov_axis >= axis_shift) {
+                                якщо (dst_ov_axis >= 0 && src_ov_axis >= axis_shift) {
                                     // target = concat of per-axis scalars; the token axis is a
                                     // runtime Gather of the slice's shape, the rest are constants.
                                     auto sl_shape = std::make_shared<ov::op::v3::ShapeOf>(sl, ov::element::i64);
@@ -133,56 +133,56 @@ OutputVector translate_view(const NodeContext & context) {
                                                                      {src_ov_axis - axis_shift}),
                                         ov::op::v0::Constant::create(ov::element::i64, {}, {0}));
                                     ov::OutputVector parts;
-                                    for (int a = axis_shift; a < (int) nd; ++a) {
-                                        if (a == dst_ov_axis) {
+                                    для (ціле a = axis_shift; a < (ціле) nd; ++a) {
+                                        якщо (a == dst_ov_axis) {
                                             parts.push_back(tok_dim);
-                                        } else {
+                                        } інакше {
                                             parts.push_back(ov::op::v0::Constant::create(
                                                 ov::element::i64, {1}, {(int64_t) dd[a]}));
                                         }
                                     }
                                     auto dc = std::make_shared<ov::op::v0::Concat>(parts, 0);
                                     auto rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, false);
-                                    return rename_outputs_with_suffix({rs}, context.get_name());
+                                    повернути rename_outputs_with_suffix({rs}, context.get_name());
                                 }
                                 std::vector<int64_t> dd_ov(dd.begin() + axis_shift, dd.end());
                                 auto dc = ov::op::v0::Constant::create(ov::element::i64, {dd_ov.size()}, dd_ov);
                                 auto rs = std::make_shared<ov::op::v1::Reshape>(sl, dc, false);
-                                return rename_outputs_with_suffix({rs}, context.get_name());
+                                повернути rename_outputs_with_suffix({rs}, context.get_name());
                             }
                         }
                     }
                 }
             }
         }
-        return {context.get_input(0)};
+        повернути {context.get_input(0)};
     }
 
     auto input = context.get_input(0);
     auto src_shape = context.get_input_shape(0);
     auto dst_shape = context.get_output_shape();
 
-    if (src_shape.rank().is_dynamic() || dst_shape.rank().is_dynamic()) {
-        return {input};
+    якщо (src_shape.rank().is_dynamic() || dst_shape.rank().is_dynamic()) {
+        повернути {input};
     }
 
     int64_t src_elems = 1;
     int64_t dst_elems = 1;
-    for (int64_t i = 0; i < src_shape.rank().get_length(); ++i) {
-        if (src_shape[i].is_dynamic()) {
-            return {input};
+    для (int64_t i = 0; i < src_shape.rank().get_length(); ++i) {
+        якщо (src_shape[i].is_dynamic()) {
+            повернути {input};
         }
         src_elems *= src_shape[i].get_length();
     }
-    for (int64_t i = 0; i < dst_shape.rank().get_length(); ++i) {
-        if (dst_shape[i].is_dynamic()) {
-            return {input};
+    для (int64_t i = 0; i < dst_shape.rank().get_length(); ++i) {
+        якщо (dst_shape[i].is_dynamic()) {
+            повернути {input};
         }
         dst_elems *= dst_shape[i].get_length();
     }
 
-    if (dst_elems >= src_elems) {
-        return {input};
+    якщо (dst_elems >= src_elems) {
+        повернути {input};
     }
 
     auto src_stride = context.get_input_stride(0);
@@ -190,57 +190,57 @@ OutputVector translate_view(const NodeContext & context) {
     size_t view_offset = context.get_output_op_offset();
 
     bool same_stride = (src_stride.size() == dst_stride.size());
-    if (same_stride) {
-        for (size_t i = 0; i < src_stride.size(); ++i) {
-            if (src_stride[i] != dst_stride[i]) {
+    якщо (same_stride) {
+        для (size_t i = 0; i < src_stride.size(); ++i) {
+            якщо (src_stride[i] != dst_stride[i]) {
                 same_stride = false;
                 break;
             }
         }
     }
 
-    if (!same_stride) {
-        return {input};
+    якщо (!same_stride) {
+        повернути {input};
     }
 
     auto src_ov_shape = src_shape.to_shape();
     auto dst_ov_shape = dst_shape.to_shape();
     size_t ndims = src_ov_shape.size();
-    if (dst_ov_shape.size() != ndims) {
-        return {input};
+    якщо (dst_ov_shape.size() != ndims) {
+        повернути {input};
     }
 
-    std::vector<int> diff_dims;
-    for (size_t i = 0; i < ndims; ++i) {
-        if (src_ov_shape[i] != dst_ov_shape[i]) {
-            diff_dims.push_back(static_cast<int>(i));
+    std::vector<ціле> diff_dims;
+    для (size_t i = 0; i < ndims; ++i) {
+        якщо (src_ov_shape[i] != dst_ov_shape[i]) {
+            diff_dims.push_back(static_cast<ціле>(i));
         }
     }
 
-    if (diff_dims.size() != 1) {
-        return {input};
+    якщо (diff_dims.size() != 1) {
+        повернути {input};
     }
 
-    int slice_dim = diff_dims[0];
+    ціле slice_dim = diff_dims[0];
     int64_t dim_size = static_cast<int64_t>(src_ov_shape[slice_dim]);
 
     size_t ov_stride_for_dim = 1;
-    for (size_t i = slice_dim + 1; i < ndims; ++i) {
+    для (size_t i = slice_dim + 1; i < ndims; ++i) {
         ov_stride_for_dim *= src_ov_shape[i];
     }
     size_t elem_size = src_stride.back();
-    if (elem_size == 0) {
+    якщо (elem_size == 0) {
         elem_size = 1;
     }
 
     int64_t begin_val = 0;
-    if (ov_stride_for_dim > 0 && elem_size > 0) {
+    якщо (ov_stride_for_dim > 0 && elem_size > 0) {
         begin_val = static_cast<int64_t>((view_offset / elem_size) / ov_stride_for_dim);
     }
     int64_t end_val = begin_val + static_cast<int64_t>(dst_ov_shape[slice_dim]);
 
-    if (begin_val < 0 || end_val > dim_size) {
-        return {input};
+    якщо (begin_val < 0 || end_val > dim_size) {
+        повернути {input};
     }
 
     auto sliced =
@@ -250,7 +250,7 @@ OutputVector translate_view(const NodeContext & context) {
                                             ov::op::v0::Constant::create(ov::element::i64, {1}, {slice_dim}));
 
     sliced->set_friendly_name(context.get_output_name());
-    return {sliced->output(0)};
+    повернути {sliced->output(0)};
 }
 
 }  // namespace op

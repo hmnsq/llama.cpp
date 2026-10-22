@@ -4,10 +4,10 @@
 #include <cmath>
 #include <type_traits>
 
-static constexpr int DSV4_HC = 4;
+static constexpr ціле DSV4_HC = 4;
 
 // tunable: one work-item per (embedding element, token)
-static constexpr int dsv4_hc_pre_block_size = 256;
+static constexpr ціле dsv4_hc_pre_block_size = 256;
 
 // gated: the weight is a per-element gate [n_embd, hc, n_tokens] passed through a sigmoid.
 // otherwise it is one weight per (stream, token).
@@ -28,21 +28,21 @@ static void dsv4_hc_pre_f32_sycl(
                           sycl::range<1>(dsv4_hc_pre_block_size)),
         [=](sycl::nd_item<1> item) {
             const int64_t ir = item.get_global_id(0);
-            if (ir >= nr) {
-                return;
+            якщо (ir >= nr) {
+                повернути;
             }
 
             const int64_t i0 = ir % n_embd;
             const int64_t it = ir / n_embd;
 
             float sum = 0.0f;
-            for (int64_t ih = 0; ih < hc; ++ih) {
+            для (int64_t ih = 0; ih < hc; ++ih) {
                 const float xv = x[i0*sx0 + ih*sx1 + it*sx2];
                 float wv;
-                if constexpr (gated) {
+                якщо constexpr (gated) {
                     const float gv = weights[i0*sw0 + ih*sw1 + it*sw2];
                     wv = 1.0f / (1.0f + sycl::exp(-gv));
-                } else {
+                } інакше {
                     wv = weights[ih*sw0 + it*sw1];
                 }
                 sum += xv * wv;
@@ -53,28 +53,28 @@ static void dsv4_hc_pre_f32_sycl(
 }
 
 static void dsv4_hc_comb_norm_cols(float * comb, float eps) {
-    for (int idst = 0; idst < DSV4_HC; ++idst) {
+    для (ціле idst = 0; idst < DSV4_HC; ++idst) {
         float sum = eps;
-        for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
+        для (ціле isrc = 0; isrc < DSV4_HC; ++isrc) {
             sum += comb[idst + DSV4_HC*isrc];
         }
 
         const float inv_sum = 1.0f / sum;
-        for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
+        для (ціле isrc = 0; isrc < DSV4_HC; ++isrc) {
             comb[idst + DSV4_HC*isrc] *= inv_sum;
         }
     }
 }
 
 static void dsv4_hc_comb_norm_rows(float * comb, float eps) {
-    for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
+    для (ціле isrc = 0; isrc < DSV4_HC; ++isrc) {
         float sum = eps;
-        for (int idst = 0; idst < DSV4_HC; ++idst) {
+        для (ціле idst = 0; idst < DSV4_HC; ++idst) {
             sum += comb[idst + DSV4_HC*isrc];
         }
 
         const float inv_sum = 1.0f / sum;
-        for (int idst = 0; idst < DSV4_HC; ++idst) {
+        для (ціле idst = 0; idst < DSV4_HC; ++idst) {
             comb[idst + DSV4_HC*isrc] *= inv_sum;
         }
     }
@@ -96,7 +96,7 @@ static void dsv4_hc_comb_f32_sycl(
         float eps,
         int32_t n_iter,
         queue_ptr stream) {
-    constexpr int comb_offset = 2*DSV4_HC;
+    constexpr ціле comb_offset = 2*DSV4_HC;
 
     const int64_t block_size = 256;
     const int64_t num_blocks = (n_tokens + block_size - 1) / block_size;
@@ -106,46 +106,46 @@ static void dsv4_hc_comb_f32_sycl(
         [=](sycl::nd_item<1> item_ct1) {
             const int64_t it = item_ct1.get_global_id(0);
 
-            if (it >= n_tokens) {
-                return;
+            якщо (it >= n_tokens) {
+                повернути;
             }
 
             const float scale_comb = scale[2*ss0];
             float comb[DSV4_HC*DSV4_HC];
 
-            for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
+            для (ціле isrc = 0; isrc < DSV4_HC; ++isrc) {
                 float max = -INFINITY;
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
+                для (ціле idst = 0; idst < DSV4_HC; ++idst) {
+                    const ціле idx = idst + DSV4_HC*isrc;
                     const float v = mixes[(comb_offset + idx)*sm0 + it*sm1] * scale_comb + base[(comb_offset + idx)*sb0];
                     comb[idx] = v;
                     max = fmaxf(max, v);
                 }
 
                 float sum = 0.0f;
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
+                для (ціле idst = 0; idst < DSV4_HC; ++idst) {
+                    const ціле idx = idst + DSV4_HC*isrc;
                     const float v = expf(comb[idx] - max);
                     comb[idx] = v;
                     sum += v;
                 }
 
                 const float inv_sum = 1.0f / sum;
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
+                для (ціле idst = 0; idst < DSV4_HC; ++idst) {
+                    const ціле idx = idst + DSV4_HC*isrc;
                     comb[idx] = comb[idx] * inv_sum + eps;
                 }
             }
 
             dsv4_hc_comb_norm_cols(comb, eps);
-            for (int32_t i = 1; i < n_iter; ++i) {
+            для (int32_t i = 1; i < n_iter; ++i) {
                 dsv4_hc_comb_norm_rows(comb, eps);
                 dsv4_hc_comb_norm_cols(comb, eps);
             }
 
-            for (int isrc = 0; isrc < DSV4_HC; ++isrc) {
-                for (int idst = 0; idst < DSV4_HC; ++idst) {
-                    const int idx = idst + DSV4_HC*isrc;
+            для (ціле isrc = 0; isrc < DSV4_HC; ++isrc) {
+                для (ціле idst = 0; idst < DSV4_HC; ++idst) {
+                    const ціле idx = idst + DSV4_HC*isrc;
                     dst[idst*sd0 + isrc*sd1 + it*sd2] = comb[idx];
                 }
             }
@@ -153,7 +153,7 @@ static void dsv4_hc_comb_f32_sycl(
 }
 
 // tunable: one work-item per (embedding element, stream, token)
-static constexpr int dsv4_hc_post_block_size = 256;
+static constexpr ціле dsv4_hc_post_block_size = 256;
 
 // comb == nullptr is identity mixing: each destination stream keeps its own residual
 // instead of summing across the streams.
@@ -175,8 +175,8 @@ static void dsv4_hc_post_f32_sycl(
         sycl::nd_range<1>(sycl::range<1>(num_blocks * block_size), sycl::range<1>(block_size)),
         [=](sycl::nd_item<1> item) {
             const int64_t ir = item.get_global_id(0);
-            if (ir >= nr) {
-                return;
+            якщо (ir >= nr) {
+                повернути;
             }
 
             const int64_t i0   = ir % n_embd;
@@ -184,11 +184,11 @@ static void dsv4_hc_post_f32_sycl(
             const int64_t it   = ir / (n_embd * hc);
 
             float sum = x[i0*sx0 + it*sx1] * post[idst*sp0 + it*sp1];
-            if constexpr (has_comb) {
-                for (int64_t isrc = 0; isrc < hc; ++isrc) {
+            якщо constexpr (has_comb) {
+                для (int64_t isrc = 0; isrc < hc; ++isrc) {
                     sum += residual[i0*sr0 + isrc*sr1 + it*sr2] * comb[idst*sc0 + isrc*sc1 + it*sc2];
                 }
-            } else {
+            } інакше {
                 sum += residual[i0*sr0 + idst*sr1 + it*sr2];
             }
 
@@ -218,7 +218,7 @@ void ggml_sycl_op_dsv4_hc_pre(ggml_backend_sycl_context & ctx, ggml_tensor * dst
 
     queue_ptr stream = ctx.stream();
 
-    if (gated) {
+    якщо (gated) {
         GGML_ASSERT(weights->ne[0] == n_embd);
         GGML_ASSERT(weights->ne[1] == hc);
         GGML_ASSERT(weights->ne[2] == n_tokens);
@@ -229,7 +229,7 @@ void ggml_sycl_op_dsv4_hc_pre(ggml_backend_sycl_context & ctx, ggml_tensor * dst
                 nbw0 / sizeof(float), nbw1 / sizeof(float), nbw2 / sizeof(float),
                 nbd0 / sizeof(float), nbd1 / sizeof(float),
                 scale, stream);
-    } else {
+    } інакше {
         GGML_ASSERT(weights->ne[0] == hc);
         GGML_ASSERT(weights->ne[1] == n_tokens);
         dsv4_hc_pre_f32_sycl<false>(
@@ -304,7 +304,7 @@ void ggml_sycl_op_dsv4_hc_post(ggml_backend_sycl_context & ctx, ggml_tensor * ds
     size_t nbc0 = 0;
     size_t nbc1 = 0;
     size_t nbc2 = 0;
-    if (comb) {
+    якщо (comb) {
         GGML_ASSERT(comb->type == GGML_TYPE_F32);
         nbc0 = comb->nb[0];
         nbc1 = comb->nb[1];
@@ -330,9 +330,9 @@ void ggml_sycl_op_dsv4_hc_post(ggml_backend_sycl_context & ctx, ggml_tensor * ds
             stream);
     };
 
-    if (comb) {
+    якщо (comb) {
         launch(std::true_type{});
-    } else {
+    } інакше {
         launch(std::false_type{});
     }
 }

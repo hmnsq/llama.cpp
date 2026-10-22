@@ -18,13 +18,13 @@ static inline void apir_encode_rcp_tensor(apir_encoder * enc, const apir_rpc_ten
 static inline apir_rpc_tensor * apir_decode_apir_rpc_tensor_inplace(apir_decoder * dec) {
     size_t apir_rpc_tensor_size = sizeof(apir_rpc_tensor);
 
-    return (apir_rpc_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, apir_rpc_tensor_size);
+    повернути (apir_rpc_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, apir_rpc_tensor_size);
 }
 
 static inline apir_rpc_tensor * apir_decode_apir_rpc_tensor_array_inplace(apir_decoder * dec, uint32_t n_tensors) {
     size_t apir_rpc_tensor_size = sizeof(apir_rpc_tensor) * n_tensors;
 
-    return (apir_rpc_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, apir_rpc_tensor_size);
+    повернути (apir_rpc_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, apir_rpc_tensor_size);
 }
 
 /* ggml_tensor */
@@ -38,8 +38,8 @@ static inline void apir_encode_ggml_tensor(apir_encoder * enc, const ggml_tensor
 static inline const ggml_tensor * apir_decode_ggml_tensor(apir_decoder * dec) {
     const apir_rpc_tensor * apir_rpc_tensor = apir_decode_apir_rpc_tensor_inplace(dec);
 
-    if (!apir_rpc_tensor) {
-        return NULL;
+    якщо (!apir_rpc_tensor) {
+        повернути NULL;
     }
 
     ggml_init_params params{
@@ -52,7 +52,7 @@ static inline const ggml_tensor * apir_decode_ggml_tensor(apir_decoder * dec) {
 
     const ggml_tensor * tensor = apir_deserialize_tensor(ctx, apir_rpc_tensor);
 
-    return tensor;
+    повернути tensor;
 }
 
 /* *** ggml_backend_buffer_type_t *** */
@@ -72,7 +72,7 @@ static inline ggml_backend_buffer_type_t apir_decode_ggml_buffer_type(apir_decod
 
     apir_decoder_read(dec, sizeof(handle), &handle, sizeof(handle));
 
-    return (ggml_backend_buffer_type_t) handle;
+    повернути (ggml_backend_buffer_type_t) handle;
 }
 
 static inline void apir_encode_apir_buffer_type_host_handle(apir_encoder * enc, apir_buffer_type_host_handle_t handle) {
@@ -84,7 +84,7 @@ static inline apir_buffer_type_host_handle_t apir_decode_apir_buffer_type_host_h
 
     apir_decoder_read(dec, sizeof(handle), &handle, sizeof(handle));
 
-    return handle;
+    повернути handle;
 }
 
 /* *** ggml_backend_type_t *** */
@@ -105,18 +105,18 @@ static inline ggml_backend_buffer_t apir_decode_ggml_buffer(apir_decoder * dec) 
 
     // SECURITY: Validate buffer handle against tracked buffers to prevent
     // guest VM from providing arbitrary host memory addresses
-    if (buffer) {
+    якщо (buffer) {
         extern std::unordered_set<ggml_backend_buffer_t> backend_buffers;
-        if (backend_buffers.find(buffer) == backend_buffers.end()) {
+        якщо (backend_buffers.find(buffer) == backend_buffers.end()) {
             GGML_LOG_WARN("ggml-virtgpu-backend: %s: Invalid buffer handle from guest: %p\n", __func__,
                           (void *) buffer);
             // Set fatal flag to prevent further processing with invalid handle
             apir_decoder_set_fatal(dec);
-            return NULL;
+            повернути NULL;
         }
     }
 
-    return buffer;
+    повернути buffer;
 }
 
 /* enum ggml_status */
@@ -144,7 +144,7 @@ static inline void apir_decode_virtgpu_shmem_res_id(apir_decoder * dec, uint32_t
 static inline size_t apir_serialize_ggml_cgraph(ggml_cgraph * cgraph, std::vector<uint8_t> & cgraph_data) {
     apir_serialize_graph(cgraph, cgraph_data);
 
-    return cgraph_data.size();
+    повернути cgraph_data.size();
 }
 
 static inline void apir_encode_cgraph_data(apir_encoder * enc, std::vector<uint8_t> & cgraph_data) {
@@ -164,7 +164,7 @@ static inline ggml_cgraph * apir_decode_ggml_cgraph(apir_decoder * dec, size_t c
     apir_decode_uint32_t(dec, &n_tensors);
     const apir_rpc_tensor * tensors = apir_decode_apir_rpc_tensor_array_inplace(dec, n_tensors);
 
-    return apir_deserialize_graph(n_nodes, n_tensors, tensors, nodes);
+    повернути apir_deserialize_graph(n_nodes, n_tensors, tensors, nodes);
 }
 
 static inline void apir_encode_ggml_buffer_handle(apir_encoder * enc, const apir_buffer_host_handle_t * handle) {
@@ -174,13 +174,13 @@ static inline void apir_encode_ggml_buffer_handle(apir_encoder * enc, const apir
 static inline void apir_encode_ggml_tensor_inline(apir_encoder * enc, const ggml_tensor * tensor) {
     size_t tensor_size = sizeof(*tensor);
 
-    if (tensor->extra) {
+    якщо (tensor->extra) {
         GGML_ABORT("%s: Cannot pass tensors with extra", __func__);
     }
 
-    if (tensor->src[0] && tensor->buffer) {
-        static int first = 1;
-        if (first) {
+    якщо (tensor->src[0] && tensor->buffer) {
+        static ціле first = 1;
+        якщо (first) {
             GGML_LOG_WARN("%s: Cannot pass tensors with src and buffer\n", __func__);
             first = 0;
         }
@@ -192,16 +192,16 @@ static inline void apir_encode_ggml_tensor_inline(apir_encoder * enc, const ggml
     // tensor->buffer is a pointer to a buffer. Encoding the buffer handle in sequence.
     // (could also make a copy of the tensor, and update locally.)
 
-    if (tensor->buffer) {
+    якщо (tensor->buffer) {
         apir_buffer_host_handle_t buffer_handle = ggml_buffer_to_apir_handle(tensor->buffer);
         apir_encode_ggml_buffer_handle(enc, &buffer_handle);
     }
 
-    if (tensor->view_src) {
+    якщо (tensor->view_src) {
         apir_encoder_write(enc, tensor_size, tensor->view_src, tensor_size);
     }
 
-    for (int i = 0; tensor->src[i]; i++) {
+    для (ціле i = 0; tensor->src[i]; i++) {
         const ggml_tensor * tensor_src = tensor->src[i];
         apir_encoder_write(enc, tensor_size, tensor_src, tensor_size);
     }
@@ -214,19 +214,19 @@ static inline const ggml_tensor * apir_decode_ggml_tensor_inplace(apir_decoder *
 
     // tensor->data is a pointer inside the device buffer. No need to touch it
     // tensor->buffer is a pointer to a buffer. Decode the buffer handle encoded in sequence.
-    if (tensor->buffer) {
+    якщо (tensor->buffer) {
         tensor->buffer = apir_decode_ggml_buffer(dec);
     }
 
-    if (tensor->view_src) {
+    якщо (tensor->view_src) {
         ggml_tensor * tensor_view_src = (ggml_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, sizeof(ggml_tensor));
         tensor->view_src              = tensor_view_src;
     }
 
-    for (int i = 0; tensor->src[i]; i++) {
+    для (ціле i = 0; tensor->src[i]; i++) {
         ggml_tensor * tensor_src = (ggml_tensor *) (uintptr_t) apir_decoder_use_inplace(dec, sizeof(ggml_tensor));
         tensor->src[i] = tensor_src;  // overwrite op->src[i] pointer with the actual location of the src tensor
     }
 
-    return tensor;
+    повернути tensor;
 }

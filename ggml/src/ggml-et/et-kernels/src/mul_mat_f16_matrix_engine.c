@@ -48,11 +48,11 @@ static inline void __attribute__((always_inline)) scp_signal(volatile uint32_t *
 
 // Wait for a counter in L2 SCP to reach the expected value.
 static inline void __attribute__((always_inline)) scp_wait(volatile uint32_t * flag, uint32_t expected) {
-    while (1) {
+    поки (1) {
         evict_to_l2((const void *) flag, 1, 64);
         WAIT_CACHEOPS;
-        if (*flag >= expected) {
-            return;
+        якщо (*flag >= expected) {
+            повернути;
         }
     }
 }
@@ -82,7 +82,7 @@ static inline void __attribute__((always_inline)) pack_b_interleaved(et_fp16_t *
         : [idx] "r"(scatter_idx)
         : "f1");
 
-    for (int j = 0; j < TILE_M; ++j) {
+    для (ціле j = 0; j < TILE_M; ++j) {
         const et_fp16_t * row = (const et_fp16_t *) (src0_batch + (mb + j) * nb1_0) + kb;
         char *            dst = (char *) out + j * 4;
 
@@ -99,17 +99,17 @@ static inline void __attribute__((always_inline)) pack_b_interleaved(et_fp16_t *
     __asm__ volatile("mova.m.x  %[ms]            \n\t" : : [ms] "r"(old_mask));
 }
 
-int entry_point(struct ggml_et_binary_params * params, void * env) {
+ціле entry_point(struct ggml_et_binary_params * params, void * env) {
     (void) env;
 
     uint64_t hart_id  = get_hart_id();
     uint64_t shire_id = get_shire_id();
 
-    if (shire_id >= NUM_COMPUTE_SHIRES) {
-        return 0;
+    якщо (shire_id >= NUM_COMPUTE_SHIRES) {
+        повернути 0;
     }
 
-    const int is_hart1     = hart_id & 1;
+    const ціле is_hart1     = hart_id & 1;
     uint64_t  local_minion = (hart_id >> 1) & 0x1F;
 
     // Dimensions (both harts need these for tile assignment)
@@ -133,11 +133,11 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const char * src1_base = (const char *) params->src1.data;
     char *       dst_base  = (char *) params->dst.data;
 
-    if ((M % TILE_M) != 0) {
-        return 0;
+    якщо ((M % TILE_M) != 0) {
+        повернути 0;
     }
-    if ((K % TILE_K) != 0) {
-        return 0;
+    якщо ((K % TILE_K) != 0) {
+        повернути 0;
     }
 
     const int64_t m_tiles     = M / TILE_M;
@@ -152,10 +152,10 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const int64_t k_steps     = K / TILE_K;
 
     int64_t k_splits = 1;
-    if (base_tiles < total_harts) {
+    якщо (base_tiles < total_harts) {
         k_splits   = (total_harts + base_tiles - 1) / base_tiles;
         int64_t ks = 1;
-        while (ks * 2 <= k_splits && ks * 2 <= 32 && k_steps % (ks * 2) == 0) {
+        поки (ks * 2 <= k_splits && ks * 2 <= 32 && k_steps % (ks * 2) == 0) {
             ks *= 2;
         }
         k_splits = ks;
@@ -182,14 +182,14 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     // ================================================================
     // Hart 1: B-panel packer
     // ================================================================
-    if (is_hart1) {
+    якщо (is_hart1) {
         // Initialize sync counters
         scp_signal(ready_ctr, 0);
         scp_signal(consumed_ctr, 0);
 
         uint32_t chunk_id = 0;
 
-        for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+        для (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
              tile += tiles_stride) {
             const int64_t tiles_per_batch = m_tiles * n_tiles;
             const int64_t batch_idx       = tile / tiles_per_batch;
@@ -205,11 +205,11 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
             const char *  src0_batch = src0_base + i3_0 * nb3_0 + i2_0 * nb2_0;
             const int64_t mb         = mb_idx * TILE_M;
 
-            for (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
-                int buf = chunk_id & 1;
+            для (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
+                ціле buf = chunk_id & 1;
 
                 // Back-pressure: wait for hart 0 to finish with this buffer
-                if (chunk_id >= 2) {
+                якщо (chunk_id >= 2) {
                     scp_wait(consumed_ctr, chunk_id - 1);
                 }
 
@@ -225,7 +225,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         FENCE;
-        return 0;
+        повернути 0;
     }
 
     // ================================================================
@@ -235,7 +235,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     const uint64_t group_base_global = my_minion_id - k_split;
 
     setup_cache_scp();
-#if CACHEOP_MAX > 0 || REP_RATE > 0
+#якщо CACHEOP_MAX > 0 || REP_RATE > 0
     ucache_control(1, REP_RATE, CACHEOP_MAX);
 #endif
     CLEAR_TENSOR_ERROR;
@@ -248,7 +248,7 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
 
     uint32_t chunk_id = 0;
 
-    for (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
+    для (int64_t tile = (int64_t) shire_id + local_tile_idx * NUM_COMPUTE_SHIRES; tile < base_tiles;
          tile += tiles_stride) {
         const int64_t tiles_per_batch = m_tiles * n_tiles;
         const int64_t batch_idx       = tile / tiles_per_batch;
@@ -268,13 +268,13 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         const int64_t n_cur = (nb + TILE_N <= N) ? TILE_N : (N - nb);
 
         // Set tensor_mask for partial N tiles
-        if (n_cur < TILE_N) {
+        якщо (n_cur < TILE_N) {
             uint64_t mask = (1ULL << n_cur) - 1;
             __asm__ __volatile__("csrw 0x805, %0" : : "r"(mask));
         }
 
-        for (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
-            int buf = chunk_id & 1;
+        для (int64_t kb = k_start; kb < k_end; kb += TILE_K) {
+            ціле buf = chunk_id & 1;
 
             // Start loading A from DRAM (overlaps with waiting for hart 1)
             tensor_load((n_cur < TILE_N), false, A_L1_START, TENSOR_LOAD_PLAIN, 0,
@@ -302,22 +302,22 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
         }
 
         // K-split ring reduce
-        if (k_splits > 1) {
+        якщо (k_splits > 1) {
             const uint64_t num_regs = (uint64_t) n_cur * 2;
 
-            if (k_split > 0) {
+            якщо (k_split > 0) {
                 tensor_reduce_recv(0, TENSOR_REDUCE_OP_FADD, num_regs, group_base_global + k_split - 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
 
-            if (k_split < k_splits - 1) {
+            якщо (k_split < k_splits - 1) {
                 tensor_reduce_send(0, num_regs, group_base_global + k_split + 1);
                 tensor_wait(TENSOR_REDUCE_WAIT);
             }
         }
 
         // Store FP32 result tile
-        if (k_split == k_splits - 1) {
+        якщо (k_split == k_splits - 1) {
             tensor_store(0, 0, 3, n_cur - 1, (uint64_t) (dst_batch + nb * nb1_d + mb * (int64_t) sizeof(float)), 0,
                          (uint64_t) nb1_d);
             tensor_wait(TENSOR_STORE_WAIT);
@@ -325,5 +325,5 @@ int entry_point(struct ggml_et_binary_params * params, void * env) {
     }
 
     FENCE;
-    return 0;
+    повернути 0;
 }

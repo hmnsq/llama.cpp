@@ -19,11 +19,11 @@ static  void im2col_kernel(
         const float * x, T * dst,
         int64_t IC, int64_t IW, int64_t IH, int64_t OH, int64_t OW, int64_t KW, int64_t KH,
         int64_t IC_IH_IW, int64_t IH_IW, int64_t N_OH, int64_t KH_KW, int64_t IC_KH_KW,
-        int s0, int s1, int p0, int p1, int d0, int d1) {
+        ціле s0, ціле s1, ціле p0, ціле p1, ціле d0, ціле d1) {
     auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     const int64_t i        = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (i >= IC_KH_KW) {
-        return;
+    якщо (i >= IC_KH_KW) {
+        повернути;
     }
 
     const int64_t iic = i / (KH_KW);
@@ -32,7 +32,7 @@ static  void im2col_kernel(
     const int64_t ikw = rem - ikh * KW;
 
     const int64_t iow = item_ct1.get_group(1);
-    for (int64_t iz = item_ct1.get_group(0); iz < N_OH; iz += MAX_GRIDDIM_Z) {
+    для (int64_t iz = item_ct1.get_group(0); iz < N_OH; iz += MAX_GRIDDIM_Z) {
         const int64_t  in = iz / OH;
         const int64_t  ioh = iz - in * OH;
 
@@ -42,9 +42,9 @@ static  void im2col_kernel(
         const int64_t offset_dst =
             ((in * OH + ioh) * OW + iow) * IC_KH_KW + iic * KH_KW + ikh * KW + ikw;
 
-        if (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
+        якщо (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW) {
             dst[offset_dst] = 0.0f;
-        } else {
+        } інакше {
             const int64_t offset_src = iic * IC_IH_IW + in * IH_IW;
             dst[offset_dst] = x[offset_src + iih * IW + iiw];
         }
@@ -68,12 +68,12 @@ static void im2col_sycl(const float *   x,
                         int64_t         N,
                         int64_t         IC_IH_IW,
                         int64_t         IH_IW,
-                        int             s0,
-                        int             s1,
-                        int             p0,
-                        int             p1,
-                        int             d0,
-                        int             d1,
+                        ціле             s0,
+                        ціле             s1,
+                        ціле             p0,
+                        ціле             p1,
+                        ціле             d0,
+                        ціле             d1,
                         dpct::queue_ptr stream) {
     const int64_t IC_KH_KW = IC * KH * KW;
     const int64_t num_blocks = (IC_KH_KW + SYCL_IM2COL_BLOCK_SIZE - 1) / SYCL_IM2COL_BLOCK_SIZE;
@@ -103,12 +103,12 @@ static void im2col_sycl_f16(const float *   x,
                             int64_t         N,
                             int64_t         IC_IH_IW,
                             int64_t         IH_IW,
-                            int             s0,
-                            int             s1,
-                            int             p0,
-                            int             p1,
-                            int             d0,
-                            int             d1,
+                            ціле             s0,
+                            ціле             s1,
+                            ціле             p0,
+                            ціле             p1,
+                            ціле             d0,
+                            ціле             d1,
                             dpct::queue_ptr stream) {
     im2col_sycl<sycl::half>(x, dst, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1, d0, d1, stream);
 }
@@ -125,12 +125,12 @@ static void im2col_sycl_f32(const float *   x,
                             int64_t         N,
                             int64_t         IC_IH_IW,
                             int64_t         IH_IW,
-                            int             s0,
-                            int             s1,
-                            int             p0,
-                            int             p1,
-                            int             d0,
-                            int             d1,
+                            ціле             s0,
+                            ціле             s1,
+                            ціле             p0,
+                            ціле             p1,
+                            ціле             d0,
+                            ціле             d1,
                             dpct::queue_ptr stream) {
     im2col_sycl<float>(x, dst, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1, d0, d1, stream);
 }
@@ -168,10 +168,10 @@ void ggml_sycl_op_im2col(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const int64_t N        = src1->ne[is_2D ? 3 : 2];
     const int64_t IH_IW    = src1->nb[is_2D ? 3 : 2] / 4; // nb is byte offset, src is type float32
 
-    if(dst->type == GGML_TYPE_F16) {
+    якщо(dst->type == GGML_TYPE_F16) {
         im2col_sycl_f16(src1_d, (sycl::half *) dst_d, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1,
                         d0, d1, stream);
-    } else {
+    } інакше {
         im2col_sycl_f32(src1_d, (float *) dst_d, IW, IH, OW, OH, KW, KH, IC, N, IC_IH_IW, IH_IW, s0, s1, p0, p1, d0, d1, stream);
     }
 }
@@ -186,11 +186,11 @@ static  void im2col_3d_kernel(
         int64_t IC_KD_KH_KW, int64_t OW_KD_KH_KW, int64_t OD_OH_OW_IC_KD_KH_KW, int64_t OH_OW_IC_KD_KH_KW,
         int64_t OW_IC_KD_KH_KW, int64_t N_OD_OH, int64_t OD_OH,
         int64_t stride_q, int64_t stride_z, int64_t stride_y, int64_t stride_x,
-        int s0, int s1, int s2, int p0, int p1, int p2, int d0, int d1, int d2) {
+        ціле s0, ціле s1, ціле s2, ціле p0, ціле p1, ціле p2, ціле d0, ціле d1, ціле d2) {
     auto          item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
     const int64_t i        = item_ct1.get_local_id(2) + item_ct1.get_group(2) * item_ct1.get_local_range(2);
-    if (i >= IC_KD_KH_KW) {
-        return;
+    якщо (i >= IC_KD_KH_KW) {
+        повернути;
     }
     GGML_UNUSED(N); GGML_UNUSED(OC); GGML_UNUSED(OH_OW); GGML_UNUSED(OD); GGML_UNUSED(OW); GGML_UNUSED(KD); GGML_UNUSED(KH);
     GGML_UNUSED(ID_IH_IW); GGML_UNUSED(IH_IW); GGML_UNUSED(IC_ID_IH_IW); GGML_UNUSED(OW_KD_KH_KW);
@@ -201,7 +201,7 @@ static  void im2col_3d_kernel(
     const int64_t ikw = i % KW;
 
     const int64_t iow = item_ct1.get_group(1);
-    for (int64_t iz = item_ct1.get_group(0); iz < N_OD_OH; iz += MAX_GRIDDIM_Z) {
+    для (int64_t iz = item_ct1.get_group(0); iz < N_OD_OH; iz += MAX_GRIDDIM_Z) {
         const int64_t in  = iz / OD_OH;
         const int64_t iod = (iz - in*OD_OH) / OH;
         const int64_t ioh = iz % OH;
@@ -212,9 +212,9 @@ static  void im2col_3d_kernel(
 
         const int64_t offset_dst = in*OD_OH_OW_IC_KD_KH_KW + iod*OH_OW_IC_KD_KH_KW + ioh*OW_IC_KD_KH_KW + iow*IC_KD_KH_KW + iic*KD_KH_KW + ikd * KH_KW + ikh*KW + ikw;
 
-        if (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW || iid < 0 || iid >= ID) {
+        якщо (iih < 0 || iih >= IH || iiw < 0 || iiw >= IW || iid < 0 || iid >= ID) {
             dst[offset_dst] = 0.0f;
-        } else {
+        } інакше {
             const int64_t offset_src = ((in * IC + iic) * stride_q) + (iid * stride_z) + (iih * stride_y) + (iiw * stride_x);
             dst[offset_dst] = src[offset_src];
         }
@@ -241,15 +241,15 @@ static void im2col_3d_sycl(const float *   src,
                            int64_t         stride_z,
                            int64_t         stride_y,
                            int64_t         stride_x,
-                           int             s0,
-                           int             s1,
-                           int             s2,
-                           int             p0,
-                           int             p1,
-                           int             p2,
-                           int             d0,
-                           int             d1,
-                           int             d2,
+                           ціле             s0,
+                           ціле             s1,
+                           ціле             s2,
+                           ціле             p0,
+                           ціле             p1,
+                           ціле             p2,
+                           ціле             d0,
+                           ціле             d1,
+                           ціле             d2,
                            dpct::queue_ptr stream) {
     const int64_t OH_OW = OH*OW;
     const int64_t KD_KH_KW = KD*KH*KW;
@@ -298,15 +298,15 @@ static void im2col_3d_sycl_f16(const float *   src,
                                int64_t         stride_z,
                                int64_t         stride_y,
                                int64_t         stride_x,
-                               int             s0,
-                               int             s1,
-                               int             s2,
-                               int             p0,
-                               int             p1,
-                               int             p2,
-                               int             d0,
-                               int             d1,
-                               int             d2,
+                               ціле             s0,
+                               ціле             s1,
+                               ціле             s2,
+                               ціле             p0,
+                               ціле             p1,
+                               ціле             p2,
+                               ціле             d0,
+                               ціле             d1,
+                               ціле             d2,
                                dpct::queue_ptr stream) {
     im2col_3d_sycl<sycl::half>(src, dst, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW, stride_q, stride_z, stride_y,
                                stride_x, s0, s1, s2, p0, p1, p2, d0, d1, d2, stream);
@@ -330,15 +330,15 @@ static void im2col_3d_sycl_f32(const float *   src,
                                int64_t         stride_z,
                                int64_t         stride_y,
                                int64_t         stride_x,
-                               int             s0,
-                               int             s1,
-                               int             s2,
-                               int             p0,
-                               int             p1,
-                               int             p2,
-                               int             d0,
-                               int             d1,
-                               int             d2,
+                               ціле             s0,
+                               ціле             s1,
+                               ціле             s2,
+                               ціле             p0,
+                               ціле             p1,
+                               ціле             p2,
+                               ціле             d0,
+                               ціле             d1,
+                               ціле             d2,
                                dpct::queue_ptr stream) {
     im2col_3d_sycl<float>(src, dst, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW,
                           stride_q, stride_z, stride_y, stride_x,
@@ -388,11 +388,11 @@ void ggml_sycl_op_im2col_3d(ggml_backend_sycl_context & ctx, ggml_tensor * dst) 
     const int64_t stride_z = src1->nb[2] / es;
     const int64_t stride_q = src1->nb[3] / es;
 
-    if(dst->type == GGML_TYPE_F16) {
+    якщо(dst->type == GGML_TYPE_F16) {
         im2col_3d_sycl_f16(src1_d, (sycl::half *) dst_d, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW,
                            stride_q, stride_z, stride_y, stride_x,
                            s0, s1, s2, p0, p1, p2, d0, d1, d2, stream);
-    } else {
+    } інакше {
         im2col_3d_sycl_f32(src1_d, (float *) dst_d, N, IC, ID, IH, IW, OC, KD, KH, KW, OD, OH, OW,
                            stride_q, stride_z, stride_y, stride_x,
                            s0, s1, s2, p0, p1, p2, d0, d1, d2, stream);

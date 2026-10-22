@@ -7,8 +7,8 @@ template <typename T>
 static void fill_kernel(T * dst, const int64_t k, const T value,
                         const sycl::nd_item<1> & item) {
     const int64_t i = (int64_t)item.get_global_id(0);
-    if (i >= k) {
-        return;
+    якщо (i >= k) {
+        повернути;
     }
     dst[i] = value;
 }

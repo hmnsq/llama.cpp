@@ -20,9 +20,9 @@ struct spine_mem_pool_tcm_info {
 };
 
 bool   spine_mem_pool_tcm_init(spine_mem_pool_tcm_info * info) noexcept;
-void * spine_mem_pool_tcm_mem_get(int cpu_id) noexcept;
-void * spine_mem_pool_tcm_mem_wait(int cpu_id) noexcept;
-int    spine_mem_pool_tcm_mem_release(int cpu_id) noexcept;
+void * spine_mem_pool_tcm_mem_get(ціле cpu_id) noexcept;
+void * spine_mem_pool_tcm_mem_wait(ціле cpu_id) noexcept;
+ціле    spine_mem_pool_tcm_mem_release(ціле cpu_id) noexcept;
 
 void * spine_mem_pool_alloc(size_t size, size_t alignment) noexcept;
 void * spine_mem_pool_shared_mem_alloc(size_t size, size_t alignment) noexcept;
