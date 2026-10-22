@@ -23,7 +23,7 @@
 
 #define UNUSED GGML_UNUSED
 
-#if defined(__wasm_simd128__)
+#ប្រសិនបើ defined(__wasm_simd128__)
 #define B1(c,s,n)  0x ## n ## c ,  0x ## n ## s
 #define B2(c,s,n) B1(c,s,n ## c), B1(c,s,n ## s)
 #define B3(c,s,n) B2(c,s,n ## c), B2(c,s,n ## s)
@@ -41,22 +41,22 @@ static const uint64_t table_b2b_1[1 << 8] = { B8(10, 00) }; // (!b) << 4
 void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(QK8_0 == 32);
     assert(k % QK8_0 == 0);
-    const int nb = k / QK8_0;
+    const ចំនួនគត់ nb = k / QK8_0;
 
     block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined __wasm_simd128__
-    for (int i = 0; i < nb; i++) {
+#ប្រសិនបើ defined __wasm_simd128__
+    សម្រាប់ (ចំនួនគត់ i = 0; i < nb; i++) {
         v128_t srcv [8];
         v128_t asrcv[8];
         v128_t amaxv[8];
 
-        for (int j = 0; j < 8; j++) srcv[j]  = wasm_v128_load(x + i*32 + 4*j);
-        for (int j = 0; j < 8; j++) asrcv[j] = wasm_f32x4_abs(srcv[j]);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 8; j++) srcv[j]  = wasm_v128_load(x + i*32 + 4*j);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 8; j++) asrcv[j] = wasm_f32x4_abs(srcv[j]);
 
-        for (int j = 0; j < 4; j++) amaxv[2*j] = wasm_f32x4_max(asrcv[2*j], asrcv[2*j+1]);
-        for (int j = 0; j < 2; j++) amaxv[4*j] = wasm_f32x4_max(amaxv[4*j], amaxv[4*j+2]);
-        for (int j = 0; j < 1; j++) amaxv[8*j] = wasm_f32x4_max(amaxv[8*j], amaxv[8*j+4]);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 4; j++) amaxv[2*j] = wasm_f32x4_max(asrcv[2*j], asrcv[2*j+1]);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 2; j++) amaxv[4*j] = wasm_f32x4_max(amaxv[4*j], amaxv[4*j+2]);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 1; j++) amaxv[8*j] = wasm_f32x4_max(amaxv[8*j], amaxv[8*j+4]);
 
         const float amax = MAX(MAX(wasm_f32x4_extract_lane(amaxv[0], 0),
                                    wasm_f32x4_extract_lane(amaxv[0], 1)),
@@ -68,7 +68,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
         y[i].d = GGML_CPU_FP32_TO_FP16(d);
 
-        for (int j = 0; j < 8; j++) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 8; j++) {
             const v128_t v  = wasm_f32x4_mul(srcv[j], wasm_f32x4_splat(id));
             const v128_t vi = wasm_i32x4_trunc_sat_f32x4(v);
 
@@ -78,7 +78,7 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
             y[i].qs[4*j + 3] = wasm_i32x4_extract_lane(vi, 3);
         }
     }
-#else
+#បើមិនដូច្នេះ
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_0_ref(x, y, k);
@@ -87,21 +87,21 @@ void quantize_row_q8_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
 void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, int64_t k) {
     assert(k % QK8_1 == 0);
-    const int nb = k / QK8_1;
+    const ចំនួនគត់ nb = k / QK8_1;
 
     block_q8_1 * GGML_RESTRICT y = vy;
-#if defined __wasm_simd128__
-    for (int i = 0; i < nb; i++) {
+#ប្រសិនបើ defined __wasm_simd128__
+    សម្រាប់ (ចំនួនគត់ i = 0; i < nb; i++) {
         v128_t srcv [8];
         v128_t asrcv[8];
         v128_t amaxv[8];
 
-        for (int j = 0; j < 8; j++) srcv[j]  = wasm_v128_load(x + i*32 + 4*j);
-        for (int j = 0; j < 8; j++) asrcv[j] = wasm_f32x4_abs(srcv[j]);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 8; j++) srcv[j]  = wasm_v128_load(x + i*32 + 4*j);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 8; j++) asrcv[j] = wasm_f32x4_abs(srcv[j]);
 
-        for (int j = 0; j < 4; j++) amaxv[2*j] = wasm_f32x4_max(asrcv[2*j], asrcv[2*j+1]);
-        for (int j = 0; j < 2; j++) amaxv[4*j] = wasm_f32x4_max(amaxv[4*j], amaxv[4*j+2]);
-        for (int j = 0; j < 1; j++) amaxv[8*j] = wasm_f32x4_max(amaxv[8*j], amaxv[8*j+4]);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 4; j++) amaxv[2*j] = wasm_f32x4_max(asrcv[2*j], asrcv[2*j+1]);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 2; j++) amaxv[4*j] = wasm_f32x4_max(amaxv[4*j], amaxv[4*j+2]);
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 1; j++) amaxv[8*j] = wasm_f32x4_max(amaxv[8*j], amaxv[8*j+4]);
 
         const float amax = MAX(MAX(wasm_f32x4_extract_lane(amaxv[0], 0),
                                    wasm_f32x4_extract_lane(amaxv[0], 1)),
@@ -115,7 +115,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
 
         v128_t accv = wasm_i32x4_splat(0);
 
-        for (int j = 0; j < 8; j++) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 8; j++) {
             const v128_t v  = wasm_f32x4_mul(srcv[j], wasm_f32x4_splat(id));
             const v128_t vi = wasm_i32x4_trunc_sat_f32x4(v);
 
@@ -133,7 +133,7 @@ void quantize_row_q8_1(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, i
                      wasm_i32x4_extract_lane(accv, 2) +
                      wasm_i32x4_extract_lane(accv, 3)));
     }
-#else
+#បើមិនដូច្នេះ
     GGML_UNUSED(nb);
     // scalar
     quantize_row_q8_1_ref(x, y, k);
@@ -148,13 +148,13 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
     const int64_t nb = k / QK_K;
     block_q8_K * GGML_RESTRICT yc = y; // Cast to proper type
 
-    for (int i = 0; i < nb; i++) {
+    សម្រាប់ (ចំនួនគត់ i = 0; i < nb; i++) {
         const float * x_block = x + i * QK_K;
 
         v128_t min_vec = wasm_v128_load(x_block);
         v128_t max_vec = min_vec;
 
-        for (int j = 4; j < QK_K; j += 4) {
+        សម្រាប់ (ចំនួនគត់ j = 4; j < QK_K; j += 4) {
             v128_t x_vec = wasm_v128_load(x_block + j);
             max_vec = wasm_f32x4_pmax(max_vec, x_vec);
             min_vec = wasm_f32x4_pmin(min_vec, x_vec);
@@ -167,10 +167,10 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
         float min = wasm_f32x4_extract_lane(min_vec, 0);
         float amax = -min > max ? min : max;
 
-        if (amax == 0.0f) {
+        ប្រសិនបើ (amax == 0.0f) {
             yc[i].d = 0.0f;
             const v128_t zero = wasm_i8x16_splat(0);
-            for (int j = 0; j < QK_K; j += 16) {
+            សម្រាប់ (ចំនួនគត់ j = 0; j < QK_K; j += 16) {
                 wasm_v128_store(yc[i].qs + j, zero);
             }
             continue;
@@ -180,7 +180,7 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
         const v128_t scale_vec = wasm_f32x4_splat(iscale);
 
         // Process 16 elements per iteration
-        for (int j = 0, jb = 0; j < QK_K; j += 16, jb++) {
+        សម្រាប់ (ចំនួនគត់ j = 0, jb = 0; j < QK_K; j += 16, jb++) {
             // Load and quantize 16 floats
             v128_t x0 = wasm_v128_load(x_block + j);
             v128_t x1 = wasm_v128_load(x_block + j + 4);
@@ -221,7 +221,7 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
 
         yc[i].d = 1.0f / iscale;
     }
-#else
+#បើមិនដូច្នេះ
     quantize_row_q8_K_ref(x, y, k);
 #endif
 }
@@ -229,9 +229,9 @@ void quantize_row_q8_K(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, in
 
 //===================================== Dot products =================================
 
-void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q4_0_q8_0(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, ចំនួនគត់ nrc) {
+    const ចំនួនគត់ qk = QK8_0;
+    const ចំនួនគត់ nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -243,16 +243,16 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    ចំនួនគត់ ib = 0;
     float sumf = 0;
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     v128_t sumv = wasm_f32x4_splat(0.0f);
 
     const v128_t m4b = wasm_i8x16_splat(0x0F);
     const v128_t s8b = wasm_i8x16_splat(0x8);
 
-    for (; ib + 1 < nb; ib += 2) {
+    សម្រាប់ (; ib + 1 < nb; ib += 2) {
         const block_q4_0 * GGML_RESTRICT x0 = &x[ib];
         const block_q4_0 * GGML_RESTRICT x1 = &x[ib + 1];
         const block_q8_0 * GGML_RESTRICT y0 = &y[ib];
@@ -336,28 +336,28 @@ void ggml_vec_dot_q4_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
            wasm_f32x4_extract_lane(sumv, 2) + wasm_f32x4_extract_lane(sumv, 3);
 
 #endif
-    for (; ib < nb; ++ib) {
-        int sumi0 = 0;
-        int sumi1 = 0;
+    សម្រាប់ (; ib < nb; ++ib) {
+        ចំនួនគត់ sumi0 = 0;
+        ចំនួនគត់ sumi1 = 0;
 
-        for (int j = 0; j < qk/2; ++j) {
-            const int v0 = (x[ib].qs[j] & 0x0F) - 8;
-            const int v1 = (x[ib].qs[j] >>   4) - 8;
+        សម្រាប់ (ចំនួនគត់ j = 0; j < qk/2; ++j) {
+            const ចំនួនគត់ v0 = (x[ib].qs[j] & 0x0F) - 8;
+            const ចំនួនគត់ v1 = (x[ib].qs[j] >>   4) - 8;
 
             sumi0 += (v0 * y[ib].qs[j]);
             sumi1 += (v1 * y[ib].qs[j + qk/2]);
         }
 
-        int sumi = sumi0 + sumi1;
+        ចំនួនគត់ sumi = sumi0 + sumi1;
         sumf += sumi*GGML_CPU_FP16_TO_FP32(x[ib].d)*GGML_CPU_FP16_TO_FP32(y[ib].d);
     }
 
     *s = sumf;
 }
 
-void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+void ggml_vec_dot_q4_1_q8_1(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, ចំនួនគត់ nrc) {
+    const ចំនួនគត់ qk = QK8_1;
+    const ចំនួនគត់ nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -371,11 +371,11 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     float sumf = 0;
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     v128_t sumv = wasm_f32x4_splat(0.0f);
     float summs = 0.0f;
 
-    for (int ib = 0; ib < nb; ++ib) {
+    សម្រាប់ (ចំនួនគត់ ib = 0; ib < nb; ++ib) {
         const block_q4_1 * GGML_RESTRICT x0 = &x[ib];
         const block_q8_1 * GGML_RESTRICT y0 = &y[ib];
 
@@ -416,7 +416,7 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#បើមិនដូច្នេះ
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -427,11 +427,11 @@ void ggml_vec_dot_q4_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q5_0_q8_0(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, ចំនួនគត់ nrc) {
+    const ចំនួនគត់ qk = QK8_0;
+    const ចំនួនគត់ nb = n / qk;
 
-    int ib = 0;
+    ចំនួនគត់ ib = 0;
     float sumf = 0;
 
     assert(n % qk == 0);
@@ -445,21 +445,21 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     v128_t sumv = wasm_f32x4_splat(0.0f);
 
     uint32_t qh_;
     uint64_t tmp[4];
 
     // TODO: check if unrolling this is better
-    for (; ib < nb; ++ib) {
+    សម្រាប់ (; ib < nb; ++ib) {
         const block_q5_0 * GGML_RESTRICT x0 = &x[ib];
         const block_q8_0 * GGML_RESTRICT y0 = &y[ib];
 
         const v128_t m4b  = wasm_i8x16_splat(0x0F);
 
         // extract the 5th bit
-        memcpy(&qh_, x0->qh, sizeof(qh_));
+        memcpy(&qh_, x0->qh, parimaa_na(qh_));
 
         tmp[0] = table_b2b_1[(qh_ >>  0) & 0xFF];
         tmp[1] = table_b2b_1[(qh_ >>  8) & 0xFF];
@@ -508,7 +508,7 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
            wasm_f32x4_extract_lane(sumv, 2) + wasm_f32x4_extract_lane(sumv, 3);
 
     *s = sumf;
-#else
+#បើមិនដូច្នេះ
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
@@ -518,11 +518,11 @@ void ggml_vec_dot_q5_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_1;
-    const int nb = n / qk;
+void ggml_vec_dot_q5_1_q8_1(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, ចំនួនគត់ nrc) {
+    const ចំនួនគត់ qk = QK8_1;
+    const ចំនួនគត់ nb = n / qk;
 
-    int ib = 0;
+    ចំនួនគត់ ib = 0;
     float sumf = 0;
 
     assert(n % qk == 0);
@@ -536,7 +536,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_1 * GGML_RESTRICT x = vx;
     const block_q8_1 * GGML_RESTRICT y = vy;
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     v128_t sumv = wasm_f32x4_splat(0.0f);
 
     float summs = 0.0f;
@@ -545,7 +545,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
     uint64_t tmp[4];
 
     // TODO: check if unrolling this is better
-    for (; ib < nb; ++ib) {
+    សម្រាប់ (; ib < nb; ++ib) {
         const block_q5_1 * GGML_RESTRICT x0 = &x[ib];
         const block_q8_1 * GGML_RESTRICT y0 = &y[ib];
 
@@ -554,7 +554,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
         const v128_t m4b = wasm_i8x16_splat(0x0F);
 
         // extract the 5th bit
-        memcpy(&qh_, x0->qh, sizeof(qh_));
+        memcpy(&qh_, x0->qh, parimaa_na(qh_));
 
         tmp[0] = table_b2b_0[(qh_ >>  0) & 0xFF];
         tmp[1] = table_b2b_0[(qh_ >>  8) & 0xFF];
@@ -603,7 +603,7 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
            wasm_f32x4_extract_lane(sumv, 2) + wasm_f32x4_extract_lane(sumv, 3) + summs;
 
     *s = sumf;
-#else
+#បើមិនដូច្នេះ
     UNUSED(nb);
     UNUSED(ib);
     UNUSED(sumf);
@@ -613,9 +613,9 @@ void ggml_vec_dot_q5_1_q8_1(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
-    const int qk = QK8_0;
-    const int nb = n / qk;
+void ggml_vec_dot_q8_0_q8_0(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, ចំនួនគត់ nrc) {
+    const ចំនួនគត់ qk = QK8_0;
+    const ចំនួនគត់ nb = n / qk;
 
     assert(n % qk == 0);
     assert(nrc == 1);
@@ -627,13 +627,13 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q8_0 * GGML_RESTRICT x = vx;
     const block_q8_0 * GGML_RESTRICT y = vy;
 
-    int ib = 0;
+    ចំនួនគត់ ib = 0;
     float sumf = 0;
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     v128_t sumv = wasm_f32x4_splat(0.0f);
 
-    for (; ib < nb; ++ib) {
+    សម្រាប់ (; ib < nb; ++ib) {
         const block_q8_0 * GGML_RESTRICT x0 = &x[ib];
         const block_q8_0 * GGML_RESTRICT y0 = &y[ib];
 
@@ -671,7 +671,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
            wasm_f32x4_extract_lane(sumv, 2) + wasm_f32x4_extract_lane(sumv, 3);
 
     *s = sumf;
-#else
+#បើមិនដូច្នេះ
     UNUSED(nb);
     UNUSED(x);
     UNUSED(y);
@@ -681,7 +681,7 @@ void ggml_vec_dot_q8_0_q8_0(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q2_K_q8_K(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, ចំនួនគត់ nrc) {
     assert(nrc == 1);
     UNUSED(nrc);
     UNUSED(bx);
@@ -691,12 +691,12 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q2_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const ចំនួនគត់ nb = n / QK_K;
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     float sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
+    សម្រាប់ (ចំនួនគត់ i = 0; i < nb; ++i) {
         const uint8_t * q2 = x[i].qs;
         const int8_t * q8 = y[i].qs;
         const uint8_t * sc = x[i].scales;
@@ -727,15 +727,15 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         // Vectorized isum calculation
         int32_t isum = 0;
         const uint8_t * sc_ptr = sc;
-        const int k_iters = QK_K/128;
+        const ចំនួនគត់ k_iters = QK_K/128;
 
-        for (int k = 0; k < k_iters; ++k) {
+        សម្រាប់ (ចំនួនគត់ k = 0; k < k_iters; ++k) {
             v128_t isum_vec = wasm_i32x4_splat(0);
-            int shift = 0;
+            ចំនួនគត់ shift = 0;
 
-            for (int j = 0; j < 4; ++j) {
-                const int d0 = (sc_ptr[0] & 0xF);
-                const int d1 = (sc_ptr[1] & 0xF);
+            សម្រាប់ (ចំនួនគត់ j = 0; j < 4; ++j) {
+                const ចំនួនគត់ d0 = (sc_ptr[0] & 0xF);
+                const ចំនួនគត់ d1 = (sc_ptr[1] & 0xF);
                 sc_ptr += 2;
 
                 // Process first 16 elements
@@ -793,7 +793,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#បើមិនដូច្នេះ
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -801,7 +801,7 @@ void ggml_vec_dot_q2_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q3_K_q8_K(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, ចំនួនគត់ nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -815,15 +815,15 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q3_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const ចំនួនគត់ nb = n / QK_K;
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     int8_t  aux8[QK_K];
     float   sums[8] = {0};
     uint32_t auxs[4];
 
     float sumf = 0;
-    for (int i = 0; i < nb; ++i) {
+    សម្រាប់ (ចំនួនគត់ i = 0; i < nb; ++i) {
         const uint8_t * GGML_RESTRICT q3 = x[i].qs;
         const uint8_t * GGML_RESTRICT hm = x[i].hmask;
         const int8_t  * GGML_RESTRICT q8 = y[i].qs;
@@ -831,10 +831,10 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         // Process blocks with SIMD
         int8_t * a = aux8;
         uint8_t m = 1;
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int shift = 0; shift <= 6; shift += 2) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < QK_K; j += 128) {
+            សម្រាប់ (ចំនួនគត់ shift = 0; shift <= 6; shift += 2) {
                 v128_t v_m = wasm_i8x16_splat(m);
-                for (int l = 0; l < 32; l += 16) {
+                សម្រាប់ (ចំនួនគត់ l = 0; l < 32; l += 16) {
                     v128_t v_q3 = wasm_v128_load(q3 + l);
                     v128_t v_shift = wasm_i8x16_shr(v_q3, shift);
                     v128_t v_low2 = wasm_v128_and(v_shift, wasm_i8x16_splat(0x03));
@@ -865,11 +865,11 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         v128_t v_acc0 = wasm_i32x4_splat(0);
         v128_t v_acc1 = wasm_i32x4_splat(0);
         a = aux8;
-        for (int j = 0; j < QK_K/16; ++j) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < QK_K/16; ++j) {
             const v128_t v_scale = wasm_i16x8_splat(scales[j] - 32);
 
             // Process 16 elements per iteration
-            for (int k = 0; k < 2; ++k) {
+            សម្រាប់ (ចំនួនគត់ k = 0; k < 2; ++k) {
                 const v128_t v_q8 = wasm_i16x8_load8x8(q8);
                 const v128_t v_a = wasm_i16x8_load8x8(a);
 
@@ -905,7 +905,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#បើមិនដូច្នេះ
     UNUSED(kmask1);
     UNUSED(kmask2);
     UNUSED(x);
@@ -916,7 +916,7 @@ void ggml_vec_dot_q3_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
 }
 
-void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q4_K_q8_K(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, ចំនួនគត់ nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -927,7 +927,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q4_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const ចំនួនគត់ nb = n / QK_K;
 
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
@@ -935,11 +935,11 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     const uint8_t * scales = (const uint8_t*)&utmp[0];
     float sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
+    សម្រាប់ (ចំនួនគត់ i = 0; i < nb; ++i) {
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
         const float dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin); // Corrected sign
 
@@ -958,7 +958,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         int32_t sumi = 0;
         const int16_t * GGML_RESTRICT q8sums = y[i].bsums;
         const uint8_t * m = (const uint8_t *)&utmp[2];
-        for (int j = 0; j < 16; j += 2) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 16; j += 2) {
             sumi += (q8sums[j] + q8sums[j+1]) * m[j/2];
         }
         sumf -= dmin * sumi;
@@ -966,7 +966,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         int32_t sumi1 = 0;
         int32_t sumi2 = 0;
 
-        for (int j = 0; j < QK_K/64; ++j) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < QK_K/64; ++j) {
             // Load 64 4-bit weights (32 bytes)
             const v128_t q4x0 = wasm_v128_load(q4);
             const v128_t q4x1 = wasm_v128_load(q4 + 16);
@@ -1036,7 +1036,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#បើមិនដូច្នេះ
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1048,7 +1048,7 @@ void ggml_vec_dot_q4_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, int nrc) {
+void ggml_vec_dot_q5_K_q8_K(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy,  size_t by, ចំនួនគត់ nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1059,7 +1059,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q5_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const ចំនួនគត់ nb = n / QK_K;
 
     static const uint32_t kmask1 = 0x3f3f3f3f;
     static const uint32_t kmask2 = 0x0f0f0f0f;
@@ -1067,11 +1067,11 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     uint32_t utmp[4];
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     //const uint8_t * scales = (const uint8_t*)&utmp[0];
     float sumf = 0;
 
-    for (int i = 0; i < nb; ++i) {
+    សម្រាប់ (ចំនួនគត់ i = 0; i < nb; ++i) {
         const float d = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].d);
         const float dmin = y[i].d * GGML_CPU_FP16_TO_FP32(x[i].dmin); // Fixed sign
 
@@ -1091,7 +1091,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         int32_t sumi_mins = 0;
         const int16_t * GGML_RESTRICT q8sums = y[i].bsums;
         const uint8_t * m = (const uint8_t *)&utmp[2];
-        for (int j = 0; j < 16; j += 2) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < 16; j += 2) {
             sumi_mins += (q8sums[j] + q8sums[j+1]) * m[j/2];
         }
         sumf -= dmin * sumi_mins; // Correct subtraction
@@ -1102,8 +1102,8 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
         int32_t sumi = 0;
 
-        for (int j = 0; j < QK_K/64; ++j) {
-            const int shift = j * 2;
+        សម្រាប់ (ចំនួនគត់ j = 0; j < QK_K/64; ++j) {
+            const ចំនួនគត់ shift = j * 2;
             v128_t qh_shift0 = wasm_u8x16_shr(qh0, shift);
             v128_t qh_shift1 = wasm_u8x16_shr(qh1, shift);
 
@@ -1179,7 +1179,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 
     *s = sumf;
 
-#else
+#បើមិនដូច្នេះ
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);
@@ -1191,7 +1191,7 @@ void ggml_vec_dot_q5_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
 #endif
 }
 
-void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, int nrc) {
+void ggml_vec_dot_q6_K_q8_K(ចំនួនគត់ n, float * GGML_RESTRICT s, size_t bs, const void * GGML_RESTRICT vx, size_t bx, const void * GGML_RESTRICT vy, size_t by, ចំនួនគត់ nrc) {
     assert(n % QK_K == 0);
     assert(nrc == 1);
     UNUSED(nrc);
@@ -1202,20 +1202,20 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
     const block_q6_K * GGML_RESTRICT x = vx;
     const block_q8_K * GGML_RESTRICT y = vy;
 
-    const int nb = n / QK_K;
+    const ចំនួនគត់ nb = n / QK_K;
 
-#if defined __wasm_simd128__
+#ប្រសិនបើ defined __wasm_simd128__
     int8_t aux8[QK_K] __attribute__((aligned(16)));
     int32_t aux32[8] __attribute__((aligned(16))) = {0};
     float sums[8] __attribute__((aligned(16))) = {0};
 
-    for (int i = 0; i < nb; ++i) {
+    សម្រាប់ (ចំនួនគត់ i = 0; i < nb; ++i) {
         // Unpack 6-bit quantized data into aux8 (unchanged)
         const uint8_t * GGML_RESTRICT q4 = x[i].ql;
         const uint8_t * GGML_RESTRICT qh = x[i].qh;
         int8_t * a = aux8;
-        for (int j = 0; j < QK_K; j += 128) {
-            for (int l = 0; l < 32; ++l) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < QK_K; j += 128) {
+            សម្រាប់ (ចំនួនគត់ l = 0; l < 32; ++l) {
                 a[l +  0] = (int8_t)((q4[l +  0] & 0xF) | (((qh[l] >> 0) & 3) << 4)) - 32;
                 a[l + 32] = (int8_t)((q4[l + 32] & 0xF) | (((qh[l] >> 2) & 3) << 4)) - 32;
                 a[l + 64] = (int8_t)((q4[l +  0] >>  4) | (((qh[l] >> 4) & 3) << 4)) - 32;
@@ -1231,8 +1231,8 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         v128_t acc0 = wasm_i32x4_splat(0);
         v128_t acc1 = wasm_i32x4_splat(0);
 
-        for (int j = 0; j < QK_K/16; ++j) {
-            const int scale = x[i].scales[j];
+        សម្រាប់ (ចំនួនគត់ j = 0; j < QK_K/16; ++j) {
+            const ចំនួនគត់ scale = x[i].scales[j];
             const v128_t vscale = wasm_i32x4_splat(scale);
 
             // Load 16 elements from a and q8
@@ -1271,19 +1271,19 @@ void ggml_vec_dot_q6_K_q8_K(int n, float * GGML_RESTRICT s, size_t bs, const voi
         wasm_v128_store(&aux32[4], acc1);
 
         const float d = GGML_CPU_FP16_TO_FP32(x[i].d) * y[i].d;
-        for (int l = 0; l < 8; ++l) {
+        សម្រាប់ (ចំនួនគត់ l = 0; l < 8; ++l) {
             sums[l] += d * aux32[l];
         }
     }
 
     // Sum final results
     float sumf = 0;
-    for (int l = 0; l < 8; ++l) {
+    សម្រាប់ (ចំនួនគត់ l = 0; l < 8; ++l) {
         sumf += sums[l];
     }
     *s = sumf;
 
-#else
+#បើមិនដូច្នេះ
     UNUSED(x);
     UNUSED(y);
     UNUSED(nb);

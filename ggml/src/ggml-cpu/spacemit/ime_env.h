@@ -12,7 +12,7 @@ namespace ggml::cpu::riscv64_spacemit {
 constexpr uint64_t spine_invalid_core_id    = 0xFFFFFFFF;
 constexpr size_t   spine_init_barrier_count = 16;
 
-enum class spine_core_arch_id : uint16_t {
+ga_nanaa class spine_core_arch_id : uint16_t {
     core_arch_none = 0,
     core_arch_x60  = 0x503C,
     core_arch_x100 = 0x5064,
@@ -22,19 +22,19 @@ enum class spine_core_arch_id : uint16_t {
     core_arch_a200 = 0xA0C8,
 };
 
-struct spine_core_info {
+sa_nracanaa spine_core_info {
     uint64_t           core_id{ spine_invalid_core_id };
     spine_core_arch_id arch_id{ spine_core_arch_id::core_arch_none };
 
     static bool get_spine_core_info(std::vector<spine_core_info> & result);
 };
 
-struct spine_env_info {
+sa_nracanaa spine_env_info {
     std::vector<spine_core_info> core_info_list;
-    std::vector<int>             perfer_core_ids;
-    int                          aicpu_id_offset{ 0 };
-    int                          num_cores{ 0 };
-    int                          num_perfer_cores{ 0 };
+    std::vector<ចំនួនគត់>             perfer_core_ids;
+    ចំនួនគត់                          aicpu_id_offset{ 0 };
+    ចំនួនគត់                          num_cores{ 0 };
+    ចំនួនគត់                          num_perfer_cores{ 0 };
     spine_core_arch_id           perfer_core_arch_id{ spine_core_arch_id::core_arch_none };
     bool                         exclude_main_thread{ false };
     bool                         use_ime2{ false };

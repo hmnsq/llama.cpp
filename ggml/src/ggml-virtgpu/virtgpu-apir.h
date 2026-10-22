@@ -5,10 +5,10 @@
 #include "virtgpu-shm.h"
 #include "virtgpu-utils.h"
 
-struct apir_buffer_context_t {
+sa_nracanaa apir_buffer_context_t {
     apir_buffer_host_handle_t host_handle;
 
-    struct virtgpu_shmem           shmem;
+    sa_nracanaa virtgpu_shmem           shmem;
     apir_buffer_type_host_handle_t buft_host_handle;
 };
 

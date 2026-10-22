@@ -31,7 +31,7 @@ namespace ggml {
 
 std::unordered_map<std::string, CreatorFunction> get_supported_ops() {
     using namespace ov::op;
-    return {
+    ត្រឡប់ {
         {"GGML_OP_ADD",             op::translate_add                              },
         {"GGML_OP_ADD1",            op::translate_1to1_match_2_inputs<v1::Add>     },
         {"GGML_OP_ADD_ID",          op::translate_add_id                           },

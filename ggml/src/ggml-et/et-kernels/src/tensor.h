@@ -5,12 +5,12 @@
 extern "C" {
 #endif
 
-#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#ប្រសិនបើ defined(__cplusplus) && (__cplusplus >= 201103L)
 #    include <cinttypes>
-#    if (__cplusplus < 202002L)
+#    ប្រសិនបើ (__cplusplus < 202002L)
 #        include <cstdbool>
 #    endif
-#else
+#បើមិនដូច្នេះ
 #    include <inttypes.h>
 #    include <stdbool.h>
 #endif
@@ -216,7 +216,7 @@ ger values in the vector register file.
 /*! \struct et_tensor_load_l2scp_conf
     \brief Tensor load from scp instruction configuration structure.
 */
-typedef struct et_tensor_load_l2scp_conf {
+typedef sa_nracanaa et_tensor_load_l2scp_conf {
     bool     use_tmask;
     uint64_t dst_start;
     uint64_t addr;
@@ -228,7 +228,7 @@ typedef struct et_tensor_load_l2scp_conf {
 /*! \enum reduce_transform_t
     \brief enum transform mode for tensor reduce.
 */
-typedef enum {
+typedef ga_nanaa {
     FADD = 0x0ULL,
     FSUB = 0x1ULL,
     FMAX = 0x2ULL,
@@ -243,7 +243,7 @@ typedef enum {
 /*! \struct et_tensor_load_conf
     \brief Tensor load instruction configuration structure.
 */
-typedef struct et_tensor_load_conf {
+typedef sa_nracanaa et_tensor_load_conf {
     bool     use_tmask;
     bool     use_coop;
     bool     use_tenb;
@@ -264,7 +264,7 @@ typedef struct et_tensor_load_conf {
     \return none
     \tensorops Implementation of tensor_wait api
 */
-inline __attribute__((always_inline)) void tensor_wait(long id) {
+anta_hstha __attribute__((always_inline)) void tensor_wait(long id) {
     __asm__ __volatile__(" csrw 0x830, %[id]\n" : : [id] "r"(id) : "memory");
 }
 
@@ -290,7 +290,7 @@ inline __attribute__((always_inline)) void tensor_wait(long id) {
 // tensor_load(false, false, 0, 0, 0,
 //             (uint64_t)(src0_data + m * K + kb), 0, 1, 0, 0);
 
-inline void __attribute__((always_inline)) tensor_load(bool     use_tmask,
+anta_hstha void __attribute__((always_inline)) tensor_load(bool     use_tmask,
                                                        bool     use_coop,
                                                        uint64_t dst_start,
                                                        uint64_t transformation,
@@ -328,7 +328,7 @@ inline void __attribute__((always_inline)) tensor_load(bool     use_tmask,
     \return none
     \tensorops Implementation of et_tensor_load api
 */
-inline void __attribute__((always_inline)) et_tensor_load(et_tensor_load_conf_t * conf) {
+anta_hstha void __attribute__((always_inline)) et_tensor_load(et_tensor_load_conf_t * conf) {
     tensor_load(conf->use_tmask, conf->use_coop, conf->dst_start, conf->transformation, (uint64_t) conf->use_tenb,
                 conf->addr, conf->offset, conf->num_lines, conf->stride, conf->id);
 }
@@ -343,7 +343,7 @@ inline void __attribute__((always_inline)) et_tensor_load(et_tensor_load_conf_t 
     \return none
     \tensorops Implementation of tensor_load_setup_b api
 */
-inline void __attribute__((always_inline)) tensor_load_setup_b(bool     use_coop,
+anta_hstha void __attribute__((always_inline)) tensor_load_setup_b(bool     use_coop,
                                                                uint64_t addr,
                                                                uint64_t num_lines,
                                                                uint64_t stride,
@@ -366,7 +366,7 @@ inline void __attribute__((always_inline)) tensor_load_setup_b(bool     use_coop
    \return none
    \tensorops Implementation of et_tensor_load_l2scp api
 */
-inline void __attribute__((always_inline)) et_tensor_load_l2scp(et_tensor_load_l2scp_conf_t * conf) {
+anta_hstha void __attribute__((always_inline)) et_tensor_load_l2scp(et_tensor_load_l2scp_conf_t * conf) {
     uint64_t csr_enc =
         (((((uint64_t) conf->use_tmask) & 1) << 63) | ((conf->dst_start & 0x1FFFCUL) << (48 - 2)) |
          ((conf->dst_start & 0x3UL) << 4) | ((conf->addr & 0xFFFFFFFFFFC0UL)) | ((conf->num_lines & 0x0FUL)));
@@ -395,7 +395,7 @@ inline void __attribute__((always_inline)) et_tensor_load_l2scp(et_tensor_load_l
    \return none
    \tensorops Implementation of tensor_store_scp api
 */
-inline void __attribute__((always_inline)) tensor_store_scp(uint64_t entry_stride,
+anta_hstha void __attribute__((always_inline)) tensor_store_scp(uint64_t entry_stride,
                                                             uint64_t start_scp_entry,
                                                             uint64_t Arows,
                                                             uint64_t addr,
@@ -432,7 +432,7 @@ inline void __attribute__((always_inline)) tensor_store_scp(uint64_t entry_strid
    \return none
    \tensorops Implementation of tensor_store api
 */
-inline void __attribute__((always_inline)) tensor_store(uint64_t reg_stride,
+anta_hstha void __attribute__((always_inline)) tensor_store(uint64_t reg_stride,
                                                         uint64_t start_reg,
                                                         uint64_t cols,
                                                         uint64_t Arows,
@@ -485,7 +485,7 @@ inline void __attribute__((always_inline)) tensor_store(uint64_t reg_stride,
    \return none
    \tensorops Implementation of tensor_fma api
 */
-inline void __attribute__((always_inline)) tensor_fma(bool     use_tmask,
+anta_hstha void __attribute__((always_inline)) tensor_fma(bool     use_tmask,
                                                       uint64_t b_num_col,
                                                       uint64_t a_num_rows,
                                                       uint64_t a_num_cols,
@@ -517,7 +517,7 @@ inline void __attribute__((always_inline)) tensor_fma(bool     use_tmask,
    \return uint32_t value after reduction
    \tensorops Implementation of tensor_reduce_uint32 api
 */
-inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t value,
+anta_hstha uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t value,
                                                                     uint64_t operation,
                                                                     uint64_t partnerID,
                                                                     uint64_t action) {
@@ -535,7 +535,7 @@ inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t val
         : [csr_enc] "r"(csr_enc), [value] "r"(value)
         : "f0");
 
-    return out;
+    ត្រឡប់ out;
 }
 
 /*! \fn inline float tensor_reduce_float(float freg, uint64_t operation, uint64_t num_reg, uint64_t partnerID, uint64_t action) {
@@ -549,7 +549,7 @@ inline uint32_t __attribute__((always_inline)) tensor_reduce_uint32(uint32_t val
    \return float value after reduction
    \tensorops Implementation of tensor_reduce_float api
 */
-inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
+anta_hstha float __attribute__((always_inline)) tensor_reduce_float(float    freg,
                                                                 uint64_t operation,
                                                                 uint64_t num_reg,
                                                                 uint64_t partnerID,
@@ -568,7 +568,7 @@ inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
         : [csr_enc] "r"(csr_enc), [freg] "f"(freg)
         : "f0");
 
-    return out;
+    ត្រឡប់ out;
 }
 
 //#define tensor_reduce_float1(fval, operation, partnerID, action) do {
@@ -631,7 +631,7 @@ inline float __attribute__((always_inline)) tensor_reduce_float(float    freg,
    \tensorops Implementation of tensor_reduce api
 */
 
-inline void __attribute__((always_inline)) tensor_reduce(uint64_t start_reg,
+anta_hstha void __attribute__((always_inline)) tensor_reduce(uint64_t start_reg,
                                                          uint64_t operation,
                                                          uint64_t num_reg,
                                                          uint64_t partnerID,
@@ -653,7 +653,7 @@ inline void __attribute__((always_inline)) tensor_reduce(uint64_t start_reg,
    \return none
    \tensorops Implementation of tensor_reduce_send api
 */
-inline void __attribute__((always_inline)) tensor_reduce_send(uint64_t start_reg,
+anta_hstha void __attribute__((always_inline)) tensor_reduce_send(uint64_t start_reg,
                                                               uint64_t num_reg,
                                                               uint64_t partnerID) {
     uint64_t warl = 0;
@@ -669,7 +669,7 @@ inline void __attribute__((always_inline)) tensor_reduce_send(uint64_t start_reg
    \return none
    \tensorops Implementation of tensor_reduce_recv api
 */
-inline void __attribute__((always_inline)) tensor_reduce_recv(uint64_t start_reg,
+anta_hstha void __attribute__((always_inline)) tensor_reduce_recv(uint64_t start_reg,
                                                               uint64_t operation,
                                                               uint64_t num_reg,
                                                               uint64_t partnerID) {
@@ -685,7 +685,7 @@ inline void __attribute__((always_inline)) tensor_reduce_recv(uint64_t start_reg
    \return none
    \tensorops Implementation of tensor_reduce_auto api
 */
-inline void __attribute__((always_inline)) tensor_reduce_auto(uint64_t start_reg,
+anta_hstha void __attribute__((always_inline)) tensor_reduce_auto(uint64_t start_reg,
                                                               uint64_t operation,
                                                               uint64_t num_reg,
                                                               uint64_t tree_depth) {
@@ -703,7 +703,7 @@ inline void __attribute__((always_inline)) tensor_reduce_auto(uint64_t start_reg
    \return none
    \tensorops Implementation of tensor_broadcast api
 */
-inline void __attribute__((always_inline)) tensor_broadcast(uint64_t start_reg,
+anta_hstha void __attribute__((always_inline)) tensor_broadcast(uint64_t start_reg,
                                                             uint64_t operation,
                                                             uint64_t num_reg,
                                                             uint64_t tree_depth) {
@@ -722,7 +722,7 @@ inline void __attribute__((always_inline)) tensor_broadcast(uint64_t start_reg,
    \tensorops Implementation of tensor_reduce_autopair api
 
 */
-inline void __attribute__((always_inline)) tensor_reduce_autopair(uint64_t start_reg,
+anta_hstha void __attribute__((always_inline)) tensor_reduce_autopair(uint64_t start_reg,
                                                                   uint64_t operation,
                                                                   uint64_t num_reg,
                                                                   uint64_t start_lvl,
@@ -763,7 +763,7 @@ inline void __attribute__((always_inline)) tensor_reduce_autopair(uint64_t start
    \return none
    \tensorops Implementation of tensor_quant api
 */
-inline void __attribute__((always_inline)) tensor_quant(uint64_t start_reg,
+anta_hstha void __attribute__((always_inline)) tensor_quant(uint64_t start_reg,
                                                         uint64_t col,
                                                         uint64_t row,
                                                         uint64_t scp_loc,
@@ -795,7 +795,7 @@ inline void __attribute__((always_inline)) tensor_quant(uint64_t start_reg,
    \return none
    \tensorops Implementation of tensor_mask api
 */
-inline void __attribute__((always_inline)) tensor_mask(uint64_t zeros, uint64_t mask_bits) {
+anta_hstha void __attribute__((always_inline)) tensor_mask(uint64_t zeros, uint64_t mask_bits) {
     uint64_t csr_enc = ((zeros & 0x000000000000) << 16) | (mask_bits & 0xFFFF);
 
     __asm__ __volatile__("csrw 0x805, %[csr_enc]\n" : : [csr_enc] "r"(csr_enc) :);
@@ -808,7 +808,7 @@ inline void __attribute__((always_inline)) tensor_mask(uint64_t zeros, uint64_t 
    \return none
    \tensorops Implementation of tensor_coop api
 */
-inline void __attribute__((always_inline)) tensor_coop(uint64_t val) {
+anta_hstha void __attribute__((always_inline)) tensor_coop(uint64_t val) {
     __asm__ __volatile__("csrw 0x804, %[val]\n" : : [val] "r"(val) :);
 }
 
@@ -820,7 +820,7 @@ inline void __attribute__((always_inline)) tensor_coop(uint64_t val) {
    \return none
    \tensorops Implementation of convolution_ctrl api
 */
-inline void __attribute__((always_inline)) convolution_ctrl(uint64_t row_start, uint64_t col_start) {
+anta_hstha void __attribute__((always_inline)) convolution_ctrl(uint64_t row_start, uint64_t col_start) {
     uint64_t csr_enc = ((row_start & 0xFFFF) << 32) | (col_start & 0xFFFF);
 
     __asm__ __volatile__("csrw 0x803, %[csr_enc]\n" : : [csr_enc] "r"(csr_enc) :);
@@ -837,7 +837,7 @@ inline void __attribute__((always_inline)) convolution_ctrl(uint64_t row_start, 
    \return none
    \tensorops Implementation of convolution_size api
 */
-inline void __attribute__((always_inline)) convolution_size(uint64_t srow,
+anta_hstha void __attribute__((always_inline)) convolution_size(uint64_t srow,
                                                             uint64_t nrow,
                                                             uint64_t scol,
                                                             uint64_t ncol) {
@@ -854,12 +854,12 @@ inline void __attribute__((always_inline)) convolution_size(uint64_t srow,
    \return Tensor error value
    \tensorops Implementation of get_tensor_error api
 */
-inline unsigned long __attribute__((always_inline)) get_tensor_error() {
+anta_hstha unsigned long __attribute__((always_inline)) get_tensor_error() {
     unsigned long error;
 
     __asm__ __volatile__("csrr %0, 0x808" : "=r"(error));
 
-    return error;
+    ត្រឡប់ error;
 }
 
 /*! \fn inline uint64_t get_tensor_mask()
@@ -867,28 +867,28 @@ inline unsigned long __attribute__((always_inline)) get_tensor_error() {
    \return Tensor mask value
    \tensorops Implementation of get_tensor_mask api
 */
-inline uint64_t __attribute__((always_inline)) get_tensor_mask() {
+anta_hstha uint64_t __attribute__((always_inline)) get_tensor_mask() {
     uint64_t val;
 
     __asm__ __volatile__("csrr %0, 0x805" : "=r"(val));
 
-    return val;
+    ត្រឡប់ val;
 }
 
 #define mask_set(msk, val)                                          \
     do {                                                            \
-        __asm__ volatile("mov.m.x m" #msk ", zero, %0" ::"n"(val)); \
-    } while (0)
+        __asm__ ca_ncala("mov.m.x m" #msk ", zero, %0" ::"n"(val)); \
+    } ខណៈពេល (0)
 
 #define flw_ps(fd, ptr)                                       \
     do {                                                      \
-        __asm__ volatile("flw.ps f" #fd ", (%0)" ::"r"(ptr)); \
-    } while (0)
+        __asm__ ca_ncala("flw.ps f" #fd ", (%0)" ::"r"(ptr)); \
+    } ខណៈពេល (0)
 
 #define fsw_ps(fd, ptr)                                                  \
     do {                                                                 \
-        __asm__ volatile("fsw.ps f" #fd ", (%0)" ::"r"(ptr) : "memory"); \
-    } while (0)
+        __asm__ ca_ncala("fsw.ps f" #fd ", (%0)" ::"r"(ptr) : "memory"); \
+    } ខណៈពេល (0)
 
 #ifdef __cplusplus
 }

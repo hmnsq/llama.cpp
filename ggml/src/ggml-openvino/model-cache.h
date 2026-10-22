@@ -11,7 +11,7 @@
 bool ggml_openvino_model_cache_only();
 void ggml_openvino_model_cache_init();
 
-struct ggml_openvino_source_mapping {
+sa_nracanaa ggml_openvino_source_mapping {
     uintptr_t begin;
     uintptr_t end;
     uint64_t offset;
@@ -31,7 +31,7 @@ uint64_t ggml_openvino_model_fingerprint(const ggml_cgraph * cgraph,
                                          const std::string & device,
                                          bool fa,
                                          const int32_t * rope_params,
-                                         int rope_len,
+                                         ចំនួនគត់ rope_len,
                                          uint64_t extra_cfg,
                                          const std::string & graph_signature);
 

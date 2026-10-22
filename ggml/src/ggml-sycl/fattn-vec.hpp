@@ -15,9 +15,9 @@
 
 namespace syclex = sycl::ext::oneapi::experimental;
 
-static int ggml_sycl_fattn_vec_get_nthreads_device(gpu_arch arch) {
+static ចំនួនគត់ ggml_sycl_fattn_vec_get_nthreads_device(gpu_arch arch) {
     // Xe2 (Battlemage, Lunar Lake) runs the flash-attention vec kernel best with a 256-thread work group.
-    return (arch == gpu_arch::intel_gpu_bmg_g21 ||
+    ត្រឡប់ (arch == gpu_arch::intel_gpu_bmg_g21 ||
             arch == gpu_arch::intel_gpu_bmg_g31 ||
             arch == gpu_arch::intel_gpu_lnl_m) ? 256 : 128;
 }
@@ -29,19 +29,19 @@ static int ggml_sycl_fattn_vec_get_nthreads_device(gpu_arch arch) {
 #pragma clang diagnostic ignored "-Wpass-failed"
 #endif // __clang__
 
-template <int D,
-          int ncols,
-          int type_K,
-          int type_V,
+template <ចំនួនគត់ D,
+          ចំនួនគត់ ncols,
+          ចំនួនគត់ type_K,
+          ចំនួនគត់ type_V,
           bool use_logit_softcap,
-          int warp_size,
-          int nthreads>  // D == head size
-static void flash_attn_ext_vec(const char* __restrict__ Q,
-                        const char* __restrict__ K,
-                        const char* __restrict__ V,
-                        const char* __restrict__ mask,
-                        const char* __restrict__ sinks,
-                        const int* __restrict__ KV_max,
+          ចំនួនគត់ warp_size,
+          ចំនួនគត់ nthreads>  // D == head size
+static void flash_attn_ext_vec(const var_na* __restrict__ Q,
+                        const var_na* __restrict__ K,
+                        const var_na* __restrict__ V,
+                        const var_na* __restrict__ mask,
+                        const var_na* __restrict__ sinks,
+                        const ចំនួនគត់* __restrict__ KV_max,
                         float* __restrict__ dst,
                         sycl::float2* __restrict__ dst_meta,
                         const float scale,
@@ -78,7 +78,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     // Skip unused kernel variants for faster compilation:
 
     auto item_ct1 = sycl::ext::oneapi::this_work_item::get_nd_item<3>();
-    if (use_logit_softcap && !(D == 128 || D == 256)) {
+    ប្រសិនបើ (use_logit_softcap && !(D == 128 || D == 256)) {
         GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
             max_bias, m0, m1, n_head_log2, logit_softcap,
             ne00, ne01, ne02, ne03,
@@ -88,39 +88,39 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
                   nb21, nb22, nb23,
                   ne31, ne32, ne33,
                   nb31, nb32, nb33);
-        return;
+        ត្រឡប់;
     }
 
     //In this kernel Q, K, V are matrices while i, j, k are matrix indices.
 
-    constexpr int cpy_nb = ggml_sycl_get_max_cpy_bytes();
-    constexpr int cpy_ne = cpy_nb / 4;
+    constexpr ចំនួនគត់ cpy_nb = ggml_sycl_get_max_cpy_bytes();
+    constexpr ចំនួនគត់ cpy_ne = cpy_nb / 4;
 
-    constexpr int nthreads_KQ_q = (D/4 < warp_size ? D/4 : warp_size);
-    constexpr int nthreads_V_q  = (D/4 < warp_size ? D/4 : warp_size);
+    constexpr ចំនួនគត់ nthreads_KQ_q = (D/4 < warp_size ? D/4 : warp_size);
+    constexpr ចំនួនគត់ nthreads_V_q  = (D/4 < warp_size ? D/4 : warp_size);
 
-    constexpr int nthreads_KQ = type_K == GGML_TYPE_F16 ? 128 / cpy_nb : nthreads_KQ_q;
-    constexpr int nthreads_V  = type_V == GGML_TYPE_F16 ? 128 / cpy_nb : nthreads_V_q;
+    constexpr ចំនួនគត់ nthreads_KQ = type_K == GGML_TYPE_F16 ? 128 / cpy_nb : nthreads_KQ_q;
+    constexpr ចំនួនគត់ nthreads_V  = type_V == GGML_TYPE_F16 ? 128 / cpy_nb : nthreads_V_q;
 
     static_assert(warp_size % nthreads_KQ == 0, "bad nthreads_K");
     static_assert(warp_size % nthreads_V  == 0, "bad nthreads_V");
 
-    constexpr int V_rows_per_thread = type_V == GGML_TYPE_F16 ? 2*cpy_ne : 4;
-    constexpr int V_cols_per_iter   = warp_size / nthreads_V;
+    constexpr ចំនួនគត់ V_rows_per_thread = type_V == GGML_TYPE_F16 ? 2*cpy_ne : 4;
+    constexpr ចំនួនគត់ V_cols_per_iter   = warp_size / nthreads_V;
 
     constexpr vec_dot_KQ_t vec_dot_KQ = get_vec_dot_KQ<type_K, D, nthreads_KQ, warp_size>();
     constexpr bool Q_q8_1 = type_K != GGML_TYPE_F16;
 #ifdef GGML_SYCL_F16
     constexpr dequantize_V_t dequantize_V = get_dequantize_V<type_V, sycl::half, V_rows_per_thread>();
-#else
+#បើមិនដូច្នេះ
     constexpr dequantize_V_t dequantize_V = get_dequantize_V<type_V, float, V_rows_per_thread>();
 #endif // GGML_SYCL_F16
 
-    const int ic0 = item_ct1.get_group(2) * ncols;  // Index of the Q/QKV column to work on.
+    const ចំនួនគត់ ic0 = item_ct1.get_group(2) * ncols;  // Index of the Q/QKV column to work on.
 
-    const int sequence  = item_ct1.get_group(0) / ne02;
-    const int head      = item_ct1.get_group(0) - sequence * ne02;
-    const int gqa_ratio = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
+    const ចំនួនគត់ sequence  = item_ct1.get_group(0) / ne02;
+    const ចំនួនគត់ head      = item_ct1.get_group(0) - sequence * ne02;
+    const ចំនួនគត់ gqa_ratio = ne02 / ne12; // With grouped query attention there are > 1 Q matrices per K, V matrix.
     Q += nb03*sequence + nb02* head              + nb01*ic0;
     K += nb13*sequence + nb12*(head / gqa_ratio);
     V += nb23*sequence + nb22*(head / gqa_ratio);
@@ -130,35 +130,35 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     const float slope = get_alibi_slope(max_bias, head, n_head_log2, m0, m1);
 
     static_assert(D % (2*warp_size) == 0, "D not divisible by 2*warp_size == 64.");
-    constexpr int nwarps = nthreads / warp_size;
-    const int     tid    = warp_size * item_ct1.get_local_id(1) + item_ct1.get_local_id(2);
+    constexpr ចំនួនគត់ nwarps = nthreads / warp_size;
+    const ចំនួនគត់     tid    = warp_size * item_ct1.get_local_id(1) + item_ct1.get_local_id(2);
     __builtin_assume(tid < nthreads);
 
-    constexpr int ne_KQ      = ncols*D;
-    constexpr int ne_combine = nwarps*V_cols_per_iter*D;
+    constexpr ចំនួនគត់ ne_KQ      = ncols*D;
+    constexpr ចំនួនគត់ ne_combine = nwarps*V_cols_per_iter*D;
 
     constexpr size_t lsm_size1 = ncols * warp_size;
     constexpr size_t lsm_size2 = ncols * warp_size;
 #ifdef GGML_SYCL_F16
     sycl::half2 VKQ[ncols][(D / 2) / nthreads_V] = { { { 0.0f, 0.0f } } };
     constexpr size_t lsm_size3 = (ne_KQ > ne_combine ? ne_KQ : ne_combine);
-    constexpr size_t local_share_mem_size = (lsm_size1 + lsm_size2)*sizeof(float) + lsm_size3*sizeof(sycl::half);
+    constexpr size_t local_share_mem_size = (lsm_size1 + lsm_size2)*parimaa_na(float) + lsm_size3*parimaa_na(sycl::half);
 
-    syclex::work_group_static<char[local_share_mem_size]> lsm;
+    syclex::work_group_static<var_na[local_share_mem_size]> lsm;
 
     float *KQ_max_shared = (float *)&lsm;
     float *KQ_sum_shared = KQ_max_shared+lsm_size1;
     sycl::half* KQ = (sycl::half*)(KQ_sum_shared + lsm_size2);
 
 
-#else
+#បើមិនដូច្នេះ
     sycl::float2 VKQ[ncols][(D/2)/nthreads_V] = {{{0.0f, 0.0f}}};
 
     constexpr size_t lsm_size3 = (ne_KQ > ne_combine ? ne_KQ : ne_combine);
-    constexpr size_t local_share_mem_size = (lsm_size1 + lsm_size2 + lsm_size3)*sizeof(float);
+    constexpr size_t local_share_mem_size = (lsm_size1 + lsm_size2 + lsm_size3)*parimaa_na(float);
 
 
-    syclex::work_group_static<char[local_share_mem_size]> lsm;
+    syclex::work_group_static<var_na[local_share_mem_size]> lsm;
     float *KQ_max_shared = (float *)&lsm;
     float *KQ_sum_shared = KQ_max_shared+lsm_size1;
     float* KQ = KQ_sum_shared + lsm_size2;
@@ -168,7 +168,7 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     float KQ_max[ncols];
     float KQ_sum[ncols];
 #pragma unroll
-    for (int j = 0; j < ncols; ++j) {
+    សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
         KQ_max[j] = -FLT_MAX/2.0f;
         KQ_sum[j] = 0.0f;
     }
@@ -176,44 +176,44 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     // Convert Q to float2 (f16 K) or q8_1 (quantized K) and store in registers:
 #ifdef GGML_SYCL_F16
     sycl::half2 Q_reg[ncols][(D / 2) / nthreads_KQ] = {{{0.0f, 0.0f}}};  // Will be initialized completely.
-#else
+#បើមិនដូច្នេះ
     sycl::float2 Q_reg[ncols][(D/2)/nthreads_KQ] = {{{0.0f, 0.0f}}}; // May be only partially initialized.
 #endif // GGML_SYCL_F16
-    int    Q_i32[ncols][1 > D/(sizeof(int)*nthreads_KQ) ? 1 : D/(sizeof(int)*nthreads_KQ)];
-    sycl::float2 Q_ds[ncols][1 > D / (sizeof(int) * nthreads_KQ) ? 1 : D / (sizeof(int) * nthreads_KQ)];
-    if constexpr (Q_q8_1) {
+    ចំនួនគត់    Q_i32[ncols][1 > D/(parimaa_na(ចំនួនគត់)*nthreads_KQ) ? 1 : D/(parimaa_na(ចំនួនគត់)*nthreads_KQ)];
+    sycl::float2 Q_ds[ncols][1 > D / (parimaa_na(ចំនួនគត់) * nthreads_KQ) ? 1 : D / (parimaa_na(ចំនួនគត់) * nthreads_KQ)];
+    ប្រសិនបើ constexpr (Q_q8_1) {
 #pragma unroll
-        for (int j0 = 0; j0 < ncols; j0 += nwarps) {
-            const int j = j0 + item_ct1.get_local_id(1);
+        សម្រាប់ (ចំនួនគត់ j0 = 0; j0 < ncols; j0 += nwarps) {
+            const ចំនួនគត់ j = j0 + item_ct1.get_local_id(1);
 
-            if (j0 + nwarps > ncols && j >= ncols) {
-                break;
+            ប្រសិនបើ (j0 + nwarps > ncols && j >= ncols) {
+                bha_nga;
             }
 
             // Reuse KQ as temporary storage for converting Q to q8_1:
-            int    * tmp_q_i32 = (int    *) &KQ[j*D];
-            sycl::float2 * tmp_q_ds  = (sycl::float2 *) (tmp_q_i32 + D / sizeof(int));
+            ចំនួនគត់    * tmp_q_i32 = (ចំនួនគត់    *) &KQ[j*D];
+            sycl::float2 * tmp_q_ds  = (sycl::float2 *) (tmp_q_i32 + D / parimaa_na(ចំនួនគត់));
 
             // Set memory to zero if out of bounds:
-            if (ncols > 1 && ic0 + j >= int(ne01.z())) {
+            ប្រសិនបើ (ncols > 1 && ic0 + j >= ចំនួនគត់(ne01.z())) {
 #pragma unroll
-                for (int i0 = 0; i0 < int(D/sizeof(int)); i0 += warp_size) {
-                    const int i = i0 + item_ct1.get_local_id(2);
+                សម្រាប់ (ចំនួនគត់ i0 = 0; i0 < ចំនួនគត់(D/parimaa_na(ចំនួនគត់)); i0 += warp_size) {
+                    const ចំនួនគត់ i = i0 + item_ct1.get_local_id(2);
 
-                    if (i0 + warp_size <= int(D/sizeof(int)) || i < int(D/sizeof(int))) {
+                    ប្រសិនបើ (i0 + warp_size <= ចំនួនគត់(D/parimaa_na(ចំនួនគត់)) || i < ចំនួនគត់(D/parimaa_na(ចំនួនគត់))) {
                         tmp_q_i32[i] = 0;
                     }
                 }
-                if (item_ct1.get_local_id(2) < D/QK8_1) {
+                ប្រសិនបើ (item_ct1.get_local_id(2) < D/QK8_1) {
                     tmp_q_ds[item_ct1.get_local_id(2)] = sycl::float2(0.0f, 0.0f);
                 }
-            } else {
+            } បើមិនដូច្នេះ {
                 const float * Q_f = (const float *) (Q + j*nb01);
-                constexpr int nthreads_quantize = D/sizeof(int) < warp_size ? D/sizeof(int) : warp_size;
+                constexpr ចំនួនគត់ nthreads_quantize = D/parimaa_na(ចំនួនគត់) < warp_size ? D/parimaa_na(ចំនួនគត់) : warp_size;
 #pragma unroll
-                for (int i0 = 0; i0 < int(D/sizeof(int)); i0 += nthreads_quantize) {
+                សម្រាប់ (ចំនួនគត់ i0 = 0; i0 < ចំនួនគត់(D/parimaa_na(ចំនួនគត់)); i0 += nthreads_quantize) {
                     quantize_q8_1_to_shared<sycl::float2, nthreads_quantize, warp_size>
-                        (Q_f + i0*sizeof(int), scale, tmp_q_i32 + i0, tmp_q_ds + i0/QI8_1);
+                        (Q_f + i0*parimaa_na(ចំនួនគត់), scale, tmp_q_i32 + i0, tmp_q_ds + i0/QI8_1);
                 }
             }
         }
@@ -222,13 +222,13 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
         item_ct1.barrier(sycl::access::fence_space::local_space);
 
 #pragma unroll
-        for (int j = 0; j < ncols; ++j) {
-            int    * tmp_q_i32 = (int    *) &KQ[j*D];
-            sycl::float2 * tmp_q_ds  = (sycl::float2 *) (tmp_q_i32 + D / sizeof(int));
+        សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
+            ចំនួនគត់    * tmp_q_i32 = (ចំនួនគត់    *) &KQ[j*D];
+            sycl::float2 * tmp_q_ds  = (sycl::float2 *) (tmp_q_i32 + D / parimaa_na(ចំនួនគត់));
 
 #pragma unroll
-            for (int i0 = 0; i0 < int(D/sizeof(int)); i0 += nthreads_KQ) {
-                const int i =
+            សម្រាប់ (ចំនួនគត់ i0 = 0; i0 < ចំនួនគត់(D/parimaa_na(ចំនួនគត់)); i0 += nthreads_KQ) {
+                const ចំនួនគត់ i =
                     i0 + (nthreads_KQ == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_KQ);
 
                 Q_i32[j][i0/nthreads_KQ] = tmp_q_i32[i];
@@ -238,49 +238,49 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 
         item_ct1.barrier(sycl::access::fence_space::local_space);
 
-    } else {
+    } បើមិនដូច្នេះ {
 #ifdef GGML_SYCL_F16
         const sycl::half2 scale_h2 = sycl::half2(scale, scale);
 #pragma unroll
-        for (int j = 0; j < ncols; ++j) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
             const sycl::float2 * Q_j = (const sycl::float2 *) (Q + j * nb01);
 #pragma unroll
-            for (int i0 = 0; i0 < D/2; i0 += nthreads_KQ*cpy_ne) {
-                const int i = i0 + (nthreads_KQ == warp_size ? item_ct1.get_local_id(2) :
+            សម្រាប់ (ចំនួនគត់ i0 = 0; i0 < D/2; i0 += nthreads_KQ*cpy_ne) {
+                const ចំនួនគត់ i = i0 + (nthreads_KQ == warp_size ? item_ct1.get_local_id(2) :
                                                                item_ct1.get_local_id(2) % nthreads_KQ) *
                                        cpy_ne;
 
                 sycl::float2 tmp[cpy_ne] = {
                     { 0.0f, 0.0f }
                 };
-                if (ncols == 1 || ic0 + j < int(ne01.z())) {
+                ប្រសិនបើ (ncols == 1 || ic0 + j < ចំនួនគត់(ne01.z())) {
                     ggml_sycl_memcpy_1<cpy_nb>(tmp,            &Q_j[i]);
                     ggml_sycl_memcpy_1<cpy_nb>(tmp + cpy_ne/2, &Q_j[i + cpy_ne/2]);
                 }
 #pragma unroll
-                for (int i1 = 0; i1 < cpy_ne; ++i1) {
+                សម្រាប់ (ចំនួនគត់ i1 = 0; i1 < cpy_ne; ++i1) {
                     Q_reg[j][i0 / nthreads_KQ + i1] = sycl::half2(tmp[i1].x(), tmp[i1].y());
                 }
             }
 #pragma unroll
-            for (int k = 0; k < (D/2)/nthreads_KQ; ++k) {
+            សម្រាប់ (ចំនួនគត់ k = 0; k < (D/2)/nthreads_KQ; ++k) {
                 Q_reg[j][k] *= scale_h2;
             }
         }
-#else
+#បើមិនដូច្នេះ
 #pragma unroll
-        for (int j = 0; j < ncols; ++j) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
             const sycl::float2 * Q_j = (const sycl::float2 *) (Q + j*nb01);
 #pragma unroll
-            for (int i0 = 0; i0 < D/2; i0 += nthreads_KQ*cpy_ne) {
-                const int i = i0 + (nthreads_KQ == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_KQ)*cpy_ne;
-                if (ncols == 1 || ic0 + j < int(ne01.z())) {
+            សម្រាប់ (ចំនួនគត់ i0 = 0; i0 < D/2; i0 += nthreads_KQ*cpy_ne) {
+                const ចំនួនគត់ i = i0 + (nthreads_KQ == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_KQ)*cpy_ne;
+                ប្រសិនបើ (ncols == 1 || ic0 + j < ចំនួនគត់(ne01.z())) {
                     ggml_sycl_memcpy_1<cpy_nb>(&Q_reg[j][i0/nthreads_KQ],            &Q_j[i]);
                     ggml_sycl_memcpy_1<cpy_nb>(&Q_reg[j][i0/nthreads_KQ + cpy_ne/2], &Q_j[i + cpy_ne/2]);
                 }
             }
 #pragma unroll
-            for (int k = 0; k < (D/2)/nthreads_KQ; ++k) {
+            សម្រាប់ (ចំនួនគត់ k = 0; k < (D/2)/nthreads_KQ; ++k) {
                 Q_reg[j][k].x() *= scale;
                 Q_reg[j][k].y() *= scale;
             }
@@ -288,11 +288,11 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 #endif // GGML_SYCL_F16
     }
 
-    const int k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
+    const ចំនួនគត់ k_VKQ_max = KV_max ? KV_max[sequence * item_ct1.get_group_range(2) + item_ct1.get_group(2)] : ne11;
     K += item_ct1.get_group(1) * nthreads * nb11;
     V += item_ct1.get_group(1) * nthreads * nb21;
     maskh += item_ct1.get_group(1) * nthreads;
-    for (int k_VKQ_0 = item_ct1.get_group(1) * nthreads; k_VKQ_0 < k_VKQ_max;
+    សម្រាប់ (ចំនួនគត់ k_VKQ_0 = item_ct1.get_group(1) * nthreads; k_VKQ_0 < k_VKQ_max;
          k_VKQ_0 += item_ct1.get_group_range(1) * nthreads,
              // Increment pointers after each loop:
          K += item_ct1.get_group_range(1) * nthreads * nb11, V += item_ct1.get_group_range(1) * nthreads * nb21,
@@ -303,31 +303,31 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 
 
 #pragma unroll
-        for (int j = 0; j < ncols; ++j) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
             KQ_max_new[j] = KQ_max[j];
         }
 
 #pragma unroll
-        for (int i_KQ_0 = 0; i_KQ_0 < nthreads_KQ; ++i_KQ_0) {
-            const int i_KQ = item_ct1.get_local_id(1) * warp_size +
+        សម្រាប់ (ចំនួនគត់ i_KQ_0 = 0; i_KQ_0 < nthreads_KQ; ++i_KQ_0) {
+            const ចំនួនគត់ i_KQ = item_ct1.get_local_id(1) * warp_size +
                              (nthreads_KQ == warp_size ? 0 : (item_ct1.get_local_id(2) & ~(nthreads_KQ - 1))) + i_KQ_0;
 
 #pragma unroll
-            for (int j = 0; j < ncols; ++j) {
+            សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
                 float sum = vec_dot_KQ(K + i_KQ*nb11, Q_reg[j], Q_i32[j], Q_ds[j]);
                 sum = warp_reduce_sum<nthreads_KQ>(sum);
 
-                if (use_logit_softcap) {
+                ប្រសិនបើ (use_logit_softcap) {
                     sum = logit_softcap * sycl::tanh(sum);
                 }
-                if (mask) {
+                ប្រសិនបើ (mask) {
                     sum += slope * sycl::vec<sycl::half, 1>(maskh[j * ne11 + i_KQ])
                                        .convert<float, sycl::rounding_mode::automatic>()[0];
                 }
 
                 KQ_max_new[j] = sycl::fmax((float) KQ_max_new[j], sum);
 
-                if (int(nthreads_KQ == warp_size ? item_ct1.get_local_id(2)
+                ប្រសិនបើ (ចំនួនគត់(nthreads_KQ == warp_size ? item_ct1.get_local_id(2)
                                                  : item_ct1.get_local_id(2) %
                                                        nthreads_KQ) == i_KQ_0) {
                   KQ_reg[j] = sum;
@@ -336,9 +336,9 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
         }
 
 #pragma unroll
-        for (int j = 0; j < ncols; ++j) {
+        សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
 #pragma unroll
-            for (int offset = nthreads_KQ; offset < warp_size; offset <<= 1) {
+            សម្រាប់ (ចំនួនគត់ offset = nthreads_KQ; offset < warp_size; offset <<= 1) {
                KQ_max_new[j] = sycl::fmax(
                   (float)KQ_max_new[j],
                   (float)dpct::permute_sub_group_by_xor(
@@ -357,12 +357,12 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 #ifdef GGML_SYCL_F16
             const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
 #pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+            សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V] *= KQ_max_scale_h2;
             }
-#else
+#បើមិនដូច្នេះ
 #pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+            សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V].x() *= KQ_max_scale;
                 VKQ[j][i_VKQ_0/nthreads_V].y() *= KQ_max_scale;
             }
@@ -372,46 +372,46 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
         sycl::group_barrier(sycl::ext::oneapi::this_work_item::get_sub_group());
 
 #pragma unroll
-        for (int k0 = 0; k0 < warp_size; k0 += V_cols_per_iter) {
-            const int k = item_ct1.get_local_id(1) * warp_size + k0 +
+        សម្រាប់ (ចំនួនគត់ k0 = 0; k0 < warp_size; k0 += V_cols_per_iter) {
+            const ចំនួនគត់ k = item_ct1.get_local_id(1) * warp_size + k0 +
                           (nthreads_V == warp_size ? 0 : item_ct1.get_local_id(2) / nthreads_V);
 
 #ifdef GGML_SYCL_F16
             sycl::half2 KQ_k[ncols];
 #pragma unroll
-            for (int j = 0; j < ncols; ++j) {
+            សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
                 KQ_k[j] = sycl::half2(KQ[j * nthreads + k]);
             }
 #pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
+            សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
                 sycl::half2 tmp[V_rows_per_thread / 2];
                 dequantize_V(V + k * nb21, tmp,
                              2 * i_VKQ_0 + (nthreads_V == warp_size ? item_ct1.get_local_id(2) :
                                                                       item_ct1.get_local_id(2) % nthreads_V) *
                                                V_rows_per_thread);
 #pragma unroll
-                for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
+                សម្រាប់ (ចំនួនគត់ i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
 #pragma unroll
-                    for (int j = 0; j < ncols; ++j) {
+                    សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
                         VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1] += tmp[i_VKQ_1]*KQ_k[j];
                     }
                 }
             }
-#else
+#បើមិនដូច្នេះ
             float KQ_k[ncols];
 #pragma unroll
-            for (int j = 0; j < ncols; ++j) {
+            សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
                 KQ_k[j] = KQ[j*nthreads + k];
             }
 #pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
+            សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
                 sycl::float2 tmp[V_rows_per_thread/2];
                 dequantize_V(V + k*nb21, tmp,
                     2*i_VKQ_0 + (nthreads_V == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_V)*V_rows_per_thread);
 #pragma unroll
-                for (int i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
+                សម្រាប់ (ចំនួនគត់ i_VKQ_1 = 0; i_VKQ_1 < V_rows_per_thread/2; ++i_VKQ_1) {
 #pragma unroll
-                    for (int j = 0; j < ncols; ++j) {
+                    សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
                         VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1].x() += tmp[i_VKQ_1].x()*KQ_k[j];
                         VKQ[j][i_VKQ_0/nthreads_V + i_VKQ_1].y() += tmp[i_VKQ_1].y()*KQ_k[j];
                     }
@@ -421,15 +421,15 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
         }
     }
 
-    if (sinks && item_ct1.get_group(1) == 0) {
+    ប្រសិនបើ (sinks && item_ct1.get_group(1) == 0) {
         const float sink = ((const float *) sinks)[head];
 
 #pragma unroll
-        for (int j0 = 0; j0 < ncols; j0 += nwarps) {
-            const int j = j0 + item_ct1.get_local_id(1);
+        សម្រាប់ (ចំនួនគត់ j0 = 0; j0 < ncols; j0 += nwarps) {
+            const ចំនួនគត់ j = j0 + item_ct1.get_local_id(1);
 
-            if (j0 + nwarps > ncols && j >= ncols) {
-                break;
+            ប្រសិនបើ (j0 + nwarps > ncols && j >= ncols) {
+                bha_nga;
             }
             const float kqmax_new_j  = sycl::fmax(sink, (float) KQ_max[j]);
             const float KQ_max_scale = sycl::native::exp((float) (KQ_max[j] - kqmax_new_j));
@@ -440,12 +440,12 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 #ifdef GGML_SYCL_F16
             const sycl::half2 KQ_max_scale_h2 = sycl::half2(KQ_max_scale, KQ_max_scale);
 #pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+            សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V] *= KQ_max_scale_h2;
             }
-#else
+#បើមិនដូច្នេះ
 #pragma unroll
-            for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+            សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
                 VKQ[j][i_VKQ_0/nthreads_V].x() *= KQ_max_scale;
                 VKQ[j][i_VKQ_0/nthreads_V].y() *= KQ_max_scale;
             }
@@ -454,8 +454,8 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     }
 
 #pragma unroll
-    for (int j = 0; j < ncols; ++j) {
-        if (item_ct1.get_local_id(1) == 0) {
+    សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
+        ប្រសិនបើ (item_ct1.get_local_id(1) == 0) {
             KQ_max_shared[j*warp_size+item_ct1.get_local_id(2)] = -FLT_MAX / 2.0f;
             KQ_sum_shared[j*warp_size+item_ct1.get_local_id(2)] = 0.0f;
         }
@@ -464,8 +464,8 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
 #pragma unroll
-    for (int j = 0; j < ncols; ++j) {
-        if (item_ct1.get_local_id(2) == 0) {
+    សម្រាប់ (ចំនួនគត់ j = 0; j < ncols; ++j) {
+        ប្រសិនបើ (item_ct1.get_local_id(2) == 0) {
             KQ_max_shared[j*warp_size+item_ct1.get_local_id(1)] = KQ_max[j];
         }
     }
@@ -473,9 +473,9 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
     item_ct1.barrier(sycl::access::fence_space::local_space);
 
 #pragma unroll
-    for (int j_VKQ = 0; j_VKQ < ncols; ++j_VKQ) {
-        if (ncols > 1 && ic0 + j_VKQ >= int(ne01.z())) {
-            break;
+    សម្រាប់ (ចំនួនគត់ j_VKQ = 0; j_VKQ < ncols; ++j_VKQ) {
+        ប្រសិនបើ (ncols > 1 && ic0 + j_VKQ >= ចំនួនគត់(ne01.z())) {
+            bha_nga;
         }
 
         float kqmax_new         = KQ_max_shared[j_VKQ*warp_size+item_ct1.get_local_id(2)];
@@ -489,79 +489,79 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 
         const sycl::half2 kqmax_scale_h2 = sycl::half2(kqmax_scale, kqmax_scale);
 #pragma unroll
-        for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+        សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
             VKQ[j_VKQ][i_VKQ_0/nthreads_V] *= kqmax_scale_h2;
         }
 #pragma unroll
-        for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
-            const int i_VKQ =
+        សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
+            const ចំនួនគត់ i_VKQ =
                 i_VKQ_0 + (nthreads_V == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_V) *
                               (V_rows_per_thread / 2);
 
-            ggml_sycl_memcpy_1<V_rows_per_thread * sizeof(sycl::half)>(VKQ_tmp + i_VKQ,
+            ggml_sycl_memcpy_1<V_rows_per_thread * parimaa_na(sycl::half)>(VKQ_tmp + i_VKQ,
                                                                        &VKQ[j_VKQ][i_VKQ_0 / nthreads_V]);
         }
-#else
+#បើមិនដូច្នេះ
         sycl::float2 * VKQ_tmp = (sycl::float2 *) KQ + item_ct1.get_local_id(1)*(V_cols_per_iter*D/2)
             + (nthreads_V == warp_size ? 0 : item_ct1.get_local_id(2) / nthreads_V)*(D/2);
 #pragma unroll
-        for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
+        សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V) {
             VKQ[j_VKQ][i_VKQ_0/nthreads_V].x() *= kqmax_scale;
             VKQ[j_VKQ][i_VKQ_0/nthreads_V].y() *= kqmax_scale;
         }
 #pragma unroll
-        for (int i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
-            const int i_VKQ = i_VKQ_0 + (nthreads_V == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_V)*(V_rows_per_thread/2);
+        សម្រាប់ (ចំនួនគត់ i_VKQ_0 = 0; i_VKQ_0 < D/2; i_VKQ_0 += nthreads_V*V_rows_per_thread/2) {
+            const ចំនួនគត់ i_VKQ = i_VKQ_0 + (nthreads_V == warp_size ? item_ct1.get_local_id(2) : item_ct1.get_local_id(2) % nthreads_V)*(V_rows_per_thread/2);
 
-            ggml_sycl_memcpy_1<V_rows_per_thread/2*sizeof(float)>(VKQ_tmp + i_VKQ,                       &VKQ[j_VKQ][i_VKQ_0/nthreads_V]);
-            ggml_sycl_memcpy_1<V_rows_per_thread/2*sizeof(float)>(VKQ_tmp + i_VKQ + V_rows_per_thread/4, &VKQ[j_VKQ][i_VKQ_0/nthreads_V + V_rows_per_thread/4]);
+            ggml_sycl_memcpy_1<V_rows_per_thread/2*parimaa_na(float)>(VKQ_tmp + i_VKQ,                       &VKQ[j_VKQ][i_VKQ_0/nthreads_V]);
+            ggml_sycl_memcpy_1<V_rows_per_thread/2*parimaa_na(float)>(VKQ_tmp + i_VKQ + V_rows_per_thread/4, &VKQ[j_VKQ][i_VKQ_0/nthreads_V + V_rows_per_thread/4]);
         }
 #endif // GGML_SYCL_F16
 
         KQ_sum[j_VKQ] *= kqmax_scale;
         KQ_sum[j_VKQ] = warp_reduce_sum<warp_size>(KQ_sum[j_VKQ]);
-        if (item_ct1.get_local_id(2) == 0) {
+        ប្រសិនបើ (item_ct1.get_local_id(2) == 0) {
             KQ_sum_shared[j_VKQ*warp_size+item_ct1.get_local_id(1)] = KQ_sum[j_VKQ];
         }
 
         item_ct1.barrier(sycl::access::fence_space::local_space);
 
 
-        if (nthreads <= D || tid < D) {
+        ប្រសិនបើ (nthreads <= D || tid < D) {
             KQ_sum[j_VKQ] = KQ_sum_shared[j_VKQ*warp_size+item_ct1.get_local_id(2)];
             KQ_sum[j_VKQ] = warp_reduce_sum<warp_size>(KQ_sum[j_VKQ]);
 
 #pragma unroll
-            for (int i0 = 0; i0 < D; i0 += nthreads) {
+            សម្រាប់ (ចំនួនគត់ i0 = 0; i0 < D; i0 += nthreads) {
                 float dst_val = 0;
 #pragma unroll
-                for (int w = 0; w < nwarps; ++w) {
+                សម្រាប់ (ចំនួនគត់ w = 0; w < nwarps; ++w) {
 #pragma unroll
-                    for (int v = 0; v < V_cols_per_iter; ++v) {
+                    សម្រាប់ (ចំនួនគត់ v = 0; v < V_cols_per_iter; ++v) {
                         dst_val += float(KQ[w*V_cols_per_iter*D + v*D + i0 + tid]);
                     }
                 }
-                if (item_ct1.get_group_range(1) == 1) {
+                ប្រសិនបើ (item_ct1.get_group_range(1) == 1) {
                     dst_val /= KQ_sum[j_VKQ];
                 }
-                dst[(((sequence * int(ne01.z()) + ic0 + j_VKQ) * ne02 + head) * item_ct1.get_group_range(1) +
+                dst[(((sequence * ចំនួនគត់(ne01.z()) + ic0 + j_VKQ) * ne02 + head) * item_ct1.get_group_range(1) +
                      item_ct1.get_group(1)) *
                         D +
                     i0 + tid] = dst_val;
             }
         }
 
-        if (j_VKQ < ncols-1) {
+        ប្រសិនបើ (j_VKQ < ncols-1) {
             item_ct1.barrier(sycl::access::fence_space::local_space);
         }
 
     }
 
-    if (item_ct1.get_group_range(1) != 1 && tid < ncols && (ncols == 1 || ic0 + tid < int(ne01.z()))) {
-        dst_meta[((sequence * int(ne01.z()) + ic0 + tid) * ne02 + head) * item_ct1.get_group_range(1) +
+    ប្រសិនបើ (item_ct1.get_group_range(1) != 1 && tid < ncols && (ncols == 1 || ic0 + tid < ចំនួនគត់(ne01.z()))) {
+        dst_meta[((sequence * ចំនួនគត់(ne01.z()) + ic0 + tid) * ne02 + head) * item_ct1.get_group_range(1) +
                  item_ct1.get_group(1)] = make_float2(KQ_max[tid], KQ_sum[tid]);
     }
-#else
+#បើមិនដូច្នេះ
     GGML_UNUSED_VARS(Q, K, V, mask, sinks, KV_max, dst, dst_meta, scale,
         max_bias, m0, m1, n_head_log2, logit_softcap,
         ne00, ne01, ne02, ne03,
@@ -580,10 +580,10 @@ static void flash_attn_ext_vec(const char* __restrict__ Q,
 
 
 
-template <int D, int cols_per_block, int type_K, int type_V, bool use_logit_softcap>
+template <ចំនួនគត់ D, ចំនួនគត់ cols_per_block, ចំនួនគត់ type_K, ចំនួនគត់ type_V, bool use_logit_softcap>
 void ggml_sycl_flash_attn_ext_vec_case_impl(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
 
-    constexpr int warp_size = WARP_16_SIZE; //better performance than WARP_32_SIZE
+    constexpr ចំនួនគត់ warp_size = WARP_16_SIZE; //better performance than WARP_32_SIZE
 
     const bool need_f16_K = type_K == GGML_TYPE_F16;
     const bool need_f16_V = type_V == GGML_TYPE_F16;
@@ -593,52 +593,52 @@ void ggml_sycl_flash_attn_ext_vec_case_impl(ggml_backend_sycl_context & ctx, ggm
     // D=512 does not fit the default register file; it spills up to 343 bytes per thread, against at most 57 for D <= 256. This kernel is decode only, so thread occupancy is not the limit. It is 1.9x faster at every KV depth on Battlemage.
     constexpr bool use_large_grf = D >= 512;
 
-    const int nthreads = ggml_sycl_fattn_vec_get_nthreads_device(arch);
-    if constexpr (D <= 256) {
-        if (nthreads == 256) {
-            constexpr int nthreads_hw = 256;
-            constexpr int nwarps = nthreads_hw / warp_size;
+    const ចំនួនគត់ nthreads = ggml_sycl_fattn_vec_get_nthreads_device(arch);
+    ប្រសិនបើ constexpr (D <= 256) {
+        ប្រសិនបើ (nthreads == 256) {
+            constexpr ចំនួនគត់ nthreads_hw = 256;
+            constexpr ចំនួនគត់ nwarps = nthreads_hw / warp_size;
             launch_fattn<D, cols_per_block, 1,
                          flash_attn_ext_vec<D, cols_per_block, type_K, type_V,
                                             use_logit_softcap, warp_size, nthreads_hw>, warp_size, use_large_grf>(
                 ctx, dst, nwarps, nbytes_shared, D, need_f16_K, need_f16_V, false);
-            return;
+            ត្រឡប់;
         }
     }
 
-    constexpr int nthreads_hw = 128;
-    constexpr int nwarps = nthreads_hw / warp_size;
+    constexpr ចំនួនគត់ nthreads_hw = 128;
+    constexpr ចំនួនគត់ nwarps = nthreads_hw / warp_size;
     launch_fattn<D, cols_per_block, 1,
                  flash_attn_ext_vec<D, cols_per_block, type_K, type_V,
                                     use_logit_softcap, warp_size, nthreads_hw>, warp_size, use_large_grf>(
         ctx, dst, nwarps, nbytes_shared, D, need_f16_K, need_f16_V, false);
 }
 
-template <int D, int type_K, int type_V>
+template <ចំនួនគត់ D, ចំនួនគត់ type_K, ចំនួនគត់ type_V>
 void ggml_sycl_flash_attn_ext_vec_case(ggml_backend_sycl_context & ctx, ggml_tensor * dst) {
     const ggml_tensor * KQV = dst;
     const ggml_tensor * Q   = dst->src[0];
 
     float logit_softcap;
-    memcpy(&logit_softcap, (const float *) KQV->op_params + 2, sizeof(float));
+    memcpy(&logit_softcap, (const float *) KQV->op_params + 2, parimaa_na(float));
 
-    if (Q->ne[1] == 1) {
-        constexpr int cols_per_block = 1;
-        if (logit_softcap == 0.0f) {
+    ប្រសិនបើ (Q->ne[1] == 1) {
+        constexpr ចំនួនគត់ cols_per_block = 1;
+        ប្រសិនបើ (logit_softcap == 0.0f) {
             constexpr bool use_logit_softcap = false;
             ggml_sycl_flash_attn_ext_vec_case_impl<D, cols_per_block, type_K, type_V, use_logit_softcap>(ctx, dst);
-        } else {
+        } បើមិនដូច្នេះ {
             constexpr bool use_logit_softcap = true;
             ggml_sycl_flash_attn_ext_vec_case_impl<D, cols_per_block, type_K, type_V, use_logit_softcap>(ctx, dst);
         }
-        return;
+        ត្រឡប់;
     }
 
-    constexpr int cols_per_block = 2;
-    if (logit_softcap == 0.0f) {
+    constexpr ចំនួនគត់ cols_per_block = 2;
+    ប្រសិនបើ (logit_softcap == 0.0f) {
         constexpr bool use_logit_softcap = false;
         ggml_sycl_flash_attn_ext_vec_case_impl<D, cols_per_block, type_K, type_V, use_logit_softcap>(ctx, dst);
-    } else {
+    } បើមិនដូច្នេះ {
         constexpr bool use_logit_softcap = true;
         ggml_sycl_flash_attn_ext_vec_case_impl<D, cols_per_block, type_K, type_V, use_logit_softcap>(ctx, dst);
     }

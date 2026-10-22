@@ -29,17 +29,17 @@ OutputVector translate_concat(const NodeContext & context) {
     auto input_1 = process_view_input_new(context, 1);
     const auto output_type = context.get_output_type();
 
-    if (input_0.get_element_type() != output_type) {
+    ប្រសិនបើ (input_0.get_element_type() != output_type) {
         input_0 = std::make_shared<ov::op::v0::Convert>(input_0, output_type);
     }
-    if (input_1.get_element_type() != output_type) {
+    ប្រសិនបើ (input_1.get_element_type() != output_type) {
         input_1 = std::make_shared<ov::op::v0::Convert>(input_1, output_type);
     }
 
     const auto axis = static_cast<int64_t>(rank - 1 - ggml_dim);
     auto res = std::make_shared<ov::op::v0::Concat>(OutputVector{input_0, input_1}, axis);
 
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ត្រឡប់ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op

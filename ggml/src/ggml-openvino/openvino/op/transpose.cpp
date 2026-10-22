@@ -19,10 +19,10 @@ OutputVector translate_transpose(const NodeContext & context) {
 
     // Compute permute order by matching output and input stride rankings.
     // Build <stride, dim_index> pairs.
-    std::vector<std::pair<size_t, int>> output_stride_dims;
-    std::vector<std::pair<size_t, int>> input_stride_dims;
+    std::vector<std::pair<size_t, ចំនួនគត់>> output_stride_dims;
+    std::vector<std::pair<size_t, ចំនួនគត់>> input_stride_dims;
 
-    for (int i = 0; i < 4; ++i) {
+    សម្រាប់ (ចំនួនគត់ i = 0; i < 4; ++i) {
         output_stride_dims.push_back({output_stride[i], i});
         input_stride_dims.push_back({input_stride[i], i});
     }
@@ -33,9 +33,9 @@ OutputVector translate_transpose(const NodeContext & context) {
 
     // Build permute order.
     std::vector<int64_t> permute_order(4);
-    for (int i = 0; i < 4; ++i) {
-        int output_dim = output_stride_dims[i].second;
-        int input_dim = input_stride_dims[i].second;
+    សម្រាប់ (ចំនួនគត់ i = 0; i < 4; ++i) {
+        ចំនួនគត់ output_dim = output_stride_dims[i].second;
+        ចំនួនគត់ input_dim = input_stride_dims[i].second;
         permute_order[output_dim] = input_dim;
     }
 
@@ -43,7 +43,7 @@ OutputVector translate_transpose(const NodeContext & context) {
 
     auto res = std::make_shared<ov::op::v1::Transpose>(
         input, ov::op::v0::Constant::create(ov::element::i64, {4}, permute_order));
-    return rename_outputs_with_suffix({res}, context.get_name());
+    ត្រឡប់ rename_outputs_with_suffix({res}, context.get_name());
 }
 
 }  // namespace op
