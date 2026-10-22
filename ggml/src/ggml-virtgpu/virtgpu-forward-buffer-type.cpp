@@ -1,6 +1,6 @@
-#include "virtgpu-forward-impl.h"
+#ضمن "virtgpu-forward-impl.h"
 
-char * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
+حرف * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -11,9 +11,9 @@ char * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t h
 
     REMOTE_CALL(gpu, encoder, decoder, ret);
 
-    const size_t string_size = apir_decode_array_size_unchecked(decoder);
-    char *       string      = (char *) apir_decoder_alloc_array(sizeof(char), string_size);
-    if (!string) {
+    ثابت size_t string_size = apir_decode_array_size_unchecked(decoder);
+    حرف *       string      = (حرف *) apir_decoder_alloc_array(حجم(حرف), string_size);
+    𐤀𐤌 (!string) {
         GGML_LOG_ERROR(GGML_VIRTGPU "%s: Could not allocate the device name buffer\n", __func__);
         apir_decoder_set_fatal(decoder);
     }
@@ -21,7 +21,7 @@ char * apir_buffer_type_get_name(virtgpu * gpu, apir_buffer_type_host_handle_t h
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return string;
+    أرجع string;
 }
 
 size_t apir_buffer_type_get_alignment(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
@@ -40,7 +40,7 @@ size_t apir_buffer_type_get_alignment(virtgpu * gpu, apir_buffer_type_host_handl
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return alignment;
+    أرجع alignment;
 }
 
 size_t apir_buffer_type_get_max_size(virtgpu * gpu, apir_buffer_type_host_handle_t host_handle) {
@@ -59,7 +59,7 @@ size_t apir_buffer_type_get_max_size(virtgpu * gpu, apir_buffer_type_host_handle
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return max_size;
+    أرجع max_size;
 }
 
 apir_buffer_context_t apir_buffer_type_alloc_buffer(virtgpu *                      gpu,
@@ -83,12 +83,12 @@ apir_buffer_context_t apir_buffer_type_alloc_buffer(virtgpu *                   
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return buffer_context;
+    أرجع buffer_context;
 }
 
 size_t apir_buffer_type_get_alloc_size(virtgpu *                      gpu,
                                        apir_buffer_type_host_handle_t host_handle,
-                                       const ggml_tensor *            op) {
+                                       ثابت ggml_tensor *            op) {
     apir_encoder *        encoder;
     apir_decoder *        decoder;
     ApirForwardReturnCode ret;
@@ -106,5 +106,5 @@ size_t apir_buffer_type_get_alloc_size(virtgpu *                      gpu,
 
     remote_call_finish(gpu, encoder, decoder);
 
-    return alloc_size;
+    أرجع alloc_size;
 }

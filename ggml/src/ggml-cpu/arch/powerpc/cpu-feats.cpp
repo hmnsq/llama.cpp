@@ -1,80 +1,80 @@
 # include "ggml-backend-impl.h"
 
-#if defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
+#𐤀𐤌 defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__)
 
-#if defined(__linux__)
-#include <sys/auxv.h>
+#𐤀𐤌 defined(__linux__)
+#ضمن <sys/auxv.h>
 #endif
 
-#include <string>
+#ضمن <string>
 
-struct powerpc_features {
+بنية powerpc_features {
     std::string platform = "";
-    int power_version    = -1;
+    صحيح power_version    = -1;
 
-    bool has_vsx         = false;
+    منطقي has_vsx         = خطأ;
 
     powerpc_features() {
-#if defined(__linux__)
+#𐤀𐤌 defined(__linux__)
         unsigned long auxval = getauxval(AT_PLATFORM);
-        if (auxval) {
-            platform = std::string(reinterpret_cast<const char*>(auxval));
+        𐤀𐤌 (auxval) {
+            platform = std::string(reinterpret_cast<ثابت حرف*>(auxval));
             // TBD: Do systems exist that return this in uppercase?
-            if (platform.substr(0, 5) == "power") {
+            𐤀𐤌 (platform.substr(0, 5) == "power") {
                 // Extractt a numeric suffix, if one exists
-                int vpos = -1;
-                for (int i = platform.length() - 1; i >= 0; i--) {
-                    if (std::isdigit(platform[i])) {
+                صحيح vpos = -1;
+                لكل (صحيح i = platform.length() - 1; i >= 0; i--) {
+                    𐤀𐤌 (std::isdigit(platform[i])) {
                         vpos = i;
-                    } else {
-                        break;
+                    } وإلا {
+                        اكسر;
                     }
                 }
-                if (vpos > -1) {
+                𐤀𐤌 (vpos > -1) {
                     power_version = std::stoi(platform.substr(vpos));
                 }
             }
         }
 #endif
-        if (power_version >= 9) {
+        𐤀𐤌 (power_version >= 9) {
             has_vsx = true;
         }
     }
 };
 
-static int ggml_backend_cpu_powerpc_score() {
-    int score = 1;
+ساكن صحيح ggml_backend_cpu_powerpc_score() {
+    صحيح score = 1;
     powerpc_features pf;
 
 // Platform scores
-#if defined(GGML_USE_POWER7)
-    if (pf.power_version < 7) { return 0; }
+#𐤀𐤌 defined(GGML_USE_POWER7)
+    𐤀𐤌 (pf.power_version < 7) { أرجع 0; }
     score += 1<<1;
 #endif
-#if defined(GGML_USE_POWER8)
-    if (pf.power_version < 8) { return 0; }
+#𐤀𐤌 defined(GGML_USE_POWER8)
+    𐤀𐤌 (pf.power_version < 8) { أرجع 0; }
     score += 1<<2;
 #endif
-#if defined(GGML_USE_POWER9)
-    if (pf.power_version < 9) { return 0; }
+#𐤀𐤌 defined(GGML_USE_POWER9)
+    𐤀𐤌 (pf.power_version < 9) { أرجع 0; }
     score += 1<<3;
 #endif
-#if defined(GGML_USE_POWER10)
-    if (pf.power_version < 10) { return 0; }
+#𐤀𐤌 defined(GGML_USE_POWER10)
+    𐤀𐤌 (pf.power_version < 10) { أرجع 0; }
     score += 1<<4;
 #endif
-#if defined(GGML_USE_POWER11)
-    if (pf.power_version < 11) { return 0; }
+#𐤀𐤌 defined(GGML_USE_POWER11)
+    𐤀𐤌 (pf.power_version < 11) { أرجع 0; }
     score += 1<<5;
 #endif
 
 // Feature scores
-#if defined(GGML_USE_VSX)
-    if (!pf.has_vsx) { return 0; }
+#𐤀𐤌 defined(GGML_USE_VSX)
+    𐤀𐤌 (!pf.has_vsx) { أرجع 0; }
     score += 1<<6;
 #endif
 
-    return score;
+    أرجع score;
 }
 
 GGML_BACKEND_DL_SCORE_IMPL(ggml_backend_cpu_powerpc_score)

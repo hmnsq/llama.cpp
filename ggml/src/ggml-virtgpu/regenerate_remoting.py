@@ -17,26 +17,26 @@ The script will:
 4. Show a summary of what was generated
 """
 
-import yaml
-from typing import Dict, List, Any
-from pathlib import Path
-import os
-import subprocess
-import shutil
-import logging
+استورد yaml
+من typing استورد Dict, List, Any
+من pathlib استورد Path
+استورد os
+استورد subprocess
+استورد shutil
+استورد logging
 
 NL = '\n' # can't have f"{'\n'}" in f-strings
 
 
-class RemotingCodebaseGenerator:
+صنف RemotingCodebaseGenerator:
     def __init__(self, yaml_path: str = "ggmlremoting_functions.yaml"):
         """Initialize the generator with the YAML configuration."""
         self.yaml_path = yaml_path
 
-        if not Path(yaml_path).exists():
-            raise FileNotFoundError(f"Configuration file {yaml_path} not found")
+        𐤀𐤌 𐤋𐤀 Path(yaml_path).exists():
+            ارفع FileNotFoundError(f"Configuration file {yaml_path} not found")
 
-        with open(yaml_path, 'r') as f:
+        with open(yaml_path, 'r') كـ f:
             self.config = yaml.safe_load(f)
 
         self.functions = self.config['functions']
@@ -48,64 +48,64 @@ class RemotingCodebaseGenerator:
 
     def _check_clang_format_available(self) -> bool:
         """Check if clang-format is available in the system PATH."""
-        return shutil.which("clang-format") is not None
+        أرجع shutil.which("clang-format") is 𐤋𐤀 None
 
     def _format_file_with_clang_format(self, file_path: Path) -> bool:
         """Format a file with clang-format -i. Returns True if successful, False otherwise."""
-        if not self.clang_format_available:
-            return False
+        𐤀𐤌 𐤋𐤀 self.clang_format_available:
+            أرجع خطأ
 
-        try:
+        حاول:
             subprocess.run(
                 ["clang-format", "-i", str(file_path)],
-                check=True,
-                capture_output=True,
-                text=True
+                check=صحيح,
+                capture_output=صحيح,
+                text=صحيح
             )
-            return True
-        except subprocess.CalledProcessError:
+            أرجع صحيح
+        استثناء subprocess.CalledProcessError:
             logging.exception(f"   ⚠️  clang-format failed for {file_path}")
-            return False
-        except Exception as e:
+            أرجع خطأ
+        استثناء Exception كـ e:
             logging.exception(f"   ⚠️  Unexpected error formatting {file_path}: {e}")
-            return False
+            أرجع خطأ
 
     def generate_enum_name(self, group_name: str, function_name: str) -> str:
         """Generate the APIR_COMMAND_TYPE enum name for a function."""
         prefix = self.naming_patterns['enum_prefix']
-        return f"{prefix}{group_name.upper()}_{function_name.upper()}"
+        أرجع f"{prefix}{group_name.upper()}_{function_name.upper()}"
 
     def generate_backend_function_name(self, group_name: str, function_name: str) -> str:
         """Generate the backend function name."""
         function_key = f"{group_name}_{function_name}"
         overrides = self.naming_patterns.get('backend_function_overrides', {})
 
-        if function_key in overrides:
-            return overrides[function_key]
+        𐤀𐤌 function_key في overrides:
+            أرجع overrides[function_key]
 
         prefix = self.naming_patterns['backend_function_prefix']
-        return f"{prefix}{group_name}_{function_name}"
+        أرجع f"{prefix}{group_name}_{function_name}"
 
     def generate_frontend_function_name(self, group_name: str, function_name: str) -> str:
         """Generate the frontend function name."""
         prefix = self.naming_patterns['frontend_function_prefix']
-        return f"{prefix}{group_name}_{function_name}"
+        أرجع f"{prefix}{group_name}_{function_name}"
 
     def get_enabled_functions(self) -> List[Dict[str, Any]]:
         """Get all enabled functions with their metadata."""
         functions = []
         enum_value = 0
 
-        for group_name, group_data in self.functions.items():
+        لكل group_name, group_data في self.functions.items():
             group_description = group_data['group_description']
 
-            for function_name, func_metadata in group_data['functions'].items():
+            لكل function_name, func_metadata في group_data['functions'].items():
                 # Handle case where func_metadata is None or empty (functions with only comments)
-                if func_metadata is None:
+                𐤀𐤌 func_metadata is None:
                     func_metadata = {}
 
                 # Functions are enabled by default unless explicitly disabled
-                if func_metadata.get('enabled', True):
+                𐤀𐤌 func_metadata.get('enabled', صحيح):
                     functions.append({
                         'group_name': group_name,
                         'function_name': function_name,
@@ -116,11 +116,11 @@ class RemotingCodebaseGenerator:
                         'frontend_return': func_metadata.get('frontend_return', 'void'),
                         'frontend_extra_params': func_metadata.get('frontend_extra_params', []),
                         'group_description': group_description,
-                        'deprecated': func_metadata.get('deprecated', False),
+                        'deprecated': func_metadata.get('deprecated', خطأ),
                     })
                     enum_value += 1
 
-        return functions
+        أرجع functions
 
     def generate_apir_backend_header(self) -> str:
         """Generate the complete apir_backend.h file."""
@@ -130,9 +130,9 @@ class RemotingCodebaseGenerator:
         enum_lines = ["typedef enum ApirBackendCommandType {"]
         current_group = None
 
-        for func in functions:
+        لكل func في functions:
             # Add comment for new group
-            if func['group_name'] != current_group:
+            𐤀𐤌 func['group_name'] != current_group:
                 enum_lines.append("")
                 enum_lines.append(f"  /* {func['group_description']} */")
                 current_group = func['group_name']
@@ -151,9 +151,9 @@ class RemotingCodebaseGenerator:
         func_lines.append("    switch (type) {")
 
         current_group = None
-        for func in functions:
+        لكل func في functions:
             # Add comment for new group
-            if func['group_name'] != current_group:
+            𐤀𐤌 func['group_name'] != current_group:
                 func_lines.append(f"        /* {func['group_description']} */")
                 current_group = func['group_name']
 
@@ -171,7 +171,7 @@ class RemotingCodebaseGenerator:
         # Full header template
         header_content = NL.join(enum_lines) + "\n\n" + NL.join(func_lines) + "\n"
 
-        return header_content
+        أرجع header_content
 
     def generate_backend_dispatched_header(self) -> str:
         """Generate the complete backend-dispatched.h file."""
@@ -181,14 +181,14 @@ class RemotingCodebaseGenerator:
         decl_lines = []
         current_group = None
 
-        for func in functions:
-            if func['group_name'] != current_group:
+        لكل func في functions:
+            𐤀𐤌 func['group_name'] != current_group:
                 decl_lines.append(f"\n/* {func['group_description']} */")
                 current_group = func['group_name']
 
             signature = "uint32_t"
             params = "apir_encoder *enc, apir_decoder *dec, virgl_apir_context *ctx"
-            if func['deprecated']:
+            𐤀𐤌 func['deprecated']:
                 decl_lines.append(f"/* {func['enum_name']} is deprecated. Keeping the handler for backward compatibility. */")
 
             decl_lines.append(f"{signature} {func['backend_function']}({params});")
@@ -197,13 +197,13 @@ class RemotingCodebaseGenerator:
         table_lines = []
         current_group = None
 
-        for func in functions:
-            if func['group_name'] != current_group:
+        لكل func في functions:
+            𐤀𐤌 func['group_name'] != current_group:
                 table_lines.append(f"\n  /* {func['group_description']} */")
                 table_lines.append("")
                 current_group = func['group_name']
 
-            deprecated = " /* DEPRECATED */" if func['deprecated'] else ""
+            deprecated = " /* DEPRECATED */" 𐤀𐤌 func['deprecated'] وإلا ""
             table_lines.append(f"  /* {func['enum_name']}  = */ {func['backend_function']}{deprecated},")
 
         header_content = f'''\
@@ -217,7 +217,7 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
 }};
 }}
 '''
-        return header_content
+        أرجع header_content
 
     def generate_virtgpu_forward_header(self) -> str:
         """Generate the complete virtgpu-forward.gen.h file."""
@@ -226,15 +226,15 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         decl_lines = []
         current_group = None
 
-        for func in functions:
-            if func['group_name'] != current_group:
+        لكل func في functions:
+            𐤀𐤌 func['group_name'] != current_group:
                 decl_lines.append("")
                 decl_lines.append(f"/* {func['group_description']} */")
                 current_group = func['group_name']
 
-            if func['deprecated']:
+            𐤀𐤌 func['deprecated']:
                 decl_lines.append(f"/* {func['frontend_function']} is deprecated. */")
-                continue
+                استمر
 
             # Build parameter list
             params = [self.naming_patterns['frontend_base_param']]
@@ -247,7 +247,7 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
 #pragma once
 {NL.join(decl_lines)}
 '''
-        return header_content
+        أرجع header_content
 
     def regenerate_codebase(self) -> None:
         """Regenerate the entire remoting codebase."""
@@ -258,11 +258,11 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         current_dir = os.getcwd()
         is_frontend_dir = current_dir.endswith('ggml-virtgpu')
 
-        if is_frontend_dir:
+        𐤀𐤌 is_frontend_dir:
             # Running from ggml/src/ggml-virtgpu-apir
             logging.info("📍 Detected frontend directory execution")
             frontend_base = Path(".")
-        else:
+        وإلا:
             # Running from project root (fallback to original behavior)
             logging.info("📍 Detected project root execution")
             base_path = self.config_data.get('base_path', 'ggml/src')
@@ -275,9 +275,9 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         virtgpu_forward_path = frontend_base / "virtgpu-forward.gen.h"
 
         # Create output directories for each file
-        apir_backend_path.parent.mkdir(parents=True, exist_ok=True)
-        backend_dispatched_path.parent.mkdir(parents=True, exist_ok=True)
-        virtgpu_forward_path.parent.mkdir(parents=True, exist_ok=True)
+        apir_backend_path.parent.mkdir(parents=صحيح, exist_ok=صحيح)
+        backend_dispatched_path.parent.mkdir(parents=صحيح, exist_ok=صحيح)
+        virtgpu_forward_path.parent.mkdir(parents=صحيح, exist_ok=صحيح)
 
         # Generate header files
         logging.info("📁 Generating header files...")
@@ -297,15 +297,15 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
         # Format generated files with clang-format
         generated_files = [apir_backend_path, backend_dispatched_path, virtgpu_forward_path]
 
-        if not self.clang_format_available:
+        𐤀𐤌 𐤋𐤀 self.clang_format_available:
             logging.warning("\n⚠️clang-format not found in PATH. Generated files will not be formatted.\n"
                             "   Install clang-format to enable automatic code formatting.")
-        else:
+        وإلا:
             logging.info("\n🎨 Formatting files with clang-format...")
-            for file_path in generated_files:
-                if self._format_file_with_clang_format(file_path):
+            لكل file_path في generated_files:
+                𐤀𐤌 self._format_file_with_clang_format(file_path):
                     logging.info(f"   ✅ Formatted {file_path.name}")
-                else:
+                وإلا:
                     logging.warning(f"   ❌ Failed to format {file_path.name}")
 
         # Generate summary
@@ -321,13 +321,13 @@ static const backend_dispatch_t apir_backend_dispatch_table[APIR_BACKEND_DISPATC
 
 
 def main():
-    try:
+    حاول:
         generator = RemotingCodebaseGenerator()
         generator.regenerate_codebase()
-    except Exception as e:
+    استثناء Exception كـ e:
         logging.exception(f"❌ Error: {e}")
         exit(1)
 
 
-if __name__ == "__main__":
+𐤀𐤌 __name__ == "__main__":
     main()
