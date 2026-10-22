@@ -14,29 +14,29 @@
 //******************************************************************************
 // Block Dot Product Operations
 //******************************************************************************
-inline void __attribute__((always_inline)) excl_mode(uint64_t val) {
+अन्तःस्थ शून्य __attribute__((always_inline)) excl_mode(uint64_t val) {
     __asm__ __volatile__("csrw 0x7d3, %[csr_enc]\n" : : [csr_enc] "r"(val) : "x31");
 }
 
-static inline float compute_block_dot_product_q4_0(const block_q4_0 * a_block, const float * b_col_start) {
+स्थिर अन्तःस्थ भिन्न compute_block_dot_product_q4_0(ध्रुव block_q4_0 * a_block, ध्रुव भिन्न * b_col_start) {
     // Set mask register to enable all 8 vector elements
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
+    __asm__ चञ्चल("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
+    __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
 
     // Use f10 as accumulator, init to 0
-    __asm__ volatile("fbci.ps f10, 0" ::: "f10");
+    __asm__ चञ्चल("fbci.ps f10, 0" ::: "f10");
 
-    static const int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    __asm__ volatile("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    स्थिर ध्रुव int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    __asm__ चञ्चल("flw.ps f31, %[gather]\n" : : [gather] "m"(*(ध्रुव int32_t (*)[8]) gather_pattern) : "f31");
 
     // Process 32 elements in 2 chunks of 16 elements (8 bytes) each
-    for (int chunk = 0; chunk < 2; chunk++) {
-        int offset_a      = chunk * 8;
-        int offset_b_low  = chunk * 8;       // Activations for lower nibbles
-        int offset_b_high = chunk * 8 + 16;  // Activations for upper nibbles (16 elements later)
+    प्रति (पूर्णाङ्क chunk = 0; chunk < 2; chunk++) {
+        पूर्णाङ्क offset_a      = chunk * 8;
+        पूर्णाङ्क offset_b_निचला  = chunk * 8;       // Activations for lower nibbles
+        पूर्णाङ्क offset_b_ऊपरी = chunk * 8 + 16;  // Activations for upper nibbles (16 elements later)
 
-        __asm__ volatile(
+        __asm__ चञ्चल(
             "fgb.ps f11, f31(%[a_ptr])\n"  // Gather 8 bytes (16 packed q4_0 weights)
 
             // 1. Extract & Multiply Lower Nibbles
@@ -54,15 +54,15 @@ static inline float compute_block_dot_product_q4_0(const block_q4_0 * a_block, c
             "flw.ps f15, 0(%[b_high])\n"          // Load next 8 B values (floats)
             "fmadd.ps f10, f14, f15, f10, rne\n"  // acc += A_high * B_high
             :
-            : [a_ptr] "r"(&a_block->qs[offset_a]), [b_low] "r"(&b_col_start[offset_b_low]),
-              [b_high] "r"(&b_col_start[offset_b_high])
+            : [a_ptr] "r"(&a_block->qs[offset_a]), [b_निचला] "r"(&b_col_start[offset_b_निचला]),
+              [b_ऊपरी] "r"(&b_col_start[offset_b_ऊपरी])
             // Note: f10 is explicitly NOT listed in the clobbers here to ensure the compiler
             // preserves the running sum across C loop iterations safely.
             : "f11", "f12", "f13", "f14", "f15");
     }
 
     // Horizontal sum: reduce f10 into a single scalar
-    float final_sum;
+    भिन्न final_sum;
     __asm__ __volatile__(
         // Pairwise sum within each 128-bit half
         "fswizz.ps f1, f10, 0xB1 \n\t"  // Swaps: e0<->e1 and e2<->e3
@@ -77,43 +77,43 @@ static inline float compute_block_dot_product_q4_0(const block_q4_0 * a_block, c
         : [vout] "=f"(final_sum)::"t0", "f1", "f2", "f3", "f4", "f5", "f10");
 
     // Restore original mask
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ चञ्चल("mova.m.x %0" ::"r"(temp_mask));
 
-    const float scale = fp16_to_fp32(a_block->d);
-    return final_sum * scale;
+    ध्रुव भिन्न scale = fp16_to_fp32(a_block->d);
+    प्रत्यागम final_sum * scale;
 }
 
 // Compute dot product between dequantized q8_0 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: 32 int8 values (QK8_0)
-static inline float compute_block_dot_product_q8_0(const block_q8_0 * a_block, const float * b_col_start) {
+स्थिर अन्तःस्थ भिन्न compute_block_dot_product_q8_0(ध्रुव block_q8_0 * a_block, ध्रुव भिन्न * b_col_start) {
     // Set mask register to enable all 8 vector elements
     unsigned long temp_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
-    __asm__ volatile("fbci.pi f10, 0" ::: "f10");       // Use f10 as accumulator, init to 0
+    __asm__ चञ्चल("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
+    __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
+    __asm__ चञ्चल("fbci.pi f10, 0" ::: "f10");       // Use f10 as accumulator, init to 0
 
-    static const int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    स्थिर ध्रुव int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
-    __asm__ volatile("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ चञ्चल("flw.ps f31, %[gather]\n" : : [gather] "m"(*(ध्रुव int32_t (*)[8]) gather_pattern) : "f31");
 
     // Process 32 elements in 4 chunks of 8 elements each
-    for (int chunk = 0; chunk < 4; chunk++) {
-        int offset = chunk << 3;  // chunk * 8
+    प्रति (पूर्णाङ्क chunk = 0; chunk < 4; chunk++) {
+        पूर्णाङ्क offset = chunk << 3;  // chunk * 8
 
-        __asm__ volatile(
+        __asm__ चञ्चल(
             "flw.ps f12, %[b_vec]\n"         // Load 8 B values (floats)
             "fgb.ps f11, f31(%[a_ptr])\n"    // Gather 8 int8 bytes from A using pattern
             "fcvt.ps.pw f11, f11\n"          // Convert int8 vector to float vector
             "fmadd.ps f10, f11, f12, f10\n"  // acc += a_vec * b_vec (8-wide)
             :
-            : [a_ptr] "r"(&a_block->qs[offset]), [b_vec] "m"(*(const float (*)[8]) & b_col_start[offset]),
+            : [a_ptr] "r"(&a_block->qs[offset]), [b_vec] "m"(*(ध्रुव भिन्न (*)[8]) & b_col_start[offset]),
               [scale] "m"(a_block->d)
             : "f10", "f11", "f12");
     }
 
     // Horizontal sum: reduce f10 into a single scalar
-    float final_sum;
+    भिन्न final_sum;
     __asm__ __volatile__(
         // Pairwise sum within each 128-bit half
         "fswizz.ps f1, f10, 0xB1 \n\t"  // Swaps: e0<->e1 and e2<->e3
@@ -128,10 +128,10 @@ static inline float compute_block_dot_product_q8_0(const block_q8_0 * a_block, c
         : [vout] "=f"(final_sum)::"t0", "f10", "f2", "f3", "f4", "f5");
 
     // Restore original mask
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ चञ्चल("mova.m.x %0" ::"r"(temp_mask));
 
-    const float scale = fp16_to_fp32(a_block->d);
-    return final_sum * scale;
+    ध्रुव भिन्न scale = fp16_to_fp32(a_block->d);
+    प्रत्यागम final_sum * scale;
 }
 
 //******************************************************************************
@@ -151,31 +151,31 @@ static inline float compute_block_dot_product_q8_0(const block_q8_0 * a_block, c
 //   f1-f5, t0 — scratch within reduce
 //******************************************************************************
 
-static inline void __attribute__((always_inline)) q8_dot_reset(void) {
-    __asm__ volatile("fbci.pi f20, 0" ::: "f20");
+स्थिर अन्तःस्थ शून्य __attribute__((always_inline)) q8_dot_reset(शून्य) {
+    __asm__ चञ्चल("fbci.pi f20, 0" ::: "f20");
 }
 
 // Accumulate n_blocks Q8_0 blocks into f20.
 // Uses fg32b.ps (fast gather with scalar pattern) for aligned chunks,
 // falls back to fgb.ps for chunks crossing a 32-byte boundary.
-static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 * q_row,
-                                                              const float *      b_col,
+स्थिर अन्तःस्थ शून्य __attribute__((always_inline)) q8_dot_tile(ध्रुव block_q8_0 * q_row,
+                                                              ध्रुव भिन्न *      b_col,
                                                               int64_t            n_blocks) {
-    const int32_t  gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    const uint64_t gather_0_to_7     = 0x398a418820ULL;
+    ध्रुव int32_t  gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    ध्रुव uint64_t gather_0_to_7     = 0x398a418820ULL;
 
-    __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ चञ्चल("flw.ps f31, %[g]\n" : : [g] "m"(*(ध्रुव int32_t (*)[8]) gather_pattern) : "f31");
 
-    for (int64_t kb = 0; kb < n_blocks; kb++) {
-        const block_q8_0 * blk         = q_row + kb;
-        const float *      b_ptr       = b_col + (kb << 5);
-        const uintptr_t    qs_addr     = (uintptr_t) blk->qs;
-        const uintptr_t    qs_aligned  = qs_addr & ~(uintptr_t) 31;
-        const uintptr_t    qs_low      = qs_addr & 31;
-        const int          fast_chunks = (int) ((32 - qs_low) >> 3);
+    प्रति (int64_t kb = 0; kb < n_blocks; kb++) {
+        ध्रुव block_q8_0 * blk         = q_row + kb;
+        ध्रुव भिन्न *      b_ptr       = b_col + (kb << 5);
+        ध्रुव uintptr_t    qs_addr     = (uintptr_t) blk->qs;
+        ध्रुव uintptr_t    qs_aligned  = qs_addr & ~(uintptr_t) 31;
+        ध्रुव uintptr_t    qs_निचला      = qs_addr & 31;
+        ध्रुव पूर्णाङ्क          fast_chunks = (पूर्णाङ्क) ((32 - qs_निचला) >> 3);
 
-        if (fast_chunks >= 3) {
-            __asm__ volatile(
+        यदि (fast_chunks >= 3) {
+            __asm__ चञ्चल(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
                 "fg32b.ps    f11, %[gi](%[ap0])\n"
@@ -196,11 +196,11 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                 :
                 : [gi] "r"(gather_0_to_7), [ap0] "r"(qs_addr), [ap1] "r"(qs_aligned | ((qs_addr + 8) & 31)),
                   [ap2] "r"(qs_aligned | ((qs_addr + 16) & 31)), [ap3] "r"(&blk->qs[24]),
-                  [bv0] "m"(*(const float (*)[8]) & b_ptr[0]), [bv1] "m"(*(const float (*)[8]) & b_ptr[8]),
-                  [bv2] "m"(*(const float (*)[8]) & b_ptr[16]), [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
+                  [bv0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]), [bv1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]),
+                  [bv2] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]), [bv3] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
-        } else if (fast_chunks == 2) {
-            __asm__ volatile(
+        } अन्यथा यदि (fast_chunks == 2) {
+            __asm__ चञ्चल(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
                 "fg32b.ps    f11, %[gi](%[ap0])\n"
@@ -220,12 +220,12 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                 "fmadd.ps    f10, f11, f12, f10\n"
                 :
                 : [gi] "r"(gather_0_to_7), [ap0] "r"(qs_addr), [ap1] "r"(qs_aligned | ((qs_addr + 8) & 31)),
-                  [ap2] "r"(&blk->qs[16]), [ap3] "r"(&blk->qs[24]), [bv0] "m"(*(const float (*)[8]) & b_ptr[0]),
-                  [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
-                  [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
+                  [ap2] "r"(&blk->qs[16]), [ap3] "r"(&blk->qs[24]), [bv0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]),
+                  [bv1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]), [bv2] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]),
+                  [bv3] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
-        } else if (fast_chunks == 1) {
-            __asm__ volatile(
+        } अन्यथा यदि (fast_chunks == 1) {
+            __asm__ चञ्चल(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
                 "fg32b.ps    f11, %[gi](%[ap0])\n"
@@ -245,12 +245,12 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                 "fmadd.ps    f10, f11, f12, f10\n"
                 :
                 : [gi] "r"(gather_0_to_7), [ap0] "r"(qs_addr), [ap1] "r"(&blk->qs[8]), [ap2] "r"(&blk->qs[16]),
-                  [ap3] "r"(&blk->qs[24]), [bv0] "m"(*(const float (*)[8]) & b_ptr[0]),
-                  [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
-                  [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
+                  [ap3] "r"(&blk->qs[24]), [bv0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]),
+                  [bv1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]), [bv2] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]),
+                  [bv3] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
-        } else {
-            __asm__ volatile(
+        } अन्यथा {
+            __asm__ चञ्चल(
                 "fbci.pi     f10, 0\n"
                 "flw.ps      f12, %[bv0]\n"
                 "fgb.ps      f11, f31(%[ap0])\n"
@@ -270,14 +270,14 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
                 "fmadd.ps    f10, f11, f12, f10\n"
                 :
                 : [ap0] "r"(&blk->qs[0]), [ap1] "r"(&blk->qs[8]), [ap2] "r"(&blk->qs[16]), [ap3] "r"(&blk->qs[24]),
-                  [bv0] "m"(*(const float (*)[8]) & b_ptr[0]), [bv1] "m"(*(const float (*)[8]) & b_ptr[8]),
-                  [bv2] "m"(*(const float (*)[8]) & b_ptr[16]), [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
+                  [bv0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]), [bv1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]),
+                  [bv2] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]), [bv3] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12");
         }
 
         // f20 += f10 * broadcast(scale) — hardware fp16→fp32 via FCVT.PS.F16
         uint32_t scale_raw = (uint32_t) blk->d;
-        __asm__ volatile(
+        __asm__ चञ्चल(
             "fbcx.ps f15, %[sb]\n"
             "fcvt.ps.f16 f15, f15\n"
             "fmadd.ps f20, f10, f15, f20\n"
@@ -288,8 +288,8 @@ static inline void __attribute__((always_inline)) q8_dot_tile(const block_q8_0 *
 }
 
 // Horizontal sum of 8-element vector accumulator f20.
-static inline float __attribute__((always_inline)) q8_dot_reduce(void) {
-    float result;
+स्थिर अन्तःस्थ भिन्न __attribute__((always_inline)) q8_dot_reduce(शून्य) {
+    भिन्न result;
     __asm__ __volatile__(
         "fswizz.ps f1, f20, 0xB1 \n\t"
         "fadd.ps   f2, f20, f1, rne \n\t"
@@ -299,19 +299,19 @@ static inline float __attribute__((always_inline)) q8_dot_reduce(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    प्रत्यागम result;
 }
 
 // Full-row dot product (convenience wrapper)
-static inline float compute_row_dot_q8_0(const block_q8_0 * q_row, const float * b_col, int64_t K_blocks) {
+स्थिर अन्तःस्थ भिन्न compute_row_dot_q8_0(ध्रुव block_q8_0 * q_row, ध्रुव भिन्न * b_col, int64_t K_blocks) {
     unsigned long saved_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ चञ्चल("mova.x.m %0" : "=r"(saved_mask));
+    __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");
     q8_dot_reset();
     q8_dot_tile(q_row, b_col, K_blocks);
-    float result = q8_dot_reduce();
-    __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-    return result;
+    भिन्न result = q8_dot_reduce();
+    __asm__ चञ्चल("mova.m.x %0" ::"r"(saved_mask));
+    प्रत्यागम result;
 }
 
 //******************************************************************************
@@ -325,25 +325,25 @@ static inline float compute_row_dot_q8_0(const block_q8_0 * q_row, const float *
 // (i.e. the Q8 row stride is a multiple of 32).
 //******************************************************************************
 
-typedef struct {
+प्रकारनिर्देश संरचना {
     unsigned long saved_mask;
 } q8_dot_state;
 
-static inline void q8_dot_begin(q8_dot_state * state) {
-    __asm__ volatile("mova.x.m %0" : "=r"(state->saved_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+स्थिर अन्तःस्थ शून्य q8_dot_begin(q8_dot_state * state) {
+    __asm__ चञ्चल("mova.x.m %0" : "=r"(state->saved_mask));
+    __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");
 }
 
-static inline void q8_dot_end(const q8_dot_state * state) {
-    __asm__ volatile("mova.m.x %0" ::"r"(state->saved_mask));
+स्थिर अन्तःस्थ शून्य q8_dot_end(ध्रुव q8_dot_state * state) {
+    __asm__ चञ्चल("mova.m.x %0" ::"r"(state->saved_mask));
 }
 
 // Equivalent to q8_dot_reset+tile+reduce, without touching the mask register.
 // Caller is responsible for q8_dot_begin/end around the surrounding loop.
-static inline float q8_dot_compute(const block_q8_0 * q_row, const float * b_col, int64_t K_blocks) {
+स्थिर अन्तःस्थ भिन्न q8_dot_compute(ध्रुव block_q8_0 * q_row, ध्रुव भिन्न * b_col, int64_t K_blocks) {
     q8_dot_reset();
     q8_dot_tile(q_row, b_col, K_blocks);
-    return q8_dot_reduce();
+    प्रत्यागम q8_dot_reduce();
 }
 
 // Compute two row dots together while reusing the same loaded B chunks.
@@ -352,33 +352,33 @@ static inline float q8_dot_compute(const block_q8_0 * q_row, const float * b_col
 // is a multiple of 32. In that case the gather/alignment pattern is the same
 // for both rows at a given `kb`, so one set of B vector loads feeds both row
 // accumulators.
-static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
-                                             const block_q8_0 * q_row1,
-                                             const float *      b_col,
+स्थिर अन्तःस्थ शून्य q8_dot_compute_x2_aligned(ध्रुव block_q8_0 * q_row0,
+                                             ध्रुव block_q8_0 * q_row1,
+                                             ध्रुव भिन्न *      b_col,
                                              int64_t            K_blocks,
-                                             float *            out0,
-                                             float *            out1) {
-    const int32_t  gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    const uint64_t gather_0_to_7     = 0x398a418820ULL;
-    __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
-    __asm__ volatile(
+                                             भिन्न *            out0,
+                                             भिन्न *            out1) {
+    ध्रुव int32_t  gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    ध्रुव uint64_t gather_0_to_7     = 0x398a418820ULL;
+    __asm__ चञ्चल("flw.ps f31, %[g]\n" : : [g] "m"(*(ध्रुव int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ चञ्चल(
         "fbci.pi f20, 0\n"
         "fbci.pi f21, 0\n" ::
             : "f20", "f21");
 
-    for (int64_t kb = 0; kb < K_blocks; kb++) {
-        const block_q8_0 * blk0  = q_row0 + kb;
-        const block_q8_0 * blk1  = q_row1 + kb;
-        const float *      b_ptr = b_col + (kb << 5);
+    प्रति (int64_t kb = 0; kb < K_blocks; kb++) {
+        ध्रुव block_q8_0 * blk0  = q_row0 + kb;
+        ध्रुव block_q8_0 * blk1  = q_row1 + kb;
+        ध्रुव भिन्न *      b_ptr = b_col + (kb << 5);
 
-        const uintptr_t qs_addr0    = (uintptr_t) blk0->qs;
-        const uintptr_t qs_addr1    = (uintptr_t) blk1->qs;
-        const uintptr_t qs_aligned0 = qs_addr0 & ~(uintptr_t) 31;
-        const uintptr_t qs_aligned1 = qs_addr1 & ~(uintptr_t) 31;
-        const int       fast_chunks = (int) ((32 - (qs_addr0 & 31)) >> 3);
+        ध्रुव uintptr_t qs_addr0    = (uintptr_t) blk0->qs;
+        ध्रुव uintptr_t qs_addr1    = (uintptr_t) blk1->qs;
+        ध्रुव uintptr_t qs_aligned0 = qs_addr0 & ~(uintptr_t) 31;
+        ध्रुव uintptr_t qs_aligned1 = qs_addr1 & ~(uintptr_t) 31;
+        ध्रुव पूर्णाङ्क       fast_chunks = (पूर्णाङ्क) ((32 - (qs_addr0 & 31)) >> 3);
 
-        if (fast_chunks >= 3) {
-            __asm__ volatile(
+        यदि (fast_chunks >= 3) {
+            __asm__ चञ्चल(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
 
@@ -417,12 +417,12 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                 : [gi] "r"(gather_0_to_7), [r0ap0] "r"(qs_addr0), [r0ap1] "r"(qs_aligned0 | ((qs_addr0 + 8) & 31)),
                   [r0ap2] "r"(qs_aligned0 | ((qs_addr0 + 16) & 31)), [r0ap3] "r"(&blk0->qs[24]), [r1ap0] "r"(qs_addr1),
                   [r1ap1] "r"(qs_aligned1 | ((qs_addr1 + 8) & 31)), [r1ap2] "r"(qs_aligned1 | ((qs_addr1 + 16) & 31)),
-                  [r1ap3] "r"(&blk1->qs[24]), [bv0] "m"(*(const float (*)[8]) & b_ptr[0]),
-                  [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
-                  [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
+                  [r1ap3] "r"(&blk1->qs[24]), [bv0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]),
+                  [bv1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]), [bv2] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]),
+                  [bv3] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
-        } else if (fast_chunks == 2) {
-            __asm__ volatile(
+        } अन्यथा यदि (fast_chunks == 2) {
+            __asm__ चञ्चल(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
 
@@ -461,12 +461,12 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                 : [gi] "r"(gather_0_to_7), [r0ap0] "r"(qs_addr0), [r0ap1] "r"(qs_aligned0 | ((qs_addr0 + 8) & 31)),
                   [r0ap2] "r"(&blk0->qs[16]), [r0ap3] "r"(&blk0->qs[24]), [r1ap0] "r"(qs_addr1),
                   [r1ap1] "r"(qs_aligned1 | ((qs_addr1 + 8) & 31)), [r1ap2] "r"(&blk1->qs[16]),
-                  [r1ap3] "r"(&blk1->qs[24]), [bv0] "m"(*(const float (*)[8]) & b_ptr[0]),
-                  [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
-                  [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
+                  [r1ap3] "r"(&blk1->qs[24]), [bv0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]),
+                  [bv1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]), [bv2] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]),
+                  [bv3] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
-        } else if (fast_chunks == 1) {
-            __asm__ volatile(
+        } अन्यथा यदि (fast_chunks == 1) {
+            __asm__ चञ्चल(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
 
@@ -504,12 +504,12 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                 :
                 : [gi] "r"(gather_0_to_7), [r0ap0] "r"(qs_addr0), [r0ap1] "r"(&blk0->qs[8]), [r0ap2] "r"(&blk0->qs[16]),
                   [r0ap3] "r"(&blk0->qs[24]), [r1ap0] "r"(qs_addr1), [r1ap1] "r"(&blk1->qs[8]),
-                  [r1ap2] "r"(&blk1->qs[16]), [r1ap3] "r"(&blk1->qs[24]), [bv0] "m"(*(const float (*)[8]) & b_ptr[0]),
-                  [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
-                  [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
+                  [r1ap2] "r"(&blk1->qs[16]), [r1ap3] "r"(&blk1->qs[24]), [bv0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]),
+                  [bv1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]), [bv2] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]),
+                  [bv3] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
-        } else {
-            __asm__ volatile(
+        } अन्यथा {
+            __asm__ चञ्चल(
                 "fbci.pi     f10, 0\n"
                 "fbci.pi     f11, 0\n"
 
@@ -547,15 +547,15 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
                 :
                 : [r0ap0] "r"(&blk0->qs[0]), [r0ap1] "r"(&blk0->qs[8]), [r0ap2] "r"(&blk0->qs[16]),
                   [r0ap3] "r"(&blk0->qs[24]), [r1ap0] "r"(&blk1->qs[0]), [r1ap1] "r"(&blk1->qs[8]),
-                  [r1ap2] "r"(&blk1->qs[16]), [r1ap3] "r"(&blk1->qs[24]), [bv0] "m"(*(const float (*)[8]) & b_ptr[0]),
-                  [bv1] "m"(*(const float (*)[8]) & b_ptr[8]), [bv2] "m"(*(const float (*)[8]) & b_ptr[16]),
-                  [bv3] "m"(*(const float (*)[8]) & b_ptr[24])
+                  [r1ap2] "r"(&blk1->qs[16]), [r1ap3] "r"(&blk1->qs[24]), [bv0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]),
+                  [bv1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]), [bv2] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]),
+                  [bv3] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
                 : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17");
         }
 
-        const uint32_t scale_raw0 = (uint32_t) blk0->d;
-        const uint32_t scale_raw1 = (uint32_t) blk1->d;
-        __asm__ volatile(
+        ध्रुव uint32_t scale_raw0 = (uint32_t) blk0->d;
+        ध्रुव uint32_t scale_raw1 = (uint32_t) blk1->d;
+        __asm__ चञ्चल(
             "fbcx.ps     f24, %[s0]\n"
             "fcvt.ps.f16 f24, f24\n"
             "fmadd.ps    f20, f10, f24, f20\n"
@@ -567,8 +567,8 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
             : "f20", "f21", "f24", "f25");
     }
 
-    float result0;
-    float result1;
+    भिन्न result0;
+    भिन्न result1;
     __asm__ __volatile__(
         "fswizz.ps f1, f20, 0xB1 \n\t"
         "fadd.ps   f2, f20, f1, rne \n\t"
@@ -595,25 +595,25 @@ static inline void q8_dot_compute_x2_aligned(const block_q8_0 * q_row0,
 // Compute dot product between f16 block and f32 column vector (NAIVE VERSION)
 // Scalar implementation for debugging - no vectorization
 // Block size: 32 f16 values (64 bytes = 1 cache line)
-static inline float compute_block_dot_product_f16_naive(const uint16_t * a_block, const float * b_col_start) {
-    float                acc_vec[8] __attribute__((aligned(32))) = { 0.0f };
+स्थिर अन्तःस्थ भिन्न compute_block_dot_product_f16_naive(ध्रुव uint16_t * a_block, ध्रुव भिन्न * b_col_start) {
+    भिन्न                acc_vec[8] __attribute__((aligned(32))) = { 0.0f };
     // Byte offsets for 16-bit (half-word) elements
-    static const int32_t gather_pattern[8]                       = { 0, 2, 4, 6, 8, 10, 12, 14 };
+    स्थिर ध्रुव int32_t gather_pattern[8]                       = { 0, 2, 4, 6, 8, 10, 12, 14 };
     unsigned long        temp_mask;
 
-    __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ चञ्चल("mova.x.m %0" : "=r"(temp_mask));
+    __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");
 
     // Load the pattern once into f31 for the duration of all 4 chunks
-    __asm__ volatile("flw.ps f31, %[gather]\n" : : [gather] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ चञ्चल("flw.ps f31, %[gather]\n" : : [gather] "m"(*(ध्रुव int32_t (*)[8]) gather_pattern) : "f31");
 
-    for (int chunk = 0; chunk < 4; chunk++) {
+    प्रति (पूर्णाङ्क chunk = 0; chunk < 4; chunk++) {
         // Correct pointers:
         // a_block elements are 2 bytes, b_col elements are 4 bytes
-        const uint16_t * a_ptr = &a_block[chunk << 3];      // chunk * 8
-        const float *    b_ptr = &b_col_start[chunk << 3];  // chunk * 8
+        ध्रुव uint16_t * a_ptr = &a_block[chunk << 3];      // chunk * 8
+        ध्रुव भिन्न *    b_ptr = &b_col_start[chunk << 3];  // chunk * 8
 
-        __asm__ volatile(
+        __asm__ चञ्चल(
             "flw.ps f10, %[acc]\n"
             "fgh.ps f11, f31(%[a_p])\n"  // Uses {0,2,4,6,8,10,12,14} byte offsets
             "fcvt.ps.f16 f11, f11\n"
@@ -621,125 +621,125 @@ static inline float compute_block_dot_product_f16_naive(const uint16_t * a_block
             "fmadd.ps f10, f11, f12, f10\n"
             "fsw.ps f10, %[result]\n"
 
-            : [result] "=m"(*(float (*)[8]) acc_vec)
-            : [acc] "m"(*(const float (*)[8]) acc_vec), [a_p] "r"(a_ptr), [b_p] "r"(b_ptr)
+            : [result] "=m"(*(भिन्न (*)[8]) acc_vec)
+            : [acc] "m"(*(ध्रुव भिन्न (*)[8]) acc_vec), [a_p] "r"(a_ptr), [b_p] "r"(b_ptr)
             : "f10", "f11", "f12");
     }
 
-    __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+    __asm__ चञ्चल("mova.m.x %0" ::"r"(temp_mask));
 
-    return acc_vec[0] + acc_vec[1] + acc_vec[2] + acc_vec[3] + acc_vec[4] + acc_vec[5] + acc_vec[6] + acc_vec[7];
+    प्रत्यागम acc_vec[0] + acc_vec[1] + acc_vec[2] + acc_vec[3] + acc_vec[4] + acc_vec[5] + acc_vec[6] + acc_vec[7];
 }
 
 // Compute dot product between f16 block and f32 column vector
 // SCALAR implementation for partial blocks
 // Block size: up to 32 f16 values (can handle partial blocks for misaligned K)
-static inline float compute_block_dot_product_f16_partial(const uint16_t * a_block,
-                                                          const float *    b_col_start,
-                                                          int              elements) {
+स्थिर अन्तःस्थ भिन्न compute_block_dot_product_f16_partial(ध्रुव uint16_t * a_block,
+                                                          ध्रुव भिन्न *    b_col_start,
+                                                          पूर्णाङ्क              elements) {
     // This matches compute_block_dot_product_f16_naive behavior
-    float sum = 0.0f;
+    भिन्न sum = 0.0f;
 
-    for (int i = 0; i < elements; i++) {
-        float a_val = fp16_to_fp32(a_block[i]);
-        float b_val = b_col_start[i];
+    प्रति (पूर्णाङ्क i = 0; i < elements; i++) {
+        भिन्न a_val = fp16_to_fp32(a_block[i]);
+        भिन्न b_val = b_col_start[i];
         sum += a_val * b_val;
     }
 
-    return sum;
+    प्रत्यागम sum;
 }
 
 // Compute dot product between f16 block and f16 column vector
 // Scalar implementation for generic non-matrix-engine fallback paths.
-static inline float compute_block_dot_product_f16_f16_partial(const uint16_t * a_block,
-                                                              const uint16_t * b_col_start,
-                                                              int              elements) {
-    float sum = 0.0f;
+स्थिर अन्तःस्थ भिन्न compute_block_dot_product_f16_f16_partial(ध्रुव uint16_t * a_block,
+                                                              ध्रुव uint16_t * b_col_start,
+                                                              पूर्णाङ्क              elements) {
+    भिन्न sum = 0.0f;
 
-    for (int i = 0; i < elements; i++) {
+    प्रति (पूर्णाङ्क i = 0; i < elements; i++) {
         sum += fp16_to_fp32(a_block[i]) * fp16_to_fp32(b_col_start[i]);
     }
 
-    return sum;
+    प्रत्यागम sum;
 }
 
 // Compute dot product between f16 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: 32 f16 values (64 bytes = 1 cache line)
-static inline float compute_block_dot_product_f16(const uint16_t * a_block, const float * b_col_start) {
-    return compute_block_dot_product_f16_partial(a_block, b_col_start, QK_F16);
+स्थिर अन्तःस्थ भिन्न compute_block_dot_product_f16(ध्रुव uint16_t * a_block, ध्रुव भिन्न * b_col_start) {
+    प्रत्यागम compute_block_dot_product_f16_partial(a_block, b_col_start, QK_F16);
 }
 
 // Compute dot product between f32 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: up to 16 f32 values (can handle partial blocks for misaligned K)
-static inline float compute_block_dot_product_f32_partial(const float * a_block,
-                                                          const float * b_col_start,
-                                                          int           elements) {
-    float acc_vec[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };  // Accumulator vector
+स्थिर अन्तःस्थ भिन्न compute_block_dot_product_f32_partial(ध्रुव भिन्न * a_block,
+                                                          ध्रुव भिन्न * b_col_start,
+                                                          पूर्णाङ्क           elements) {
+    भिन्न acc_vec[8] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };  // Accumulator vector
 
     // Calculate how many full 8-element chunks we can process
-    int vec_end = (elements / 8) * 8;
+    पूर्णाङ्क vec_end = (elements / 8) * 8;
 
-    if (vec_end > 0) {
+    यदि (vec_end > 0) {
         // Set mask register to enable all 8 vector elements
         unsigned long temp_mask;
-        __asm__ volatile("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
-        __asm__ volatile("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
+        __asm__ चञ्चल("mova.x.m %0" : "=r"(temp_mask));  // Save current mask
+        __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");           // Enable all 8 elements
 
         // Process full 8-element chunks
-        for (int i = 0; i < vec_end; i += 8) {
+        प्रति (पूर्णाङ्क i = 0; i < vec_end; i += 8) {
             // Vectorized f32 multiply-accumulate
-            __asm__ volatile(
+            __asm__ चञ्चल(
                 "flw.ps f10, %[acc]\n"           // Load current accumulator (8 floats)
                 "flw.ps f11, %[a_vec]\n"         // Load 8 A values (f32)
                 "flw.ps f12, %[b_vec]\n"         // Load 8 B values (f32)
                 "fmadd.ps f10, f11, f12, f10\n"  // acc += a_vec * b_vec (8-wide)
                 "fsw.ps f10, %[result]\n"        // Store back to accumulator
 
-                : [result] "=m"(*(float (*)[8]) acc_vec)
-                : [acc] "m"(*(const float (*)[8]) acc_vec), [a_vec] "m"(*(const float (*)[8])(a_block + i)),
-                  [b_vec] "m"(*(const float (*)[8])(b_col_start + i))
+                : [result] "=m"(*(भिन्न (*)[8]) acc_vec)
+                : [acc] "m"(*(ध्रुव भिन्न (*)[8]) acc_vec), [a_vec] "m"(*(ध्रुव भिन्न (*)[8])(a_block + i)),
+                  [b_vec] "m"(*(ध्रुव भिन्न (*)[8])(b_col_start + i))
                 : "f10", "f11", "f12");
         }
 
         // Restore original mask
-        __asm__ volatile("mova.m.x %0" ::"r"(temp_mask));
+        __asm__ चञ्चल("mova.m.x %0" ::"r"(temp_mask));
     }
 
     // Horizontal sum: reduce 8 accumulator elements to single scalar
-    float final_sum = 0.0f;
-    for (int i = 0; i < 8; i++) {
+    भिन्न final_sum = 0.0f;
+    प्रति (पूर्णाङ्क i = 0; i < 8; i++) {
         final_sum += acc_vec[i];
     }
 
     // Handle remaining elements (< 8) with scalar operations
-    for (int i = vec_end; i < elements; i++) {
+    प्रति (पूर्णाङ्क i = vec_end; i < elements; i++) {
         final_sum += a_block[i] * b_col_start[i];
     }
 
-    return final_sum;
+    प्रत्यागम final_sum;
 }
 
 // Compute dot product between f32 block and f16 column vector
 // Scalar implementation for generic non-matrix-engine fallback paths.
-static inline float compute_block_dot_product_f32_f16_partial(const float *    a_block,
-                                                              const uint16_t * b_col_start,
-                                                              int              elements) {
-    float sum = 0.0f;
+स्थिर अन्तःस्थ भिन्न compute_block_dot_product_f32_f16_partial(ध्रुव भिन्न *    a_block,
+                                                              ध्रुव uint16_t * b_col_start,
+                                                              पूर्णाङ्क              elements) {
+    भिन्न sum = 0.0f;
 
-    for (int i = 0; i < elements; i++) {
+    प्रति (पूर्णाङ्क i = 0; i < elements; i++) {
         sum += a_block[i] * fp16_to_fp32(b_col_start[i]);
     }
 
-    return sum;
+    प्रत्यागम sum;
 }
 
 // Compute dot product between f32 block and f32 column vector
 // Vectorized: processes 8 elements at a time using ET vector instructions
 // Block size: 16 f32 values (64 bytes = 1 cache line)
-static inline float compute_block_dot_product_f32(const float * a_block, const float * b_col_start) {
-    return compute_block_dot_product_f32_partial(a_block, b_col_start, QK_F32);
+स्थिर अन्तःस्थ भिन्न compute_block_dot_product_f32(ध्रुव भिन्न * a_block, ध्रुव भिन्न * b_col_start) {
+    प्रत्यागम compute_block_dot_product_f32_partial(a_block, b_col_start, QK_F32);
 
     // float acc_vec[8];
     // unsigned long old_mask;
@@ -769,21 +769,21 @@ static inline float compute_block_dot_product_f32(const float * a_block, const f
 
 #endif  // BLOCK_OPS_H
 
-static inline void __attribute__((always_inline)) q4_dot_reset(void) {
-    __asm__ volatile("fbci.pi f20, 0" ::: "f20");
+स्थिर अन्तःस्थ शून्य __attribute__((always_inline)) q4_dot_reset(शून्य) {
+    __asm__ चञ्चल("fbci.pi f20, 0" ::: "f20");
 }
 
-static inline void __attribute__((always_inline)) q4_dot_tile(const block_q4_0 * q_row,
-                                                              const float *      b_col,
+स्थिर अन्तःस्थ शून्य __attribute__((always_inline)) q4_dot_tile(ध्रुव block_q4_0 * q_row,
+                                                              ध्रुव भिन्न *      b_col,
                                                               int64_t            n_blocks) {
-    const int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
+    ध्रुव int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    __asm__ चञ्चल("flw.ps f31, %[g]\n" : : [g] "m"(*(ध्रुव int32_t (*)[8]) gather_pattern) : "f31");
 
-    for (int64_t kb = 0; kb < n_blocks; kb++) {
-        const block_q4_0 * blk   = q_row + kb;
-        const float *      b_ptr = b_col + (kb << 5);
+    प्रति (int64_t kb = 0; kb < n_blocks; kb++) {
+        ध्रुव block_q4_0 * blk   = q_row + kb;
+        ध्रुव भिन्न *      b_ptr = b_col + (kb << 5);
 
-        __asm__ volatile(
+        __asm__ चञ्चल(
             "fbci.pi     f10, 0\n"
 
             "fgb.ps      f11, f31(%[a_ptr0])\n"
@@ -814,13 +814,13 @@ static inline void __attribute__((always_inline)) q4_dot_tile(const block_q4_0 *
             "flw.ps      f15, %[b_high1]\n"
             "fmadd.ps    f10, f14, f15, f10, rne\n"
             :
-            : [a_ptr0] "r"(&blk->qs[0]), [b_low0] "m"(*(const float (*)[8]) & b_ptr[0]),
-              [b_high0] "m"(*(const float (*)[8]) & b_ptr[16]), [a_ptr1] "r"(&blk->qs[8]),
-              [b_low1] "m"(*(const float (*)[8]) & b_ptr[8]), [b_high1] "m"(*(const float (*)[8]) & b_ptr[24])
+            : [a_ptr0] "r"(&blk->qs[0]), [b_low0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]),
+              [b_high0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]), [a_ptr1] "r"(&blk->qs[8]),
+              [b_low1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]), [b_high1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
             : "f10", "f11", "f12", "f13", "f14", "f15");
 
         uint32_t scale_raw = (uint32_t) blk->d;
-        __asm__ volatile(
+        __asm__ चञ्चल(
             "fbcx.ps f15, %[sb]\n"
             "fcvt.ps.f16 f15, f15\n"
             "fmadd.ps f20, f10, f15, f20\n"
@@ -830,8 +830,8 @@ static inline void __attribute__((always_inline)) q4_dot_tile(const block_q4_0 *
     }
 }
 
-static inline float __attribute__((always_inline)) q4_dot_reduce(void) {
-    float result;
+स्थिर अन्तःस्थ भिन्न __attribute__((always_inline)) q4_dot_reduce(शून्य) {
+    भिन्न result;
     __asm__ __volatile__(
         "fswizz.ps f1, f20, 0xB1 \n\t"
         "fadd.ps   f2, f20, f1, rne \n\t"
@@ -841,58 +841,58 @@ static inline float __attribute__((always_inline)) q4_dot_reduce(void) {
         "fbcx.ps   f5, t0 \n\t"
         "fadd.ps   %[vout], f4, f5, rne \n\t"
         : [vout] "=f"(result)::"t0", "f1", "f2", "f3", "f4", "f5");
-    return result;
+    प्रत्यागम result;
 }
 
-static inline float compute_row_dot_q4_0(const block_q4_0 * q_row, const float * b_col, int64_t K_blocks) {
+स्थिर अन्तःस्थ भिन्न compute_row_dot_q4_0(ध्रुव block_q4_0 * q_row, ध्रुव भिन्न * b_col, int64_t K_blocks) {
     unsigned long saved_mask;
-    __asm__ volatile("mova.x.m %0" : "=r"(saved_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+    __asm__ चञ्चल("mova.x.m %0" : "=r"(saved_mask));
+    __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");
     q4_dot_reset();
     q4_dot_tile(q_row, b_col, K_blocks);
-    float result = q4_dot_reduce();
-    __asm__ volatile("mova.m.x %0" ::"r"(saved_mask));
-    return result;
+    भिन्न result = q4_dot_reduce();
+    __asm__ चञ्चल("mova.m.x %0" ::"r"(saved_mask));
+    प्रत्यागम result;
 }
 
-typedef struct {
+प्रकारनिर्देश संरचना {
     unsigned long saved_mask;
 } q4_dot_state;
 
-static inline void q4_dot_begin(q4_dot_state * state) {
-    __asm__ volatile("mova.x.m %0" : "=r"(state->saved_mask));
-    __asm__ volatile("mov.m.x m0, x0, 0xFF");
+स्थिर अन्तःस्थ शून्य q4_dot_begin(q4_dot_state * state) {
+    __asm__ चञ्चल("mova.x.m %0" : "=r"(state->saved_mask));
+    __asm__ चञ्चल("mov.m.x m0, x0, 0xFF");
 }
 
-static inline void q4_dot_end(const q4_dot_state * state) {
-    __asm__ volatile("mova.m.x %0" ::"r"(state->saved_mask));
+स्थिर अन्तःस्थ शून्य q4_dot_end(ध्रुव q4_dot_state * state) {
+    __asm__ चञ्चल("mova.m.x %0" ::"r"(state->saved_mask));
 }
 
-static inline float q4_dot_compute(const block_q4_0 * q_row, const float * b_col, int64_t K_blocks) {
+स्थिर अन्तःस्थ भिन्न q4_dot_compute(ध्रुव block_q4_0 * q_row, ध्रुव भिन्न * b_col, int64_t K_blocks) {
     q4_dot_reset();
     q4_dot_tile(q_row, b_col, K_blocks);
-    return q4_dot_reduce();
+    प्रत्यागम q4_dot_reduce();
 }
 
-static inline void q4_dot_compute_x2_aligned(const block_q4_0 * q_row0,
-                                             const block_q4_0 * q_row1,
-                                             const float *      b_col,
+स्थिर अन्तःस्थ शून्य q4_dot_compute_x2_aligned(ध्रुव block_q4_0 * q_row0,
+                                             ध्रुव block_q4_0 * q_row1,
+                                             ध्रुव भिन्न *      b_col,
                                              int64_t            K_blocks,
-                                             float *            out0,
-                                             float *            out1) {
-    const int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-    __asm__ volatile("flw.ps f31, %[g]\n" : : [g] "m"(*(const int32_t (*)[8]) gather_pattern) : "f31");
-    __asm__ volatile(
+                                             भिन्न *            out0,
+                                             भिन्न *            out1) {
+    ध्रुव int32_t gather_pattern[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    __asm__ चञ्चल("flw.ps f31, %[g]\n" : : [g] "m"(*(ध्रुव int32_t (*)[8]) gather_pattern) : "f31");
+    __asm__ चञ्चल(
         "fbci.pi f20, 0\n"
         "fbci.pi f21, 0\n" ::
             : "f20", "f21");
 
-    for (int64_t kb = 0; kb < K_blocks; kb++) {
-        const block_q4_0 * blk0  = q_row0 + kb;
-        const block_q4_0 * blk1  = q_row1 + kb;
-        const float *      b_ptr = b_col + (kb << 5);
+    प्रति (int64_t kb = 0; kb < K_blocks; kb++) {
+        ध्रुव block_q4_0 * blk0  = q_row0 + kb;
+        ध्रुव block_q4_0 * blk1  = q_row1 + kb;
+        ध्रुव भिन्न *      b_ptr = b_col + (kb << 5);
 
-        __asm__ volatile(
+        __asm__ चञ्चल(
             "fbci.pi     f10, 0\n"
             "fbci.pi     f16, 0\n"
 
@@ -953,14 +953,14 @@ static inline void q4_dot_compute_x2_aligned(const block_q4_0 * q_row0,
             "fmadd.ps    f16, f19, f15, f16, rne\n"
             :
             : [a_ptr0_0] "r"(&blk0->qs[0]), [a_ptr0_1] "r"(&blk0->qs[8]), [a_ptr1_0] "r"(&blk1->qs[0]),
-              [a_ptr1_1] "r"(&blk1->qs[8]), [b_low0] "m"(*(const float (*)[8]) & b_ptr[0]),
-              [b_high0] "m"(*(const float (*)[8]) & b_ptr[16]), [b_low1] "m"(*(const float (*)[8]) & b_ptr[8]),
-              [b_high1] "m"(*(const float (*)[8]) & b_ptr[24])
+              [a_ptr1_1] "r"(&blk1->qs[8]), [b_low0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[0]),
+              [b_high0] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[16]), [b_low1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[8]),
+              [b_high1] "m"(*(ध्रुव भिन्न (*)[8]) & b_ptr[24])
             : "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19");
 
-        const uint32_t scale_raw0 = (uint32_t) blk0->d;
-        const uint32_t scale_raw1 = (uint32_t) blk1->d;
-        __asm__ volatile(
+        ध्रुव uint32_t scale_raw0 = (uint32_t) blk0->d;
+        ध्रुव uint32_t scale_raw1 = (uint32_t) blk1->d;
+        __asm__ चञ्चल(
             "fbcx.ps     f24, %[s0]\n"
             "fcvt.ps.f16 f24, f24\n"
             "fmadd.ps    f20, f10, f24, f20\n"
@@ -972,7 +972,7 @@ static inline void q4_dot_compute_x2_aligned(const block_q4_0 * q_row0,
             : "f20", "f21", "f24", "f25");
     }
 
-    float result0, result1;
+    भिन्न result0, result1;
     __asm__ __volatile__(
         "fswizz.ps f1, f20, 0xB1 \n\t"
         "fadd.ps   f2, f20, f1, rne \n\t"
